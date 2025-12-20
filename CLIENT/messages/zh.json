@@ -1,0 +1,222 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "search": "搜索",
+    "filter": "筛选",
+    "reset": "重置",
+    "submit": "提交",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "close": "关闭"
+  },
+  "errors": {
+    "network": {
+      "timeout": "连接超时。请重试。",
+      "connection": "无法连接到服务器。请检查您的网络连接。",
+      "unknown": "发生未知错误。请重试。"
+    },
+    "http": {
+      "400": "请求无效。",
+      "401": "您的会话已过期。请重新登录。",
+      "403": "您无权访问此资源。",
+      "404": "找不到请求的资源。",
+      "422": "数据无效。请再次检查。",
+      "500": "服务器错误。请稍后重试。",
+      "502": "网关错误。请稍后重试。",
+      "503": "服务暂时不可用。请稍后重试。",
+      "generic": "错误 {status}: {message}"
+    },
+    "validation": {
+      "title": "验证错误",
+      "details": "请检查以下字段："
+    },
+    "unauthorized": {
+      "title": "未授权",
+      "message": "您无权执行此操作。"
+    },
+    "forbidden": {
+      "title": "禁止",
+      "message": "您无权访问此资源。"
+    },
+    "notFound": {
+      "title": "未找到",
+      "message": "找不到请求的资源。"
+    },
+    "server": {
+      "title": "服务器错误",
+      "message": "服务器发生错误。请稍后重试。"
+    },
+    "unknown": {
+      "title": "未知错误",
+      "message": "发生未知错误。请重试。"
+    }
+  },
+  "notifications": {
+    "success": "操作成功！",
+    "error": "发生错误",
+    "warning": "警告",
+    "info": "信息"
+  },
+  "auth": {
+    "title": "管理员登录",
+    "subtitle": "请登录以访问管理系统",
+    "email": {
+      "label": "电子邮件",
+      "placeholder": "admin@example.com",
+      "required": "请输入您的电子邮件！",
+      "invalid": "无效的电子邮件！"
+    },
+    "password": {
+      "label": "密码",
+      "placeholder": "输入您的密码",
+      "required": "请输入您的密码！",
+      "minLength": "密码必须至少8个字符！"
+    },
+    "login": "登录",
+    "loginSuccess": "登录成功！",
+    "loginError": "您无权访问管理员页面",
+    "forAdminOnly": "仅限系统管理员",
+    "user": {
+      "loginTitle": "登录",
+      "loginSubtitle": "请登录您的账户",
+      "login": "登录",
+      "loginSuccess": "登录成功！",
+      "registerTitle": "注册账户",
+      "registerSubtitle": "创建新账户以开始使用服务",
+      "register": "注册",
+      "registerSuccess": "注册成功！",
+      "noAccount": "没有账户？",
+      "haveAccount": "已有账户？",
+      "fullName": {
+        "label": "姓名",
+        "placeholder": "请输入您的姓名",
+        "required": "请输入姓名！"
+      },
+      "phone": {
+        "label": "电话号码",
+        "placeholder": "请输入您的电话号码",
+        "required": "请输入电话号码！"
+      },
+      "confirmPassword": {
+        "label": "确认密码",
+        "placeholder": "请再次输入密码",
+        "required": "请确认密码！",
+        "notMatch": "确认密码不匹配！"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "welcome": "欢迎使用仪表板",
+    "menu": {
+      "dashboard": "仪表板",
+      "users": "用户",
+      "settings": "设置"
+    },
+    "header": {
+      "profile": "个人资料",
+      "settings": "设置",
+      "logout": "登出"
+    },
+    "stats": {
+      "totalUsers": "总用户数",
+      "totalOrders": "总订单数",
+      "revenue": "收入",
+      "growth": "增长"
+    },
+    "recentActivity": "最近活动",
+    "noRecentActivity": "没有最近活动",
+    "quickActions": "快速操作",
+    "quickActionsDesc": "快速操作将显示在这里"
+  },
+  "home": {
+    "logo": "PR1AS",
+    "nav": {
+      "home": "首页",
+      "about": "关于",
+      "services": "服务",
+      "contact": "联系我们"
+    },
+    "hero": {
+      "title": "连接客户和工作者",
+      "subtitle": "连接客户和服务专业人士的可信平台",
+      "getStarted": "立即开始",
+      "learnMore": "了解更多"
+    },
+    "features": {
+      "title": "主要功能",
+      "subtitle": "满足您所有需求的全面解决方案",
+      "client": {
+        "title": "面向客户",
+        "description": "快速轻松地找到并连接服务专业人士"
+      },
+      "worker": {
+        "title": "面向工作者",
+        "description": "扩展业务机会并与潜在客户建立联系"
+      },
+      "safe": {
+        "title": "安全可靠",
+        "description": "具有高级安全措施的可靠系统"
+      }
+    },
+    "services": {
+      "title": "我们的服务",
+      "subtitle": "我们提供的服务",
+      "service1": {
+        "title": "智能连接",
+        "description": "帮助客户和服务提供商高效会面的智能连接系统"
+      },
+      "service2": {
+        "title": "订单管理",
+        "description": "轻松便捷地跟踪和管理所有订单"
+      },
+      "service3": {
+        "title": "安全支付",
+        "description": "适用于所有交易的安全可靠支付系统"
+      },
+      "service4": {
+        "title": "24/7 支持",
+        "description": "随时准备为您提供帮助的客户支持团队"
+      }
+    },
+    "cta": {
+      "title": "准备开始了吗？",
+      "subtitle": "立即加入我们，体验卓越的服务",
+      "button": "立即注册"
+    },
+    "footer": {
+      "company": {
+        "title": "关于我们",
+        "description": "连接客户和服务提供商的领先平台"
+      },
+      "links": {
+        "title": "快速链接"
+      },
+      "services": {
+        "title": "服务",
+        "item1": "智能连接",
+        "item2": "订单管理",
+        "item3": "安全支付"
+      },
+      "contact": {
+        "title": "联系方式"
+      },
+      "copyright": "PR1AS",
+      "rights": "版权所有",
+      "privacy": "隐私政策",
+      "terms": "服务条款"
+    }
+  }
+}
+

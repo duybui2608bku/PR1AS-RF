@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close"
+  },
+  "errors": {
+    "network": {
+      "timeout": "Connection timeout. Please try again.",
+      "connection": "Cannot connect to server. Please check your network connection.",
+      "unknown": "An unknown error occurred. Please try again."
+    },
+    "http": {
+      "400": "Invalid request.",
+      "401": "Your session has expired. Please log in again.",
+      "403": "You do not have permission to access this resource.",
+      "404": "The requested resource was not found.",
+      "422": "Invalid data. Please check again.",
+      "500": "Server error. Please try again later.",
+      "502": "Gateway error. Please try again later.",
+      "503": "Service temporarily unavailable. Please try again later.",
+      "generic": "Error {status}: {message}"
+    },
+    "validation": {
+      "title": "Validation Error",
+      "details": "Please check the following fields:"
+    },
+    "unauthorized": {
+      "title": "Unauthorized",
+      "message": "You are not authorized to perform this action."
+    },
+    "forbidden": {
+      "title": "Forbidden",
+      "message": "You do not have permission to access this resource."
+    },
+    "notFound": {
+      "title": "Not Found",
+      "message": "The requested resource was not found."
+    },
+    "server": {
+      "title": "Server Error",
+      "message": "An error occurred on the server. Please try again later."
+    },
+    "unknown": {
+      "title": "Unknown Error",
+      "message": "An unknown error occurred. Please try again."
+    }
+  },
+  "notifications": {
+    "success": "Operation successful!",
+    "error": "An error occurred",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "auth": {
+    "title": "Admin Login",
+    "subtitle": "Please log in to access the administration system",
+    "email": {
+      "label": "Email",
+      "placeholder": "admin@example.com",
+      "required": "Please enter your email!",
+      "invalid": "Invalid email!"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "Enter your password",
+      "required": "Please enter your password!",
+      "minLength": "Password must be at least 8 characters!"
+    },
+    "login": "Login",
+    "loginSuccess": "Login successful!",
+    "loginError": "You do not have permission to access the admin page",
+    "forAdminOnly": "For system administrators only"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Dashboard",
+    "menu": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "settings": "Settings"
+    },
+    "header": {
+      "profile": "Profile",
+      "settings": "Settings",
+      "logout": "Logout"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalOrders": "Total Orders",
+      "revenue": "Revenue",
+      "growth": "Growth"
+    },
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity",
+    "quickActions": "Quick Actions",
+    "quickActionsDesc": "Quick actions will be displayed here"
+  },
+  "home": {
+    "logo": "PR1AS",
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "services": "Services",
+      "contact": "Contact"
+    },
+    "hero": {
+      "title": "Connect Clients and Workers",
+      "subtitle": "A trusted platform to connect customers with service professionals",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More"
+    },
+    "features": {
+      "title": "Key Features",
+      "subtitle": "Comprehensive solutions for all your needs",
+      "client": {
+        "title": "For Clients",
+        "description": "Find and connect with service professionals quickly and easily"
+      },
+      "worker": {
+        "title": "For Workers",
+        "description": "Expand business opportunities and connect with potential customers"
+      },
+      "safe": {
+        "title": "Safe & Secure",
+        "description": "Reliable system with advanced security measures"
+      }
+    },
+    "services": {
+      "title": "Our Services",
+      "subtitle": "What we offer",
+      "service1": {
+        "title": "Smart Connection",
+        "description": "Smart connection system that helps customers and service providers meet efficiently"
+      },
+      "service2": {
+        "title": "Order Management",
+        "description": "Track and manage all orders easily and conveniently"
+      },
+      "service3": {
+        "title": "Secure Payment",
+        "description": "Safe and reliable payment system for all transactions"
+      },
+      "service4": {
+        "title": "24/7 Support",
+        "description": "Customer support team always ready to help you anytime"
+      }
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join us today and experience excellent service",
+      "button": "Sign Up Now"
+    },
+    "footer": {
+      "company": {
+        "title": "About Us",
+        "description": "Leading platform connecting customers and service providers"
+      },
+      "links": {
+        "title": "Quick Links"
+      },
+      "services": {
+        "title": "Services",
+        "item1": "Smart Connection",
+        "item2": "Order Management",
+        "item3": "Secure Payment"
+      },
+      "contact": {
+        "title": "Contact"
+      },
+      "copyright": "PR1AS",
+      "rights": "All rights reserved",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    }
+  }
+}
+

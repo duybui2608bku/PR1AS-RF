@@ -1,0 +1,26 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "project": "./SERVER/tsconfig.json"
+  },
+  "plugins": ["@typescript-eslint", "prettier"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "no-console": "warn",
+    "linebreak-style": "off",
+    "prettier/prettier": "error"
+  },
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "*.js"]
+}

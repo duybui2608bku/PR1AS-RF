@@ -1,0 +1,221 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "warning": "Cảnh báo",
+    "info": "Thông tin",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "reset": "Đặt lại",
+    "submit": "Gửi",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước đó",
+    "close": "Đóng"
+  },
+  "errors": {
+    "network": {
+      "timeout": "Kết nối quá lâu. Vui lòng thử lại.",
+      "connection": "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.",
+      "unknown": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+    },
+    "http": {
+      "400": "Yêu cầu không hợp lệ.",
+      "401": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      "403": "Bạn không có quyền truy cập tài nguyên này.",
+      "404": "Không tìm thấy tài nguyên được yêu cầu.",
+      "422": "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.",
+      "500": "Lỗi máy chủ. Vui lòng thử lại sau.",
+      "502": "Lỗi cổng kết nối. Vui lòng thử lại sau.",
+      "503": "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.",
+      "generic": "Lỗi {status}: {message}"
+    },
+    "validation": {
+      "title": "Lỗi xác thực",
+      "details": "Vui lòng kiểm tra các trường sau:"
+    },
+    "unauthorized": {
+      "title": "Không có quyền",
+      "message": "Bạn không có quyền thực hiện hành động này."
+    },
+    "forbidden": {
+      "title": "Bị cấm",
+      "message": "Bạn không có quyền truy cập tài nguyên này."
+    },
+    "notFound": {
+      "title": "Không tìm thấy",
+      "message": "Không tìm thấy tài nguyên được yêu cầu."
+    },
+    "server": {
+      "title": "Lỗi máy chủ",
+      "message": "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau."
+    },
+    "unknown": {
+      "title": "Lỗi không xác định",
+      "message": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+    }
+  },
+  "notifications": {
+    "success": "Thao tác thành công!",
+    "error": "Đã xảy ra lỗi",
+    "warning": "Cảnh báo",
+    "info": "Thông tin"
+  },
+  "auth": {
+    "title": "Đăng nhập Admin",
+    "subtitle": "Vui lòng đăng nhập để truy cập hệ thống quản trị",
+    "email": {
+      "label": "Email",
+      "placeholder": "admin@example.com",
+      "required": "Vui lòng nhập email!",
+      "invalid": "Email không hợp lệ!"
+    },
+    "password": {
+      "label": "Mật khẩu",
+      "placeholder": "Nhập mật khẩu",
+      "required": "Vui lòng nhập mật khẩu!",
+      "minLength": "Mật khẩu phải có ít nhất 8 ký tự!"
+    },
+    "login": "Đăng nhập",
+    "loginSuccess": "Đăng nhập thành công!",
+    "loginError": "Bạn không có quyền truy cập trang admin",
+    "forAdminOnly": "Chỉ dành cho quản trị viên hệ thống",
+    "user": {
+      "loginTitle": "Đăng nhập",
+      "loginSubtitle": "Vui lòng đăng nhập vào tài khoản của bạn",
+      "login": "Đăng nhập",
+      "loginSuccess": "Đăng nhập thành công!",
+      "registerTitle": "Đăng ký tài khoản",
+      "registerSubtitle": "Tạo tài khoản mới để bắt đầu sử dụng dịch vụ",
+      "register": "Đăng ký",
+      "registerSuccess": "Đăng ký thành công!",
+      "noAccount": "Chưa có tài khoản?",
+      "haveAccount": "Đã có tài khoản?",
+      "fullName": {
+        "label": "Họ và tên",
+        "placeholder": "Nhập họ và tên của bạn",
+        "required": "Vui lòng nhập họ và tên!"
+      },
+      "phone": {
+        "label": "Số điện thoại",
+        "placeholder": "Nhập số điện thoại của bạn",
+        "required": "Vui lòng nhập số điện thoại!"
+      },
+      "confirmPassword": {
+        "label": "Xác nhận mật khẩu",
+        "placeholder": "Nhập lại mật khẩu",
+        "required": "Vui lòng xác nhận mật khẩu!",
+        "notMatch": "Mật khẩu xác nhận không khớp!"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển",
+    "welcome": "Chào mừng đến với Bảng điều khiển",
+    "menu": {
+      "dashboard": "Bảng điều khiển",
+      "users": "Người dùng",
+      "settings": "Cài đặt"
+    },
+    "header": {
+      "profile": "Hồ sơ",
+      "settings": "Cài đặt",
+      "logout": "Đăng xuất"
+    },
+    "stats": {
+      "totalUsers": "Tổng người dùng",
+      "totalOrders": "Tổng đơn hàng",
+      "revenue": "Doanh thu",
+      "growth": "Tăng trưởng"
+    },
+    "recentActivity": "Hoạt động gần đây",
+    "noRecentActivity": "Không có hoạt động gần đây",
+    "quickActions": "Thao tác nhanh",
+    "quickActionsDesc": "Các thao tác nhanh sẽ được hiển thị ở đây"
+  },
+  "home": {
+    "logo": "PR1AS",
+    "nav": {
+      "home": "Trang chủ",
+      "about": "Giới thiệu",
+      "services": "Dịch vụ",
+      "contact": "Liên hệ"
+    },
+    "hero": {
+      "title": "Kết nối Client và Worker",
+      "subtitle": "Nền tảng đáng tin cậy để kết nối khách hàng với các chuyên gia dịch vụ",
+      "getStarted": "Bắt đầu ngay",
+      "learnMore": "Tìm hiểu thêm"
+    },
+    "features": {
+      "title": "Tính năng nổi bật",
+      "subtitle": "Giải pháp toàn diện cho mọi nhu cầu của bạn",
+      "client": {
+        "title": "Dành cho Client",
+        "description": "Tìm kiếm và kết nối với các chuyên gia dịch vụ một cách nhanh chóng và dễ dàng"
+      },
+      "worker": {
+        "title": "Dành cho Worker",
+        "description": "Mở rộng cơ hội kinh doanh và kết nối với khách hàng tiềm năng"
+      },
+      "safe": {
+        "title": "An toàn & Bảo mật",
+        "description": "Hệ thống đáng tin cậy với các biện pháp bảo mật tiên tiến"
+      }
+    },
+    "services": {
+      "title": "Dịch vụ của chúng tôi",
+      "subtitle": "Những gì chúng tôi cung cấp",
+      "service1": {
+        "title": "Kết nối thông minh",
+        "description": "Hệ thống kết nối thông minh giúp khách hàng và nhà cung cấp dịch vụ gặp gỡ một cách hiệu quả"
+      },
+      "service2": {
+        "title": "Quản lý đơn hàng",
+        "description": "Theo dõi và quản lý mọi đơn hàng một cách dễ dàng và thuận tiện"
+      },
+      "service3": {
+        "title": "Thanh toán an toàn",
+        "description": "Hệ thống thanh toán an toàn và đáng tin cậy cho mọi giao dịch"
+      },
+      "service4": {
+        "title": "Hỗ trợ 24/7",
+        "description": "Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giúp đỡ bạn mọi lúc"
+      }
+    },
+    "cta": {
+      "title": "Sẵn sàng bắt đầu?",
+      "subtitle": "Tham gia cùng chúng tôi ngay hôm nay và trải nghiệm dịch vụ tuyệt vời",
+      "button": "Đăng ký ngay"
+    },
+    "footer": {
+      "company": {
+        "title": "Về chúng tôi",
+        "description": "Nền tảng kết nối hàng đầu giữa khách hàng và nhà cung cấp dịch vụ"
+      },
+      "links": {
+        "title": "Liên kết nhanh"
+      },
+      "services": {
+        "title": "Dịch vụ",
+        "item1": "Kết nối thông minh",
+        "item2": "Quản lý đơn hàng",
+        "item3": "Thanh toán an toàn"
+      },
+      "contact": {
+        "title": "Liên hệ"
+      },
+      "copyright": "PR1AS",
+      "rights": "Tất cả quyền được bảo lưu",
+      "privacy": "Chính sách bảo mật",
+      "terms": "Điều khoản sử dụng"
+    }
+  }
+}
