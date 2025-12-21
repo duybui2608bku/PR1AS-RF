@@ -70,3 +70,13 @@ export const VALIDATION_MESSAGES = {
   MAX_VALUE: (field: string, value: number) =>
     `${field} phải nhỏ hơn hoặc bằng ${value}`,
 } as const;
+
+/**
+ * User Messages - Thông báo liên quan đến quản lý người dùng
+ */
+export const USER_MESSAGES = {
+  USER_NOT_FOUND: "Không tìm thấy người dùng",
+  INVALID_STATUS: "Trạng thái không hợp lệ",
+  STATUS_UPDATED: "Cập nhật trạng thái người dùng thành công",
+  USERS_FETCHED: "Lấy danh sách người dùng thành công",
+} as const;
