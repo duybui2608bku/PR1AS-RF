@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IUserDocument, UserRole, UserStatus } from "../../types";
+import { gender, IUserDocument, UserRole, UserStatus } from "../../types";
 
 const userSchema = new Schema<IUserDocument>(
   {
@@ -34,6 +34,44 @@ const userSchema = new Schema<IUserDocument>(
       enum: Object.values(UserRole),
       default: [UserRole.CLIENT],
     },
+    last_active_role: {
+      type: String,
+      enum: Object.values(UserRole),
+      default: UserRole.CLIENT,
+    },
+    worker_profile: {
+      type: new Schema(
+        {
+          date_of_birth: { type: Date, default: null },
+          gender: {
+            type: String,
+            enum: gender,
+            default: gender.OTHER,
+          },
+          height_cm: { type: Number, default: null },
+          weight_kg: { type: Number, default: null },
+          star_sign: { type: String, default: null },
+          lifestyle: { type: String, default: null },
+          hobbies: { type: [String], default: [] },
+          quote: { type: String, default: null },
+          introduction: { type: String, default: null },
+          gallery_urls: { type: [String], default: [] },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
+    client_profile: {
+      type: new Schema(
+        {
+          company_name: { type: String, default: null },
+          website: { type: String, default: null },
+          total_spent: { type: Number, default: 0 },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
     status: {
       type: String,
       enum: Object.values(UserStatus),
@@ -49,6 +87,11 @@ const userSchema = new Schema<IUserDocument>(
     },
     last_login: {
       type: Date,
+      default: null,
+    },
+    refresh_token_hash: {
+      type: String,
+      select: false, // Không trả về khi query thường
       default: null,
     },
     coords: {

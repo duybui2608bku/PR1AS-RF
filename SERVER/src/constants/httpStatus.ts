@@ -21,6 +21,8 @@ export const HTTP_STATUS = {
 export const ERROR_MESSAGES = {
   INTERNAL_SERVER_ERROR: "Internal Server Error",
   NOT_FOUND: "Route not found",
-  DATABASE_NOT_INITIALIZED: "Database not initialized. Call connectDatabase() first.",
-  SOCKET_NOT_INITIALIZED: "Socket.IO not initialized. Call initializeSocket() first.",
+  DATABASE_NOT_INITIALIZED:
+    "Database not initialized. Call connectDatabase() first.",
+  SOCKET_NOT_INITIALIZED:
+    "Socket.IO not initialized. Call initializeSocket() first.",
 } as const;

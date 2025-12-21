@@ -6,7 +6,8 @@
   "tabWidth": 2,
   "useTabs": false,
   "arrowParens": "always",
-  "endOfLine": "crlf",
+  "endOfLine": "lf",
   "bracketSpacing": true,
   "bracketSameLine": false
+  
 }

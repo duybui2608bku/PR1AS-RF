@@ -19,8 +19,20 @@ export const generateToken = (
   } as jwt.SignOptions);
 };
 
+export const generateRefreshToken = (
+  payload: Omit<JWTPayload, "iat" | "exp">
+): string => {
+  return jwt.sign(payload, config.jwtRefreshSecret, {
+    expiresIn: config.jwtRefreshExpire,
+  } as jwt.SignOptions);
+};
+
 export const verifyToken = (token: string): JWTPayload => {
   return jwt.verify(token, config.jwtSecret) as JWTPayload;
+};
+
+export const verifyRefreshToken = (token: string): JWTPayload => {
+  return jwt.verify(token, config.jwtRefreshSecret) as JWTPayload;
 };
 
 export const decodeToken = (token: string): JWTPayload | null => {

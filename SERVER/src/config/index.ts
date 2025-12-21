@@ -16,7 +16,9 @@ export const config = {
 
   // JWT Configuration
   jwtSecret: process.env.JWT_SECRET || "pr1as",
-  jwtExpire: process.env.JWT_EXPIRE || "7d",
+  jwtExpire: process.env.JWT_EXPIRE || "15m",
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "pr1as_refresh",
+  jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || "7d",
 
   // Database Configuration
   mongodbUri: process.env.MONGODB_URI || "mongodb://localhost:27017",

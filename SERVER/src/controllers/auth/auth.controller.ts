@@ -55,6 +55,19 @@ export class AuthController {
   }
 
   /**
+   * POST /api/auth/refresh-token
+   * Làm mới Access Token
+   */
+  async refreshToken(req: Request, res: Response): Promise<void> {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw AppError.badRequest("Refresh token is required");
+    }
+    const result = await authService.refreshToken(refreshToken);
+    R.success(res, result);
+  }
+
+  /**
    * GET /api/auth/me
    * Lấy thông tin user hiện tại
    */

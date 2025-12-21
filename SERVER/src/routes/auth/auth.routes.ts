@@ -24,6 +24,16 @@ router.post(
 router.post("/login", asyncHandler(authController.login.bind(authController)));
 
 /**
+ * @route   POST /api/auth/refresh-token
+ * @desc    Làm mới Access Token
+ * @access  Public
+ */
+router.post(
+  "/refresh-token",
+  asyncHandler(authController.refreshToken.bind(authController))
+);
+
+/**
  * @route   GET /api/auth/me
  * @desc    Lấy thông tin user hiện tại
  * @access  Private

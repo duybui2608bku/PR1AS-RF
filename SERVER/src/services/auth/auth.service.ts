@@ -1,6 +1,7 @@
 import { userRepository } from "../../repositories/auth/user.repository";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
-import { generateToken } from "../../utils/jwt";
+import { verifyRefreshToken } from "../../utils/jwt";
+import { generateAuthTokens } from "../../helpers/token.helper";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -13,6 +14,7 @@ import {
   IUserDocument,
   UserStatus,
 } from "../../types/auth/user.types";
+import { User } from "../../models/auth/user.model";
 
 export class AuthService {
   /**
@@ -58,17 +60,13 @@ export class AuthService {
       phone: input.phone,
     });
 
-    // Generate JWT token
-    const token = generateToken({
-      sub: user._id.toString(),
-      email: user.email,
-      roles: user.roles,
-      status: user.status,
-    });
+    // Generate Tokens
+    const { token, refreshToken } = await generateAuthTokens(user);
 
     return {
       user: this.toPublicUser(user),
       token,
+      refreshToken,
     };
   }
 
@@ -108,21 +106,59 @@ export class AuthService {
       );
     }
 
-    // Cập nhật last_login
-    await userRepository.updateLastLogin(user._id.toString());
-
-    // Generate JWT token
-    const token = generateToken({
-      sub: user._id.toString(),
-      email: user.email,
-      roles: user.roles,
-      status: user.status,
-    });
+    // Generate Tokens
+    const { token, refreshToken } = await generateAuthTokens(user);
 
     return {
       user: this.toPublicUser(user),
       token,
+      refreshToken,
     };
+  }
+
+  /**
+   * Refresh Token
+   */
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    try {
+      const payload = verifyRefreshToken(refreshToken);
+
+      const user = await User.findById(payload.sub).select(
+        "+refresh_token_hash"
+      );
+
+      if (!user || !user.refresh_token_hash) {
+        throw new AppError("Invalid refresh token", HTTP_STATUS.UNAUTHORIZED);
+      }
+
+      if (user.status === UserStatus.BANNED) {
+        throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
+      }
+
+      const isValid = await comparePassword(
+        refreshToken,
+        user.refresh_token_hash
+      );
+      if (!isValid) {
+        await User.findByIdAndUpdate(user._id, { refresh_token_hash: null });
+        throw new AppError(
+          "Refresh token reuse detected",
+          HTTP_STATUS.UNAUTHORIZED
+        );
+      }
+
+      const tokens = await generateAuthTokens(user);
+
+      return {
+        user: this.toPublicUser(user),
+        ...tokens,
+      };
+    } catch (error) {
+      throw new AppError(
+        "Invalid or expired refresh token",
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
   }
 
   /**
