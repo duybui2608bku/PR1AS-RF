@@ -15,6 +15,14 @@ export function ThemeSync() {
     const applyTheme = (themeMode: "light" | "dark") => {
       const body = document.body;
       const html = document.documentElement;
+      
+      // Lấy giá trị từ CSS variables
+      const bgColor = getComputedStyle(document.documentElement)
+        .getPropertyValue("--background")
+        .trim() || "#ffffff";
+      const textColor = getComputedStyle(document.documentElement)
+        .getPropertyValue("--foreground")
+        .trim() || "#000000";
 
       if (themeMode === "dark") {
         body.style.backgroundColor = "#141414";
@@ -22,9 +30,9 @@ export function ThemeSync() {
         html.style.backgroundColor = "#141414";
         html.setAttribute("data-theme", "dark");
       } else {
-        body.style.backgroundColor = "#ffffff";
-        body.style.color = "rgba(0, 0, 0, 0.88)";
-        html.style.backgroundColor = "#ffffff";
+        body.style.backgroundColor = bgColor;
+        body.style.color = textColor;
+        html.style.backgroundColor = bgColor;
         html.setAttribute("data-theme", "light");
       }
     };
@@ -53,15 +61,23 @@ export function ThemeSync() {
         const themeMode = parsed?.state?.theme || "light";
         const body = document.body;
         const html = document.documentElement;
+        
+        // Lấy giá trị từ CSS variables
+        const bgColor = getComputedStyle(document.documentElement)
+          .getPropertyValue("--background")
+          .trim() || "#ffffff";
+        const textColor = getComputedStyle(document.documentElement)
+          .getPropertyValue("--foreground")
+          .trim() || "#000000";
 
         if (themeMode === "dark") {
           body.style.backgroundColor = "#141414";
           body.style.color = "rgba(255, 255, 255, 0.85)";
           html.style.backgroundColor = "#141414";
         } else {
-          body.style.backgroundColor = "#ffffff";
-          body.style.color = "rgba(0, 0, 0, 0.88)";
-          html.style.backgroundColor = "#ffffff";
+          body.style.backgroundColor = bgColor;
+          body.style.color = textColor;
+          html.style.backgroundColor = bgColor;
         }
       } catch (e) {
         // Ignore parse errors

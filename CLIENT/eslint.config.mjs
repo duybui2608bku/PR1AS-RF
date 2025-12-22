@@ -5,6 +5,13 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Custom rules for the client.
+  {
+    rules: {
+      "linebreak-style": "off",
+      "prettier/prettier": ["error", { endOfLine: "crlf" }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

@@ -1,82 +1,84 @@
 /**
  * Centralized messages constants
- * Quản lý tập trung các thông báo lỗi và thành công
+ * Centralized management of error and success messages
  */
 
 /**
- * Auth Messages - Thông báo liên quan đến xác thực
+ * Auth Messages - Authentication related messages
  */
 export const AUTH_MESSAGES = {
   // Validation
-  INVALID_DATA: "Dữ liệu không hợp lệ",
-  EMAIL_REQUIRED: "Email là bắt buộc",
-  EMAIL_INVALID: "Email không hợp lệ",
-  PASSWORD_REQUIRED: "Mật khẩu là bắt buộc",
-  PASSWORD_MIN_LENGTH: "Mật khẩu phải có ít nhất 8 ký tự",
+  INVALID_DATA: "Invalid data",
+  EMAIL_REQUIRED: "Email is required",
+  EMAIL_INVALID: "Invalid email",
+  PASSWORD_REQUIRED: "Password is required",
+  PASSWORD_MIN_LENGTH: "Password must be at least 8 characters",
 
   // Token
-  TOKEN_NOT_PROVIDED: "Token không được cung cấp",
-  TOKEN_INVALID: "Token không hợp lệ",
-  TOKEN_EXPIRED: "Token không hợp lệ hoặc đã hết hạn",
+  TOKEN_NOT_PROVIDED: "Token not provided",
+  TOKEN_INVALID: "Invalid token",
+  TOKEN_EXPIRED: "Token is invalid or expired",
 
   // User status
-  USER_BANNED: "Tài khoản đã bị khóa",
-  USER_NOT_FOUND: "Không tìm thấy người dùng",
-  EMAIL_EXISTS: "Email đã được đăng ký",
+  USER_BANNED: "Account has been banned",
+  USER_NOT_FOUND: "User not found",
+  EMAIL_EXISTS: "Email already registered",
 
   // Credentials
-  INVALID_CREDENTIALS: "Email hoặc mật khẩu không chính xác",
-  LOGIN_REQUIRED: "Yêu cầu đăng nhập",
+  INVALID_CREDENTIALS: "Invalid email or password",
+  LOGIN_REQUIRED: "Login required",
 
   // Success
-  LOGOUT_SUCCESS: "Đăng xuất thành công",
-  REGISTER_SUCCESS: "Đăng ký thành công",
-  LOGIN_SUCCESS: "Đăng nhập thành công",
+  LOGOUT_SUCCESS: "Logout successful",
+  REGISTER_SUCCESS: "Registration successful",
+  LOGIN_SUCCESS: "Login successful",
 } as const;
 
 /**
- * Authorization Messages - Thông báo liên quan đến phân quyền
+ * Authorization Messages - Authorization related messages
  */
 export const AUTHZ_MESSAGES = {
-  FORBIDDEN: "Bạn không có quyền thực hiện hành động này",
-  INSUFFICIENT_PERMISSIONS: "Không đủ quyền truy cập",
+  FORBIDDEN: "You do not have permission to perform this action",
+  INSUFFICIENT_PERMISSIONS: "Insufficient permissions",
 } as const;
 
 /**
- * Common Messages - Thông báo chung
+ * Common Messages - Common messages
  */
 export const COMMON_MESSAGES = {
-  INTERNAL_SERVER_ERROR: "Đã xảy ra lỗi hệ thống",
-  NOT_FOUND: "Không tìm thấy tài nguyên",
-  BAD_REQUEST: "Yêu cầu không hợp lệ",
-  SUCCESS: "Thành công",
-  CREATED: "Tạo mới thành công",
-  UPDATED: "Cập nhật thành công",
-  DELETED: "Xóa thành công",
+  INTERNAL_SERVER_ERROR: "Internal server error occurred",
+  NOT_FOUND: "Resource not found",
+  BAD_REQUEST: "Invalid request",
+  SUCCESS: "Success",
+  CREATED: "Created successfully",
+  UPDATED: "Updated successfully",
+  DELETED: "Deleted successfully",
 } as const;
 
 /**
- * Validation Messages - Thông báo validation chung
+ * Validation Messages - Common validation messages
  */
 export const VALIDATION_MESSAGES = {
-  REQUIRED: (field: string) => `${field} là bắt buộc`,
-  INVALID: (field: string) => `${field} không hợp lệ`,
+  REQUIRED: (field: string) => `${field} is required`,
+  INVALID: (field: string) => `${field} is invalid`,
   MIN_LENGTH: (field: string, length: number) =>
-    `${field} phải có ít nhất ${length} ký tự`,
+    `${field} must be at least ${length} characters`,
   MAX_LENGTH: (field: string, length: number) =>
-    `${field} không được vượt quá ${length} ký tự`,
+    `${field} must not exceed ${length} characters`,
   MIN_VALUE: (field: string, value: number) =>
-    `${field} phải lớn hơn hoặc bằng ${value}`,
+    `${field} must be greater than or equal to ${value}`,
   MAX_VALUE: (field: string, value: number) =>
-    `${field} phải nhỏ hơn hoặc bằng ${value}`,
+    `${field} must be less than or equal to ${value}`,
 } as const;
 
 /**
- * User Messages - Thông báo liên quan đến quản lý người dùng
+ * User Messages - User management related messages
  */
 export const USER_MESSAGES = {
-  USER_NOT_FOUND: "Không tìm thấy người dùng",
-  INVALID_STATUS: "Trạng thái không hợp lệ",
-  STATUS_UPDATED: "Cập nhật trạng thái người dùng thành công",
-  USERS_FETCHED: "Lấy danh sách người dùng thành công",
+  USER_NOT_FOUND: "User not found",
+  INVALID_STATUS: "Invalid status",
+  INVALID_ROLE: "Invalid role. Role must be 'client' or 'worker'",
+  STATUS_UPDATED: "User status updated successfully",
+  ROLE_UPDATED: "Active role updated successfully",
+  USERS_FETCHED: "Users fetched successfully",
 } as const;

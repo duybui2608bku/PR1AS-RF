@@ -34,7 +34,7 @@ export class AppError extends Error {
     );
   }
 
-  static unauthorized(message: string = "Không được phép truy cập"): AppError {
+  static unauthorized(message: string = "Unauthorized access"): AppError {
     return new AppError(
       message,
       HTTP_STATUS.UNAUTHORIZED,
@@ -42,11 +42,11 @@ export class AppError extends Error {
     );
   }
 
-  static forbidden(message: string = "Không có quyền thực hiện"): AppError {
+  static forbidden(message: string = "Forbidden"): AppError {
     return new AppError(message, HTTP_STATUS.FORBIDDEN, ErrorCode.FORBIDDEN);
   }
 
-  static notFound(message: string = "Không tìm thấy"): AppError {
+  static notFound(message: string = "Not found"): AppError {
     return new AppError(message, HTTP_STATUS.NOT_FOUND, ErrorCode.NOT_FOUND);
   }
 
@@ -57,7 +57,7 @@ export class AppError extends Error {
     return new AppError(message, HTTP_STATUS.CONFLICT, code);
   }
 
-  static internal(message: string = "Lỗi hệ thống"): AppError {
+  static internal(message: string = "Internal server error"): AppError {
     return new AppError(
       message,
       HTTP_STATUS.INTERNAL_SERVER_ERROR,

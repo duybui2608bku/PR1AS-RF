@@ -33,7 +33,7 @@ export class ServiceService {
   async getServiceById(id: string): Promise<IServiceDocument> {
     const service = await serviceRepository.findById(id);
     if (!service) {
-      throw AppError.notFound("Không tìm thấy dịch vụ");
+      throw AppError.notFound("Service not found");
     }
     return service;
   }
@@ -44,7 +44,7 @@ export class ServiceService {
   async getServiceByCode(code: string): Promise<IServiceDocument> {
     const service = await serviceRepository.findByCode(code);
     if (!service) {
-      throw AppError.notFound("Không tìm thấy dịch vụ");
+      throw AppError.notFound("Service not found");
     }
     return service;
   }

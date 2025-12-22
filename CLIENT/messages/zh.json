@@ -140,6 +140,9 @@
     "quickActions": "快速操作",
     "quickActionsDesc": "快速操作将显示在这里"
   },
+  "header": {
+    "becomeWorker": "成为工作者"
+  },
   "home": {
     "logo": "PR1AS",
     "nav": {

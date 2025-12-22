@@ -68,6 +68,9 @@ export interface IUserPublic {
   roles: UserRole[];
   status: UserStatus;
   verify_email: boolean;
+  last_active_role: UserRole;
+  worker_profile: WorkerProfile | null;
+  client_profile: ClientProfile | null;
   coords: {
     latitude: number | null;
     longitude: number | null;

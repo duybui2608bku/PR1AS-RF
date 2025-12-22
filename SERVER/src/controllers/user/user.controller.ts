@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../../utils/asyncHandler";
 import { ResponseHelper } from "../../utils/response";
+import { PaginationHelper } from "../../utils/pagination";
 import * as userService from "../../services/user/user.service";
 import { GetUsersQuery } from "../../types/user/user.dto";
 import { AppError } from "../../utils/AppError";
 import { USER_MESSAGES } from "../../constants/messages";
+import { PaginationRequest } from "../../middleware/pagination";
 import {
   updateUserStatusSchema,
   getUsersQuerySchema,
@@ -53,7 +54,7 @@ const validateQuery = <T>(
       field: err.path.join("."),
       message: err.message,
     }));
-    throw AppError.badRequest("Query parameters không hợp lệ", details);
+    throw AppError.badRequest("Invalid query parameters", details);
   }
   return result.data as T;
 };
@@ -62,24 +63,37 @@ const validateQuery = <T>(
  * GET /api/users
  * Lấy danh sách người dùng với filters và pagination
  */
-export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+export const getUsers = async (req: PaginationRequest, res: Response) => {
+  // Validate các query params khác (không bao gồm page/limit vì đã được middleware xử lý)
   const query = validateQuery(getUsersQuerySchema, req.query);
-  const result = await userService.getAllUsers(query as GetUsersQuery);
 
-  ResponseHelper.success(res, result, USER_MESSAGES.USERS_FETCHED);
-});
+  // Lấy pagination info từ middleware
+  const { page, limit, skip } = req.pagination!;
+
+  // Lấy data từ service
+  const { users, total } = await userService.getAllUsers({
+    ...query,
+    page,
+    limit,
+    skip,
+  } as GetUsersQuery & { skip: number });
+
+  // Format response với PaginationHelper
+  const response = PaginationHelper.format(users, req.pagination!, total);
+
+  ResponseHelper.success(res, response, USER_MESSAGES.USERS_FETCHED);
+};
 
 /**
  * PATCH /api/users/:id/status
  * Cập nhật trạng thái người dùng
  */
-export const updateUserStatus = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const body = validateBody(updateUserStatusSchema, req.body);
 
-    await userService.updateUserStatus(id, body.status);
+export const updateUserStatus = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const body = validateBody(updateUserStatusSchema, req.body);
 
-    ResponseHelper.success(res, null, USER_MESSAGES.STATUS_UPDATED);
-  }
-);
+  await userService.updateUserStatus(id, body.status);
+
+  ResponseHelper.success(res, null, USER_MESSAGES.STATUS_UPDATED);
+};

@@ -16,7 +16,7 @@
     "@typescript-eslint/explicit-function-return-type": "off",
     "no-console": "warn",
     "linebreak-style": "off",
-    "prettier/prettier": "error"
+    "prettier/prettier": ["error", { "endOfLine": "crlf" }]
   },
   "env": {
     "node": true,

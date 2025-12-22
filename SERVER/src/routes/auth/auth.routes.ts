@@ -55,4 +55,15 @@ router.post(
   asyncHandler(authController.logout.bind(authController))
 );
 
+/**
+ * @route   PATCH /api/auth/switch-role
+ * @desc    Chuyển đổi last_active_role giữa client và worker
+ * @access  Private
+ */
+router.patch(
+  "/switch-role",
+  authenticate,
+  asyncHandler<AuthRequest>(authController.switchRole.bind(authController))
+);
+
 export default router;

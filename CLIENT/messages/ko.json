@@ -140,6 +140,9 @@
     "quickActions": "빠른 작업",
     "quickActionsDesc": "빠른 작업이 여기에 표시됩니다"
   },
+  "header": {
+    "becomeWorker": "워커 되기"
+  },
   "home": {
     "logo": "PR1AS",
     "nav": {

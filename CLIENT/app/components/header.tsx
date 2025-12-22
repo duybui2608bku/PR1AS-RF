@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Layout, Menu, Avatar, Dropdown, Button, Space, Typography } from "antd";
-import type { MenuProps } from "antd";
 import {
-  UserOutlined,
-  LogoutOutlined,
-  HomeOutlined,
-  MenuOutlined,
-} from "@ant-design/icons";
+  Layout,
+  Avatar,
+  Dropdown,
+  Button,
+  Space,
+  Typography,
+  Popover,
+  Select,
+  Divider,
+} from "antd";
+import type { MenuProps } from "antd";
+import { UserOutlined, LogoutOutlined, MenuOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { useLogout } from "@/lib/hooks/use-auth";
+import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth";
+import { SettingsPopover } from "@/lib/components/settings-popover";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
+import { useCurrency } from "@/lib/hooks/use-currency";
+import { AuthModal } from "@/lib/components/auth-modal";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -28,7 +36,89 @@ export function Header() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const logoutMutation = useLogout();
-  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const switchRoleMutation = useSwitchRole();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"login" | "register">(
+    "login"
+  );
+  const [isMobile, setIsMobile] = useState(false);
+  const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const lastActiveRole = (user as unknown as { last_active_role?: string })
+    ?.last_active_role;
+  const userRoles = (user as unknown as { roles?: string[] })?.roles || [];
+  const workerProfile = (
+    user as unknown as {
+      worker_profile?: unknown | null;
+    }
+  )?.worker_profile;
+  const hasWorkerRole = userRoles.includes("worker");
+  const isWorkerActive = lastActiveRole === "worker";
+  const workerButtonLabel = isWorkerActive
+    ? t("header.hireService")
+    : t("header.becomeWorker");
+
+  /**
+   * Xử lý chuyển đổi role hoặc điều hướng đến trang worker
+   */
+  const handleSwitchRole = async () => {
+    if (!isAuthenticated || !user) {
+      handleOpenLogin();
+      return;
+    }
+
+    // Nếu đang là worker, chuyển về client
+    if (isWorkerActive) {
+      try {
+        await switchRoleMutation.mutateAsync("client");
+      } catch (error) {
+        console.error("Switch role error:", error);
+      }
+      return;
+    }
+
+    // Nếu đang là client và chưa có worker role
+    if (!hasWorkerRole) {
+      // Kiểm tra worker_profile
+      if (!workerProfile || workerProfile === null) {
+        // Chưa có worker profile → điều hướng đến trang setup
+        router.push("/worker/setup");
+      } else {
+        // Đã có worker profile → điều hướng đến trang worker
+        router.push("/worker");
+      }
+      return;
+    }
+
+    // Nếu đã có worker role nhưng chưa active → chuyển sang worker
+    if (hasWorkerRole && !isWorkerActive) {
+      try {
+        await switchRoleMutation.mutateAsync("worker");
+      } catch (error) {
+        console.error("Switch role error:", error);
+      }
+    }
+  };
+
+  const getUserInitial = () => {
+    const displayName = user?.name || user?.email || "";
+    return displayName.charAt(0).toUpperCase();
+  };
 
   /**
    * Xử lý đăng xuất
@@ -36,10 +126,25 @@ export function Header() {
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      router.push("/auth/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
+  };
+
+  /**
+   * Mở modal đăng nhập
+   */
+  const handleOpenLogin = () => {
+    setAuthModalTab("login");
+    setAuthModalOpen(true);
+  };
+
+  /**
+   * Mở modal đăng ký
+   */
+  const handleOpenRegister = () => {
+    setAuthModalTab("register");
+    setAuthModalOpen(true);
   };
 
   /**
@@ -66,44 +171,146 @@ export function Header() {
     },
   ];
 
-  /**
-   * Menu items cho navigation
-   */
-  const navMenuItems: MenuProps["items"] = [
-    {
-      key: "home",
-      icon: <HomeOutlined />,
-      label: (
-        <Link href="/" style={{ color: "inherit" }}>
-          {t("home.nav.home")}
-        </Link>
-      ),
-    },
-    {
-      key: "about",
-      label: (
-        <Link href="/#about" style={{ color: "inherit" }}>
-          {t("home.nav.about")}
-        </Link>
-      ),
-    },
-    {
-      key: "services",
-      label: (
-        <Link href="/#services" style={{ color: "inherit" }}>
-          {t("home.nav.services")}
-        </Link>
-      ),
-    },
-    {
-      key: "contact",
-      label: (
-        <Link href="/#contact" style={{ color: "inherit" }}>
-          {t("home.nav.contact")}
-        </Link>
-      ),
-    },
-  ];
+  const workerButton = (
+    <Button
+      type="default"
+      onClick={handleSwitchRole}
+      loading={switchRoleMutation.isPending}
+      block
+    >
+      {workerButtonLabel}
+    </Button>
+  );
+
+  const authSection =
+    isAuthenticated && user ? (
+      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 0",
+            cursor: "pointer",
+          }}
+        >
+          <Avatar
+            size="small"
+            src={user.avatar || undefined}
+            icon={
+              !user.avatar && !getUserInitial() ? <UserOutlined /> : undefined
+            }
+            style={{
+              backgroundColor: !user.avatar
+                ? "var(--ant-color-primary)"
+                : undefined,
+            }}
+          >
+            {!user.avatar && getUserInitial()}
+          </Avatar>
+          <Text strong>{user.name || user.email}</Text>
+        </div>
+      </Dropdown>
+    ) : (
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Button type="text" onClick={handleOpenLogin} block>
+          {t("auth.login")}
+        </Button>
+        <Button type="primary" onClick={handleOpenRegister} block>
+          {t("auth.user.register")}
+        </Button>
+      </Space>
+    );
+
+  const mobilePopoverContent = (
+    <div
+      style={{
+        minWidth: 260,
+        padding: 8,
+      }}
+    >
+      <Space direction="vertical" size="small" style={{ width: "100%" }}>
+        {/* Worker / Thuê dịch vụ */}
+        <div style={{ width: "100%" }}>{workerButton}</div>
+
+        <Divider style={{ margin: "8px 0" }} />
+
+        {/* Tiền tệ */}
+        <div style={{ width: "100%" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              color: "var(--ant-color-text-tertiary)",
+              marginBottom: 4,
+            }}
+          >
+            Tiền tệ
+          </div>
+          <Select
+            value={currency}
+            onChange={(value) => setCurrency(value as any)}
+            style={{ width: "100%" }}
+            size="middle"
+          >
+            {currencies.map((curr) => (
+              <Select.Option key={curr} value={curr}>
+                {getCurrencyLabel(curr as any)}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+        {/* Ngôn ngữ */}
+        <div style={{ width: "100%" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              color: "var(--ant-color-text-tertiary)",
+              marginBottom: 4,
+            }}
+          >
+            Ngôn ngữ
+          </div>
+          <LanguageSwitcher />
+        </div>
+
+        {/* Theme */}
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "4px 0",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              color: "var(--ant-color-text-tertiary)",
+            }}
+          >
+            Giao diện
+          </span>
+          <ThemeToggle />
+        </div>
+
+        <Divider style={{ margin: "8px 0" }} />
+
+        {/* Auth */}
+        <div style={{ width: "100%" }}>{authSection}</div>
+      </Space>
+    </div>
+  );
 
   return (
     <AntHeader
@@ -119,7 +326,7 @@ export function Header() {
         borderBottom: "1px solid var(--ant-color-border-secondary)",
       }}
     >
-      {/* Logo */}
+      {/* Left side: Logo/Menu */}
       <Link
         href="/"
         style={{
@@ -127,73 +334,38 @@ export function Header() {
           fontWeight: "bold",
           color: "var(--ant-color-primary)",
           textDecoration: "none",
-          marginRight: 24,
         }}
       >
         {t("home.logo")}
       </Link>
 
-      {/* Desktop Navigation */}
-      <Menu
-        mode="horizontal"
-        items={navMenuItems}
-        style={{
-          flex: 1,
-          minWidth: 0,
-          borderBottom: "none",
-          background: "transparent",
-        }}
+      {/* Middle: Empty space */}
+      <div style={{ flex: 1 }} />
+
+      {/* Right side: Worker button, Settings popover, Auth buttons */}
+      {!isMobile && (
+        <Space size="middle">
+          {workerButton}
+          <SettingsPopover />
+          {authSection}
+        </Space>
+      )}
+
+      {isMobile && (
+        <Popover
+          content={mobilePopoverContent}
+          trigger="click"
+          placement="bottomRight"
+        >
+          <Button icon={<MenuOutlined />} />
+        </Popover>
+      )}
+
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultTab={authModalTab}
       />
-
-      {/* Right side: Auth buttons, Theme toggle, Language switcher */}
-      <Space size="middle" style={{ marginLeft: "auto" }}>
-        <ThemeToggle />
-        <LanguageSwitcher />
-
-        {isAuthenticated && user ? (
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="bottomRight"
-            arrow
-          >
-            <Space
-              style={{
-                cursor: "pointer",
-                padding: "4px 8px",
-                borderRadius: 4,
-                transition: "background-color 0.3s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "var(--ant-color-fill-tertiary)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <Avatar
-                size="small"
-                icon={<UserOutlined />}
-                src={user.avatar}
-                style={{ backgroundColor: "var(--ant-color-primary)" }}
-              />
-              <Text strong style={{ display: "inline" }}>
-                {user.name || user.email}
-              </Text>
-            </Space>
-          </Dropdown>
-        ) : (
-          <Space>
-            <Link href="/auth/login">
-              <Button type="text">{t("auth.login")}</Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button type="primary">{t("auth.user.register")}</Button>
-            </Link>
-          </Space>
-        )}
-      </Space>
     </AntHeader>
   );
 }
-

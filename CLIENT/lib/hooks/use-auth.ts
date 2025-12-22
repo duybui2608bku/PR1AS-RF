@@ -124,3 +124,39 @@ export function useLogout() {
     },
   });
 }
+
+/**
+ * Hook để chuyển đổi role (client <-> worker)
+ */
+export function useSwitchRole() {
+  const { setUser, user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<{ user: AuthResponse["user"] & { last_active_role?: string } }>,
+    Error,
+    "client" | "worker"
+  >({
+    mutationFn: async (role) => {
+      const response = await api.patch<
+        ApiResponse<{ user: AuthResponse["user"] & { last_active_role?: string } }>
+      >("/auth/switch-role", {
+        last_active_role: role,
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success && data.data?.user) {
+        // Cập nhật user trong store với last_active_role mới
+        const updatedUser = {
+          ...user!,
+          ...data.data.user,
+          last_active_role: data.data.user.last_active_role,
+        };
+        setUser(updatedUser);
+        // Invalidate user queries để refetch
+        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      }
+    },
+  });
+}

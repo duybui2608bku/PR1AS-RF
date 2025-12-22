@@ -9,8 +9,23 @@ import zhCN from "antd/locale/zh_CN";
 import { useLocaleStore } from "../stores/locale.store";
 import { useThemeStore } from "../stores/theme.store";
 import { ThemeSync } from "../components/theme-sync";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/config";
+
+/**
+ * Lấy giá trị CSS variable
+ */
+function getCSSVariable(variableName: string): string {
+  if (typeof window === "undefined") {
+    return "#711111"; // Fallback cho SSR
+  }
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue(variableName)
+      .trim() || "#711111"
+  );
+}
 
 interface AntdProviderProps {
   children: ReactNode;
@@ -33,6 +48,13 @@ export function AntdProvider({ children }: AntdProviderProps) {
   const { locale } = useLocaleStore();
   const { theme: themeMode } = useThemeStore();
   const antdLocale = antdLocaleMap[locale] || viVN;
+  const [primaryColor, setPrimaryColor] = useState("#711111");
+
+  // Lấy màu primary từ CSS variable khi component mount
+  useEffect(() => {
+    const color = getCSSVariable("--ant-color-primary");
+    setPrimaryColor(color);
+  }, []);
 
   return (
     <AntdRegistry>
@@ -42,23 +64,38 @@ export function AntdProvider({ children }: AntdProviderProps) {
         theme={{
           // Cấu hình token (màu sắc, spacing, typography, etc.)
           token: {
-            // Primary color
-            colorPrimary: "#1890ff",
-            // Border radius
-            borderRadius: 6,
+            // Primary color từ CSS variable
+            colorPrimary: primaryColor,
+            // Border radius mặc định
+            borderRadius: 8,
             // Font size
             fontSize: 14,
+            // Font family
+            fontFamily:
+              'var(--font-work-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           },
           // Cấu hình component cụ thể
           components: {
             Button: {
-              borderRadius: 6,
+              borderRadius: 8,
             },
             Input: {
-              borderRadius: 6,
+              borderRadius: 8,
+            },
+            InputNumber: {
+              borderRadius: 8,
+            },
+            Select: {
+              borderRadius: 8,
+            },
+            DatePicker: {
+              borderRadius: 8,
             },
             Card: {
-              borderRadius: 8,
+              borderRadius: 12,
+            },
+            Form: {
+              // Form container không cần border-radius riêng
             },
           },
           // Algorithm: sử dụng dark mode hoặc light mode

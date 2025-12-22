@@ -134,6 +134,7 @@ button {
   border: none;
   background: none;
   padding: 0;
+  border-radius: 0.5rem; // 8px
   transition: all 0.2s ease;
 
   &:disabled {
@@ -148,6 +149,7 @@ textarea {
   border: none;
   outline: none;
   background: transparent;
+  border-radius: 0.5rem; // 8px
 
   &:focus {
     outline: 2px solid $color-primary;
@@ -162,6 +164,27 @@ textarea {
 textarea {
   resize: vertical;
   min-height: 100px;
+  border-radius: 0.5rem; // 8px
+}
+
+// Select element
+select {
+  border-radius: 0.5rem; // 8px
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background-color: $bg-primary;
+  color: $text-primary;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    border-color: $color-primary;
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 // ============================================
@@ -472,7 +495,7 @@ pre {
   justify-content: center;
   padding: 0.75rem 1.5rem;
   font-weight: 500;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem; // 8px
   transition: all 0.2s ease;
   cursor: pointer;
   border: none;
@@ -517,7 +540,7 @@ pre {
 // Card base styles
 .card {
   background-color: $bg-primary;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem; // 12px
   padding: 1.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease;
@@ -532,7 +555,7 @@ pre {
   width: 100%;
   padding: 0.75rem 1rem;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 0.375rem;
+  border-radius: 0.5rem; // 8px
   background-color: $bg-primary;
   color: $text-primary;
   transition: border-color 0.2s ease;

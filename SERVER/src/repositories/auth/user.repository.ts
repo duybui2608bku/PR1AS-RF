@@ -65,6 +65,17 @@ export class UserRepository {
     return User.findByIdAndUpdate(id, { status }, { new: true });
   }
 
+  async updateLastActiveRole(
+    id: string,
+    last_active_role: UserRole
+  ): Promise<IUserDocument | null> {
+    return User.findByIdAndUpdate(
+      id,
+      { last_active_role },
+      { new: true }
+    );
+  }
+
   async emailExists(email: string): Promise<boolean> {
     const user = await User.findOne({
       email: email.toLowerCase().trim(),
@@ -75,9 +86,11 @@ export class UserRepository {
   /**
    * Tìm tất cả users với filters và pagination
    */
-  async findAllWithFilters(query: GetUsersQuery): Promise<FindAllUsersResult> {
+  async findAllWithFilters(
+    query: GetUsersQuery & { skip: number }
+  ): Promise<FindAllUsersResult> {
     const {
-      page = 1,
+      skip,
       limit = 10,
       search,
       role,
@@ -86,7 +99,6 @@ export class UserRepository {
       endDate,
     } = query;
 
-    const skip = (Number(page) - 1) * Number(limit);
     const filter: Record<string, unknown> = {};
 
     // Filter by search (full_name, email, phone)

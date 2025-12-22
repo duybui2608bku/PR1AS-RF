@@ -140,6 +140,10 @@
     "quickActions": "Thao tác nhanh",
     "quickActionsDesc": "Các thao tác nhanh sẽ được hiển thị ở đây"
   },
+  "header": {
+    "becomeWorker": "Trở thành worker",
+    "hireService": "Thuê dịch vụ"
+  },
   "home": {
     "logo": "PR1AS",
     "nav": {

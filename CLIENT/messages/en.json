@@ -112,6 +112,10 @@
     "quickActions": "Quick Actions",
     "quickActionsDesc": "Quick actions will be displayed here"
   },
+  "header": {
+    "becomeWorker": "Become a worker",
+    "hireService": "Hire a service"
+  },
   "home": {
     "logo": "PR1AS",
     "nav": {

@@ -10,6 +10,20 @@ export interface User {
   name?: string;
   avatar?: string;
   role?: string;
+  roles?: string[];
+  last_active_role?: "client" | "worker" | "admin";
+  worker_profile?: {
+    date_of_birth?: string;
+    gender?: string;
+    height_cm?: number;
+    weight_kg?: number;
+    star_sign?: string;
+    lifestyle?: string;
+    hobbies: string[];
+    quote?: string;
+    introduction?: string;
+    gallery_urls: string[];
+  } | null;
   [key: string]: unknown;
 }
 
