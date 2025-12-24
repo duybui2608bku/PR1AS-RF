@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 import { gender, IUserDocument, UserRole, UserStatus } from "../../types";
+import { modelsName } from "../models.name";
 
 const userSchema = new Schema<IUserDocument>(
   {
@@ -144,4 +145,4 @@ const userSchema = new Schema<IUserDocument>(
 
 userSchema.index({ email: 1 });
 
-export const User = mongoose.model<IUserDocument>("User", userSchema);
+export const User = mongoose.model<IUserDocument>(modelsName.USER, userSchema);

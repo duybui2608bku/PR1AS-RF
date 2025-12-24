@@ -4,6 +4,7 @@ import {
   IServiceDocument,
   ServiceCategory,
 } from "../../types/service/service.type";
+import { modelsName } from "../models.name";
 
 const serviceSchema = new Schema<IServiceDocument>(
   {
@@ -62,7 +63,7 @@ const serviceSchema = new Schema<IServiceDocument>(
   },
   {
     timestamps: false,
-    collection: "service",
+    collection: modelsName.SERVICE,
     toJSON: {
       transform: (_doc, ret: Record<string, unknown>) => {
         ret.id = (ret._id as mongoose.Types.ObjectId).toString();
@@ -77,6 +78,6 @@ const serviceSchema = new Schema<IServiceDocument>(
 serviceSchema.index({ code: 1, category: 1 });
 
 export const Service = mongoose.model<IServiceDocument>(
-  "Service",
+  modelsName.SERVICE,
   serviceSchema
 );

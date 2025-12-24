@@ -52,6 +52,19 @@ export class ServiceRepository {
   async findByCode(code: string): Promise<IServiceDocument | null> {
     return Service.findOne({ code: code.toUpperCase().trim() });
   }
+
+  /**
+   * Tìm danh sách service theo ids, chỉ lấy service đang active
+   */
+  async findActiveByIds(ids: string[]): Promise<IServiceDocument[]> {
+    if (!ids.length) {
+      return [];
+    }
+    return Service.find({
+      _id: { $in: ids },
+      is_active: true,
+    });
+  }
 }
 
 export const serviceRepository = new ServiceRepository();

@@ -82,3 +82,13 @@ export const USER_MESSAGES = {
   ROLE_UPDATED: "Active role updated successfully",
   USERS_FETCHED: "Users fetched successfully",
 } as const;
+
+export const PAGINATION_MESSAGES = {
+  PAGE_NOT_FOUND: "Page not found",
+  LIMIT_NOT_FOUND: "Limit not found",
+  PAGE_AND_LIMIT_NOT_FOUND: "Page and limit not found",
+  PAGE_AND_LIMIT_INVALID: "Page and limit must be numbers",
+  PAGE_AND_LIMIT_MIN_VALUE: "Page and limit must be greater than 0",
+  PAGE_AND_LIMIT_MAX_VALUE: "Page and limit must be less than 100",
+  PAGE_AND_LIMIT_REQUIRED: "Page and limit are required",
+} as const;

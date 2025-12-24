@@ -1,76 +1,24 @@
 import { Request, Response } from "express";
-import { ResponseHelper } from "../../utils/response";
 import { PaginationHelper } from "../../utils/pagination";
 import * as userService from "../../services/user/user.service";
 import { GetUsersQuery } from "../../types/user/user.dto";
-import { AppError } from "../../utils/AppError";
-import { USER_MESSAGES } from "../../constants/messages";
+import { PAGINATION_MESSAGES, USER_MESSAGES } from "../../constants/messages";
 import { PaginationRequest } from "../../middleware/pagination";
 import {
   updateUserStatusSchema,
   getUsersQuerySchema,
 } from "../../validations/user/user.validation";
+import { ResponseHelper, validateWithSchema } from "../../utils";
 
-/**
- * Helper: Validate request body với Zod schema
- */
-const validateBody = <T>(
-  schema: {
-    safeParse: (data: unknown) => {
-      success: boolean;
-      data?: T;
-      error?: { errors: { path: (string | number)[]; message: string }[] };
-    };
-  },
-  body: unknown
-): T => {
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const details = result.error!.errors.map((err) => ({
-      field: err.path.join("."),
-      message: err.message,
-    }));
-    throw AppError.badRequest(USER_MESSAGES.INVALID_STATUS, details);
-  }
-  return result.data as T;
-};
-
-/**
- * Helper: Validate query parameters với Zod schema
- */
-const validateQuery = <T>(
-  schema: {
-    safeParse: (data: unknown) => {
-      success: boolean;
-      data?: T;
-      error?: { errors: { path: (string | number)[]; message: string }[] };
-    };
-  },
-  query: unknown
-): T => {
-  const result = schema.safeParse(query);
-  if (!result.success) {
-    const details = result.error!.errors.map((err) => ({
-      field: err.path.join("."),
-      message: err.message,
-    }));
-    throw AppError.badRequest("Invalid query parameters", details);
-  }
-  return result.data as T;
-};
-
-/**
- * GET /api/users
- * Lấy danh sách người dùng với filters và pagination
- */
 export const getUsers = async (req: PaginationRequest, res: Response) => {
-  // Validate các query params khác (không bao gồm page/limit vì đã được middleware xử lý)
-  const query = validateQuery(getUsersQuerySchema, req.query);
+  const query = validateWithSchema(
+    getUsersQuerySchema,
+    req.query,
+    PAGINATION_MESSAGES.PAGE_AND_LIMIT_REQUIRED
+  );
 
-  // Lấy pagination info từ middleware
   const { page, limit, skip } = req.pagination!;
 
-  // Lấy data từ service
   const { users, total } = await userService.getAllUsers({
     ...query,
     page,
@@ -78,20 +26,14 @@ export const getUsers = async (req: PaginationRequest, res: Response) => {
     skip,
   } as GetUsersQuery & { skip: number });
 
-  // Format response với PaginationHelper
   const response = PaginationHelper.format(users, req.pagination!, total);
 
   ResponseHelper.success(res, response, USER_MESSAGES.USERS_FETCHED);
 };
 
-/**
- * PATCH /api/users/:id/status
- * Cập nhật trạng thái người dùng
- */
-
 export const updateUserStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const body = validateBody(updateUserStatusSchema, req.body);
+  const body = validateWithSchema(updateUserStatusSchema, req.body);
 
   await userService.updateUserStatus(id, body.status);
 

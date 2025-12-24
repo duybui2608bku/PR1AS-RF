@@ -23,21 +23,24 @@ Bước này thu thập thông tin cá nhân cơ bản của Worker để hiển
 
 Dựa trên schema `WorkerProfile` trong `user.model.ts`:
 
-| Trường          | Kiểu dữ liệu | Bắt buộc | Mô tả                                                              |
-| --------------- | ------------ | -------- | ------------------------------------------------------------------ |
-| `date_of_birth` | Date         | Không    | Ngày sinh                                                          |
-| `gender`        | Enum         | Có       | Giới tính (MALE, FEMALE, OTHER)                                    |
-| `height_cm`     | Number       | Không    | Chiều cao (cm)                                                     |
-| `weight_kg`     | Number       | Không    | Cân nặng (kg)                                                      |
-| `star_sign`     | String       | Không    | Cung hoàng đạo (dropdown select)                                   |
-| `lifestyle`     | String       | Không    | Châm ngôn cuộc sống                                                |
-| `hobbies`       | String[]     | Không    | Sở thích (tag system - tự tạo tag)                                 |
-| `introduction`  | String       | Không    | Giới thiệu bản thân                                                |
-| `quote`         | String       | Không    | Câu nói yêu thích                                                  |
-| `gallery_urls`  | String[]     | Không    | Gallery ảnh (sử dụng Ant Design Image Crop để giới hạn kích thước) |
+| Trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
+| ------ | ------------ | -------- | ----- |
+
+|`coor`||Không| Vị trí (Location)
+| `date_of_birth` | Date | Không | Ngày sinh |
+| `gender` | Enum | Có | Giới tính (MALE, FEMALE, OTHER) |
+| `height_cm` | Number | Không | Chiều cao (cm) |
+| `weight_kg` | Number | Không | Cân nặng (kg) |
+| `star_sign` | String | Không | Cung hoàng đạo (dropdown select) |
+| `lifestyle` | String | Không | Châm ngôn cuộc sống |
+| `hobbies` | String[] | Không | Sở thích (tag system - tự tạo tag) |
+| `introduction` | String | Không | Giới thiệu bản thân |
+| `quote` | String | Không | Câu nói yêu thích |
+| `gallery_urls` | String[] | Không | Gallery ảnh (sử dụng Ant Design Image Crop để giới hạn kích thước) |
 
 ### UI Components
 
+- Dùng js để lấy vị trí người dùng (Được cho phép)
 - Form với các input fields tương ứng
 - Image upload với crop functionality (Ant Design)
 - Tag input cho hobbies
