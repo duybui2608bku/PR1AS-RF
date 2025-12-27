@@ -3,6 +3,7 @@
 import { Card, Typography, Rate, Avatar, Space } from "antd";
 import { EnvironmentOutlined, UserOutlined, HeartOutlined } from "@ant-design/icons";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { Service } from "../data/services.mock";
 import { useMemo, useState } from "react";
 
@@ -15,6 +16,7 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, size = "medium", onClick }: ServiceCardProps) {
+  const { t } = useTranslation();
   const [isLiked, setIsLiked] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -103,9 +105,9 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
               gap: 4,
               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
             }}
-          >
+            >
             <span style={{ fontSize: 14 }}>❤️</span>
-            Được khách yêu thích
+            {t("serviceCard.loved")}
           </div>
         )}
 

@@ -1,5 +1,5 @@
 export const modelsName = {
-  USER: "User",
-  SERVICE: "Service",
-  WORKER_SERVICE: "WorkerService",
+  USER: "users",
+  SERVICE: "service",
+  WORKER_SERVICE: "worker_service",
 };

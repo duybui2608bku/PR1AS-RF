@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Result, Button } from "antd";
 import { ReloadOutlined, HomeOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 /**
  * Global Error Handler cho Next.js
@@ -17,10 +18,12 @@ export default function Error({
   reset: () => void;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
-    // Log error to console in development
+    // Log error to console in development only
     if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
       console.error("Global error:", error);
     }
 
@@ -40,8 +43,8 @@ export default function Error({
     >
       <Result
         status="500"
-        title="500"
-        subTitle="Xin lỗi, đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."
+        title={t("errorBoundary.title")}
+        subTitle={t("errorBoundary.subtitle")}
         extra={[
           <Button
             key="retry"
@@ -49,14 +52,14 @@ export default function Error({
             icon={<ReloadOutlined />}
             onClick={reset}
           >
-            Thử lại
+            {t("errorBoundary.retry")}
           </Button>,
           <Button
             key="home"
             icon={<HomeOutlined />}
             onClick={() => router.push("/")}
           >
-            Về trang chủ
+            {t("errorBoundary.home")}
           </Button>,
         ]}
       />
@@ -72,7 +75,7 @@ export default function Error({
           }}
         >
           <h4 style={{ color: "#cf1322", marginBottom: "10px" }}>
-            Chi tiết lỗi (Development only):
+            {t("errorBoundary.errorDetails")}
           </h4>
           <pre
             style={{

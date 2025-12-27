@@ -23,10 +23,6 @@ import type { LoginRequest } from "@/lib/hooks/use-auth";
 
 const { Title, Text } = Typography;
 
-/**
- * Trang đăng nhập cho User
- * Route: /auth/login
- */
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -34,10 +30,8 @@ export default function LoginPage() {
   const [form] = Form.useForm();
   const { t } = useTranslation();
 
-  // Redirect nếu đã đăng nhập
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Kiểm tra nếu user có role admin thì redirect về admin
       const roles = Array.isArray(user.roles)
         ? user.roles
         : user.role
@@ -47,15 +41,11 @@ export default function LoginPage() {
       if (roles.includes("admin")) {
         router.push("/admin");
       } else {
-        // User thông thường redirect về trang chủ
         router.push("/");
       }
     }
   }, [isAuthenticated, user, router]);
 
-  /**
-   * Xử lý đăng nhập
-   */
   const handleLogin = async (values: LoginRequest) => {
     try {
       const response = await loginMutation.mutateAsync(values);
@@ -63,7 +53,6 @@ export default function LoginPage() {
       if (response.success && response.data) {
         const { user: loggedInUser } = response.data;
 
-        // Kiểm tra role
         const userRoles = (loggedInUser as { roles?: string[]; role?: string })
           .roles;
         const userRole = (loggedInUser as { roles?: string[]; role?: string })
@@ -77,7 +66,6 @@ export default function LoginPage() {
 
         message.success(t("auth.user.loginSuccess"));
 
-        // Redirect dựa trên role
         if (roles.includes("admin")) {
           router.push("/admin");
         } else {
@@ -85,8 +73,7 @@ export default function LoginPage() {
         }
       }
     } catch (error: unknown) {
-      // Error đã được xử lý bởi axios interceptor và error handler
-      console.error("Login error:", error);
+      message.error(t("auth.user.loginError"));
     }
   };
 
@@ -100,7 +87,6 @@ export default function LoginPage() {
         background: "var(--ant-color-bg-container)",
       }}
     >
-      {/* Header với theme toggle và language switcher */}
       <div
         style={{
           display: "flex",
@@ -114,7 +100,6 @@ export default function LoginPage() {
         </Space>
       </div>
 
-      {/* Form đăng nhập */}
       <div
         style={{
           flex: 1,

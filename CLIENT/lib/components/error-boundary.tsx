@@ -2,7 +2,9 @@
 
 import React, { Component, type ReactNode } from "react";
 import { Result, Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { ReloadOutlined, HomeOutlined } from "@ant-design/icons";
+import { getTranslationSync } from "../utils/i18n-helper";
+import { useRouter } from "next/navigation";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -34,8 +36,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
+    // Log error to console in development only
     if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
       console.error("ErrorBoundary caught an error:", error, errorInfo);
     }
 
@@ -57,62 +60,114 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      // UI mặc định
+      // UI mặc định với i18n
+      const title = getTranslationSync("errorBoundary.title");
+      const subtitle = getTranslationSync("errorBoundary.subtitle");
+      const retryText = getTranslationSync("errorBoundary.retry");
+      const homeText = getTranslationSync("errorBoundary.home");
+      const errorDetailsText = getTranslationSync("errorBoundary.errorDetails");
+
       return (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
-            padding: "20px",
-          }}
-        >
-          <Result
-            status="500"
-            title="500"
-            subTitle="Xin lỗi, đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau."
-            extra={
-              <Button
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={this.handleReset}
-              >
-                Thử lại
-              </Button>
-            }
-          />
-          {process.env.NODE_ENV === "development" && this.state.error && (
-            <div
-              style={{
-                marginTop: "20px",
-                padding: "20px",
-                backgroundColor: "#fff2f0",
-                border: "1px solid #ffccc7",
-                borderRadius: "4px",
-                maxWidth: "800px",
-              }}
-            >
-              <h4 style={{ color: "#cf1322", marginBottom: "10px" }}>
-                Chi tiết lỗi (Development only):
-              </h4>
-              <pre
-                style={{
-                  color: "#cf1322",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {this.state.error.toString()}
-                {this.state.error.stack && `\n\n${this.state.error.stack}`}
-              </pre>
-            </div>
-          )}
-        </div>
+        <ErrorBoundaryContent
+          title={title}
+          subtitle={subtitle}
+          retryText={retryText}
+          homeText={homeText}
+          errorDetailsText={errorDetailsText}
+          error={this.state.error}
+          onReset={this.handleReset}
+        />
       );
     }
 
     return this.props.children;
   }
+}
+
+/**
+ * Error Boundary Content Component - Functional component để sử dụng hooks
+ */
+interface ErrorBoundaryContentProps {
+  title: string;
+  subtitle: string;
+  retryText: string;
+  homeText: string;
+  errorDetailsText: string;
+  error: Error | null;
+  onReset: () => void;
+}
+
+function ErrorBoundaryContent({
+  title,
+  subtitle,
+  retryText,
+  homeText,
+  errorDetailsText,
+  error,
+  onReset,
+}: ErrorBoundaryContentProps) {
+  const router = useRouter();
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        padding: "20px",
+      }}
+    >
+      <Result
+        status="500"
+        title={title}
+        subTitle={subtitle}
+        extra={[
+          <Button
+            key="retry"
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={onReset}
+          >
+            {retryText}
+          </Button>,
+          <Button
+            key="home"
+            icon={<HomeOutlined />}
+            onClick={() => router.push("/")}
+          >
+            {homeText}
+          </Button>,
+        ]}
+      />
+      {process.env.NODE_ENV === "development" && error && (
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "20px",
+            backgroundColor: "#fff2f0",
+            border: "1px solid #ffccc7",
+            borderRadius: "4px",
+            maxWidth: "800px",
+          }}
+        >
+          <h4 style={{ color: "#cf1322", marginBottom: "10px" }}>
+            {errorDetailsText}
+          </h4>
+          <pre
+            style={{
+              color: "#cf1322",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {error.toString()}
+            {error.stack && `\n\n${error.stack}`}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
 }
 

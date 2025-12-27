@@ -42,8 +42,11 @@ export class AppError extends Error {
     );
   }
 
-  static forbidden(message: string = "Forbidden"): AppError {
-    return new AppError(message, HTTP_STATUS.FORBIDDEN, ErrorCode.FORBIDDEN);
+  static forbidden(
+    message: string = "Forbidden",
+    code: ErrorCode = ErrorCode.FORBIDDEN
+  ): AppError {
+    return new AppError(message, HTTP_STATUS.FORBIDDEN, code);
   }
 
   static notFound(message: string = "Not found"): AppError {

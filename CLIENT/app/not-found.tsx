@@ -3,12 +3,11 @@
 import { Result, Button } from "antd";
 import { useRouter } from "next/navigation";
 import { HomeOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
-/**
- * Trang 404 - Không tìm thấy trang
- */
 export default function NotFound() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <div
@@ -23,18 +22,17 @@ export default function NotFound() {
       <Result
         status="404"
         title="404"
-        subTitle="Xin lỗi, trang bạn đang tìm kiếm không tồn tại."
+        subTitle={t("notFound.subtitle")}
         extra={
           <Button
             type="primary"
             icon={<HomeOutlined />}
             onClick={() => router.push("/")}
           >
-            Về trang chủ
+            {t("notFound.home")}
           </Button>
         }
       />
     </div>
   );
 }
-

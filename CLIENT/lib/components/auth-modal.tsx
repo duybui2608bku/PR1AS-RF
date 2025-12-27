@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { useLogin, useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import type { LoginRequest, RegisterRequest } from "@/lib/hooks/use-auth";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 
 const { Text } = Typography;
 
@@ -44,6 +45,7 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
+  const { handleError } = useErrorHandler();
 
   // Đóng modal khi đã đăng nhập thành công
   useEffect(() => {
@@ -75,7 +77,7 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
       }
     } catch (error: unknown) {
       // Error đã được xử lý bởi axios interceptor và error handler
-      console.error("Login error:", error);
+      handleError(error);
     }
   };
 
@@ -93,7 +95,7 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
       }
     } catch (error: unknown) {
       // Error đã được xử lý bởi axios interceptor và error handler
-      console.error("Register error:", error);
+      handleError(error);
     }
   };
 

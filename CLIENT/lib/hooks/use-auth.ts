@@ -86,7 +86,7 @@ export function useRegister() {
  * Hook để lấy thông tin user hiện tại
  */
 export function useMe() {
-  const { setLoading } = useAuthStore();
+  const { setLoading, token } = useAuthStore();
 
   return useQuery<ApiResponse<{ user: AuthResponse["user"] }>>({
     queryKey: ["auth", "me"],
@@ -101,8 +101,12 @@ export function useMe() {
         setLoading(false);
       }
     },
-    enabled: !!useAuthStore.getState().token, // Chỉ fetch khi có token
-    retry: false,
+    enabled: !!token, // Chỉ fetch khi có token
+    retry: false, // Không retry khi lỗi
+    refetchOnWindowFocus: false, // Không refetch khi focus window
+    refetchOnReconnect: false, // Không refetch khi reconnect (tránh loop khi server down)
+    refetchOnMount: true, // Chỉ refetch khi mount component
+    staleTime: 1000 * 60 * 5, // Data fresh trong 5 phút
   });
 }
 

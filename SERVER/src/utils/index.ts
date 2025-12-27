@@ -10,3 +10,4 @@ export type { JWTPayload } from "./jwt";
 export { PaginationHelper } from "./pagination";
 export type { PaginationMeta, PaginatedResponse } from "./pagination";
 export { validateWithSchema } from "./validator";
+export { toPublicUser } from "./user.helper";

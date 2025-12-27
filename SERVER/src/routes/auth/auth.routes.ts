@@ -3,67 +3,96 @@ import { authController } from "../../controllers/auth/auth.controller";
 import { authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
+import {
+  authLimiter,
+  refreshTokenLimiter,
+  emailActionLimiter,
+} from "../../middleware/rateLimiter";
+import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
-/**
- * @route   POST /api/auth/register
- * @desc    Đăng ký tài khoản mới
- * @access  Public
- */
 router.post(
   "/register",
+  authLimiter,
+  ...csrfProtection,
   asyncHandler(authController.register.bind(authController))
 );
 
-/**
- * @route   POST /api/auth/login
- * @desc    Đăng nhập
- * @access  Public
- */
-router.post("/login", asyncHandler(authController.login.bind(authController)));
+router.post(
+  "/login",
+  authLimiter,
+  ...csrfProtection,
+  asyncHandler(authController.login.bind(authController))
+);
 
-/**
- * @route   POST /api/auth/refresh-token
- * @desc    Làm mới Access Token
- * @access  Public
- */
 router.post(
   "/refresh-token",
+  refreshTokenLimiter,
+  ...csrfProtection,
   asyncHandler(authController.refreshToken.bind(authController))
 );
 
-/**
- * @route   GET /api/auth/me
- * @desc    Lấy thông tin user hiện tại
- * @access  Private
- */
 router.get(
   "/me",
   authenticate,
   asyncHandler<AuthRequest>(authController.getMe.bind(authController))
 );
 
-/**
- * @route   POST /api/auth/logout
- * @desc    Đăng xuất
- * @access  Private
- */
 router.post(
   "/logout",
   authenticate,
+  ...csrfProtection,
   asyncHandler(authController.logout.bind(authController))
 );
 
-/**
- * @route   PATCH /api/auth/switch-role
- * @desc    Chuyển đổi last_active_role giữa client và worker
- * @access  Private
- */
 router.patch(
   "/switch-role",
   authenticate,
+  ...csrfProtection,
   asyncHandler<AuthRequest>(authController.switchRole.bind(authController))
+);
+
+router.patch(
+  "/profile",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(authController.updateProfile.bind(authController))
+);
+
+router.patch(
+  "/update-profile",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(
+    authController.updateBasicProfile.bind(authController)
+  )
+);
+
+router.post(
+  "/forgot-password",
+  emailActionLimiter,
+  ...csrfProtection,
+  asyncHandler(authController.forgotPassword.bind(authController))
+);
+
+router.post(
+  "/reset-password",
+  ...csrfProtection,
+  asyncHandler(authController.resetPassword.bind(authController))
+);
+
+router.post(
+  "/verify-email",
+  ...csrfProtection,
+  asyncHandler(authController.verifyEmail.bind(authController))
+);
+
+router.post(
+  "/resend-verification",
+  emailActionLimiter,
+  ...csrfProtection,
+  asyncHandler(authController.resendVerificationEmail.bind(authController))
 );
 
 export default router;

@@ -18,7 +18,8 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "close": "Close"
+    "close": "Close",
+    "step": "Step"
   },
   "errors": {
     "network": {
@@ -114,7 +115,78 @@
   },
   "header": {
     "becomeWorker": "Become a worker",
-    "hireService": "Hire a service"
+    "hireService": "Hire a service",
+    "currency": "Currency",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "upload": {
+    "avatar": {
+      "success": "Avatar uploaded successfully",
+      "error": "Failed to upload avatar. Please try again.",
+      "invalidFormat": "Only image files are accepted",
+      "tooLarge": "File size must not exceed 5MB",
+      "changeHint": "Click on avatar to change"
+    },
+    "image": {
+      "success": "Image {fileName} uploaded successfully",
+      "error": "Error uploading image {fileName}: {errorMessage}",
+      "images": {
+        "error": "Error uploading images"
+      }
+    }
+  },
+  "errorBoundary": {
+    "title": "500",
+    "subtitle": "Sorry, an unexpected error occurred. Please try again later.",
+    "retry": "Try again",
+    "home": "Go to home",
+    "errorDetails": "Error details (Development only):"
+  },
+  "notFound": {
+    "title": "404",
+    "subtitle": "Sorry, the page you are looking for does not exist.",
+    "home": "Go to home"
+  },
+  "home": {
+    "categories": {
+      "assistance": {
+        "title": "Assistance Services",
+        "subtitle": "Professional assistance services"
+      },
+      "personalAssistant": {
+        "title": "Personal Assistant"
+      },
+      "onSiteProfessional": {
+        "title": "On-site Professional Assistance"
+      },
+      "virtualAssistant": {
+        "title": "Virtual Assistant"
+      },
+      "tourGuide": {
+        "title": "Tour Guide"
+      },
+      "translator": {
+        "title": "Translator"
+      },
+      "companionship": {
+        "title": "Companionship Services",
+        "subtitle": "Companionship services at multiple levels"
+      },
+      "companionshipLevel1": {
+        "title": "Companionship Level 1"
+      },
+      "companionshipLevel2": {
+        "title": "Companionship Level 2"
+      },
+      "companionshipLevel3": {
+        "title": "Companionship Level 3"
+      }
+    },
+    "viewAll": "View all"
+  },
+  "serviceCard": {
+    "loved": "Loved by customers"
   },
   "home": {
     "logo": "PR1AS",
@@ -193,6 +265,451 @@
       "privacy": "Privacy Policy",
       "terms": "Terms of Service"
     }
+  },
+  "profile": {
+    "edit": {
+      "title": "Edit Profile",
+      "fullName": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name",
+        "maxLength": "Full name must not exceed 100 characters"
+      },
+      "phone": {
+        "label": "Phone Number",
+        "placeholder": "Enter your phone number",
+        "invalidFormat": "Invalid phone number format",
+        "maxLength": "Phone number must not exceed 20 characters"
+      },
+      "changePassword": {
+        "title": "Change Password (Optional)"
+      },
+      "oldPassword": {
+        "label": "Old Password",
+        "placeholder": "Enter your old password",
+        "required": "Please enter your old password"
+      },
+      "newPassword": {
+        "label": "New Password",
+        "placeholder": "Enter new password (minimum 8 characters)",
+        "minLength": "Password must be at least 8 characters"
+      },
+      "update": "Update",
+      "cancel": "Cancel",
+      "success": "Profile updated successfully",
+      "error": "Failed to update profile",
+      "warning": "Please change at least one field",
+      "avatar": {
+        "changeHint": "Click on avatar to change"
+      }
+    }
+  },
+  "worker": {
+    "setup": {
+      "title": "Worker Profile Setup",
+      "subtitle": "Complete your profile information and configure services",
+      "step1": {
+        "title": "Basic Information",
+        "description": "Fill in personal information",
+        "location": {
+          "label": "Your Location",
+          "getLocation": "Get current location",
+          "success": "Location retrieved successfully",
+          "error": "Unable to get location",
+          "notSupported": "Your browser does not support geolocation",
+          "required": "Please get your location before continuing",
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        },
+        "dateOfBirth": {
+          "label": "Date of Birth"
+        },
+        "gender": {
+          "label": "Gender",
+          "required": "Please select gender!",
+          "male": "Male",
+          "female": "Female",
+          "other": "Other"
+        },
+        "heightWeight": {
+          "label": "Height and Weight",
+          "height": "Height (cm)",
+          "weight": "Weight (kg)"
+        },
+        "starSign": {
+          "label": "Star Sign",
+          "placeholder": "Select star sign",
+          "aries": "Aries",
+          "taurus": "Taurus",
+          "gemini": "Gemini",
+          "cancer": "Cancer",
+          "leo": "Leo",
+          "virgo": "Virgo",
+          "libra": "Libra",
+          "scorpio": "Scorpio",
+          "sagittarius": "Sagittarius",
+          "capricorn": "Capricorn",
+          "aquarius": "Aquarius",
+          "pisces": "Pisces"
+        },
+        "lifestyle": {
+          "label": "Lifestyle Quote",
+          "placeholder": "Enter your lifestyle quote"
+        },
+        "hobbies": {
+          "label": "Hobbies",
+          "placeholder": "Enter hobby and press Enter",
+          "add": "Add"
+        },
+        "introduction": {
+          "label": "Introduction",
+          "placeholder": "Write a few lines about yourself"
+        },
+        "quote": {
+          "label": "Favorite Quote",
+          "placeholder": "Enter your favorite quote"
+        },
+        "gallery": {
+          "label": "Photo Gallery",
+          "upload": "Upload",
+          "maxImages": "Maximum 10 images, each up to 5MB",
+          "invalidFormat": "Only JPG/PNG/WEBP images are accepted!",
+          "tooLarge": "Image must be smaller than 5MB!"
+        },
+        "next": "Next",
+        "complete": "Complete",
+        "validation": {
+          "fillAll": "Please fill in all information"
+        }
+      },
+      "step2": {
+        "title": "Services to Provide",
+        "description": "Select and configure services",
+        "subtitle": "Choose category and services you want to provide, then set pricing for each service.",
+        "category": {
+          "label": "Select Category:",
+          "assistance": "Assistance Services",
+          "companionship": "Companionship Services"
+        },
+        "services": {
+          "label": "Select Services:",
+          "noServices": "No services in this category",
+          "pricingSet": "Pricing set",
+          "setPricing": "Set pricing",
+          "updatePricing": "Update pricing",
+          "editPricing": "Edit pricing",
+          "remove": "Remove",
+          "noPricing": "No pricing set"
+        },
+        "selected": {
+          "title": "Selected Services",
+          "hour": "hour",
+          "day": "day",
+          "month": "month"
+        },
+        "pricing": {
+          "title": "Set Pricing",
+          "info": "You can set multiple pricing tiers for this service",
+          "unit": {
+            "label": "Unit",
+            "required": "Please select unit!",
+            "hour": "Per hour",
+            "day": "Per day",
+            "month": "Per month"
+          },
+          "duration": {
+            "label": "Duration",
+            "placeholder": "Quantity",
+            "required": "Please enter duration!",
+            "min": "Duration must be greater than 0!"
+          },
+          "price": {
+            "label": "Price",
+            "placeholder": "Price",
+            "required": "Please enter price!",
+            "min": "Price must be greater than 0!"
+          },
+          "add": "Add pricing tier",
+          "save": "Save",
+          "cancel": "Cancel"
+        },
+        "validation": {
+          "noServices": "Please select at least one service",
+          "noPricing": "Please set pricing for services",
+          "minPricing": "Please add at least one pricing tier for the service"
+        },
+        "back": "Back",
+        "complete": "Complete"
+      },
+      "success": {
+        "profileSaved": "Basic information saved!",
+        "setupComplete": "Profile setup completed!"
+      },
+      "error": {
+        "saveProfile": "Error saving information",
+        "saveServices": "Error saving services"
+      },
+      "loading": {
+        "savingProfile": "Saving information...",
+        "savingServices": "Saving services..."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated",
+    "sections": {
+      "introduction": {
+        "title": "1. Introduction",
+        "content1": "We are committed to protecting your privacy and personal information. This privacy policy explains how we collect, use, store, and protect your information when you use the PR1AS platform.",
+        "content2": "By using our services, you agree to the collection and use of information as described in this policy."
+      },
+      "informationCollection": {
+        "title": "2. Information We Collect",
+        "providedInfo": {
+          "title": "2.1. Information You Provide",
+          "description": "When registering an account or using services, we may collect:",
+          "items": {
+            "personal": "Personal information: Name, email, phone number, date of birth",
+            "payment": "Payment information: Credit card information, bank account",
+            "profile": "Profile information: Avatar, self-introduction, hobbies",
+            "address": "Address information: Home address, geographic location"
+          }
+        },
+        "autoInfo": {
+          "title": "2.2. Automatically Collected Information",
+          "description": "When you use our services, we automatically collect:",
+          "items": {
+            "device": "Device information: Device type, operating system, browser",
+            "usage": "Usage information: Pages you visit, access time, IP address",
+            "cookies": "Cookies and similar technologies: To improve user experience"
+          }
+        }
+      },
+      "informationUse": {
+        "title": "3. How We Use Information",
+        "description": "We use the collected information to:",
+        "items": {
+          "provide": "Provide, maintain, and improve our services",
+          "process": "Process transactions and send related notifications",
+          "marketing": "Send marketing information and service updates (with your consent)",
+          "detect": "Detect, prevent, and resolve technical issues or fraud",
+          "comply": "Comply with legal obligations and protect user rights"
+        }
+      },
+      "informationSharing": {
+        "title": "4. Information Sharing",
+        "description": "We do not sell your personal information. We only share information in the following cases:",
+        "items": {
+          "users": "With other users: Some public information (such as name, avatar) may be displayed to other users when you interact on the platform",
+          "providers": "Service providers: We may share information with service partners (such as payment, storage) to support platform operations",
+          "legal": "Legal requirements: When required by law enforcement or to protect our and users' rights",
+          "business": "Business transfer: In case of merger, acquisition, or asset sale, information may be transferred"
+        }
+      },
+      "security": {
+        "title": "5. Information Security",
+        "description": "We apply appropriate technical and organizational security measures to protect your information from unauthorized access, loss, or alteration:",
+        "items": {
+          "encryption": "Encrypt sensitive data during transmission and storage",
+          "access": "Strict access control and user authentication",
+          "monitoring": "Monitor and detect unusual activities",
+          "training": "Train staff on information security"
+        },
+        "disclaimer": "However, no method of electronic transmission or storage is 100% secure. We cannot guarantee absolute security."
+      },
+      "rights": {
+        "title": "6. Your Rights",
+        "description": "You have the right to:",
+        "items": {
+          "access": "Access: Request to view personal information we store about you",
+          "edit": "Edit: Update or modify your personal information",
+          "delete": "Delete: Request deletion of your personal information (unless law requires us to retain it)",
+          "optout": "Opt-out: Refuse to receive marketing information or withdraw consent",
+          "portability": "Data portability: Request transfer of your data to another service"
+        },
+        "contact": "To exercise these rights, please contact us at: privacy@pr1as.com"
+      },
+      "cookies": {
+        "title": "7. Cookies and Tracking Technologies",
+        "description": "We use cookies and similar technologies to improve user experience, analyze traffic, and personalize content. You can manage cookie settings in your browser."
+      },
+      "children": {
+        "title": "8. Children's Privacy",
+        "description": "Our services are not intended for children under 18 years of age. We do not knowingly collect information from children. If we discover that we have collected information from children, we will delete that information immediately."
+      },
+      "changes": {
+        "title": "9. Policy Changes",
+        "description": "We may update this privacy policy from time to time. We will notify you of significant changes by posting a notice on the website or sending an email. Your continued use of the service after changes take effect is considered acceptance of the new policy."
+      },
+      "contact": {
+        "title": "10. Contact",
+        "description": "If you have questions or concerns about this privacy policy, please contact us:",
+        "email": "Email: privacy@pr1as.com",
+        "phone": "Phone: +84 123 456 789",
+        "address": "Address: [Company Address]"
+      },
+      "effectiveDate": "This policy is effective from"
+    }
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last updated",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "content1": "By accessing and using the PR1AS platform, you agree to comply with and be bound by these terms and conditions of use. If you do not agree with any part of these terms, you are not permitted to use the service.",
+        "content2": "We reserve the right to modify these terms at any time. Your continued use of the service after changes is considered acceptance of the new terms."
+      },
+      "definitions": {
+        "title": "2. Definitions",
+        "items": {
+          "platform": "\"Platform\" or \"Service\": Refers to the PR1AS platform and all features, services, and tools provided through the platform.",
+          "company": "\"We\", \"Company\", or \"PR1AS\": Refers to the company that owns and operates the platform.",
+          "user": "\"You\" or \"User\": Refers to any individual or organization that accesses and uses the service.",
+          "client": "\"Client\": Users who seek and use services from Workers.",
+          "worker": "\"Worker\": Users who provide services to Clients."
+        }
+      },
+      "registration": {
+        "title": "3. Account Registration",
+        "requirements": {
+          "title": "3.1. Registration Requirements",
+          "description": "To use some features of the service, you need to register an account. When registering, you agree to:",
+          "items": {
+            "accurate": "Provide accurate, complete, and up-to-date information",
+            "maintain": "Maintain and update your account information",
+            "security": "Secure your password and login information",
+            "responsibility": "Be responsible for all activities under your account",
+            "notify": "Notify us immediately of any security breaches"
+          }
+        },
+        "eligibility": {
+          "title": "3.2. Eligibility",
+          "description": "You must be at least 18 years old and have legal capacity to enter into contracts. By using the service, you confirm that you meet these requirements."
+        }
+      },
+      "usage": {
+        "title": "4. Use of Service",
+        "rights": {
+          "title": "4.1. Usage Rights",
+          "description": "We grant you a non-exclusive, non-transferable, revocable right to use the service, subject to these terms."
+        },
+        "prohibited": {
+          "title": "4.2. Prohibited Conduct",
+          "description": "You are not permitted to:",
+          "items": {
+            "illegal": "Use the service for any illegal or unauthorized purpose",
+            "violate": "Violate any applicable laws, regulations, or rules",
+            "infringe": "Infringe on intellectual property, privacy, or other rights of others",
+            "content": "Post, transmit, or share content that is infringing, fraudulent, threatening, harassing, or discriminatory",
+            "spam": "Use the service to send spam, junk mail, or unwanted information",
+            "access": "Attempt to gain unauthorized access to our systems, accounts, or networks",
+            "automation": "Use robots, spiders, or other automated tools to access the service",
+            "copy": "Copy, modify, distribute, or create derivative works from the service without permission"
+          }
+        }
+      },
+      "services": {
+        "title": "5. Worker and Client Services",
+        "worker": {
+          "title": "5.1. Worker",
+          "description": "If you register as a Worker, you agree to:",
+          "items": {
+            "accurate": "Provide accurate information about your services, skills, and experience",
+            "professional": "Provide services professionally and as described",
+            "comply": "Comply with all laws and regulations related to service provision",
+            "tax": "Be responsible for taxes and other legal obligations related to service income",
+            "illegal": "Not use the service to conduct illegal or inappropriate activities"
+          }
+        },
+        "client": {
+          "title": "5.2. Client",
+          "description": "If you use the service as a Client, you agree to:",
+          "items": {
+            "payment": "Pay fully and on time for ordered services",
+            "respect": "Treat Workers with respect and professionalism",
+            "accurate": "Provide accurate information about your service requirements",
+            "illegal": "Not request Workers to perform illegal or inappropriate activities"
+          }
+        }
+      },
+      "payment": {
+        "title": "6. Payment and Fees",
+        "description": "Some services on the platform may require payment. You agree to:",
+        "items": {
+          "pay": "Pay all fees and costs related to service use",
+          "accurate": "Provide accurate and valid payment information",
+          "fees": "We may charge service fees or commissions for transactions made through the platform",
+          "refund": "All payments are non-refundable unless otherwise stated in our refund policy"
+        }
+      },
+      "intellectual": {
+        "title": "7. Intellectual Property",
+        "content1": "All content, features, and functions of the service, including but not limited to text, graphics, logos, icons, images, software, and source code, are owned by us or licensed to us and protected by copyright, trademark, and other intellectual property laws.",
+        "content2": "You may not copy, modify, distribute, sell, or rent any part of the service without our written permission."
+      },
+      "userContent": {
+        "title": "8. User Content",
+        "ownership": {
+          "title": "8.1. Ownership",
+          "description": "You retain ownership of content you post on the platform. However, by posting content, you grant us a non-exclusive, worldwide, free, and transferable right to use, copy, modify, and display that content on the platform."
+        },
+        "responsibility": {
+          "title": "8.2. Content Responsibility",
+          "description": "You are fully responsible for content you post. You ensure that your content:",
+          "items": {
+            "rights": "Does not infringe on any third party's rights",
+            "laws": "Does not violate any laws or regulations",
+            "misleading": "Does not contain misleading or fraudulent information",
+            "offensive": "Does not contain offensive, threatening, or harassing content"
+          }
+        }
+      },
+      "disclaimer": {
+        "title": "9. Disclaimer",
+        "description": "The service is provided \"as is\" and \"as available\". We do not guarantee that:",
+        "items": {
+          "uninterrupted": "The service will always operate uninterrupted or error-free",
+          "errors": "Errors will be corrected or the service will meet your specific requirements",
+          "viruses": "The service or servers providing the service are free of viruses or malicious components"
+        },
+        "liability": "We are not responsible for any damages arising from the use or inability to use the service, including but not limited to direct, indirect, incidental, special, or consequential damages."
+      },
+      "limitation": {
+        "title": "10. Limitation of Liability",
+        "description": "To the maximum extent permitted by law, we are not liable for any damages, including but not limited to:",
+        "items": {
+          "profits": "Loss of profits, revenue, or data",
+          "indirect": "Indirect, incidental, or consequential damages",
+          "use": "Damages arising from the use or inability to use the service"
+        }
+      },
+      "indemnification": {
+        "title": "11. Indemnification",
+        "description": "You agree to indemnify, defend, and hold us, our affiliates, employees, agents, and partners harmless from any claims, liabilities, damages, losses, costs, or expenses (including reasonable attorney fees) arising from or related to:",
+        "items": {
+          "use": "Your use of the service",
+          "violation": "Violation of these terms",
+          "rights": "Infringement of any third party's rights"
+        }
+      },
+      "termination": {
+        "title": "12. Termination",
+        "content1": "We reserve the right to terminate or suspend your access to the service immediately, without prior notice, for any reason, including but not limited to violation of these terms.",
+        "content2": "Upon termination, your right to use the service will immediately cease and we may delete or disable your account and content."
+      },
+      "governing": {
+        "title": "13. Governing Law",
+        "description": "These terms are governed by and interpreted in accordance with the laws of Vietnam. Any disputes arising from or related to these terms will be resolved in the competent courts of Vietnam."
+      },
+      "contact": {
+        "title": "14. Contact",
+        "description": "If you have questions about these terms, please contact us:",
+        "email": "Email: support@pr1as.com",
+        "phone": "Phone: +84 123 456 789",
+        "address": "Address: [Company Address]"
+      },
+      "effectiveDate": "These terms are effective from"
+    }
   }
 }
-

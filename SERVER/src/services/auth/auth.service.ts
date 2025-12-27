@@ -15,34 +15,23 @@ import {
   UserStatus,
 } from "../../types/auth/user.types";
 import { User } from "../../models/auth/user.model";
+import crypto from "crypto";
+import nodemailerUtils from "../../utils/nodemailer";
+import {
+  passwordResetTemplate,
+  emailVerificationTemplate,
+} from "../../utils/templage-mail";
+import { config } from "../../config";
+import { logger } from "../../utils/logger";
+import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
+import {
+  createPasswordResetExpiry,
+  createEmailVerificationExpiry,
+} from "../../utils/date";
+import { toPublicUser } from "../../utils/user.helper";
 
 export class AuthService {
-  /**
-   * Chuyển đổi user document thành public user object
-   */
-  private toPublicUser(user: IUserDocument): IUserPublic {
-    return {
-      id: user._id.toString(),
-      email: user.email,
-      avatar: user.avatar,
-      full_name: user.full_name,
-      phone: user.phone,
-      roles: user.roles,
-      status: user.status,
-      last_active_role: user.last_active_role,
-      verify_email: user.verify_email,
-      worker_profile: user.worker_profile,
-      client_profile: user.client_profile,
-      created_at: user.created_at,
-      coords: user.coords,
-    };
-  }
-
-  /**
-   * Đăng ký tài khoản mới
-   */
   async register(input: RegisterInput): Promise<AuthResponse> {
-    // Kiểm tra email đã tồn tại
     const emailExists = await userRepository.emailExists(input.email);
     if (emailExists) {
       throw new AppError(
@@ -52,10 +41,8 @@ export class AuthService {
       );
     }
 
-    // Hash password
     const password_hash = await hashPassword(input.password);
 
-    // Tạo user mới
     const user = await userRepository.create({
       email: input.email,
       password_hash,
@@ -63,21 +50,24 @@ export class AuthService {
       phone: input.phone,
     });
 
-    // Generate Tokens
+    await this.sendVerificationEmail(user.email).catch((error) => {
+      logger.error("Failed to send verification email during registration", {
+        userId: user._id.toString(),
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+
     const { token, refreshToken } = await generateAuthTokens(user);
 
     return {
-      user: this.toPublicUser(user),
+      user: toPublicUser(user),
       token,
       refreshToken,
     };
   }
 
-  /**
-   * Đăng nhập
-   */
   async login(input: LoginInput): Promise<AuthResponse> {
-    // Tìm user theo email
     const user = await userRepository.findByEmail(input.email);
     if (!user) {
       throw new AppError(
@@ -87,7 +77,6 @@ export class AuthService {
       );
     }
 
-    // So sánh password
     const isPasswordValid = await comparePassword(
       input.password,
       user.password_hash
@@ -100,7 +89,6 @@ export class AuthService {
       );
     }
 
-    // Kiểm tra trạng thái tài khoản
     if (user.status === UserStatus.BANNED) {
       throw new AppError(
         AUTH_MESSAGES.USER_BANNED,
@@ -109,71 +97,269 @@ export class AuthService {
       );
     }
 
-    // Generate Tokens
     const { token, refreshToken } = await generateAuthTokens(user);
 
     return {
-      user: this.toPublicUser(user),
+      user: toPublicUser(user),
       token,
       refreshToken,
     };
   }
 
-  /**
-   * Refresh Token
-   */
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    try {
-      const payload = verifyRefreshToken(refreshToken);
+    const payload = verifyRefreshToken(refreshToken);
 
-      const user = await User.findById(payload.sub).select(
-        "+refresh_token_hash"
-      );
+    const user = await User.findById(payload.sub).select("+refresh_token_hash");
 
-      if (!user || !user.refresh_token_hash) {
-        throw new AppError("Invalid refresh token", HTTP_STATUS.UNAUTHORIZED);
-      }
-
-      if (user.status === UserStatus.BANNED) {
-        throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
-      }
-
-      const isValid = await comparePassword(
-        refreshToken,
-        user.refresh_token_hash
-      );
-      if (!isValid) {
-        await User.findByIdAndUpdate(user._id, { refresh_token_hash: null });
-        throw new AppError(
-          "Refresh token reuse detected",
-          HTTP_STATUS.UNAUTHORIZED
-        );
-      }
-
-      const tokens = await generateAuthTokens(user);
-
-      return {
-        user: this.toPublicUser(user),
-        ...tokens,
-      };
-    } catch (error) {
+    if (!user || !user.refresh_token_hash) {
       throw new AppError(
-        "Invalid or expired refresh token",
-        HTTP_STATUS.UNAUTHORIZED
+        AUTH_MESSAGES.REFRESH_TOKEN_INVALID,
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
       );
     }
+
+    if (user.status === UserStatus.BANNED) {
+      throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
+    }
+
+    const isValid = await comparePassword(
+      refreshToken,
+      user.refresh_token_hash
+    );
+    if (!isValid) {
+      await User.findByIdAndUpdate(user._id, { refresh_token_hash: null });
+      throw new AppError(
+        AUTH_MESSAGES.REFRESH_TOKEN_REUSE_DETECTED,
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    const tokens = await generateAuthTokens(user);
+
+    return {
+      user: toPublicUser(user),
+      ...tokens,
+    };
   }
 
-  /**
-   * Lấy thông tin user hiện tại
-   */
   async getMe(userId: string): Promise<IUserPublic> {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
     }
 
-    return this.toPublicUser(user);
+    return toPublicUser(user);
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await userRepository.findByEmail(email);
+
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetTokenHash = await hashPassword(resetToken);
+      const resetExpires = createPasswordResetExpiry();
+
+      await User.findByIdAndUpdate(user._id, {
+        password_reset_token: resetTokenHash,
+        password_reset_expires: resetExpires,
+      });
+
+      const resetLink = `${config.frontendUrl}/auth/reset-password?token=${resetToken}`;
+
+      await nodemailerUtils({
+        email: user.email,
+        html: passwordResetTemplate(resetLink, user.full_name || undefined),
+        subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.PASSWORD_RESET}`,
+      }).catch((error) => {
+        logger.error("Failed to send password reset email", {
+          userId: user._id.toString(),
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
+
+    return {
+      message: AUTH_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
+    };
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const users = await User.find({
+      password_reset_expires: { $gt: new Date() },
+    }).select("+password_reset_token +password_reset_expires");
+
+    let user: IUserDocument | null = null;
+
+    for (const u of users) {
+      const resetToken = (u as IUserDocument).password_reset_token;
+      const resetExpires = (u as IUserDocument).password_reset_expires;
+      if (resetToken && resetExpires) {
+        const isValid = await comparePassword(token, resetToken);
+        if (isValid) {
+          user = u;
+          break;
+        }
+      }
+    }
+
+    if (!user) {
+      throw new AppError(
+        AUTH_MESSAGES.RESET_TOKEN_INVALID,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    const resetExpires = (user as IUserDocument).password_reset_expires;
+    if (!resetExpires || resetExpires < new Date()) {
+      await User.findByIdAndUpdate(user._id, {
+        password_reset_token: null,
+        password_reset_expires: null,
+      });
+      throw new AppError(
+        AUTH_MESSAGES.RESET_TOKEN_EXPIRED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await User.findByIdAndUpdate(user._id, {
+      password_hash: passwordHash,
+      password_reset_token: null,
+      password_reset_expires: null,
+      refresh_token_hash: null,
+    });
+
+    return {
+      message: AUTH_MESSAGES.PASSWORD_RESET_SUCCESS,
+    };
+  }
+
+  async sendVerificationEmail(email: string): Promise<void> {
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      return;
+    }
+
+    if (user.verify_email) {
+      return;
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = await hashPassword(verificationToken);
+    const verificationExpires = createEmailVerificationExpiry();
+
+    await User.findByIdAndUpdate(user._id, {
+      email_verification_token: verificationTokenHash,
+      email_verification_expires: verificationExpires,
+    });
+
+    const verificationLink = `${config.frontendUrl}/auth/verify-email?token=${verificationToken}`;
+
+    await nodemailerUtils({
+      email: user.email,
+      html: emailVerificationTemplate(verificationLink),
+      subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.EMAIL_VERIFICATION}`,
+    }).catch((error) => {
+      logger.error("Failed to send verification email", {
+        userId: user._id.toString(),
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    });
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const users = await User.find({
+      email_verification_expires: { $gt: new Date() },
+    }).select("+email_verification_token +email_verification_expires");
+
+    let user: IUserDocument | null = null;
+
+    for (const u of users) {
+      const verificationToken = (u as IUserDocument).email_verification_token;
+      const verificationExpires = (u as IUserDocument)
+        .email_verification_expires;
+      if (verificationToken && verificationExpires) {
+        const isValid = await comparePassword(token, verificationToken);
+        if (isValid) {
+          user = u;
+          break;
+        }
+      }
+    }
+
+    if (!user) {
+      throw new AppError(
+        AUTH_MESSAGES.VERIFICATION_TOKEN_INVALID,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    const verificationExpires = (user as IUserDocument)
+      .email_verification_expires;
+    if (!verificationExpires || verificationExpires < new Date()) {
+      await User.findByIdAndUpdate(user._id, {
+        email_verification_token: null,
+        email_verification_expires: null,
+      });
+      throw new AppError(
+        AUTH_MESSAGES.VERIFICATION_TOKEN_EXPIRED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    if (user.verify_email) {
+      await User.findByIdAndUpdate(user._id, {
+        email_verification_token: null,
+        email_verification_expires: null,
+      });
+      throw new AppError(
+        AUTH_MESSAGES.EMAIL_ALREADY_VERIFIED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      verify_email: true,
+      email_verification_token: null,
+      email_verification_expires: null,
+    });
+
+    return {
+      message: AUTH_MESSAGES.EMAIL_VERIFICATION_SUCCESS,
+    };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    const user = await userRepository.findByEmail(email);
+    if (user) {
+      if (!user.verify_email) {
+        await this.sendVerificationEmail(email).catch((error) => {
+          logger.error("Failed to resend verification email", {
+            userId: user._id.toString(),
+            email: user.email,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
+    }
+
+    return {
+      message: AUTH_MESSAGES.EMAIL_VERIFICATION_SENT,
+    };
   }
 }
 

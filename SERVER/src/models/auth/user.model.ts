@@ -13,35 +13,24 @@ const userSchema = new Schema<IUserDocument>(
       trim: true,
       index: true,
     },
-
     password_hash: {
       type: String,
-
       required: true,
     },
-
     avatar: {
       type: String,
-
       default: null,
     },
-
     full_name: {
       type: String,
-
       trim: true,
-
       default: null,
     },
-
     phone: {
       type: String,
-
       trim: true,
-
       default: null,
     },
-
     roles: {
       type: [String],
 
@@ -49,7 +38,6 @@ const userSchema = new Schema<IUserDocument>(
 
       default: [UserRole.CLIENT],
     },
-
     last_active_role: {
       type: String,
 
@@ -57,7 +45,6 @@ const userSchema = new Schema<IUserDocument>(
 
       default: UserRole.CLIENT,
     },
-
     worker_profile: {
       type: new Schema(
         {
@@ -98,17 +85,14 @@ const userSchema = new Schema<IUserDocument>(
     },
     verify_email: {
       type: Boolean,
-
       default: false,
     },
     created_at: {
       type: Date,
-
       default: Date.now,
     },
     last_login: {
       type: Date,
-
       default: null,
     },
     refresh_token_hash: {
@@ -116,15 +100,33 @@ const userSchema = new Schema<IUserDocument>(
       select: false,
       default: null,
     },
+    password_reset_token: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    password_reset_expires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+    email_verification_token: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    email_verification_expires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
     coords: {
       latitude: {
         type: Number,
-
         default: null,
       },
       longitude: {
         type: Number,
-
         default: null,
       },
     },

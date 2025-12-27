@@ -5,14 +5,12 @@ import { Header } from "./components/header";
 import { Footer } from "./components/footer";
 import { CategorySection } from "./components/category-section";
 import { mockServices } from "./data/services.mock";
+import { useTranslation } from "react-i18next";
 
 const { Content } = Layout;
 
-/**
- * Landing page trang chủ - Marketplace dịch vụ lấy cảm hứng từ Airbnb
- */
 export default function Home() {
-  // Group services by category
+  const { t } = useTranslation();
   const assistanceServices = mockServices.filter(
     (s) => s.category === "ASSISTANCE"
   );
@@ -20,7 +18,6 @@ export default function Home() {
     (s) => s.category === "COMPANIONSHIP"
   );
 
-  // Group by category code
   const personalAssistantServices = assistanceServices.filter(
     (s) => s.categoryCode === "PERSONAL_ASSISTANT"
   );
@@ -53,7 +50,6 @@ export default function Home() {
       <Content
         style={{ background: "#FFFFFF", maxWidth: "100%", overflowX: "hidden" }}
       >
-        {/* Services Section - Category Sections */}
         <section
           id="services"
           style={{
@@ -63,62 +59,55 @@ export default function Home() {
             overflowX: "hidden",
           }}
         >
-          {/* ASSISTANCE Category */}
           <CategorySection
-            title="Dịch vụ hỗ trợ"
-            subtitle="Các dịch vụ hỗ trợ chuyên nghiệp"
+            title={t("home.categories.assistance.title")}
+            subtitle={t("home.categories.assistance.subtitle")}
             services={assistanceServices}
           />
 
-          {/* Personal Assistant */}
           <CategorySection
-            title="Trợ lý cá nhân"
+            title={t("home.categories.personalAssistant.title")}
             services={personalAssistantServices}
           />
 
-          {/* On-site Professional Assist */}
           <CategorySection
-            title="Hỗ trợ chuyên môn tại chỗ"
+            title={t("home.categories.onSiteProfessional.title")}
             services={onSiteServices}
           />
 
-          {/* Virtual Assistant */}
           <CategorySection
-            title="Trợ lý ảo"
+            title={t("home.categories.virtualAssistant.title")}
             services={virtualAssistantServices}
           />
 
-          {/* Tour Guide */}
           <CategorySection
-            title="Hướng dẫn viên du lịch"
+            title={t("home.categories.tourGuide.title")}
             services={tourGuideServices}
           />
 
-          {/* Translator */}
-          <CategorySection title="Phiên dịch" services={translatorServices} />
-
-          {/* COMPANIONSHIP Category */}
           <CategorySection
-            title="Dịch vụ đồng hành"
-            subtitle="Các dịch vụ đồng hành theo nhiều cấp độ"
+            title={t("home.categories.translator.title")}
+            services={translatorServices}
+          />
+
+          <CategorySection
+            title={t("home.categories.companionship.title")}
+            subtitle={t("home.categories.companionship.subtitle")}
             services={companionshipServices}
           />
 
-          {/* Companionship Level 1 */}
           <CategorySection
-            title="Đồng hành cấp 1"
+            title={t("home.categories.companionshipLevel1.title")}
             services={companionshipLevel1Services}
           />
 
-          {/* Companionship Level 2 */}
           <CategorySection
-            title="Đồng hành cấp 2"
+            title={t("home.categories.companionshipLevel2.title")}
             services={companionshipLevel2Services}
           />
 
-          {/* Companionship Level 3 */}
           <CategorySection
-            title="Đồng hành cấp 3"
+            title={t("home.categories.companionshipLevel3.title")}
             services={companionshipLevel3Services}
           />
         </section>

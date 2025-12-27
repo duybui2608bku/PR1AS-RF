@@ -1,8 +1,13 @@
 "use client";
 
 import { Typography, Button, Space } from "antd";
-import { ArrowRightOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import {
+  ArrowRightOutlined,
+  LeftOutlined,
+  RightOutlined,
+} from "@ant-design/icons";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Service } from "../data/services.mock";
 import { ServiceCard } from "./service-card";
 
@@ -15,17 +20,24 @@ interface CategorySectionProps {
   showViewAll?: boolean;
 }
 
-export function CategorySection({ title, subtitle, services, showViewAll = true }: CategorySectionProps) {
+export function CategorySection({
+  title,
+  subtitle,
+  services,
+  showViewAll = true,
+}: CategorySectionProps) {
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
       const scrollAmount = 400;
       const currentScroll = scrollContainerRef.current.scrollLeft;
-      const newScroll = direction === "left" 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      
+      const newScroll =
+        direction === "left"
+          ? currentScroll - scrollAmount
+          : currentScroll + scrollAmount;
+
       scrollContainerRef.current.scrollTo({
         left: newScroll,
         behavior: "smooth",
@@ -37,7 +49,6 @@ export function CategorySection({ title, subtitle, services, showViewAll = true 
 
   return (
     <section style={{ marginBottom: 80, width: "100%", overflow: "hidden" }}>
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -75,7 +86,7 @@ export function CategorySection({ title, subtitle, services, showViewAll = true 
                   fontWeight: 500,
                 }}
               >
-                Xem tất cả
+                {t("home.viewAll")}
               </Button>
             )}
           </div>
@@ -86,7 +97,6 @@ export function CategorySection({ title, subtitle, services, showViewAll = true 
           )}
         </div>
 
-        {/* Navigation Buttons */}
         {services.length > 3 && (
           <Space size={8} style={{ marginLeft: 24, flexShrink: 0 }}>
             <Button
@@ -139,7 +149,6 @@ export function CategorySection({ title, subtitle, services, showViewAll = true 
         )}
       </div>
 
-      {/* Scrollable Container */}
       <div
         ref={scrollContainerRef}
         style={{
@@ -168,8 +177,7 @@ export function CategorySection({ title, subtitle, services, showViewAll = true 
             <ServiceCard service={service} size="medium" />
           </div>
         ))}
-          </div>
+      </div>
     </section>
   );
 }
-

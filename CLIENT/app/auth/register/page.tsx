@@ -29,10 +29,6 @@ import type { RegisterRequest } from "@/lib/hooks/use-auth";
 
 const { Title, Text } = Typography;
 
-/**
- * Trang đăng ký cho User
- * Route: /auth/register
- */
 export default function RegisterPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -40,7 +36,6 @@ export default function RegisterPage() {
   const [form] = Form.useForm();
   const { t } = useTranslation();
 
-  // Redirect nếu đã đăng nhập
   useEffect(() => {
     if (isAuthenticated && user) {
       const roles = Array.isArray(user.roles)
@@ -57,10 +52,9 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  /**
-   * Xử lý đăng ký
-   */
-  const handleRegister = async (values: RegisterRequest & { confirmPassword?: string }) => {
+  const handleRegister = async (
+    values: RegisterRequest & { confirmPassword?: string }
+  ) => {
     try {
       const { confirmPassword, ...registerData } = values;
       const response = await registerMutation.mutateAsync(registerData);
@@ -70,9 +64,9 @@ export default function RegisterPage() {
 
         message.success(t("auth.user.registerSuccess"));
 
-        // Kiểm tra role và redirect
-        const userRoles = (registeredUser as { roles?: string[]; role?: string })
-          .roles;
+        const userRoles = (
+          registeredUser as { roles?: string[]; role?: string }
+        ).roles;
         const userRole = (registeredUser as { roles?: string[]; role?: string })
           .role;
 
@@ -89,8 +83,7 @@ export default function RegisterPage() {
         }
       }
     } catch (error: unknown) {
-      // Error đã được xử lý bởi axios interceptor và error handler
-      console.error("Register error:", error);
+      message.error(t("auth.user.registerError"));
     }
   };
 
@@ -104,7 +97,6 @@ export default function RegisterPage() {
         background: "var(--ant-color-bg-container)",
       }}
     >
-      {/* Header với theme toggle và language switcher */}
       <div
         style={{
           display: "flex",
@@ -118,7 +110,6 @@ export default function RegisterPage() {
         </Space>
       </div>
 
-      {/* Form đăng ký */}
       <div
         style={{
           flex: 1,
@@ -212,7 +203,10 @@ export default function RegisterPage() {
               label={t("auth.user.confirmPassword.label")}
               dependencies={["password"]}
               rules={[
-                { required: true, message: t("auth.user.confirmPassword.required") },
+                {
+                  required: true,
+                  message: t("auth.user.confirmPassword.required"),
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue("password") === value) {
@@ -260,4 +254,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

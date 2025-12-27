@@ -3,8 +3,16 @@ import { authService } from "../../services/auth/auth.service";
 import {
   registerSchema,
   loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
 } from "../../validations/auth/auth.validation";
-import { updateLastActiveRoleSchema } from "../../validations/user/user.validation";
+import {
+  updateLastActiveRoleSchema,
+  updateWorkerProfileSchema,
+  updateBasicProfileSchema,
+} from "../../validations/user/user.validation";
 import {
   AUTH_MESSAGES,
   COMMON_MESSAGES,
@@ -13,6 +21,8 @@ import {
 import { AuthRequest } from "../../middleware/auth";
 import { AppError, R, validateWithSchema } from "../../utils";
 import * as userService from "../../services/user/user.service";
+import { WorkerProfile } from "../../types";
+import { toPublicUser } from "../../utils/user.helper";
 
 export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
@@ -73,23 +83,101 @@ export class AuthController {
       body.last_active_role
     );
 
-    const publicUser = {
-      id: updatedUser._id.toString(),
-      email: updatedUser.email,
-      avatar: updatedUser.avatar,
-      full_name: updatedUser.full_name,
-      phone: updatedUser.phone,
-      roles: updatedUser.roles,
-      status: updatedUser.status,
-      last_active_role: updatedUser.last_active_role,
-      verify_email: updatedUser.verify_email,
-      worker_profile: updatedUser.worker_profile,
-      client_profile: updatedUser.client_profile,
-      created_at: updatedUser.created_at,
-      coords: updatedUser.coords,
-    };
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      USER_MESSAGES.ROLE_UPDATED
+    );
+  }
 
-    R.success(res, { user: publicUser }, USER_MESSAGES.ROLE_UPDATED);
+  async updateProfile(req: AuthRequest, res: Response): Promise<void> {
+    if (!req.user?.sub) {
+      throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_INVALID);
+    }
+
+    const body = validateWithSchema(
+      updateWorkerProfileSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const updatedUser = await userService.updateWorkerProfile(
+      req.user.sub,
+      body.worker_profile as Partial<WorkerProfile>
+    );
+
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      "Profile updated successfully"
+    );
+  }
+
+  async updateBasicProfile(req: AuthRequest, res: Response): Promise<void> {
+    if (!req.user?.sub) {
+      throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_INVALID);
+    }
+
+    const body = validateWithSchema(
+      updateBasicProfileSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const updatedUser = await userService.updateBasicProfile(
+      req.user.sub,
+      body
+    );
+
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.PROFILE_UPDATED
+    );
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      forgotPasswordSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const result = await authService.forgotPassword(data.email);
+    R.success(res, result, result.message);
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      resetPasswordSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const result = await authService.resetPassword(data.token, data.password);
+    R.success(res, result, result.message);
+  }
+
+  async verifyEmail(req: Request, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      verifyEmailSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const result = await authService.verifyEmail(data.token);
+    R.success(res, result, result.message);
+  }
+
+  async resendVerificationEmail(req: Request, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      resendVerificationSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const result = await authService.resendVerificationEmail(data.email);
+    R.success(res, result, result.message);
   }
 }
 

@@ -41,7 +41,7 @@ export interface ApiError extends AxiosError<ApiResponse> {
 /**
  * Base URL cho API
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3052/api";
 
 /**
  * Tạo axios instance với cấu hình mặc định
@@ -115,8 +115,18 @@ axiosInstance.interceptors.response.use(
       }
     } else if (!error.response && typeof window !== "undefined") {
       // Xử lý network errors (chỉ khi không có flag skip)
+      // Network errors thường xảy ra khi server không chạy hoặc không thể kết nối
       if (!originalRequest.skipErrorNotification) {
-        showErrorNotification(error);
+        // Chỉ hiển thị notification một lần để tránh spam
+        const errorKey = `network-error-${originalRequest.url}`;
+        const lastErrorTime = sessionStorage.getItem(errorKey);
+        const now = Date.now();
+        
+        // Chỉ hiển thị notification nếu chưa hiển thị trong 5 giây gần đây
+        if (!lastErrorTime || now - parseInt(lastErrorTime) > 5000) {
+          sessionStorage.setItem(errorKey, now.toString());
+          showErrorNotification(error);
+        }
       }
     }
 

@@ -19,6 +19,7 @@ export const CURRENCY_LABELS: Record<Currency, string> = {
 interface CurrencyState {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
+  formatCurrency: (amount: number) => string;
 }
 
 /**
@@ -27,7 +28,7 @@ interface CurrencyState {
  */
 export const useCurrencyStore = create<CurrencyState>()(
   persist(
-    (set) => {
+    (set, get) => {
       return {
         // Initial state - mặc định là USD
         currency: "USD" as Currency,
@@ -35,6 +36,25 @@ export const useCurrencyStore = create<CurrencyState>()(
         // Set currency
         setCurrency: (currency: Currency) => {
           set({ currency });
+        },
+
+        // Format currency
+        formatCurrency: (amount: number) => {
+          const currencySymbols: Record<Currency, string> = {
+            USD: "$",
+            VND: "₫",
+            EUR: "€",
+            KRW: "₩",
+            CNY: "¥",
+          };
+
+          const symbol = currencySymbols[get().currency];
+          const formattedAmount = new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(amount);
+
+          return `${symbol}${formattedAmount}`;
         },
       };
     },

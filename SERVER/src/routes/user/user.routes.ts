@@ -6,10 +6,10 @@ import {
 import { authenticate, adminOnly } from "../../middleware/auth";
 import { pagination } from "../../middleware/pagination";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
-// Áp dụng middleware xác thực và phân quyền admin cho toàn bộ route quản lý user
 router.use(authenticate);
 router.use(adminOnly);
 
@@ -34,6 +34,7 @@ router.get("/", pagination(), asyncHandler(getUsers.bind(getUsers)));
  */
 router.patch(
   "/:id/status",
+  ...csrfProtection,
   asyncHandler(updateUserStatus.bind(updateUserStatus))
 );
 

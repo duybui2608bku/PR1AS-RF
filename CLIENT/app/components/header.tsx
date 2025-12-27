@@ -24,6 +24,7 @@ import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { AuthModal } from "@/lib/components/auth-modal";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -43,6 +44,7 @@ export function Header() {
   );
   const [isMobile, setIsMobile] = useState(false);
   const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
+  const { handleError } = useErrorHandler();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -87,7 +89,7 @@ export function Header() {
       try {
         await switchRoleMutation.mutateAsync("client");
       } catch (error) {
-        console.error("Switch role error:", error);
+        handleError(error);
       }
       return;
     }
@@ -110,7 +112,7 @@ export function Header() {
       try {
         await switchRoleMutation.mutateAsync("worker");
       } catch (error) {
-        console.error("Switch role error:", error);
+        handleError(error);
       }
     }
   };
@@ -127,7 +129,7 @@ export function Header() {
     try {
       await logoutMutation.mutateAsync();
     } catch (error) {
-      console.error("Logout error:", error);
+      handleError(error);
     }
   };
 
@@ -208,7 +210,6 @@ export function Header() {
           >
             {!user.avatar && getUserInitial()}
           </Avatar>
-          <Text strong>{user.name || user.email}</Text>
         </div>
       </Dropdown>
     ) : (
@@ -247,7 +248,7 @@ export function Header() {
               marginBottom: 4,
             }}
           >
-            Tiền tệ
+            {t("header.currency")}
           </div>
           <Select
             value={currency}
@@ -275,7 +276,7 @@ export function Header() {
               marginBottom: 4,
             }}
           >
-            Ngôn ngữ
+            {t("header.language")}
           </div>
           <LanguageSwitcher />
         </div>
@@ -299,7 +300,7 @@ export function Header() {
               color: "var(--ant-color-text-tertiary)",
             }}
           >
-            Giao diện
+            {t("header.theme")}
           </span>
           <ThemeToggle />
         </div>

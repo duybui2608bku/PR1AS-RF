@@ -18,7 +18,8 @@
     "back": "Quay lại",
     "next": "Tiếp theo",
     "previous": "Trước đó",
-    "close": "Đóng"
+    "close": "Đóng",
+    "step": "Bước"
   },
   "errors": {
     "network": {
@@ -142,7 +143,78 @@
   },
   "header": {
     "becomeWorker": "Trở thành worker",
-    "hireService": "Thuê dịch vụ"
+    "hireService": "Thuê dịch vụ",
+    "currency": "Tiền tệ",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện"
+  },
+  "upload": {
+    "avatar": {
+      "success": "Upload avatar thành công",
+      "error": "Upload avatar thất bại. Vui lòng thử lại.",
+      "invalidFormat": "Chỉ chấp nhận file ảnh",
+      "tooLarge": "Kích thước file không được vượt quá 5MB",
+      "changeHint": "Nhấn vào avatar để thay đổi"
+    },
+    "image": {
+      "success": "Upload ảnh {fileName} thành công",
+      "error": "Upload ảnh {fileName} thất bại: {errorMessage}",
+      "images": {
+        "error": "Lỗi khi upload ảnh"
+      }
+    }
+  },
+  "errorBoundary": {
+    "title": "500",
+    "subtitle": "Xin lỗi, đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.",
+    "retry": "Thử lại",
+    "home": "Về trang chủ",
+    "errorDetails": "Chi tiết lỗi (Development only):"
+  },
+  "notFound": {
+    "title": "404",
+    "subtitle": "Xin lỗi, trang bạn đang tìm kiếm không tồn tại.",
+    "home": "Về trang chủ"
+  },
+  "home": {
+    "categories": {
+      "assistance": {
+        "title": "Dịch vụ hỗ trợ",
+        "subtitle": "Các dịch vụ hỗ trợ chuyên nghiệp"
+      },
+      "personalAssistant": {
+        "title": "Trợ lý cá nhân"
+      },
+      "onSiteProfessional": {
+        "title": "Hỗ trợ chuyên môn tại chỗ"
+      },
+      "virtualAssistant": {
+        "title": "Trợ lý ảo"
+      },
+      "tourGuide": {
+        "title": "Hướng dẫn viên du lịch"
+      },
+      "translator": {
+        "title": "Phiên dịch"
+      },
+      "companionship": {
+        "title": "Dịch vụ đồng hành",
+        "subtitle": "Các dịch vụ đồng hành theo nhiều cấp độ"
+      },
+      "companionshipLevel1": {
+        "title": "Đồng hành cấp 1"
+      },
+      "companionshipLevel2": {
+        "title": "Đồng hành cấp 2"
+      },
+      "companionshipLevel3": {
+        "title": "Đồng hành cấp 3"
+      }
+    },
+    "viewAll": "Xem tất cả"
+  },
+  "serviceCard": {
+    "loved": "Được khách yêu thích"
   },
   "home": {
     "logo": "PR1AS",
@@ -220,6 +292,452 @@
       "rights": "Tất cả quyền được bảo lưu",
       "privacy": "Chính sách bảo mật",
       "terms": "Điều khoản sử dụng"
+    }
+  },
+  "profile": {
+    "edit": {
+      "title": "Chỉnh sửa Profile",
+      "fullName": {
+        "label": "Họ và tên",
+        "placeholder": "Nhập họ và tên",
+        "maxLength": "Họ và tên không được vượt quá 100 ký tự"
+      },
+      "phone": {
+        "label": "Số điện thoại",
+        "placeholder": "Nhập số điện thoại",
+        "invalidFormat": "Định dạng số điện thoại không hợp lệ",
+        "maxLength": "Số điện thoại không được vượt quá 20 ký tự"
+      },
+      "changePassword": {
+        "title": "Đổi mật khẩu (tùy chọn)"
+      },
+      "oldPassword": {
+        "label": "Mật khẩu cũ",
+        "placeholder": "Nhập mật khẩu cũ",
+        "required": "Vui lòng nhập mật khẩu cũ"
+      },
+      "newPassword": {
+        "label": "Mật khẩu mới",
+        "placeholder": "Nhập mật khẩu mới (tối thiểu 8 ký tự)",
+        "minLength": "Mật khẩu phải có ít nhất 8 ký tự"
+      },
+      "update": "Cập nhật",
+      "cancel": "Hủy",
+      "success": "Cập nhật profile thành công",
+      "error": "Cập nhật profile thất bại",
+      "warning": "Vui lòng thay đổi ít nhất một trường",
+      "avatar": {
+        "changeHint": "Nhấn vào avatar để thay đổi"
+      }
+    }
+  },
+  "worker": {
+    "setup": {
+      "title": "Thiết lập Profile Worker",
+      "subtitle": "Hoàn thiện thông tin profile và cấu hình dịch vụ của bạn",
+      "step1": {
+        "title": "Thông tin cơ bản",
+        "description": "Điền thông tin cá nhân",
+        "location": {
+          "label": "Vị trí của bạn",
+          "getLocation": "Lấy vị trí hiện tại",
+          "success": "Vị trí đã được lấy thành công",
+          "error": "Không thể lấy vị trí",
+          "notSupported": "Trình duyệt của bạn không hỗ trợ định vị",
+          "required": "Vui lòng lấy vị trí trước khi tiếp tục",
+          "latitude": "Vĩ độ",
+          "longitude": "Kinh độ"
+        },
+        "dateOfBirth": {
+          "label": "Ngày sinh"
+        },
+        "gender": {
+          "label": "Giới tính",
+          "required": "Vui lòng chọn giới tính!",
+          "male": "Nam",
+          "female": "Nữ",
+          "other": "Khác"
+        },
+        "heightWeight": {
+          "label": "Chiều cao và Cân nặng",
+          "height": "Chiều cao (cm)",
+          "weight": "Cân nặng (kg)"
+        },
+        "starSign": {
+          "label": "Cung hoàng đạo",
+          "placeholder": "Chọn cung hoàng đạo",
+          "aries": "Bạch Dương (Aries)",
+          "taurus": "Kim Ngưu (Taurus)",
+          "gemini": "Song Tử (Gemini)",
+          "cancer": "Cự Giải (Cancer)",
+          "leo": "Sư Tử (Leo)",
+          "virgo": "Xử Nữ (Virgo)",
+          "libra": "Thiên Bình (Libra)",
+          "scorpio": "Bọ Cạp (Scorpio)",
+          "sagittarius": "Nhân Mã (Sagittarius)",
+          "capricorn": "Ma Kết (Capricorn)",
+          "aquarius": "Bảo Bình (Aquarius)",
+          "pisces": "Song Ngư (Pisces)"
+        },
+        "lifestyle": {
+          "label": "Châm ngôn cuộc sống",
+          "placeholder": "Nhập châm ngôn cuộc sống của bạn"
+        },
+        "hobbies": {
+          "label": "Sở thích",
+          "placeholder": "Nhập sở thích và nhấn Enter",
+          "add": "Thêm"
+        },
+        "introduction": {
+          "label": "Giới thiệu bản thân",
+          "placeholder": "Viết một vài dòng giới thiệu về bản thân"
+        },
+        "quote": {
+          "label": "Câu nói yêu thích",
+          "placeholder": "Nhập câu nói yêu thích của bạn"
+        },
+        "gallery": {
+          "label": "Gallery ảnh",
+          "upload": "Upload",
+          "maxImages": "Tối đa 10 ảnh, mỗi ảnh tối đa 5MB",
+          "invalidFormat": "Chỉ chấp nhận file ảnh JPG/PNG/WEBP!",
+          "tooLarge": "Ảnh phải nhỏ hơn 5MB!"
+        },
+        "next": "Tiếp theo",
+        "complete": "Hoàn thành",
+        "validation": {
+          "fillAll": "Vui lòng điền đầy đủ thông tin"
+        }
+      },
+      "step2": {
+        "title": "Dịch vụ sẽ cung cấp",
+        "description": "Chọn và cấu hình dịch vụ",
+        "subtitle": "Chọn category và các dịch vụ bạn muốn cung cấp, sau đó thiết lập giá cả cho từng dịch vụ.",
+        "category": {
+          "label": "Chọn Category:",
+          "assistance": "Dịch vụ hỗ trợ",
+          "companionship": "Dịch vụ đồng hành"
+        },
+        "services": {
+          "label": "Chọn Services:",
+          "noServices": "Không có dịch vụ nào trong category này",
+          "pricingSet": "Đã thiết lập giá",
+          "setPricing": "Thiết lập giá",
+          "updatePricing": "Cập nhật giá",
+          "editPricing": "Sửa giá",
+          "remove": "Xóa",
+          "noPricing": "Chưa thiết lập giá"
+        },
+        "selected": {
+          "title": "Dịch vụ đã chọn",
+          "hour": "giờ",
+          "day": "ngày",
+          "month": "tháng"
+        },
+        "pricing": {
+          "title": "Thiết lập giá",
+          "info": "Bạn có thể thiết lập nhiều mức giá cho dịch vụ này",
+          "unit": {
+            "label": "Đơn vị",
+            "required": "Vui lòng chọn đơn vị!",
+            "hour": "Theo giờ",
+            "day": "Theo ngày",
+            "month": "Theo tháng"
+          },
+          "duration": {
+            "label": "Thời gian",
+            "placeholder": "Số lượng",
+            "required": "Vui lòng nhập thời gian!",
+            "min": "Thời gian phải lớn hơn 0!"
+          },
+          "price": {
+            "label": "Giá",
+            "placeholder": "Giá",
+            "required": "Vui lòng nhập giá!",
+            "min": "Giá phải lớn hơn 0!"
+          },
+          "add": "Thêm mức giá",
+          "save": "Lưu",
+          "cancel": "Hủy"
+        },
+        "validation": {
+          "noServices": "Vui lòng chọn ít nhất một dịch vụ",
+          "noPricing": "Vui lòng thiết lập giá cho các dịch vụ",
+          "minPricing": "Vui lòng thêm ít nhất một mức giá cho dịch vụ"
+        },
+        "back": "Quay lại",
+        "complete": "Hoàn thành"
+      },
+      "success": {
+        "profileSaved": "Đã lưu thông tin cơ bản!",
+        "setupComplete": "Đã hoàn tất setup profile!"
+      },
+      "error": {
+        "saveProfile": "Có lỗi xảy ra khi lưu thông tin",
+        "saveServices": "Có lỗi xảy ra khi lưu dịch vụ"
+      },
+      "loading": {
+        "savingProfile": "Đang lưu thông tin...",
+        "savingServices": "Đang lưu dịch vụ..."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Chính sách bảo mật",
+    "lastUpdated": "Cập nhật lần cuối",
+    "sections": {
+      "introduction": {
+        "title": "1. Giới thiệu",
+        "content1": "Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của bạn. Chính sách bảo mật này giải thích cách chúng tôi thu thập, sử dụng, lưu trữ và bảo vệ thông tin của bạn khi sử dụng nền tảng PR1AS.",
+        "content2": "Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý với việc thu thập và sử dụng thông tin theo mô tả trong chính sách này."
+      },
+      "informationCollection": {
+        "title": "2. Thông tin chúng tôi thu thập",
+        "providedInfo": {
+          "title": "2.1. Thông tin bạn cung cấp",
+          "description": "Khi đăng ký tài khoản hoặc sử dụng dịch vụ, chúng tôi có thể thu thập:",
+          "items": {
+            "personal": "Thông tin cá nhân: Họ tên, email, số điện thoại, ngày sinh",
+            "payment": "Thông tin thanh toán: Thông tin thẻ tín dụng, tài khoản ngân hàng",
+            "profile": "Thông tin hồ sơ: Ảnh đại diện, giới thiệu bản thân, sở thích",
+            "address": "Thông tin địa chỉ: Địa chỉ nhà, vị trí địa lý"
+          }
+        },
+        "autoInfo": {
+          "title": "2.2. Thông tin tự động thu thập",
+          "description": "Khi bạn sử dụng dịch vụ, chúng tôi tự động thu thập:",
+          "items": {
+            "device": "Thông tin thiết bị: Loại thiết bị, hệ điều hành, trình duyệt",
+            "usage": "Thông tin sử dụng: Trang bạn truy cập, thời gian truy cập, IP address",
+            "cookies": "Cookies và công nghệ tương tự: Để cải thiện trải nghiệm người dùng"
+          }
+        }
+      },
+      "informationUse": {
+        "title": "3. Cách chúng tôi sử dụng thông tin",
+        "description": "Chúng tôi sử dụng thông tin thu thập được để:",
+        "items": {
+          "provide": "Cung cấp, duy trì và cải thiện dịch vụ của chúng tôi",
+          "process": "Xử lý giao dịch và gửi thông báo liên quan",
+          "marketing": "Gửi thông tin marketing và cập nhật dịch vụ (với sự đồng ý của bạn)",
+          "detect": "Phát hiện, ngăn chặn và giải quyết các vấn đề kỹ thuật hoặc gian lận",
+          "comply": "Tuân thủ các nghĩa vụ pháp lý và bảo vệ quyền lợi của người dùng"
+        }
+      },
+      "informationSharing": {
+        "title": "4. Chia sẻ thông tin",
+        "description": "Chúng tôi không bán thông tin cá nhân của bạn. Chúng tôi chỉ chia sẻ thông tin trong các trường hợp sau:",
+        "items": {
+          "users": "Với người dùng khác: Một số thông tin công khai (như tên, ảnh đại diện) có thể được hiển thị cho người dùng khác khi bạn tương tác trên nền tảng",
+          "providers": "Nhà cung cấp dịch vụ: Chúng tôi có thể chia sẻ thông tin với các đối tác cung cấp dịch vụ (như thanh toán, lưu trữ) để hỗ trợ hoạt động của nền tảng",
+          "legal": "Yêu cầu pháp lý: Khi được yêu cầu bởi cơ quan pháp luật hoặc để bảo vệ quyền lợi của chúng tôi và người dùng",
+          "business": "Chuyển giao kinh doanh: Trong trường hợp sáp nhập, mua lại hoặc bán tài sản, thông tin có thể được chuyển giao"
+        }
+      },
+      "security": {
+        "title": "5. Bảo mật thông tin",
+        "description": "Chúng tôi áp dụng các biện pháp bảo mật kỹ thuật và tổ chức phù hợp để bảo vệ thông tin của bạn khỏi truy cập trái phép, mất mát hoặc thay đổi:",
+        "items": {
+          "encryption": "Mã hóa dữ liệu nhạy cảm trong quá trình truyền và lưu trữ",
+          "access": "Kiểm soát truy cập nghiêm ngặt và xác thực người dùng",
+          "monitoring": "Giám sát và phát hiện các hoạt động bất thường",
+          "training": "Đào tạo nhân viên về bảo mật thông tin"
+        },
+        "disclaimer": "Tuy nhiên, không có phương thức truyền tải hoặc lưu trữ điện tử nào là 100% an toàn. Chúng tôi không thể đảm bảo an toàn tuyệt đối."
+      },
+      "rights": {
+        "title": "6. Quyền của bạn",
+        "description": "Bạn có quyền:",
+        "items": {
+          "access": "Truy cập: Yêu cầu xem thông tin cá nhân chúng tôi lưu trữ về bạn",
+          "edit": "Chỉnh sửa: Cập nhật hoặc sửa đổi thông tin cá nhân của bạn",
+          "delete": "Xóa: Yêu cầu xóa thông tin cá nhân của bạn (trừ khi pháp luật yêu cầu chúng tôi giữ lại)",
+          "optout": "Từ chối: Từ chối nhận thông tin marketing hoặc rút lại sự đồng ý",
+          "portability": "Di chuyển dữ liệu: Yêu cầu chuyển dữ liệu của bạn sang dịch vụ khác"
+        },
+        "contact": "Để thực hiện các quyền này, vui lòng liên hệ với chúng tôi qua email: privacy@pr1as.com"
+      },
+      "cookies": {
+        "title": "7. Cookies và công nghệ theo dõi",
+        "description": "Chúng tôi sử dụng cookies và công nghệ tương tự để cải thiện trải nghiệm người dùng, phân tích lưu lượng truy cập và cá nhân hóa nội dung. Bạn có thể quản lý cài đặt cookies trong trình duyệt của mình."
+      },
+      "children": {
+        "title": "8. Bảo mật trẻ em",
+        "description": "Dịch vụ của chúng tôi không dành cho trẻ em dưới 18 tuổi. Chúng tôi không cố ý thu thập thông tin từ trẻ em. Nếu phát hiện chúng tôi đã thu thập thông tin từ trẻ em, chúng tôi sẽ xóa thông tin đó ngay lập tức."
+      },
+      "changes": {
+        "title": "9. Thay đổi chính sách",
+        "description": "Chúng tôi có thể cập nhật chính sách bảo mật này theo thời gian. Chúng tôi sẽ thông báo cho bạn về các thay đổi quan trọng bằng cách đăng thông báo trên trang web hoặc gửi email. Việc bạn tiếp tục sử dụng dịch vụ sau khi thay đổi có hiệu lực được coi là chấp nhận chính sách mới."
+      },
+      "contact": {
+        "title": "10. Liên hệ",
+        "description": "Nếu bạn có câu hỏi hoặc quan ngại về chính sách bảo mật này, vui lòng liên hệ với chúng tôi:",
+        "email": "Email: privacy@pr1as.com",
+        "phone": "Điện thoại: +84 123 456 789",
+        "address": "Địa chỉ: [Địa chỉ công ty]"
+      },
+      "effectiveDate": "Chính sách này có hiệu lực từ ngày"
+    }
+  },
+  "terms": {
+    "title": "Điều khoản sử dụng",
+    "lastUpdated": "Cập nhật lần cuối",
+    "sections": {
+      "acceptance": {
+        "title": "1. Chấp nhận điều khoản",
+        "content1": "Bằng việc truy cập và sử dụng nền tảng PR1AS, bạn đồng ý tuân thủ và bị ràng buộc bởi các điều khoản và điều kiện sử dụng này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không được phép sử dụng dịch vụ.",
+        "content2": "Chúng tôi có quyền sửa đổi các điều khoản này bất cứ lúc nào. Việc bạn tiếp tục sử dụng dịch vụ sau khi có thay đổi được coi là chấp nhận các điều khoản mới."
+      },
+      "definitions": {
+        "title": "2. Định nghĩa",
+        "items": {
+          "platform": "\"Nền tảng\" hoặc \"Dịch vụ\": Chỉ nền tảng PR1AS và tất cả các tính năng, dịch vụ và công cụ được cung cấp thông qua nền tảng.",
+          "company": "\"Chúng tôi\", \"Công ty\" hoặc \"PR1AS\": Chỉ công ty sở hữu và vận hành nền tảng.",
+          "user": "\"Bạn\" hoặc \"Người dùng\": Chỉ cá nhân hoặc tổ chức truy cập và sử dụng dịch vụ.",
+          "client": "\"Client\": Người dùng tìm kiếm và sử dụng dịch vụ từ Worker.",
+          "worker": "\"Worker\": Người dùng cung cấp dịch vụ cho Client."
+        }
+      },
+      "registration": {
+        "title": "3. Đăng ký tài khoản",
+        "requirements": {
+          "title": "3.1. Yêu cầu đăng ký",
+          "description": "Để sử dụng một số tính năng của dịch vụ, bạn cần đăng ký tài khoản. Khi đăng ký, bạn đồng ý:",
+          "items": {
+            "accurate": "Cung cấp thông tin chính xác, đầy đủ và cập nhật",
+            "maintain": "Duy trì và cập nhật thông tin tài khoản của bạn",
+            "security": "Bảo mật mật khẩu và thông tin đăng nhập",
+            "responsibility": "Chịu trách nhiệm cho mọi hoạt động diễn ra dưới tài khoản của bạn",
+            "notify": "Thông báo ngay cho chúng tôi về bất kỳ vi phạm bảo mật nào"
+          }
+        },
+        "eligibility": {
+          "title": "3.2. Đủ điều kiện",
+          "description": "Bạn phải đủ 18 tuổi và có năng lực pháp lý để tham gia hợp đồng. Bằng việc sử dụng dịch vụ, bạn xác nhận rằng bạn đáp ứng các yêu cầu này."
+        }
+      },
+      "usage": {
+        "title": "4. Sử dụng dịch vụ",
+        "rights": {
+          "title": "4.1. Quyền sử dụng",
+          "description": "Chúng tôi cấp cho bạn quyền sử dụng dịch vụ một cách không độc quyền, không thể chuyển nhượng và có thể thu hồi, tuân thủ các điều khoản này."
+        },
+        "prohibited": {
+          "title": "4.2. Hành vi bị cấm",
+          "description": "Bạn không được phép:",
+          "items": {
+            "illegal": "Sử dụng dịch vụ cho bất kỳ mục đích bất hợp pháp hoặc trái phép nào",
+            "violate": "Vi phạm bất kỳ luật, quy định hoặc quy tắc nào có thể áp dụng",
+            "infringe": "Xâm phạm quyền sở hữu trí tuệ, quyền riêng tư hoặc quyền khác của người khác",
+            "content": "Đăng tải, truyền hoặc chia sẻ nội dung vi phạm, lừa đảo, đe dọa, quấy rối hoặc phân biệt đối xử",
+            "spam": "Sử dụng dịch vụ để gửi spam, thư rác hoặc thông tin không mong muốn",
+            "access": "Cố gắng truy cập trái phép vào hệ thống, tài khoản hoặc mạng của chúng tôi",
+            "automation": "Sử dụng robot, spider hoặc công cụ tự động khác để truy cập dịch vụ",
+            "copy": "Sao chép, sửa đổi, phân phối hoặc tạo sản phẩm phái sinh từ dịch vụ mà không có sự cho phép"
+          }
+        }
+      },
+      "services": {
+        "title": "5. Dịch vụ Worker và Client",
+        "worker": {
+          "title": "5.1. Worker",
+          "description": "Nếu bạn đăng ký làm Worker, bạn đồng ý:",
+          "items": {
+            "accurate": "Cung cấp thông tin chính xác về dịch vụ, kỹ năng và kinh nghiệm của bạn",
+            "professional": "Cung cấp dịch vụ một cách chuyên nghiệp và đúng với mô tả đã đăng",
+            "comply": "Tuân thủ tất cả các luật và quy định liên quan đến việc cung cấp dịch vụ",
+            "tax": "Chịu trách nhiệm về thuế và các nghĩa vụ pháp lý khác liên quan đến thu nhập từ dịch vụ",
+            "illegal": "Không sử dụng dịch vụ để thực hiện các hoạt động bất hợp pháp hoặc không phù hợp"
+          }
+        },
+        "client": {
+          "title": "5.2. Client",
+          "description": "Nếu bạn sử dụng dịch vụ với tư cách Client, bạn đồng ý:",
+          "items": {
+            "payment": "Thanh toán đầy đủ và đúng hạn cho các dịch vụ đã đặt",
+            "respect": "Đối xử tôn trọng và chuyên nghiệp với Worker",
+            "accurate": "Cung cấp thông tin chính xác về yêu cầu dịch vụ của bạn",
+            "illegal": "Không yêu cầu Worker thực hiện các hoạt động bất hợp pháp hoặc không phù hợp"
+          }
+        }
+      },
+      "payment": {
+        "title": "6. Thanh toán và phí",
+        "description": "Một số dịch vụ trên nền tảng có thể yêu cầu thanh toán. Bạn đồng ý:",
+        "items": {
+          "pay": "Thanh toán tất cả các khoản phí và chi phí liên quan đến việc sử dụng dịch vụ",
+          "accurate": "Cung cấp thông tin thanh toán chính xác và hợp lệ",
+          "fees": "Chúng tôi có thể tính phí dịch vụ hoặc hoa hồng cho các giao dịch được thực hiện thông qua nền tảng",
+          "refund": "Tất cả các khoản thanh toán đều không hoàn lại, trừ khi có quy định khác trong chính sách hoàn tiền của chúng tôi"
+        }
+      },
+      "intellectual": {
+        "title": "7. Sở hữu trí tuệ",
+        "content1": "Tất cả nội dung, tính năng và chức năng của dịch vụ, bao gồm nhưng không giới hạn ở văn bản, đồ họa, logo, biểu tượng, hình ảnh, phần mềm và mã nguồn, đều thuộc sở hữu của chúng tôi hoặc được cấp phép cho chúng tôi và được bảo vệ bởi luật bản quyền, nhãn hiệu và các luật sở hữu trí tuệ khác.",
+        "content2": "Bạn không được sao chép, sửa đổi, phân phối, bán hoặc cho thuê bất kỳ phần nào của dịch vụ mà không có sự cho phép bằng văn bản của chúng tôi."
+      },
+      "userContent": {
+        "title": "8. Nội dung người dùng",
+        "ownership": {
+          "title": "8.1. Quyền sở hữu",
+          "description": "Bạn giữ quyền sở hữu đối với nội dung bạn đăng tải lên nền tảng. Tuy nhiên, bằng việc đăng tải nội dung, bạn cấp cho chúng tôi quyền không độc quyền, toàn cầu, miễn phí và có thể chuyển nhượng để sử dụng, sao chép, sửa đổi và hiển thị nội dung đó trên nền tảng."
+        },
+        "responsibility": {
+          "title": "8.2. Trách nhiệm về nội dung",
+          "description": "Bạn chịu trách nhiệm hoàn toàn về nội dung bạn đăng tải. Bạn đảm bảo rằng nội dung của bạn:",
+          "items": {
+            "rights": "Không vi phạm quyền của bất kỳ bên thứ ba nào",
+            "laws": "Không vi phạm bất kỳ luật hoặc quy định nào",
+            "misleading": "Không chứa thông tin sai lệch hoặc lừa đảo",
+            "offensive": "Không chứa nội dung phản cảm, đe dọa hoặc quấy rối"
+          }
+        }
+      },
+      "disclaimer": {
+        "title": "9. Miễn trừ trách nhiệm",
+        "description": "Dịch vụ được cung cấp \"nguyên trạng\" và \"theo khả năng có sẵn\". Chúng tôi không đảm bảo rằng:",
+        "items": {
+          "uninterrupted": "Dịch vụ sẽ luôn hoạt động không gián đoạn hoặc không có lỗi",
+          "errors": "Các lỗi sẽ được sửa chữa hoặc dịch vụ sẽ đáp ứng yêu cầu cụ thể của bạn",
+          "viruses": "Dịch vụ hoặc máy chủ cung cấp dịch vụ không có vi-rút hoặc thành phần độc hại"
+        },
+        "liability": "Chúng tôi không chịu trách nhiệm về bất kỳ thiệt hại nào phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ, bao gồm nhưng không giới hạn ở thiệt hại trực tiếp, gián tiếp, ngẫu nhiên, đặc biệt hoặc hậu quả."
+      },
+      "limitation": {
+        "title": "10. Giới hạn trách nhiệm",
+        "description": "Trong phạm vi tối đa được pháp luật cho phép, chúng tôi không chịu trách nhiệm về bất kỳ thiệt hại nào, bao gồm nhưng không giới hạn ở:",
+        "items": {
+          "profits": "Mất lợi nhuận, doanh thu hoặc dữ liệu",
+          "indirect": "Thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả",
+          "use": "Thiệt hại phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ"
+        }
+      },
+      "indemnification": {
+        "title": "11. Bồi thường",
+        "description": "Bạn đồng ý bồi thường, bảo vệ và giữ cho chúng tôi, các công ty liên kết, nhân viên, đại lý và đối tác không bị thiệt hại khỏi bất kỳ khiếu nại, trách nhiệm, thiệt hại, tổn thất, chi phí hoặc phí tổn nào (bao gồm phí luật sư hợp lý) phát sinh từ hoặc liên quan đến:",
+        "items": {
+          "use": "Việc bạn sử dụng dịch vụ",
+          "violation": "Vi phạm các điều khoản này",
+          "rights": "Vi phạm quyền của bất kỳ bên thứ ba nào"
+        }
+      },
+      "termination": {
+        "title": "12. Chấm dứt",
+        "content1": "Chúng tôi có quyền chấm dứt hoặc đình chỉ quyền truy cập của bạn vào dịch vụ ngay lập tức, không cần thông báo trước, vì bất kỳ lý do nào, bao gồm nhưng không giới hạn ở vi phạm các điều khoản này.",
+        "content2": "Khi chấm dứt, quyền sử dụng dịch vụ của bạn sẽ ngay lập tức chấm dứt và chúng tôi có thể xóa hoặc vô hiệu hóa tài khoản và nội dung của bạn."
+      },
+      "governing": {
+        "title": "13. Luật áp dụng",
+        "description": "Các điều khoản này được điều chỉnh bởi và được giải thích theo luật pháp Việt Nam. Bất kỳ tranh chấp nào phát sinh từ hoặc liên quan đến các điều khoản này sẽ được giải quyết tại tòa án có thẩm quyền tại Việt Nam."
+      },
+      "contact": {
+        "title": "14. Liên hệ",
+        "description": "Nếu bạn có câu hỏi về các điều khoản này, vui lòng liên hệ với chúng tôi:",
+        "email": "Email: support@pr1as.com",
+        "phone": "Điện thoại: +84 123 456 789",
+        "address": "Địa chỉ: [Địa chỉ công ty]"
+      },
+      "effectiveDate": "Các điều khoản này có hiệu lực từ ngày"
     }
   }
 }

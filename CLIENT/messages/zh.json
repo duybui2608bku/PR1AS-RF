@@ -18,7 +18,8 @@
     "back": "返回",
     "next": "下一步",
     "previous": "上一步",
-    "close": "关闭"
+    "close": "关闭",
+    "step": "步骤"
   },
   "errors": {
     "network": {
@@ -141,7 +142,79 @@
     "quickActionsDesc": "快速操作将显示在这里"
   },
   "header": {
-    "becomeWorker": "成为工作者"
+    "becomeWorker": "成为工作者",
+    "hireService": "雇佣服务",
+    "currency": "货币",
+    "language": "语言",
+    "theme": "主题"
+  },
+  "upload": {
+    "avatar": {
+      "success": "头像上传成功",
+      "error": "头像上传失败。请重试。",
+      "invalidFormat": "仅接受图片文件",
+      "tooLarge": "文件大小不能超过5MB",
+      "changeHint": "点击头像进行更改"
+    },
+    "image": {
+      "success": "图片 {fileName} 上传成功",
+      "error": "图片 {fileName} 上传失败: {errorMessage}",
+      "images": {
+        "error": "上传图片时出错"
+      }
+    }
+  },
+  "errorBoundary": {
+    "title": "500",
+    "subtitle": "抱歉，发生了意外错误。请稍后重试。",
+    "retry": "重试",
+    "home": "返回首页",
+    "errorDetails": "错误详情（仅限开发环境）："
+  },
+  "notFound": {
+    "title": "404",
+    "subtitle": "抱歉，您正在查找的页面不存在。",
+    "home": "返回首页"
+  },
+  "home": {
+    "categories": {
+      "assistance": {
+        "title": "援助服务",
+        "subtitle": "专业援助服务"
+      },
+      "personalAssistant": {
+        "title": "个人助理"
+      },
+      "onSiteProfessional": {
+        "title": "现场专业援助"
+      },
+      "virtualAssistant": {
+        "title": "虚拟助理"
+      },
+      "tourGuide": {
+        "title": "导游"
+      },
+      "translator": {
+        "title": "翻译"
+      },
+      "companionship": {
+        "title": "陪伴服务",
+        "subtitle": "多级别的陪伴服务"
+      },
+      "companionshipLevel1": {
+        "title": "陪伴级别 1"
+      },
+      "companionshipLevel2": {
+        "title": "陪伴级别 2"
+      },
+      "companionshipLevel3": {
+        "title": "陪伴级别 3"
+      }
+    },
+    "viewAll": "查看全部"
+  },
+  "serviceCard": {
+    "loved": "深受客户喜爱"
   },
   "home": {
     "logo": "PR1AS",
@@ -219,6 +292,445 @@
       "rights": "版权所有",
       "privacy": "隐私政策",
       "terms": "服务条款"
+    }
+  },
+  "profile": {
+    "edit": {
+      "title": "编辑个人资料",
+      "fullName": {
+        "label": "全名",
+        "placeholder": "请输入您的全名",
+        "maxLength": "全名不能超过100个字符"
+      },
+      "phone": {
+        "label": "电话号码",
+        "placeholder": "请输入您的电话号码",
+        "invalidFormat": "电话号码格式无效",
+        "maxLength": "电话号码不能超过20个字符"
+      },
+      "changePassword": {
+        "title": "更改密码（可选）"
+      },
+      "oldPassword": {
+        "label": "旧密码",
+        "placeholder": "请输入您的旧密码",
+        "required": "请输入旧密码"
+      },
+      "newPassword": {
+        "label": "新密码",
+        "placeholder": "请输入新密码（最少8个字符）",
+        "minLength": "密码必须至少8个字符"
+      },
+      "update": "更新",
+      "cancel": "取消",
+      "success": "个人资料更新成功",
+      "error": "更新个人资料失败",
+      "warning": "请至少更改一个字段",
+      "avatar": {
+        "changeHint": "点击头像进行更改"
+      }
+    }
+  },
+  "worker": {
+    "setup": {
+      "title": "工作者资料设置",
+      "subtitle": "完善您的资料信息并配置服务",
+      "step1": {
+        "title": "基本信息",
+        "description": "填写个人信息",
+        "location": {
+          "label": "位置",
+          "getLocation": "获取当前位置",
+          "success": "成功获取位置",
+          "error": "无法获取位置",
+          "notSupported": "您的浏览器不支持定位服务"
+        },
+        "dateOfBirth": {
+          "label": "出生日期"
+        },
+        "gender": {
+          "label": "性别",
+          "required": "请选择性别！",
+          "male": "男",
+          "female": "女",
+          "other": "其他"
+        },
+        "heightWeight": {
+          "label": "身高和体重",
+          "height": "身高 (cm)",
+          "weight": "体重 (kg)"
+        },
+        "starSign": {
+          "label": "星座",
+          "placeholder": "选择星座",
+          "aries": "白羊座",
+          "taurus": "金牛座",
+          "gemini": "双子座",
+          "cancer": "巨蟹座",
+          "leo": "狮子座",
+          "virgo": "处女座",
+          "libra": "天秤座",
+          "scorpio": "天蝎座",
+          "sagittarius": "射手座",
+          "capricorn": "摩羯座",
+          "aquarius": "水瓶座",
+          "pisces": "双鱼座"
+        },
+        "lifestyle": {
+          "label": "生活格言",
+          "placeholder": "输入您的生活格言"
+        },
+        "hobbies": {
+          "label": "爱好",
+          "placeholder": "输入爱好并按Enter",
+          "add": "添加"
+        },
+        "introduction": {
+          "label": "自我介绍",
+          "placeholder": "写一些关于您自己的内容"
+        },
+        "quote": {
+          "label": "喜欢的名言",
+          "placeholder": "输入您喜欢的名言"
+        },
+        "gallery": {
+          "label": "照片库",
+          "upload": "上传",
+          "maxImages": "最多10张图片，每张最多5MB",
+          "invalidFormat": "仅接受JPG/PNG/WEBP图片！",
+          "tooLarge": "图片必须小于5MB！"
+        },
+        "next": "下一步"
+      },
+      "step2": {
+        "title": "将提供的服务",
+        "description": "选择并配置服务",
+        "subtitle": "选择您要提供的类别和服务，然后为每个服务设置价格。",
+        "category": {
+          "label": "选择类别：",
+          "assistance": "协助服务 (ASSISTANCE)",
+          "companionship": "陪伴服务 (COMPANIONSHIP)"
+        },
+        "services": {
+          "label": "选择服务：",
+          "noServices": "此类别中没有服务",
+          "pricingSet": "已设置价格",
+          "setPricing": "设置价格",
+          "updatePricing": "更新价格",
+          "editPricing": "编辑价格",
+          "remove": "删除",
+          "noPricing": "未设置价格"
+        },
+        "selected": {
+          "title": "已选择的服务",
+          "hour": "小时",
+          "day": "天",
+          "month": "月"
+        },
+        "pricing": {
+          "title": "设置价格",
+          "info": "您可以为此服务设置多个价格等级",
+          "unit": {
+            "label": "单位",
+            "required": "请选择单位！",
+            "hour": "每小时",
+            "day": "每天",
+            "month": "每月"
+          },
+          "duration": {
+            "label": "时长",
+            "placeholder": "数量",
+            "required": "请输入时长！",
+            "min": "时长必须大于0！"
+          },
+          "price": {
+            "label": "价格",
+            "placeholder": "价格",
+            "required": "请输入价格！",
+            "min": "价格必须大于0！"
+          },
+          "add": "添加价格等级",
+          "save": "保存",
+          "cancel": "取消"
+        },
+        "validation": {
+          "noServices": "请至少选择一个服务",
+          "noPricing": "请为服务设置价格",
+          "minPricing": "请为服务添加至少一个价格等级"
+        },
+        "back": "返回",
+        "complete": "完成"
+      },
+      "success": {
+        "profileSaved": "基本信息已保存！",
+        "setupComplete": "资料设置完成！"
+      },
+      "error": {
+        "saveProfile": "保存信息时出错",
+        "saveServices": "保存服务时出错"
+      },
+      "loading": {
+        "savingProfile": "正在保存信息...",
+        "savingServices": "正在保存服务..."
+      }
+    }
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "lastUpdated": "最后更新",
+    "sections": {
+      "introduction": {
+        "title": "1. 介绍",
+        "content1": "我们致力于保护您的隐私和个人信息。本隐私政策说明了您使用 PR1AS 平台时我们如何收集、使用、存储和保护您的信息。",
+        "content2": "通过使用我们的服务，您同意按照本政策中描述的方式收集和使用信息。"
+      },
+      "informationCollection": {
+        "title": "2. 我们收集的信息",
+        "providedInfo": {
+          "title": "2.1. 您提供的信息",
+          "description": "注册账户或使用服务时，我们可能收集：",
+          "items": {
+            "personal": "个人信息：姓名、电子邮件、电话号码、出生日期",
+            "payment": "支付信息：信用卡信息、银行账户",
+            "profile": "个人资料信息：头像、自我介绍、爱好",
+            "address": "地址信息：家庭地址、地理位置"
+          }
+        },
+        "autoInfo": {
+          "title": "2.2. 自动收集的信息",
+          "description": "当您使用我们的服务时，我们会自动收集：",
+          "items": {
+            "device": "设备信息：设备类型、操作系统、浏览器",
+            "usage": "使用信息：您访问的页面、访问时间、IP 地址",
+            "cookies": "Cookie 和类似技术：用于改善用户体验"
+          }
+        }
+      },
+      "informationUse": {
+        "title": "3. 我们如何使用信息",
+        "description": "我们使用收集的信息来：",
+        "items": {
+          "provide": "提供、维护和改进我们的服务",
+          "process": "处理交易并发送相关通知",
+          "marketing": "发送营销信息和服务更新（在您同意的情况下）",
+          "detect": "检测、预防和解决技术问题或欺诈",
+          "comply": "遵守法律义务并保护用户权利"
+        }
+      },
+      "informationSharing": {
+        "title": "4. 信息共享",
+        "description": "我们不出售您的个人信息。我们仅在以下情况下共享信息：",
+        "items": {
+          "users": "与其他用户：当您在平台上互动时，一些公开信息（如姓名、头像）可能会显示给其他用户",
+          "providers": "服务提供商：我们可能与服务合作伙伴（如支付、存储）共享信息以支持平台运营",
+          "legal": "法律要求：当执法机构要求或为保护我们和用户的权利时",
+          "business": "业务转让：在合并、收购或资产出售的情况下，信息可能会被转让"
+        }
+      },
+      "security": {
+        "title": "5. 信息安全",
+        "description": "我们采用适当的技术和组织安全措施来保护您的信息免受未经授权的访问、丢失或更改：",
+        "items": {
+          "encryption": "在传输和存储过程中加密敏感数据",
+          "access": "严格的访问控制和用户身份验证",
+          "monitoring": "监控和检测异常活动",
+          "training": "对员工进行信息安全培训"
+        },
+        "disclaimer": "但是，没有任何电子传输或存储方法是 100% 安全的。我们无法保证绝对安全。"
+      },
+      "rights": {
+        "title": "6. 您的权利",
+        "description": "您有权：",
+        "items": {
+          "access": "访问：要求查看我们存储的关于您的个人信息",
+          "edit": "编辑：更新或修改您的个人信息",
+          "delete": "删除：要求删除您的个人信息（除非法律要求我们保留）",
+          "optout": "退出：拒绝接收营销信息或撤回同意",
+          "portability": "数据可移植性：要求将您的数据转移到其他服务"
+        },
+        "contact": "要行使这些权利，请通过以下电子邮件联系我们：privacy@pr1as.com"
+      },
+      "cookies": {
+        "title": "7. Cookie 和跟踪技术",
+        "description": "我们使用 Cookie 和类似技术来改善用户体验、分析流量并个性化内容。您可以在浏览器中管理 Cookie 设置。"
+      },
+      "children": {
+        "title": "8. 儿童隐私",
+        "description": "我们的服务不适用于 18 岁以下的儿童。我们不会故意收集儿童的信息。如果我们发现我们已从儿童那里收集了信息，我们将立即删除该信息。"
+      },
+      "changes": {
+        "title": "9. 政策变更",
+        "description": "我们可能会不时更新此隐私政策。我们将在网站上发布通知或发送电子邮件，告知您重要变更。您在变更生效后继续使用服务将被视为接受新政策。"
+      },
+      "contact": {
+        "title": "10. 联系方式",
+        "description": "如果您对此隐私政策有疑问或担忧，请联系我们：",
+        "email": "电子邮件：privacy@pr1as.com",
+        "phone": "电话：+84 123 456 789",
+        "address": "地址：[公司地址]"
+      },
+      "effectiveDate": "本政策自以下日期起生效"
+    }
+  },
+  "terms": {
+    "title": "使用条款",
+    "lastUpdated": "最后更新",
+    "sections": {
+      "acceptance": {
+        "title": "1. 接受条款",
+        "content1": "通过访问和使用 PR1AS 平台，您同意遵守并受这些使用条款和条件的约束。如果您不同意这些条款的任何部分，则不允许使用该服务。",
+        "content2": "我们保留随时修改这些条款的权利。您在更改后继续使用服务将被视为接受新条款。"
+      },
+      "definitions": {
+        "title": "2. 定义",
+        "items": {
+          "platform": "\"平台\"或\"服务\"：指 PR1AS 平台以及通过平台提供的所有功能、服务和工具。",
+          "company": "\"我们\"、\"公司\"或\"PR1AS\"：指拥有和运营平台的公司。",
+          "user": "\"您\"或\"用户\"：指访问和使用服务的任何个人或组织。",
+          "client": "\"客户\"：从工作者那里寻找和使用服务的用户。",
+          "worker": "\"工作者\"：向客户提供服务的用户。"
+        }
+      },
+      "registration": {
+        "title": "3. 账户注册",
+        "requirements": {
+          "title": "3.1. 注册要求",
+          "description": "要使用服务的某些功能，您需要注册账户。注册时，您同意：",
+          "items": {
+            "accurate": "提供准确、完整和最新的信息",
+            "maintain": "维护和更新您的账户信息",
+            "security": "保护您的密码和登录信息",
+            "responsibility": "对您账户下发生的所有活动负责",
+            "notify": "立即通知我们任何安全违规行为"
+          }
+        },
+        "eligibility": {
+          "title": "3.2. 资格",
+          "description": "您必须年满 18 岁并具有签订合同的法律能力。通过使用服务，您确认您满足这些要求。"
+        }
+      },
+      "usage": {
+        "title": "4. 服务使用",
+        "rights": {
+          "title": "4.1. 使用权利",
+          "description": "我们授予您非排他性、不可转让、可撤销的使用服务的权利，但须遵守这些条款。"
+        },
+        "prohibited": {
+          "title": "4.2. 禁止行为",
+          "description": "您不得：",
+          "items": {
+            "illegal": "将服务用于任何非法或未经授权的目的",
+            "violate": "违反任何适用的法律、法规或规则",
+            "infringe": "侵犯他人的知识产权、隐私或其他权利",
+            "content": "发布、传输或分享侵权、欺诈、威胁、骚扰或歧视性内容",
+            "spam": "使用服务发送垃圾邮件、垃圾邮件或不需要的信息",
+            "access": "试图未经授权访问我们的系统、账户或网络",
+            "automation": "使用机器人、爬虫或其他自动化工具访问服务",
+            "copy": "未经许可复制、修改、分发或创建服务的衍生作品"
+          }
+        }
+      },
+      "services": {
+        "title": "5. 工作者和客户服务",
+        "worker": {
+          "title": "5.1. 工作者",
+          "description": "如果您注册为工作者，您同意：",
+          "items": {
+            "accurate": "提供关于您的服务、技能和经验的准确信息",
+            "professional": "专业地提供符合描述的服务",
+            "comply": "遵守与服务提供相关的所有法律法规",
+            "tax": "对与服务收入相关的税收和其他法律义务负责",
+            "illegal": "不使用服务进行非法或不适当的活动"
+          }
+        },
+        "client": {
+          "title": "5.2. 客户",
+          "description": "如果您作为客户使用服务，您同意：",
+          "items": {
+            "payment": "为已订购的服务全额及时付款",
+            "respect": "尊重和专业地对待工作者",
+            "accurate": "提供关于您服务要求的准确信息",
+            "illegal": "不要求工作者执行非法或不适当的活动"
+          }
+        }
+      },
+      "payment": {
+        "title": "6. 付款和费用",
+        "description": "平台上的某些服务可能需要付款。您同意：",
+        "items": {
+          "pay": "支付与服务使用相关的所有费用和成本",
+          "accurate": "提供准确有效的付款信息",
+          "fees": "我们可能对通过平台进行的交易收取服务费或佣金",
+          "refund": "除非我们的退款政策另有规定，否则所有付款均不可退款"
+        }
+      },
+      "intellectual": {
+        "title": "7. 知识产权",
+        "content1": "服务的所有内容、功能和功能（包括但不限于文本、图形、徽标、图标、图像、软件和源代码）均归我们所有或已授权给我们，并受版权、商标和其他知识产权法律保护。",
+        "content2": "未经我们的书面许可，您不得复制、修改、分发、出售或出租服务的任何部分。"
+      },
+      "userContent": {
+        "title": "8. 用户内容",
+        "ownership": {
+          "title": "8.1. 所有权",
+          "description": "您保留对在平台上发布的内容的所有权。但是，通过发布内容，您授予我们在平台上使用、复制、修改和显示该内容的非排他性、全球性、免费和可转让的权利。"
+        },
+        "responsibility": {
+          "title": "8.2. 内容责任",
+          "description": "您对发布的内容负全部责任。您确保您的内容：",
+          "items": {
+            "rights": "不侵犯任何第三方的权利",
+            "laws": "不违反任何法律法规",
+            "misleading": "不包含误导性或欺诈性信息",
+            "offensive": "不包含攻击性、威胁性或骚扰性内容"
+          }
+        }
+      },
+      "disclaimer": {
+        "title": "9. 免责声明",
+        "description": "服务按\"原样\"和\"可用\"提供。我们不保证：",
+        "items": {
+          "uninterrupted": "服务将始终不间断或无错误地运行",
+          "errors": "错误将被纠正或服务将满足您的特定要求",
+          "viruses": "服务或提供服务的服务器没有病毒或恶意组件"
+        },
+        "liability": "我们对因使用或无法使用服务而产生的任何损害（包括但不限于直接、间接、偶然、特殊或后果性损害）不承担责任。"
+      },
+      "limitation": {
+        "title": "10. 责任限制",
+        "description": "在法律允许的最大范围内，我们对任何损害不承担责任，包括但不限于：",
+        "items": {
+          "profits": "利润、收入或数据损失",
+          "indirect": "间接、偶然或后果性损害",
+          "use": "因使用或无法使用服务而产生的损害"
+        }
+      },
+      "indemnification": {
+        "title": "11. 赔偿",
+        "description": "您同意赔偿、辩护并使我们、我们的关联公司、员工、代理人和合作伙伴免受因以下原因产生或与之相关的任何索赔、责任、损害、损失、成本或费用（包括合理的律师费）：",
+        "items": {
+          "use": "您使用服务",
+          "violation": "违反这些条款",
+          "rights": "侵犯任何第三方的权利"
+        }
+      },
+      "termination": {
+        "title": "12. 终止",
+        "content1": "我们保留因任何原因（包括但不限于违反这些条款）立即终止或暂停您对服务的访问的权利，无需事先通知。",
+        "content2": "终止后，您使用服务的权利将立即停止，我们可能会删除或禁用您的账户和内容。"
+      },
+      "governing": {
+        "title": "13. 适用法律",
+        "description": "这些条款受越南法律管辖并按其解释。因这些条款产生或与之相关的任何争议将在越南有管辖权的法院解决。"
+      },
+      "contact": {
+        "title": "14. 联系方式",
+        "description": "如果您对这些条款有疑问，请联系我们：",
+        "email": "电子邮件：support@pr1as.com",
+        "phone": "电话：+84 123 456 789",
+        "address": "地址：[公司地址]"
+      },
+      "effectiveDate": "这些条款自以下日期起生效"
     }
   }
 }

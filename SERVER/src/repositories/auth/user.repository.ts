@@ -69,11 +69,45 @@ export class UserRepository {
     id: string,
     last_active_role: UserRole
   ): Promise<IUserDocument | null> {
-    return User.findByIdAndUpdate(
-      id,
-      { last_active_role },
-      { new: true }
-    );
+    return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
+  }
+
+  async updateWorkerProfile(
+    id: string,
+    worker_profile: Partial<IUserDocument["worker_profile"]>
+  ): Promise<IUserDocument | null> {
+    return User.findByIdAndUpdate(id, { worker_profile }, { new: true });
+  }
+
+  async updateBasicProfile(
+    id: string,
+    updates: {
+      avatar?: string | null;
+      full_name?: string | null;
+      phone?: string | null;
+      password_hash?: string;
+    }
+  ): Promise<IUserDocument | null> {
+    const updateData: Record<string, unknown> = {};
+
+    if (updates.avatar !== undefined) {
+      updateData.avatar = updates.avatar;
+    }
+    if (updates.full_name !== undefined) {
+      updateData.full_name = updates.full_name?.trim() || null;
+    }
+    if (updates.phone !== undefined) {
+      updateData.phone = updates.phone?.trim() || null;
+    }
+    if (updates.password_hash !== undefined) {
+      updateData.password_hash = updates.password_hash;
+    }
+
+    return User.findByIdAndUpdate(id, updateData, { new: true });
+  }
+
+  async findByIdWithPassword(id: string): Promise<IUserDocument | null> {
+    return User.findById(id);
   }
 
   async emailExists(email: string): Promise<boolean> {
@@ -83,9 +117,6 @@ export class UserRepository {
     return !!user;
   }
 
-  /**
-   * Tìm tất cả users với filters và pagination
-   */
   async findAllWithFilters(
     query: GetUsersQuery & { skip: number }
   ): Promise<FindAllUsersResult> {
@@ -101,7 +132,6 @@ export class UserRepository {
 
     const filter: Record<string, unknown> = {};
 
-    // Filter by search (full_name, email, phone)
     if (search) {
       const searchRegex = new RegExp(search, "i");
       filter.$or = [
@@ -111,28 +141,24 @@ export class UserRepository {
       ];
     }
 
-    // Filter by Role
     if (role) {
       filter.roles = role;
     }
 
-    // Filter by Status
     if (status) {
       filter.status = status;
     }
 
-    // Filter by Date Range
     if (startDate || endDate) {
-      filter.created_at = {};
+      filter.created_at = {} as { $gte?: Date; $lte?: Date };
       if (startDate) {
-        filter.created_at.$gte = new Date(startDate);
+        (filter.created_at as { $gte: Date }).$gte = new Date(startDate);
       }
       if (endDate) {
-        filter.created_at.$lte = new Date(endDate);
+        (filter.created_at as { $lte: Date }).$lte = new Date(endDate);
       }
     }
 
-    // Execute Query
     const [users, total] = await Promise.all([
       User.find(filter)
         .select("-password_hash -refresh_token_hash")

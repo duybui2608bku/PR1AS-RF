@@ -208,6 +208,14 @@ interface ApiResponse<T> {
 ### Translation Files
 - Location: `messages/{locale}.json`
 - Format: JSON với nested keys
+- Comprehensive translations cho:
+  - Common UI elements (buttons, labels, messages)
+  - Error messages (network, HTTP, validation)
+  - Authentication flows
+  - Profile management
+  - Worker setup process
+  - Privacy policy và Terms of service
+  - Home page content
 
 ### Usage
 - Hook: `useI18n()` từ `lib/hooks/use-i18n.ts`
@@ -274,22 +282,63 @@ interface ApiResponse<T> {
 - Authentication state
 - Login/logout functions
 - User information
+- Auth guard functionality
 
 ### `use-theme.ts`
 - Theme state
 - Theme toggle function
+- System preference detection
 
 ### `use-i18n.ts`
 - i18n utilities
 - Translation functions
+- Language switching
 
 ### `use-currency.ts`
 - Currency state
 - Currency conversion
+- Currency formatting
 
 ### `use-error-handler.ts`
 - Error handling utilities
 - Error notifications
+- Error type detection
+
+## Key Components
+
+### `AvatarUpload` (`app/components/avatar-upload.tsx`)
+- Avatar upload component
+- Image cropping với antd-img-crop
+- Preview functionality
+
+### `Header` (`app/components/header.tsx`)
+- Main navigation header
+- Language switcher
+- Theme toggle
+- User menu
+- "Become Worker" button
+
+### `Footer` (`app/components/footer.tsx`)
+- Site footer
+- Links và company information
+
+### `AuthGuard` (`lib/components/auth-guard.tsx`)
+- Route protection component
+- Redirects unauthenticated users
+- Role-based access control
+
+### `ErrorBoundary` (`lib/components/error-boundary.tsx`)
+- React Error Boundary
+- Fallback UI
+- Error reporting
+
+### `LanguageSwitcher` (`lib/components/language-switcher.tsx`)
+- Language selection dropdown
+- i18n integration
+
+### `ThemeToggle` (`lib/components/theme-toggle.tsx`)
+- Theme switching button
+- Light/Dark mode toggle
 
 ## Environment Variables
 
@@ -307,11 +356,18 @@ NEXT_PUBLIC_DEFAULT_LOCALE=vi
 ## Routing
 
 ### App Router Structure
-- `/` - Home page
+- `/` - Home page (public)
 - `/auth/login` - Login page
 - `/auth/register` - Register page
-- `/admin/*` - Admin routes
-- `/worker/*` - Worker routes
+- `/privacy` - Privacy policy page
+- `/terms` - Terms of service page
+- `/client/profile` - Client profile page
+- `/client/profile/edit` - Edit client profile
+- `/worker/setup` - Worker profile setup (multi-step)
+  - Step 1: Basic information (location, personal details, gallery)
+  - Step 2: Services selection và pricing
+- `/admin/auth/login` - Admin login
+- `/admin/dashboard` - Admin dashboard
 
 ### Layouts
 - Root layout: `app/layout.tsx`
@@ -376,6 +432,34 @@ npm run lint     # Lint code
 4. **React Query**: Caching và deduplication
 5. **Lazy Loading**: Dynamic imports cho heavy components
 6. **Font Optimization**: Next.js font optimization
+7. **Progress Bar**: next-nprogress-bar cho navigation feedback
+
+## Worker Setup Flow
+
+### Step 1: Basic Information
+- Location (with geolocation API)
+- Date of birth
+- Gender selection
+- Height và Weight
+- Star sign selection
+- Lifestyle description
+- Hobbies (tag input)
+- Introduction text
+- Favorite quote
+- Photo gallery (max 10 images, 5MB each)
+
+### Step 2: Services Configuration
+- Category selection (Assistance Services / Companionship Services)
+- Service selection từ available services
+- Pricing configuration:
+  - Multiple pricing tiers per service
+  - Unit selection (hour/day/month)
+  - Duration và Price per unit
+  - Add/remove pricing tiers
+
+### Validation
+- Step 1: All required fields must be filled
+- Step 2: At least one service must be selected với pricing configured
 
 ## Security
 

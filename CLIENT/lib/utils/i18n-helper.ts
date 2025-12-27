@@ -24,7 +24,11 @@ async function loadMessages(locale: Locale): Promise<Record<string, any>> {
     messagesCache[locale] = messages.default;
     return messages.default;
   } catch (error) {
-    console.error(`Failed to load messages for locale: ${locale}`, error);
+    // Log error chỉ trong development mode
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to load messages for locale: ${locale}`, error);
+    }
     // Fallback về en nếu không load được
     if (locale !== "en") {
       return loadMessages("en");

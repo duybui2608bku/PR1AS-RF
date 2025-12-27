@@ -10,6 +10,7 @@ import { useAuthStore } from "@/lib/stores/auth.store";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 
 const { Title, Text } = Typography;
 
@@ -23,6 +24,7 @@ export default function AdminAuthPage() {
   const loginMutation = useLogin();
   const [form] = Form.useForm();
   const { t } = useTranslation();
+  const { handleError } = useErrorHandler();
 
   // Redirect nếu đã đăng nhập và là admin
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function AdminAuthPage() {
       }
     } catch (error: unknown) {
       // Error đã được xử lý bởi axios interceptor và error handler
-      console.error("Login error:", error);
+      handleError(error);
     }
   };
 

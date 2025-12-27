@@ -8,9 +8,6 @@ export interface AuthRequest extends Request {
   user?: JWTPayload;
 }
 
-/**
- * Middleware xác thực JWT token
- */
 export const authenticate = (
   req: AuthRequest,
   _res: Response,
@@ -28,7 +25,6 @@ export const authenticate = (
 
     const decoded = verifyToken(token);
 
-    // Kiểm tra user có bị banned không
     if (decoded.status === UserStatus.BANNED) {
       throw AppError.forbidden(AUTH_MESSAGES.USER_BANNED);
     }
@@ -43,9 +39,6 @@ export const authenticate = (
   }
 };
 
-/**
- * Middleware kiểm tra quyền dựa trên role
- */
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: AuthRequest, _res: Response, next: NextFunction): void => {
     if (!req.user) {
@@ -63,9 +56,6 @@ export const authorize = (...allowedRoles: UserRole[]) => {
   };
 };
 
-/**
- * Role-based middleware shortcuts
- */
 export const adminOnly = authorize(UserRole.ADMIN);
 export const workerOnly = authorize(UserRole.WORKER);
 export const clientOnly = authorize(UserRole.CLIENT);

@@ -93,18 +93,44 @@ UI Update ← Components ← Hooks ← API Client ← Backend API
 - `PUT /api/services/:id` - Cập nhật service
 - `DELETE /api/services/:id` - Xóa service
 
+### Worker Services (`/api/worker/services`)
+- Quản lý services của worker
+- Các endpoints liên quan đến worker service management
+
 ## Database Schema
 
 ### User Model
 - `_id`: ObjectId
-- `email`: String (unique, required)
-- `password`: String (hashed, required)
-- `name`: String
-- `roles`: Array<UserRole>
-- `status`: UserStatus (ACTIVE, BANNED, INACTIVE)
+- `email`: String (unique, required, indexed, lowercase)
+- `password_hash`: String (hashed, required)
+- `avatar`: String (optional)
+- `full_name`: String (optional)
+- `phone`: String (optional)
+- `roles`: Array<UserRole> (default: [CLIENT])
+- `last_active_role`: UserRole (default: CLIENT)
+- `status`: UserStatus (ACTIVE, BANNED, INACTIVE, default: ACTIVE)
+- `verify_email`: Boolean (default: false)
 - `worker_profile`: Object (optional)
-- `createdAt`: Date
-- `updatedAt`: Date
+  - `date_of_birth`: Date
+  - `gender`: String (enum: MALE, FEMALE, OTHER)
+  - `height_cm`: Number
+  - `weight_kg`: Number
+  - `star_sign`: String
+  - `lifestyle`: String
+  - `hobbies`: Array<String>
+  - `quote`: String
+  - `introduction`: String
+  - `gallery_urls`: Array<String>
+- `client_profile`: Object (optional)
+  - `company_name`: String
+  - `website`: String
+  - `total_spent`: Number
+- `coords`: Object (optional)
+  - `latitude`: Number
+  - `longitude`: Number
+- `refresh_token_hash`: String (hashed, not selected by default)
+- `created_at`: Date
+- `last_login`: Date
 
 ## Environment Setup
 
@@ -216,9 +242,44 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - Error boundaries cho error handling
 - Component composition
 
+## Frontend Pages & Features
+
+### Public Pages
+- `/` - Home page với hero section, features, services
+- `/auth/login` - Login page
+- `/auth/register` - Registration page
+- `/privacy` - Privacy policy page
+- `/terms` - Terms of service page
+
+### Client Pages
+- `/client/profile` - Client profile page
+- `/client/profile/edit` - Edit profile với avatar upload, password change
+
+### Worker Pages
+- `/worker/setup` - Worker profile setup (multi-step)
+  - Step 1: Basic information (location, date of birth, gender, height/weight, star sign, lifestyle, hobbies, introduction, quote, gallery)
+  - Step 2: Services selection và pricing configuration
+
+### Admin Pages
+- `/admin/auth/login` - Admin login
+- `/admin/dashboard` - Admin dashboard
+
+## Internationalization (i18n)
+
+### Supported Languages
+- Vietnamese (vi) - Default
+- English (en)
+- Korean (ko)
+- Chinese (zh)
+
+### Translation Files
+- Location: `CLIENT/messages/{locale}.json`
+- Comprehensive translations cho tất cả features
+- Nested JSON structure cho organized translations
+
 ## Future Enhancements
 
-- [ ] Real-time notifications với Socket.IO
+- [x] Real-time notifications với Socket.IO (configured)
 - [ ] File upload với multer
 - [ ] Email service
 - [ ] Payment integration
@@ -226,4 +287,6 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - [ ] Analytics và reporting
 - [ ] Mobile app (React Native)
 - [ ] Admin dashboard improvements
+- [ ] Order management system
+- [ ] Review và rating system
 
