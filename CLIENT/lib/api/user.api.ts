@@ -3,9 +3,6 @@
 import { api, extractData } from "../axios/index";
 import type { ApiResponse } from "../axios";
 
-/**
- * Update Basic Profile Input
- */
 export interface UpdateBasicProfileInput {
   password?: string;
   old_password?: string;
@@ -14,9 +11,6 @@ export interface UpdateBasicProfileInput {
   phone?: string | null;
 }
 
-/**
- * User Profile Response
- */
 export interface UserProfile {
   id: string;
   email: string;
@@ -29,13 +23,7 @@ export interface UserProfile {
   verify_email?: boolean;
 }
 
-/**
- * User Profile API
- */
 export const userProfileApi = {
-  /**
-   * Lấy thông tin user profile hiện tại
-   */
   getProfile: async (): Promise<UserProfile> => {
     const response = await api.get<ApiResponse<{ user: UserProfile }>>(
       "/auth/me"
@@ -44,9 +32,6 @@ export const userProfileApi = {
     return data.user;
   },
 
-  /**
-   * Cập nhật basic profile (password, avatar, full_name, phone)
-   */
   updateBasicProfile: async (
     data: UpdateBasicProfileInput
   ): Promise<UserProfile> => {

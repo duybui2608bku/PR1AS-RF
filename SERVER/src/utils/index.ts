@@ -1,4 +1,3 @@
-// Utils barrel export
 export { AppError } from "./AppError";
 export { asyncHandler } from "./asyncHandler";
 export { ResponseHelper, R } from "./response";

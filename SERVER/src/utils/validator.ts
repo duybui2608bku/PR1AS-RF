@@ -9,9 +9,6 @@ type ZodSchema<T> = {
   };
 };
 
-/**
- * Helper chuẩn hóa validate schema và ném lỗi AppError.badRequest với details.
- */
 export const validateWithSchema = <T>(
   schema: ZodSchema<T>,
   payload: unknown,
@@ -27,4 +24,3 @@ export const validateWithSchema = <T>(
   }
   return result.data as T;
 };
-

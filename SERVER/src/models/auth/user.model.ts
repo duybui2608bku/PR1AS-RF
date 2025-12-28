@@ -1,6 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
-import { gender, IUserDocument, UserRole, UserStatus } from "../../types";
+import {
+  gender,
+  Experience,
+  IUserDocument,
+  UserRole,
+  UserStatus,
+} from "../../types";
 import { modelsName } from "../models.name";
 
 const userSchema = new Schema<IUserDocument>(
@@ -62,6 +68,12 @@ const userSchema = new Schema<IUserDocument>(
           quote: { type: String, default: null },
           introduction: { type: String, default: null },
           gallery_urls: { type: [String], default: [] },
+          experience: {
+            type: String,
+            enum: Object.values(Experience),
+            default: null,
+          },
+          title: { type: String, default: null, trim: true },
         },
         { _id: false }
       ),

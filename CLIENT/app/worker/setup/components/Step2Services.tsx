@@ -44,6 +44,7 @@ const { Title, Text, Paragraph } = Typography;
 interface Step2ServicesProps {
   onNext: (data: WorkerServiceInput) => void;
   onBack: () => void;
+  isPending?: boolean;
 }
 
 interface SelectedService extends Service {
@@ -54,6 +55,7 @@ interface SelectedService extends Service {
 export const Step2Services: React.FC<Step2ServicesProps> = ({
   onNext,
   onBack,
+  isPending = false,
 }) => {
   const { t } = useI18n();
   const { currency, formatCurrency } = useCurrencyStore();
@@ -497,7 +499,12 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         <Button onClick={onBack} size="large">
           {t("worker.setup.step2.back")}
         </Button>
-        <Button type="primary" onClick={handleSubmit} size="large">
+        <Button 
+          type="primary" 
+          onClick={handleSubmit} 
+          loading={isPending}
+          size="large"
+        >
           {t("worker.setup.step2.complete")}
         </Button>
       </div>

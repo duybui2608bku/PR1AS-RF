@@ -1,8 +1,7 @@
-/**
- * Upload Image API - Bên thứ 3 (iByteCDN)
- */
-
 import { getTranslationSync } from "./i18n-helper";
+
+const UPLOAD_API_URL = "https://cfig.ibytecdn.org/upload";
+const DEFAULT_SERVER = "server_1";
 
 export interface UploadImageResponse {
   success: boolean;
@@ -19,22 +18,16 @@ export interface UploadImageError {
   message?: string;
 }
 
-/**
- * Upload ảnh lên bên thứ 3 (iByteCDN)
- * @param file - File ảnh cần upload
- * @param server - Server name (mặc định: "server_1")
- * @returns Promise với URL của ảnh đã upload
- */
 export async function uploadImage(
   file: File,
-  server: string = "server_1"
+  server: string = DEFAULT_SERVER
 ): Promise<string> {
   try {
     const formData = new FormData();
     formData.append("images[]", file);
     formData.append("server", server);
 
-    const response = await fetch("https://cfig.ibytecdn.org/upload", {
+    const response = await fetch(UPLOAD_API_URL, {
       method: "POST",
       body: formData,
     });
@@ -63,20 +56,13 @@ export async function uploadImage(
 
     return uploadData.results[0].url;
   } catch (error) {
-    // Error sẽ được xử lý bởi component gọi hàm này
     throw error;
   }
 }
 
-/**
- * Upload nhiều ảnh cùng lúc
- * @param files - Mảng các file ảnh cần upload
- * @param server - Server name (mặc định: "server_1")
- * @returns Promise với mảng các URL của ảnh đã upload
- */
 export async function uploadMultipleImages(
   files: File[],
-  server: string = "server_1"
+  server: string = DEFAULT_SERVER
 ): Promise<string[]> {
   try {
     const formData = new FormData();
@@ -85,7 +71,7 @@ export async function uploadMultipleImages(
     });
     formData.append("server", server);
 
-    const response = await fetch("https://cfig.ibytecdn.org/upload", {
+    const response = await fetch(UPLOAD_API_URL, {
       method: "POST",
       body: formData,
     });
@@ -108,12 +94,10 @@ export async function uploadMultipleImages(
       throw new Error("Upload failed: No images uploaded");
     }
 
-    // Lọc các ảnh upload thành công và trả về URLs
     return uploadData.results
       .filter((result) => result.success)
       .map((result) => result.url);
   } catch (error) {
-    // Error sẽ được xử lý bởi component gọi hàm này
     throw error;
   }
 }

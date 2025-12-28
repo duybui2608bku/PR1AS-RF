@@ -45,9 +45,9 @@ export const config = {
   ],
   corsCredentials: process.env.CORS_CREDENTIALS === "true" || true,
   jwtSecret: process.env.JWT_SECRET || "jwt_secret",
-  jwtExpire: process.env.JWT_EXPIRE || "jwt_expire",
+  jwtExpire: process.env.JWT_EXPIRE || "15m",
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret",
-  jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || "jwt_refresh_expire",
+  jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || "7d",
   mongodbUri: process.env.MONGODB_URI || "mongodb://localhost:27017",
   dbName: process.env.DB_NAME || "db_name",
   rateLimit: {

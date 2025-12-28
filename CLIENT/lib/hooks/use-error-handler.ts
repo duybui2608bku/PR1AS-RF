@@ -10,19 +10,14 @@ import {
   type ApiError,
 } from "../utils/error-handler";
 
-/**
- * Hook để sử dụng error handler và notifications với i18n
- */
 export function useErrorHandler() {
   const { t } = useTranslation();
 
   const handleError = useCallback(
     (error: unknown, customMessage?: string) => {
-      // Kiểm tra nếu là ApiError
       if (error && typeof error === "object" && "response" in error) {
         showErrorNotification(error as ApiError, customMessage);
       } else if (error instanceof Error) {
-        // Xử lý Error thông thường
         showErrorNotification(
           {
             message: error.message,
@@ -31,7 +26,6 @@ export function useErrorHandler() {
           customMessage || error.message
         );
       } else {
-        // Xử lý lỗi không xác định với i18n
         const defaultMessage = t("errors.unknown.message");
         showErrorNotification(
           {

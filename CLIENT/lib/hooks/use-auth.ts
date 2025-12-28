@@ -5,9 +5,9 @@ import { api } from "../axios";
 import { useAuthStore } from "../stores/auth.store";
 import type { ApiResponse } from "../axios";
 
-/**
- * Auth API Types
- */
+const AUTH_QUERY_KEY = ["auth", "me"];
+const STALE_TIME_MS = 1000 * 60 * 5;
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -29,11 +29,9 @@ export interface AuthResponse {
     role?: string;
   };
   token: string;
+  refreshToken: string;
 }
 
-/**
- * Hook để đăng nhập
- */
 export function useLogin() {
   const { login } = useAuthStore();
   const queryClient = useQueryClient();
@@ -48,18 +46,14 @@ export function useLogin() {
     },
     onSuccess: (data) => {
       if (data.success && data.data) {
-        const { user, token } = data.data;
-        login(user, token);
-        // Invalidate user queries
-        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+        const { user, token, refreshToken } = data.data;
+        login(user, token, refreshToken);
+        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       }
     },
   });
 }
 
-/**
- * Hook để đăng ký
- */
 export function useRegister() {
   const { login } = useAuthStore();
   const queryClient = useQueryClient();
@@ -74,22 +68,19 @@ export function useRegister() {
     },
     onSuccess: (data) => {
       if (data.success && data.data) {
-        const { user, token } = data.data;
-        login(user, token);
-        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+        const { user, token, refreshToken } = data.data;
+        login(user, token, refreshToken);
+        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       }
     },
   });
 }
 
-/**
- * Hook để lấy thông tin user hiện tại
- */
 export function useMe() {
   const { setLoading, token } = useAuthStore();
 
   return useQuery<ApiResponse<{ user: AuthResponse["user"] }>>({
-    queryKey: ["auth", "me"],
+    queryKey: AUTH_QUERY_KEY,
     queryFn: async () => {
       setLoading(true);
       try {
@@ -101,18 +92,15 @@ export function useMe() {
         setLoading(false);
       }
     },
-    enabled: !!token, // Chỉ fetch khi có token
-    retry: false, // Không retry khi lỗi
-    refetchOnWindowFocus: false, // Không refetch khi focus window
-    refetchOnReconnect: false, // Không refetch khi reconnect (tránh loop khi server down)
-    refetchOnMount: true, // Chỉ refetch khi mount component
-    staleTime: 1000 * 60 * 5, // Data fresh trong 5 phút
+    enabled: !!token,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: true,
+    staleTime: STALE_TIME_MS,
   });
 }
 
-/**
- * Hook để đăng xuất
- */
 export function useLogout() {
   const { logout } = useAuthStore();
   const queryClient = useQueryClient();
@@ -123,15 +111,41 @@ export function useLogout() {
     },
     onSuccess: () => {
       logout();
-      // Clear tất cả queries
       queryClient.clear();
     },
   });
 }
 
-/**
- * Hook để chuyển đổi role (client <-> worker)
- */
+export function useRefreshToken() {
+  const { setToken, setRefreshToken, refreshToken } = useAuthStore();
+
+  return useMutation<ApiResponse<AuthResponse>, Error>({
+    mutationFn: async () => {
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+      const response = await api.post<ApiResponse<AuthResponse>>(
+        "/auth/refresh-token",
+        { refreshToken }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success && data.data) {
+        const { token, refreshToken: newRefreshToken } = data.data;
+        setToken(token);
+        setRefreshToken(newRefreshToken);
+      }
+    },
+    onError: () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+        window.location.href = "/login";
+      }
+    },
+  });
+}
+
 export function useSwitchRole() {
   const { setUser, user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -151,16 +165,47 @@ export function useSwitchRole() {
     },
     onSuccess: (data) => {
       if (data.success && data.data?.user) {
-        // Cập nhật user trong store với last_active_role mới
         const updatedUser = {
           ...user!,
           ...data.data.user,
           last_active_role: data.data.user.last_active_role,
         };
         setUser(updatedUser);
-        // Invalidate user queries để refetch
-        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
       }
+    },
+  });
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
+export function useForgotPassword() {
+  return useMutation<ApiResponse<{ message: string }>, Error, ForgotPasswordRequest>({
+    mutationFn: async (data) => {
+      const response = await api.post<ApiResponse<{ message: string }>>(
+        "/auth/forgot-password",
+        data
+      );
+      return response.data;
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation<ApiResponse<{ message: string }>, Error, ResetPasswordRequest>({
+    mutationFn: async (data) => {
+      const response = await api.post<ApiResponse<{ message: string }>>(
+        "/auth/reset-password",
+        data
+      );
+      return response.data;
     },
   });
 }

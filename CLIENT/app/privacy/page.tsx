@@ -8,9 +8,6 @@ import { useTranslation } from "react-i18next";
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
 
-/**
- * Privacy Policy Page - Trang chính sách bảo mật
- */
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation();
 

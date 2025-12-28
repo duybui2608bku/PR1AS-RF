@@ -5,6 +5,8 @@ import { HTTP_STATUS, ERROR_MESSAGES } from "../constants/httpStatus";
 import { AppError } from "../utils/AppError";
 import { ErrorCode } from "../types/common/error.types";
 import { ApiResponse } from "../utils/response";
+import { getMessageKey } from "../utils/message-mapper";
+import { t, getLocaleFromHeader } from "../utils/i18n";
 
 export const errorHandler = (
   err: Error | AppError,
@@ -55,13 +57,30 @@ export const errorHandler = (
 
   logger.error(errorLog);
 
+  // Get locale from Accept-Language header
+  const acceptLanguage = req.get("accept-language");
+  const locale = getLocaleFromHeader(acceptLanguage);
+  
+  // Translate message
+  const messageKey = getMessageKey(message);
+  const translatedMessage = t(messageKey, locale);
+
+  // Translate details if present
+  let translatedDetails = details;
+  if (details && details.length > 0) {
+    translatedDetails = details.map((detail) => ({
+      field: detail.field,
+      message: t(getMessageKey(detail.message), locale),
+    }));
+  }
+
   const response: ApiResponse = {
     success: false,
     statusCode,
     error: {
       code,
-      message,
-      ...(details && { details }),
+      message: translatedMessage,
+      ...(translatedDetails && { details: translatedDetails }),
       ...(config.nodeEnv === "development" && { stack: err.stack }),
     },
   };

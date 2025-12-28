@@ -61,6 +61,15 @@
     "unknown": {
       "title": "Lỗi không xác định",
       "message": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."
+    },
+    "csrf": {
+      "tokenMissing": "CSRF token bị thiếu. Vui lòng tải lại trang và thử lại.",
+      "tokenInvalid": "CSRF token không hợp lệ. Vui lòng tải lại trang và thử lại.",
+      "description": "Nếu lỗi vẫn tiếp tục, vui lòng tải lại trang và đảm bảo cookies được bật trong trình duyệt."
+    },
+    "rateLimit": {
+      "retryAfterSeconds": "Vui lòng thử lại sau {seconds} giây.",
+      "retryAfterMinutes": "Vui lòng thử lại sau {minutes} phút."
     }
   },
   "notifications": {
@@ -82,7 +91,8 @@
       "label": "Mật khẩu",
       "placeholder": "Nhập mật khẩu",
       "required": "Vui lòng nhập mật khẩu!",
-      "minLength": "Mật khẩu phải có ít nhất 8 ký tự!"
+      "minLength": "Mật khẩu phải có ít nhất 8 ký tự!",
+      "complexity": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
     },
     "login": "Đăng nhập",
     "loginSuccess": "Đăng nhập thành công!",
@@ -114,6 +124,28 @@
         "placeholder": "Nhập lại mật khẩu",
         "required": "Vui lòng xác nhận mật khẩu!",
         "notMatch": "Mật khẩu xác nhận không khớp!"
+      },
+      "forgotPassword": {
+        "link": "Quên mật khẩu?",
+        "title": "Quên mật khẩu",
+        "subtitle": "Nhập email của bạn để nhận liên kết đặt lại mật khẩu",
+        "resetTitle": "Đặt lại mật khẩu",
+        "resetSubtitle": "Nhập token và mật khẩu mới của bạn",
+        "sendResetLink": "Gửi liên kết đặt lại",
+        "resetPassword": "Đặt lại mật khẩu",
+        "emailSent": "Email đặt lại mật khẩu đã được gửi!",
+        "emailSentTitle": "Email đã được gửi",
+        "emailSentMessage": "Vui lòng kiểm tra email của bạn để nhận liên kết đặt lại mật khẩu",
+        "checkEmail": "Vui lòng kiểm tra email của bạn để nhận liên kết đặt lại mật khẩu",
+        "resetSuccess": "Mật khẩu đã được đặt lại thành công!",
+        "redirecting": "Đang chuyển hướng đến trang đăng nhập...",
+        "backToLogin": "Quay lại đăng nhập",
+        "noToken": "Không tìm thấy token. Vui lòng sử dụng liên kết từ email.",
+        "resetToken": {
+          "label": "Token đặt lại",
+          "placeholder": "Nhập token từ email",
+          "required": "Vui lòng nhập token đặt lại!"
+        }
       }
     }
   },
@@ -144,6 +176,7 @@
   "header": {
     "becomeWorker": "Trở thành worker",
     "hireService": "Thuê dịch vụ",
+    "myServices": "Dịch vụ của tôi",
     "currency": "Tiền tệ",
     "language": "Ngôn ngữ",
     "theme": "Giao diện"
@@ -295,6 +328,21 @@
     }
   },
   "profile": {
+    "title": "Thông tin cá nhân",
+    "edit": "Chỉnh sửa",
+    "editProfile": "Chỉnh sửa thông tin",
+    "info": {
+      "title": "Chi tiết tài khoản",
+      "fullName": "Họ và tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "status": "Trạng thái",
+      "verified": "Đã xác thực",
+      "unverified": "Chưa xác thực",
+      "notSet": "Chưa thiết lập",
+      "lastActiveRole": "Vai trò hoạt động cuối",
+      "userId": "ID người dùng"
+    },
     "edit": {
       "title": "Chỉnh sửa Profile",
       "fullName": {
@@ -362,6 +410,22 @@
           "label": "Chiều cao và Cân nặng",
           "height": "Chiều cao (cm)",
           "weight": "Cân nặng (kg)"
+        },
+        "experienceTitle": {
+          "label": "Kinh nghiệm và Tiêu đề"
+        },
+        "experience": {
+          "label": "Số năm kinh nghiệm",
+          "placeholder": "Chọn số năm kinh nghiệm của bạn",
+          "lessThan1": "Dưới 1 năm",
+          "oneTo3": "1-3 năm",
+          "threeTo5": "3-5 năm",
+          "fiveTo10": "5-10 năm",
+          "moreThan10": "Trên 10 năm"
+        },
+        "title": {
+          "label": "Tiêu đề chuyên nghiệp",
+          "placeholder": "Ví dụ: Hướng dẫn viên chuyên nghiệp"
         },
         "starSign": {
           "label": "Cung hoàng đạo",

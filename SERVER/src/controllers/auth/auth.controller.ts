@@ -32,7 +32,7 @@ export class AuthController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const result = await authService.register(data);
-    R.created(res, result);
+    R.created(res, result, undefined, req);
   }
 
   async login(req: Request, res: Response): Promise<void> {
@@ -42,7 +42,7 @@ export class AuthController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const result = await authService.login(data);
-    R.success(res, result);
+    R.success(res, result, undefined, req);
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
@@ -51,7 +51,7 @@ export class AuthController {
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
     const result = await authService.refreshToken(refreshToken);
-    R.success(res, result);
+    R.success(res, result, undefined, req);
   }
 
   async getMe(req: AuthRequest, res: Response): Promise<void> {
@@ -59,12 +59,12 @@ export class AuthController {
       throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_INVALID);
     }
     const user = await authService.getMe(req.user.sub);
-    R.success(res, { user });
+    R.success(res, { user }, undefined, req);
   }
 
-  async logout(_req: Request, res: Response): Promise<void> {
+  async logout(req: Request, res: Response): Promise<void> {
     res.clearCookie("token");
-    R.success(res, { message: AUTH_MESSAGES.LOGOUT_SUCCESS });
+    R.success(res, { message: AUTH_MESSAGES.LOGOUT_SUCCESS }, undefined, req);
   }
 
   async switchRole(req: AuthRequest, res: Response): Promise<void> {
@@ -86,7 +86,8 @@ export class AuthController {
     R.success(
       res,
       { user: toPublicUser(updatedUser) },
-      USER_MESSAGES.ROLE_UPDATED
+      USER_MESSAGES.ROLE_UPDATED,
+      req
     );
   }
 
@@ -109,7 +110,8 @@ export class AuthController {
     R.success(
       res,
       { user: toPublicUser(updatedUser) },
-      "Profile updated successfully"
+      AUTH_MESSAGES.PROFILE_UPDATED,
+      req
     );
   }
 
@@ -132,7 +134,8 @@ export class AuthController {
     R.success(
       res,
       { user: toPublicUser(updatedUser) },
-      AUTH_MESSAGES.PROFILE_UPDATED
+      AUTH_MESSAGES.PROFILE_UPDATED,
+      req
     );
   }
 
@@ -144,7 +147,7 @@ export class AuthController {
     );
 
     const result = await authService.forgotPassword(data.email);
-    R.success(res, result, result.message);
+    R.success(res, result, result.message, req);
   }
 
   async resetPassword(req: Request, res: Response): Promise<void> {
@@ -155,7 +158,7 @@ export class AuthController {
     );
 
     const result = await authService.resetPassword(data.token, data.password);
-    R.success(res, result, result.message);
+    R.success(res, result, result.message, req);
   }
 
   async verifyEmail(req: Request, res: Response): Promise<void> {
@@ -166,7 +169,7 @@ export class AuthController {
     );
 
     const result = await authService.verifyEmail(data.token);
-    R.success(res, result, result.message);
+    R.success(res, result, result.message, req);
   }
 
   async resendVerificationEmail(req: Request, res: Response): Promise<void> {
@@ -177,7 +180,7 @@ export class AuthController {
     );
 
     const result = await authService.resendVerificationEmail(data.email);
-    R.success(res, result, result.message);
+    R.success(res, result, result.message, req);
   }
 }
 

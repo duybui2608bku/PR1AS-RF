@@ -14,10 +14,8 @@ import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 
 const { Title, Text } = Typography;
 
-/**
- * Trang đăng nhập Admin
- * Route: /admin/auth
- */
+const ADMIN_ROLE = "admin";
+
 export default function AdminAuthPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -26,50 +24,35 @@ export default function AdminAuthPage() {
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
 
-  // Redirect nếu đã đăng nhập và là admin
+  const getUserRoles = (user: typeof user) => {
+    return Array.isArray(user?.roles)
+      ? user.roles
+      : user?.role
+      ? [user.role]
+      : [];
+  };
+
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Kiểm tra nếu user có role admin
-      // Backend trả về roles là mảng, nhưng có thể có role là string
-      const roles = Array.isArray(user.roles)
-        ? user.roles
-        : user.role
-        ? [user.role]
-        : [];
+      const roles = getUserRoles(user);
 
-      if (roles.includes("admin")) {
+      if (roles.includes(ADMIN_ROLE)) {
         router.push("/admin");
       } else {
-        // Nếu không phải admin, redirect về trang chủ
         router.push("/");
       }
     }
   }, [isAuthenticated, user, router]);
 
-  /**
-   * Xử lý đăng nhập
-   */
   const handleLogin = async (values: LoginRequest) => {
     try {
       const response = await loginMutation.mutateAsync(values);
 
       if (response.success && response.data) {
         const { user: loggedInUser } = response.data;
+        const roles = getUserRoles(loggedInUser as typeof user);
 
-        // Kiểm tra role admin
-        // Backend trả về roles là mảng, nhưng có thể có role là string
-        const userRoles = (loggedInUser as { roles?: string[]; role?: string })
-          .roles;
-        const userRole = (loggedInUser as { roles?: string[]; role?: string })
-          .role;
-
-        const roles = Array.isArray(userRoles)
-          ? userRoles
-          : userRole
-          ? [userRole]
-          : [];
-
-        if (roles.includes("admin")) {
+        if (roles.includes(ADMIN_ROLE)) {
           message.success(t("auth.loginSuccess"));
           router.push("/admin");
         } else {
@@ -78,14 +61,12 @@ export default function AdminAuthPage() {
         }
       }
     } catch (error: unknown) {
-      // Error đã được xử lý bởi axios interceptor và error handler
       handleError(error);
     }
   };
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "20px" }}>
-      {/* Header với theme toggle và language switcher */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
         <Space>
           <ThemeToggle />
@@ -93,7 +74,6 @@ export default function AdminAuthPage() {
         </Space>
       </div>
 
-      {/* Form đăng nhập */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Card style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>

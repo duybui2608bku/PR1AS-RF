@@ -8,9 +8,6 @@ import { useTranslation } from "react-i18next";
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
 
-/**
- * Terms of Use Page - Trang điều khoản sử dụng
- */
 export default function TermsOfUsePage() {
   const { t } = useTranslation();
 

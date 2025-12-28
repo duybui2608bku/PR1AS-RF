@@ -1,11 +1,13 @@
 import { z } from "zod";
-import { UserStatus, UserRole, gender } from "../../types/auth/user.types";
+import {
+  UserStatus,
+  UserRole,
+  gender,
+  Experience,
+} from "../../types/auth/user.types";
 import { USER_MESSAGES, AUTH_MESSAGES } from "../../constants/messages";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 
-/**
- * Schema validation cho update user status
- */
 export const updateUserStatusSchema = z.object({
   status: z.nativeEnum(UserStatus, {
     errorMap: () => ({
@@ -14,9 +16,6 @@ export const updateUserStatusSchema = z.object({
   }),
 });
 
-/**
- * Schema validation cho update last_active_role
- */
 export const updateLastActiveRoleSchema = z.object({
   last_active_role: z.enum([UserRole.CLIENT, UserRole.WORKER], {
     errorMap: () => ({
@@ -25,10 +24,6 @@ export const updateLastActiveRoleSchema = z.object({
   }),
 });
 
-/**
- * Schema validation cho query parameters của get users
- * Note: page và limit được xử lý bởi pagination middleware, không cần validate ở đây
- */
 export const getUsersQuerySchema = z.object({
   search: z.string().trim().optional(),
   role: z.string().optional(),
@@ -37,15 +32,10 @@ export const getUsersQuerySchema = z.object({
   endDate: z.string().optional(),
 });
 
-export type UpdateUserStatusSchemaType = z.infer<
-  typeof updateUserStatusSchema
->;
+export type UpdateUserStatusSchemaType = z.infer<typeof updateUserStatusSchema>;
 export type UpdateLastActiveRoleSchemaType = z.infer<
   typeof updateLastActiveRoleSchema
 >;
-/**
- * Schema validation cho update worker profile
- */
 export const updateWorkerProfileSchema = z.object({
   worker_profile: z.object({
     date_of_birth: z
@@ -72,6 +62,8 @@ export const updateWorkerProfileSchema = z.object({
     quote: z.string().optional().nullable(),
     introduction: z.string().optional().nullable(),
     gallery_urls: z.array(z.string()).optional().default([]),
+    experience: z.nativeEnum(Experience).optional().nullable(),
+    title: z.string().trim().max(100).optional().nullable(),
     coords: z
       .object({
         latitude: z.number().nullable(),
@@ -87,25 +79,29 @@ export type UpdateWorkerProfileSchemaType = z.infer<
   typeof updateWorkerProfileSchema
 >;
 
-/**
- * Schema validation cho update basic profile (password, avatar, full_name, phone)
- */
 export const updateBasicProfileSchema = z
   .object({
     password: z
       .string()
-      .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, AUTH_MESSAGES.PASSWORD_MIN_LENGTH)
+      .min(
+        VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
+        AUTH_MESSAGES.PASSWORD_MIN_LENGTH
+      )
       .optional(),
     old_password: z.string().optional(),
     avatar: z
-      .union([
-        z.string().url("Avatar must be a valid URL"),
-        z.null(),
-      ])
+      .union([z.string().url("Avatar must be a valid URL"), z.null()])
       .optional(),
     full_name: z
       .union([
-        z.string().trim().min(1, "Full name cannot be empty").max(VALIDATION_LIMITS.FULL_NAME_MAX_LENGTH, `Full name must not exceed ${VALIDATION_LIMITS.FULL_NAME_MAX_LENGTH} characters`),
+        z
+          .string()
+          .trim()
+          .min(1, "Full name cannot be empty")
+          .max(
+            VALIDATION_LIMITS.FULL_NAME_MAX_LENGTH,
+            `Full name must not exceed ${VALIDATION_LIMITS.FULL_NAME_MAX_LENGTH} characters`
+          ),
         z.null(),
       ])
       .optional(),
@@ -115,7 +111,10 @@ export const updateBasicProfileSchema = z
           .string()
           .trim()
           .regex(/^[0-9+\-\s()]+$/, "Phone number format is invalid")
-          .max(VALIDATION_LIMITS.PHONE_MAX_LENGTH, `Phone number must not exceed ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} characters`),
+          .max(
+            VALIDATION_LIMITS.PHONE_MAX_LENGTH,
+            `Phone number must not exceed ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} characters`
+          ),
         z.null(),
       ])
       .optional(),
@@ -149,4 +148,3 @@ export const updateBasicProfileSchema = z
 export type UpdateBasicProfileSchemaType = z.infer<
   typeof updateBasicProfileSchema
 >;
-

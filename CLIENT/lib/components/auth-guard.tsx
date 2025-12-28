@@ -11,33 +11,27 @@ interface AuthGuardProps {
   requireAuth?: boolean;
 }
 
-/**
- * AuthGuard Component
- * Bảo vệ routes, tự động redirect nếu chưa đăng nhập
- * Tái sử dụng cho tất cả protected pages
- */
+const DEFAULT_REDIRECT = "/auth/login";
+
 export function AuthGuard({
   children,
-  redirectTo = "/auth/login",
+  redirectTo = DEFAULT_REDIRECT,
   requireAuth = true,
 }: AuthGuardProps) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Đợi zustand persist hydrate xong từ localStorage
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
-  // Redirect nếu chưa đăng nhập (sau khi đã hydrate)
   useEffect(() => {
     if (isHydrated && requireAuth && !isAuthenticated) {
       router.push(redirectTo);
     }
   }, [isHydrated, isAuthenticated, requireAuth, redirectTo, router]);
 
-  // Hiển thị loading khi chưa hydrate hoặc đang check auth
   if (!isHydrated || (requireAuth && !isAuthenticated)) {
     return (
       <div

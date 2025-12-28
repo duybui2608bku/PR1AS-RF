@@ -4,6 +4,14 @@ export enum Gender {
   OTHER = "OTHER",
 }
 
+export enum Experience {
+  LESS_THAN_1 = "LESS_THAN_1",
+  ONE_TO_3 = "ONE_TO_3",
+  THREE_TO_5 = "THREE_TO_5",
+  FIVE_TO_10 = "FIVE_TO_10",
+  MORE_THAN_10 = "MORE_THAN_10",
+}
+
 export interface WorkerProfile {
   date_of_birth?: string;
   gender: Gender;
@@ -15,6 +23,8 @@ export interface WorkerProfile {
   quote?: string;
   introduction?: string;
   gallery_urls: string[];
+  experience?: Experience;
+  title?: string;
   coords?: {
     latitude: number | null;
     longitude: number | null;
@@ -32,6 +42,8 @@ export interface WorkerProfileUpdateInput {
   quote?: string;
   introduction?: string;
   gallery_urls?: string[];
+  experience?: Experience;
+  title?: string;
   coords?: {
     latitude: number | null;
     longitude: number | null;

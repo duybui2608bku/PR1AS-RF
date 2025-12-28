@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/**
- * User Interface
- */
+const TOKEN_STORAGE_KEY = "token";
+const REFRESH_TOKEN_STORAGE_KEY = "refreshToken";
+const AUTH_STORAGE_KEY = "auth-storage";
+
 export interface User {
   id: string;
   email: string;
@@ -27,54 +28,51 @@ export interface User {
   [key: string]: unknown;
 }
 
-/**
- * Auth State Interface
- */
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
-/**
- * Auth Actions Interface
- */
 interface AuthActions {
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
-  login: (user: User, token: string) => void;
+  setRefreshToken: (refreshToken: string | null) => void;
+  login: (user: User, token: string, refreshToken: string) => void;
   logout: () => void;
   setLoading: (isLoading: boolean) => void;
 }
 
-/**
- * Auth Store với Zustand
- * Sử dụng persist middleware để lưu vào localStorage
- */
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set) => {
-      // Lắng nghe custom event từ axios interceptor
-      if (typeof window !== "undefined") {
-        window.addEventListener("auth:logout", () => {
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
+        if (typeof window !== "undefined") {
+          window.addEventListener("auth:logout", () => {
+            set({
+              user: null,
+              token: null,
+              refreshToken: null,
+              isAuthenticated: false,
+            });
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
           });
-          localStorage.removeItem("token");
-        });
-      }
+
+          window.addEventListener("auth:token-refreshed", ((event: CustomEvent<{ token: string; refreshToken: string }>) => {
+            const { token, refreshToken } = event.detail;
+            set({ token, refreshToken });
+          }) as EventListener);
+        }
 
       return {
-        // Initial state
         user: null,
         token: null,
+        refreshToken: null,
         isAuthenticated: false,
         isLoading: false,
 
-        // Actions
         setUser: (user) =>
           set({
             user,
@@ -83,25 +81,36 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         setToken: (token) => {
           set({ token });
-          // Lưu token vào localStorage để axios interceptor sử dụng
           if (typeof window !== "undefined") {
             if (token) {
-              localStorage.setItem("token", token);
+              localStorage.setItem(TOKEN_STORAGE_KEY, token);
             } else {
-              localStorage.removeItem("token");
+              localStorage.removeItem(TOKEN_STORAGE_KEY);
             }
           }
         },
 
-        login: (user, token) => {
+        setRefreshToken: (refreshToken) => {
+          set({ refreshToken });
+          if (typeof window !== "undefined") {
+            if (refreshToken) {
+              localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+            } else {
+              localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+            }
+          }
+        },
+
+        login: (user, token, refreshToken) => {
           set({
             user,
             token,
+            refreshToken,
             isAuthenticated: true,
           });
-          // Lưu token vào localStorage
           if (typeof window !== "undefined") {
-            localStorage.setItem("token", token);
+            localStorage.setItem(TOKEN_STORAGE_KEY, token);
+            localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
           }
         },
 
@@ -109,11 +118,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           set({
             user: null,
             token: null,
+            refreshToken: null,
             isAuthenticated: false,
           });
-          // Xóa token khỏi localStorage
           if (typeof window !== "undefined") {
-            localStorage.removeItem("token");
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
           }
         },
 
@@ -121,10 +131,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       };
     },
     {
-      name: "auth-storage", // Tên key trong localStorage
+      name: AUTH_STORAGE_KEY,
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

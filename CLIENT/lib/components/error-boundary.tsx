@@ -16,9 +16,6 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Error Boundary Component - Bắt lỗi React errors
- */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -35,15 +32,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development only
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("ErrorBoundary caught an error:", error, errorInfo);
-    }
-
-    // Có thể gửi error đến error tracking service (Sentry, etc.)
-    // logErrorToService(error, errorInfo);
+  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
   }
 
   handleReset = () => {
@@ -55,12 +44,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
-      // Nếu có custom fallback, sử dụng nó
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // UI mặc định với i18n
       const title = getTranslationSync("errorBoundary.title");
       const subtitle = getTranslationSync("errorBoundary.subtitle");
       const retryText = getTranslationSync("errorBoundary.retry");
@@ -84,9 +71,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
-/**
- * Error Boundary Content Component - Functional component để sử dụng hooks
- */
 interface ErrorBoundaryContentProps {
   title: string;
   subtitle: string;

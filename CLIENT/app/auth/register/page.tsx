@@ -9,7 +9,6 @@ import {
   Card,
   Typography,
   message,
-  Space,
   Divider,
 } from "antd";
 import {
@@ -23,8 +22,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { ThemeToggle } from "@/lib/components/theme-toggle";
-import { LanguageSwitcher } from "@/lib/components/language-switcher";
+import { PasswordStrength, validatePasswordComplexity } from "@/lib/components/password-strength";
 import type { RegisterRequest } from "@/lib/hooks/use-auth";
 
 const { Title, Text } = Typography;
@@ -90,35 +88,14 @@ export default function RegisterPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        flex: 1,
         display: "flex",
-        flexDirection: "column",
-        padding: "20px",
-        background: "var(--ant-color-bg-container)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 20px",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginBottom: 20,
-        }}
-      >
-        <Space>
-          <ThemeToggle />
-          <LanguageSwitcher />
-        </Space>
-      </div>
-
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Card style={{ width: "100%", maxWidth: 480 }}>
+      <Card style={{ width: "100%", maxWidth: 480 }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
             <Title level={2}>{t("auth.user.registerTitle")}</Title>
@@ -188,6 +165,19 @@ export default function RegisterPage() {
               rules={[
                 { required: true, message: t("auth.password.required") },
                 { min: 8, message: t("auth.password.minLength") },
+                {
+                  validator: (_, value) => {
+                    if (!value) {
+                      return Promise.resolve();
+                    }
+                    if (validatePasswordComplexity(value)) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error(t("auth.password.complexity"))
+                    );
+                  },
+                },
               ]}
               hasFeedback
             >
@@ -196,6 +186,12 @@ export default function RegisterPage() {
                 placeholder={t("auth.password.placeholder")}
                 autoComplete="new-password"
               />
+            </Form.Item>
+            <Form.Item shouldUpdate={(prevValues, currentValues) => prevValues.password !== currentValues.password}>
+              {({ getFieldValue }) => {
+                const password = getFieldValue("password");
+                return password ? <PasswordStrength password={password} /> : null;
+              }}
             </Form.Item>
 
             <Form.Item

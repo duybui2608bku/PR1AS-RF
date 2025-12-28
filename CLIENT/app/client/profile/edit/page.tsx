@@ -15,12 +15,7 @@ import {
   Divider,
   Layout,
 } from "antd";
-import {
-  UserOutlined,
-  LockOutlined,
-  PhoneOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, LockOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -42,7 +37,9 @@ function EditProfileContent() {
   const { user, setUser } = useAuthStore();
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    user?.avatar || null
+  );
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["user-profile"],

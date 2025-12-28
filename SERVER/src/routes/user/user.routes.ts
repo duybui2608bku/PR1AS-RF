@@ -13,25 +13,8 @@ const router = Router();
 router.use(authenticate);
 router.use(adminOnly);
 
-/**
- * @route   GET /api/users
- * @desc    Lấy danh sách người dùng với filter & pagination
- * @query   page - Số trang (mặc định: 1)
- * @query   limit - Số lượng items mỗi trang (mặc định: 10, min: 0, max: 100)
- * @query   search - Tìm kiếm theo tên, email, phone
- * @query   role - Lọc theo role
- * @query   status - Lọc theo status
- * @query   startDate - Ngày bắt đầu (YYYY-MM-DD)
- * @query   endDate - Ngày kết thúc (YYYY-MM-DD)
- * @access  Private/Admin
- */
 router.get("/", pagination(), asyncHandler(getUsers.bind(getUsers)));
 
-/**
- * @route   PATCH /api/users/:id/status
- * @desc    Cập nhật trạng thái hoạt động của user
- * @access  Private/Admin
- */
 router.patch(
   "/:id/status",
   ...csrfProtection,

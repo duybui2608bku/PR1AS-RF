@@ -29,9 +29,8 @@ import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
-/**
- * Header component với menu user và nút đăng xuất
- */
+const MOBILE_BREAKPOINT = 768;
+
 export function Header() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -50,7 +49,7 @@ export function Header() {
     if (typeof window === "undefined") return;
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
 
     handleResize();
@@ -71,48 +70,61 @@ export function Header() {
   )?.worker_profile;
   const hasWorkerRole = userRoles.includes("worker");
   const isWorkerActive = lastActiveRole === "worker";
-  const workerButtonLabel = isWorkerActive
-    ? t("header.hireService")
-    : t("header.becomeWorker");
+  const hasWorkerProfile = workerProfile && workerProfile !== null;
 
-  /**
-   * Xử lý chuyển đổi role hoặc điều hướng đến trang worker
-   */
+  // Determine button label based on user state
+  let workerButtonLabel: string;
+  if (isWorkerActive) {
+    workerButtonLabel = t("header.hireService");
+  } else if (hasWorkerProfile) {
+    workerButtonLabel = t("header.myServices");
+  } else {
+    workerButtonLabel = t("header.becomeWorker");
+  }
+
   const handleSwitchRole = async () => {
     if (!isAuthenticated || !user) {
       handleOpenLogin();
       return;
     }
 
-    // Nếu đang là worker, chuyển về client
+    // If currently active as worker, switch to client role and navigate to client routes
     if (isWorkerActive) {
       try {
         await switchRoleMutation.mutateAsync("client");
+        // Navigate to client routes (home page)
+        router.push("/");
       } catch (error) {
         handleError(error);
       }
       return;
     }
 
-    // Nếu đang là client và chưa có worker role
+    // If user doesn't have worker role yet
     if (!hasWorkerRole) {
-      // Kiểm tra worker_profile
       if (!workerProfile || workerProfile === null) {
-        // Chưa có worker profile → điều hướng đến trang setup
+        // No profile setup, go to setup page
         router.push("/worker/setup");
       } else {
-        // Đã có worker profile → điều hướng đến trang worker
+        // Has profile but no role, navigate to worker routes
         router.push("/worker");
       }
       return;
     }
 
-    // Nếu đã có worker role nhưng chưa active → chuyển sang worker
+    // If user has worker role but not active, and has profile setup
     if (hasWorkerRole && !isWorkerActive) {
-      try {
-        await switchRoleMutation.mutateAsync("worker");
-      } catch (error) {
-        handleError(error);
+      if (hasWorkerProfile) {
+        // Has profile setup, navigate to worker routes and switch role
+        try {
+          await switchRoleMutation.mutateAsync("worker");
+          router.push("/worker");
+        } catch (error) {
+          handleError(error);
+        }
+      } else {
+        // Has role but no profile, go to setup
+        router.push("/worker/setup");
       }
     }
   };
@@ -122,9 +134,6 @@ export function Header() {
     return displayName.charAt(0).toUpperCase();
   };
 
-  /**
-   * Xử lý đăng xuất
-   */
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
@@ -133,32 +142,23 @@ export function Header() {
     }
   };
 
-  /**
-   * Mở modal đăng nhập
-   */
   const handleOpenLogin = () => {
     setAuthModalTab("login");
     setAuthModalOpen(true);
   };
 
-  /**
-   * Mở modal đăng ký
-   */
   const handleOpenRegister = () => {
     setAuthModalTab("register");
     setAuthModalOpen(true);
   };
 
-  /**
-   * Menu items cho user dropdown
-   */
   const userMenuItems: MenuProps["items"] = [
     {
       key: "profile",
       icon: <UserOutlined />,
       label: t("dashboard.header.profile"),
       onClick: () => {
-        // Navigate to profile page if needed
+        router.push("/client/profile");
       },
     },
     {
@@ -184,7 +184,46 @@ export function Header() {
     </Button>
   );
 
-  const authSection =
+  const authSectionDesktop =
+    isAuthenticated && user ? (
+      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 0",
+            cursor: "pointer",
+          }}
+        >
+          <Avatar
+            size="small"
+            src={user.avatar || undefined}
+            icon={
+              !user.avatar && !getUserInitial() ? <UserOutlined /> : undefined
+            }
+            style={{
+              backgroundColor: !user.avatar
+                ? "var(--ant-color-primary)"
+                : undefined,
+            }}
+          >
+            {!user.avatar && getUserInitial()}
+          </Avatar>
+        </div>
+      </Dropdown>
+    ) : (
+      <Space size="small">
+        <Button type="text" onClick={handleOpenLogin}>
+          {t("auth.login")}
+        </Button>
+        <Button type="primary" onClick={handleOpenRegister}>
+          {t("auth.user.register")}
+        </Button>
+      </Space>
+    );
+
+  const authSectionMobile =
     isAuthenticated && user ? (
       <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
         <div
@@ -231,12 +270,10 @@ export function Header() {
       }}
     >
       <Space direction="vertical" size="small" style={{ width: "100%" }}>
-        {/* Worker / Thuê dịch vụ */}
         <div style={{ width: "100%" }}>{workerButton}</div>
 
         <Divider style={{ margin: "8px 0" }} />
 
-        {/* Tiền tệ */}
         <div style={{ width: "100%" }}>
           <div
             style={{
@@ -264,7 +301,6 @@ export function Header() {
           </Select>
         </div>
 
-        {/* Ngôn ngữ */}
         <div style={{ width: "100%" }}>
           <div
             style={{
@@ -281,7 +317,6 @@ export function Header() {
           <LanguageSwitcher />
         </div>
 
-        {/* Theme */}
         <div
           style={{
             width: "100%",
@@ -307,8 +342,7 @@ export function Header() {
 
         <Divider style={{ margin: "8px 0" }} />
 
-        {/* Auth */}
-        <div style={{ width: "100%" }}>{authSection}</div>
+        <div style={{ width: "100%" }}>{authSectionMobile}</div>
       </Space>
     </div>
   );
@@ -327,7 +361,6 @@ export function Header() {
         borderBottom: "1px solid var(--ant-color-border-secondary)",
       }}
     >
-      {/* Left side: Logo/Menu */}
       <Link
         href="/"
         style={{
@@ -340,15 +373,13 @@ export function Header() {
         {t("home.logo")}
       </Link>
 
-      {/* Middle: Empty space */}
       <div style={{ flex: 1 }} />
 
-      {/* Right side: Worker button, Settings popover, Auth buttons */}
       {!isMobile && (
         <Space size="middle">
           {workerButton}
           <SettingsPopover />
-          {authSection}
+          {authSectionDesktop}
         </Space>
       )}
 

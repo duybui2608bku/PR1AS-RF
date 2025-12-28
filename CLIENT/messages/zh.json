@@ -61,6 +61,15 @@
     "unknown": {
       "title": "未知错误",
       "message": "发生未知错误。请重试。"
+    },
+    "csrf": {
+      "tokenMissing": "CSRF令牌缺失。请重新加载页面并重试。",
+      "tokenInvalid": "CSRF令牌无效。请重新加载页面并重试。",
+      "description": "如果错误仍然存在，请重新加载页面并确保在浏览器中启用了cookie。"
+    },
+    "rateLimit": {
+      "retryAfterSeconds": "请在{seconds}秒后重试。",
+      "retryAfterMinutes": "请在{minutes}分钟后重试。"
     }
   },
   "notifications": {
@@ -82,7 +91,8 @@
       "label": "密码",
       "placeholder": "输入您的密码",
       "required": "请输入您的密码！",
-      "minLength": "密码必须至少8个字符！"
+      "minLength": "密码必须至少8个字符！",
+      "complexity": "密码必须至少8个字符，包括大写字母、小写字母、数字和特殊字符"
     },
     "login": "登录",
     "loginSuccess": "登录成功！",
@@ -114,6 +124,28 @@
         "placeholder": "请再次输入密码",
         "required": "请确认密码！",
         "notMatch": "确认密码不匹配！"
+      },
+      "forgotPassword": {
+        "link": "忘记密码？",
+        "title": "忘记密码",
+        "subtitle": "输入您的邮箱以接收密码重置链接",
+        "resetTitle": "重置密码",
+        "resetSubtitle": "输入您的令牌和新密码",
+        "sendResetLink": "发送重置链接",
+        "resetPassword": "重置密码",
+        "emailSent": "密码重置邮件已发送！",
+        "emailSentTitle": "邮件已发送",
+        "emailSentMessage": "请检查您的邮箱以接收密码重置链接",
+        "checkEmail": "请检查您的邮箱以接收密码重置链接",
+        "resetSuccess": "密码已成功重置！",
+        "redirecting": "正在跳转到登录页面...",
+        "backToLogin": "返回登录",
+        "noToken": "未找到令牌。请使用邮件中的链接。",
+        "resetToken": {
+          "label": "重置令牌",
+          "placeholder": "输入邮件中的令牌",
+          "required": "请输入重置令牌！"
+        }
       }
     }
   },
@@ -144,6 +176,7 @@
   "header": {
     "becomeWorker": "成为工作者",
     "hireService": "雇佣服务",
+    "myServices": "我的服务",
     "currency": "货币",
     "language": "语言",
     "theme": "主题"
@@ -295,6 +328,21 @@
     }
   },
   "profile": {
+    "title": "个人信息",
+    "edit": "编辑",
+    "editProfile": "编辑资料",
+    "info": {
+      "title": "账户详情",
+      "fullName": "全名",
+      "email": "电子邮件",
+      "phone": "电话号码",
+      "status": "状态",
+      "verified": "已验证",
+      "unverified": "未验证",
+      "notSet": "未设置",
+      "lastActiveRole": "最后活动角色",
+      "userId": "用户ID"
+    },
     "edit": {
       "title": "编辑个人资料",
       "fullName": {

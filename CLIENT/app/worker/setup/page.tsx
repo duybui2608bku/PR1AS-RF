@@ -46,14 +46,15 @@ export default function WorkerSetupPage() {
     },
   });
 
+  const REDIRECT_DELAY_MS = 1500;
+
   const servicesMutation = useApiMutation("/worker/services", "POST", {
     onSuccess: () => {
       message.success(t("worker.setup.success.setupComplete"));
       setStepStatus(["finish", "finish"]);
-      // Redirect to worker dashboard or profile page
       setTimeout(() => {
         router.push("/");
-      }, 1500);
+      }, REDIRECT_DELAY_MS);
     },
     onError: (error: any) => {
       message.error(
@@ -96,12 +97,12 @@ export default function WorkerSetupPage() {
     },
   ];
 
-  // Render Step 1 with full layout
   if (currentStep === 0) {
     return (
       <StepLayout stepTitle={t("worker.setup.step1.title")}>
         <Step1BasicInfo
           onNext={handleStep1Next}
+          isPending={profileMutation.isPending}
           initialData={
             step1Data
               ? {
@@ -139,11 +140,14 @@ export default function WorkerSetupPage() {
     );
   }
 
-  // Render Step 2 with full layout
   if (currentStep === 1) {
     return (
       <StepLayout stepTitle={t("worker.setup.step2.title")}>
-        <Step2Services onNext={handleStep2Next} onBack={handleStep2Back} />
+        <Step2Services 
+          onNext={handleStep2Next} 
+          onBack={handleStep2Back}
+          isPending={servicesMutation.isPending}
+        />
 
         {/* Loading Overlay */}
         {servicesMutation.isPending && (

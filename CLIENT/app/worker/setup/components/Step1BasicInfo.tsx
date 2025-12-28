@@ -32,7 +32,7 @@ import type {
   WorkerProfileUpdateInput,
   Gender,
 } from "@/lib/types/worker";
-import { STAR_SIGNS } from "@/lib/types/worker";
+import { STAR_SIGNS, Experience } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { uploadImage } from "@/lib/utils/upload";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
@@ -43,13 +43,14 @@ const { Title, Text } = Typography;
 interface Step1BasicInfoProps {
   onNext: (data: WorkerProfileUpdateInput) => void;
   initialData?: WorkerProfile | null;
+  isPending?: boolean;
 }
 
-// Sub-step types
 type SubStep =
   | "location"
   | "birthday-gender"
   | "height-weight"
+  | "experience-title"
   | "star-sign"
   | "lifestyle"
   | "hobbies"
@@ -61,6 +62,7 @@ const SUB_STEPS: SubStep[] = [
   "location",
   "birthday-gender",
   "height-weight",
+  "experience-title",
   "star-sign",
   "lifestyle",
   "hobbies",
@@ -72,19 +74,21 @@ const SUB_STEPS: SubStep[] = [
 export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   onNext,
   initialData,
+  isPending = false,
 }) => {
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
   const [form] = Form.useForm();
   const [currentSubStep, setCurrentSubStep] = useState<number>(0);
 
-  // State để lưu dữ liệu từng sub-step
   const [stepData, setStepData] = useState<Partial<WorkerProfileUpdateInput>>({
     coords: { latitude: null, longitude: null },
     date_of_birth: undefined,
     gender: undefined,
     height_cm: undefined,
     weight_kg: undefined,
+    experience: undefined,
+    title: undefined,
     star_sign: undefined,
     lifestyle: undefined,
     hobbies: [],
@@ -104,7 +108,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     lng: null,
   });
 
-  // Load existing profile data
   const { data: profileData, isLoading } = useApiQueryData<{
     user: { worker_profile: WorkerProfile | null };
   }>(["worker-profile"], "/auth/me", {
@@ -121,6 +124,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         gender: profile.gender,
         height_cm: profile.height_cm,
         weight_kg: profile.weight_kg,
+        experience: profile.experience,
+        title: profile.title,
         star_sign: profile.star_sign,
         lifestyle: profile.lifestyle,
         quote: profile.quote,
@@ -160,6 +165,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         gender: initialData.gender,
         height_cm: initialData.height_cm,
         weight_kg: initialData.weight_kg,
+        experience: initialData.experience,
+        title: initialData.title,
         star_sign: initialData.star_sign,
         lifestyle: initialData.lifestyle,
         quote: initialData.quote,
@@ -181,7 +188,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     }
   }, [profileData, initialData, form]);
 
-  // Get user location
   const getLocation = () => {
     if (!navigator.geolocation) {
       message.error(t("worker.setup.step1.location.notSupported"));
@@ -236,7 +242,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   const handleUploadChange: UploadProps["onChange"] = async (info) => {
     let newFileList = [...info.fileList];
 
-    // Tìm các file cần upload (có originFileObj và chưa có url)
     const filesToUpload = newFileList.filter(
       (file) =>
         file.originFileObj &&
@@ -246,7 +251,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         file.status !== "done"
     );
 
-    // Đánh dấu các file đang upload
     if (filesToUpload.length > 0) {
       filesToUpload.forEach((file) => {
         file.status = "uploading";
@@ -254,15 +258,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       setFileList([...newFileList]);
     }
 
-    // Upload các file
     const uploadPromises = filesToUpload.map(async (file) => {
       try {
         const imageUrl = await uploadImage(file.originFileObj!);
         file.status = "done";
         file.url = imageUrl;
-        message.success(
-          t("upload.image.success", { fileName: file.name })
-        );
+        message.success(t("upload.image.success", { fileName: file.name }));
       } catch (error) {
         file.status = "error";
         const errorMessage =
@@ -276,13 +277,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       }
     });
 
-    // Chờ tất cả upload hoàn thành
     if (uploadPromises.length > 0) {
       await Promise.all(uploadPromises);
     }
 
-    // Giới hạn tối đa 10 ảnh
-    newFileList = newFileList.slice(-10);
+    const MAX_GALLERY_IMAGES = 10;
+    newFileList = newFileList.slice(-MAX_GALLERY_IMAGES);
     setFileList(newFileList);
     setStepData({
       ...stepData,
@@ -307,14 +307,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       message.error(t("worker.setup.step1.gallery.tooLarge"));
       return false;
     }
-    // Trả về false để tự xử lý upload
     return false;
   };
 
   const handleNext = () => {
     const currentStepType = SUB_STEPS[currentSubStep];
 
-    // Validate và lưu dữ liệu theo từng sub-step
     if (currentStepType === "location") {
       if (!location.lat || !location.lng) {
         message.warning(t("worker.setup.step1.location.required"));
@@ -340,6 +338,13 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         height_cm: values.height_cm,
         weight_kg: values.weight_kg,
       });
+    } else if (currentStepType === "experience-title") {
+      const values = form.getFieldsValue(["experience", "title"]);
+      setStepData({
+        ...stepData,
+        experience: values.experience,
+        title: values.title,
+      });
     } else if (currentStepType === "star-sign") {
       const values = form.getFieldsValue(["star_sign"]);
       setStepData({
@@ -353,7 +358,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         lifestyle: values.lifestyle,
       });
     } else if (currentStepType === "hobbies") {
-      // Hobbies đã được lưu trong state
     } else if (currentStepType === "introduction") {
       const values = form.getFieldsValue(["introduction"]);
       setStepData({
@@ -367,14 +371,11 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         quote: values.quote,
       });
     } else if (currentStepType === "gallery") {
-      // Gallery đã được lưu trong state
     }
 
-    // Chuyển sang sub-step tiếp theo hoặc submit
     if (currentSubStep < SUB_STEPS.length - 1) {
       setCurrentSubStep(currentSubStep + 1);
     } else {
-      // Submit tất cả dữ liệu
       handleSubmit();
     }
   };
@@ -547,6 +548,60 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   max={500}
                   addonAfter="kg"
                   size="large"
+                />
+              </Form.Item>
+            </Form>
+          </Card>
+        );
+
+      case "experience-title":
+        return (
+          <Card
+            style={{
+              maxWidth: "600px",
+              margin: "0 auto",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            }}
+          >
+            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+              {t("worker.setup.step1.experienceTitle.label")}
+            </Title>
+            <Form form={form} layout="vertical">
+              <Form.Item
+                label={t("worker.setup.step1.experience.label")}
+                name="experience"
+              >
+                <Select
+                  placeholder={t("worker.setup.step1.experience.placeholder")}
+                  size="large"
+                  allowClear
+                >
+                  <Select.Option value={Experience.LESS_THAN_1}>
+                    {t("worker.setup.step1.experience.lessThan1")}
+                  </Select.Option>
+                  <Select.Option value={Experience.ONE_TO_3}>
+                    {t("worker.setup.step1.experience.oneTo3")}
+                  </Select.Option>
+                  <Select.Option value={Experience.THREE_TO_5}>
+                    {t("worker.setup.step1.experience.threeTo5")}
+                  </Select.Option>
+                  <Select.Option value={Experience.FIVE_TO_10}>
+                    {t("worker.setup.step1.experience.fiveTo10")}
+                  </Select.Option>
+                  <Select.Option value={Experience.MORE_THAN_10}>
+                    {t("worker.setup.step1.experience.moreThan10")}
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item
+                label={t("worker.setup.step1.title.label")}
+                name="title"
+              >
+                <Input
+                  placeholder={t("worker.setup.step1.title.placeholder")}
+                  size="large"
+                  maxLength={100}
+                  showCount
                 />
               </Form.Item>
             </Form>
@@ -803,6 +858,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         <Button
           type="primary"
           onClick={handleNext}
+          loading={isPending}
           icon={
             currentSubStep === SUB_STEPS.length - 1 ? undefined : (
               <ArrowRightOutlined />

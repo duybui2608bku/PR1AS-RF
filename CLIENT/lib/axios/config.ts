@@ -1,17 +1,11 @@
-import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
-import { showErrorNotification, getErrorType, ErrorType } from "../utils/error-handler";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { showErrorNotification, getErrorType, ErrorType, HttpStatus } from "../utils/error-handler";
 
-/**
- * Extended Axios Request Config với metadata tùy chỉnh
- */
 export interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   skipErrorNotification?: boolean;
   _retry?: boolean;
 }
 
-/**
- * API Response Interface - Khớp với server response format
- */
 export interface ApiResponse<T = unknown> {
   success: boolean;
   statusCode: number;
@@ -25,9 +19,6 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-/**
- * Axios Error với ApiResponse
- */
 export interface ApiError extends AxiosError<ApiResponse> {
   response?: {
     data: ApiResponse;
@@ -38,33 +29,106 @@ export interface ApiError extends AxiosError<ApiResponse> {
   };
 }
 
-/**
- * Base URL cho API
- */
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3052/api";
+const REQUEST_TIMEOUT = 30000;
+const NETWORK_ERROR_THROTTLE_MS = 5000;
 
-/**
- * Tạo axios instance với cấu hình mặc định
- */
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: REQUEST_TIMEOUT,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Để gửi cookies nếu cần
+  withCredentials: true,
 });
 
-/**
- * Request Interceptor - Thêm token vào header
- */
+const CSRF_TOKEN_COOKIE_NAME = "XSRF-TOKEN";
+const CSRF_TOKEN_HEADER = "X-CSRF-Token";
+
+const getCsrfToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  
+  const cookies = document.cookie.split("; ");
+  const csrfCookie = cookies.find((row) => row.startsWith(`${CSRF_TOKEN_COOKIE_NAME}=`));
+  
+  if (csrfCookie) {
+    return csrfCookie.split("=")[1];
+  }
+  
+  return null;
+};
+
+const refreshAccessToken = async (): Promise<boolean> => {
+  if (typeof window === "undefined") return false;
+
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (!refreshToken) {
+    return false;
+  }
+
+  try {
+    const csrfToken = getCsrfToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (csrfToken) {
+      headers[CSRF_TOKEN_HEADER] = csrfToken;
+    }
+
+    const response = await axios.post<ApiResponse<{ token: string; refreshToken: string }>>(
+      `${API_BASE_URL}/auth/refresh-token`,
+      { refreshToken },
+      {
+        headers,
+        withCredentials: true,
+      }
+    );
+
+    if (response.data.success && response.data.data) {
+      const { token, refreshToken: newRefreshToken } = response.data.data;
+      
+      localStorage.setItem("token", token);
+      localStorage.setItem("refreshToken", newRefreshToken);
+      
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("auth:token-refreshed", {
+            detail: { token, refreshToken: newRefreshToken },
+          })
+        );
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+    }
+    return false;
+  }
+};
+
+const HTTP_METHODS_NEEDING_CSRF = ["POST", "PATCH", "PUT", "DELETE"];
+
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Lấy token từ localStorage hoặc cookie
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const method = config.method?.toUpperCase();
+    const needsCsrfToken = method && HTTP_METHODS_NEEDING_CSRF.includes(method);
+    
+    if (needsCsrfToken && config.headers) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        config.headers[CSRF_TOKEN_HEADER] = csrfToken;
+      }
     }
 
     return config;
@@ -74,39 +138,40 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-/**
- * Response Interceptor - Xử lý response và errors
- */
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Server trả về data trong response.data.data hoặc response.data
     return response;
   },
   async (error: ApiError) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-    // Xử lý lỗi 401 Unauthorized - Token hết hạn hoặc không hợp lệ
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === HttpStatus.UNAUTHORIZED && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Xóa token và redirect về trang login
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-        // Dispatch custom event để store có thể lắng nghe và logout
-        window.dispatchEvent(new CustomEvent("auth:logout"));
-        // Có thể thêm logic refresh token ở đây nếu cần
-        window.location.href = "/login";
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        const newToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (newToken && originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        
+        return axiosInstance(originalRequest);
+      } else {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          window.dispatchEvent(new CustomEvent("auth:logout"));
+          window.location.href = "/login";
+        }
       }
 
       return Promise.reject(error);
     }
 
-    // Hiển thị notification cho các lỗi khác (trừ 401 đã xử lý ở trên)
-    // Chỉ hiển thị notification khi có response và không có flag skipErrorNotification
     if (error.response && typeof window !== "undefined") {
       const errorType = getErrorType(error.response.status);
       
-      // Hiển thị notification cho các lỗi cần thông báo
       if (
         errorType !== ErrorType.UNAUTHORIZED &&
         !originalRequest.skipErrorNotification
@@ -114,30 +179,22 @@ axiosInstance.interceptors.response.use(
         showErrorNotification(error);
       }
     } else if (!error.response && typeof window !== "undefined") {
-      // Xử lý network errors (chỉ khi không có flag skip)
-      // Network errors thường xảy ra khi server không chạy hoặc không thể kết nối
       if (!originalRequest.skipErrorNotification) {
-        // Chỉ hiển thị notification một lần để tránh spam
         const errorKey = `network-error-${originalRequest.url}`;
         const lastErrorTime = sessionStorage.getItem(errorKey);
         const now = Date.now();
         
-        // Chỉ hiển thị notification nếu chưa hiển thị trong 5 giây gần đây
-        if (!lastErrorTime || now - parseInt(lastErrorTime) > 5000) {
+        if (!lastErrorTime || now - parseInt(lastErrorTime) > NETWORK_ERROR_THROTTLE_MS) {
           sessionStorage.setItem(errorKey, now.toString());
           showErrorNotification(error);
         }
       }
     }
 
-    // Trả về error với format chuẩn
     return Promise.reject(error);
   }
 );
 
-/**
- * Helper function để extract data từ ApiResponse
- */
 export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
   if (response.data.success && response.data.data) {
     return response.data.data;

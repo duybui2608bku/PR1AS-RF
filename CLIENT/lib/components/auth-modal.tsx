@@ -25,6 +25,7 @@ import { useLogin, useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import type { LoginRequest, RegisterRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { ForgotPasswordModal } from "./forgot-password-modal";
 
 const { Text } = Typography;
 
@@ -34,9 +35,6 @@ interface AuthModalProps {
   defaultTab?: "login" | "register";
 }
 
-/**
- * Modal component cho đăng nhập và đăng ký
- */
 export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProps) {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuthStore();
@@ -45,45 +43,35 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const { handleError } = useErrorHandler();
 
-  // Đóng modal khi đã đăng nhập thành công
   useEffect(() => {
     if (isAuthenticated && user && open) {
       onClose();
-      // Reset forms
       loginForm.resetFields();
       registerForm.resetFields();
     }
   }, [isAuthenticated, user, open, onClose, loginForm, registerForm]);
 
-  // Reset active tab khi modal mở
   useEffect(() => {
     if (open) {
       setActiveTab(defaultTab);
     }
   }, [open, defaultTab]);
 
-  /**
-   * Xử lý đăng nhập
-   */
   const handleLogin = async (values: LoginRequest) => {
     try {
       const response = await loginMutation.mutateAsync(values);
 
       if (response.success && response.data) {
         message.success(t("auth.user.loginSuccess"));
-        // Modal sẽ tự động đóng khi isAuthenticated thay đổi
       }
     } catch (error: unknown) {
-      // Error đã được xử lý bởi axios interceptor và error handler
       handleError(error);
     }
   };
 
-  /**
-   * Xử lý đăng ký
-   */
   const handleRegister = async (values: RegisterRequest & { confirmPassword?: string }) => {
     try {
       const { confirmPassword, ...registerData } = values;
@@ -91,20 +79,14 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
 
       if (response.success && response.data) {
         message.success(t("auth.user.registerSuccess"));
-        // Modal sẽ tự động đóng khi isAuthenticated thay đổi
       }
     } catch (error: unknown) {
-      // Error đã được xử lý bởi axios interceptor và error handler
       handleError(error);
     }
   };
 
-  /**
-   * Xử lý khi chuyển tab
-   */
   const handleTabChange = (key: string) => {
     setActiveTab(key);
-    // Reset forms khi chuyển tab
     if (key === "login") {
       registerForm.resetFields();
     } else {
@@ -112,9 +94,6 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
     }
   };
 
-  /**
-   * Xử lý đóng modal
-   */
   const handleClose = () => {
     loginForm.resetFields();
     registerForm.resetFields();
@@ -162,6 +141,22 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
               placeholder={t("auth.password.placeholder")}
               autoComplete="current-password"
             />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 16 }}>
+            <Button
+              type="link"
+              onClick={() => {
+                const email = loginForm.getFieldValue("email");
+                setForgotPasswordModalOpen(true);
+                if (email) {
+                  // Email sẽ được truyền vào modal
+                }
+              }}
+              style={{ padding: 0 }}
+            >
+              {t("auth.user.forgotPassword.link")}
+            </Button>
           </Form.Item>
 
           <Form.Item>
@@ -331,6 +326,12 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
         onChange={handleTabChange}
         items={tabItems}
         centered
+      />
+
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
+        onClose={() => setForgotPasswordModalOpen(false)}
+        initialEmail={loginForm.getFieldValue("email") || ""}
       />
     </Modal>
   );

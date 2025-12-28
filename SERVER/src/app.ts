@@ -86,4 +86,3 @@ export const createApp = (): express.Application => {
 
   return app;
 };
-

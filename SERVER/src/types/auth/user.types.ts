@@ -17,6 +17,14 @@ export enum gender {
   OTHER = "OTHER",
 }
 
+export enum Experience {
+  LESS_THAN_1 = "LESS_THAN_1",
+  ONE_TO_3 = "ONE_TO_3",
+  THREE_TO_5 = "THREE_TO_5",
+  FIVE_TO_10 = "FIVE_TO_10",
+  MORE_THAN_10 = "MORE_THAN_10",
+}
+
 export interface WorkerProfile {
   date_of_birth?: Date;
   gender: gender;
@@ -28,6 +36,8 @@ export interface WorkerProfile {
   quote?: string;
   introduction?: string;
   gallery_urls: string[];
+  experience?: Experience;
+  title?: string;
 }
 
 export interface ClientProfile {

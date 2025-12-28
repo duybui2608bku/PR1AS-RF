@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import { Result, Button } from "antd";
 import { ReloadOutlined, HomeOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
-/**
- * Global Error Handler cho Next.js
- * Xử lý các lỗi không được bắt bởi ErrorBoundary
- */
 export default function Error({
   error,
   reset,
@@ -19,17 +14,6 @@ export default function Error({
 }) {
   const router = useRouter();
   const { t } = useTranslation();
-
-  useEffect(() => {
-    // Log error to console in development only
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("Global error:", error);
-    }
-
-    // Có thể gửi error đến error tracking service (Sentry, etc.)
-    // logErrorToService(error);
-  }, [error]);
 
   return (
     <div

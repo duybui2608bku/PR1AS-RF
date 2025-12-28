@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, Upload, Spin } from "antd";
 import { CameraOutlined, UserOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
@@ -28,6 +28,10 @@ export function AvatarUpload({
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreviewUrl(value || null);
+  }, [value]);
 
   const handleFileChange = async (file: File) => {
     if (!file.type.startsWith("image/")) {
