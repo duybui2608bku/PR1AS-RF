@@ -38,7 +38,6 @@ export const useCurrencyStore = create<CurrencyState>()(
           set({ currency });
         },
 
-        // Format currency
         formatCurrency: (amount: number) => {
           const currencySymbols: Record<Currency, string> = {
             USD: "$",
@@ -48,10 +47,13 @@ export const useCurrencyStore = create<CurrencyState>()(
             CNY: "¥",
           };
 
-          const symbol = currencySymbols[get().currency];
+          const currency = get().currency;
+          const symbol = currencySymbols[currency];
+          
+          const isVND = currency === "VND";
           const formattedAmount = new Intl.NumberFormat("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            minimumFractionDigits: isVND ? 0 : 2,
+            maximumFractionDigits: isVND ? 0 : 2,
           }).format(amount);
 
           return `${symbol}${formattedAmount}`;

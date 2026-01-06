@@ -15,7 +15,12 @@ import {
   Divider,
 } from "antd";
 import type { MenuProps } from "antd";
-import { UserOutlined, LogoutOutlined, MenuOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  MessageOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth";
@@ -25,6 +30,7 @@ import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { getProfileRoute } from "@/lib/utils/profile-navigation";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -72,7 +78,6 @@ export function Header() {
   const isWorkerActive = lastActiveRole === "worker";
   const hasWorkerProfile = workerProfile && workerProfile !== null;
 
-  // Determine button label based on user state
   let workerButtonLabel: string;
   if (isWorkerActive) {
     workerButtonLabel = t("header.hireService");
@@ -88,11 +93,9 @@ export function Header() {
       return;
     }
 
-    // If currently active as worker, switch to client role and navigate to client routes
     if (isWorkerActive) {
       try {
         await switchRoleMutation.mutateAsync("client");
-        // Navigate to client routes (home page)
         router.push("/");
       } catch (error) {
         handleError(error);
@@ -100,22 +103,17 @@ export function Header() {
       return;
     }
 
-    // If user doesn't have worker role yet
     if (!hasWorkerRole) {
       if (!workerProfile || workerProfile === null) {
-        // No profile setup, go to setup page
         router.push("/worker/setup");
       } else {
-        // Has profile but no role, navigate to worker routes
         router.push("/worker");
       }
       return;
     }
 
-    // If user has worker role but not active, and has profile setup
     if (hasWorkerRole && !isWorkerActive) {
       if (hasWorkerProfile) {
-        // Has profile setup, navigate to worker routes and switch role
         try {
           await switchRoleMutation.mutateAsync("worker");
           router.push("/worker");
@@ -123,7 +121,6 @@ export function Header() {
           handleError(error);
         }
       } else {
-        // Has role but no profile, go to setup
         router.push("/worker/setup");
       }
     }
@@ -158,7 +155,16 @@ export function Header() {
       icon: <UserOutlined />,
       label: t("dashboard.header.profile"),
       onClick: () => {
-        router.push("/client/profile");
+        const profileRoute = getProfileRoute(user);
+        router.push(profileRoute);
+      },
+    },
+    {
+      key: "messages",
+      icon: <MessageOutlined />,
+      label: t("dashboard.header.messages"),
+      onClick: () => {
+        router.push("/chat");
       },
     },
     {

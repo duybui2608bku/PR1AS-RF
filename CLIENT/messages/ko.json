@@ -160,7 +160,8 @@
     "header": {
       "profile": "프로필",
       "settings": "설정",
-      "logout": "로그아웃"
+      "logout": "로그아웃",
+      "messages": "메시지"
     },
     "stats": {
       "totalUsers": "총 사용자",
@@ -408,6 +409,22 @@
           "height": "키 (cm)",
           "weight": "몸무게 (kg)"
         },
+        "experienceTitle": {
+          "label": "경력 및 직함"
+        },
+        "experience": {
+          "label": "경력 연수",
+          "placeholder": "경력 연수를 선택하세요",
+          "lessThan1": "1년 미만",
+          "oneTo3": "1-3년",
+          "threeTo5": "3-5년",
+          "fiveTo10": "5-10년",
+          "moreThan10": "10년 이상"
+        },
+        "professionalTitle": {
+          "label": "전문 직함",
+          "placeholder": "예: 전문 가이드"
+        },
         "starSign": {
           "label": "별자리",
           "placeholder": "별자리 선택",
@@ -520,6 +537,55 @@
       "loading": {
         "savingProfile": "정보 저장 중...",
         "savingServices": "서비스 저장 중..."
+      }
+    },
+    "detail": {
+      "loading": "정보를 불러오는 중...",
+      "error": {
+        "title": "오류",
+        "message": "워커 정보를 불러올 수 없습니다. 나중에 다시 시도해 주세요."
+      },
+      "noName": "이름 없음",
+      "rating": {
+        "reviews": "리뷰"
+      },
+      "gender": {
+        "male": "남성",
+        "female": "여성",
+        "other": "기타"
+      },
+      "experience": {
+        "lessThan1": "1년 미만",
+        "oneTo3": "1-3년",
+        "threeTo5": "3-5년",
+        "fiveTo10": "5-10년",
+        "moreThan10": "10년 이상",
+        "noInfo": "정보 없음"
+      },
+      "introduction": {
+        "showMore": "더 보기",
+        "showLess": "접기"
+      },
+      "info": {
+        "age": "나이",
+        "years": "세",
+        "height": "키",
+        "weight": "몸무게",
+        "zodiac": "별자리"
+      },
+      "lifestyle": "라이프스타일",
+      "quote": "명언",
+      "reviews": {
+        "title": "리뷰 및 피드백"
+      },
+      "services": {
+        "title": "서비스"
+      },
+      "hireNow": "지금 고용하기",
+      "message": "메시지",
+      "selectDate": "날짜 선택",
+      "services": {
+        "noServices": "서비스 없음"
       }
     }
   },
@@ -779,6 +845,82 @@
         "address": "주소: [회사 주소]"
       },
       "effectiveDate": "이 약관은 다음 날짜부터 유효합니다"
+    }
+  },
+  "chat": {
+    "inputPlaceholder": "메시지 입력...",
+    "noMessages": "메시지가 없습니다",
+    "selectConversation": "대화를 선택하여 채팅을 시작하세요",
+    "typing": "입력 중...",
+    "unknownUser": "알 수 없는 사용자",
+    "reply": "답장",
+    "delete": "삭제",
+    "attachImage": "이미지",
+    "attachFile": "파일",
+    "attachVideo": "비디오",
+    "attachList": "목록",
+    "comingSoon": "곧 출시 예정",
+    "imageSentSuccess": "이미지 전송 성공",
+    "sentImage": "이미지 1개 전송됨",
+    "conversations": "대화",
+    "noConversations": "대화가 없습니다",
+    "errors": {
+      "noConversation": "대화가 선택되지 않았습니다",
+      "sendFailed": "메시지 전송 실패",
+      "deleteFailed": "메시지 삭제 실패",
+      "invalidImageFile": "유효한 이미지 파일을 선택하세요",
+      "imageUploadFailed": "이미지 업로드 실패"
+    }
+  },
+  "wallet": {
+    "title": "지갑",
+    "balance": "잔액",
+    "deposit": {
+      "title": "입금",
+      "subtitle": "계정에 돈을 입금하세요",
+      "amount": {
+        "label": "입금 금액",
+        "placeholder": "금액 입력",
+        "min": "최소 금액은 {{amount}} VND입니다",
+        "max": "최대 금액은 {{amount}} VND입니다",
+        "required": "금액을 입력하세요",
+        "invalid": "유효하지 않은 금액"
+      },
+      "presets": "빠른 금액 선택",
+      "submit": "입금",
+      "processing": "처리 중...",
+      "success": "입금 요청이 성공적으로 생성되었습니다",
+      "error": "입금 요청 생성 실패",
+      "redirecting": "결제 게이트웨이로 리디렉션 중...",
+      "callback": {
+        "verifying": "결제 확인 중...",
+        "pleaseWait": "결제를 확인하는 동안 잠시 기다려 주세요",
+        "success": "결제 성공",
+        "successMessage": "입금이 성공적으로 처리되어 지갑에 추가되었습니다",
+        "failed": "결제 확인 실패",
+        "error": "결제 확인 실패",
+        "invalidParameters": "유효하지 않은 콜백 매개변수",
+        "backToDeposit": "입금으로 돌아가기"
+      }
+    },
+    "transactions": {
+      "title": "거래 내역",
+      "noTransactions": "거래 내역이 없습니다",
+      "type": {
+        "deposit": "입금",
+        "withdraw": "출금",
+        "payment": "결제",
+        "refund": "환불"
+      },
+      "status": {
+        "pending": "대기 중",
+        "success": "성공",
+        "failed": "실패",
+        "cancelled": "취소됨"
+      },
+      "amount": "금액",
+      "date": "날짜",
+      "description": "설명"
     }
   }
 }

@@ -160,7 +160,8 @@
     "header": {
       "profile": "Profile",
       "settings": "Settings",
-      "logout": "Logout"
+      "logout": "Logout",
+      "messages": "Messages"
     },
     "stats": {
       "totalUsers": "Total Users",
@@ -423,7 +424,7 @@
           "fiveTo10": "5-10 years",
           "moreThan10": "More than 10 years"
         },
-        "title": {
+        "professionalTitle": {
           "label": "Professional Title",
           "placeholder": "e.g., Professional Guide"
         },
@@ -543,6 +544,55 @@
       "loading": {
         "savingProfile": "Saving information...",
         "savingServices": "Saving services..."
+      }
+    },
+    "detail": {
+      "loading": "Loading information...",
+      "error": {
+        "title": "Error",
+        "message": "Unable to load worker information. Please try again later."
+      },
+      "noName": "No name",
+      "rating": {
+        "reviews": "reviews"
+      },
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      },
+      "experience": {
+        "lessThan1": "< 1 year",
+        "oneTo3": "1-3 years",
+        "threeTo5": "3-5 years",
+        "fiveTo10": "5-10 years",
+        "moreThan10": "> 10 years",
+        "noInfo": "No information"
+      },
+      "introduction": {
+        "showMore": "Show more",
+        "showLess": "Show less"
+      },
+      "info": {
+        "age": "Age",
+        "years": "years",
+        "height": "Height",
+        "weight": "Weight",
+        "zodiac": "Zodiac"
+      },
+      "lifestyle": "Lifestyle",
+      "quote": "Quote",
+      "reviews": {
+        "title": "Reviews & Feedback"
+      },
+      "services": {
+        "title": "Services"
+      },
+      "hireNow": "Hire Now",
+      "message": "Message",
+      "selectDate": "Select Date",
+      "services": {
+        "noServices": "No services available"
       }
     }
   },
@@ -802,6 +852,82 @@
         "address": "Address: [Company Address]"
       },
       "effectiveDate": "These terms are effective from"
+    }
+  },
+  "chat": {
+    "inputPlaceholder": "Type a message...",
+    "noMessages": "No messages yet",
+    "selectConversation": "Select a conversation to start chatting",
+    "typing": "Typing...",
+    "unknownUser": "Unknown User",
+    "reply": "Reply",
+    "delete": "Delete",
+    "attachImage": "Image",
+    "attachFile": "File",
+    "attachVideo": "Video",
+    "attachList": "List",
+    "comingSoon": "Coming soon",
+    "imageSentSuccess": "Image sent successfully",
+    "sentImage": "Sent an image",
+    "conversations": "Conversations",
+    "noConversations": "No conversations",
+    "errors": {
+      "noConversation": "No conversation selected",
+      "sendFailed": "Failed to send message",
+      "deleteFailed": "Failed to delete message",
+      "invalidImageFile": "Please select a valid image file",
+      "imageUploadFailed": "Failed to upload image"
+    }
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "deposit": {
+      "title": "Deposit",
+      "subtitle": "Deposit money into your account",
+      "amount": {
+        "label": "Deposit amount",
+        "placeholder": "Enter amount",
+        "min": "Minimum amount is {{amount}} VND",
+        "max": "Maximum amount is {{amount}} VND",
+        "required": "Please enter amount",
+        "invalid": "Invalid amount"
+      },
+      "presets": "Quick amount selection",
+      "submit": "Deposit",
+      "processing": "Processing...",
+      "success": "Deposit request created successfully",
+      "error": "Failed to create deposit request",
+      "redirecting": "Redirecting to payment gateway...",
+      "callback": {
+        "verifying": "Verifying payment...",
+        "pleaseWait": "Please wait while we verify your payment",
+        "success": "Payment Successful",
+        "successMessage": "Your deposit has been successfully processed and added to your wallet",
+        "failed": "Payment Verification Failed",
+        "error": "Payment verification failed",
+        "invalidParameters": "Invalid callback parameters",
+        "backToDeposit": "Back to Deposit"
+      }
+    },
+    "transactions": {
+      "title": "Transaction History",
+      "noTransactions": "No transactions yet",
+      "type": {
+        "deposit": "Deposit",
+        "withdraw": "Withdraw",
+        "payment": "Payment",
+        "refund": "Refund"
+      },
+      "status": {
+        "pending": "Pending",
+        "success": "Success",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "amount": "Amount",
+      "date": "Date",
+      "description": "Description"
     }
   }
 }

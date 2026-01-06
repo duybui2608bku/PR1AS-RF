@@ -8,6 +8,13 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get(
+  "/",
+  asyncHandler(
+    workerServiceController.getWorkerServices.bind(workerServiceController)
+  )
+);
+
 router.post(
   "/",
   ...csrfProtection,

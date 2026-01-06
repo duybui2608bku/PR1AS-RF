@@ -16,3 +16,4 @@ export {
   generateCsrfToken,
 } from "./csrf";
 export { sanitizeInput, validateContentSecurity } from "./xss";
+export { validateObjectId } from "./validateObjectId";

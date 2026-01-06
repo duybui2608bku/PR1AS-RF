@@ -27,6 +27,7 @@ import { AvatarUpload } from "@/app/components/avatar-upload";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
+import { AppRoute } from "@/lib/constants/routes";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -62,7 +63,7 @@ function EditProfileContent() {
 
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       message.success(t("profile.edit.success"));
-      router.push("/client/profile");
+      router.push(AppRoute.CLIENT_PROFILE);
     },
     onError: (error: any) => {
       const errorMessage =
@@ -271,7 +272,9 @@ function EditProfileContent() {
                       >
                         {t("profile.edit.update")}
                       </Button>
-                      <Button onClick={() => router.push("/client/profile")}>
+                      <Button
+                        onClick={() => router.push(AppRoute.CLIENT_PROFILE)}
+                      >
                         {t("profile.edit.cancel")}
                       </Button>
                     </Space>

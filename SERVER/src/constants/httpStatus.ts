@@ -1,6 +1,3 @@
-/**
- * HTTP Status Codes Constants
- */
 export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
@@ -16,9 +13,6 @@ export const HTTP_STATUS = {
   SERVICE_UNAVAILABLE: 503,
 } as const;
 
-/**
- * Error Messages Constants
- */
 export const ERROR_MESSAGES = {
   INTERNAL_SERVER_ERROR: "Internal Server Error",
   NOT_FOUND: "Route not found",

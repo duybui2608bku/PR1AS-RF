@@ -4,6 +4,8 @@ import { AppError } from "../utils/AppError";
 import { ErrorCode } from "../types/common/error.types";
 import { config } from "../config";
 import { TIME_IN_MS, TOKEN_EXPIRY } from "../constants/time";
+import { CSRF_CONSTANTS } from "../constants/csrf";
+import { CSRF_MESSAGES } from "../constants/messages";
 
 export const generateCsrfToken = (): string => {
   return crypto.randomBytes(32).toString("hex");
@@ -17,15 +19,15 @@ export const csrfToken = (
   if (req.method === "GET") {
     const token = generateCsrfToken();
 
-    res.cookie("XSRF-TOKEN", token, {
+    res.cookie(CSRF_CONSTANTS.COOKIE_NAME, token, {
       httpOnly: false,
       secure: config.nodeEnv === "production",
-      sameSite: "strict",
+      sameSite: config.nodeEnv === "production" ? "strict" : "lax",
       maxAge: TOKEN_EXPIRY.CSRF_TOKEN_HOURS * TIME_IN_MS.HOUR,
       path: "/",
     });
 
-    res.setHeader("X-CSRF-Token", token);
+    res.setHeader(CSRF_CONSTANTS.HEADER_NAME, token);
   }
 
   next();
@@ -39,16 +41,26 @@ export const validateCsrf = (
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
   }
+  if (config.nodeEnv === "development") {
+    const headerToken =
+      req.headers[CSRF_CONSTANTS.HEADER_NAME_LOWER] ||
+      req.headers[CSRF_CONSTANTS.HEADER_NAME_XSRF];
+    const cookieToken = req.cookies?.[CSRF_CONSTANTS.COOKIE_NAME];
+    if (!headerToken && !cookieToken) {
+      return next();
+    }
+  }
 
   const headerToken =
-    req.headers["x-csrf-token"] || req.headers["x-xsrf-token"];
+    req.headers[CSRF_CONSTANTS.HEADER_NAME_LOWER] ||
+    req.headers[CSRF_CONSTANTS.HEADER_NAME_XSRF];
 
-  const cookieToken = req.cookies?.["XSRF-TOKEN"];
+  const cookieToken = req.cookies?.[CSRF_CONSTANTS.COOKIE_NAME];
 
   if (!headerToken || !cookieToken) {
     return next(
       AppError.forbidden(
-        "CSRF token missing",
+        CSRF_MESSAGES.TOKEN_MISSING,
         ErrorCode.CSRF_TOKEN_MISSING
       )
     );
@@ -57,7 +69,7 @@ export const validateCsrf = (
   if (headerToken !== cookieToken) {
     return next(
       AppError.forbidden(
-        "CSRF token mismatch",
+        CSRF_MESSAGES.TOKEN_MISMATCH,
         ErrorCode.CSRF_TOKEN_INVALID
       )
     );
@@ -101,7 +113,7 @@ export const validateOrigin = (
     if (!isAllowed) {
       return next(
         AppError.forbidden(
-          "Invalid origin",
+          CSRF_MESSAGES.INVALID_ORIGIN,
           ErrorCode.INVALID_ORIGIN
         )
       );
@@ -122,7 +134,7 @@ export const validateOrigin = (
       if (!isAllowed) {
         return next(
           AppError.forbidden(
-            "Invalid referer",
+            CSRF_MESSAGES.INVALID_REFERER,
             ErrorCode.INVALID_REFERER
           )
         );
@@ -130,7 +142,7 @@ export const validateOrigin = (
     } catch {
       return next(
         AppError.forbidden(
-          "Invalid referer format",
+          CSRF_MESSAGES.INVALID_REFERER_FORMAT,
           ErrorCode.INVALID_REFERER
         )
       );
@@ -143,10 +155,7 @@ export const validateOrigin = (
 
   if (config.nodeEnv === "production" && !origin && !referer) {
     return next(
-      AppError.forbidden(
-        "Origin or Referer header required",
-        ErrorCode.MISSING_ORIGIN
-      )
+      AppError.forbidden(CSRF_MESSAGES.MISSING_ORIGIN, ErrorCode.MISSING_ORIGIN)
     );
   }
 
@@ -154,4 +163,3 @@ export const validateOrigin = (
 };
 
 export const csrfProtection = [validateOrigin, validateCsrf];
-

@@ -1,0 +1,21 @@
+export enum SocketEvent {
+  CONNECTED = "connected",
+  DISCONNECT = "disconnect",
+  ERROR = "error",
+  JOIN_CONVERSATION = "join_conversation",
+  LEAVE_CONVERSATION = "leave_conversation",
+  CONVERSATION_JOINED = "conversation_joined",
+  CONVERSATION_LEFT = "conversation_left",
+  TYPING = "typing",
+  USER_TYPING = "user_typing",
+  MARK_READ = "mark_read",
+  READ_CONFIRMED = "read_confirmed",
+  NEW_MESSAGE = "new_message",
+  NEW_CONVERSATION = "new_conversation",
+  CONVERSATION_UPDATED = "conversation_updated",
+  CONVERSATION_DELETED = "conversation_deleted",
+  MESSAGE_DELETED = "message_deleted",
+  MESSAGE_READ = "message_read",
+  MESSAGE_UPDATED = "message_updated",
+}
+

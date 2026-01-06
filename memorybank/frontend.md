@@ -340,6 +340,40 @@ interface ApiResponse<T> {
 - Theme switching button
 - Light/Dark mode toggle
 
+## Wallet Integration
+
+### Wallet API (`lib/api/wallet.api.ts`)
+- Deposit với VNPay
+- Balance management
+- Transaction history
+- Payment callback handling
+
+### Wallet Pages
+- Deposit page với preset amounts
+- Payment callback page
+- Balance display
+
+Xem chi tiết: `memorybank/wallet.md`
+
+## Chat/Messaging Integration
+
+### Socket.IO Client (`lib/socket/`)
+- Real-time messaging
+- Event handling
+- Connection management
+
+### Chat API (`lib/api/chat.api.ts`)
+- Send/receive messages
+- Conversations management
+- Read receipts
+- Unread count
+
+### Chat Pages
+- Chat interface với conversation list
+- Message view với real-time updates
+
+Xem chi tiết: `memorybank/chat.md`
+
 ## Environment Variables
 
 ### Required Variables
@@ -363,6 +397,9 @@ NEXT_PUBLIC_DEFAULT_LOCALE=vi
 - `/terms` - Terms of service page
 - `/client/profile` - Client profile page
 - `/client/profile/edit` - Edit client profile
+- `/client/wallet/deposit` - Deposit page với VNPay integration
+- `/wallet/deposit/callback` - Payment callback page
+- `/chat` - Chat page với conversation list và message view
 - `/worker/setup` - Worker profile setup (multi-step)
   - Step 1: Basic information (location, personal details, gallery)
   - Step 2: Services selection và pricing

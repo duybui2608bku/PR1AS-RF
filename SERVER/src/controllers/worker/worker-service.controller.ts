@@ -75,6 +75,12 @@ class WorkerServiceController {
 
     R.noContent(res);
   }
+
+  async getWorkerServices(req: AuthRequest, res: Response): Promise<void> {
+    const workerId = this.getAuthenticatedWorkerId(req);
+    const services = await workerServiceService.getWorkerServices(workerId);
+    R.success(res, { services }, COMMON_MESSAGES.SUCCESS);
+  }
 }
 
 export const workerServiceController = new WorkerServiceController();

@@ -8,4 +8,3 @@ export const EMAIL_SUBJECTS = {
   PASSWORD_RESET: "Password Reset Request",
   EMAIL_VERIFICATION: "Email Verification",
 } as const;
-

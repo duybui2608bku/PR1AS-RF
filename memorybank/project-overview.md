@@ -277,16 +277,48 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - Comprehensive translations cho tất cả features
 - Nested JSON structure cho organized translations
 
+## Modules & Features
+
+### Wallet System
+- Deposit với VNPay integration
+- Transaction history tracking
+- Balance management
+- Payment gateway callbacks
+- Xem chi tiết: `memorybank/wallet.md`
+
+### Chat/Messaging System
+- Real-time messaging với Socket.IO
+- Conversations management
+- Read receipts
+- Unread count tracking
+- Message history với pagination
+- Xem chi tiết: `memorybank/chat.md`
+
+### Worker Services
+- Worker profile setup (multi-step)
+- Service management
+- Pricing configuration
+- Gallery management
+
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control (ADMIN, WORKER, CLIENT)
+- Refresh token mechanism
+- Protected routes
+
 ## Future Enhancements
 
 - [x] Real-time notifications với Socket.IO (configured)
+- [x] Payment integration với VNPay (implemented)
+- [x] Chat/Messaging system với Socket.IO (implemented)
 - [ ] File upload với multer
 - [ ] Email service
-- [ ] Payment integration
 - [ ] Advanced search và filtering
 - [ ] Analytics và reporting
 - [ ] Mobile app (React Native)
 - [ ] Admin dashboard improvements
 - [ ] Order management system
 - [ ] Review và rating system
+- [ ] Withdraw functionality
+- [ ] Multiple payment gateways
 

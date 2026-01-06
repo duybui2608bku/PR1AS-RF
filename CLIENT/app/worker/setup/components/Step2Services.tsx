@@ -23,8 +23,8 @@ import {
   CheckCircleOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
-import { useApiQueryData, useApiMutation } from "@/lib/hooks/use-api";
-import { servicesApi } from "@/lib/api/worker.api";
+import { useApiQueryData } from "@/lib/hooks/use-api";
+
 import type {
   Service,
   ServiceCategory,
@@ -69,6 +69,19 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     useState<Service | null>(null);
   const [pricingForm] = Form.useForm();
 
+  const { data: allServicesResponse, isLoading: isLoadingAllServices } =
+    useApiQueryData<{ services: Service[]; count: number }>(
+      ["services", "all"],
+      "/services",
+      {
+        enabled: true,
+        staleTime: 0,
+        refetchOnMount: true,
+      }
+    );
+
+  const allServices = allServicesResponse?.services || [];
+
   const {
     data: servicesResponse,
     isLoading: isLoadingServices,
@@ -85,11 +98,70 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
 
   const services = servicesResponse?.services || [];
 
+  const {
+    data: existingWorkerServicesResponse,
+    isLoading: isLoadingExistingServices,
+  } = useApiQueryData<{
+    services: Array<{
+      service_id: string;
+      service_code: string;
+      pricing: Array<{
+        unit: string;
+        duration: number;
+        price: number;
+        currency: string;
+      }>;
+      is_active: boolean;
+    }>;
+  }>(["worker-services"], "/worker/services", {
+    enabled: true,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+
+  const existingWorkerServices = existingWorkerServicesResponse?.services || [];
+
   useEffect(() => {
     if (selectedCategory) {
       refetchServices();
     }
   }, [selectedCategory, refetchServices]);
+
+  const [hasLoadedExistingServices, setHasLoadedExistingServices] =
+    useState(false);
+
+  useEffect(() => {
+    if (
+      !hasLoadedExistingServices &&
+      existingWorkerServices &&
+      Array.isArray(existingWorkerServices) &&
+      existingWorkerServices.length > 0 &&
+      allServices.length > 0
+    ) {
+      const serviceMap = new Map(allServices.map((s) => [s.id, s]));
+      const newSelectedServices = new Map<string, SelectedService>();
+
+      existingWorkerServices.forEach((workerService) => {
+        const service = serviceMap.get(workerService.service_id);
+        if (service) {
+          newSelectedServices.set(service.id, {
+            ...service,
+            pricing: workerService.pricing.map((p) => ({
+              unit: p.unit as PricingUnit,
+              duration: p.duration,
+              price: p.price,
+            })),
+            is_active: workerService.is_active,
+          });
+        }
+      });
+
+      if (newSelectedServices.size > 0) {
+        setSelectedServices(newSelectedServices);
+      }
+      setHasLoadedExistingServices(true);
+    }
+  }, [existingWorkerServices, allServices, hasLoadedExistingServices]);
 
   const handleCategorySelect = (category: ServiceCategory) => {
     setSelectedCategory(category);
@@ -144,6 +216,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         Modal.error({
           title: t("common.error"),
           content: t("worker.setup.step2.validation.minPricing"),
+          centered: true,
         });
         return;
       }
@@ -175,6 +248,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
       Modal.warning({
         title: t("common.warning"),
         content: t("worker.setup.step2.validation.noServices"),
+        centered: true,
       });
       return;
     }
@@ -189,6 +263,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         content: `${t(
           "worker.setup.step2.validation.noPricing"
         )}: ${servicesWithoutPricing.map((s) => s.name.vi).join(", ")}`,
+        centered: true,
       });
       return;
     }
@@ -499,9 +574,9 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         <Button onClick={onBack} size="large">
           {t("worker.setup.step2.back")}
         </Button>
-        <Button 
-          type="primary" 
-          onClick={handleSubmit} 
+        <Button
+          type="primary"
+          onClick={handleSubmit}
           loading={isPending}
           size="large"
         >
@@ -522,6 +597,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         width={600}
         okText={t("worker.setup.step2.pricing.save")}
         cancelText={t("worker.setup.step2.pricing.cancel")}
+        centered
       >
         <Alert
           message={t("worker.setup.step2.pricing.info")}

@@ -12,6 +12,11 @@ import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
+router.get(
+  "/csrf-token",
+  asyncHandler(authController.getCsrfToken.bind(authController))
+);
+
 router.post(
   "/register",
   authLimiter,

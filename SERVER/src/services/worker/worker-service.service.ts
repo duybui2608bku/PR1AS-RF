@@ -41,7 +41,6 @@ class WorkerServiceService {
   private ensureNoDuplicateServiceIds(serviceIds: string[]): void {
     const seen = new Set<string>();
     const duplicates: string[] = [];
-
     serviceIds.forEach((id) => {
       const normalized = id.trim();
       if (seen.has(normalized)) {
@@ -196,6 +195,11 @@ class WorkerServiceService {
     if (!deleted) {
       throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
     }
+  }
+
+  async getWorkerServices(workerId: string): Promise<IWorkerServiceDocument[]> {
+    await this.ensureWorkerExists(workerId);
+    return workerServiceRepository.findAllForWorker(workerId);
   }
 }
 

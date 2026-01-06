@@ -319,6 +319,23 @@ COMBINED_LOG_FILE=combined.log
 
   - Worker-specific service endpoints
 
+- `/api/wallet` - Wallet endpoints
+
+  - `POST /deposit` - Create deposit transaction
+  - `GET /deposit/callback` - Verify payment callback
+  - `GET /balance` - Get wallet balance
+  - `GET /transactions` - Get transaction history
+
+- `/api/chat` - Chat/Messaging endpoints
+
+  - `POST /messages` - Send message
+  - `GET /messages` - Get messages
+  - `GET /conversations` - Get conversations
+  - `GET /conversations/:id` - Get conversation details
+  - `PATCH /messages/read` - Mark messages as read
+  - `GET /messages/unread` - Get unread count
+  - `DELETE /messages/:id` - Delete message
+
 - `/health` - Health check endpoint (không có prefix `/api`)
 
 ## Quy ước Coding
@@ -369,6 +386,23 @@ npm test         # Run tests
 6. **Input Validation**: Zod schemas
 7. **Error Handling**: Không expose sensitive info trong production
 
+## Payment Integration
+
+### VNPay Integration
+- Payment gateway cho deposit transactions
+- Service: `src/services/vnpay/vnpay.service.ts`
+- Configuration trong environment variables
+- Payment URL building và verification
+- Xem chi tiết: `memorybank/wallet.md`
+
+## Real-time Communication
+
+### Socket.IO
+- Real-time messaging cho chat system
+- Event-based communication
+- Connection management
+- Xem chi tiết: `memorybank/chat.md`
+
 ## Development Guidelines
 
 1. Luôn sử dụng TypeScript strict mode
@@ -378,3 +412,6 @@ npm test         # Run tests
 5. Handle errors properly với AppError
 6. Test API endpoints với proper error cases
 7. Document API changes trong `docs/`
+8. Follow repository pattern cho data access
+9. Use service layer cho business logic
+10. Implement proper error handling và validation

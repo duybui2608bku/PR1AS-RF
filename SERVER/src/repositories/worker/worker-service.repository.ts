@@ -99,6 +99,14 @@ class WorkerServiceRepository {
 
     return result.deletedCount === 1;
   }
+
+  async findAllForWorker(
+    workerId: string
+  ): Promise<IWorkerServiceDocument[]> {
+    return WorkerService.find({
+      worker_id: workerId,
+    }).sort({ created_at: -1, service_code: 1 });
+  }
 }
 
 export const workerServiceRepository = new WorkerServiceRepository();

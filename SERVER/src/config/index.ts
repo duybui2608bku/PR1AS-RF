@@ -98,4 +98,15 @@ export const config = {
       preload: process.env.HSTS_PRELOAD === "true" || false,
     },
   },
+  vnpay: {
+    tmnCode: process.env.VNPAY_TMN_CODE || "PAJ1DL8M",
+    secureSecret:
+      process.env.VNPAY_SECURE_SECRET || "J4CKYRXGCC4XE94PNN4SFTZBZRMZRZH6",
+    vnpayHost: process.env.VNPAY_HOST || "https://sandbox.vnpayment.vn",
+    testMode: process.env.VNPAY_TEST_MODE === "true" || true,
+    hashAlgorithm: process.env.VNPAY_HASH_ALGORITHM || "SHA512",
+    returnUrl:
+      process.env.VNPAY_RETURN_URL ||
+      `${process.env.FRONTEND_URL || "http://localhost:3000"}/wallet/deposit/callback`,
+  },
 };

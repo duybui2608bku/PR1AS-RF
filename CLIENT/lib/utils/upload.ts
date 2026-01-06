@@ -39,9 +39,7 @@ export async function uploadImage(
     const data: UploadImageResponse | UploadImageError = await response.json();
 
     if (!data.success) {
-      throw new Error(
-        (data as UploadImageError).message || "Upload failed"
-      );
+      throw new Error((data as UploadImageError).message || "Upload failed");
     }
 
     const uploadData = data as UploadImageResponse;
@@ -83,9 +81,7 @@ export async function uploadMultipleImages(
     const data: UploadImageResponse | UploadImageError = await response.json();
 
     if (!data.success) {
-      throw new Error(
-        (data as UploadImageError).message || "Upload failed"
-      );
+      throw new Error((data as UploadImageError).message || "Upload failed");
     }
 
     const uploadData = data as UploadImageResponse;
@@ -102,3 +98,26 @@ export async function uploadMultipleImages(
   }
 }
 
+export function isImageUrl(url: string): boolean {
+  if (!url || typeof url !== "string") return false;
+
+  try {
+    const urlObj = new URL(url);
+    if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(urlObj.pathname)) {
+      return true;
+    }
+    if (
+      urlObj.hostname.includes("ibytecdn.org") ||
+      urlObj.hostname.includes("cdn") ||
+      urlObj.hostname.includes("imgur") ||
+      urlObj.hostname.includes("imgbb")
+    ) {
+      return true;
+    }
+  } catch {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return true;
+    }
+  }
+  return false;
+}

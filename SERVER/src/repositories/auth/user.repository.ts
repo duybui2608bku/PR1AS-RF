@@ -24,7 +24,7 @@ export class UserRepository {
   }
 
   async findById(id: string): Promise<IUserDocument | null> {
-    return User.findById(id);
+    return User.findById(id).lean() as Promise<IUserDocument | null>;
   }
 
   async create(data: CreateUserInput): Promise<IUserDocument> {

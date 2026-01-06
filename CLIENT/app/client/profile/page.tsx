@@ -29,6 +29,7 @@ import { userProfileApi } from "@/lib/api/user.api";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
+import { AppRoute } from "@/lib/constants/routes";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -44,7 +45,7 @@ function ProfileContent() {
   });
 
   const handleEdit = () => {
-    router.push("/client/profile/edit");
+    router.push(AppRoute.CLIENT_PROFILE_EDIT);
   };
 
   return (

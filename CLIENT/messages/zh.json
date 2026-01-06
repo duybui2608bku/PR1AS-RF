@@ -160,7 +160,8 @@
     "header": {
       "profile": "个人资料",
       "settings": "设置",
-      "logout": "登出"
+      "logout": "登出",
+      "messages": "消息"
     },
     "stats": {
       "totalUsers": "总用户数",
@@ -408,6 +409,22 @@
           "height": "身高 (cm)",
           "weight": "体重 (kg)"
         },
+        "experienceTitle": {
+          "label": "经验和职称"
+        },
+        "experience": {
+          "label": "工作年限",
+          "placeholder": "选择您的工作年限",
+          "lessThan1": "少于1年",
+          "oneTo3": "1-3年",
+          "threeTo5": "3-5年",
+          "fiveTo10": "5-10年",
+          "moreThan10": "10年以上"
+        },
+        "professionalTitle": {
+          "label": "专业职称",
+          "placeholder": "例如：专业导游"
+        },
         "starSign": {
           "label": "星座",
           "placeholder": "选择星座",
@@ -520,6 +537,55 @@
       "loading": {
         "savingProfile": "正在保存信息...",
         "savingServices": "正在保存服务..."
+      }
+    },
+    "detail": {
+      "loading": "正在加载信息...",
+      "error": {
+        "title": "错误",
+        "message": "无法加载工作者信息。请稍后再试。"
+      },
+      "noName": "无名称",
+      "rating": {
+        "reviews": "评价"
+      },
+      "gender": {
+        "male": "男",
+        "female": "女",
+        "other": "其他"
+      },
+      "experience": {
+        "lessThan1": "少于1年",
+        "oneTo3": "1-3年",
+        "threeTo5": "3-5年",
+        "fiveTo10": "5-10年",
+        "moreThan10": "10年以上",
+        "noInfo": "无信息"
+      },
+      "introduction": {
+        "showMore": "查看更多",
+        "showLess": "收起"
+      },
+      "info": {
+        "age": "年龄",
+        "years": "岁",
+        "height": "身高",
+        "weight": "体重",
+        "zodiac": "星座"
+      },
+      "lifestyle": "生活方式",
+      "quote": "名言",
+      "reviews": {
+        "title": "评价与反馈"
+      },
+      "services": {
+        "title": "服务"
+      },
+      "hireNow": "立即雇佣",
+      "message": "消息",
+      "selectDate": "选择日期",
+      "services": {
+        "noServices": "无可用服务"
       }
     }
   },
@@ -779,6 +845,82 @@
         "address": "地址：[公司地址]"
       },
       "effectiveDate": "这些条款自以下日期起生效"
+    }
+  },
+  "chat": {
+    "inputPlaceholder": "输入消息...",
+    "noMessages": "还没有消息",
+    "selectConversation": "选择一个对话开始聊天",
+    "typing": "正在输入...",
+    "unknownUser": "未知用户",
+    "reply": "回复",
+    "delete": "删除",
+    "attachImage": "图片",
+    "attachFile": "文件",
+    "attachVideo": "视频",
+    "attachList": "列表",
+    "comingSoon": "即将推出",
+    "imageSentSuccess": "图片发送成功",
+    "sentImage": "已发送1张图片",
+    "conversations": "对话",
+    "noConversations": "没有对话",
+    "errors": {
+      "noConversation": "未选择对话",
+      "sendFailed": "发送消息失败",
+      "deleteFailed": "删除消息失败",
+      "invalidImageFile": "请选择有效的图片文件",
+      "imageUploadFailed": "图片上传失败"
+    }
+  },
+  "wallet": {
+    "title": "钱包",
+    "balance": "余额",
+    "deposit": {
+      "title": "充值",
+      "subtitle": "向您的账户充值",
+      "amount": {
+        "label": "充值金额",
+        "placeholder": "输入金额",
+        "min": "最低金额为 {{amount}} VND",
+        "max": "最高金额为 {{amount}} VND",
+        "required": "请输入金额",
+        "invalid": "无效金额"
+      },
+      "presets": "快速金额选择",
+      "submit": "充值",
+      "processing": "处理中...",
+      "success": "充值请求创建成功",
+      "error": "创建充值请求失败",
+      "redirecting": "正在重定向到支付网关...",
+      "callback": {
+        "verifying": "正在验证支付...",
+        "pleaseWait": "请稍候，我们正在验证您的支付",
+        "success": "支付成功",
+        "successMessage": "您的充值已成功处理并已添加到钱包",
+        "failed": "支付验证失败",
+        "error": "支付验证失败",
+        "invalidParameters": "无效的回调参数",
+        "backToDeposit": "返回充值"
+      }
+    },
+    "transactions": {
+      "title": "交易历史",
+      "noTransactions": "暂无交易",
+      "type": {
+        "deposit": "充值",
+        "withdraw": "提现",
+        "payment": "支付",
+        "refund": "退款"
+      },
+      "status": {
+        "pending": "待处理",
+        "success": "成功",
+        "failed": "失败",
+        "cancelled": "已取消"
+      },
+      "amount": "金额",
+      "date": "日期",
+      "description": "描述"
     }
   }
 }

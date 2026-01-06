@@ -60,7 +60,7 @@ export const errorHandler = (
   // Get locale from Accept-Language header
   const acceptLanguage = req.get("accept-language");
   const locale = getLocaleFromHeader(acceptLanguage);
-  
+
   // Translate message
   const messageKey = getMessageKey(message);
   const translatedMessage = t(messageKey, locale);

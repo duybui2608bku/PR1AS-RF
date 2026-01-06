@@ -17,8 +17,6 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  DeleteOutlined,
-  UploadOutlined,
   EnvironmentOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -594,11 +592,13 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 </Select>
               </Form.Item>
               <Form.Item
-                label={t("worker.setup.step1.title.label")}
+                label={t("worker.setup.step1.professionalTitle.label")}
                 name="title"
               >
                 <Input
-                  placeholder={t("worker.setup.step1.title.placeholder")}
+                  placeholder={t(
+                    "worker.setup.step1.professionalTitle.placeholder"
+                  )}
                   size="large"
                   maxLength={100}
                   showCount

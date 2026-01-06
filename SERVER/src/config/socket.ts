@@ -3,6 +3,7 @@ import { Server as HttpServer } from "http";
 import { logger } from "../utils/logger";
 import { config } from "./index";
 import { ERROR_MESSAGES } from "../constants/httpStatus";
+import { authenticateSocket, setupChatHandlers } from "./socket.handlers";
 
 let io: SocketServer | null = null;
 
@@ -44,24 +45,17 @@ export const initializeSocket = (httpServer: HttpServer): SocketServer => {
     pingTimeout: config.socket.pingTimeout,
   });
 
+  io.use(authenticateSocket);
+
   io.on("connection", (socket) => {
-    logger.info(`Socket connected: ${socket.id}`);
-    socket.on("disconnect", () => {
-      logger.info(`Socket disconnected: ${socket.id}`);
-    });
-
-    socket.on("join-room", (roomId: string) => {
-      socket.join(roomId);
-      logger.info(`Socket ${socket.id} joined room: ${roomId}`);
-    });
-
-    socket.on("leave-room", (roomId: string) => {
-      socket.leave(roomId);
-      logger.info(`Socket ${socket.id} left room: ${roomId}`);
+    setupChatHandlers(socket);
+    
+    socket.on("error", (error) => {
+      logger.error(`Socket error on ${socket.id}:`, error);
     });
   });
 
-  logger.info("Socket.IO initialized");
+  logger.info("Socket.IO initialized with authentication");
   return io;
 };
 

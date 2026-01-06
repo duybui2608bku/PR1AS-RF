@@ -160,7 +160,8 @@
     "header": {
       "profile": "Hồ sơ",
       "settings": "Cài đặt",
-      "logout": "Đăng xuất"
+      "logout": "Đăng xuất",
+      "messages": "Tin nhắn"
     },
     "stats": {
       "totalUsers": "Tổng người dùng",
@@ -423,7 +424,7 @@
           "fiveTo10": "5-10 năm",
           "moreThan10": "Trên 10 năm"
         },
-        "title": {
+        "professionalTitle": {
           "label": "Tiêu đề chuyên nghiệp",
           "placeholder": "Ví dụ: Hướng dẫn viên chuyên nghiệp"
         },
@@ -543,6 +544,55 @@
       "loading": {
         "savingProfile": "Đang lưu thông tin...",
         "savingServices": "Đang lưu dịch vụ..."
+      }
+    },
+    "detail": {
+      "loading": "Đang tải thông tin...",
+      "error": {
+        "title": "Lỗi",
+        "message": "Không thể tải thông tin worker. Vui lòng thử lại sau."
+      },
+      "noName": "Chưa có tên",
+      "rating": {
+        "reviews": "đánh giá"
+      },
+      "gender": {
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác"
+      },
+      "experience": {
+        "lessThan1": "< 1 năm",
+        "oneTo3": "1-3 năm",
+        "threeTo5": "3-5 năm",
+        "fiveTo10": "5-10 năm",
+        "moreThan10": "> 10 năm",
+        "noInfo": "Chưa có thông tin"
+      },
+      "introduction": {
+        "showMore": "Xem thêm",
+        "showLess": "Thu gọn"
+      },
+      "info": {
+        "age": "Tuổi",
+        "years": "tuổi",
+        "height": "Chiều cao",
+        "weight": "Cân nặng",
+        "zodiac": "Cung hoàng đạo"
+      },
+      "lifestyle": "Lifestyle",
+      "quote": "Quote",
+      "reviews": {
+        "title": "Đánh giá & Phản hồi"
+      },
+      "services": {
+        "title": "Dịch vụ"
+      },
+      "hireNow": "Thuê ngay",
+      "message": "Nhắn tin",
+      "selectDate": "Chọn ngày",
+      "services": {
+        "noServices": "Không có dịch vụ"
       }
     }
   },
@@ -802,6 +852,88 @@
         "address": "Địa chỉ: [Địa chỉ công ty]"
       },
       "effectiveDate": "Các điều khoản này có hiệu lực từ ngày"
+    }
+  },
+  "chat": {
+    "inputPlaceholder": "Nhập tin nhắn...",
+    "noMessages": "Chưa có tin nhắn",
+    "selectConversation": "Chọn một cuộc trò chuyện để bắt đầu",
+    "typing": "Đang soạn tin nhắn...",
+    "unknownUser": "Người dùng",
+    "reply": "Trả lời",
+    "delete": "Xóa",
+    "attachImage": "Ảnh",
+    "attachFile": "Tệp",
+    "attachVideo": "Video",
+    "attachList": "Danh sách",
+    "comingSoon": "Sắp ra mắt",
+    "imageSentSuccess": "Đã gửi ảnh thành công",
+    "sentImage": "Đã gửi 1 ảnh",
+    "conversations": "Cuộc trò chuyện",
+    "noConversations": "Chưa có cuộc trò chuyện nào",
+    "time": {
+      "justNow": "Vừa xong",
+      "minutesAgo": "{{count}} phút trước",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước"
+    },
+    "errors": {
+      "noConversation": "Không tìm thấy cuộc trò chuyện",
+      "sendFailed": "Gửi tin nhắn thất bại",
+      "deleteFailed": "Xóa tin nhắn thất bại",
+      "invalidImageFile": "Vui lòng chọn file ảnh hợp lệ",
+      "imageUploadFailed": "Tải ảnh lên thất bại"
+    }
+  },
+  "wallet": {
+    "title": "Ví tiền",
+    "balance": "Số dư",
+    "deposit": {
+      "title": "Nạp tiền",
+      "subtitle": "Nạp tiền vào tài khoản của bạn",
+      "amount": {
+        "label": "Số tiền nạp",
+        "placeholder": "Nhập số tiền",
+        "min": "Số tiền tối thiểu là {{amount}} VNĐ",
+        "max": "Số tiền tối đa là {{amount}} VNĐ",
+        "required": "Vui lòng nhập số tiền",
+        "invalid": "Số tiền không hợp lệ"
+      },
+      "presets": "Chọn số tiền nhanh",
+      "submit": "Nạp tiền",
+      "processing": "Đang xử lý...",
+      "success": "Tạo yêu cầu nạp tiền thành công",
+      "error": "Tạo yêu cầu nạp tiền thất bại",
+      "redirecting": "Đang chuyển hướng đến cổng thanh toán...",
+      "callback": {
+        "verifying": "Đang xác minh thanh toán...",
+        "pleaseWait": "Vui lòng đợi trong khi chúng tôi xác minh thanh toán của bạn",
+        "success": "Thanh toán thành công",
+        "successMessage": "Giao dịch nạp tiền của bạn đã được xử lý thành công và đã được thêm vào ví",
+        "failed": "Xác minh thanh toán thất bại",
+        "error": "Xác minh thanh toán thất bại",
+        "invalidParameters": "Tham số callback không hợp lệ",
+        "backToDeposit": "Quay lại nạp tiền"
+      }
+    },
+    "transactions": {
+      "title": "Lịch sử giao dịch",
+      "noTransactions": "Chưa có giao dịch nào",
+      "type": {
+        "deposit": "Nạp tiền",
+        "withdraw": "Rút tiền",
+        "payment": "Thanh toán",
+        "refund": "Hoàn tiền"
+      },
+      "status": {
+        "pending": "Đang chờ",
+        "success": "Thành công",
+        "failed": "Thất bại",
+        "cancelled": "Đã hủy"
+      },
+      "amount": "Số tiền",
+      "date": "Ngày",
+      "description": "Mô tả"
     }
   }
 }
