@@ -144,6 +144,7 @@ export class WalletRepository {
     const [transactions, total] = await Promise.all([
       WalletTransaction.find(filter)
         .sort({ created_at: -1 })
+        .populate("user_id")
         .skip(skip)
         .limit(Number(limit))
         .lean(),

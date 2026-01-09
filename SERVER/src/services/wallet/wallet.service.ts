@@ -238,12 +238,8 @@ export const getAdminTransactionHistory = async (
 
   return {
     transactions,
-
     total,
-
     page: query.page || 1,
-
     limit: query.limit || 10,
   };
 };
-

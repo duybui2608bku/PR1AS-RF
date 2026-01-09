@@ -29,4 +29,3 @@ export const getAdminTransactionHistory = async (
 
   ResponseHelper.success(res, response, WALLET_MESSAGES.TRANSACTIONS_FETCHED);
 };
-

@@ -13,6 +13,7 @@ const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
       type: String,
       required: true,
       index: true,
+      ref: modelsName.USER,
     },
     type: {
       type: String,
