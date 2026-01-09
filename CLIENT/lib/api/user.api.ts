@@ -6,7 +6,7 @@ import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
 import type { UserProfile, UpdateBasicProfileInput } from "./auth.api";
 
 export interface User {
-  id: string;
+  _id: string;
   email: string;
   avatar?: string | null;
   full_name?: string | null;
@@ -28,7 +28,7 @@ export interface GetUsersQuery {
 }
 
 export interface GetUsersResponse {
-  users: User[];
+  data: User[];
   pagination: {
     page: number;
     limit: number;
@@ -53,12 +53,11 @@ export const userApi = {
   updateUserStatus: async (
     userId: string,
     data: UpdateUserStatusInput
-  ): Promise<User> => {
-    const response = await api.patch<ApiResponse<{ user: User }>>(
+  ): Promise<void> => {
+    await api.patch<ApiResponse<null>>(
       buildEndpoint(ApiEndpoint.USERS_STATUS, { id: userId }),
       data
     );
-    return extractData(response).user;
   },
 };
 

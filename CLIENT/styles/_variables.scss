@@ -1,7 +1,20 @@
-$bg-primary: #ffffff;
-
 $color-primary: #711111;
 
-$text-on-primary: #ffffff;
+$bg-dark-primary: #000000;
+$bg-dark-secondary: #141414;
+$bg-light-primary: #ffffff;
+$bg-light-secondary: #f5f5f5;
 
-$text-primary: #000000;
+$text-dark-primary: #ffffff;
+$text-dark-secondary: #b3b3b3;
+$text-light-primary: #000000;
+$text-light-secondary: #666666;
+
+$text-on-primary-light: #ffffff;
+$text-on-primary-dark: #ffffff;
+
+$border-dark: rgba(255, 255, 255, 0.1);
+$border-light: rgba(0, 0, 0, 0.06);
+
+$fill-dark: rgba(255, 255, 255, 0.06);
+$fill-light: rgba(0, 0, 0, 0.04);

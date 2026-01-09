@@ -921,6 +921,35 @@
       "amount": "금액",
       "date": "날짜",
       "description": "설명"
+    },
+    "transactionType": {
+      "deposit": "입금",
+      "withdraw": "출금",
+      "payment": "결제",
+      "refund": "환불"
+    },
+    "transactionStatus": {
+      "pending": "대기 중",
+      "success": "성공",
+      "failed": "실패",
+      "cancelled": "취소됨"
+    },
+    "tabs": {
+      "overview": "개요",
+      "depositHistory": "입금 내역",
+      "withdrawHistory": "출금 내역"
+    },
+    "cards": {
+      "totalBalance": "총 잔액",
+      "reconciliationBalance": "조정 잔액",
+      "totalDeposited": "총 입금액",
+      "totalWithdrawn": "총 출금액"
+    },
+    "table": {
+      "amount": "금액",
+      "status": "상태",
+      "description": "설명",
+      "createdAt": "생성일"
     }
   }
 }

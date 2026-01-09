@@ -9,7 +9,6 @@ import {
   Dropdown,
   Button,
   Space,
-  Typography,
   Popover,
   Select,
   Divider,
@@ -20,6 +19,8 @@ import {
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
+  SettingOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -31,9 +32,9 @@ import { useCurrency } from "@/lib/hooks/use-currency";
 import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { getProfileRoute } from "@/lib/utils/profile-navigation";
+import { AppRoute, UserRole } from "@/lib/constants/routes";
 
 const { Header: AntHeader } = Layout;
-const { Text } = Typography;
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -60,7 +61,6 @@ export function Header() {
 
     handleResize();
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
@@ -74,9 +74,11 @@ export function Header() {
       worker_profile?: unknown | null;
     }
   )?.worker_profile;
-  const hasWorkerRole = userRoles.includes("worker");
-  const isWorkerActive = lastActiveRole === "worker";
+
+  const hasWorkerRole = userRoles.includes(UserRole.WORKER);
+  const isWorkerActive = lastActiveRole === UserRole.WORKER;
   const hasWorkerProfile = workerProfile && workerProfile !== null;
+  const isAdmin = userRoles.includes(UserRole.ADMIN);
 
   let workerButtonLabel: string;
   if (isWorkerActive) {
@@ -95,8 +97,8 @@ export function Header() {
 
     if (isWorkerActive) {
       try {
-        await switchRoleMutation.mutateAsync("client");
-        router.push("/");
+        await switchRoleMutation.mutateAsync(UserRole.CLIENT);
+        router.push(AppRoute.HOME);
       } catch (error) {
         handleError(error);
       }
@@ -105,9 +107,9 @@ export function Header() {
 
     if (!hasWorkerRole) {
       if (!workerProfile || workerProfile === null) {
-        router.push("/worker/setup");
+        router.push(AppRoute.WORKER_SETUP);
       } else {
-        router.push("/worker");
+        router.push(AppRoute.HOME);
       }
       return;
     }
@@ -115,13 +117,13 @@ export function Header() {
     if (hasWorkerRole && !isWorkerActive) {
       if (hasWorkerProfile) {
         try {
-          await switchRoleMutation.mutateAsync("worker");
-          router.push("/worker");
+          await switchRoleMutation.mutateAsync(UserRole.WORKER);
+          router.push(AppRoute.HOME);
         } catch (error) {
           handleError(error);
         }
       } else {
-        router.push("/worker/setup");
+        router.push(AppRoute.WORKER_SETUP);
       }
     }
   };
@@ -149,6 +151,10 @@ export function Header() {
     setAuthModalOpen(true);
   };
 
+  const handleNavigateToAdminDashboard = () => {
+    router.push(AppRoute.ADMIN_DASHBOARD);
+  };
+
   const userMenuItems: MenuProps["items"] = [
     {
       key: "profile",
@@ -164,8 +170,35 @@ export function Header() {
       icon: <MessageOutlined />,
       label: t("dashboard.header.messages"),
       onClick: () => {
-        router.push("/chat");
+        router.push(AppRoute.CHAT);
       },
+    },
+    {
+      key: "wallet",
+      icon: <WalletOutlined />,
+      label: t("dashboard.header.wallet"),
+      onClick: () => {
+        router.push(AppRoute.CLIENT_WALLET);
+      },
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: t("dashboard.header.logout"),
+      onClick: handleLogout,
+      danger: true,
+    },
+  ];
+
+  const adminMenuItems: MenuProps["items"] = [
+    {
+      key: "admin-dashboard",
+      icon: <SettingOutlined />,
+      label: t("dashboard.header.admin"),
+      onClick: handleNavigateToAdminDashboard,
     },
     {
       type: "divider",
@@ -181,45 +214,44 @@ export function Header() {
 
   const workerButton = (
     <Button
-      type="default"
+      type="primary"
       onClick={handleSwitchRole}
       loading={switchRoleMutation.isPending}
-      block
     >
       {workerButtonLabel}
     </Button>
   );
 
-  const authSectionDesktop =
-    isAuthenticated && user ? (
-      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
-        <div
+  const renderAvatarDropdown = (menuItems: MenuProps["items"]) => (
+    <Dropdown
+      menu={{ items: menuItems }}
+      placement="bottomRight"
+      trigger={["hover"]}
+    >
+      <div style={{ cursor: "pointer" }}>
+        <Avatar
+          size="large"
+          src={user?.avatar}
+          icon={!user?.avatar ? <UserOutlined /> : undefined}
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 0",
-            cursor: "pointer",
+            backgroundColor: !user?.avatar
+              ? "var(--ant-color-primary)"
+              : undefined,
           }}
         >
-          <Avatar
-            size="small"
-            src={user.avatar || undefined}
-            icon={
-              !user.avatar && !getUserInitial() ? <UserOutlined /> : undefined
-            }
-            style={{
-              backgroundColor: !user.avatar
-                ? "var(--ant-color-primary)"
-                : undefined,
-            }}
-          >
-            {!user.avatar && getUserInitial()}
-          </Avatar>
-        </div>
-      </Dropdown>
+          {!user?.avatar && getUserInitial()}
+        </Avatar>
+      </div>
+    </Dropdown>
+  );
+
+  const authSectionDesktop =
+    isAuthenticated && user ? (
+      <Space size="middle">
+        {renderAvatarDropdown(isAdmin ? adminMenuItems : userMenuItems)}
+      </Space>
     ) : (
-      <Space size="small">
+      <Space>
         <Button type="text" onClick={handleOpenLogin}>
           {t("auth.login")}
         </Button>
@@ -231,173 +263,102 @@ export function Header() {
 
   const authSectionMobile =
     isAuthenticated && user ? (
-      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 0",
-            cursor: "pointer",
-          }}
-        >
-          <Avatar
-            size="small"
-            src={user.avatar || undefined}
-            icon={
-              !user.avatar && !getUserInitial() ? <UserOutlined /> : undefined
-            }
-            style={{
-              backgroundColor: !user.avatar
-                ? "var(--ant-color-primary)"
-                : undefined,
-            }}
-          >
-            {!user.avatar && getUserInitial()}
-          </Avatar>
-        </div>
-      </Dropdown>
+      <Space size="middle">
+        {renderAvatarDropdown(isAdmin ? adminMenuItems : userMenuItems)}
+      </Space>
     ) : (
       <Space direction="vertical" style={{ width: "100%" }}>
-        <Button type="text" onClick={handleOpenLogin} block>
+        <Button type="primary" onClick={handleOpenLogin} block>
           {t("auth.login")}
         </Button>
-        <Button type="primary" onClick={handleOpenRegister} block>
+        <Button onClick={handleOpenRegister} block>
           {t("auth.user.register")}
         </Button>
       </Space>
     );
 
   const mobilePopoverContent = (
-    <div
-      style={{
-        minWidth: 260,
-        padding: 8,
-      }}
-    >
-      <Space direction="vertical" size="small" style={{ width: "100%" }}>
-        <div style={{ width: "100%" }}>{workerButton}</div>
+    <div style={{ width: 280, padding: "8px 0" }}>
+      {!isAdmin && <div style={{ marginBottom: 16 }}>{workerButton}</div>}
+      {!isAdmin && <SettingsPopover />}
+      <Divider style={{ margin: "12px 0" }} />
 
-        <Divider style={{ margin: "8px 0" }} />
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontWeight: 500 }}>{t("header.currency")}</span>
+      </div>
+      <Select
+        value={currency}
+        onChange={(value) => setCurrency(value as any)}
+        style={{ width: "100%" }}
+        size="middle"
+      >
+        {currencies.map((curr) => (
+          <Select.Option key={curr} value={curr}>
+            {getCurrencyLabel(curr as any)}
+          </Select.Option>
+        ))}
+      </Select>
 
-        <div style={{ width: "100%" }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-              color: "var(--ant-color-text-tertiary)",
-              marginBottom: 4,
-            }}
-          >
-            {t("header.currency")}
-          </div>
-          <Select
-            value={currency}
-            onChange={(value) => setCurrency(value as any)}
-            style={{ width: "100%" }}
-            size="middle"
-          >
-            {currencies.map((curr) => (
-              <Select.Option key={curr} value={curr}>
-                {getCurrencyLabel(curr as any)}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+      <Divider style={{ margin: "12px 0" }} />
 
-        <div style={{ width: "100%" }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-              color: "var(--ant-color-text-tertiary)",
-              marginBottom: 4,
-            }}
-          >
-            {t("header.language")}
-          </div>
-          <LanguageSwitcher />
-        </div>
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontWeight: 500 }}>{t("header.language")}</span>
+      </div>
+      <LanguageSwitcher />
 
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px 0",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-              color: "var(--ant-color-text-tertiary)",
-            }}
-          >
-            {t("header.theme")}
-          </span>
-          <ThemeToggle />
-        </div>
+      <Divider style={{ margin: "12px 0" }} />
 
-        <Divider style={{ margin: "8px 0" }} />
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontWeight: 500 }}>{t("header.theme")}</span>
+      </div>
+      <ThemeToggle />
 
-        <div style={{ width: "100%" }}>{authSectionMobile}</div>
-      </Space>
+      <Divider style={{ margin: "12px 0" }} />
+
+      {authSectionMobile}
     </div>
   );
 
   return (
     <AntHeader
       style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 24px",
-        background: "var(--ant-color-bg-container)",
-        borderBottom: "1px solid var(--ant-color-border-secondary)",
+        background: "var(--bg-dark-primary)",
+        borderBottom: "1px solid var(--bg-dark-secondary)",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
       }}
     >
       <Link
-        href="/"
-        style={{
-          fontSize: 20,
-          fontWeight: "bold",
-          color: "var(--ant-color-primary)",
-          textDecoration: "none",
-        }}
+        href={AppRoute.HOME}
+        style={{ fontSize: 20, fontWeight: "bold", color: "inherit" }}
       >
         {t("home.logo")}
       </Link>
 
-      <div style={{ flex: 1 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {!isMobile && (
+          <Space size="middle">
+            {!isAdmin && workerButton}
+            {!isAdmin && <SettingsPopover />}
+            {authSectionDesktop}
+          </Space>
+        )}
 
-      {!isMobile && (
-        <Space size="middle">
-          {workerButton}
-          <SettingsPopover />
-          {authSectionDesktop}
-        </Space>
-      )}
-
-      {isMobile && (
-        <Popover
-          content={mobilePopoverContent}
-          trigger="click"
-          placement="bottomRight"
-        >
-          <Button icon={<MenuOutlined />} />
-        </Popover>
-      )}
+        {isMobile && (
+          <Popover
+            content={mobilePopoverContent}
+            trigger="click"
+            placement="bottomRight"
+          >
+            <Button type="text" icon={<MenuOutlined />} />
+          </Popover>
+        )}
+      </div>
 
       <AuthModal
         open={authModalOpen}

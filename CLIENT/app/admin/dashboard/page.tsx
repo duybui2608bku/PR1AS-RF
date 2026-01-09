@@ -17,7 +17,7 @@ export default function DashboardPage() {
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
       <Title level={2}>{t("dashboard.welcome")}</Title>
-      
+
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
@@ -25,7 +25,7 @@ export default function DashboardPage() {
               title={t("dashboard.stats.totalUsers")}
               value={1128}
               prefix={<UserOutlined />}
-              valueStyle={{ color: "#3f8600" }}
+              style={{ color: "var(--color-success)" }}
             />
           </Card>
         </Col>
@@ -35,7 +35,7 @@ export default function DashboardPage() {
               title={t("dashboard.stats.totalOrders")}
               value={93}
               prefix={<ShoppingCartOutlined />}
-              valueStyle={{ color: "#1890ff" }}
+              style={{ color: "var(--color-primary)" }}
             />
           </Card>
         </Col>
@@ -80,4 +80,3 @@ export default function DashboardPage() {
     </Space>
   );
 }
-

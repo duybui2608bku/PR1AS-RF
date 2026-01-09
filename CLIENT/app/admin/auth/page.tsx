@@ -66,76 +66,96 @@ export default function AdminAuthPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: 20,
+        }}
+      >
         <Space>
           <ThemeToggle />
           <LanguageSwitcher />
         </Space>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Card style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-          <Title level={2}>{t("auth.title")}</Title>
-          <Text type="secondary">{t("auth.subtitle")}</Text>
-        </div>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+            <Title level={2}>{t("auth.title")}</Title>
+            <Text type="secondary">{t("auth.subtitle")}</Text>
+          </div>
 
-        <Form
-          form={form}
-          name="admin-login"
-          onFinish={handleLogin}
-          autoComplete="off"
-          layout="vertical"
-          size="large"
-        >
-          <Form.Item
-            name="email"
-            label={t("auth.email.label")}
-            rules={[
-              { required: true, message: t("auth.email.required") },
-              { type: "email", message: t("auth.email.invalid") },
-            ]}
+          <Form
+            form={form}
+            name="admin-login"
+            onFinish={handleLogin}
+            autoComplete="off"
+            layout="vertical"
+            size="large"
           >
-            <Input
-              prefix={<UserOutlined />}
-              placeholder={t("auth.email.placeholder")}
-              autoComplete="email"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label={t("auth.password.label")}
-            rules={[
-              { required: true, message: t("auth.password.required") },
-              { min: 8, message: t("auth.password.minLength") },
-            ]}
-          >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder={t("auth.password.placeholder")}
-              autoComplete="current-password"
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              loading={loginMutation.isPending}
+            <Form.Item
+              name="email"
+              label={t("auth.email.label")}
+              rules={[
+                { required: true, message: t("auth.email.required") },
+                { type: "email", message: t("auth.email.invalid") },
+              ]}
             >
-              {t("auth.login")}
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input
+                prefix={<UserOutlined />}
+                placeholder={t("auth.email.placeholder")}
+                autoComplete="email"
+              />
+            </Form.Item>
 
-        <div style={{ marginTop: 24, textAlign: "center" }}>
-          <Text type="secondary">{t("auth.forAdminOnly")}</Text>
-        </div>
-      </Card>
+            <Form.Item
+              name="password"
+              label={t("auth.password.label")}
+              rules={[
+                { required: true, message: t("auth.password.required") },
+                { min: 8, message: t("auth.password.minLength") },
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder={t("auth.password.placeholder")}
+                autoComplete="current-password"
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
+                loading={loginMutation.isPending}
+              >
+                {t("auth.login")}
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <div style={{ marginTop: 24, textAlign: "center" }}>
+            <Text type="secondary">{t("auth.forAdminOnly")}</Text>
+          </div>
+        </Card>
       </div>
     </div>
   );

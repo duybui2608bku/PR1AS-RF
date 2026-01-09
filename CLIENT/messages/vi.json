@@ -19,7 +19,12 @@
     "next": "Tiếp theo",
     "previous": "Trước đó",
     "close": "Đóng",
-    "step": "Bước"
+    "step": "Bước",
+    "clear": "Xóa bộ lọc",
+    "refresh": "Làm mới",
+    "pagination": {
+      "total": "Tổng {total} mục"
+    }
   },
   "errors": {
     "network": {
@@ -149,19 +154,81 @@
       }
     }
   },
+  "admin": {
+    "wallet": {
+      "title": "Quản lý giao dịch",
+      "table": {
+        "id": "ID",
+        "userId": "ID người dùng",
+        "type": "Loại",
+        "amount": "Số tiền",
+        "status": "Trạng thái",
+        "gateway": "Cổng thanh toán",
+        "description": "Mô tả",
+        "createdAt": "Ngày tạo"
+      },
+      "filters": {
+        "userId": "ID người dùng",
+        "type": "Loại",
+        "status": "Trạng thái"
+      }
+    },
+    "user": {
+      "title": "Quản lý người dùng",
+      "table": {
+        "id": "ID",
+        "email": "Email",
+        "fullName": "Họ và tên",
+        "phone": "Số điện thoại",
+        "roles": "Vai trò",
+        "status": "Trạng thái",
+        "verifyEmail": "Xác thực email",
+        "createdAt": "Ngày tạo",
+        "actions": "Thao tác"
+      },
+      "filters": {
+        "search": "Tìm kiếm theo email hoặc tên",
+        "role": "Vai trò",
+        "status": "Trạng thái"
+      },
+      "role": {
+        "client": "Khách hàng",
+        "worker": "Người làm việc",
+        "admin": "Quản trị viên"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "banned": "Bị cấm"
+      },
+      "verifyEmail": {
+        "verified": "Đã xác thực",
+        "unverified": "Chưa xác thực"
+      },
+      "actions": {
+        "updateStatus": "Cập nhật trạng thái"
+      },
+      "updateStatus": {
+        "title": "Cập nhật trạng thái người dùng",
+        "message": "Bạn có chắc chắn muốn thay đổi trạng thái của người dùng {email} từ {currentStatus} sang {newStatus}?",
+        "success": "Cập nhật trạng thái người dùng thành công"
+      }
+    }
+  },
   "dashboard": {
     "title": "Bảng điều khiển",
     "welcome": "Chào mừng đến với Bảng điều khiển",
     "menu": {
       "dashboard": "Bảng điều khiển",
       "users": "Người dùng",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "transactions": "Giao dịch"
     },
     "header": {
       "profile": "Hồ sơ",
       "settings": "Cài đặt",
       "logout": "Đăng xuất",
-      "messages": "Tin nhắn"
+      "messages": "Tin nhắn",
+      "admin": "Quản trị"
     },
     "stats": {
       "totalUsers": "Tổng người dùng",
@@ -934,6 +1001,35 @@
       "amount": "Số tiền",
       "date": "Ngày",
       "description": "Mô tả"
+    },
+    "transactionType": {
+      "deposit": "Nạp tiền",
+      "withdraw": "Rút tiền",
+      "payment": "Thanh toán",
+      "refund": "Hoàn tiền"
+    },
+    "transactionStatus": {
+      "pending": "Đang chờ",
+      "success": "Thành công",
+      "failed": "Thất bại",
+      "cancelled": "Đã hủy"
+    },
+    "tabs": {
+      "overview": "Tổng quan",
+      "depositHistory": "Lịch sử nạp tiền",
+      "withdrawHistory": "Lịch sử rút tiền"
+    },
+    "cards": {
+      "totalBalance": "Tổng số dư",
+      "reconciliationBalance": "Số dư đối soát",
+      "totalDeposited": "Số tiền đã nạp",
+      "totalWithdrawn": "Số tiền đã rút"
+    },
+    "table": {
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "description": "Mô tả",
+      "createdAt": "Ngày tạo"
     }
   }
 }

@@ -921,6 +921,35 @@
       "amount": "金额",
       "date": "日期",
       "description": "描述"
+    },
+    "transactionType": {
+      "deposit": "充值",
+      "withdraw": "提现",
+      "payment": "支付",
+      "refund": "退款"
+    },
+    "transactionStatus": {
+      "pending": "待处理",
+      "success": "成功",
+      "failed": "失败",
+      "cancelled": "已取消"
+    },
+    "tabs": {
+      "overview": "概览",
+      "depositHistory": "充值历史",
+      "withdrawHistory": "提现历史"
+    },
+    "cards": {
+      "totalBalance": "总余额",
+      "reconciliationBalance": "对账余额",
+      "totalDeposited": "总充值金额",
+      "totalWithdrawn": "总提现金额"
+    },
+    "table": {
+      "amount": "金额",
+      "status": "状态",
+      "description": "描述",
+      "createdAt": "创建时间"
     }
   }
 }

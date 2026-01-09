@@ -3,15 +3,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #{$bg-primary};
-  --foreground: #{$text-primary};
   --color-primary: #{$color-primary};
-  --text-on-primary: #{$text-on-primary};
+  --text-on-primary: #{$text-on-primary-light};
+}
 
-  --ant-color-primary: #{$color-primary};
-  --ant-color-bg-container: #{$bg-primary};
-  --ant-color-border-secondary: rgba(0, 0, 0, 0.06);
-  --ant-color-fill-tertiary: rgba(0, 0, 0, 0.04);
+:root[data-theme="light"] {
+  --background: #{$bg-light-primary};
+  --background-secondary: #{$bg-light-secondary};
+  --foreground: #{$text-light-primary};
+  --foreground-secondary: #{$text-light-secondary};
+  --text-on-primary: #{$text-on-primary-light};
+  --border-secondary: #{$border-light};
+  --fill-tertiary: #{$fill-light};
+}
+
+:root[data-theme="dark"] {
+  --background: #{$bg-dark-primary};
+  --background-secondary: #{$bg-dark-secondary};
+  --foreground: #{$text-dark-primary};
+  --foreground-secondary: #{$text-dark-secondary};
+  --text-on-primary: #{$text-on-primary-dark};
+  --border-secondary: #{$border-dark};
+  --fill-tertiary: #{$fill-dark};
+}
+
+:root:not([data-theme]) {
+  --background: #{$bg-light-primary};
+  --background-secondary: #{$bg-light-secondary};
+  --foreground: #{$text-light-primary};
+  --foreground-secondary: #{$text-light-secondary};
+  --text-on-primary: #{$text-on-primary-light};
+  --border-secondary: #{$border-light};
+  --fill-tertiary: #{$fill-light};
+}
+
+:root {
+  --ant-color-primary: var(--color-primary);
+  --ant-color-bg-container: var(--background);
+  --ant-color-border-secondary: var(--border-secondary);
+  --ant-color-fill-tertiary: var(--fill-tertiary);
 }
 
 @theme inline {
@@ -21,8 +51,8 @@
 }
 
 body {
-  background: $bg-primary;
-  color: $text-primary;
+  background: var(--background);
+  color: var(--foreground);
   font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -44,23 +74,23 @@ h6,
 }
 
 .bg-primary {
-  background-color: $color-primary;
+  background-color: var(--color-primary);
 }
 
 .text-primary {
-  color: $color-primary;
+  color: var(--color-primary);
 }
 
 .text-on-primary {
-  color: $text-on-primary;
+  color: var(--text-on-primary);
 }
 
 .bg-white {
-  background-color: $bg-primary;
+  background-color: var(--background);
 }
 
 .text-black {
-  color: $text-primary;
+  color: var(--foreground);
 }
 
 @media (max-width: 768px) {
@@ -187,7 +217,7 @@ select:not([class*="ant-"]) {
   h4,
   h5,
   h6 {
-    color: $color-primary !important;
+    color: var(--color-primary) !important;
   }
 }
 
@@ -197,19 +227,19 @@ h3.ant-typography,
 h4.ant-typography,
 h5.ant-typography,
 h6.ant-typography {
-  color: $color-primary !important;
+  color: var(--color-primary) !important;
 }
 
 .ant-btn-link {
-  color: $color-primary !important;
+  color: var(--color-primary) !important;
 
   &:hover,
   &:focus {
-    color: $color-primary !important;
+    color: var(--color-primary) !important;
     opacity: 0.8;
   }
 
   &:active {
-    color: $color-primary !important;
+    color: var(--color-primary) !important;
   }
 }

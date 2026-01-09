@@ -30,6 +30,7 @@ export enum ApiEndpoint {
   WALLET_DEPOSIT_CALLBACK = "/wallet/deposit/callback",
   WALLET_BALANCE = "/wallet/balance",
   WALLET_TRANSACTIONS = "/wallet/transactions",
+  ADMIN_WALLET_TRANSACTIONS = "/admin/wallet/transactions",
 }
 
 export const buildEndpoint = (

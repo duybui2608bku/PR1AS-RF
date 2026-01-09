@@ -9,6 +9,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BellOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -32,7 +33,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t } = useI18n();
   const { user, logout } = useAuthStore();
 
-  // Menu items cho sidebar
   const menuItems: MenuProps["items"] = [
     {
       key: "/admin/dashboard",
@@ -40,9 +40,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       label: t("dashboard.menu.dashboard"),
     },
     {
-      key: "/admin/users",
+      key: "/admin/dashboard/user",
       icon: <UserOutlined />,
       label: t("dashboard.menu.users"),
+    },
+    {
+      key: "/admin/dashboard/wallet",
+      icon: <WalletOutlined />,
+      label: t("dashboard.menu.transactions"),
     },
     {
       key: "/admin/settings",
@@ -51,7 +56,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     },
   ];
 
-  // Menu dropdown cho user
   const userMenuItems: MenuProps["items"] = [
     {
       key: "profile",
@@ -134,6 +138,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         style={{
           marginLeft: collapsed ? 80 : 250,
           transition: "margin-left 0.2s",
+          background: "#000000",
         }}
       >
         <Header
@@ -180,7 +185,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             margin: "24px 16px",
             padding: 24,
             minHeight: 280,
-            background: "var(--ant-color-bg-container)",
+            background: "#000000",
             borderRadius: 8,
           }}
         >

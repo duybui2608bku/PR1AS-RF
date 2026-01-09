@@ -7,6 +7,8 @@ export enum AppRoute {
   CLIENT_WALLET_DEPOSIT = "/client/wallet/deposit",
   WORKER_SETUP = "/worker/setup",
   CHAT = "/chat",
+  ADMIN_DASHBOARD = "/admin/dashboard",
+  CLIENT_WALLET = "/client/wallet",
 }
 
 export enum UserRole {

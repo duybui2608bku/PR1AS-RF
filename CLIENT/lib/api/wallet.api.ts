@@ -2,6 +2,7 @@ import { api, extractData } from "../axios/index";
 import type { ApiResponse } from "../axios";
 import { ApiEndpoint } from "../constants/api-endpoints";
 import { TransactionType, TransactionStatus } from "../constants/wallet";
+import { UserProfile } from "@/lib/api/auth.api";
 
 export interface CreateDepositRequest {
   amount: number;
@@ -24,9 +25,13 @@ export interface TransactionHistoryQuery {
   limit?: number;
 }
 
+export interface AdminTransactionHistoryQuery extends TransactionHistoryQuery {
+  user_id?: string;
+}
+
 export interface WalletTransaction {
   id: string;
-  user_id: string;
+  user_id: string | UserProfile;
   type: TransactionType;
   amount: number;
   status: TransactionStatus;
@@ -86,5 +91,24 @@ export const walletApi = {
     );
     return extractData(response);
   },
-};
 
+  getAdminTransactionHistory: async (
+    query?: AdminTransactionHistoryQuery
+  ): Promise<TransactionHistoryResponse> => {
+    const cleanQuery: Record<string, string> = {};
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          cleanQuery[key] = String(value);
+        }
+      });
+    }
+    const queryString = new URLSearchParams(cleanQuery).toString();
+    const response = await api.get<ApiResponse<TransactionHistoryResponse>>(
+      `${ApiEndpoint.ADMIN_WALLET_TRANSACTIONS}${
+        queryString ? `?${queryString}` : ""
+      }`
+    );
+    return extractData(response);
+  },
+};

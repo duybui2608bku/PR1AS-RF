@@ -21,7 +21,7 @@
 
 .chatContainer {
   display: flex;
-  height: calc(100vh - 64px); // Subtract header height only
+  height: calc(100vh - 64px);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
@@ -63,7 +63,7 @@
   z-index: 1;
   backdrop-filter: blur(8px);
   background: var(--ant-color-bg-container);
-  
+
   [data-theme="dark"] & {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
@@ -136,9 +136,9 @@
   &.selected {
     background-color: rgba($color-primary, 0.1);
     border-left: 4px solid $color-primary;
-    
+
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       top: 0;
@@ -194,7 +194,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  
+
   [data-theme="dark"] & {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
@@ -297,7 +297,7 @@
 
     .messageContent {
       background: $color-primary;
-      color: #ffffff; // Always white text for sender messages
+      color: #ffffff;
       border-radius: 20px 20px 6px 20px;
       box-shadow: 0 2px 8px rgba($color-primary, 0.25);
       transition: transform 0.1s ease, box-shadow 0.2s ease;
@@ -309,7 +309,7 @@
 
       [data-theme="dark"] & {
         box-shadow: 0 2px 8px rgba($color-primary, 0.4);
-        
+
         &:hover {
           box-shadow: 0 4px 12px rgba($color-primary, 0.5);
         }
@@ -317,7 +317,7 @@
     }
 
     .messageTime {
-      color: rgba(255, 255, 255, 0.9); // Always white/light text for time
+      color: rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -338,7 +338,7 @@
 
       [data-theme="dark"] & {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        
+
         &:hover {
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
         }
@@ -447,7 +447,7 @@
   }
 
   @media (max-width: 768px) {
-    opacity: 1; // Always show on mobile for better touch interaction
+    opacity: 1;
   }
 }
 
@@ -540,7 +540,7 @@
   z-index: 1;
   backdrop-filter: blur(8px);
   background: var(--ant-color-bg-container);
-  
+
   [data-theme="dark"] & {
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
   }
@@ -700,7 +700,7 @@
 .sendButton {
   background: $color-primary;
   border-color: $color-primary;
-  color: $text-on-primary;
+  color: var(--text-on-primary);
   border-radius: 24px;
   height: 44px;
   min-height: 44px;
@@ -839,7 +839,7 @@
   }
 
   .messageInput {
-    font-size: 16px; // Prevents zoom on iOS
+    font-size: 16px;
   }
 
   .conversationItem {
@@ -896,4 +896,3 @@
     max-height: 250px;
   }
 }
-

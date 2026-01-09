@@ -19,7 +19,12 @@
     "next": "Next",
     "previous": "Previous",
     "close": "Close",
-    "step": "Step"
+    "step": "Step",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "pagination": {
+      "total": "Total {total} items"
+    }
   },
   "errors": {
     "network": {
@@ -146,6 +151,66 @@
           "placeholder": "Enter token from email",
           "required": "Please enter the reset token!"
         }
+      }
+    }
+  },
+  "admin": {
+    "wallet": {
+      "title": "Transaction Management",
+      "table": {
+        "id": "ID",
+        "userId": "User ID",
+        "type": "Type",
+        "amount": "Amount",
+        "status": "Status",
+        "gateway": "Gateway",
+        "description": "Description",
+        "createdAt": "Created At"
+      },
+      "filters": {
+        "userId": "User ID",
+        "type": "Type",
+        "status": "Status"
+      }
+    },
+    "user": {
+      "title": "User Management",
+      "table": {
+        "id": "ID",
+        "email": "Email",
+        "fullName": "Full Name",
+        "phone": "Phone",
+        "roles": "Roles",
+        "status": "Status",
+        "verifyEmail": "Email Verified",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "filters": {
+        "search": "Search by email or name",
+        "role": "Role",
+        "status": "Status"
+      },
+      "role": {
+        "client": "Client",
+        "worker": "Worker",
+        "admin": "Admin"
+      },
+      "status": {
+        "active": "Active",
+        "banned": "Banned"
+      },
+      "verifyEmail": {
+        "verified": "Verified",
+        "unverified": "Unverified"
+      },
+      "actions": {
+        "updateStatus": "Update Status"
+      },
+      "updateStatus": {
+        "title": "Update User Status",
+        "message": "Are you sure you want to change the status of user {email} from {currentStatus} to {newStatus}?",
+        "success": "User status updated successfully"
       }
     }
   },
@@ -928,6 +993,35 @@
       "amount": "Amount",
       "date": "Date",
       "description": "Description"
+    },
+    "transactionType": {
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "payment": "Payment",
+      "refund": "Refund"
+    },
+    "transactionStatus": {
+      "pending": "Pending",
+      "success": "Success",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "depositHistory": "Deposit History",
+      "withdrawHistory": "Withdrawal History"
+    },
+    "cards": {
+      "totalBalance": "Total Balance",
+      "reconciliationBalance": "Reconciliation Balance",
+      "totalDeposited": "Total Deposited",
+      "totalWithdrawn": "Total Withdrawn"
+    },
+    "table": {
+      "amount": "Amount",
+      "status": "Status",
+      "description": "Description",
+      "createdAt": "Created At"
     }
   }
 }
