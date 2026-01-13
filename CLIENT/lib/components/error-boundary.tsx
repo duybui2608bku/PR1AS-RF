@@ -125,7 +125,7 @@ function ErrorBoundaryContent({
           </Button>,
         ]}
       />
-      {process.env.NODE_ENV === "development" && error && (
+      {process.env.NODE_ENV !== "production" && error && (
         <div
           style={{
             marginTop: "20px",
