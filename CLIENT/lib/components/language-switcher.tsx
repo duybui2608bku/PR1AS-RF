@@ -3,25 +3,32 @@
 import { Select } from "antd";
 import { useI18n } from "../hooks/use-i18n";
 import type { Locale } from "@/i18n/config";
+import { memo, useMemo, useCallback } from "react";
 
-/**
- * Component chuyển đổi ngôn ngữ
- */
-export function LanguageSwitcher() {
+const LanguageSwitcherComponent = () => {
   const { locale, changeLocale, availableLocales, getLocaleLabel } = useI18n();
+
+  const handleChange = useCallback((value: unknown) => {
+    changeLocale(value as Locale);
+  }, [changeLocale]);
+
+  const options = useMemo(() => 
+    availableLocales.map((loc) => (
+      <Select.Option key={loc} value={loc}>
+        {getLocaleLabel(loc)}
+      </Select.Option>
+    )), [availableLocales, getLocaleLabel]);
 
   return (
     <Select
       value={locale}
-      onChange={(value) => changeLocale(value as Locale)}
+      onChange={handleChange}
       style={{ minWidth: 120 }}
     >
-      {availableLocales.map((loc) => (
-        <Select.Option key={loc} value={loc}>
-          {getLocaleLabel(loc)}
-        </Select.Option>
-      ))}
+      {options}
     </Select>
   );
-}
+};
+
+export const LanguageSwitcher = memo(LanguageSwitcherComponent);
 

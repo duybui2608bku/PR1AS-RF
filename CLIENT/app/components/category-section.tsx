@@ -6,10 +6,11 @@ import {
   LeftOutlined,
   RightOutlined,
 } from "@ant-design/icons";
-import { useRef } from "react";
+import { useRef, memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Service } from "../data/services.mock";
 import { ServiceCard } from "./service-card";
+import { ScrollAmount, Spacing, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
 
 const { Title } = Typography;
 
@@ -20,30 +21,55 @@ interface CategorySectionProps {
   showViewAll?: boolean;
 }
 
-export function CategorySection({
+const CategorySectionComponent = ({
   title,
   subtitle,
   services,
   showViewAll = true,
-}: CategorySectionProps) {
+}: CategorySectionProps) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = useCallback((direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 400;
       const currentScroll = scrollContainerRef.current.scrollLeft;
       const newScroll =
         direction === "left"
-          ? currentScroll - scrollAmount
-          : currentScroll + scrollAmount;
+          ? currentScroll - ScrollAmount.CATEGORY_SECTION
+          : currentScroll + ScrollAmount.CATEGORY_SECTION;
 
       scrollContainerRef.current.scrollTo({
         left: newScroll,
         behavior: "smooth",
       });
     }
-  };
+  }, []);
+
+  const handleScrollLeft = useCallback(() => scroll("left"), [scroll]);
+  const handleScrollRight = useCallback(() => scroll("right"), [scroll]);
+
+  const showScrollButtons = useMemo(() => services.length > 3, [services.length]);
+
+  const buttonStyle = useMemo(() => ({
+    width: 40,
+    height: 40,
+    borderRadius: `${BorderRadius.CIRCLE}%`,
+    border: "1px solid #E5E5E5",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: `all ${TransitionDuration.FAST}ms ease-out`,
+  }), []);
+
+  const handleButtonMouseEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.borderColor = "#1D1D1F";
+    e.currentTarget.style.transform = "scale(1.05)";
+  }, []);
+
+  const handleButtonMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.borderColor = "#E5E5E5";
+    e.currentTarget.style.transform = "scale(1)";
+  }, []);
 
   if (services.length === 0) return null;
 
@@ -54,14 +80,14 @@ export function CategorySection({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "0 24px",
+          padding: `0 ${Spacing.XL}px`,
           maxWidth: "1400px",
-          margin: "0 auto 24px",
+          margin: `0 auto ${Spacing.XL}px`,
           width: "100%",
         }}
       >
         <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: Spacing.MD }}>
             <Title
               level={2}
               style={{
@@ -82,7 +108,7 @@ export function CategorySection({
                   padding: 0,
                   height: "auto",
                   color: "#1D1D1F",
-                  fontSize: 16,
+                  fontSize: Spacing.LG,
                   fontWeight: 500,
                 }}
               >
@@ -91,59 +117,29 @@ export function CategorySection({
             )}
           </div>
           {subtitle && (
-            <p style={{ margin: "8px 0 0", color: "#6E6E73", fontSize: 16 }}>
+            <p style={{ margin: `${Spacing.SM}px 0 0`, color: "#6E6E73", fontSize: Spacing.LG }}>
               {subtitle}
             </p>
           )}
         </div>
 
-        {services.length > 3 && (
-          <Space size={8} style={{ marginLeft: 24, flexShrink: 0 }}>
+        {showScrollButtons && (
+          <Space size={Spacing.SM} style={{ marginLeft: Spacing.XL, flexShrink: 0 }}>
             <Button
               type="text"
               icon={<LeftOutlined />}
-              onClick={() => scroll("left")}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                border: "1px solid #E5E5E5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 50ms ease-out",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#1D1D1F";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#E5E5E5";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
+              onClick={handleScrollLeft}
+              style={buttonStyle}
+              onMouseEnter={handleButtonMouseEnter}
+              onMouseLeave={handleButtonMouseLeave}
             />
             <Button
               type="text"
               icon={<RightOutlined />}
-              onClick={() => scroll("right")}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                border: "1px solid #E5E5E5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 50ms ease-out",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#1D1D1F";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#E5E5E5";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
+              onClick={handleScrollRight}
+              style={buttonStyle}
+              onMouseEnter={handleButtonMouseEnter}
+              onMouseLeave={handleButtonMouseLeave}
             />
           </Space>
         )}
@@ -153,10 +149,10 @@ export function CategorySection({
         ref={scrollContainerRef}
         style={{
           display: "flex",
-          gap: "24px",
+          gap: `${Spacing.XL}px`,
           overflowX: "auto",
           overflowY: "hidden",
-          padding: "0 24px",
+          padding: `0 ${Spacing.XL}px`,
           scrollBehavior: "smooth",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -180,4 +176,6 @@ export function CategorySection({
       </div>
     </section>
   );
-}
+};
+
+export const CategorySection = memo(CategorySectionComponent);

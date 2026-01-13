@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -33,12 +33,11 @@ import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { getProfileRoute } from "@/lib/utils/profile-navigation";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
+import { Breakpoint, ZIndex, Spacing } from "@/lib/constants/ui.constants";
 
 const { Header: AntHeader } = Layout;
 
-const MOBILE_BREAKPOINT = 768;
-
-export function Header() {
+const HeaderComponent = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -56,7 +55,7 @@ export function Header() {
     if (typeof window === "undefined") return;
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+      setIsMobile(window.innerWidth < Breakpoint.MOBILE);
     };
 
     handleResize();
@@ -66,36 +65,44 @@ export function Header() {
     };
   }, []);
 
-  const lastActiveRole = (user as unknown as { last_active_role?: string })
-    ?.last_active_role;
-  const userRoles = (user as unknown as { roles?: string[] })?.roles || [];
-  const workerProfile = (
-    user as unknown as {
-      worker_profile?: unknown | null;
+  const userData = useMemo(() => {
+    const lastActiveRole = (user as unknown as { last_active_role?: string })
+      ?.last_active_role;
+    const userRoles = (user as unknown as { roles?: string[] })?.roles || [];
+    const workerProfile = (
+      user as unknown as {
+        worker_profile?: unknown | null;
+      }
+    )?.worker_profile;
+
+    return {
+      lastActiveRole,
+      userRoles,
+      workerProfile,
+      hasWorkerRole: userRoles.includes(UserRole.WORKER),
+      isWorkerActive: lastActiveRole === UserRole.WORKER,
+      hasWorkerProfile: workerProfile && workerProfile !== null,
+      isAdmin: userRoles.includes(UserRole.ADMIN),
+    };
+  }, [user]);
+
+  const workerButtonLabel = useMemo(() => {
+    if (userData.isWorkerActive) {
+      return t("header.hireService");
+    } else if (userData.hasWorkerProfile) {
+      return t("header.myServices");
+    } else {
+      return t("header.becomeWorker");
     }
-  )?.worker_profile;
+  }, [userData.isWorkerActive, userData.hasWorkerProfile, t]);
 
-  const hasWorkerRole = userRoles.includes(UserRole.WORKER);
-  const isWorkerActive = lastActiveRole === UserRole.WORKER;
-  const hasWorkerProfile = workerProfile && workerProfile !== null;
-  const isAdmin = userRoles.includes(UserRole.ADMIN);
-
-  let workerButtonLabel: string;
-  if (isWorkerActive) {
-    workerButtonLabel = t("header.hireService");
-  } else if (hasWorkerProfile) {
-    workerButtonLabel = t("header.myServices");
-  } else {
-    workerButtonLabel = t("header.becomeWorker");
-  }
-
-  const handleSwitchRole = async () => {
+  const handleSwitchRole = useCallback(async () => {
     if (!isAuthenticated || !user) {
       handleOpenLogin();
       return;
     }
 
-    if (isWorkerActive) {
+    if (userData.isWorkerActive) {
       try {
         await switchRoleMutation.mutateAsync(UserRole.CLIENT);
         router.push(AppRoute.HOME);
@@ -105,8 +112,8 @@ export function Header() {
       return;
     }
 
-    if (!hasWorkerRole) {
-      if (!workerProfile || workerProfile === null) {
+    if (!userData.hasWorkerRole) {
+      if (!userData.workerProfile || userData.workerProfile === null) {
         router.push(AppRoute.WORKER_SETUP);
       } else {
         router.push(AppRoute.HOME);
@@ -114,8 +121,8 @@ export function Header() {
       return;
     }
 
-    if (hasWorkerRole && !isWorkerActive) {
-      if (hasWorkerProfile) {
+    if (userData.hasWorkerRole && !userData.isWorkerActive) {
+      if (userData.hasWorkerProfile) {
         try {
           await switchRoleMutation.mutateAsync(UserRole.WORKER);
           router.push(AppRoute.HOME);
@@ -126,36 +133,36 @@ export function Header() {
         router.push(AppRoute.WORKER_SETUP);
       }
     }
-  };
+  }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError]);
 
-  const getUserInitial = () => {
+  const getUserInitial = useCallback((): string => {
     const displayName = user?.name || user?.email || "";
     return displayName.charAt(0).toUpperCase();
-  };
+  }, [user]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await logoutMutation.mutateAsync();
     } catch (error) {
       handleError(error);
     }
-  };
+  }, [logoutMutation, handleError]);
 
-  const handleOpenLogin = () => {
+  const handleOpenLogin = useCallback(() => {
     setAuthModalTab("login");
     setAuthModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenRegister = () => {
+  const handleOpenRegister = useCallback(() => {
     setAuthModalTab("register");
     setAuthModalOpen(true);
-  };
+  }, []);
 
-  const handleNavigateToAdminDashboard = () => {
+  const handleNavigateToAdminDashboard = useCallback(() => {
     router.push(AppRoute.ADMIN_DASHBOARD);
-  };
+  }, [router]);
 
-  const userMenuItems: MenuProps["items"] = [
+  const userMenuItems: MenuProps["items"] = useMemo(() => [
     {
       key: "profile",
       icon: <UserOutlined />,
@@ -191,9 +198,9 @@ export function Header() {
       onClick: handleLogout,
       danger: true,
     },
-  ];
+  ], [t, user, router, handleLogout]);
 
-  const adminMenuItems: MenuProps["items"] = [
+  const adminMenuItems: MenuProps["items"] = useMemo(() => [
     {
       key: "admin-dashboard",
       icon: <SettingOutlined />,
@@ -210,9 +217,9 @@ export function Header() {
       onClick: handleLogout,
       danger: true,
     },
-  ];
+  ], [t, handleNavigateToAdminDashboard, handleLogout]);
 
-  const workerButton = (
+  const workerButton = useMemo(() => (
     <Button
       type="primary"
       onClick={handleSwitchRole}
@@ -220,9 +227,9 @@ export function Header() {
     >
       {workerButtonLabel}
     </Button>
-  );
+  ), [handleSwitchRole, switchRoleMutation.isPending, workerButtonLabel]);
 
-  const renderAvatarDropdown = (menuItems: MenuProps["items"]) => (
+  const renderAvatarDropdown = useCallback((menuItems: MenuProps["items"]) => (
     <Dropdown
       menu={{ items: menuItems }}
       placement="bottomRight"
@@ -243,12 +250,12 @@ export function Header() {
         </Avatar>
       </div>
     </Dropdown>
-  );
+  ), [user, getUserInitial]);
 
-  const authSectionDesktop =
+  const authSectionDesktop = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
-        {renderAvatarDropdown(isAdmin ? adminMenuItems : userMenuItems)}
+        {renderAvatarDropdown(userData.isAdmin ? adminMenuItems : userMenuItems)}
       </Space>
     ) : (
       <Space>
@@ -259,12 +266,12 @@ export function Header() {
           {t("auth.user.register")}
         </Button>
       </Space>
-    );
+    ), [isAuthenticated, user, renderAvatarDropdown, userData.isAdmin, adminMenuItems, userMenuItems, handleOpenLogin, handleOpenRegister, t]);
 
-  const authSectionMobile =
+  const authSectionMobile = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
-        {renderAvatarDropdown(isAdmin ? adminMenuItems : userMenuItems)}
+        {renderAvatarDropdown(userData.isAdmin ? adminMenuItems : userMenuItems)}
       </Space>
     ) : (
       <Space orientation="vertical" style={{ width: "100%" }}>
@@ -275,12 +282,12 @@ export function Header() {
           {t("auth.user.register")}
         </Button>
       </Space>
-    );
+    ), [isAuthenticated, user, renderAvatarDropdown, userData.isAdmin, adminMenuItems, userMenuItems, handleOpenLogin, handleOpenRegister, t]);
 
   const mobilePopoverContent = (
     <div style={{ width: 280, padding: "8px 0" }}>
-      {!isAdmin && <div style={{ marginBottom: 16 }}>{workerButton}</div>}
-      {!isAdmin && <SettingsPopover />}
+      {!userData.isAdmin && <div style={{ marginBottom: 16 }}>{workerButton}</div>}
+      {!userData.isAdmin && <SettingsPopover />}
       <Divider style={{ margin: "12px 0" }} />
 
       <div style={{ marginBottom: 8 }}>
@@ -330,7 +337,7 @@ export function Header() {
         borderBottom: "1px solid var(--bg-dark-secondary)",
         position: "sticky",
         top: 0,
-        zIndex: 1000,
+        zIndex: ZIndex.HEADER,
       }}
     >
       <Link
@@ -343,8 +350,8 @@ export function Header() {
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {!isMobile && (
           <Space size="middle">
-            {!isAdmin && workerButton}
-            {!isAdmin && <SettingsPopover />}
+            {!userData.isAdmin && workerButton}
+            {!userData.isAdmin && <SettingsPopover />}
             {authSectionDesktop}
           </Space>
         )}
@@ -367,4 +374,6 @@ export function Header() {
       />
     </AntHeader>
   );
-}
+};
+
+export const Header = memo(HeaderComponent);

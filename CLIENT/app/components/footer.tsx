@@ -11,23 +11,22 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
+import { memo, useMemo } from "react";
+import { Spacing, FontSize } from "@/lib/constants/ui.constants";
 
 const { Footer: AntFooter } = Layout;
 const { Title, Text } = Typography;
 
-/**
- * Footer component
- */
-export function Footer() {
+const FooterComponent = () => {
   const { t } = useTranslation();
-  const currentYear = new Date().getFullYear();
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <AntFooter
       style={{
         background: "var(--ant-color-bg-container)",
         borderTop: "1px solid var(--ant-color-border-secondary)",
-        padding: "48px 24px 24px",
+        padding: `${Spacing.XXXL}px ${Spacing.XL}px ${Spacing.XL}px`,
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -172,5 +171,7 @@ export function Footer() {
       </div>
     </AntFooter>
   );
-}
+};
+
+export const Footer = memo(FooterComponent);
 

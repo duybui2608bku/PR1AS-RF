@@ -15,7 +15,7 @@ const messageSchema = new Schema({
   },
   receiver_id: {
     type: Schema.Types.ObjectId,
-    ref: modelsName.MESSAGE,
+    ref: modelsName.USER,
     required: true,
   },
   type: {

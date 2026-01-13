@@ -5,7 +5,8 @@ import { EnvironmentOutlined, UserOutlined, HeartOutlined } from "@ant-design/ic
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { Service } from "../data/services.mock";
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo, useCallback } from "react";
+import { ImageHeight, FontSize, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
 
 const { Text, Title } = Typography;
 
@@ -15,26 +16,26 @@ interface ServiceCardProps {
   onClick?: () => void;
 }
 
-export function ServiceCard({ service, size = "medium", onClick }: ServiceCardProps) {
+const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCardProps) => {
   const { t } = useTranslation();
   const [isLiked, setIsLiked] = useState(false);
 
-  const formatPrice = (price: number) => {
+  const formatPrice = useCallback((price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
       maximumFractionDigits: 0,
     }).format(price);
-  };
+  }, []);
 
   const cardStyles = useMemo(() => {
     const baseStyles: React.CSSProperties = {
-      borderRadius: "12px",
+      borderRadius: `${BorderRadius.LARGE}px`,
       border: "1px solid #E5E5E5",
       overflow: "hidden",
       background: "#FFFFFF",
       cursor: "pointer",
-      transition: "all 50ms ease-out",
+      transition: `all ${TransitionDuration.FAST}ms ease-out`,
       height: "100%",
       display: "flex",
       flexDirection: "column",
@@ -43,21 +44,38 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
     return baseStyles;
   }, []);
 
-  const imageHeight = size === "large" ? 320 : size === "medium" ? 240 : 180;
+  const imageHeight = useMemo(() => {
+    return size === "large" ? ImageHeight.LARGE : size === "medium" ? ImageHeight.MEDIUM : ImageHeight.SMALL;
+  }, [size]);
+
+  const formattedPrice = useMemo(() => formatPrice(service.price), [service.price, formatPrice]);
+
+  const titleLevel = useMemo(() => size === "large" ? 4 : 5, [size]);
+
+  const priceFontSize = useMemo(() => size === "large" ? FontSize.LG : FontSize.MD, [size]);
+
+  const handleLikeClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setIsLiked((prev) => !prev);
+  }, []);
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = "translateY(-2px)";
+    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
+  }, []);
+
+  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = "translateY(0)";
+    e.currentTarget.style.boxShadow = "none";
+  }, []);
 
   return (
     <Card
       hoverable
       style={cardStyles}
       onClick={onClick}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       styles={{
         body: {
           padding: 0,
@@ -83,7 +101,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
           fill
           style={{
             objectFit: "cover",
-            transition: "transform 100ms ease-out",
+            transition: `transform ${TransitionDuration.NORMAL}ms ease-out`,
           }}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
@@ -97,8 +115,8 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
               background: "rgba(255, 255, 255, 0.95)",
               color: "#1D1D1F",
               padding: "6px 12px",
-              borderRadius: "20px",
-              fontSize: 12,
+              borderRadius: `${BorderRadius.EXTRA_LARGE}px`,
+              fontSize: FontSize.XS,
               fontWeight: 500,
               display: "flex",
               alignItems: "center",
@@ -113,10 +131,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
 
         {/* Heart Icon */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsLiked(!isLiked);
-          }}
+          onClick={handleLikeClick}
           style={{
             position: "absolute",
             top: 12,
@@ -130,7 +145,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            transition: "all 50ms ease-out",
+            transition: `all ${TransitionDuration.FAST}ms ease-out`,
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           }}
           onMouseEnter={(e) => {
@@ -144,9 +159,9 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
         >
           <HeartOutlined
             style={{
-              fontSize: 18,
+              fontSize: FontSize.LG,
               color: isLiked ? "#FF385C" : "#1D1D1F",
-              transition: "color 50ms ease-out",
+              transition: `color ${TransitionDuration.FAST}ms ease-out`,
             }}
           />
         </button>
@@ -159,7 +174,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
           <Text
             type="secondary"
             style={{
-              fontSize: 12,
+              fontSize: FontSize.XS,
               textTransform: "uppercase",
               letterSpacing: "0.5px",
               fontWeight: 500,
@@ -167,12 +182,12 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
           >
             {service.category}
           </Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: FontSize.XS }}>
             •
           </Text>
           <Space size={4}>
-            <EnvironmentOutlined style={{ fontSize: 12, color: "#8C8C8C" }} />
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <EnvironmentOutlined style={{ fontSize: FontSize.XS, color: "#8C8C8C" }} />
+            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
               {service.location}
             </Text>
           </Space>
@@ -180,7 +195,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
 
         {/* Title */}
         <Title
-          level={size === "large" ? 4 : 5}
+          level={titleLevel}
           style={{
             margin: 0,
             marginBottom: 8,
@@ -202,18 +217,18 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
             disabled
             value={service.rating}
             allowHalf
-            style={{ fontSize: 14 }}
+            style={{ fontSize: FontSize.SM }}
           />
           <Text
             style={{
-              fontSize: 14,
+              fontSize: FontSize.SM,
               fontWeight: 500,
               color: "#1D1D1F",
             }}
           >
             {service.rating}
           </Text>
-          <Text type="secondary" style={{ fontSize: 14 }}>
+          <Text type="secondary" style={{ fontSize: FontSize.SM }}>
             ({service.reviewCount})
           </Text>
         </Space>
@@ -237,7 +252,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
                   src={service.users[0].avatar}
                   icon={<UserOutlined />}
                 />
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FontSize.XS }}>
                   {service.users[0].name}
                 </Text>
               </>
@@ -254,16 +269,16 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
           </Space>
           <Text
             style={{
-              fontSize: size === "large" ? 18 : 16,
+              fontSize: priceFontSize,
               fontWeight: 700,
               color: "#711111",
             }}
           >
-            {formatPrice(service.price)}
+            {formattedPrice}
             <Text
               type="secondary"
               style={{
-                fontSize: 12,
+                fontSize: FontSize.XS,
                 fontWeight: 400,
                 marginLeft: 4,
               }}
@@ -275,5 +290,7 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
       </div>
     </Card>
   );
-}
+};
+
+export const ServiceCard = memo(ServiceCardComponent);
 

@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { Spin, Alert, Typography } from "antd";
 import type { AxiosError } from "axios";
 import type { ApiResponse } from "../axios";
 import { useI18n } from "../hooks/use-i18n";
+import { LoadingSize } from "../constants/ui.constants";
 
 const { Text } = Typography;
 
@@ -20,13 +21,10 @@ export interface QueryStateProps {
   showEmpty?: boolean;
   children?: React.ReactNode;
   className?: string;
+  loadingSize?: LoadingSize;
 }
 
-/**
- * Reusable component for handling query states (loading, error, empty, success)
- * Can be used across the entire site for consistent loading/error handling
- */
-export function QueryState({
+function QueryStateComponent({
   isLoading,
   isError,
   error,
@@ -38,13 +36,14 @@ export function QueryState({
   showEmpty = false,
   children,
   className,
+  loadingSize = LoadingSize.LARGE,
 }: QueryStateProps) {
   const { t } = useI18n();
 
   if (isLoading) {
     return (
       <div className={className || "query-state-loading"}>
-        <Spin size="large" />
+        <Spin size={loadingSize} />
         {loadingText && <Text type="secondary">{loadingText}</Text>}
       </div>
     );
@@ -89,3 +88,4 @@ export function QueryState({
   return <>{children}</>;
 }
 
+export const QueryState = memo(QueryStateComponent);
