@@ -31,6 +31,9 @@ export enum ApiEndpoint {
   WALLET_BALANCE = "/wallet/balance",
   WALLET_TRANSACTIONS = "/wallet/transactions",
   ADMIN_WALLET_TRANSACTIONS = "/admin/wallet/transactions",
+  ADMIN_WALLET_STATS = "/admin/wallet/stats",
+  ADMIN_WALLET_TOP_USERS = "/admin/wallet/top-users",
+  ADMIN_WALLET_CHART = "/admin/wallet/chart",
 }
 
 export const buildEndpoint = (

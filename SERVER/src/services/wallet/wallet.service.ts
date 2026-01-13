@@ -12,12 +12,16 @@ import {
   TransactionHistoryQuery,
   TransactionHistoryResponse,
   AdminTransactionHistoryQuery,
+  AdminTransactionStatsResponse,
+  TopUsersResponse,
+  TransactionChartResponse,
 } from "../../types/wallet";
 
 import {
   TransactionType,
   TransactionStatus,
   WALLET_LIMITS,
+  DateRangePreset,
 } from "../../constants/wallet";
 
 import { PaymentGateway } from "../../constants/wallet";
@@ -29,6 +33,8 @@ import { WALLET_MESSAGES } from "../../constants/messages";
 import { buildDepositPaymentUrl, verifyPaymentReturn } from "../vnpay";
 
 import mongoose from "mongoose";
+
+import dayjs from "dayjs";
 
 export const createDepositTransaction = async (
   userId: string,
@@ -242,4 +248,66 @@ export const getAdminTransactionHistory = async (
     page: query.page || 1,
     limit: query.limit || 10,
   };
+};
+
+const getDateRangeFromPreset = (
+  preset: DateRangePreset
+): { startDate: Date; endDate: Date } => {
+  const now = dayjs();
+
+  switch (preset) {
+    case DateRangePreset.TODAY:
+      return {
+        startDate: now.startOf("day").toDate(),
+        endDate: now.endOf("day").toDate(),
+      };
+    case DateRangePreset.YESTERDAY:
+      return {
+        startDate: now.subtract(1, "day").startOf("day").toDate(),
+        endDate: now.subtract(1, "day").endOf("day").toDate(),
+      };
+    case DateRangePreset.LAST_7_DAYS:
+      return {
+        startDate: now.subtract(6, "day").startOf("day").toDate(),
+        endDate: now.endOf("day").toDate(),
+      };
+    case DateRangePreset.LAST_14_DAYS:
+      return {
+        startDate: now.subtract(13, "day").startOf("day").toDate(),
+        endDate: now.endOf("day").toDate(),
+      };
+    case DateRangePreset.THIS_MONTH:
+      return {
+        startDate: now.startOf("month").toDate(),
+        endDate: now.endOf("day").toDate(),
+      };
+    default:
+      throw AppError.badRequest(WALLET_MESSAGES.INVALID_DATE_RANGE);
+  }
+};
+
+export const getTransactionStats = async (
+  dateRange: DateRangePreset
+): Promise<AdminTransactionStatsResponse> => {
+  const { startDate, endDate } = getDateRangeFromPreset(dateRange);
+  return walletRepository.getTransactionStats(startDate, endDate);
+};
+
+export const getTopUsers = async (
+  dateRange: DateRangePreset
+): Promise<TopUsersResponse> => {
+  const { startDate, endDate } = getDateRangeFromPreset(dateRange);
+  const users = await walletRepository.getTopUsers(startDate, endDate);
+  return { users };
+};
+
+export const getTransactionChartData = async (
+  dateRange: DateRangePreset
+): Promise<TransactionChartResponse> => {
+  const { startDate, endDate } = getDateRangeFromPreset(dateRange);
+  const data = await walletRepository.getTransactionChartData(
+    startDate,
+    endDate
+  );
+  return { data };
 };

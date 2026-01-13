@@ -130,4 +130,8 @@ export const WALLET_MESSAGES = {
   PAYMENT_VERIFIED: "Payment verified successfully",
   BALANCE_FETCHED: "Balance fetched successfully",
   TRANSACTIONS_FETCHED: "Transactions fetched successfully",
+  STATS_FETCHED: "Transaction statistics fetched successfully",
+  TOP_USERS_FETCHED: "Top users fetched successfully",
+  CHART_DATA_FETCHED: "Chart data fetched successfully",
+  INVALID_DATE_RANGE: "Invalid date range",
 } as const;

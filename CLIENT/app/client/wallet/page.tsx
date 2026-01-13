@@ -356,7 +356,7 @@ function WalletContent() {
                     bodyStyle={{ padding: "24px" }}
                   >
                     <Space
-                      direction="vertical"
+                      orientation="vertical"
                       size="small"
                       style={{ width: "100%" }}
                     >

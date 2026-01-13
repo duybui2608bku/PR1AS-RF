@@ -16,6 +16,16 @@ export enum PaymentGateway {
   VNPAY = "vnpay",
 }
 
+export enum DateRangePreset {
+  TODAY = "today",
+  YESTERDAY = "yesterday",
+  LAST_7_DAYS = "last_7_days",
+  LAST_14_DAYS = "last_14_days",
+  THIS_MONTH = "this_month",
+}
+
+export const TOP_USERS_LIMIT = 5 as const;
+
 export const WALLET_LIMITS = {
   MIN_DEPOSIT_AMOUNT: 100,
   MAX_DEPOSIT_AMOUNT: 50000000,

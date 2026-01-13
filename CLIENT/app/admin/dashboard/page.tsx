@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const { t } = useI18n();
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space orientation="vertical" size="large" style={{ width: "100%" }}>
       <Title level={2}>{t("dashboard.welcome")}</Title>
 
       <Row gutter={[16, 16]}>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} lg={8}>
           <Card title={t("dashboard.quickActions")}>
-            <Space direction="vertical" style={{ width: "100%" }}>
+            <Space orientation="vertical" style={{ width: "100%" }}>
               <p>{t("dashboard.quickActionsDesc")}</p>
             </Space>
           </Card>

@@ -117,7 +117,7 @@ export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element 
         </Form.Item>
 
         <Form.Item>
-          <Space direction="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
             <span>{t("wallet.deposit.presets")}</span>
             <Space wrap>
               {DEPOSIT_AMOUNT_PRESETS.map((preset) => (

@@ -90,7 +90,7 @@ export const SocketDebug = () => {
         </Button>
       }
     >
-      <Space direction="vertical" style={{ width: "100%" }} size="small">
+      <Space orientation="vertical" style={{ width: "100%" }} size="small">
         <div>
           <Text strong>Connection Status: </Text>
           {isConnected ? (

@@ -17,7 +17,7 @@ export function SettingsPopover() {
   const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
 
   const content = (
-    <Space direction="vertical" size="middle" style={{ minWidth: 200 }}>
+    <Space orientation="vertical" size="middle" style={{ minWidth: 200 }}>
       {/* Currency Selector */}
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Tiền tệ</div>

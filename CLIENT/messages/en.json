@@ -171,6 +171,38 @@
         "userId": "User ID",
         "type": "Type",
         "status": "Status"
+      },
+      "dateRange": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7Days": "Last 7 days",
+        "last14Days": "Last 14 days",
+        "thisMonth": "This month"
+      },
+      "stats": {
+        "totalTransactions": "Total Transactions",
+        "deposit": "Deposit",
+        "withdraw": "Withdraw",
+        "payment": "Payment",
+        "refund": "Refund",
+        "success": "Success",
+        "pending": "Pending",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "topUsers": {
+        "title": "Top 5 Users by Transactions",
+        "transactions": "transactions"
+      },
+      "chart": {
+        "title": "Transaction Chart"
+      },
+      "transactions": {
+        "title": "Transaction List"
+      },
+      "tabs": {
+        "statistics": "Statistics",
+        "data": "Data"
       }
     },
     "user": {

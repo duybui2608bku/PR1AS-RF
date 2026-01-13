@@ -309,7 +309,7 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
       footer={null}
       width={activeTab === "register" ? 640 : 480}
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <SafetyOutlined style={{ fontSize: 48, marginBottom: 16, color: "var(--ant-color-primary)" }} />

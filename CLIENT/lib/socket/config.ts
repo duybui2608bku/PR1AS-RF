@@ -6,7 +6,7 @@ import { SocketEvent } from "../constants/socket-events";
 const SOCKET_BASE_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-  "http://localhost:3052";
+  "http://localhost:3052/api";
 
 let socketInstance: Socket | null = null;
 

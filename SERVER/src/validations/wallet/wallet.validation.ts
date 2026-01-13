@@ -4,6 +4,7 @@ import {
   TransactionType,
   TransactionStatus,
   WALLET_LIMITS,
+  DateRangePreset,
 } from "../../constants/wallet";
 
 import { WALLET_MESSAGES } from "../../constants/messages";
@@ -40,9 +41,15 @@ export const transactionHistoryQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
+export const dateRangeQuerySchema = z.object({
+  date_range: z.nativeEnum(DateRangePreset),
+});
+
 export type CreateDepositSchemaType = z.infer<typeof createDepositSchema>;
 
 export type TransactionHistoryQuerySchemaType = z.infer<
   typeof transactionHistoryQuerySchema
 >;
+
+export type DateRangeQuerySchemaType = z.infer<typeof dateRangeQuerySchema>;
 

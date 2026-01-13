@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Card,
@@ -11,19 +11,45 @@ import {
   Button,
   Tag,
   Space as AntSpace,
+  Row,
+  Col,
+  Statistic,
+  Avatar,
+  List,
+  Spin,
+  Tabs,
 } from "antd";
 import {
   ReloadOutlined,
   SearchOutlined,
   ClearOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  DollarOutlined,
+  UserOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  SwapOutlined,
+  BarChartOutlined,
+  TableOutlined,
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { walletApi } from "@/lib/api/wallet.api";
-import type { AdminTransactionHistoryQuery } from "@/lib/api/wallet.api";
-import type { WalletTransaction } from "@/lib/api/wallet.api";
-import { TransactionType, TransactionStatus } from "@/lib/constants/wallet";
+import type {
+  AdminTransactionHistoryQuery,
+  WalletTransaction,
+  AdminTransactionStatsResponse,
+  TopUserTransaction,
+  ChartDataPoint,
+} from "@/lib/api/wallet.api";
+import {
+  TransactionType,
+  TransactionStatus,
+  DateRangePreset,
+} from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import type { ColumnsType } from "antd/es/table";
 import { UserProfile } from "@/lib/api";
@@ -37,15 +63,79 @@ import {
   getTypeTagColor,
   TableColumnKeys,
 } from "@/app/admin/dashboard/wallet/constants/wallet.constants";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title as ChartTitle,
+  Tooltip,
+  Legend,
+  Filler,
+  TooltipItem,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 
-const { Title } = Typography;
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ChartTitle,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+const { Title, Text } = Typography;
 const { Option } = Select;
+
+enum TabKey {
+  STATISTICS = "statistics",
+  DATA = "data",
+}
+
+const DATE_RANGE_OPTIONS = [
+  { value: DateRangePreset.TODAY, labelKey: "admin.wallet.dateRange.today" },
+  {
+    value: DateRangePreset.YESTERDAY,
+    labelKey: "admin.wallet.dateRange.yesterday",
+  },
+  {
+    value: DateRangePreset.LAST_7_DAYS,
+    labelKey: "admin.wallet.dateRange.last7Days",
+  },
+  {
+    value: DateRangePreset.LAST_14_DAYS,
+    labelKey: "admin.wallet.dateRange.last14Days",
+  },
+  {
+    value: DateRangePreset.THIS_MONTH,
+    labelKey: "admin.wallet.dateRange.thisMonth",
+  },
+];
+
+const CHART_COLORS = {
+  deposit: "rgba(82, 196, 26, 1)",
+  withdraw: "rgba(114, 46, 209, 1)",
+  payment: "rgba(22, 119, 255, 1)",
+  refund: "rgba(250, 173, 20, 1)",
+  depositBg: "rgba(82, 196, 26, 0.1)",
+  withdrawBg: "rgba(114, 46, 209, 0.1)",
+  paymentBg: "rgba(22, 119, 255, 0.1)",
+  refundBg: "rgba(250, 173, 20, 0.1)",
+};
 
 export default function AdminWalletPage() {
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
 
+  const [activeTab, setActiveTab] = useState<TabKey>(TabKey.STATISTICS);
+  const [dateRange, setDateRange] = useState<DateRangePreset>(
+    DateRangePreset.LAST_7_DAYS
+  );
   const [filters, setFilters] = useState<AdminTransactionHistoryQuery>({
     page: PAGINATION_DEFAULTS.PAGE,
     limit: PAGINATION_DEFAULTS.LIMIT,
@@ -54,19 +144,68 @@ export default function AdminWalletPage() {
 
   const {
     data: transactionData,
-    isLoading,
-    refetch,
-    error,
+    isLoading: isLoadingTransactions,
+    refetch: refetchTransactions,
+    error: transactionError,
   } = useQuery({
     queryKey: ["admin-transaction-history", filters],
     queryFn: () => walletApi.getAdminTransactionHistory(filters),
+    enabled: activeTab === TabKey.DATA,
+  });
+
+  const {
+    data: statsData,
+    isLoading: isLoadingStats,
+    error: statsError,
+    refetch: refetchStats,
+  } = useQuery({
+    queryKey: ["admin-wallet-stats", dateRange],
+    queryFn: () => walletApi.getTransactionStats({ date_range: dateRange }),
+    enabled: activeTab === TabKey.STATISTICS,
+  });
+
+  const {
+    data: topUsersData,
+    isLoading: isLoadingTopUsers,
+    error: topUsersError,
+    refetch: refetchTopUsers,
+  } = useQuery({
+    queryKey: ["admin-wallet-top-users", dateRange],
+    queryFn: () => walletApi.getTopUsers({ date_range: dateRange }),
+    enabled: activeTab === TabKey.STATISTICS,
+  });
+
+  const {
+    data: chartData,
+    isLoading: isLoadingChart,
+    error: chartError,
+    refetch: refetchChart,
+  } = useQuery({
+    queryKey: ["admin-wallet-chart", dateRange],
+    queryFn: () => walletApi.getTransactionChartData({ date_range: dateRange }),
+    enabled: activeTab === TabKey.STATISTICS,
   });
 
   useEffect(() => {
-    if (error) {
-      handleError(error);
-    }
-  }, [error, handleError]);
+    if (transactionError) handleError(transactionError);
+    if (statsError) handleError(statsError);
+    if (topUsersError) handleError(topUsersError);
+    if (chartError) handleError(chartError);
+  }, [transactionError, statsError, topUsersError, chartError, handleError]);
+
+  const handleTabChange = (key: string): void => {
+    setActiveTab(key as TabKey);
+  };
+
+  const handleDateRangeChange = (value: DateRangePreset): void => {
+    setDateRange(value);
+  };
+
+  const handleRefreshStats = (): void => {
+    refetchStats();
+    refetchTopUsers();
+    refetchChart();
+  };
 
   const handleFilterChange = (
     key: keyof AdminTransactionHistoryQuery,
@@ -109,6 +248,78 @@ export default function AdminWalletPage() {
       limit: pageSize,
     }));
   };
+
+  const chartConfig = useMemo(() => {
+    if (!chartData?.data) return null;
+
+    return {
+      labels: chartData.data.map((item: ChartDataPoint) => item.date),
+      datasets: [
+        {
+          label: t("wallet.transactionType.deposit"),
+          data: chartData.data.map((item: ChartDataPoint) => item.deposit),
+          borderColor: CHART_COLORS.deposit,
+          backgroundColor: CHART_COLORS.depositBg,
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: t("wallet.transactionType.withdraw"),
+          data: chartData.data.map((item: ChartDataPoint) => item.withdraw),
+          borderColor: CHART_COLORS.withdraw,
+          backgroundColor: CHART_COLORS.withdrawBg,
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: t("wallet.transactionType.payment"),
+          data: chartData.data.map((item: ChartDataPoint) => item.payment),
+          borderColor: CHART_COLORS.payment,
+          backgroundColor: CHART_COLORS.paymentBg,
+          fill: true,
+          tension: 0.4,
+        },
+        {
+          label: t("wallet.transactionType.refund"),
+          data: chartData.data.map((item: ChartDataPoint) => item.refund),
+          borderColor: CHART_COLORS.refund,
+          backgroundColor: CHART_COLORS.refundBg,
+          fill: true,
+          tension: 0.4,
+        },
+      ],
+    };
+  }, [chartData, t]);
+
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top" as const,
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: TooltipItem<"line">) => {
+              const label = context.dataset.label || "";
+              const value = context.parsed.y ?? 0;
+              return `${label}: ${formatCurrency(value)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value: number | string) => formatCurrency(Number(value)),
+          },
+        },
+      },
+    }),
+    [formatCurrency]
+  );
 
   const columns: ColumnsType<WalletTransaction> = [
     {
@@ -178,15 +389,231 @@ export default function AdminWalletPage() {
     },
   ];
 
-  return (
-    <Space orientation="vertical" size="large" style={{ width: "100%" }}>
-      <Title level={2}>{t("admin.wallet.title")}</Title>
-      <Card>
-        <AntSpace
-          orientation="vertical"
-          size="middle"
-          style={{ width: "100%" }}
+  const renderStatCards = (stats: AdminTransactionStatsResponse) => (
+    <Row gutter={[16, 16]}>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.totalTransactions")}
+            value={stats.total_transactions}
+            prefix={<SwapOutlined />}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.deposit")}
+            value={stats.deposit.count}
+            suffix={
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                ({formatCurrency(stats.deposit.total_amount)})
+              </Text>
+            }
+            prefix={<ArrowDownOutlined style={{ color: "#52c41a" }} />}
+            valueStyle={{ color: "#52c41a" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.withdraw")}
+            value={stats.withdraw.count}
+            suffix={
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                ({formatCurrency(stats.withdraw.total_amount)})
+              </Text>
+            }
+            prefix={<ArrowUpOutlined style={{ color: "#722ed1" }} />}
+            valueStyle={{ color: "#722ed1" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.payment")}
+            value={stats.payment.count}
+            suffix={
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                ({formatCurrency(stats.payment.total_amount)})
+              </Text>
+            }
+            prefix={<DollarOutlined style={{ color: "#1677ff" }} />}
+            valueStyle={{ color: "#1677ff" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.refund")}
+            value={stats.refund.count}
+            suffix={
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                ({formatCurrency(stats.refund.total_amount)})
+              </Text>
+            }
+            prefix={<DollarOutlined style={{ color: "#faad14" }} />}
+            valueStyle={{ color: "#faad14" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.success")}
+            value={stats.success.count}
+            prefix={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+            valueStyle={{ color: "#52c41a" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.pending")}
+            value={stats.pending.count}
+            prefix={<ClockCircleOutlined style={{ color: "#faad14" }} />}
+            valueStyle={{ color: "#faad14" }}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} md={8} lg={6}>
+        <Card>
+          <Statistic
+            title={t("admin.wallet.stats.failed")}
+            value={stats.failed.count}
+            prefix={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />}
+            valueStyle={{ color: "#ff4d4f" }}
+          />
+        </Card>
+      </Col>
+    </Row>
+  );
+
+  const renderTopUsers = (users: TopUserTransaction[]) => (
+    <List
+      itemLayout="horizontal"
+      dataSource={users}
+      renderItem={(item: TopUserTransaction, index: number) => (
+        <List.Item>
+          <List.Item.Meta
+            avatar={
+              <Avatar
+                size={40}
+                src={item.avatar}
+                icon={!item.avatar && <UserOutlined />}
+              />
+            }
+            title={
+              <Space>
+                <Tag color="blue">#{index + 1}</Tag>
+                <Text strong>{item.full_name}</Text>
+              </Space>
+            }
+            description={item.email}
+          />
+          <div style={{ textAlign: "right" }}>
+            <div>
+              <Text strong>{item.transaction_count}</Text>{" "}
+              <Text type="secondary">
+                {t("admin.wallet.topUsers.transactions")}
+              </Text>
+            </div>
+            <div>
+              <Text type="success">{formatCurrency(item.total_amount)}</Text>
+            </div>
+          </div>
+        </List.Item>
+      )}
+    />
+  );
+
+  const renderStatisticsTab = () => (
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 16,
+        }}
+      >
+        <Select
+          value={dateRange}
+          onChange={handleDateRangeChange}
+          style={{ width: 180 }}
+          size="large"
         >
+          {DATE_RANGE_OPTIONS.map((option) => (
+            <Option key={option.value} value={option.value}>
+              {t(option.labelKey)}
+            </Option>
+          ))}
+        </Select>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={handleRefreshStats}
+          loading={isLoadingStats || isLoadingTopUsers || isLoadingChart}
+          size="large"
+        >
+          {t("common.refresh")}
+        </Button>
+      </div>
+
+      {isLoadingStats ? (
+        <Card>
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <Spin size="large" />
+          </div>
+        </Card>
+      ) : (
+        statsData && renderStatCards(statsData)
+      )}
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={16}>
+          <Card title={t("admin.wallet.chart.title")}>
+            {isLoadingChart ? (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <Spin size="large" />
+              </div>
+            ) : chartConfig ? (
+              <div style={{ height: 400 }}>
+                <Line data={chartConfig} options={chartOptions} />
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <Text type="secondary">{t("common.noData")}</Text>
+              </div>
+            )}
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title={t("admin.wallet.topUsers.title")}>
+            {isLoadingTopUsers ? (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <Spin size="large" />
+              </div>
+            ) : topUsersData?.users && topUsersData.users.length > 0 ? (
+              renderTopUsers(topUsersData.users)
+            ) : (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <Text type="secondary">{t("common.noData")}</Text>
+              </div>
+            )}
+          </Card>
+        </Col>
+      </Row>
+    </Space>
+  );
+
+  const renderDataTab = () => (
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <Card>
+        <AntSpace direction="vertical" size="middle" style={{ width: "100%" }}>
           <AntSpace wrap size={16}>
             <Input
               placeholder={t("admin.wallet.filters.userId")}
@@ -250,8 +677,8 @@ export default function AdminWalletPage() {
 
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isLoading}
+              onClick={() => refetchTransactions()}
+              loading={isLoadingTransactions}
               size="large"
             >
               {t("common.refresh")}
@@ -264,7 +691,7 @@ export default function AdminWalletPage() {
         <Table<WalletTransaction>
           columns={columns}
           dataSource={transactionData?.data || []}
-          loading={isLoading}
+          loading={isLoadingTransactions}
           rowKey={(record) => record.id}
           pagination={{
             current:
@@ -285,6 +712,41 @@ export default function AdminWalletPage() {
           scroll={{ x: "max-content" }}
         />
       </Card>
+    </Space>
+  );
+
+  const tabItems = [
+    {
+      key: TabKey.STATISTICS,
+      label: (
+        <span>
+          <BarChartOutlined />
+          {t("admin.wallet.tabs.statistics")}
+        </span>
+      ),
+      children: renderStatisticsTab(),
+    },
+    {
+      key: TabKey.DATA,
+      label: (
+        <span>
+          <TableOutlined />
+          {t("admin.wallet.tabs.data")}
+        </span>
+      ),
+      children: renderDataTab(),
+    },
+  ];
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <Title level={2}>{t("admin.wallet.title")}</Title>
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        items={tabItems}
+        size="large"
+      />
     </Space>
   );
 }

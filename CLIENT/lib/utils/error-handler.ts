@@ -1,6 +1,6 @@
-import { notification } from "antd";
 import type { ApiError } from "../axios/config";
 import { getTranslationSync, formatMessage } from "./i18n-helper";
+import { getNotificationApi } from "./notification.service";
 
 export enum ErrorType {
   API = "api",
@@ -196,8 +196,8 @@ export function showErrorNotification(
     }
   }
 
-  notification.error({
-    message: config.message,
+  getNotificationApi().error({
+    title: config.message,
     description: config.description,
     duration: config.duration,
     placement: "topRight",
@@ -208,8 +208,8 @@ export function showSuccessNotification(
   message: string,
   description?: string
 ): void {
-  notification.success({
-    message,
+  getNotificationApi().success({
+    title: message,
     description,
     duration: NOTIFICATION_DURATION,
     placement: "topRight",
@@ -220,8 +220,8 @@ export function showWarningNotification(
   message: string,
   description?: string
 ): void {
-  notification.warning({
-    message,
+  getNotificationApi().warning({
+    title: message,
     description,
     duration: NOTIFICATION_DURATION,
     placement: "topRight",
@@ -232,8 +232,8 @@ export function showInfoNotification(
   message: string,
   description?: string
 ): void {
-  notification.info({
-    message,
+  getNotificationApi().info({
+    title: message,
     description,
     duration: NOTIFICATION_DURATION,
     placement: "topRight",

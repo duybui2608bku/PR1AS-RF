@@ -77,7 +77,7 @@ export function CategorySection({
               <Button
                 type="link"
                 icon={<ArrowRightOutlined />}
-                iconPosition="end"
+                iconPlacement="end"
                 style={{
                   padding: 0,
                   height: "auto",

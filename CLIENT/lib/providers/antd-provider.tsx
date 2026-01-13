@@ -1,7 +1,7 @@
 "use client";
 
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App } from "antd";
 import viVN from "antd/locale/vi_VN";
 import enUS from "antd/locale/en_US";
 import koKR from "antd/locale/ko_KR";
@@ -9,6 +9,7 @@ import zhCN from "antd/locale/zh_CN";
 import { useLocaleStore } from "../stores/locale.store";
 import { useThemeStore } from "../stores/theme.store";
 import { ThemeSync } from "../components/theme-sync";
+import { AppNotificationInit } from "../components/app-notification-init";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/config";
@@ -62,19 +63,13 @@ export function AntdProvider({ children }: AntdProviderProps) {
       <ConfigProvider
         locale={antdLocale}
         theme={{
-          // Cấu hình token (màu sắc, spacing, typography, etc.)
           token: {
-            // Primary color từ CSS variable
             colorPrimary: primaryColor,
-            // Border radius mặc định
             borderRadius: 8,
-            // Font size
             fontSize: 14,
-            // Font family
             fontFamily:
               'var(--font-work-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           },
-          // Cấu hình component cụ thể
           components: {
             Button: {
               borderRadius: 8,
@@ -94,16 +89,15 @@ export function AntdProvider({ children }: AntdProviderProps) {
             Card: {
               borderRadius: 12,
             },
-            Form: {
-              // Form container không cần border-radius riêng
-            },
+            Form: {},
           },
-          // Algorithm: sử dụng dark mode hoặc light mode
           algorithm:
             themeMode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
       >
-        {children}
+        <App>
+          <AppNotificationInit>{children}</AppNotificationInit>
+        </App>
       </ConfigProvider>
     </AntdRegistry>
   );

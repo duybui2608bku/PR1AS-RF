@@ -77,7 +77,7 @@ export function Footer() {
             <Title level={4} style={{ marginBottom: 16 }}>
               {t("home.footer.links.title")}
             </Title>
-            <Space direction="vertical" size="small">
+            <Space orientation="vertical" size="small">
               <Link
                 href="/"
                 style={{ color: "var(--ant-color-text-secondary)", display: "block" }}
@@ -110,7 +110,7 @@ export function Footer() {
             <Title level={4} style={{ marginBottom: 16 }}>
               {t("home.footer.services.title")}
             </Title>
-            <Space direction="vertical" size="small">
+            <Space orientation="vertical" size="small">
               <Text type="secondary" style={{ display: "block" }}>
                 {t("home.footer.services.item1")}
               </Text>
@@ -128,7 +128,7 @@ export function Footer() {
             <Title level={4} style={{ marginBottom: 16 }}>
               {t("home.footer.contact.title")}
             </Title>
-            <Space direction="vertical" size="middle">
+            <Space orientation="vertical" size="middle">
               <Space>
                 <MailOutlined />
                 <Text type="secondary">info@example.com</Text>

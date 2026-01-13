@@ -64,7 +64,7 @@ export function ForgotPasswordModal({
       footer={null}
       width={480}
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         {isSuccess ? (

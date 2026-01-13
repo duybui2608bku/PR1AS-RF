@@ -416,7 +416,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
               {t("worker.setup.step1.location.label")}
             </Title>
-            <Space direction="vertical" style={{ width: "100%" }} size="large">
+            <Space orientation="vertical" style={{ width: "100%" }} size="large">
               <Button
                 icon={<EnvironmentOutlined />}
                 onClick={getLocation}
@@ -678,7 +678,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
               {t("worker.setup.step1.hobbies.label")}
             </Title>
-            <Space direction="vertical" style={{ width: "100%" }} size="large">
+            <Space orientation="vertical" style={{ width: "100%" }} size="large">
               <Space.Compact style={{ width: "100%" }}>
                 <Input
                   value={hobbyInput}

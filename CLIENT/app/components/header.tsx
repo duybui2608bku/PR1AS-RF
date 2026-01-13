@@ -267,7 +267,7 @@ export function Header() {
         {renderAvatarDropdown(isAdmin ? adminMenuItems : userMenuItems)}
       </Space>
     ) : (
-      <Space direction="vertical" style={{ width: "100%" }}>
+      <Space orientation="vertical" style={{ width: "100%" }}>
         <Button type="primary" onClick={handleOpenLogin} block>
           {t("auth.login")}
         </Button>

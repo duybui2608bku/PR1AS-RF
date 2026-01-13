@@ -106,7 +106,7 @@ export function PasswordStrength({ password, showRequirements = true }: Password
 
   return (
     <div style={{ marginTop: 8 }}>
-      <Space direction="vertical" size="small" style={{ width: "100%" }}>
+      <Space orientation="vertical" size="small" style={{ width: "100%" }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
             <Text style={{ fontSize: 12 }}>Độ mạnh mật khẩu:</Text>

@@ -51,6 +51,10 @@ const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
       type: String,
       default: null,
     },
+    currency: {
+      type: String,
+      default: "VND",
+    },
     created_at: {
       type: Date,
       default: Date.now,

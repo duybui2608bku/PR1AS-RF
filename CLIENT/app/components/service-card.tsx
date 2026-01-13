@@ -243,9 +243,8 @@ export function ServiceCard({ service, size = "medium", onClick }: ServiceCardPr
               </>
             ) : (
               <Avatar.Group
-                maxCount={2}
+                max={{ count: 2, style: { color: "#1D1D1F", backgroundColor: "#F5F5F5" } }}
                 size={24}
-                maxStyle={{ color: "#1D1D1F", backgroundColor: "#F5F5F5" }}
               >
                 {service.users.map((user) => (
                   <Avatar key={user.id} src={user.avatar} icon={<UserOutlined />} />
