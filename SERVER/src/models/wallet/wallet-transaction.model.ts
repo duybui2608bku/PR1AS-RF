@@ -10,10 +10,10 @@ import { modelsName } from "../models.name";
 const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
   {
     user_id: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER,
       required: true,
       index: true,
-      ref: modelsName.USER,
     },
     type: {
       type: String,

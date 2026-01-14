@@ -38,5 +38,5 @@ export const VNPAY_CONSTANTS = {
   CURRENCY_CODE: "VND",
   LOCALE: "vn",
   ORDER_TYPE: "other",
-  ORDER_INFO_PREFIX: "Nap tien vao tai khoan",
+  ORDER_INFO_PREFIX: "NAP TIEN VAO TAI KHOAN",
 } as const;

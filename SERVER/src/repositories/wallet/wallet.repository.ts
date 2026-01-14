@@ -255,7 +255,7 @@ export class WalletRepository {
     );
 
     return {
-      total_transactions: totalTransactions,
+      total_transactions: totalTransactions as unknown as number,
       deposit: typeStatsMap[TransactionType.DEPOSIT] || {
         count: 0,
         total_amount: 0,

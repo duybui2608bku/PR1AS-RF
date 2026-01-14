@@ -6,4 +6,7 @@ export const modelsName = {
   MESSAGE: "messages",
   WALLET_TRANSACTION: "wallet_transactions",
   WALLET: "wallets",
+  ESCROW: "escrows",
+  BOOKING: "bookings",
+  REVIEW: "reviews",
 };

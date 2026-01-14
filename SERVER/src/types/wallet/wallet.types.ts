@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 import {
   TransactionType,
@@ -7,7 +7,7 @@ import {
 } from "../../constants/wallet";
 
 export interface IWallet {
-  user_id: string;
+  user_id: Types.ObjectId;
   balance: number;
   currency: string;
   updated_at: Date;
@@ -16,7 +16,7 @@ export interface IWallet {
 export interface IWalletDocument extends IWallet, Document {}
 
 export interface IWalletTransaction {
-  user_id: string;
+  user_id: Types.ObjectId;
   type: TransactionType;
   amount: number;
   status: TransactionStatus;
