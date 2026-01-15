@@ -5,9 +5,9 @@ import { modelsName } from "../models.name";
 const walletSchema = new Schema<IWalletDocument>(
   {
     user_id: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
-      unique: true,
+      ref: modelsName.USER,
       index: true,
     },
     balance: {

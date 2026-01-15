@@ -42,4 +42,3 @@ export class WalletBalanceRepository {
 }
 
 export const walletBalanceRepository = new WalletBalanceRepository();
-

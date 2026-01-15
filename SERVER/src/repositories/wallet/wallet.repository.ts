@@ -12,6 +12,7 @@ import {
   TOP_USERS_LIMIT,
 } from "../../constants/wallet";
 import { modelsName } from "../../models/models.name";
+import mongoose from "mongoose";
 
 export interface CreateTransactionInput {
   user_id: string;
@@ -169,7 +170,7 @@ export class WalletRepository {
     const result = await WalletTransaction.aggregate([
       {
         $match: {
-          user_id: userId,
+          user_id: new mongoose.Types.ObjectId(userId),
           status: TransactionStatus.SUCCESS,
         },
       },
@@ -188,9 +189,7 @@ export class WalletRepository {
         },
       },
     ]);
-
     const balance = result.reduce((sum, item) => sum + (item.total || 0), 0);
-
     return Math.max(0, balance);
   }
 
@@ -250,7 +249,7 @@ export class WalletRepository {
     );
 
     const totalTransactions = Object.values(statusStatsMap).reduce(
-      (sum, item) => sum + item.count,
+      (sum: number, item: { count: number }) => sum + item.count,
       0
     );
 

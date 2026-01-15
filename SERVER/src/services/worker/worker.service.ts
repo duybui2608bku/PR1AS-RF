@@ -16,6 +16,7 @@ export interface WorkerDetailResponse {
   };
   worker_profile: IUserDocument["worker_profile"] | null;
   services?: Array<{
+    _id: string;
     service_id: string;
     service_code: string;
     pricing: Array<{
@@ -55,6 +56,7 @@ export class WorkerService {
     );
 
     const services = workerServices.map((ws) => ({
+      _id: ws._id.toString(),
       service_id: ws.service_id.toString(),
       service_code: ws.service_code,
       pricing: ws.pricing.map((p) => ({

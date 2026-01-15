@@ -20,7 +20,10 @@ router.get(
   asyncHandler(getAdminTransactionHistory.bind(getAdminTransactionHistory))
 );
 
-router.get("/stats", asyncHandler(getTransactionStats.bind(getTransactionStats)));
+router.get(
+  "/stats",
+  asyncHandler(getTransactionStats.bind(getTransactionStats))
+);
 
 router.get("/top-users", asyncHandler(getTopUsers.bind(getTopUsers)));
 

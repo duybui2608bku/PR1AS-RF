@@ -21,15 +21,12 @@ router.use(authenticate);
 
 router.post(
   "/deposit",
-
   ...csrfProtection,
-
   asyncHandler(createDeposit.bind(createDeposit))
 );
 
 router.get(
   "/deposit/callback",
-
   asyncHandler(verifyDepositCallback.bind(verifyDepositCallback))
 );
 

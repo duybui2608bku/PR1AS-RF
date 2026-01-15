@@ -188,28 +188,20 @@ export const getWalletBalance = async (
   userId: string
 ): Promise<WalletBalanceResponse> => {
   const user = await userRepository.findById(userId);
-
   if (!user) {
     throw AppError.notFound(WALLET_MESSAGES.WALLET_NOT_FOUND);
   }
-
   const calculatedBalance = await walletRepository.calculateUserBalance(userId);
-
   const wallet = await walletBalanceRepository.findByUserId(userId);
-
   if (!wallet || wallet.balance !== calculatedBalance) {
     await walletBalanceRepository.createOrUpdate(userId, calculatedBalance);
-
     return {
       balance: calculatedBalance,
-
       user_id: userId,
     };
   }
-
   return {
     balance: wallet.balance,
-
     user_id: userId,
   };
 };

@@ -18,17 +18,13 @@ export const authenticate = (
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : req.cookies?.token;
-
     if (!token) {
       throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
-
     const decoded = verifyToken(token);
-
     if (decoded.status === UserStatus.BANNED) {
       throw AppError.forbidden(AUTH_MESSAGES.USER_BANNED);
     }
-
     req.user = decoded;
     next();
   } catch (error) {
@@ -44,14 +40,12 @@ export const authorize = (...allowedRoles: UserRole[]) => {
     if (!req.user) {
       return next(AppError.unauthorized(AUTH_MESSAGES.LOGIN_REQUIRED));
     }
-
     const userRoles = req.user.roles || [];
     const hasPermission = allowedRoles.some((role) => userRoles.includes(role));
 
     if (!hasPermission) {
       return next(AppError.forbidden(AUTHZ_MESSAGES.FORBIDDEN));
     }
-
     next();
   };
 };
