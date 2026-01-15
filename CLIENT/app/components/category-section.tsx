@@ -10,15 +10,21 @@ import { useRef, memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Service } from "../data/services.mock";
 import { ServiceCard } from "./service-card";
+import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { ScrollAmount, Spacing, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
 
 const { Title } = Typography;
+
+enum SkeletonCount {
+  DEFAULT = 4,
+}
 
 interface CategorySectionProps {
   title: string;
   subtitle?: string;
   services: Service[];
   showViewAll?: boolean;
+  isLoading?: boolean;
 }
 
 const CategorySectionComponent = ({
@@ -26,6 +32,7 @@ const CategorySectionComponent = ({
   subtitle,
   services,
   showViewAll = true,
+  isLoading = false,
 }: CategorySectionProps) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +78,7 @@ const CategorySectionComponent = ({
     e.currentTarget.style.transform = "scale(1)";
   }, []);
 
-  if (services.length === 0) return null;
+  if (!isLoading && services.length === 0) return null;
 
   return (
     <section style={{ marginBottom: 80, width: "100%", overflow: "hidden" }}>
@@ -162,17 +169,29 @@ const CategorySectionComponent = ({
         }}
         className="category-scroll-container"
       >
-        {services.map((service) => (
-          <div
-            key={service.id}
-            style={{
-              flex: "0 0 320px",
-              minWidth: 0,
-            }}
-          >
-            <ServiceCard service={service} size="medium" />
-          </div>
-        ))}
+        {isLoading
+          ? Array.from({ length: SkeletonCount.DEFAULT }).map((_, index) => (
+              <div
+                key={index}
+                style={{
+                  flex: "0 0 320px",
+                  minWidth: 0,
+                }}
+              >
+                <ServiceCardSkeleton size="medium" />
+              </div>
+            ))
+          : services.map((service) => (
+              <div
+                key={service.id}
+                style={{
+                  flex: "0 0 320px",
+                  minWidth: 0,
+                }}
+              >
+                <ServiceCard service={service} size="medium" />
+              </div>
+            ))}
       </div>
     </section>
   );

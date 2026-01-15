@@ -29,6 +29,7 @@ import { useApiQueryData } from "@/lib/hooks/use-api";
 import { type WorkerDetailResponse, servicesApi } from "@/lib/api/worker.api";
 import type { Service } from "@/lib/types/worker";
 import { QueryState } from "@/lib/components/query-state";
+import { ImageGallerySkeleton } from "@/lib/components/skeletons";
 import {
   getGenderIcon,
   getGenderLabelKey,
@@ -149,44 +150,48 @@ export default function WorkerDetailPage() {
                   <div className={styles.container}>
                     <Row gutter={[32, 32]} className={styles.section}>
                       <Col xs={24} lg={12}>
-                        <div className={styles.imageGallery}>
-                          {mainImage && (
-                            <div className={styles.mainImageContainer}>
-                              <Image
-                                src={mainImage}
-                                alt={user.full_name || "Worker"}
-                                fill
-                                className={styles.mainImage}
-                                priority
-                                sizes="(max-width: 1024px) 100vw, 50vw"
-                              />
-                            </div>
-                          )}
+                        {!mainImage ? (
+                          <ImageGallerySkeleton />
+                        ) : (
+                          <div className={styles.imageGallery}>
+                            {mainImage && (
+                              <div className={styles.mainImageContainer}>
+                                <Image
+                                  src={mainImage}
+                                  alt={user.full_name || "Worker"}
+                                  fill
+                                  className={styles.mainImage}
+                                  priority
+                                  sizes="(max-width: 1024px) 100vw, 50vw"
+                                />
+                              </div>
+                            )}
 
-                          {allImages.length > 1 && (
-                            <div className={styles.imageSlider}>
-                              {allImages.map((image, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => setSelectedImageIndex(index)}
-                                  className={`${styles.thumbnailButton} ${
-                                    selectedImageIndex === index
-                                      ? styles.active
-                                      : ""
-                                  }`}
-                                >
-                                  <Image
-                                    src={image}
-                                    alt={`Gallery ${index + 1}`}
-                                    fill
-                                    className={styles.thumbnailImage}
-                                    sizes="120px"
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                            {allImages.length > 1 && (
+                              <div className={styles.imageSlider}>
+                                {allImages.map((image, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => setSelectedImageIndex(index)}
+                                    className={`${styles.thumbnailButton} ${
+                                      selectedImageIndex === index
+                                        ? styles.active
+                                        : ""
+                                    }`}
+                                  >
+                                    <Image
+                                      src={image}
+                                      alt={`Gallery ${index + 1}`}
+                                      fill
+                                      className={styles.thumbnailImage}
+                                      sizes="120px"
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </Col>
 
                       <Col xs={24} lg={12}>

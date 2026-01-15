@@ -2,10 +2,8 @@
 
 import { useThemeStore } from "../stores/theme.store";
 import type { ThemeMode } from "../stores/theme.store";
+import { ThemeMode as ThemeModeEnum } from "../constants/theme.constants";
 
-/**
- * Hook để sử dụng theme
- */
 export function useTheme() {
   const { theme, setTheme, toggleTheme } = useThemeStore();
 
@@ -13,8 +11,8 @@ export function useTheme() {
     theme,
     setTheme,
     toggleTheme,
-    isDark: theme === "dark",
-    isLight: theme === "light",
+    isDark: theme === ThemeModeEnum.DARK,
+    isLight: theme === ThemeModeEnum.LIGHT,
   };
 }
 

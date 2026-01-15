@@ -199,7 +199,16 @@ export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
   if (response.data.success && response.data.data) {
     return response.data.data;
   }
-  throw new Error(response.data.error?.message || "Invalid response format");
+  const errorMessage = response.data.error?.message || response.data.message || "Invalid response format";
+  const error = new Error(errorMessage) as ApiError;
+  error.response = {
+    data: response.data,
+    status: response.data.statusCode || 500,
+    statusText: "Invalid Response",
+    headers: {},
+    config: {} as InternalAxiosRequestConfig,
+  };
+  throw error;
 };
 
 export default axiosInstance;

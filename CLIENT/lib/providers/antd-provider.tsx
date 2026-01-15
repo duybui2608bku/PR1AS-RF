@@ -13,18 +13,23 @@ import { AppNotificationInit } from "../components/app-notification-init";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/config";
+import {
+  ThemeMode,
+  ThemeColor,
+  ThemeCSSVariable,
+  ThemeDefault,
+  ThemeBorderRadius,
+  ThemeFontSize,
+} from "../constants/theme.constants";
 
-/**
- * Lấy giá trị CSS variable
- */
 function getCSSVariable(variableName: string): string {
   if (typeof window === "undefined") {
-    return "#711111"; // Fallback cho SSR
+    return ThemeDefault.PRIMARY_COLOR;
   }
   return (
     getComputedStyle(document.documentElement)
       .getPropertyValue(variableName)
-      .trim() || "#711111"
+      .trim() || ThemeDefault.PRIMARY_COLOR
   );
 }
 
@@ -32,9 +37,6 @@ interface AntdProviderProps {
   children: ReactNode;
 }
 
-/**
- * Map locale từ i18n sang Ant Design locale
- */
 const antdLocaleMap: Record<Locale, typeof viVN> = {
   vi: viVN,
   en: enUS,
@@ -42,18 +44,14 @@ const antdLocaleMap: Record<Locale, typeof viVN> = {
   zh: zhCN,
 };
 
-/**
- * Ant Design Provider với cấu hình theme và locale động
- */
 export function AntdProvider({ children }: AntdProviderProps) {
   const { locale } = useLocaleStore();
   const { theme: themeMode } = useThemeStore();
   const antdLocale = antdLocaleMap[locale] || viVN;
-  const [primaryColor, setPrimaryColor] = useState("#711111");
+  const [primaryColor, setPrimaryColor] = useState(ThemeDefault.PRIMARY_COLOR);
 
-  // Lấy màu primary từ CSS variable khi component mount
   useEffect(() => {
-    const color = getCSSVariable("--ant-color-primary");
+    const color = getCSSVariable(ThemeCSSVariable.ANT_COLOR_PRIMARY);
     setPrimaryColor(color);
   }, []);
 
@@ -65,34 +63,36 @@ export function AntdProvider({ children }: AntdProviderProps) {
         theme={{
           token: {
             colorPrimary: primaryColor,
-            borderRadius: 8,
-            fontSize: 14,
+            borderRadius: ThemeBorderRadius.MEDIUM,
+            fontSize: ThemeFontSize.SM,
             fontFamily:
               'var(--font-work-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           },
           components: {
             Button: {
-              borderRadius: 8,
+              borderRadius: ThemeBorderRadius.MEDIUM,
             },
             Input: {
-              borderRadius: 8,
+              borderRadius: ThemeBorderRadius.MEDIUM,
             },
             InputNumber: {
-              borderRadius: 8,
+              borderRadius: ThemeBorderRadius.MEDIUM,
             },
             Select: {
-              borderRadius: 8,
+              borderRadius: ThemeBorderRadius.MEDIUM,
             },
             DatePicker: {
-              borderRadius: 8,
+              borderRadius: ThemeBorderRadius.MEDIUM,
             },
             Card: {
-              borderRadius: 12,
+              borderRadius: ThemeBorderRadius.LARGE,
             },
             Form: {},
           },
           algorithm:
-            themeMode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
+            themeMode === ThemeMode.DARK
+              ? theme.darkAlgorithm
+              : theme.defaultAlgorithm,
         }}
       >
         <App>

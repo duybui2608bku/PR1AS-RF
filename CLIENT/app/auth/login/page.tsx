@@ -2,15 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Form,
-  Input,
-  Button,
-  Card,
-  Typography,
-  message,
-  Divider,
-} from "antd";
+import { Form, Input, Button, Card, Typography, message, Divider } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";

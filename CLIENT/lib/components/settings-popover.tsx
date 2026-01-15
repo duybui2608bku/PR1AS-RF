@@ -7,10 +7,8 @@ import { useI18n } from "../hooks/use-i18n";
 import { useCurrency } from "../hooks/use-currency";
 import type { Locale } from "@/i18n/config";
 import type { Currency } from "../stores/currency.store";
+import { ThemeMode } from "../constants/theme.constants";
 
-/**
- * Component popover chứa các tùy chọn: currency, language, theme
- */
 export function SettingsPopover() {
   const { theme, toggleTheme } = useTheme();
   const { locale, changeLocale, availableLocales, getLocaleLabel } = useI18n();
@@ -18,7 +16,6 @@ export function SettingsPopover() {
 
   const content = (
     <Space orientation="vertical" size="middle" style={{ minWidth: 200 }}>
-      {/* Currency Selector */}
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Tiền tệ</div>
         <Select
@@ -36,7 +33,6 @@ export function SettingsPopover() {
 
       <Divider style={{ margin: "8px 0" }} />
 
-      {/* Language Selector */}
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Ngôn ngữ</div>
         <Select
@@ -54,16 +50,17 @@ export function SettingsPopover() {
 
       <Divider style={{ margin: "8px 0" }} />
 
-      {/* Theme Toggle */}
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Giao diện</div>
         <Button
           type="text"
-          icon={theme === "light" ? <MoonOutlined /> : <SunOutlined />}
+          icon={
+            theme === ThemeMode.LIGHT ? <MoonOutlined /> : <SunOutlined />
+          }
           onClick={toggleTheme}
           style={{ width: "100%", textAlign: "left" }}
         >
-          {theme === "light" ? "Chế độ tối" : "Chế độ sáng"}
+          {theme === ThemeMode.LIGHT ? "Chế độ tối" : "Chế độ sáng"}
         </Button>
       </div>
     </Space>

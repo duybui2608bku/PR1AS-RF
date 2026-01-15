@@ -8,7 +8,9 @@ export function setNotificationApi(api: NotificationInstance): void {
 
 export function getNotificationApi(): NotificationInstance {
   if (!notificationApi) {
-    throw new Error("Notification API not initialized. Make sure App component is mounted.");
+    throw new Error(
+      "Notification API not initialized. Make sure App component is mounted."
+    );
   }
   return notificationApi;
 }

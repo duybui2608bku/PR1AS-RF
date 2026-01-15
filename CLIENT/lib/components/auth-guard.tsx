@@ -2,8 +2,8 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Spin } from "antd";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { PageSkeleton } from "./skeletons";
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -33,19 +33,7 @@ export function AuthGuard({
   }, [isHydrated, isAuthenticated, requireAuth, redirectTo, router]);
 
   if (!isHydrated || (requireAuth && !isAuthenticated)) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--ant-color-bg-container)",
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return <>{children}</>;

@@ -11,7 +11,7 @@ import {
 } from "antd";
 import { WalletOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "@tanstack/react-query";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { walletApi } from "@/lib/api/wallet.api";
 import { WALLET_LIMITS, DEPOSIT_AMOUNT_PRESETS } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
@@ -30,7 +30,7 @@ export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element 
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
   const [form] = Form.useForm<DepositFormValues>();
 
-  const createDepositMutation = useMutation({
+  const createDepositMutation = useStandardizedMutation({
     mutationFn: walletApi.createDeposit,
     onSuccess: (data) => {
       message.success(t("wallet.deposit.success"));
@@ -39,9 +39,6 @@ export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element 
       if (data.payment_url) {
         window.location.href = data.payment_url;
       }
-    },
-    onError: () => {
-      message.error(t("wallet.deposit.error"));
     },
   });
 

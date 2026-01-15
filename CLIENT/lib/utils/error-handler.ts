@@ -1,6 +1,7 @@
 import type { ApiError } from "../axios/config";
 import { getTranslationSync, formatMessage } from "./i18n-helper";
 import { getNotificationApi } from "./notification.service";
+import { resolveErrorMessage } from "./error-message-resolver";
 
 export enum ErrorType {
   API = "api",
@@ -137,11 +138,19 @@ export function showErrorNotification(
   customMessage?: string
 ): void {
   const errorType = getErrorType(error.response?.status);
-  const message = customMessage || getErrorMessage(error);
-  let description = getErrorDescription(error);
 
   if (errorType === ErrorType.UNAUTHORIZED) {
     return;
+  }
+
+  const resolution = resolveErrorMessage(error);
+  const message = customMessage || resolution.message;
+  let description = resolution.description || getErrorDescription(error);
+
+  if (resolution.action) {
+    description = description
+      ? `${description}\n${resolution.action}`
+      : resolution.action;
   }
 
   const config: ErrorNotificationConfig = {

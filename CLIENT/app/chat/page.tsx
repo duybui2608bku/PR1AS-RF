@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useSearchParams } from "next/navigation";
 import {
   Layout,
@@ -86,7 +87,7 @@ function ChatContent() {
     enabled: !!selectedConversationId,
   });
 
-  const sendMessageMutation = useMutation({
+  const sendMessageMutation = useStandardizedMutation({
     mutationFn: (content: string) => {
       if (!selectedConversationId) {
         throw new Error(t("chat.errors.noConversation"));
@@ -119,21 +120,15 @@ function ChatContent() {
       });
       queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
     },
-    onError: () => {
-      message.error(t("chat.errors.sendFailed"));
-    },
   });
 
-  const deleteMessageMutation = useMutation({
+  const deleteMessageMutation = useStandardizedMutation({
     mutationFn: (messageId: string) => chatApi.deleteMessage(messageId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["chat-messages", selectedConversationId],
       });
       queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
-    },
-    onError: () => {
-      message.error(t("chat.errors.deleteFailed"));
     },
   });
 

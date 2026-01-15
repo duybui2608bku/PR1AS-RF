@@ -9,14 +9,12 @@ import {
   Col,
   Typography,
   Table,
-  Tag,
   Space,
   Spin,
   Button,
 } from "antd";
 import {
   WalletOutlined,
-  DollarOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   PlusOutlined,
@@ -28,18 +26,17 @@ import type {
   WalletTransaction,
   TransactionHistoryQuery,
 } from "@/lib/api/wallet.api";
-import { TransactionType, TransactionStatus } from "@/lib/constants/wallet";
+import { TransactionType } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import { DepositModal } from "@/lib/components/deposit-modal";
-import { formatDateTime } from "@/app/func/func";
 import {
   PAGINATION_DEFAULTS,
   PAGE_SIZE_OPTIONS,
 } from "@/app/constants/constants";
-import type { ColumnsType } from "antd/es/table";
+import { createWalletTransactionColumns } from "@/lib/utils/wallet.utils";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -51,23 +48,6 @@ enum WalletTabKey {
   WITHDRAW_HISTORY = "withdraw",
 }
 
-enum TableColumnKeys {
-  ID = "id",
-  AMOUNT = "amount",
-  STATUS = "status",
-  DESCRIPTION = "description",
-  CREATED_AT = "created_at",
-}
-
-const getStatusTagColor = (status: TransactionStatus): string => {
-  const colorMap: Record<TransactionStatus, string> = {
-    [TransactionStatus.PENDING]: "orange",
-    [TransactionStatus.SUCCESS]: "green",
-    [TransactionStatus.FAILED]: "red",
-    [TransactionStatus.CANCELLED]: "default",
-  };
-  return colorMap[status] || "default";
-};
 
 function WalletContent() {
   const { t } = useTranslation();
@@ -133,83 +113,8 @@ function WalletContent() {
     setWithdrawLimit(pageSize);
   };
 
-  const depositColumns: ColumnsType<WalletTransaction> = [
-    {
-      title: t("wallet.table.amount"),
-      dataIndex: TableColumnKeys.AMOUNT,
-      key: TableColumnKeys.AMOUNT,
-      width: 150,
-      render: (amount: number) => (
-        <Text strong style={{ color: "var(--ant-color-primary)" }}>
-          {formatCurrency(amount)}
-        </Text>
-      ),
-    },
-    {
-      title: t("wallet.table.status"),
-      dataIndex: TableColumnKeys.STATUS,
-      key: TableColumnKeys.STATUS,
-      width: 120,
-      render: (status: TransactionStatus) => (
-        <Tag color={getStatusTagColor(status)}>
-          {t(`wallet.transactionStatus.${status}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: t("wallet.table.description"),
-      dataIndex: TableColumnKeys.DESCRIPTION,
-      key: TableColumnKeys.DESCRIPTION,
-      ellipsis: true,
-      render: (description: string | undefined) => description || "-",
-    },
-    {
-      title: t("wallet.table.createdAt"),
-      dataIndex: TableColumnKeys.CREATED_AT,
-      key: TableColumnKeys.CREATED_AT,
-      width: 180,
-      render: (createdAt: string) => formatDateTime(createdAt),
-    },
-  ];
-
-  const withdrawColumns: ColumnsType<WalletTransaction> = [
-    {
-      title: t("wallet.table.amount"),
-      dataIndex: TableColumnKeys.AMOUNT,
-      key: TableColumnKeys.AMOUNT,
-      width: 150,
-      render: (amount: number) => (
-        <Text strong style={{ color: "var(--ant-color-primary)" }}>
-          {formatCurrency(amount)}
-        </Text>
-      ),
-    },
-    {
-      title: t("wallet.table.status"),
-      dataIndex: TableColumnKeys.STATUS,
-      key: TableColumnKeys.STATUS,
-      width: 120,
-      render: (status: TransactionStatus) => (
-        <Tag color={getStatusTagColor(status)}>
-          {t(`wallet.transactionStatus.${status}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: t("wallet.table.description"),
-      dataIndex: TableColumnKeys.DESCRIPTION,
-      key: TableColumnKeys.DESCRIPTION,
-      ellipsis: true,
-      render: (description: string | undefined) => description || "-",
-    },
-    {
-      title: t("wallet.table.createdAt"),
-      dataIndex: TableColumnKeys.CREATED_AT,
-      key: TableColumnKeys.CREATED_AT,
-      width: 180,
-      render: (createdAt: string) => formatDateTime(createdAt),
-    },
-  ];
+  const depositColumns = createWalletTransactionColumns(t, formatCurrency);
+  const withdrawColumns = createWalletTransactionColumns(t, formatCurrency);
 
   return (
     <Layout

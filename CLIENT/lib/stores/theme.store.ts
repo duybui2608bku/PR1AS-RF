@@ -1,42 +1,42 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  ThemeMode,
+  ThemeStorageKey,
+  ThemeDefault,
+} from "../constants/theme.constants";
 
-export type ThemeMode = "light" | "dark";
+export type { ThemeMode };
 
-/**
- * Theme State Interface
- */
 interface ThemeState {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
 }
 
-/**
- * Theme Store với Zustand
- * Quản lý theme sáng/tối
- */
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => {
       return {
-        // Initial state - mặc định là light
-        theme: "light" as ThemeMode,
+        theme: ThemeDefault.MODE,
 
-        // Set theme
         setTheme: (theme: ThemeMode) => {
           set({ theme });
         },
 
-        // Toggle theme
         toggleTheme: () => {
           const currentTheme = get().theme;
-          set({ theme: currentTheme === "light" ? "dark" : "light" });
+          set({
+            theme:
+              currentTheme === ThemeMode.LIGHT
+                ? ThemeMode.DARK
+                : ThemeMode.LIGHT,
+          });
         },
       };
     },
     {
-      name: "theme-storage", // Tên key trong localStorage
+      name: ThemeStorageKey.THEME,
       partialize: (state) => ({
         theme: state.theme,
       }),
