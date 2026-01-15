@@ -135,3 +135,54 @@ export const WALLET_MESSAGES = {
   CHART_DATA_FETCHED: "Chart data fetched successfully",
   INVALID_DATE_RANGE: "Invalid date range",
 } as const;
+
+export const BOOKING_MESSAGES = {
+  BOOKING_NOT_FOUND: "Booking not found",
+  BOOKING_CREATED: "Booking created successfully",
+  BOOKING_UPDATED: "Booking updated successfully",
+  BOOKING_CANCELLED: "Booking cancelled successfully",
+  BOOKING_STATUS_UPDATED: "Booking status updated successfully",
+  BOOKINGS_FETCHED: "Bookings fetched successfully",
+  BOOKING_FETCHED: "Booking fetched successfully",
+  INVALID_SCHEDULE: "Invalid schedule. Start time must be before end time",
+  INVALID_SCHEDULE_ADVANCE: "Booking must be scheduled at least 2 hours in advance",
+  INVALID_SCHEDULE_MAX_ADVANCE: "Booking cannot be scheduled more than 30 days in advance",
+  INVALID_DURATION: "Duration must be between 1 and 24 hours",
+  INVALID_PRICING: "Invalid pricing information",
+  INVALID_STATUS_TRANSITION: "Invalid status transition",
+  CANNOT_CANCEL_COMPLETED: "Cannot cancel a completed booking",
+  CANNOT_CANCEL_CANCELLED: "Booking is already cancelled",
+  CANNOT_UPDATE_COMPLETED: "Cannot update a completed booking",
+  CANNOT_UPDATE_CANCELLED: "Cannot update a cancelled booking",
+  UNAUTHORIZED_ACCESS: "You do not have permission to access this booking",
+  WORKER_SERVICE_NOT_FOUND: "Worker service not found",
+  SERVICE_NOT_FOUND: "Service not found",
+  USER_NOT_FOUND: "User not found",
+} as const;
+
+export const REVIEW_MESSAGES = {
+  REVIEW_NOT_FOUND: "Review not found",
+  REVIEW_CREATED: "Review created successfully",
+  REVIEW_UPDATED: "Review updated successfully",
+  REVIEW_DELETED: "Review deleted successfully",
+  REVIEW_REPLIED: "Review reply added successfully",
+  REVIEWS_FETCHED: "Reviews fetched successfully",
+  REVIEW_FETCHED: "Review fetched successfully",
+  REVIEW_ALREADY_EXISTS: "Review already exists for this booking",
+  INVALID_RATING: "Rating must be between 1 and 5",
+  INVALID_RATING_DETAILS: "All rating details must be between 1 and 5",
+  INVALID_COMMENT_LENGTH: "Comment must be between 10 and 1000 characters",
+  INVALID_REPLY_LENGTH: "Reply must not exceed 500 characters",
+  CANNOT_UPDATE_REVIEW: "Cannot update review after approval",
+  CANNOT_DELETE_REVIEW: "Cannot delete review",
+  UNAUTHORIZED_ACCESS: "You do not have permission to access this review",
+  BOOKING_NOT_COMPLETED: "Cannot review a booking that is not completed",
+  BOOKING_NOT_FOUND: "Booking not found",
+} as const;
+
+export const ESCROW_MESSAGES = {
+  ESCROW_NOT_FOUND: "Escrow transaction not found",
+  ESCROWS_FETCHED: "Escrow transactions fetched successfully",
+  ESCROW_FETCHED: "Escrow transaction fetched successfully",
+  UNAUTHORIZED_ACCESS: "You do not have permission to access this escrow transaction",
+} as const;

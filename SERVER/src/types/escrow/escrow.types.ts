@@ -72,3 +72,13 @@ export interface EscrowSummary {
   count_released: number;
   count_refunded: number;
 }
+
+export interface EscrowQuery {
+  client_id?: string;
+  worker_id?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+  start_date?: Date;
+  end_date?: Date;
+}

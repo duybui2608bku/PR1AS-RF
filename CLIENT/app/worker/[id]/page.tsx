@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Layout,
   Row,
@@ -11,6 +11,7 @@ import {
   Space,
   Button,
   Card,
+  message,
 } from "antd";
 import {
   CalendarOutlined,
@@ -42,6 +43,7 @@ import { Footer } from "@/app/components/footer";
 import { WorkerReviews } from "../components/WorkerReviews";
 import { WorkerCalendar } from "../components/WorkerCalendar";
 import { WorkerServices } from "../components/WorkerServices";
+import { BookingModal } from "../components/BookingModal";
 import { buildChatRoute } from "@/lib/constants/routes";
 import type { Dayjs } from "dayjs";
 import styles from "./worker-detail.module.scss";
@@ -58,6 +60,7 @@ export default function WorkerDetailPage() {
   const [showFullIntroduction, setShowFullIntroduction] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
 
   const {
     data: workerData,
@@ -74,6 +77,13 @@ export default function WorkerDetailPage() {
 
   const workerServices = workerData?.services || [];
   const isLoadingServices = isLoading;
+
+  const selectedWorkerService = useMemo(() => {
+    if (selectedServices.length === 0) return null;
+    return workerServices.find(
+      (ws) => ws.service_id === selectedServices[0]
+    );
+  }, [selectedServices, workerServices]);
 
   const { data: allServicesResponse, isLoading: isLoadingAllServices } =
     useApiQueryData<{ services: Service[]; count: number }>(
@@ -108,6 +118,26 @@ export default function WorkerDetailPage() {
     if (workerData?.user?.id) {
       router.push(buildChatRoute(workerData.user.id));
     }
+  };
+
+  const handleHireClick = (): void => {
+    if (!selectedDate) {
+      message.warning(t("booking.selectDate") || "Vui lòng chọn ngày");
+      return;
+    }
+
+    if (selectedServices.length === 0) {
+      message.warning(t("booking.selectService") || "Vui lòng chọn dịch vụ");
+      return;
+    }
+
+    setBookingModalOpen(true);
+  };
+
+  const handleBookingSuccess = (): void => {
+    setSelectedDate(null);
+    setSelectedServices([]);
+    setBookingModalOpen(false);
   };
 
   return (
@@ -415,6 +445,8 @@ export default function WorkerDetailPage() {
                           icon={<ShoppingCartOutlined />}
                           className={styles.hireButton}
                           style={{ marginBottom: 16 }}
+                          onClick={handleHireClick}
+                          disabled={!selectedDate || selectedServices.length === 0}
                         >
                           {t("worker.detail.hireNow") || "Thuê ngay"}
                         </Button>
@@ -435,6 +467,20 @@ export default function WorkerDetailPage() {
             })()}
         </QueryState>
       </Content>
+
+      {workerData && selectedWorkerService && (
+        <BookingModal
+          open={bookingModalOpen}
+          onClose={() => setBookingModalOpen(false)}
+          workerId={workerData.user.id}
+          workerServiceId={selectedWorkerService.service_id}
+          serviceId={selectedWorkerService.service_id}
+          serviceCode={selectedWorkerService.service_code}
+          selectedDate={selectedDate}
+          pricing={selectedWorkerService.pricing}
+          onSuccess={handleBookingSuccess}
+        />
+      )}
 
       <Footer />
     </Layout>

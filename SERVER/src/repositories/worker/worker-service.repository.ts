@@ -107,6 +107,10 @@ class WorkerServiceRepository {
       worker_id: workerId,
     }).sort({ created_at: -1, service_code: 1 });
   }
+
+  async findById(id: string): Promise<IWorkerServiceDocument | null> {
+    return WorkerService.findById(id);
+  }
 }
 
 export const workerServiceRepository = new WorkerServiceRepository();

@@ -34,6 +34,12 @@ export enum ApiEndpoint {
   ADMIN_WALLET_STATS = "/admin/wallet/stats",
   ADMIN_WALLET_TOP_USERS = "/admin/wallet/top-users",
   ADMIN_WALLET_CHART = "/admin/wallet/chart",
+  BOOKINGS = "/bookings",
+  BOOKINGS_MY = "/bookings/my",
+  BOOKINGS_ALL = "/bookings/all",
+  BOOKINGS_BY_ID = "/bookings/:id",
+  BOOKINGS_BY_ID_STATUS = "/bookings/:id/status",
+  BOOKINGS_BY_ID_CANCEL = "/bookings/:id/cancel",
 }
 
 export const buildEndpoint = (
