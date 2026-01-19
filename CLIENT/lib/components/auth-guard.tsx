@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { PageSkeleton } from "./skeletons";
@@ -36,6 +36,6 @@ export function AuthGuard({
     return <PageSkeleton />;
   }
 
-  return <>{children}</>;
+  return <Fragment>{children}</Fragment>;
 }
 

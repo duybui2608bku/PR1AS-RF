@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { workerService } from "../../services/worker/worker.service";
-import { ResponseHelper } from "../../utils";
+import { R } from "../../utils";
 import { AppError } from "../../utils/AppError";
-import { AUTH_MESSAGES } from "../../constants/messages";
+import { AUTH_MESSAGES, WORKER_MESSAGES } from "../../constants/messages";
 
 export class WorkerController {
   async getWorkerById(req: Request, res: Response): Promise<void> {
@@ -11,7 +11,17 @@ export class WorkerController {
     if (!worker) {
       throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
     }
-    ResponseHelper.success(res, worker, undefined, req);
+    R.success(res, worker, undefined, req);
+  }
+
+  async getWorkersGroupedByService(req: Request, res: Response): Promise<void> {
+    const result = await workerService.getWorkersGroupedByService();
+    R.success(
+      res,
+      result,
+      WORKER_MESSAGES.WORKERS_GROUPED_BY_SERVICE_FETCHED,
+      req
+    );
   }
 }
 

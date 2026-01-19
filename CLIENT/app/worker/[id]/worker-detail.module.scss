@@ -600,7 +600,21 @@
   cursor: not-allowed;
 }
 
-// Services
+.bookingCard {
+  border-radius: 12px;
+  margin-bottom: 16px;
+
+  @media (prefers-color-scheme: dark) {
+    background-color: #1a1a1a;
+    border-color: #333333;
+  }
+}
+
+:global([data-theme="dark"]) .bookingCard {
+  background-color: #1a1a1a;
+  border-color: #333333;
+}
+
 .servicesList {
   width: 100%;
 }

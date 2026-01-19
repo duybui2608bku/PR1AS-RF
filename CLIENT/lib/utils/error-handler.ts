@@ -184,7 +184,7 @@ export function showErrorNotification(
   if (error.response?.status === HttpStatus.TOO_MANY_REQUESTS) {
     config.type = "warning";
     const retryAfter =
-      error?.response?.headers?.["retry-after"] ||
+      (error?.response?.headers as Record<string, string>)?.["retry-after"] ||
       (error?.response?.headers as Record<string, string>)?.["Retry-After"];
     if (retryAfter) {
       const seconds = parseInt(retryAfter, 10);

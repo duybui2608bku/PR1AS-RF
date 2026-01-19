@@ -1,5 +1,4 @@
 "use client";
-
 import { Typography, Button, Space } from "antd";
 import {
   ArrowRightOutlined,
@@ -12,6 +11,7 @@ import { Service } from "../data/services.mock";
 import { ServiceCard } from "./service-card";
 import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { ScrollAmount, Spacing, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
+import router from "next/router";
 
 const { Title } = Typography;
 
@@ -61,7 +61,7 @@ const CategorySectionComponent = ({
     width: 40,
     height: 40,
     borderRadius: `${BorderRadius.CIRCLE}%`,
-    border: "1px solid #E5E5E5",
+    border: `1px solid var(--border-secondary)`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -69,13 +69,17 @@ const CategorySectionComponent = ({
   }), []);
 
   const handleButtonMouseEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.borderColor = "#1D1D1F";
+    e.currentTarget.style.borderColor = "var(--foreground)";
     e.currentTarget.style.transform = "scale(1.05)";
   }, []);
 
   const handleButtonMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.borderColor = "#E5E5E5";
+    e.currentTarget.style.borderColor = "var(--border-secondary)";
     e.currentTarget.style.transform = "scale(1)";
+  }, []);
+
+  const handleServiceClick = useCallback((service: Service) => {
+    // router.push(`/worker/${service.users.id}`);
   }, []);
 
   if (!isLoading && services.length === 0) return null;
@@ -100,7 +104,7 @@ const CategorySectionComponent = ({
               style={{
                 fontSize: "clamp(22px, 3vw, 28px)",
                 fontWeight: 700,
-                color: "#711111",
+                color: "var(--color-primary)",
                 margin: 0,
               }}
             >
@@ -114,7 +118,7 @@ const CategorySectionComponent = ({
                 style={{
                   padding: 0,
                   height: "auto",
-                  color: "#1D1D1F",
+                  color: "var(--foreground)",
                   fontSize: Spacing.LG,
                   fontWeight: 500,
                 }}
@@ -124,7 +128,7 @@ const CategorySectionComponent = ({
             )}
           </div>
           {subtitle && (
-            <p style={{ margin: `${Spacing.SM}px 0 0`, color: "#6E6E73", fontSize: Spacing.LG }}>
+            <p style={{ margin: `${Spacing.SM}px 0 0`, color: "var(--foreground-secondary)", fontSize: Spacing.LG }}>
               {subtitle}
             </p>
           )}
@@ -189,7 +193,11 @@ const CategorySectionComponent = ({
                   minWidth: 0,
                 }}
               >
-                <ServiceCard service={service} size="medium" />
+                <ServiceCard
+                 service={service}
+                 size="medium"
+                 onClick={() => handleServiceClick(service)}
+                />
               </div>
             ))}
       </div>

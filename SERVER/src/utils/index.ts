@@ -9,5 +9,5 @@ export type { JWTPayload } from "./jwt";
 export { PaginationHelper } from "./pagination";
 export type { PaginationMeta, PaginatedResponse } from "./pagination";
 export { validateWithSchema } from "./validator";
-export { toPublicUser } from "./user.helper";
+export { toPublicUser, extractUserIdFromRequest } from "./user.helper";
 export * from "./chat.helper";

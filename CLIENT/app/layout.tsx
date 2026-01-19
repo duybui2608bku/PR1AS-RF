@@ -3,6 +3,7 @@ import { Outfit, Work_Sans } from "next/font/google";
 import "./globals.scss";
 import { Providers } from "@/lib/providers";
 import "@/i18n/config";
+import { BackTop } from "antd";
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <Providers>{children}</Providers>
       </body>
+      <BackTop />
     </html>
   );
 }

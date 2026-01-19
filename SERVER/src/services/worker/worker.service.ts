@@ -79,6 +79,46 @@ export class WorkerService {
       services,
     };
   }
+
+  async getWorkersGroupedByService(): Promise<
+    Array<{
+      service: {
+        id: string;
+        code: string;
+        name: {
+          en: string;
+          vi: string;
+          zh?: string | null;
+          ko?: string | null;
+        };
+        description: {
+          en: string;
+          vi: string;
+          zh?: string | null;
+          ko?: string | null;
+        };
+        category: string;
+      };
+      workers: Array<{
+        id: string;
+        full_name: string | null;
+        avatar: string | null;
+        worker_profile: {
+          title: string | null;
+          introduction: string | null;
+          gallery_urls: string[];
+        } | null;
+        pricing: Array<{
+          unit: string;
+          duration: number;
+          price: number;
+          currency: string;
+        }>;
+      }>;
+    }>
+  > {
+    return workerServiceRepository.findWorkersGroupedByService();
+  }
 }
 
 export const workerService = new WorkerService();

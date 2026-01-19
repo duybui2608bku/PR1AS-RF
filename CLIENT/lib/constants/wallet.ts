@@ -35,3 +35,26 @@ export const WALLET_LIMITS = {
 export const DEPOSIT_AMOUNT_PRESETS = [
   50000, 100000, 200000, 500000, 1000000, 2000000, 5000000,
 ] as const;
+
+export enum StatusTagColor {
+  PENDING = "orange",
+  SUCCESS = "green",
+  FAILED = "red",
+  CANCELLED = "default",
+  DEFAULT = "default",
+}
+
+export enum TableColumnWidth {
+  AMOUNT = 150,
+  STATUS = 120,
+  CREATED_AT = 180,
+}
+
+export enum TableColumnKey {
+  AMOUNT = "amount",
+  STATUS = "status",
+  DESCRIPTION = "description",
+  CREATED_AT = "created_at",
+}
+
+export const EMPTY_PLACEHOLDER = "-" as const;

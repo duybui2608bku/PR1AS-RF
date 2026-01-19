@@ -1,15 +1,17 @@
 "use client";
 
-import { Card, Row, Col, Checkbox, Typography } from "antd";
+import { Card, Row, Col, Radio, Typography } from "antd";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import type { Service } from "@/lib/types/worker";
 import { formatPrice, getServiceName } from "@/lib/utils/worker.utils";
+import { Spacing, FontSize } from "@/lib/constants/ui.constants";
 import styles from "../[id]/worker-detail.module.scss";
 
 const { Text } = Typography;
 
 interface WorkerService {
+  _id: string;
   service_id: string;
   service_code: string;
   pricing: Array<{
@@ -43,8 +45,8 @@ export function WorkerServices({
     return (
       <Card
         className={styles.bookingCard}
-        title={t("worker.detail.services.title") || "Dịch vụ"}
-        style={{ marginBottom: 16 }}
+        title={t("worker.detail.services.title")}
+        style={{ marginBottom: Spacing.LG }}
       >
         <Text type="secondary">{t("common.loading")}</Text>
       </Card>
@@ -55,20 +57,18 @@ export function WorkerServices({
     return (
       <Card
         className={styles.bookingCard}
-        title={t("worker.detail.services.title") || "Dịch vụ"}
-        style={{ marginBottom: 16 }}
+        title={t("worker.detail.services.title")}
+        style={{ marginBottom: Spacing.LG }}
       >
-        <Text type="secondary">
-          {t("worker.detail.services.noServices") || "Không có dịch vụ"}
-        </Text>
+        <Text type="secondary">{t("worker.detail.services.noServices")}</Text>
       </Card>
     );
   }
 
   const unitLabels = {
-    HOURLY: t("worker.setup.step2.selected.hour") || "giờ",
-    DAILY: t("worker.setup.step2.selected.day") || "ngày",
-    MONTHLY: t("worker.setup.step2.selected.month") || "tháng",
+    HOURLY: t("worker.setup.step2.selected.hour"),
+    DAILY: t("worker.setup.step2.selected.day"),
+    MONTHLY: t("worker.setup.step2.selected.month"),
   };
 
   const activeServices = services.filter((ws) => ws.is_active);
@@ -76,14 +76,13 @@ export function WorkerServices({
   return (
     <Card
       className={styles.bookingCard}
-      title={t("worker.detail.services.title") || "Dịch vụ"}
-      style={{ marginBottom: 16 }}
+      title={t("worker.detail.services.title")}
+      style={{ marginBottom: Spacing.LG }}
     >
-      <Row gutter={[12, 12]} className={styles.servicesList}>
+      <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.servicesList}>
         {activeServices.map((workerService) => {
           const firstPricing = workerService.pricing[0];
           if (!firstPricing) return null;
-
           const serviceName = getServiceName({
             serviceCode: workerService.service_code,
             serviceMap,
@@ -96,7 +95,9 @@ export function WorkerServices({
             unitLabels,
           });
 
-          const isSelected = selectedServices.includes(workerService.service_id);
+          const isSelected = selectedServices.includes(
+            workerService.service_id
+          );
 
           return (
             <Col xs={24} sm={12} key={workerService.service_id}>
@@ -108,12 +109,10 @@ export function WorkerServices({
                 onClick={() => onServiceToggle(workerService.service_id)}
                 style={{ cursor: "pointer" }}
               >
-                <Checkbox
+                <Radio
                   checked={isSelected}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onServiceToggle(workerService.service_id);
-                  }}
+                  onChange={() => onServiceToggle(workerService.service_id)}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className={styles.serviceCardContent}>
                     <Text strong>{serviceName}</Text>
@@ -121,13 +120,13 @@ export function WorkerServices({
                       type="secondary"
                       style={{
                         display: "block",
-                        fontSize: 12,
+                        fontSize: FontSize.XS,
                       }}
                     >
                       {priceText}
                     </Text>
                   </div>
-                </Checkbox>
+                </Radio>
               </Card>
             </Col>
           );
@@ -136,4 +135,3 @@ export function WorkerServices({
     </Card>
   );
 }
-

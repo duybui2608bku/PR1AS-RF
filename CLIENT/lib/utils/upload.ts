@@ -1,5 +1,3 @@
-import { getTranslationSync } from "./i18n-helper";
-
 const UPLOAD_API_URL = "https://cfig.ibytecdn.org/upload";
 const DEFAULT_SERVER = "server_1";
 

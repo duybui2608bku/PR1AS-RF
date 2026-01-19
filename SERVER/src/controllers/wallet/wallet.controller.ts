@@ -81,23 +81,18 @@ export const verifyDepositCallback = async (
 
 export const getBalance = async (
   req: AuthRequest,
-
   res: Response
 ): Promise<void> => {
   const userId = req.user?.sub;
-
   if (!userId) {
     throw AppError.unauthorized(AUTH_MESSAGES.LOGIN_REQUIRED);
   }
-
   const balance = await walletService.getWalletBalance(userId);
-
   ResponseHelper.success(res, balance, WALLET_MESSAGES.BALANCE_FETCHED);
 };
 
 export const getTransactionHistory = async (
   req: PaginationRequest & AuthRequest,
-
   res: Response
 ): Promise<void> => {
   const userId = req.user?.sub;

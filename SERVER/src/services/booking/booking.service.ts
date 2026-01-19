@@ -3,6 +3,7 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
+import { escrowRepository } from "../../repositories/escrow/escrow.repository";
 import {
   CreateBookingInput,
   BookingQuery,
@@ -19,6 +20,8 @@ import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { BOOKING_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
+import { holdBalanceForBooking } from "../wallet/wallet.service";
+import { CreateEscrowInput } from "../../types/escrow/escrow.types";
 
 export class BookingService {
   async createBooking(
@@ -92,7 +95,46 @@ export class BookingService {
     };
 
     const booking = await bookingRepository.create(bookingData);
-    return booking;
+
+    const holdTransactionId = await holdBalanceForBooking(
+      clientId,
+      input.pricing.total_amount,
+      booking._id.toString(),
+      `Hold balance for booking ${booking._id.toString()}`
+    );
+
+    const escrowData: CreateEscrowInput = {
+      booking_id: booking._id,
+      client_id: new Types.ObjectId(clientId),
+      worker_id: input.worker_id,
+      amount: input.pricing.total_amount,
+      platform_fee: input.pricing.platform_fee,
+      worker_payout: input.pricing.worker_payout,
+      currency: input.pricing.currency,
+      hold_transaction_id: new Types.ObjectId(holdTransactionId),
+    };
+
+    const escrow = await escrowRepository.create(escrowData);
+
+    await bookingRepository.update(booking._id.toString(), {
+      escrow_id: escrow._id,
+      transaction_id: holdTransactionId,
+      payment_status: BookingPaymentStatus.PAID,
+    });
+
+    const updatedBooking = await bookingRepository.findById(
+      booking._id.toString()
+    );
+
+    if (!updatedBooking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
+
+    return updatedBooking;
   }
 
   async getBookingById(
@@ -146,7 +188,11 @@ export class BookingService {
       { ...query, page, limit }
     );
 
-    return PaginationHelper.format(bookings, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      bookings,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async getBookingsByWorker(
@@ -170,7 +216,11 @@ export class BookingService {
       { ...query, page, limit }
     );
 
-    return PaginationHelper.format(bookings, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      bookings,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async getAllBookings(query: BookingQuery): Promise<{
@@ -192,7 +242,11 @@ export class BookingService {
       limit,
     });
 
-    return PaginationHelper.format(bookings, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      bookings,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async updateBookingStatus(
@@ -213,9 +267,12 @@ export class BookingService {
 
     const isAdmin = userRoles.includes("admin");
     const isWorker = booking.worker_id.toString() === userId;
-    const isClient = booking.client_id.toString() === userId;
+    // const isClient = booking.client_id.toString() === userId;
 
-    if (status === BookingStatus.CONFIRMED || status === BookingStatus.REJECTED) {
+    if (
+      status === BookingStatus.CONFIRMED ||
+      status === BookingStatus.REJECTED
+    ) {
       if (!isAdmin && !isWorker) {
         throw new AppError(
           BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
@@ -315,11 +372,7 @@ export class BookingService {
     const isWorker = booking.worker_id.toString() === userId;
     const isClient = booking.client_id.toString() === userId;
 
-    if (
-      cancelledBy === CancelledBy.CLIENT &&
-      !isAdmin &&
-      !isClient
-    ) {
+    if (cancelledBy === CancelledBy.CLIENT && !isAdmin && !isClient) {
       throw new AppError(
         BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
@@ -327,11 +380,7 @@ export class BookingService {
       );
     }
 
-    if (
-      cancelledBy === CancelledBy.WORKER &&
-      !isAdmin &&
-      !isWorker
-    ) {
+    if (cancelledBy === CancelledBy.WORKER && !isAdmin && !isWorker) {
       throw new AppError(
         BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,

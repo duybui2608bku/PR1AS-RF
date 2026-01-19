@@ -31,9 +31,9 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
   const cardStyles = useMemo(() => {
     const baseStyles: React.CSSProperties = {
       borderRadius: `${BorderRadius.LARGE}px`,
-      border: "1px solid #E5E5E5",
+      border: `1px solid var(--border-secondary)`,
       overflow: "hidden",
-      background: "#FFFFFF",
+      background: "var(--background)",
       cursor: "pointer",
       transition: `all ${TransitionDuration.FAST}ms ease-out`,
       height: "100%",
@@ -85,14 +85,13 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
         },
       }}
     >
-      {/* Image */}
       <div
         style={{
           position: "relative",
           width: "100%",
           height: imageHeight,
           overflow: "hidden",
-          backgroundColor: "#F5F5F5",
+          backgroundColor: "var(--background-secondary)",
         }}
       >
         <Image
@@ -105,15 +104,15 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           }}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {/* Loved Badge */}
         {service.loved && (
           <div
             style={{
               position: "absolute",
               top: 12,
               left: 12,
-              background: "rgba(255, 255, 255, 0.95)",
-              color: "#1D1D1F",
+              background: "var(--background)",
+              color: "var(--foreground)",
+              opacity: 0.95,
               padding: "6px 12px",
               borderRadius: `${BorderRadius.EXTRA_LARGE}px`,
               fontSize: FontSize.XS,
@@ -129,7 +128,6 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           </div>
         )}
 
-        {/* Heart Icon */}
         <button
           onClick={handleLikeClick}
           style={{
@@ -140,7 +138,8 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             height: 32,
             borderRadius: "50%",
             border: "none",
-            background: "rgba(255, 255, 255, 0.95)",
+            background: "var(--background)",
+            opacity: 0.95,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -150,26 +149,26 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.background = "#FFFFFF";
+            e.currentTarget.style.background = "var(--background)";
+            e.currentTarget.style.opacity = "1";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
+            e.currentTarget.style.background = "var(--background)";
+            e.currentTarget.style.opacity = "0.95";
           }}
         >
           <HeartOutlined
             style={{
               fontSize: FontSize.LG,
-              color: isLiked ? "#FF385C" : "#1D1D1F",
+              color: isLiked ? "#FF385C" : "var(--foreground)",
               transition: `color ${TransitionDuration.FAST}ms ease-out`,
             }}
           />
         </button>
       </div>
 
-      {/* Content */}
       <div style={{ padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Category & Location */}
         <Space style={{ marginBottom: 8 }} size="small">
           <Text
             type="secondary"
@@ -186,21 +185,20 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             •
           </Text>
           <Space size={4}>
-            <EnvironmentOutlined style={{ fontSize: FontSize.XS, color: "#8C8C8C" }} />
+            <EnvironmentOutlined style={{ fontSize: FontSize.XS, color: "var(--foreground-secondary)" }} />
             <Text type="secondary" style={{ fontSize: FontSize.XS }}>
               {service.location}
             </Text>
           </Space>
         </Space>
 
-        {/* Title */}
         <Title
           level={titleLevel}
           style={{
             margin: 0,
             marginBottom: 8,
             fontWeight: 700,
-            color: "#711111",
+            color: "var(--color-primary)",
             lineHeight: 1.3,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -211,7 +209,6 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           {service.title}
         </Title>
 
-        {/* Rating & Reviews */}
         <Space style={{ marginBottom: 12 }} size={4}>
           <Rate
             disabled
@@ -223,7 +220,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             style={{
               fontSize: FontSize.SM,
               fontWeight: 500,
-              color: "#1D1D1F",
+              color: "var(--foreground)",
             }}
           >
             {service.rating}
@@ -232,8 +229,6 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             ({service.reviewCount})
           </Text>
         </Space>
-
-        {/* Users & Price */}
         <div
           style={{
             marginTop: "auto",
@@ -241,7 +236,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             justifyContent: "space-between",
             alignItems: "center",
             paddingTop: 12,
-            borderTop: "1px solid #F5F5F5",
+            borderTop: `1px solid var(--border-secondary)`,
           }}
         >
           <Space size={8}>
@@ -258,7 +253,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
               </>
             ) : (
               <Avatar.Group
-                max={{ count: 2, style: { color: "#1D1D1F", backgroundColor: "#F5F5F5" } }}
+                max={{ count: 2, style: { color: "var(--foreground)", backgroundColor: "var(--background-secondary)" } }}
                 size={24}
               >
                 {service.users.map((user) => (
@@ -271,7 +266,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             style={{
               fontSize: priceFontSize,
               fontWeight: 700,
-              color: "#711111",
+              color: "var(--color-primary)",
             }}
           >
             {formattedPrice}

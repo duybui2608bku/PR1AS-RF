@@ -258,7 +258,9 @@
       "profile": "Profile",
       "settings": "Settings",
       "logout": "Logout",
-      "messages": "Messages"
+      "messages": "Messages",
+      "wallet": "Wallet",
+      "clientBookings": "Client Bookings"
     },
     "stats": {
       "totalUsers": "Total Users",
@@ -307,6 +309,9 @@
     "subtitle": "Sorry, the page you are looking for does not exist.",
     "home": "Go to home"
   },
+  "serviceCard": {
+    "loved": "Loved by customers"
+  },
   "home": {
     "categories": {
       "assistance": {
@@ -342,12 +347,7 @@
         "title": "Companionship Level 3"
       }
     },
-    "viewAll": "View all"
-  },
-  "serviceCard": {
-    "loved": "Loved by customers"
-  },
-  "home": {
+    "viewAll": "View all",
     "logo": "PR1AS",
     "nav": {
       "home": "Home",
@@ -427,7 +427,7 @@
   },
   "profile": {
     "title": "Personal Information",
-    "edit": "Edit",
+    "editLabel": "Edit",
     "editProfile": "Edit Profile",
     "info": {
       "title": "Account Details",
@@ -683,14 +683,12 @@
         "title": "Reviews & Feedback"
       },
       "services": {
-        "title": "Services"
+        "title": "Services",
+        "noServices": "No services available"
       },
       "hireNow": "Hire Now",
       "message": "Message",
-      "selectDate": "Select Date",
-      "services": {
-        "noServices": "No services available"
-      }
+      "selectDate": "Select Date"
     }
   },
   "privacy": {
@@ -1054,6 +1052,114 @@
       "status": "Status",
       "description": "Description",
       "createdAt": "Created At"
+    }
+  },
+  "booking": {
+    "create": {
+      "title": "Book Service",
+      "submit": "Book",
+      "date": "Date",
+      "dateRequired": "Please select a date",
+      "selectDate": "Select date",
+      "startTime": "Start time",
+      "startTimeRequired": "Please select start time",
+      "selectStartTime": "Select start time",
+      "pricingUnit": "Unit",
+      "quantity": "Quantity",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter notes (optional)",
+      "success": "Booking created successfully",
+      "invalidDuration": "Invalid duration (1-24 hours)",
+      "minAdvance": "Must book at least {hours} hours in advance",
+      "maxAdvance": "Cannot book more than {days} days in advance"
+    },
+    "list": {
+      "title": "My Bookings",
+      "filters": {
+        "status": "Status",
+        "paymentStatus": "Payment Status",
+        "dateRange": "Date Range",
+        "all": "All"
+      }
+    },
+    "table": {
+      "serviceCode": "Service Code",
+      "workerName": "Worker Name",
+      "schedule": "Schedule",
+      "startTime": "Start Time",
+      "duration": "Duration",
+      "totalAmount": "Total Amount",
+      "status": "Status",
+      "paymentStatus": "Payment Status",
+      "actions": "Actions",
+      "createdAt": "Created At"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected",
+      "disputed": "Disputed"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "partially_refunded": "Partially Refunded",
+      "refunded": "Refunded"
+    },
+    "pricing": {
+      "hourly": "Hour",
+      "daily": "Day",
+      "monthly": "Month",
+      "subtotal": "Subtotal",
+      "platformFee": "Platform fee",
+      "total": "Total"
+    },
+    "worker": {
+      "list": {
+        "title": "My Bookings Management"
+      },
+      "payout": "Payout",
+      "actions": {
+        "confirm": "Confirm",
+        "reject": "Reject",
+        "start": "Start",
+        "complete": "Complete",
+        "cancel": "Cancel",
+        "noActions": "No actions available",
+        "rejectTitle": "Reject Booking",
+        "rejectMessage": "Please enter the reason for rejection",
+        "rejectConfirm": "Are you sure you want to reject this booking?",
+        "cancelTitle": "Cancel Booking",
+        "cancelMessage": "Please enter the reason for cancellation",
+        "cancelConfirm": "Are you sure you want to cancel this booking?",
+        "cancelReason": "Worker cancelled",
+        "cancelSuccess": "Booking cancelled successfully",
+        "success": "Action completed successfully",
+        "error": "Action failed",
+        "responsePlaceholder": "Enter notes (optional)",
+        "refreshing": "Refreshing...",
+        "refreshSuccess": "Refreshed successfully"
+      }
+    },
+    "cancel": {
+      "reason": "Cancellation Reason",
+      "reasonRequired": "Please select a cancellation reason",
+      "selectReason": "Select a reason",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter additional notes (optional)",
+      "notesMaxLength": "Notes must not exceed 500 characters",
+      "reasons": {
+        "clientRequest": "Client Request",
+        "workerUnavailable": "Worker Unavailable",
+        "scheduleConflict": "Schedule Conflict",
+        "emergency": "Emergency",
+        "paymentFailed": "Payment Failed",
+        "policyViolation": "Policy Violation",
+        "other": "Other"
+      }
     }
   }
 }

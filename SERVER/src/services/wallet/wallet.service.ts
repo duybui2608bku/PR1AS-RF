@@ -303,3 +303,29 @@ export const getTransactionChartData = async (
   );
   return { data };
 };
+
+export const holdBalanceForBooking = async (
+  userId: string,
+  amount: number,
+  bookingId: string,
+  description?: string
+): Promise<string> => {
+  const currentBalance = await walletRepository.calculateUserBalance(userId);
+  
+  if (currentBalance < amount) {
+    throw AppError.badRequest(WALLET_MESSAGES.INSUFFICIENT_BALANCE, []);
+  }
+
+  const transaction = await walletRepository.create({
+    user_id: userId,
+    type: TransactionType.PAYMENT,
+    amount,
+    status: TransactionStatus.SUCCESS,
+    description: description || `Hold balance for booking ${bookingId}`,
+  });
+
+  const updatedBalance = currentBalance - amount;
+  await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+
+  return transaction._id.toString();
+};

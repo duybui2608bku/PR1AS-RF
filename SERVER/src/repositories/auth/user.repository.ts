@@ -27,6 +27,24 @@ export class UserRepository {
     return User.findById(id).lean() as Promise<IUserDocument | null>;
   }
 
+  async getLastActiveRoleById(userId: string): Promise<UserRole | null> {
+    const user = await User.findById(userId).select("last_active_role").lean();
+    return user?.last_active_role || null;
+  }
+
+  async getUserRoleInfoById(userId: string): Promise<{
+    lastActiveRole: UserRole | null;
+    isWorker: boolean;
+    isClient: boolean;
+  }> {
+    const lastActiveRole = await this.getLastActiveRoleById(userId);
+    return {
+      lastActiveRole,
+      isWorker: lastActiveRole === UserRole.WORKER,
+      isClient: lastActiveRole === UserRole.CLIENT,
+    };
+  }
+
   async create(data: CreateUserInput): Promise<IUserDocument> {
     const user = new User({
       email: data.email.toLowerCase().trim(),

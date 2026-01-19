@@ -1,4 +1,7 @@
 import { IUserDocument, IUserPublic } from "../types/auth/user.types";
+import { AuthRequest } from "../middleware/auth";
+import { AppError } from "./AppError";
+import { AUTH_MESSAGES } from "../constants/messages";
 
 export const toPublicUser = (user: IUserDocument): IUserPublic => {
   return {
@@ -16,4 +19,11 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     created_at: user.created_at,
     coords: user.coords,
   };
+};
+
+export const extractUserIdFromRequest = (req: AuthRequest): string => {
+  if (!req.user?.sub) {
+    throw AppError.unauthorized(AUTH_MESSAGES.LOGIN_REQUIRED);
+  }
+  return req.user.sub;
 };

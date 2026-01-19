@@ -9,30 +9,22 @@ export interface IEscrow {
   booking_id: Types.ObjectId;
   client_id: Types.ObjectId;
   worker_id: Types.ObjectId;
-
   amount: number;
   platform_fee: number;
   worker_payout: number;
   currency: string;
-
   status: EscrowStatus;
-
   hold_transaction_id: Types.ObjectId | null;
   release_transaction_id: Types.ObjectId | null;
   refund_transaction_id: Types.ObjectId | null;
-
   held_at: Date;
   released_at: Date | null;
   refunded_at: Date | null;
-
   release_reason: EscrowReleaseReason | null;
   refund_reason: EscrowRefundReason | null;
-
   refund_amount: number;
   penalty_amount: number;
-  currency: string;
   expires_at: Date;
-
   created_at: Date;
   updated_at: Date;
 }
@@ -71,14 +63,4 @@ export interface EscrowSummary {
   count_holding: number;
   count_released: number;
   count_refunded: number;
-}
-
-export interface EscrowQuery {
-  client_id?: string;
-  worker_id?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-  start_date?: Date;
-  end_date?: Date;
 }

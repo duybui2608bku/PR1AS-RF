@@ -6,6 +6,13 @@ import { validateObjectId } from "../../middleware";
 const router = Router();
 
 router.get(
+  "/grouped-by-service",
+  asyncHandler(
+    workerController.getWorkersGroupedByService.bind(workerController)
+  )
+);
+
+router.get(
   "/:id",
   validateObjectId("id"),
   asyncHandler(workerController.getWorkerById.bind(workerController))

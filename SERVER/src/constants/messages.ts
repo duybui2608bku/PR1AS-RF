@@ -186,3 +186,7 @@ export const ESCROW_MESSAGES = {
   ESCROW_FETCHED: "Escrow transaction fetched successfully",
   UNAUTHORIZED_ACCESS: "You do not have permission to access this escrow transaction",
 } as const;
+
+export const WORKER_MESSAGES = {
+  WORKERS_GROUPED_BY_SERVICE_FETCHED: "Workers grouped by service fetched successfully",
+} as const;

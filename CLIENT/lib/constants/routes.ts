@@ -5,10 +5,12 @@ export enum AppRoute {
   CLIENT_PROFILE = "/client/profile",
   CLIENT_PROFILE_EDIT = "/client/profile/edit",
   CLIENT_WALLET_DEPOSIT = "/client/wallet/deposit",
+  CLIENT_WALLET = "/client/wallet",
+  CLIENT_BOOKINGS = "/client/bookings",
   WORKER_SETUP = "/worker/setup",
+  WORKER_BOOKINGS = "/worker/bookings",
   CHAT = "/chat",
   ADMIN_DASHBOARD = "/admin/dashboard",
-  CLIENT_WALLET = "/client/wallet",
 }
 
 export enum UserRole {

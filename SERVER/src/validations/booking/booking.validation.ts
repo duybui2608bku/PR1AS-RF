@@ -13,10 +13,9 @@ import { BOOKING_MESSAGES } from "../../constants/messages";
 
 const objectIdSchema = z
   .string()
-  .refine(
-    (val) => Types.ObjectId.isValid(val),
-    { message: "Invalid ObjectId format" }
-  )
+  .refine((val) => Types.ObjectId.isValid(val), {
+    message: "Invalid ObjectId format",
+  })
   .transform((val) => new Types.ObjectId(val));
 
 const dateSchema = z
@@ -37,13 +36,10 @@ const scheduleSchema = z
     start_time: dateSchema,
     end_time: dateSchema,
   })
-  .refine(
-    (data) => data.start_time < data.end_time,
-    {
-      message: BOOKING_MESSAGES.INVALID_SCHEDULE,
-      path: ["end_time"],
-    }
-  )
+  .refine((data) => data.start_time < data.end_time, {
+    message: BOOKING_MESSAGES.INVALID_SCHEDULE,
+    path: ["end_time"],
+  })
   .refine(
     (data) => {
       const now = new Date();
@@ -93,13 +89,16 @@ const pricingSchema = z
     unit: z.nativeEnum(PricingUnit),
     unit_price: z.number().positive().min(0.01),
     quantity: z.number().int().positive().min(1),
-    currency: z.string().default("VND").transform((val) => val.toUpperCase().trim()),
+    currency: z
+      .string()
+      .default("VND")
+      .transform((val) => val.toUpperCase().trim()),
   })
   .transform((data) => {
     const subtotal = data.unit_price * data.quantity;
-    const platformFee = Math.round(
-      (subtotal * BOOKING_FEE.PLATFORM_FEE_PERCENT) / 100 * 100
-    ) / 100;
+    const platformFee =
+      Math.round(((subtotal * BOOKING_FEE.PLATFORM_FEE_PERCENT) / 100) * 100) /
+      100;
     const totalAmount = subtotal + platformFee;
     const workerPayout = subtotal - platformFee;
     return {
@@ -113,6 +112,7 @@ const pricingSchema = z
 
 export const createBookingSchema = z.object({
   worker_id: objectIdSchema,
+  client_id: objectIdSchema,
   worker_service_id: objectIdSchema,
   service_id: objectIdSchema,
   service_code: z
@@ -136,28 +136,30 @@ export const cancelBookingSchema = z.object({
   notes: z.string().trim().max(500).optional().default(""),
 });
 
-export const updateBookingSchema = z.object({
-  schedule: scheduleSchema.optional(),
-  pricing: pricingSchema.optional(),
-  client_notes: z.string().trim().max(1000).optional(),
-  worker_response: z.string().trim().max(1000).optional(),
-}).refine(
-  (data) => {
-    return (
-      data.schedule !== undefined ||
-      data.pricing !== undefined ||
-      data.client_notes !== undefined ||
-      data.worker_response !== undefined
-    );
-  },
-  {
-    message: "At least one field must be provided for update",
-  }
-);
+export const updateBookingSchema = z
+  .object({
+    schedule: scheduleSchema.optional(),
+    pricing: pricingSchema.optional(),
+    client_notes: z.string().trim().max(1000).optional(),
+    worker_response: z.string().trim().max(1000).optional(),
+  })
+  .refine(
+    (data) => {
+      return (
+        data.schedule !== undefined ||
+        data.pricing !== undefined ||
+        data.client_notes !== undefined ||
+        data.worker_response !== undefined
+      );
+    },
+    {
+      message: "At least one field must be provided for update",
+    }
+  );
 
 export const getBookingsQuerySchema = z.object({
-  client_id: z.string().optional(),
-  worker_id: z.string().optional(),
+  client_id: objectIdSchema.optional(),
+  worker_id: objectIdSchema.optional(),
   status: z.nativeEnum(BookingStatus).optional(),
   payment_status: z.nativeEnum(BookingPaymentStatus).optional(),
   service_code: z.string().optional(),

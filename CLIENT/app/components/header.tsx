@@ -21,6 +21,7 @@ import {
   MessageOutlined,
   SettingOutlined,
   WalletOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -33,9 +34,11 @@ import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { getProfileRoute } from "@/lib/utils/profile-navigation";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
-import { Breakpoint, ZIndex, Spacing } from "@/lib/constants/ui.constants";
+import { Breakpoint, ZIndex,} from "@/lib/constants/ui.constants";
 
 const { Header: AntHeader } = Layout;
+
+const AUTH_MODAL_TABS = ["login", "register"] as const;
 
 const HeaderComponent = () => {
   const { t } = useTranslation();
@@ -44,8 +47,8 @@ const HeaderComponent = () => {
   const logoutMutation = useLogout();
   const switchRoleMutation = useSwitchRole();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<"login" | "register">(
-    "login"
+  const [authModalTab, setAuthModalTab] = useState<typeof AUTH_MODAL_TABS[number]>(
+    AUTH_MODAL_TABS[0]
   );
   const [isMobile, setIsMobile] = useState(false);
   const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
@@ -186,6 +189,14 @@ const HeaderComponent = () => {
       label: t("dashboard.header.wallet"),
       onClick: () => {
         router.push(AppRoute.CLIENT_WALLET);
+      },
+    },
+    {
+      key: "client-bookings",
+      icon: <BookOutlined />,
+      label: t("dashboard.header.clientBookings"),
+      onClick: () => {
+        router.push(AppRoute.CLIENT_BOOKINGS);
       },
     },
     {

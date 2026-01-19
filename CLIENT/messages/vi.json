@@ -260,7 +260,9 @@
       "settings": "Cài đặt",
       "logout": "Đăng xuất",
       "messages": "Tin nhắn",
-      "admin": "Quản trị"
+      "admin": "Quản trị",
+      "wallet": "Ví",
+      "clientBookings": "Bookings"
     },
     "stats": {
       "totalUsers": "Tổng người dùng",
@@ -309,6 +311,9 @@
     "subtitle": "Xin lỗi, trang bạn đang tìm kiếm không tồn tại.",
     "home": "Về trang chủ"
   },
+  "serviceCard": {
+    "loved": "Được khách yêu thích"
+  },
   "home": {
     "categories": {
       "assistance": {
@@ -344,12 +349,7 @@
         "title": "Đồng hành cấp 3"
       }
     },
-    "viewAll": "Xem tất cả"
-  },
-  "serviceCard": {
-    "loved": "Được khách yêu thích"
-  },
-  "home": {
+    "viewAll": "Xem tất cả",
     "logo": "PR1AS",
     "nav": {
       "home": "Trang chủ",
@@ -429,7 +429,7 @@
   },
   "profile": {
     "title": "Thông tin cá nhân",
-    "edit": "Chỉnh sửa",
+    "editLabel": "Chỉnh sửa",
     "editProfile": "Chỉnh sửa thông tin",
     "info": {
       "title": "Chi tiết tài khoản",
@@ -685,14 +685,12 @@
         "title": "Đánh giá & Phản hồi"
       },
       "services": {
-        "title": "Dịch vụ"
+        "title": "Dịch vụ",
+        "noServices": "Không có dịch vụ"
       },
       "hireNow": "Thuê ngay",
       "message": "Nhắn tin",
-      "selectDate": "Chọn ngày",
-      "services": {
-        "noServices": "Không có dịch vụ"
-      }
+      "selectDate": "Chọn ngày"
     }
   },
   "privacy": {
@@ -1062,6 +1060,114 @@
       "status": "Trạng thái",
       "description": "Mô tả",
       "createdAt": "Ngày tạo"
+    }
+  },
+  "booking": {
+    "create": {
+      "title": "Đặt lịch dịch vụ",
+      "submit": "Đặt lịch",
+      "date": "Ngày",
+      "dateRequired": "Vui lòng chọn ngày",
+      "selectDate": "Chọn ngày",
+      "startTime": "Giờ bắt đầu",
+      "startTimeRequired": "Vui lòng chọn giờ bắt đầu",
+      "selectStartTime": "Chọn giờ bắt đầu",
+      "pricingUnit": "Đơn vị",
+      "quantity": "Số lượng",
+      "notes": "Ghi chú",
+      "notesPlaceholder": "Nhập ghi chú (tùy chọn)",
+      "success": "Đặt lịch thành công",
+      "invalidDuration": "Thời lượng không hợp lệ (1-24 giờ)",
+      "minAdvance": "Phải đặt trước ít nhất {hours} giờ",
+      "maxAdvance": "Không thể đặt quá {days} ngày"
+    },
+    "list": {
+      "title": "Đặt lịch của tôi",
+      "filters": {
+        "status": "Trạng thái",
+        "paymentStatus": "Trạng thái thanh toán",
+        "dateRange": "Khoảng thời gian",
+        "all": "Tất cả"
+      }
+    },
+    "table": {
+      "serviceCode": "Mã dịch vụ",
+      "workerName": "Tên Worker",
+      "schedule": "Lịch trình",
+      "startTime": "Thời gian bắt đầu",
+      "duration": "Thời lượng",
+      "totalAmount": "Tổng tiền",
+      "status": "Trạng thái",
+      "paymentStatus": "Trạng thái thanh toán",
+      "actions": "Thao tác",
+      "createdAt": "Ngày tạo"
+    },
+    "status": {
+      "pending": "Đang chờ",
+      "confirmed": "Đã xác nhận",
+      "in_progress": "Đang thực hiện",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy",
+      "rejected": "Đã từ chối",
+      "disputed": "Đang tranh chấp"
+    },
+    "paymentStatus": {
+      "pending": "Đang chờ",
+      "paid": "Đã thanh toán",
+      "partially_refunded": "Hoàn tiền một phần",
+      "refunded": "Đã hoàn tiền"
+    },
+    "pricing": {
+      "hourly": "Giờ",
+      "daily": "Ngày",
+      "monthly": "Tháng",
+      "subtotal": "Tạm tính",
+      "platformFee": "Phí nền tảng",
+      "total": "Tổng cộng"
+    },
+    "worker": {
+      "list": {
+        "title": "Quản lý đặt lịch của tôi"
+      },
+      "payout": "Thu nhập",
+      "actions": {
+        "confirm": "Xác nhận",
+        "reject": "Từ chối",
+        "start": "Bắt đầu",
+        "complete": "Hoàn thành",
+        "cancel": "Hủy",
+        "noActions": "Không có thao tác khả dụng",
+        "rejectTitle": "Từ chối đặt lịch",
+        "rejectMessage": "Vui lòng nhập lý do từ chối",
+        "rejectConfirm": "Bạn có chắc chắn muốn từ chối đặt lịch này không?",
+        "cancelTitle": "Hủy đặt lịch",
+        "cancelMessage": "Vui lòng nhập lý do hủy",
+        "cancelConfirm": "Bạn có chắc chắn muốn hủy đặt lịch này không?",
+        "cancelReason": "Worker cancelled",
+        "cancelSuccess": "Đặt lịch đã được hủy",
+        "success": "Thao tác thành công",
+        "error": "Thao tác thất bại",
+        "responsePlaceholder": "Nhập ghi chú (tùy chọn)",
+        "refreshing": "Đang làm mới...",
+        "refreshSuccess": "Làm mới thành công"
+      }
+    },
+    "cancel": {
+      "reason": "Lý do hủy",
+      "reasonRequired": "Vui lòng chọn lý do hủy",
+      "selectReason": "Chọn lý do",
+      "notes": "Ghi chú",
+      "notesPlaceholder": "Nhập ghi chú bổ sung (tùy chọn)",
+      "notesMaxLength": "Ghi chú không được vượt quá 500 ký tự",
+      "reasons": {
+        "clientRequest": "Yêu cầu từ khách hàng",
+        "workerUnavailable": "Worker không có sẵn",
+        "scheduleConflict": "Xung đột lịch trình",
+        "emergency": "Tình huống khẩn cấp",
+        "paymentFailed": "Thanh toán thất bại",
+        "policyViolation": "Vi phạm chính sách",
+        "other": "Khác"
+      }
     }
   }
 }

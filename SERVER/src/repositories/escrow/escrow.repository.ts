@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { Escrow } from "../../models/escrow/escrow.model";
-import { IEscrowDocument } from "../../types/escrow/escrow.types";
+import { IEscrowDocument, CreateEscrowInput } from "../../types/escrow/escrow.types";
 import { EscrowStatus } from "../../constants/escrow";
 
 export interface EscrowQueryParams {
@@ -176,6 +176,19 @@ export class EscrowRepository {
       .populate("client_id", "email full_name")
       .populate("worker_id", "email full_name")
       .populate("booking_id");
+  }
+
+  async create(
+    data: CreateEscrowInput
+  ): Promise<IEscrowDocument> {
+    const escrow = new Escrow({
+      ...data,
+      status: EscrowStatus.HOLDING,
+      held_at: new Date(),
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    return escrow.save();
   }
 }
 

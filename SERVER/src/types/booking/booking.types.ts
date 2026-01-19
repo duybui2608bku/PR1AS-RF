@@ -48,11 +48,7 @@ export interface IBooking {
   worker_service_id: Types.ObjectId;
   service_id: Types.ObjectId;
   service_code: string;
-
   schedule: BookingSchedule;
-
-  location: BookingLocation;
-
   pricing: BookingPricing;
 
   status: BookingStatus;
@@ -85,7 +81,6 @@ export interface CreateBookingInput {
   service_id: Types.ObjectId;
   service_code: string;
   schedule: BookingSchedule;
-  location: BookingLocation;
   pricing: BookingPricing;
   client_notes?: string;
 }

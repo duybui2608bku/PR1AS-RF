@@ -20,6 +20,7 @@ export interface WorkerDetailResponse {
   };
   worker_profile: WorkerProfile;
   services?: Array<{
+    _id: string;
     service_id: string;
     service_code: string;
     pricing: Array<{
@@ -89,6 +90,42 @@ export const servicesApi = {
   },
 };
 
+export interface WorkersGroupedByServiceResponse {
+  service: {
+    id: string;
+    code: string;
+    name: {
+      en: string;
+      vi: string;
+      zh?: string | null;
+      ko?: string | null;
+    };
+    description: {
+      en: string;
+      vi: string;
+      zh?: string | null;
+      ko?: string | null;
+    };
+    category: string;
+  };
+  workers: Array<{
+    id: string;
+    full_name: string | null;
+    avatar: string | null;
+    worker_profile: {
+      title: string | null;
+      introduction: string | null;
+      gallery_urls: string[];
+    } | null;
+    pricing: Array<{
+      unit: string;
+      duration: number;
+      price: number;
+      currency: string;
+    }>;
+  }>;
+}
+
 export const workerServicesApi = {
   getServices: async (): Promise<
     Array<{
@@ -119,6 +156,15 @@ export const workerServicesApi = {
       }>
     >(ApiEndpoint.WORKER_SERVICES);
     return extractData(response).services;
+  },
+
+  getWorkersGroupedByService: async (): Promise<
+    WorkersGroupedByServiceResponse[]
+  > => {
+    const response = await api.get<
+      ApiResponse<WorkersGroupedByServiceResponse[]>
+    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE);
+    return extractData(response);
   },
 
   createOrUpdateServices: async (data: WorkerServiceInput): Promise<void> => {

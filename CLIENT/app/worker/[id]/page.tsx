@@ -80,9 +80,7 @@ export default function WorkerDetailPage() {
 
   const selectedWorkerService = useMemo(() => {
     if (selectedServices.length === 0) return null;
-    return workerServices.find(
-      (ws) => ws.service_id === selectedServices[0]
-    );
+    return workerServices.find((ws) => ws.service_id === selectedServices[0]);
   }, [selectedServices, workerServices]);
 
   const { data: allServicesResponse, isLoading: isLoadingAllServices } =
@@ -108,9 +106,7 @@ export default function WorkerDetailPage() {
 
   const handleServiceToggle = (serviceId: string): void => {
     setSelectedServices((prev) =>
-      prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
+      prev.includes(serviceId) ? [] : [serviceId]
     );
   };
 
@@ -121,13 +117,8 @@ export default function WorkerDetailPage() {
   };
 
   const handleHireClick = (): void => {
-    if (!selectedDate) {
-      message.warning(t("booking.selectDate") || "Vui lòng chọn ngày");
-      return;
-    }
-
     if (selectedServices.length === 0) {
-      message.warning(t("booking.selectService") || "Vui lòng chọn dịch vụ");
+      message.warning(t("booking.selectService"));
       return;
     }
 
@@ -135,7 +126,6 @@ export default function WorkerDetailPage() {
   };
 
   const handleBookingSuccess = (): void => {
-    setSelectedDate(null);
     setSelectedServices([]);
     setBookingModalOpen(false);
   };
@@ -341,36 +331,32 @@ export default function WorkerDetailPage() {
                             );
                             const infoCards = [
                               {
-                                title: t("worker.detail.info.age") || "Tuổi",
+                                title: t("worker.detail.info.age"),
                                 value:
                                   age !== null
-                                    ? `${age} ${
-                                        t("worker.detail.info.years") || "tuổi"
-                                      }`
-                                    : "N/A",
+                                    ? `${age} ${t("worker.detail.info.years")}`
+                                    : t("worker.detail.info.na"),
                                 icon: <UserOutlined />,
                               },
                               {
-                                title:
-                                  t("worker.detail.info.height") || "Chiều cao",
+                                title: t("worker.detail.info.height"),
                                 value: worker_profile.height_cm
                                   ? `${worker_profile.height_cm} cm`
-                                  : "N/A",
+                                  : t("worker.detail.info.na"),
                                 icon: <ArrowsAltOutlined />,
                               },
                               {
-                                title:
-                                  t("worker.detail.info.weight") || "Cân nặng",
+                                title: t("worker.detail.info.weight"),
                                 value: worker_profile.weight_kg
                                   ? `${worker_profile.weight_kg} kg`
-                                  : "N/A",
+                                  : t("worker.detail.info.na"),
                                 icon: <DashboardOutlined />,
                               },
                               {
-                                title:
-                                  t("worker.detail.info.zodiac") ||
-                                  "Cung hoàng đạo",
-                                value: worker_profile.star_sign || "N/A",
+                                title: t("worker.detail.info.zodiac"),
+                                value:
+                                  worker_profile.star_sign ||
+                                  t("worker.detail.info.na"),
                                 icon: <StarOutlined />,
                               },
                             ];
@@ -401,9 +387,7 @@ export default function WorkerDetailPage() {
                             <Col xs={24} sm={12}>
                               <Card
                                 className={styles.contentCard}
-                                title={
-                                  t("worker.detail.lifestyle") || "Lifestyle"
-                                }
+                                title={t("worker.detail.lifestyle")}
                               >
                                 <Paragraph className={styles.contentText}>
                                   {worker_profile.lifestyle}
@@ -415,7 +399,7 @@ export default function WorkerDetailPage() {
                             <Col xs={24} sm={12}>
                               <Card
                                 className={styles.contentCard}
-                                title={t("worker.detail.quote") || "Quote"}
+                                title={t("worker.detail.quote")}
                               >
                                 <Paragraph className={styles.quoteText}>
                                   "{worker_profile.quote}"
@@ -446,9 +430,9 @@ export default function WorkerDetailPage() {
                           className={styles.hireButton}
                           style={{ marginBottom: 16 }}
                           onClick={handleHireClick}
-                          disabled={!selectedDate || selectedServices.length === 0}
+                          disabled={selectedServices.length === 0}
                         >
-                          {t("worker.detail.hireNow") || "Thuê ngay"}
+                          {t("worker.detail.hireNow")}
                         </Button>
                         <Button
                           size="large"
@@ -457,7 +441,7 @@ export default function WorkerDetailPage() {
                           className={styles.messageButton}
                           onClick={handleMessageClick}
                         >
-                          {t("worker.detail.message") || "Nhắn tin"}
+                          {t("worker.detail.message")}
                         </Button>
                       </Col>
                     </Row>
@@ -473,10 +457,9 @@ export default function WorkerDetailPage() {
           open={bookingModalOpen}
           onClose={() => setBookingModalOpen(false)}
           workerId={workerData.user.id}
-          workerServiceId={selectedWorkerService.service_id}
+          workerServiceId={selectedWorkerService._id}
           serviceId={selectedWorkerService.service_id}
           serviceCode={selectedWorkerService.service_code}
-          selectedDate={selectedDate}
           pricing={selectedWorkerService.pricing}
           onSuccess={handleBookingSuccess}
         />
