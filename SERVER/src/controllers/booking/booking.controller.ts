@@ -64,12 +64,6 @@ export class BookingController {
 
   async getAllBookings(req: AuthRequest, res: Response): Promise<void> {
     extractUserIdFromRequest(req);
-
-    // const userRoles = req.user?.roles || [];
-    // if (!userRoles.includes("admin")) {
-    //   throw AppError.forbidden();
-    // }
-
     const query = validateWithSchema(
       getBookingsQuerySchema,
       req.query,
@@ -82,7 +76,6 @@ export class BookingController {
 
   async updateBookingStatus(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
-
     const { id } = req.params;
     const data = validateWithSchema(
       updateBookingStatusSchema,
@@ -90,12 +83,12 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const userRoles = req.user?.roles || [];
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+
     const result = await bookingService.updateBookingStatus(
       id,
       data.status,
-      userId,
-      userRoles,
+      roleInfo,
       data.worker_response
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_STATUS_UPDATED, req);
@@ -111,21 +104,21 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const userRoles = req.user?.roles || [];
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const cancelledBy = data.cancelled_by || CancelledBy.CLIENT;
     const result = await bookingService.cancelBooking(
       id,
       cancelledBy,
       data.reason,
       data.notes || "",
-      userId,
-      userRoles
+      roleInfo
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_CANCELLED, req);
   }
 
   async updateBooking(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
 
     const { id } = req.params;
     const data = validateWithSchema(
@@ -134,13 +127,7 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const userRoles = req.user?.roles || [];
-    const result = await bookingService.updateBooking(
-      id,
-      data,
-      userId,
-      userRoles
-    );
+    const result = await bookingService.updateBooking(id, data, roleInfo);
     R.success(res, result, BOOKING_MESSAGES.BOOKING_UPDATED, req);
   }
 }

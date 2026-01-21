@@ -24,6 +24,130 @@ import { holdBalanceForBooking } from "../wallet/wallet.service";
 import { CreateEscrowInput } from "../../types/escrow/escrow.types";
 
 export class BookingService {
+  private async getBookingOrThrow(
+    bookingId: string
+  ): Promise<IBookingDocument> {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
+    return booking;
+  }
+
+  private validateBookingStatus(
+    booking: IBookingDocument,
+    operation: "cancel" | "update"
+  ): void {
+    const messages = {
+      cancel: {
+        completed: BOOKING_MESSAGES.CANNOT_CANCEL_COMPLETED,
+        cancelled: BOOKING_MESSAGES.CANNOT_CANCEL_CANCELLED,
+      },
+      update: {
+        completed: BOOKING_MESSAGES.CANNOT_UPDATE_COMPLETED,
+        cancelled: BOOKING_MESSAGES.CANNOT_UPDATE_CANCELLED,
+      },
+    };
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new AppError(
+        messages[operation].completed,
+        HTTP_STATUS.BAD_REQUEST,
+        operation === "cancel"
+          ? ErrorCode.BOOKING_CANNOT_CANCEL
+          : ErrorCode.BOOKING_CANNOT_UPDATE
+      );
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new AppError(
+        messages[operation].cancelled,
+        HTTP_STATUS.BAD_REQUEST,
+        operation === "cancel"
+          ? ErrorCode.BOOKING_CANNOT_CANCEL
+          : ErrorCode.BOOKING_CANNOT_UPDATE
+      );
+    }
+  }
+
+  private ensureAuthorized(
+    hasPermission: boolean,
+    message: string = BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
+  ): void {
+    if (!hasPermission) {
+      throw new AppError(
+        message,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
+    }
+  }
+
+  private async validateWorkerService(
+    workerServiceId: string,
+    workerId: string
+  ): Promise<void> {
+    const workerService =
+      await workerServiceRepository.findById(workerServiceId);
+
+    if (
+      !workerService ||
+      workerService.worker_id.toString() !== workerId ||
+      !workerService.is_active
+    ) {
+      throw new AppError(
+        BOOKING_MESSAGES.WORKER_SERVICE_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+  }
+
+  private async validateScheduleConflict(
+    workerId: string,
+    startTime: Date,
+    endTime: Date,
+    excludeBookingId?: string
+  ): Promise<void> {
+    const hasConflict = await bookingRepository.checkScheduleConflict(
+      workerId,
+      startTime,
+      endTime,
+      excludeBookingId
+    );
+
+    if (hasConflict) {
+      throw new AppError(
+        BOOKING_MESSAGES.INVALID_SCHEDULE,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_INVALID_SCHEDULE
+      );
+    }
+  }
+
+  private getTimestampUpdateData(
+    status: BookingStatus,
+    booking: IBookingDocument
+  ) {
+    const updates: Partial<IBookingDocument> = {};
+
+    if (status === BookingStatus.CONFIRMED && !booking.confirmed_at) {
+      updates.confirmed_at = new Date();
+    }
+    if (status === BookingStatus.IN_PROGRESS && !booking.started_at) {
+      updates.started_at = new Date();
+    }
+    if (status === BookingStatus.COMPLETED && !booking.completed_at) {
+      updates.completed_at = new Date();
+    }
+
+    return updates;
+  }
+
   async createBooking(
     clientId: string,
     input: CreateBookingInput
@@ -37,32 +161,10 @@ export class BookingService {
       );
     }
 
-    const workerService = await workerServiceRepository.findById(
-      input.worker_service_id.toString()
+    await this.validateWorkerService(
+      input.worker_service_id.toString(),
+      input.worker_id.toString()
     );
-    if (!workerService) {
-      throw new AppError(
-        BOOKING_MESSAGES.WORKER_SERVICE_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.NOT_FOUND
-      );
-    }
-
-    if (workerService.worker_id.toString() !== input.worker_id.toString()) {
-      throw new AppError(
-        BOOKING_MESSAGES.WORKER_SERVICE_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.NOT_FOUND
-      );
-    }
-
-    if (!workerService.is_active) {
-      throw new AppError(
-        BOOKING_MESSAGES.WORKER_SERVICE_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.NOT_FOUND
-      );
-    }
 
     const service = await serviceRepository.findById(
       input.service_id.toString()
@@ -75,25 +177,16 @@ export class BookingService {
       );
     }
 
-    const hasConflict = await bookingRepository.checkScheduleConflict(
+    await this.validateScheduleConflict(
       input.worker_id.toString(),
       input.schedule.start_time,
       input.schedule.end_time
     );
 
-    if (hasConflict) {
-      throw new AppError(
-        BOOKING_MESSAGES.INVALID_SCHEDULE,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_INVALID_SCHEDULE
-      );
-    }
-
     const bookingData: CreateBookingInput = {
       ...input,
       client_id: new Types.ObjectId(clientId),
     };
-
     const booking = await bookingRepository.create(bookingData);
 
     const holdTransactionId = await holdBalanceForBooking(
@@ -113,57 +206,23 @@ export class BookingService {
       currency: input.pricing.currency,
       hold_transaction_id: new Types.ObjectId(holdTransactionId),
     };
-
-    const escrow = await escrowRepository.create(escrowData);
+    await escrowRepository.create(escrowData);
 
     await bookingRepository.update(booking._id.toString(), {
-      escrow_id: escrow._id,
+      escrow_id: escrowData.booking_id,
       transaction_id: holdTransactionId,
       payment_status: BookingPaymentStatus.PAID,
     });
 
-    const updatedBooking = await bookingRepository.findById(
-      booking._id.toString()
-    );
-
-    if (!updatedBooking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    return updatedBooking;
+    return this.getBookingOrThrow(booking._id.toString());
   }
 
   async getBookingById(
     bookingId: string,
-    userId: string,
-    userRoles: string[]
+    roleInfo: { isWorker: boolean; isClient: boolean }
   ): Promise<IBookingDocument> {
-    const booking = await bookingRepository.findById(bookingId);
-    if (!booking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    const isAdmin = userRoles.includes("admin");
-    const isOwner =
-      booking.client_id.toString() === userId ||
-      booking.worker_id.toString() === userId;
-
-    if (!isAdmin && !isOwner) {
-      throw new AppError(
-        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-      );
-    }
-
+    const booking = await this.getBookingOrThrow(bookingId);
+    this.ensureAuthorized(roleInfo.isWorker || roleInfo.isClient);
     return booking;
   }
 
@@ -172,14 +231,7 @@ export class BookingService {
     query: BookingQuery
   ): Promise<{
     data: IBookingDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
   }> {
     const page = query.page || 1;
     const limit = query.limit || 10;
@@ -200,14 +252,7 @@ export class BookingService {
     query: BookingQuery
   ): Promise<{
     data: IBookingDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
   }> {
     const page = query.page || 1;
     const limit = query.limit || 10;
@@ -225,14 +270,7 @@ export class BookingService {
 
   async getAllBookings(query: BookingQuery): Promise<{
     data: IBookingDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
   }> {
     const page = query.page || 1;
     const limit = query.limit || 10;
@@ -252,70 +290,25 @@ export class BookingService {
   async updateBookingStatus(
     bookingId: string,
     status: BookingStatus,
-    userId: string,
-    userRoles: string[],
+    roleInfo: { isWorker: boolean; isClient: boolean },
     workerResponse?: string
   ): Promise<IBookingDocument> {
-    const booking = await bookingRepository.findById(bookingId);
-    if (!booking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    const isAdmin = userRoles.includes("admin");
-    const isWorker = booking.worker_id.toString() === userId;
-    // const isClient = booking.client_id.toString() === userId;
+    const booking = await this.getBookingOrThrow(bookingId);
+    this.validateBookingStatus(booking, "update");
 
     if (
       status === BookingStatus.CONFIRMED ||
       status === BookingStatus.REJECTED
     ) {
-      if (!isAdmin && !isWorker) {
-        throw new AppError(
-          BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-          HTTP_STATUS.FORBIDDEN,
-          ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-        );
-      }
+      this.ensureAuthorized(roleInfo.isWorker);
     }
 
-    if (
-      status === BookingStatus.CANCELLED &&
-      booking.status === BookingStatus.COMPLETED
-    ) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_CANCEL_COMPLETED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_CANCEL
-      );
-    }
+    const updateData: Partial<IBookingDocument> = {
+      ...this.getTimestampUpdateData(status, booking),
+    };
 
-    if (booking.status === BookingStatus.CANCELLED) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_CANCEL_CANCELLED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_CANCEL
-      );
-    }
-
-    const updateData: Partial<IBookingDocument> = {};
     if (workerResponse !== undefined) {
       updateData.worker_response = workerResponse;
-    }
-
-    if (status === BookingStatus.CONFIRMED && !booking.confirmed_at) {
-      updateData.confirmed_at = new Date();
-    }
-
-    if (status === BookingStatus.IN_PROGRESS && !booking.started_at) {
-      updateData.started_at = new Date();
-    }
-
-    if (status === BookingStatus.COMPLETED && !booking.completed_at) {
-      updateData.completed_at = new Date();
     }
 
     const updatedBooking = await bookingRepository.updateStatus(
@@ -340,52 +333,15 @@ export class BookingService {
     cancelledBy: CancelledBy,
     reason: CancellationReason,
     notes: string,
-    userId: string,
-    userRoles: string[]
+    roleInfo: { isWorker: boolean; isClient: boolean }
   ): Promise<IBookingDocument> {
-    const booking = await bookingRepository.findById(bookingId);
-    if (!booking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
+    const booking = await this.getBookingOrThrow(bookingId);
+    this.validateBookingStatus(booking, "cancel");
 
-    if (booking.status === BookingStatus.COMPLETED) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_CANCEL_COMPLETED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_CANCEL
-      );
-    }
-
-    if (booking.status === BookingStatus.CANCELLED) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_CANCEL_CANCELLED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_CANCEL
-      );
-    }
-
-    const isAdmin = userRoles.includes("admin");
-    const isWorker = booking.worker_id.toString() === userId;
-    const isClient = booking.client_id.toString() === userId;
-
-    if (cancelledBy === CancelledBy.CLIENT && !isAdmin && !isClient) {
-      throw new AppError(
-        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-      );
-    }
-
-    if (cancelledBy === CancelledBy.WORKER && !isAdmin && !isWorker) {
-      throw new AppError(
-        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-      );
+    if (cancelledBy === CancelledBy.CLIENT) {
+      this.ensureAuthorized(roleInfo.isClient);
+    } else if (cancelledBy === CancelledBy.WORKER) {
+      this.ensureAuthorized(roleInfo.isWorker);
     }
 
     const cancellation = {
@@ -397,90 +353,38 @@ export class BookingService {
       penalty_amount: 0,
     };
 
-    const updatedBooking = await bookingRepository.update(bookingId, {
-      status: BookingStatus.CANCELLED,
-      cancellation,
-    });
-
-    if (!updatedBooking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    return updatedBooking;
+    return this.getBookingOrThrow(
+      (
+        await bookingRepository.update(bookingId, {
+          status: BookingStatus.CANCELLED,
+          cancellation,
+        })
+      )?._id.toString() || bookingId
+    );
   }
 
   async updateBooking(
     bookingId: string,
     updateData: Partial<IBookingDocument>,
-    userId: string,
-    userRoles: string[]
+    roleInfo: { isWorker: boolean; isClient: boolean }
   ): Promise<IBookingDocument> {
-    const booking = await bookingRepository.findById(bookingId);
-    if (!booking) {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    if (booking.status === BookingStatus.COMPLETED) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_UPDATE_COMPLETED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_UPDATE
-      );
-    }
-
-    if (booking.status === BookingStatus.CANCELLED) {
-      throw new AppError(
-        BOOKING_MESSAGES.CANNOT_UPDATE_CANCELLED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.BOOKING_CANNOT_UPDATE
-      );
-    }
-
-    const isAdmin = userRoles.includes("admin");
-    const isClient = booking.client_id.toString() === userId;
-    const isWorker = booking.worker_id.toString() === userId;
+    const booking = await this.getBookingOrThrow(bookingId);
+    this.validateBookingStatus(booking, "update");
 
     if (updateData.schedule || updateData.pricing) {
-      if (!isAdmin && !isClient) {
-        throw new AppError(
-          BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-          HTTP_STATUS.FORBIDDEN,
-          ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-        );
-      }
+      this.ensureAuthorized(roleInfo.isClient);
 
       if (updateData.schedule) {
-        const hasConflict = await bookingRepository.checkScheduleConflict(
+        await this.validateScheduleConflict(
           booking.worker_id.toString(),
           updateData.schedule.start_time,
           updateData.schedule.end_time,
           bookingId
         );
-
-        if (hasConflict) {
-          throw new AppError(
-            BOOKING_MESSAGES.INVALID_SCHEDULE,
-            HTTP_STATUS.BAD_REQUEST,
-            ErrorCode.BOOKING_INVALID_SCHEDULE
-          );
-        }
       }
     }
-
-    if (updateData.worker_response && !isAdmin && !isWorker) {
-      throw new AppError(
-        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-      );
+    if (updateData.worker_response) {
+      this.ensureAuthorized(roleInfo.isWorker);
     }
 
     const updatedBooking = await bookingRepository.update(
