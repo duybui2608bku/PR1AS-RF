@@ -1093,6 +1093,8 @@
     "table": {
       "serviceCode": "Mã dịch vụ",
       "workerName": "Tên Worker",
+      "clientName": "Tên Client",
+      "expired": "Đã hết hạn",
       "schedule": "Lịch trình",
       "startTime": "Thời gian bắt đầu",
       "duration": "Thời lượng",
@@ -1136,7 +1138,8 @@
         "start": "Bắt đầu",
         "complete": "Hoàn thành",
         "cancel": "Hủy",
-        "noActions": "Không có thao tác khả dụng",
+        "noActionsAvailable": "Không có thao tác khả dụng",
+        "expired": "Đã hết hạn",
         "rejectTitle": "Từ chối đặt lịch",
         "rejectMessage": "Vui lòng nhập lý do từ chối",
         "rejectConfirm": "Bạn có chắc chắn muốn từ chối đặt lịch này không?",
@@ -1159,6 +1162,12 @@
       "notes": "Ghi chú",
       "notesPlaceholder": "Nhập ghi chú bổ sung (tùy chọn)",
       "notesMaxLength": "Ghi chú không được vượt quá 500 ký tự",
+      "cancelledAt": "Hủy lúc",
+      "cancelledBy": "Hủy bởi",
+      "cancelledByWorker": "Worker",
+      "cancelledByClient": "Khách hàng",
+      "refundAmount": "Số tiền hoàn lại",
+      "penaltyAmount": "Số tiền phạt",
       "reasons": {
         "clientRequest": "Yêu cầu từ khách hàng",
         "workerUnavailable": "Worker không có sẵn",
@@ -1168,6 +1177,30 @@
         "policyViolation": "Vi phạm chính sách",
         "other": "Khác"
       }
+    },
+    "client": {
+      "actions": {
+        "review": "Đánh giá",
+        "complain": "Khiếu nại",
+        "complainComingSoon": "Tính năng khiếu nại sắp ra mắt"
+      }
+    },
+    "review": {
+      "title": "Đánh giá dịch vụ",
+      "overallRating": "Đánh giá tổng thể",
+      "detailedRatings": "Đánh giá chi tiết",
+      "professionalism": "Chuyên nghiệp",
+      "punctuality": "Đúng giờ",
+      "communication": "Giao tiếp",
+      "serviceQuality": "Chất lượng dịch vụ",
+      "comment": "Nhận xét",
+      "ratingRequired": "Vui lòng cung cấp đánh giá",
+      "commentRequired": "Vui lòng cung cấp nhận xét",
+      "commentMinLength": "Nhận xét phải có ít nhất 10 ký tự",
+      "commentMaxLength": "Nhận xét không được vượt quá 1000 ký tự",
+      "commentPlaceholder": "Chia sẻ trải nghiệm của bạn với dịch vụ này...",
+      "success": "Đánh giá đã được gửi thành công",
+      "error": "Gửi đánh giá thất bại. Vui lòng thử lại."
     }
   }
 }

@@ -5,4 +5,5 @@ export * from "./user.api";
 export * from "./worker.api";
 export * from "./wallet.api";
 export * from "./booking.api";
+export * from "./review.api";
 

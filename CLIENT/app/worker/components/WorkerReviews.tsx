@@ -2,52 +2,62 @@
 
 import { Card, Space, Avatar, Rate, Typography, Divider } from "antd";
 import { useI18n } from "@/lib/hooks/use-i18n";
+import type { WorkerReviewItem } from "@/lib/api/worker.api";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/vi";
+import "dayjs/locale/en";
+import "dayjs/locale/ko";
+import "dayjs/locale/zh-cn";
+import { useEffect } from "react";
 import styles from "../[id]/worker-detail.module.scss";
+
+dayjs.extend(relativeTime);
 
 const { Text, Paragraph } = Typography;
 
-interface Review {
-  id: number;
-  name: string;
-  rating: number;
-  comment: string;
-  date: string;
-  avatar: string | null;
-}
-
 interface WorkerReviewsProps {
-  reviews?: Review[];
+  reviews?: WorkerReviewItem[];
 }
 
-const DEFAULT_REVIEWS: Review[] = [
-  {
-    id: 1,
-    name: "Nguyễn Văn A",
-    rating: 5,
-    comment: "Rất hài lòng với dịch vụ. Worker rất chuyên nghiệp và nhiệt tình!",
-    date: "2 tuần trước",
-    avatar: null,
-  },
-  {
-    id: 2,
-    name: "Trần Thị B",
-    rating: 5,
-    comment: "Tuyệt vời! Đúng như mong đợi. Sẽ quay lại sử dụng dịch vụ.",
-    date: "1 tháng trước",
-    avatar: null,
-  },
-  {
-    id: 3,
-    name: "Lê Văn C",
-    rating: 4,
-    comment: "Khá tốt, nhưng có thể cải thiện thêm một chút về thời gian phản hồi.",
-    date: "2 tháng trước",
-    avatar: null,
-  },
-];
+function formatReviewDate(dateString: string): string {
+  const date = dayjs(dateString);
+  return date.fromNow();
+}
 
-export function WorkerReviews({ reviews = DEFAULT_REVIEWS }: WorkerReviewsProps) {
-  const { t } = useI18n();
+function getInitials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+export function WorkerReviews({ reviews = [] }: WorkerReviewsProps) {
+  const { t, locale } = useI18n();
+
+  useEffect(() => {
+    const dayjsLocaleMap: Record<string, string> = {
+      vi: "vi",
+      en: "en",
+      ko: "ko",
+      zh: "zh-cn",
+    };
+    const dayjsLocale = dayjsLocaleMap[locale] || "en";
+    dayjs.locale(dayjsLocale);
+  }, [locale]);
+
+  if (reviews.length === 0) {
+    return (
+      <Card
+        className={styles.reviewsCard}
+        title={t("worker.detail.reviews.title") || "Đánh giá & Phản hồi"}
+      >
+        <Text type="secondary">
+          {t("worker.detail.reviews.noReviews") || "Chưa có đánh giá nào"}
+        </Text>
+      </Card>
+    );
+  }
 
   return (
     <Card
@@ -55,13 +65,17 @@ export function WorkerReviews({ reviews = DEFAULT_REVIEWS }: WorkerReviewsProps)
       title={t("worker.detail.reviews.title") || "Đánh giá & Phản hồi"}
     >
       <div className={styles.reviewsList}>
-        {reviews.map((review) => (
+        {reviews.map((review, index) => (
           <div key={review.id} className={styles.reviewItem}>
             <div className={styles.reviewHeader}>
               <Space>
-                <Avatar>{review.name.charAt(0)}</Avatar>
+                <Avatar src={review.client.avatar}>
+                  {getInitials(review.client.full_name)}
+                </Avatar>
                 <div>
-                  <Text strong>{review.name}</Text>
+                  <Text strong>
+                    {review.client.full_name || t("worker.detail.reviews.anonymous") || "Ẩn danh"}
+                  </Text>
                   <div>
                     <Rate
                       disabled
@@ -75,7 +89,7 @@ export function WorkerReviews({ reviews = DEFAULT_REVIEWS }: WorkerReviewsProps)
                         fontSize: 12,
                       }}
                     >
-                      {review.date}
+                      {formatReviewDate(review.created_at)}
                     </Text>
                   </div>
                 </div>
@@ -84,7 +98,17 @@ export function WorkerReviews({ reviews = DEFAULT_REVIEWS }: WorkerReviewsProps)
             <Paragraph className={styles.reviewComment}>
               {review.comment}
             </Paragraph>
-            {review.id < reviews.length && (
+            {review.worker_reply && (
+              <div className={styles.workerReply}>
+                <Text strong type="secondary" style={{ fontSize: 12 }}>
+                  {t("worker.detail.reviews.workerReply") || "Phản hồi từ worker:"}
+                </Text>
+                <Paragraph className={styles.replyText} style={{ marginTop: 4 }}>
+                  {review.worker_reply}
+                </Paragraph>
+              </div>
+            )}
+            {index < reviews.length - 1 && (
               <Divider style={{ margin: "12px 0" }} />
             )}
           </div>

@@ -232,13 +232,14 @@ export default function WorkerDetailPage() {
                               <Space size={8} className={styles.ratingGroup}>
                                 <Rate
                                   disabled
-                                  value={5}
+                                  value={workerData.review_stats?.average_rating || 0}
                                   allowHalf
                                   style={{ color: "#fbbf24" }}
                                 />
                               </Space>
                               <Text className={styles.commentText}>
-                                (53 {t("worker.detail.rating.reviews")})
+                                ({workerData.review_stats?.total_reviews || 0}{" "}
+                                {t("worker.detail.rating.reviews")})
                               </Text>
                             </Space>
                           </div>
@@ -408,7 +409,7 @@ export default function WorkerDetailPage() {
                             </Col>
                           )}
                         </Row>
-                        <WorkerReviews />
+                        <WorkerReviews reviews={workerData.reviews} />
                       </Col>
                       <Col xs={24} lg={10}>
                         <WorkerCalendar

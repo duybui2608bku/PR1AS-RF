@@ -41,6 +41,9 @@ export enum ApiEndpoint {
   BOOKINGS_BY_ID = "/bookings/:id",
   BOOKINGS_BY_ID_STATUS = "/bookings/:id/status",
   BOOKINGS_BY_ID_CANCEL = "/bookings/:id/cancel",
+  REVIEWS = "/reviews",
+  REVIEWS_MY = "/reviews/my",
+  REVIEWS_BY_ID = "/reviews/:id",
 }
 
 export const buildEndpoint = (

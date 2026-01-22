@@ -18,8 +18,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "PR1AS Application",
-  description: "PR1AS Application",
+  title: "PR1AS",
+  description: "PR1AS",
 };
 
 export default function RootLayout({

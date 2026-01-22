@@ -5,6 +5,8 @@ export enum PAGINATION_DEFAULTS {
 
 export const PAGE_SIZE_OPTIONS = ["10", "20", "50", "100"];
 
+export const DATE_FORMAT_ISO = "YYYY-MM-DD";
+
 
 export const SERVICE_CATEGORIES = {
   ASSISTANCE: "ASSISTANCE",

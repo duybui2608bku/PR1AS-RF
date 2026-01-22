@@ -19,9 +19,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { Dayjs } from "dayjs";
 import { bookingApi } from "@/lib/api/booking.api";
+import { reviewApi } from "@/lib/api/review.api";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
+import { ReviewType } from "@/lib/types/review";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
+import { useAuthStore } from "@/lib/stores/auth.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
@@ -35,6 +38,7 @@ import type { Service } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { CancelledBy } from "@/app/client/bookings/constants/client-booking-constants";
 import { CancelBookingModal } from "@/app/client/bookings/components/CancelBookingModal";
+import { ReviewModal } from "@/app/client/bookings/components/ReviewModal";
 import type { CancellationReason } from "@/app/client/bookings/constants/client-booking-constants";
 
 const { Title } = Typography;
@@ -58,10 +62,14 @@ function BookingsContent() {
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
+  const { user } = useAuthStore();
   const [cancelModalOpen, setCancelModalOpen] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
+  const [reviewModalOpen, setReviewModalOpen] = useState<boolean>(false);
+  const [selectedBookingForReview, setSelectedBookingForReview] =
+    useState<Booking | null>(null);
 
   const { data: allServicesResponse } = useApiQueryData<{
     services: Service[];
@@ -160,12 +168,77 @@ function BookingsContent() {
     message.success(t("booking.worker.actions.refreshSuccess"));
   };
 
+  const handleOpenReviewModal = (bookingId: string): void => {
+    const booking = bookingsData?.data.find(
+      (b) => (b as { id?: string }).id === bookingId || b._id === bookingId
+    );
+    if (booking) {
+      setSelectedBookingForReview(booking);
+      setReviewModalOpen(true);
+    }
+  };
+
+  const handleCloseReviewModal = (): void => {
+    setReviewModalOpen(false);
+    setSelectedBookingForReview(null);
+  };
+
+  const handleSubmitReview = async (values: {
+    rating: number;
+    rating_details: {
+      professionalism: number;
+      punctuality: number;
+      communication: number;
+      service_quality: number;
+    };
+    comment: string;
+  }): Promise<void> => {
+    try {
+      if (!selectedBookingForReview || !user) {
+        return;
+      }
+
+      const bookingId =
+        (selectedBookingForReview as { id?: string }).id ||
+        selectedBookingForReview._id;
+
+      const workerId =
+        typeof selectedBookingForReview.worker_id === "object" &&
+        selectedBookingForReview.worker_id !== null &&
+        "_id" in selectedBookingForReview.worker_id
+          ? (selectedBookingForReview.worker_id as { _id: string })._id
+          : (selectedBookingForReview.worker_id as string);
+
+      await reviewApi.createReview({
+        booking_id: bookingId,
+        worker_id: workerId,
+        client_id: user.id,
+        review_type: ReviewType.CLIENT_TO_WORKER,
+        rating: values.rating,
+        rating_details: values.rating_details,
+        comment: values.comment,
+      });
+
+      message.success(t("booking.review.success"));
+      queryClient.invalidateQueries({ queryKey: ["client-bookings"] });
+      handleCloseReviewModal();
+    } catch (error) {
+      message.error(t("booking.review.error"));
+    }
+  };
+
+  const handleComplainBooking = (bookingId: string): void => {
+    message.info(t("booking.client.actions.complainComingSoon"));
+  };
+
   const columns = createBookingColumns({
     t,
     formatCurrency,
     serviceMap,
     locale,
     onCancelBooking: handleOpenCancelModal,
+    onReviewBooking: handleOpenReviewModal,
+    onComplainBooking: handleComplainBooking,
   });
 
   return (
@@ -321,6 +394,11 @@ function BookingsContent() {
           open={cancelModalOpen}
           onCancel={handleCloseCancelModal}
           onOk={handleSubmitCancelBooking}
+        />
+        <ReviewModal
+          open={reviewModalOpen}
+          onCancel={handleCloseReviewModal}
+          onOk={handleSubmitReview}
         />
       </Content>
       <Footer />

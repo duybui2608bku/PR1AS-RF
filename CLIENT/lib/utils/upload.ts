@@ -1,5 +1,22 @@
-const UPLOAD_API_URL = "https://cfig.ibytecdn.org/upload";
-const DEFAULT_SERVER = "server_1";
+import { UploadErrorCode } from "../constants/error-codes";
+
+enum UploadConfig {
+  API_URL = "https://cfig.ibytecdn.org/upload",
+  DEFAULT_SERVER = "server_1",
+}
+
+enum UploadFormField {
+  Images = "images[]",
+  Server = "server",
+}
+
+const EMPTY_RESULTS_LENGTH = 0;
+const FIRST_RESULT_INDEX = 0;
+
+const IMAGE_EXTENSION_PATTERN = "\\.(jpg|jpeg|png|gif|webp|bmp|svg)(\\?.*)?$";
+const IMAGE_EXTENSION_FLAGS = "i";
+
+const IMAGE_HOST_KEYWORDS = ["ibytecdn.org", "cdn", "imgur", "imgbb"] as const;
 
 export interface UploadImageResponse {
   success: boolean;
@@ -18,39 +35,39 @@ export interface UploadImageError {
 
 export async function uploadImage(
   file: File,
-  server: string = DEFAULT_SERVER
+  server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string> {
   try {
     const formData = new FormData();
-    formData.append("images[]", file);
-    formData.append("server", server);
+    formData.append(UploadFormField.Images, file);
+    formData.append(UploadFormField.Server, server);
 
-    const response = await fetch(UPLOAD_API_URL, {
+    const response = await fetch(UploadConfig.API_URL, {
       method: "POST",
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      throw new Error(UploadErrorCode.REQUEST_FAILED);
     }
 
     const data: UploadImageResponse | UploadImageError = await response.json();
 
     if (!data.success) {
-      throw new Error((data as UploadImageError).message || "Upload failed");
+      throw new Error(UploadErrorCode.RESPONSE_INVALID);
     }
 
     const uploadData = data as UploadImageResponse;
 
     if (
       !uploadData.results ||
-      uploadData.results.length === 0 ||
-      !uploadData.results[0].success
+      uploadData.results.length === EMPTY_RESULTS_LENGTH ||
+      !uploadData.results[FIRST_RESULT_INDEX].success
     ) {
-      throw new Error("Upload failed: No image URL returned");
+      throw new Error(UploadErrorCode.RESULT_INVALID);
     }
 
-    return uploadData.results[0].url;
+    return uploadData.results[FIRST_RESULT_INDEX].url;
   } catch (error) {
     throw error;
   }
@@ -58,34 +75,37 @@ export async function uploadImage(
 
 export async function uploadMultipleImages(
   files: File[],
-  server: string = DEFAULT_SERVER
+  server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string[]> {
   try {
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append("images[]", file);
+      formData.append(UploadFormField.Images, file);
     });
-    formData.append("server", server);
+    formData.append(UploadFormField.Server, server);
 
-    const response = await fetch(UPLOAD_API_URL, {
+    const response = await fetch(UploadConfig.API_URL, {
       method: "POST",
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      throw new Error(UploadErrorCode.REQUEST_FAILED);
     }
 
     const data: UploadImageResponse | UploadImageError = await response.json();
 
     if (!data.success) {
-      throw new Error((data as UploadImageError).message || "Upload failed");
+      throw new Error(UploadErrorCode.RESPONSE_INVALID);
     }
 
     const uploadData = data as UploadImageResponse;
 
-    if (!uploadData.results || uploadData.results.length === 0) {
-      throw new Error("Upload failed: No images uploaded");
+    if (
+      !uploadData.results ||
+      uploadData.results.length === EMPTY_RESULTS_LENGTH
+    ) {
+      throw new Error(UploadErrorCode.MULTIPLE_UPLOAD_EMPTY);
     }
 
     return uploadData.results
@@ -101,15 +121,17 @@ export function isImageUrl(url: string): boolean {
 
   try {
     const urlObj = new URL(url);
-    if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(urlObj.pathname)) {
+    const imageExtensionRegex = new RegExp(
+      IMAGE_EXTENSION_PATTERN,
+      IMAGE_EXTENSION_FLAGS
+    );
+    if (imageExtensionRegex.test(urlObj.pathname)) {
       return true;
     }
-    if (
-      urlObj.hostname.includes("ibytecdn.org") ||
-      urlObj.hostname.includes("cdn") ||
-      urlObj.hostname.includes("imgur") ||
-      urlObj.hostname.includes("imgbb")
-    ) {
+    const hasImageHostKeyword = IMAGE_HOST_KEYWORDS.some((keyword) =>
+      urlObj.hostname.includes(keyword)
+    );
+    if (hasImageHostKeyword) {
       return true;
     }
   } catch {

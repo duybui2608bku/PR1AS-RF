@@ -196,7 +196,7 @@ const HeaderComponent = () => {
       icon: <BookOutlined />,
       label: t("dashboard.header.clientBookings"),
       onClick: () => {
-        router.push(AppRoute.CLIENT_BOOKINGS);
+        userData.isWorkerActive ? router.push(AppRoute.WORKER_BOOKINGS) : router.push(AppRoute.CLIENT_BOOKINGS);
       },
     },
     {

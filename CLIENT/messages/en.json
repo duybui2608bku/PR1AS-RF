@@ -1085,6 +1085,8 @@
     "table": {
       "serviceCode": "Service Code",
       "workerName": "Worker Name",
+      "clientName": "Client Name",
+      "expired": "Expired",
       "schedule": "Schedule",
       "startTime": "Start Time",
       "duration": "Duration",
@@ -1128,7 +1130,8 @@
         "start": "Start",
         "complete": "Complete",
         "cancel": "Cancel",
-        "noActions": "No actions available",
+        "noActionsUnavailable": "No actions available",
+        "expired": "Expired",
         "rejectTitle": "Reject Booking",
         "rejectMessage": "Please enter the reason for rejection",
         "rejectConfirm": "Are you sure you want to reject this booking?",
@@ -1151,6 +1154,12 @@
       "notes": "Notes",
       "notesPlaceholder": "Enter additional notes (optional)",
       "notesMaxLength": "Notes must not exceed 500 characters",
+      "cancelledAt": "Cancelled At",
+      "cancelledBy": "Cancelled By",
+      "cancelledByWorker": "Worker",
+      "cancelledByClient": "Client",
+      "refundAmount": "Refund Amount",
+      "penaltyAmount": "Penalty Amount",
       "reasons": {
         "clientRequest": "Client Request",
         "workerUnavailable": "Worker Unavailable",
@@ -1160,6 +1169,30 @@
         "policyViolation": "Policy Violation",
         "other": "Other"
       }
+    },
+    "client": {
+      "actions": {
+        "review": "Review",
+        "complain": "Complain",
+        "complainComingSoon": "Complain feature coming soon"
+      }
+    },
+    "review": {
+      "title": "Review Service",
+      "overallRating": "Overall Rating",
+      "detailedRatings": "Detailed Ratings",
+      "professionalism": "Professionalism",
+      "punctuality": "Punctuality",
+      "communication": "Communication",
+      "serviceQuality": "Service Quality",
+      "comment": "Comment",
+      "ratingRequired": "Please provide a rating",
+      "commentRequired": "Please provide a comment",
+      "commentMinLength": "Comment must be at least 10 characters",
+      "commentMaxLength": "Comment must not exceed 1000 characters",
+      "commentPlaceholder": "Share your experience with this service...",
+      "success": "Review submitted successfully",
+      "error": "Failed to submit review. Please try again."
     }
   }
 }

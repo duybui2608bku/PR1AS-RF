@@ -1,5 +1,5 @@
 import type { ColumnsType } from "antd/es/table";
-import { Typography, Tag, Space, Button, Popconfirm } from "antd";
+import { Typography, Tag, Space, Button } from "antd";
 import type { Booking } from "@/lib/types/booking";
 import {
   BookingStatus,
@@ -21,7 +21,7 @@ enum TableColumnWidth {
   STATUS = 120,
   PAYMENT_STATUS = 200,
   CREATED_AT = 180,
-  ACTIONS = 120,
+  ACTIONS = 200,
 }
 
 enum TableColumnKeys {
@@ -90,6 +90,8 @@ interface CreateBookingColumnsOptions {
   serviceMap: Map<string, Service>;
   locale: string;
   onCancelBooking?: (bookingId: string) => void;
+  onReviewBooking?: (bookingId: string) => void;
+  onComplainBooking?: (bookingId: string) => void;
 }
 
 const canCancelBooking = (status: BookingStatus): boolean => {
@@ -100,12 +102,18 @@ const canCancelBooking = (status: BookingStatus): boolean => {
   );
 };
 
+const canReviewOrComplain = (status: BookingStatus): boolean => {
+  return status === BookingStatus.COMPLETED;
+};
+
 export const createBookingColumns = ({
   t,
   formatCurrency,
   serviceMap,
   locale,
   onCancelBooking,
+  onReviewBooking,
+  onComplainBooking,
 }: CreateBookingColumnsOptions): ColumnsType<Booking> => {
   return [
     {
@@ -211,18 +219,46 @@ export const createBookingColumns = ({
       align: "center",
       fixed: "right",
       render: (_: unknown, record: Booking) => {
-        if (!onCancelBooking || !canCancelBooking(record.status)) {
-          return null;
+        const bookingId = (record as { id?: string }).id || record._id;
+
+        if (canReviewOrComplain(record.status)) {
+          return (
+            <Space size="small">
+              {onReviewBooking && (
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => onReviewBooking(bookingId)}
+                >
+                  {t("booking.client.actions.review")}
+                </Button>
+              )}
+              {onComplainBooking && (
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => onComplainBooking(bookingId)}
+                >
+                  {t("booking.client.actions.complain")}
+                </Button>
+              )}
+            </Space>
+          );
         }
-        return (
-          <Button
-            danger
-            size="small"
-            onClick={() => onCancelBooking(record.id)}
-          >
-            {t("booking.worker.actions.cancel")}
-          </Button>
-        );
+
+        if (onCancelBooking && canCancelBooking(record.status)) {
+          return (
+            <Button
+              danger
+              size="small"
+              onClick={() => onCancelBooking(bookingId)}
+            >
+              {t("booking.worker.actions.cancel")}
+            </Button>
+          );
+        }
+
+        return null;
       },
     },
   ];

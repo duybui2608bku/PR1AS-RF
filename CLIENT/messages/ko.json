@@ -981,6 +981,8 @@
     "table": {
       "serviceCode": "서비스 코드",
       "workerName": "워커 이름",
+      "clientName": "클라이언트 이름",
+      "expired": "만료됨",
       "schedule": "일정",
       "startTime": "시작 시간",
       "duration": "기간",
@@ -1024,7 +1026,8 @@
         "start": "시작",
         "complete": "완료",
         "cancel": "취소",
-        "noActions": "사용 가능한 작업 없음",
+        "noActionsAvailable": "사용 가능한 작업 없음",
+        "expired": "만료됨",
         "rejectTitle": "예약 거부",
         "rejectMessage": "거부 사유를 입력하세요",
         "rejectConfirm": "이 예약을 거부하시겠습니까?",
@@ -1047,6 +1050,12 @@
       "notes": "메모",
       "notesPlaceholder": "추가 메모 입력 (선택사항)",
       "notesMaxLength": "메모는 500자를 초과할 수 없습니다",
+      "cancelledAt": "취소 시간",
+      "cancelledBy": "취소자",
+      "cancelledByWorker": "작업자",
+      "cancelledByClient": "고객",
+      "refundAmount": "환불 금액",
+      "penaltyAmount": "페널티 금액",
       "reasons": {
         "clientRequest": "고객 요청",
         "workerUnavailable": "작업자 불가",
@@ -1056,6 +1065,30 @@
         "policyViolation": "정책 위반",
         "other": "기타"
       }
+    },
+    "client": {
+      "actions": {
+        "review": "리뷰",
+        "complain": "불만",
+        "complainComingSoon": "불만 기능 곧 출시 예정"
+      }
+    },
+    "review": {
+      "title": "서비스 리뷰",
+      "overallRating": "전체 평점",
+      "detailedRatings": "상세 평점",
+      "professionalism": "전문성",
+      "punctuality": "시간 준수",
+      "communication": "소통",
+      "serviceQuality": "서비스 품질",
+      "comment": "댓글",
+      "ratingRequired": "평점을 제공해주세요",
+      "commentRequired": "댓글을 제공해주세요",
+      "commentMinLength": "댓글은 최소 10자 이상이어야 합니다",
+      "commentMaxLength": "댓글은 1000자를 초과할 수 없습니다",
+      "commentPlaceholder": "이 서비스에 대한 경험을 공유해주세요...",
+      "success": "리뷰가 성공적으로 제출되었습니다",
+      "error": "리뷰 제출에 실패했습니다. 다시 시도해주세요."
     }
   }
 }

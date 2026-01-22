@@ -11,6 +11,38 @@ import type {
 import { Gender } from "../types/worker";
 import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
 
+export interface ReviewStats {
+  total_reviews: number;
+  average_rating: number;
+  rating_distribution: {
+    "1": number;
+    "2": number;
+    "3": number;
+    "4": number;
+    "5": number;
+  };
+  average_rating_details: {
+    professionalism: number;
+    punctuality: number;
+    communication: number;
+    service_quality: number;
+  };
+}
+
+export interface WorkerReviewItem {
+  id: string;
+  rating: number;
+  comment: string;
+  client: {
+    id: string;
+    full_name: string | null;
+    avatar: string | null;
+  };
+  worker_reply: string | null;
+  worker_replied_at: string | null;
+  created_at: string;
+}
+
 export interface WorkerDetailResponse {
   user: {
     id: string;
@@ -31,6 +63,8 @@ export interface WorkerDetailResponse {
     }>;
     is_active: boolean;
   }>;
+  review_stats?: ReviewStats;
+  reviews?: WorkerReviewItem[];
 }
 
 export const workerProfileApi = {

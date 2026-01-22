@@ -49,7 +49,7 @@ export interface CreateBookingInput {
 }
 
 export interface Booking {
-  id: string;
+  _id: string;
   client_id: string;
   worker_id: string;
   worker_service_id: string;
