@@ -1,16 +1,21 @@
-import { escrowRepository, EscrowQueryParams } from "../../repositories/escrow/escrow.repository";
+import {
+  escrowRepository,
+  EscrowQueryParams,
+} from "../../repositories/escrow/escrow.repository";
 import { IEscrowDocument } from "../../types/escrow/escrow.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ESCROW_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
+import { IPagination } from "../../types/common/pagination.type";
+import { getPagination } from "../../func/pagination.func";
 
 export class EscrowService {
   async getEscrowById(
     escrowId: string,
     userId: string,
-    userRoles: string[]
+    isAdmin: boolean
   ): Promise<IEscrowDocument> {
     const escrow = await escrowRepository.findById(escrowId);
     if (!escrow) {
@@ -21,7 +26,6 @@ export class EscrowService {
       );
     }
 
-    const isAdmin = userRoles.includes("admin");
     const isOwner =
       escrow.client_id.toString() === userId ||
       escrow.worker_id.toString() === userId;
@@ -42,23 +46,16 @@ export class EscrowService {
     query: EscrowQueryParams
   ): Promise<{
     data: IEscrowDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: IPagination;
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const { escrows, total } = await escrowRepository.findByClientId(
-      clientId,
-      { ...query, page, limit }
-    );
+    const { page, limit, skip } = getPagination(query.page, query.limit);
+    const { escrows, total } = await escrowRepository.findByClientId(clientId, {
+      ...query,
+      page,
+      limit,
+    });
 
-    return PaginationHelper.format(escrows, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(escrows, { page, limit, skip }, total);
   }
 
   async getEscrowsByWorker(
@@ -66,45 +63,30 @@ export class EscrowService {
     query: EscrowQueryParams
   ): Promise<{
     data: IEscrowDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const { escrows, total } = await escrowRepository.findByWorkerId(
-      workerId,
-      { ...query, page, limit }
-    );
+    const { page, limit, skip } = getPagination(query.page, query.limit);
+    const { escrows, total } = await escrowRepository.findByWorkerId(workerId, {
+      ...query,
+      page,
+      limit,
+    });
 
-    return PaginationHelper.format(escrows, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(escrows, { page, limit, skip }, total);
   }
 
   async getAllEscrows(query: EscrowQueryParams): Promise<{
     data: IEscrowDocument[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+    const { page, limit, skip } = getPagination(query.page, query.limit);
     const { escrows, total } = await escrowRepository.findAll({
       ...query,
       page,
       limit,
     });
 
-    return PaginationHelper.format(escrows, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(escrows, { page, limit, skip }, total);
   }
 }
 

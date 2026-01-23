@@ -147,7 +147,7 @@ export function ReviewModal({
             style={{ marginBottom: 0 }}
           >
             <Space
-              direction="vertical"
+              orientation="vertical"
               size={Spacing.SM}
               style={{ width: "100%" }}
             >

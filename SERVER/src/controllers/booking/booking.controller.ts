@@ -17,6 +17,7 @@ import {
 } from "../../utils";
 import { CancelledBy } from "../../constants/booking";
 import { userRepository } from "../../repositories/auth/user.repository";
+import { getPagination } from "../../func/pagination.func";
 
 export class BookingController {
   async createBooking(req: AuthRequest, res: Response): Promise<void> {
@@ -34,8 +35,8 @@ export class BookingController {
     const userId = extractUserIdFromRequest(req);
 
     const { id } = req.params;
-    const userRoles = req.user?.roles || [];
-    const result = await bookingService.getBookingById(id, userId, userRoles);
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    const result = await bookingService.getBookingById(id, roleInfo);
     R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
 
@@ -46,15 +47,25 @@ export class BookingController {
       req.query,
       COMMON_MESSAGES.BAD_REQUEST
     );
-
+    const { page, limit, skip } = getPagination(query.page, query.limit);
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const { isWorker, isClient } = roleInfo;
 
     let result;
     if (isWorker) {
-      result = await bookingService.getBookingsByWorker(userId, query);
+      result = await bookingService.getBookingsByWorker(userId, {
+        ...query,
+        page,
+        limit,
+        skip,
+      });
     } else if (isClient) {
-      result = await bookingService.getBookingsByClient(userId, query);
+      result = await bookingService.getBookingsByClient(userId, {
+        ...query,
+        page,
+        limit,
+        skip,
+      });
     } else {
       throw AppError.forbidden();
     }

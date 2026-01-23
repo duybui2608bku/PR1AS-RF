@@ -1,9 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import {
-  ReviewStatus,
-  ReviewType,
-  REVIEW_LIMITS,
-} from "../../constants/review";
+import { ReviewType, REVIEW_LIMITS } from "../../constants/review";
 import { IReviewDocument } from "../../types/review";
 import { modelsName } from "../models.name";
 
@@ -80,12 +76,6 @@ const reviewSchema = new Schema<IReviewDocument>(
       trim: true,
       minlength: REVIEW_LIMITS.MIN_COMMENT_LENGTH,
       maxlength: REVIEW_LIMITS.MAX_COMMENT_LENGTH,
-    },
-    status: {
-      type: String,
-      enum: Object.values(ReviewStatus),
-      default: ReviewStatus.PENDING,
-      index: true,
     },
     is_visible: {
       type: Boolean,

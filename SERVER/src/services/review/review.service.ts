@@ -14,15 +14,14 @@ import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { REVIEW_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
+import { IBookingDocument, UserRole } from "../../types";
+import { VALIDATION_LIMITS } from "../../constants/validation";
 
 export class ReviewService {
-  async createReview(
-    input: CreateReviewInput,
-    userId: string
-  ): Promise<IReviewDocument> {
-    const booking = await bookingRepository.findById(
-      input.booking_id.toString()
-    );
+  private async checkBookingExists(
+    bookingId: string
+  ): Promise<IBookingDocument> {
+    const booking = await bookingRepository.findById(bookingId);
     if (!booking) {
       throw new AppError(
         REVIEW_MESSAGES.BOOKING_NOT_FOUND,
@@ -30,6 +29,14 @@ export class ReviewService {
         ErrorCode.NOT_FOUND
       );
     }
+    return booking;
+  }
+
+  async createReview(
+    input: CreateReviewInput,
+    userId: string
+  ): Promise<IReviewDocument> {
+    const booking = await this.checkBookingExists(input.booking_id.toString());
 
     if (booking.status !== BookingStatus.COMPLETED) {
       throw new AppError(
@@ -42,33 +49,12 @@ export class ReviewService {
     const existingReview = await reviewRepository.findByBookingId(
       input.booking_id.toString()
     );
+
     if (existingReview) {
       throw new AppError(
         REVIEW_MESSAGES.REVIEW_ALREADY_EXISTS,
         HTTP_STATUS.CONFLICT,
         ErrorCode.REVIEW_ALREADY_EXISTS
-      );
-    }
-
-    if (
-      input.review_type === ReviewType.CLIENT_TO_WORKER &&
-      booking.client_id.toString() !== userId
-    ) {
-      throw new AppError(
-        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
-      );
-    }
-
-    if (
-      input.review_type === ReviewType.WORKER_TO_CLIENT &&
-      booking.worker_id.toString() !== userId
-    ) {
-      throw new AppError(
-        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
       );
     }
 
@@ -91,7 +77,11 @@ export class ReviewService {
   async getReviewById(
     reviewId: string,
     userId: string,
-    userRoles: string[]
+    roleInfo: {
+      lastActiveRole: UserRole | null;
+      isWorker: boolean;
+      isClient: boolean;
+    }
   ): Promise<IReviewDocument> {
     const review = await reviewRepository.findById(reviewId);
     if (!review) {
@@ -102,12 +92,12 @@ export class ReviewService {
       );
     }
 
-    const isAdmin = userRoles.includes("admin");
-    const isOwner =
-      review.client_id.toString() === userId ||
-      review.worker_id.toString() === userId;
+    const isAdmin = roleInfo.lastActiveRole === UserRole.ADMIN;
+    const isOwner = roleInfo.isWorker && review.worker_id.toString() === userId;
+    const isClient =
+      roleInfo.isClient && review.client_id.toString() === userId;
 
-    if (!isAdmin && !isOwner && !review.is_visible) {
+    if (!isAdmin && !isOwner && !isClient && !review.is_visible) {
       throw new AppError(
         REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
@@ -132,14 +122,19 @@ export class ReviewService {
       hasPrevPage: boolean;
     };
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const { reviews, total } = await reviewRepository.findByWorkerId(
-      workerId,
-      { ...query, page, limit }
-    );
+    const page = query.page || VALIDATION_LIMITS.PAGINATION_DEFAULT_PAGE;
+    const limit = query.limit || VALIDATION_LIMITS.PAGINATION_DEFAULT_LIMIT;
+    const { reviews, total } = await reviewRepository.findByWorkerId(workerId, {
+      ...query,
+      page,
+      limit,
+    });
 
-    return PaginationHelper.format(reviews, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      reviews,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async getReviewsByClient(
@@ -156,14 +151,19 @@ export class ReviewService {
       hasPrevPage: boolean;
     };
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const { reviews, total } = await reviewRepository.findByClientId(
-      clientId,
-      { ...query, page, limit }
-    );
+    const page = query.page || VALIDATION_LIMITS.PAGINATION_DEFAULT_PAGE;
+    const limit = query.limit || VALIDATION_LIMITS.PAGINATION_DEFAULT_LIMIT;
+    const { reviews, total } = await reviewRepository.findByClientId(clientId, {
+      ...query,
+      page,
+      limit,
+    });
 
-    return PaginationHelper.format(reviews, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      reviews,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async getAllReviews(query: ReviewQuery): Promise<{
@@ -177,15 +177,19 @@ export class ReviewService {
       hasPrevPage: boolean;
     };
   }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+    const page = query.page || VALIDATION_LIMITS.PAGINATION_DEFAULT_PAGE;
+    const limit = query.limit || VALIDATION_LIMITS.PAGINATION_DEFAULT_LIMIT;
     const { reviews, total } = await reviewRepository.findAll({
       ...query,
       page,
       limit,
     });
 
-    return PaginationHelper.format(reviews, { page, limit, skip: (page - 1) * limit }, total);
+    return PaginationHelper.format(
+      reviews,
+      { page, limit, skip: (page - 1) * limit },
+      total
+    );
   }
 
   async updateReview(
@@ -211,7 +215,7 @@ export class ReviewService {
       );
     }
 
-    const isAdmin = userRoles.includes("admin");
+    const isAdmin = userRoles.includes(UserRole.ADMIN);
     const isOwner =
       review.client_id.toString() === userId ||
       review.worker_id.toString() === userId;
@@ -250,7 +254,7 @@ export class ReviewService {
       );
     }
 
-    const isAdmin = userRoles.includes("admin");
+    const isAdmin = userRoles.includes(UserRole.ADMIN);
     const isOwner =
       review.client_id.toString() === userId ||
       review.worker_id.toString() === userId;
@@ -305,11 +309,7 @@ export class ReviewService {
       );
     }
 
-    const updatedReview = await reviewRepository.addReply(
-      reviewId,
-      reply,
-      workerId
-    );
+    const updatedReview = await reviewRepository.addReply(reviewId, reply);
     if (!updatedReview) {
       throw new AppError(
         REVIEW_MESSAGES.REVIEW_NOT_FOUND,
@@ -321,17 +321,11 @@ export class ReviewService {
     return updatedReview;
   }
 
-  async getReviewStatsByWorker(
-    workerId: string
-  ): Promise<{
+  async getReviewStatsByWorker(workerId: string): Promise<{
     total_reviews: number;
     average_rating: number;
     rating_distribution: {
-      "1": number;
-      "2": number;
-      "3": number;
-      "4": number;
-      "5": number;
+      [key: string]: number;
     };
     average_rating_details: {
       professionalism: number;

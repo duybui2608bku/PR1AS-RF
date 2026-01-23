@@ -1,46 +1,44 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { escrowService } from "../../services/escrow/escrow.service";
 import { getEscrowsQuerySchema } from "../../validations/escrow/escrow.validation";
 import { ESCROW_MESSAGES, COMMON_MESSAGES } from "../../constants/messages";
 import { AuthRequest } from "../../middleware/auth";
-import { AppError, R, validateWithSchema } from "../../utils";
+import {
+  AppError,
+  extractUserIdFromRequest,
+  R,
+  validateWithSchema,
+} from "../../utils";
+import { userRepository } from "../../repositories";
+import { UserRole } from "../../types";
 
 export class EscrowController {
   async getEscrowById(req: AuthRequest, res: Response): Promise<void> {
-    if (!req.user?.sub) {
-      throw AppError.unauthorized();
-    }
-
+    const userId = extractUserIdFromRequest(req);
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const { id } = req.params;
-    const userRoles = req.user.roles || [];
     const result = await escrowService.getEscrowById(
       id,
-      req.user.sub,
-      userRoles
+      userId,
+      roleInfo.isAdmin
     );
     R.success(res, result, ESCROW_MESSAGES.ESCROW_FETCHED, req);
   }
 
   async getMyEscrows(req: AuthRequest, res: Response): Promise<void> {
-    if (!req.user?.sub) {
-      throw AppError.unauthorized();
-    }
-
+    const userId = extractUserIdFromRequest(req);
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const query = validateWithSchema(
       getEscrowsQuerySchema,
       req.query,
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const userRoles = req.user.roles || [];
-    const isWorker = userRoles.includes("worker");
-    const isClient = userRoles.includes("client");
-
     let result;
-    if (isWorker) {
-      result = await escrowService.getEscrowsByWorker(req.user.sub, query);
-    } else if (isClient) {
-      result = await escrowService.getEscrowsByClient(req.user.sub, query);
+    if (roleInfo.isWorker) {
+      result = await escrowService.getEscrowsByWorker(userId, query);
+    } else if (roleInfo.isClient) {
+      result = await escrowService.getEscrowsByClient(userId, query);
     } else {
       throw AppError.forbidden();
     }
@@ -54,7 +52,7 @@ export class EscrowController {
     }
 
     const userRoles = req.user.roles || [];
-    if (!userRoles.includes("admin")) {
+    if (!userRoles.includes(UserRole.ADMIN)) {
       throw AppError.forbidden();
     }
 

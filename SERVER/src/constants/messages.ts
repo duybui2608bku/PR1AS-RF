@@ -145,8 +145,10 @@ export const BOOKING_MESSAGES = {
   BOOKINGS_FETCHED: "Bookings fetched successfully",
   BOOKING_FETCHED: "Booking fetched successfully",
   INVALID_SCHEDULE: "Invalid schedule. Start time must be before end time",
-  INVALID_SCHEDULE_ADVANCE: "Booking must be scheduled at least 2 hours in advance",
-  INVALID_SCHEDULE_MAX_ADVANCE: "Booking cannot be scheduled more than 30 days in advance",
+  INVALID_SCHEDULE_ADVANCE:
+    "Booking must be scheduled at least 2 hours in advance",
+  INVALID_SCHEDULE_MAX_ADVANCE:
+    "Booking cannot be scheduled more than 30 days in advance",
   INVALID_DURATION: "Duration must be between 1 and 24 hours",
   INVALID_PRICING: "Invalid pricing information",
   INVALID_STATUS_TRANSITION: "Invalid status transition",
@@ -178,15 +180,21 @@ export const REVIEW_MESSAGES = {
   UNAUTHORIZED_ACCESS: "You do not have permission to access this review",
   BOOKING_NOT_COMPLETED: "Cannot review a booking that is not completed",
   BOOKING_NOT_FOUND: "Booking not found",
+  AT_LEAST_ONE_FIELD_MUST_BE_PROVIDED_FOR_UPDATE:
+    "At least one field must be provided for update",
+  RATING_MUST_BE_CONSISTENT_WITH_RATING_DETAILS:
+    "Rating must be consistent with rating details",
 } as const;
 
 export const ESCROW_MESSAGES = {
   ESCROW_NOT_FOUND: "Escrow transaction not found",
   ESCROWS_FETCHED: "Escrow transactions fetched successfully",
   ESCROW_FETCHED: "Escrow transaction fetched successfully",
-  UNAUTHORIZED_ACCESS: "You do not have permission to access this escrow transaction",
+  UNAUTHORIZED_ACCESS:
+    "You do not have permission to access this escrow transaction",
 } as const;
 
 export const WORKER_MESSAGES = {
-  WORKERS_GROUPED_BY_SERVICE_FETCHED: "Workers grouped by service fetched successfully",
+  WORKERS_GROUPED_BY_SERVICE_FETCHED:
+    "Workers grouped by service fetched successfully",
 } as const;

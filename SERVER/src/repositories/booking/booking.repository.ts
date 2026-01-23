@@ -6,6 +6,7 @@ import {
   BookingQuery,
 } from "../../types/booking/booking.types";
 import { BookingStatus, BookingPaymentStatus } from "../../constants/booking";
+import { getPagination } from "../../func/pagination.func";
 
 export class BookingRepository {
   async create(data: CreateBookingInput): Promise<IBookingDocument> {
@@ -32,7 +33,7 @@ export class BookingRepository {
     clientId: string,
     query: BookingQuery
   ): Promise<{ bookings: IBookingDocument[]; total: number }> {
-    const filter: Record<string, unknown> = {
+    const filter: Record<string, any> = {
       client_id: new Types.ObjectId(clientId),
     };
 
@@ -86,7 +87,7 @@ export class BookingRepository {
     workerId: string,
     query: BookingQuery
   ): Promise<{ bookings: IBookingDocument[]; total: number }> {
-    const filter: Record<string, unknown> = {
+    const filter: Record<string, any> = {
       worker_id: new Types.ObjectId(workerId),
     };
 
@@ -112,10 +113,6 @@ export class BookingRepository {
       }
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
         .populate("client_id", "email full_name")
@@ -124,8 +121,8 @@ export class BookingRepository {
         .populate("service_id")
         .populate("escrow_id")
         .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
+        .skip(query.skip)
+        .limit(query.limit)
         .lean(),
       Booking.countDocuments(filter),
     ]);
@@ -140,7 +137,7 @@ export class BookingRepository {
     bookings: IBookingDocument[];
     total: number;
   }> {
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, any> = {};
 
     if (query.client_id) {
       filter.client_id = new Types.ObjectId(query.client_id.toString());

@@ -45,7 +45,6 @@ export interface CreateReviewInput {
 }
 
 export interface UpdateReviewInput {
-  review_id: Types.ObjectId;
   rating?: number;
   rating_details?: ReviewRatingDetails;
   comment?: string;
@@ -58,9 +57,9 @@ export interface ReplyReviewInput {
 }
 
 export interface ReviewQuery {
-  worker_id?: Types.ObjectId;
-  client_id?: Types.ObjectId;
-  booking_id?: Types.ObjectId;
+  worker_id?: string;
+  client_id?: string;
+  booking_id?: string | Types.ObjectId;
   review_type?: ReviewType;
   status?: ReviewStatus;
   min_rating?: number;

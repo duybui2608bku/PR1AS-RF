@@ -1,14 +1,18 @@
 import { z } from "zod";
 import { Types } from "mongoose";
-import { ReviewStatus, ReviewType, REVIEW_LIMITS } from "../../constants/review";
+import {
+  ReviewStatus,
+  ReviewType,
+  REVIEW_LIMITS,
+} from "../../constants/review";
 import { REVIEW_MESSAGES } from "../../constants/messages";
+import { VALIDATION_LIMITS } from "../../constants/validation";
 
 const objectIdSchema = z
   .string()
-  .refine(
-    (val) => Types.ObjectId.isValid(val),
-    { message: "Invalid ObjectId format" }
-  )
+  .refine((val) => Types.ObjectId.isValid(val), {
+    message: "Invalid ObjectId format",
+  })
   .transform((val) => new Types.ObjectId(val));
 
 const ratingSchema = z
@@ -27,6 +31,8 @@ const ratingDetailsSchema = z.object({
 export const createReviewSchema = z
   .object({
     booking_id: objectIdSchema,
+    worker_id: objectIdSchema,
+    client_id: objectIdSchema,
     review_type: z.nativeEnum(ReviewType),
     rating: ratingSchema,
     rating_details: ratingDetailsSchema,
@@ -49,11 +55,11 @@ export const createReviewSchema = z
           data.rating_details.punctuality +
           data.rating_details.communication +
           data.rating_details.service_quality) /
-        4;
+        REVIEW_LIMITS.RATING_DETAILS_COUNT;
       return Math.abs(averageRating - data.rating) <= 1;
     },
     {
-      message: "Rating must be consistent with rating details",
+      message: REVIEW_MESSAGES.RATING_MUST_BE_CONSISTENT_WITH_RATING_DETAILS,
       path: ["rating"],
     }
   );
@@ -83,13 +89,13 @@ export const updateReviewSchema = z
             data.rating_details.punctuality +
             data.rating_details.communication +
             data.rating_details.service_quality) /
-          4;
+          REVIEW_LIMITS.RATING_DETAILS_COUNT;
         return Math.abs(averageRating - data.rating) <= 1;
       }
       return true;
     },
     {
-      message: "Rating must be consistent with rating details",
+      message: REVIEW_MESSAGES.RATING_MUST_BE_CONSISTENT_WITH_RATING_DETAILS,
       path: ["rating"],
     }
   )
@@ -102,7 +108,7 @@ export const updateReviewSchema = z
       );
     },
     {
-      message: "At least one field must be provided for update",
+      message: REVIEW_MESSAGES.AT_LEAST_ONE_FIELD_MUST_BE_PROVIDED_FOR_UPDATE,
     }
   );
 
@@ -124,12 +130,24 @@ export const getReviewsQuerySchema = z.object({
     .string()
     .optional()
     .transform((val) => (val ? parseFloat(val) : undefined))
-    .pipe(z.number().min(REVIEW_LIMITS.MIN_RATING).max(REVIEW_LIMITS.MAX_RATING).optional()),
+    .pipe(
+      z
+        .number()
+        .min(REVIEW_LIMITS.MIN_RATING)
+        .max(REVIEW_LIMITS.MAX_RATING)
+        .optional()
+    ),
   max_rating: z
     .string()
     .optional()
     .transform((val) => (val ? parseFloat(val) : undefined))
-    .pipe(z.number().min(REVIEW_LIMITS.MIN_RATING).max(REVIEW_LIMITS.MAX_RATING).optional()),
+    .pipe(
+      z
+        .number()
+        .min(REVIEW_LIMITS.MIN_RATING)
+        .max(REVIEW_LIMITS.MAX_RATING)
+        .optional()
+    ),
   is_visible: z
     .string()
     .optional()
@@ -141,13 +159,19 @@ export const getReviewsQuerySchema = z.object({
   page: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
+    .transform((val) =>
+      val ? parseInt(val, 10) : VALIDATION_LIMITS.PAGINATION_DEFAULT_PAGE
+    )
     .pipe(z.number().int().positive().min(1)),
   limit: z
     .string()
     .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 10))
-    .pipe(z.number().int().positive().min(1).max(100)),
+    .transform((val) =>
+      val ? parseInt(val, 10) : VALIDATION_LIMITS.PAGINATION_DEFAULT_LIMIT
+    )
+    .pipe(
+      z.number().int().positive().min(1).max(VALIDATION_LIMITS.PAGINATION_MAX_LIMIT)
+    ),
 });
 
 export type CreateReviewSchemaType = z.infer<typeof createReviewSchema>;

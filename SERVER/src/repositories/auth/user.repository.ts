@@ -32,16 +32,24 @@ export class UserRepository {
     return user?.last_active_role || null;
   }
 
+  async getRolesById(userId: string): Promise<UserRole[]> {
+    const user = await User.findById(userId).select("roles").lean();
+    return user?.roles || [];
+  }
+
   async getUserRoleInfoById(userId: string): Promise<{
     lastActiveRole: UserRole | null;
     isWorker: boolean;
     isClient: boolean;
+    isAdmin: boolean;
   }> {
     const lastActiveRole = await this.getLastActiveRoleById(userId);
+    const roles = await this.getRolesById(userId);
     return {
       lastActiveRole,
-      isWorker: lastActiveRole === UserRole.WORKER,
-      isClient: lastActiveRole === UserRole.CLIENT,
+      isWorker: roles.includes(UserRole.WORKER),
+      isClient: roles.includes(UserRole.CLIENT),
+      isAdmin: roles.includes(UserRole.ADMIN),
     };
   }
 

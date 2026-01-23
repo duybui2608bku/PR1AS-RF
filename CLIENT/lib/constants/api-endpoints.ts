@@ -44,6 +44,9 @@ export enum ApiEndpoint {
   REVIEWS = "/reviews",
   REVIEWS_MY = "/reviews/my",
   REVIEWS_BY_ID = "/reviews/:id",
+  ESCROWS_MY = "/escrows/my",
+  ESCROWS_ALL = "/escrows/all",
+  ESCROWS_BY_ID = "/escrows/:id",
 }
 
 export const buildEndpoint = (

@@ -106,8 +106,9 @@ export interface BookingQuery {
   service_code?: string;
   start_date?: Date;
   end_date?: Date;
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
+  skip: number;
 }
 
 export interface BookingStats {

@@ -1,7 +1,11 @@
 import { Types } from "mongoose";
 import { Escrow } from "../../models/escrow/escrow.model";
-import { IEscrowDocument, CreateEscrowInput } from "../../types/escrow/escrow.types";
+import {
+  IEscrowDocument,
+  CreateEscrowInput,
+} from "../../types/escrow/escrow.types";
 import { EscrowStatus } from "../../constants/escrow";
+import { getPagination } from "../../func/pagination.func";
 
 export interface EscrowQueryParams {
   client_id?: string;
@@ -28,7 +32,7 @@ export class EscrowRepository {
     clientId: string,
     query: EscrowQueryParams
   ): Promise<{ escrows: IEscrowDocument[]; total: number }> {
-    const filter: Record<string, unknown> = {
+    const filter: Record<string, any> = {
       client_id: new Types.ObjectId(clientId),
     };
 
@@ -37,7 +41,7 @@ export class EscrowRepository {
     }
 
     if (query.start_date || query.end_date) {
-      filter.created_at = {};
+      filter.created_at = {} as any;
       if (query.start_date) {
         filter.created_at.$gte = query.start_date;
       }
@@ -46,9 +50,7 @@ export class EscrowRepository {
       }
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPagination(query.page, query.limit);
 
     const [escrows, total] = await Promise.all([
       Escrow.find(filter)
@@ -75,7 +77,7 @@ export class EscrowRepository {
     workerId: string,
     query: EscrowQueryParams
   ): Promise<{ escrows: IEscrowDocument[]; total: number }> {
-    const filter: Record<string, unknown> = {
+    const filter: Record<string, any> = {
       worker_id: new Types.ObjectId(workerId),
     };
 
@@ -93,9 +95,7 @@ export class EscrowRepository {
       }
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPagination(query.page, query.limit);
 
     const [escrows, total] = await Promise.all([
       Escrow.find(filter)
@@ -122,7 +122,7 @@ export class EscrowRepository {
     escrows: IEscrowDocument[];
     total: number;
   }> {
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, any> = {};
 
     if (query.client_id) {
       filter.client_id = new Types.ObjectId(query.client_id);
@@ -146,9 +146,7 @@ export class EscrowRepository {
       }
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+    const { limit, skip } = getPagination(query.page, query.limit);
 
     const [escrows, total] = await Promise.all([
       Escrow.find(filter)
@@ -178,9 +176,7 @@ export class EscrowRepository {
       .populate("booking_id");
   }
 
-  async create(
-    data: CreateEscrowInput
-  ): Promise<IEscrowDocument> {
+  async create(data: CreateEscrowInput): Promise<IEscrowDocument> {
     const escrow = new Escrow({
       ...data,
       status: EscrowStatus.HOLDING,

@@ -6,6 +6,24 @@ import { AUTH_MESSAGES } from "../../constants/messages";
 
 import { IUserDocument } from "../../types/auth/user.types";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
+import { reviewRepository } from "../../repositories/review/review.repository";
+import { ReviewStats, IReviewDocument } from "../../types/review/review.types";
+import { ReviewType } from "../../constants/review";
+import { VALIDATION_LIMITS } from "../../constants/validation";
+
+export interface WorkerReviewItem {
+  id: string;
+  rating: number;
+  comment: string;
+  client: {
+    id: string;
+    full_name: string | null;
+    avatar: string | null;
+  };
+  worker_reply: string | null;
+  worker_replied_at: Date | null;
+  created_at: Date;
+}
 
 export interface WorkerDetailResponse {
   user: {
@@ -27,6 +45,8 @@ export interface WorkerDetailResponse {
     }>;
     is_active: boolean;
   }>;
+  review_stats?: ReviewStats;
+  reviews?: WorkerReviewItem[];
 }
 
 export class WorkerService {
@@ -49,8 +69,6 @@ export class WorkerService {
           }
         : undefined,
     };
-
-    // Get worker services
     const workerServices = await workerServiceRepository.findAllForWorker(
       user._id.toString()
     );
@@ -68,6 +86,43 @@ export class WorkerService {
       is_active: ws.is_active,
     }));
 
+    const [reviewStats, reviewsData] = await Promise.all([
+      reviewRepository.getStatsByWorkerId(user._id.toString()),
+      reviewRepository.findByWorkerId(user._id.toString(), {
+        review_type: ReviewType.CLIENT_TO_WORKER,
+        is_visible: true,
+        page: 1,
+        limit: VALIDATION_LIMITS.PAGINATION_MAX_LIMIT,
+      }),
+    ]);
+
+    const reviews: WorkerReviewItem[] = reviewsData.reviews.map(
+      (review: IReviewDocument) => {
+        const client = review.client_id as unknown as {
+          _id: { toString: () => string } | string;
+          full_name: string | null;
+          avatar: string | null;
+        };
+
+        const clientId =
+          typeof client._id === "string" ? client._id : client._id.toString();
+
+        return {
+          id: review._id.toString(),
+          rating: review.rating,
+          comment: review.comment,
+          client: {
+            id: clientId,
+            full_name: client.full_name || null,
+            avatar: client.avatar || null,
+          },
+          worker_reply: review.worker_reply || null,
+          worker_replied_at: review.worker_replied_at || null,
+          created_at: review.created_at,
+        };
+      }
+    );
+
     return {
       user: {
         id: user._id.toString(),
@@ -77,6 +132,8 @@ export class WorkerService {
       },
       worker_profile: workerProfile,
       services,
+      review_stats: reviewStats,
+      reviews,
     };
   }
 

@@ -42,7 +42,15 @@ function QueryStateComponent({
 
   if (isLoading) {
     return (
-      <div className={className || "query-state-loading"}>
+      <div 
+      className={className || "query-state-loading"}
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
+      }}
+      >
         <Spin size={loadingSize} />
         {loadingText && <Text type="secondary">{loadingText}</Text>}
       </div>

@@ -17,6 +17,16 @@ export const REVIEW_LIMITS = {
   MAX_COMMENT_LENGTH: 1000,
   MAX_REPLY_LENGTH: 500,
   RATING_DECIMAL_PLACES: 1,
+  RATING_DETAILS_COUNT: 4,
+  RATING_ROUNDING_MULTIPLIER: 10,
+} as const;
+
+export const RATING_VALUES = {
+  ONE: 1,
+  TWO: 2,
+  THREE: 3,
+  FOUR: 4,
+  FIVE: 5,
 } as const;
 
 export const REVIEW_WEIGHTS = {
