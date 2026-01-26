@@ -30,6 +30,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { message } from "antd";
 import { chatApi, type Conversation, type Message } from "@/lib/api/chat.api";
+import { ChatErrorCode } from "@/lib/constants/error-codes";
 import { useChatSocket } from "@/lib/hooks/use-socket";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
@@ -87,20 +88,20 @@ function ChatContent() {
     enabled: !!selectedConversationId,
   });
 
-  const sendMessageMutation = useStandardizedMutation({
-    mutationFn: (content: string) => {
+  const sendMessageMutation = useStandardizedMutation(
+    (content: string) => {
       if (!selectedConversationId) {
-        throw new Error(t("chat.errors.noConversation"));
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const currentConversation = conversationsData?.conversations.find(
         (c) => c.id === selectedConversationId
       );
       if (!currentConversation) {
-        throw new Error(t("chat.errors.noConversation"));
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const receiverId = getOtherParticipant(currentConversation);
       if (!receiverId) {
-        throw new Error(t("chat.errors.noConversation"));
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const replyToId = replyingToRef.current?._id || null;
       return chatApi.sendMessage({
@@ -111,26 +112,30 @@ function ChatContent() {
         reply_to_id: replyToId,
       });
     },
-    onSuccess: () => {
-      setMessageContent("");
-      setReplyingTo(null);
-      replyingToRef.current = null;
-      queryClient.invalidateQueries({
-        queryKey: ["chat-messages", selectedConversationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
-    },
-  });
+    {
+      onSuccess: () => {
+        setMessageContent("");
+        setReplyingTo(null);
+        replyingToRef.current = null;
+        queryClient.invalidateQueries({
+          queryKey: ["chat-messages", selectedConversationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
+      },
+    }
+  );
 
-  const deleteMessageMutation = useStandardizedMutation({
-    mutationFn: (messageId: string) => chatApi.deleteMessage(messageId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["chat-messages", selectedConversationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
-    },
-  });
+  const deleteMessageMutation = useStandardizedMutation(
+    (messageId: string) => chatApi.deleteMessage(messageId),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["chat-messages", selectedConversationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
+      },
+    }
+  );
 
   const markAsReadMutation = useMutation({
     mutationFn: (conversationId: string) =>
@@ -208,11 +213,11 @@ function ChatContent() {
         (c) => c.id === selectedConversationId
       );
       if (!currentConversation) {
-        throw new Error(t("chat.errors.noConversation"));
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const receiverId = getOtherParticipant(currentConversation);
       if (!receiverId) {
-        throw new Error(t("chat.errors.noConversation"));
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       await chatApi.sendMessage({
         receiver_id: receiverId,

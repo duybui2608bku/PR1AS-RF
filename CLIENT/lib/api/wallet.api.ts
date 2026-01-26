@@ -25,6 +25,8 @@ export interface WalletBalanceResponse {
 export interface TransactionHistoryQuery {
   type?: TransactionType;
   status?: TransactionStatus;
+  start_date?: string;
+  end_date?: string;
   page?: number;
   limit?: number;
 }

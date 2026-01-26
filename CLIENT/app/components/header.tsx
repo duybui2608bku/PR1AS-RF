@@ -188,7 +188,7 @@ const HeaderComponent = () => {
       icon: <WalletOutlined />,
       label: t("dashboard.header.wallet"),
       onClick: () => {
-        router.push(AppRoute.CLIENT_WALLET);
+          userData.isWorkerActive ? router.push(AppRoute.WORKER_WALLET) : router.push(AppRoute.CLIENT_WALLET);
       },
     },
     {

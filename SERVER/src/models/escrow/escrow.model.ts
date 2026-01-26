@@ -132,12 +132,6 @@ const escrowSchema = new Schema<IEscrowDocument>(
   }
 );
 
-escrowSchema.index({ booking_id: 1 }, { unique: true });
-escrowSchema.index({ client_id: 1, status: 1 });
-escrowSchema.index({ worker_id: 1, status: 1 });
-escrowSchema.index({ status: 1, created_at: -1 });
-escrowSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
-
 export const Escrow = mongoose.model<IEscrowDocument>(
   modelsName.ESCROW,
   escrowSchema

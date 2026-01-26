@@ -35,9 +35,9 @@ export class EscrowController {
     );
 
     let result;
-    if (roleInfo.isWorker) {
+    if (roleInfo.lastActiveRole === UserRole.WORKER) {
       result = await escrowService.getEscrowsByWorker(userId, query);
-    } else if (roleInfo.isClient) {
+    } else if (roleInfo.lastActiveRole === UserRole.CLIENT) {
       result = await escrowService.getEscrowsByClient(userId, query);
     } else {
       throw AppError.forbidden();

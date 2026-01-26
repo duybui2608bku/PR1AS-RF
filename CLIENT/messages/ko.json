@@ -19,7 +19,15 @@
     "next": "다음",
     "previous": "이전",
     "close": "닫기",
-    "step": "단계"
+    "step": "단계",
+    "pagination": {
+      "total": "총 {total}개 항목"
+    },
+    "error": {
+      "title": "오류",
+      "message": "오류가 발생했습니다"
+    },
+    "loading": "로딩 중..."
   },
   "errors": {
     "network": {
@@ -585,6 +593,35 @@
       "hireNow": "지금 고용하기",
       "message": "메시지",
       "selectDate": "날짜 선택"
+    },
+    "wallet": {
+      "title": "워커 지갑",
+      "tabs": {
+        "balance": "잔액",
+        "reconciliation": "조정 거래"
+      },
+      "cards": {
+        "balance": "잔액",
+        "reconciliationBalance": "조정 잔액",
+        "pendingWithdrawal": "대기 중인 출금"
+      }
+    }
+  },
+  "escrow": {
+    "status": {
+      "holding": "보유 중",
+      "released": "해제됨",
+      "refunded": "환불됨",
+      "partiallyReleased": "부분 해제",
+      "disputed": "분쟁 중"
+    },
+    "table": {
+      "bookingId": "예약 ID",
+      "amount": "금액",
+      "workerPayout": "워커 지급액",
+      "status": "상태",
+      "heldAt": "보유 시간",
+      "releasedAt": "해제 시간"
     }
   },
   "privacy": {

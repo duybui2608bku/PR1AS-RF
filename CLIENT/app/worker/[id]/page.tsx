@@ -45,6 +45,7 @@ import { WorkerCalendar } from "../components/WorkerCalendar";
 import { WorkerServices } from "../components/WorkerServices";
 import { BookingModal } from "../components/BookingModal";
 import { buildChatRoute } from "@/lib/constants/routes";
+import { useAuthStore } from "@/lib/stores/auth.store";
 import type { Dayjs } from "dayjs";
 import styles from "./worker-detail.module.scss";
 
@@ -56,6 +57,7 @@ export default function WorkerDetailPage() {
   const router = useRouter();
   const workerId = params.id as string;
   const { t } = useI18n();
+  const { user: currentUser } = useAuthStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullIntroduction, setShowFullIntroduction] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -82,6 +84,10 @@ export default function WorkerDetailPage() {
     if (selectedServices.length === 0) return null;
     return workerServices.find((ws) => ws.service_id === selectedServices[0]);
   }, [selectedServices, workerServices]);
+
+  const isViewingOwnProfile = useMemo(() => {
+    return currentUser?.id === workerData?.user?.id;
+  }, [currentUser?.id, workerData?.user?.id]);
 
   const { data: allServicesResponse, isLoading: isLoadingAllServices } =
     useApiQueryData<{ services: Service[]; count: number }>(
@@ -422,28 +428,33 @@ export default function WorkerDetailPage() {
                           onServiceToggle={handleServiceToggle}
                           serviceMap={serviceMap}
                           isLoading={isLoadingServices || isLoadingAllServices}
+                          disabled={isViewingOwnProfile}
                         />
-                        <Button
-                          type="primary"
-                          size="large"
-                          block
-                          icon={<ShoppingCartOutlined />}
-                          className={styles.hireButton}
-                          style={{ marginBottom: 16 }}
-                          onClick={handleHireClick}
-                          disabled={selectedServices.length === 0}
-                        >
-                          {t("worker.detail.hireNow")}
-                        </Button>
-                        <Button
-                          size="large"
-                          block
-                          icon={<MessageOutlined />}
-                          className={styles.messageButton}
-                          onClick={handleMessageClick}
-                        >
-                          {t("worker.detail.message")}
-                        </Button>
+                        {!isViewingOwnProfile && (
+                          <>
+                            <Button
+                              type="primary"
+                              size="large"
+                              block
+                              icon={<ShoppingCartOutlined />}
+                              className={styles.hireButton}
+                              style={{ marginBottom: 16 }}
+                              onClick={handleHireClick}
+                              disabled={selectedServices.length === 0}
+                            >
+                              {t("worker.detail.hireNow")}
+                            </Button>
+                            <Button
+                              size="large"
+                              block
+                              icon={<MessageOutlined />}
+                              className={styles.messageButton}
+                              onClick={handleMessageClick}
+                            >
+                              {t("worker.detail.message")}
+                            </Button>
+                          </>
+                        )}
                       </Col>
                     </Row>
                   </div>

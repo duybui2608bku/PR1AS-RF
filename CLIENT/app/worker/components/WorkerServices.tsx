@@ -29,6 +29,7 @@ interface WorkerServicesProps {
   onServiceToggle: (serviceId: string) => void;
   serviceMap: Map<string, Service>;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 export function WorkerServices({
@@ -37,6 +38,7 @@ export function WorkerServices({
   onServiceToggle,
   serviceMap,
   isLoading = false,
+  disabled = false,
 }: WorkerServicesProps) {
   const { t, locale } = useI18n();
   const { currency } = useCurrency();
@@ -105,13 +107,14 @@ export function WorkerServices({
                 className={`${styles.serviceCard} ${
                   isSelected ? styles.serviceCardSelected : ""
                 }`}
-                hoverable
-                onClick={() => onServiceToggle(workerService.service_id)}
-                style={{ cursor: "pointer" }}
+                hoverable={!disabled}
+                onClick={disabled ? undefined : () => onServiceToggle(workerService.service_id)}
+                style={{ cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.6 : 1 }}
               >
                 <Radio
                   checked={isSelected}
-                  onChange={() => onServiceToggle(workerService.service_id)}
+                  disabled={disabled}
+                  onChange={disabled ? undefined : () => onServiceToggle(workerService.service_id)}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className={styles.serviceCardContent}>

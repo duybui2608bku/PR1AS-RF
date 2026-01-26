@@ -292,31 +292,22 @@ function WorkerBookingsContent() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Space
             style={{
-              marginBottom: 24,
+              marginBottom: Spacing.XL,
               width: "100%",
-              justifyContent: "space-between",
-              alignItems: "center",
             }}
           >
             <Title
               level={2}
               style={{ margin: 0, color: "var(--ant-color-primary)" }}
             >
-              <CalendarOutlined style={{ marginRight: 8 }} />
+              <CalendarOutlined style={{ marginRight: Spacing.SM }} />
               {t("booking.worker.list.title")}
             </Title>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={handleRefreshBookings}
-              loading={isLoading}
-            >
-              {t("common.refresh")}
-            </Button>
           </Space>
 
           <Card>
-            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-              <Col xs={24} sm={12} md={6}>
+            <Row gutter={[Spacing.LG, Spacing.LG]} style={{ marginBottom: Spacing.LG }}>
+              <Col xs={24} sm={12} md={5}>
                 <Space orientation="vertical" size="small" style={{ width: "100%" }}>
                   <span>{t("booking.list.filters.status")}:</span>
                   <Select
@@ -350,7 +341,7 @@ function WorkerBookingsContent() {
                   </Select>
                 </Space>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={24} sm={12} md={5}>
                 <Space orientation="vertical" size="small" style={{ width: "100%" }}>
                   <span>{t("booking.list.filters.paymentStatus")}:</span>
                   <Select
@@ -392,14 +383,28 @@ function WorkerBookingsContent() {
                   />
                 </Space>
               </Col>
-              <Col xs={24} sm={12} md={2}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}> 
-                  <span/>
-                <Button
-                  icon={<UndoOutlined />}
-                  onClick={handleResetFilters}
+              <Col xs={12} sm={6} md={4}>
+                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                  <span />
+                  <Button
+                    icon={<UndoOutlined />}
+                    onClick={handleResetFilters}
+                    style={{ width: "100%" }}
                   >
                     {t("common.reset")}
+                  </Button>
+                </Space>
+              </Col>
+              <Col xs={12} sm={6} md={4}>
+                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                  <span />
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefreshBookings}
+                    loading={isLoading}
+                    style={{ width: "100%" }}
+                  >
+                    {t("common.refresh")}
                   </Button>
                 </Space>
               </Col>

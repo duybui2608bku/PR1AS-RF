@@ -19,7 +19,15 @@
     "next": "下一步",
     "previous": "上一步",
     "close": "关闭",
-    "step": "步骤"
+    "step": "步骤",
+    "pagination": {
+      "total": "共 {total} 项"
+    },
+    "error": {
+      "title": "错误",
+      "message": "发生错误"
+    },
+    "loading": "加载中..."
   },
   "errors": {
     "network": {
@@ -585,6 +593,35 @@
       "hireNow": "立即雇佣",
       "message": "消息",
       "selectDate": "选择日期"
+    },
+    "wallet": {
+      "title": "工作者钱包",
+      "tabs": {
+        "balance": "余额",
+        "reconciliation": "对账交易"
+      },
+      "cards": {
+        "balance": "余额",
+        "reconciliationBalance": "对账余额",
+        "pendingWithdrawal": "待提现"
+      }
+    }
+  },
+  "escrow": {
+    "status": {
+      "holding": "持有中",
+      "released": "已释放",
+      "refunded": "已退款",
+      "partiallyReleased": "部分释放",
+      "disputed": "争议中"
+    },
+    "table": {
+      "bookingId": "预订ID",
+      "amount": "金额",
+      "workerPayout": "工作者付款",
+      "status": "状态",
+      "heldAt": "持有时间",
+      "releasedAt": "释放时间"
     }
   },
   "privacy": {

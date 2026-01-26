@@ -96,7 +96,6 @@ export class EscrowRepository {
     }
 
     const { limit, skip } = getPagination(query.page, query.limit);
-
     const [escrows, total] = await Promise.all([
       Escrow.find(filter)
         .populate("client_id", "email full_name")

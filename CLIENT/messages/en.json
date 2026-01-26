@@ -24,7 +24,12 @@
     "refresh": "Refresh",
     "pagination": {
       "total": "Total {total} items"
-    }
+    },
+    "error": {
+      "title": "Error",
+      "message": "An error occurred"
+    },
+    "loading": "Loading..."
   },
   "errors": {
     "network": {
@@ -689,6 +694,35 @@
       "hireNow": "Hire Now",
       "message": "Message",
       "selectDate": "Select Date"
+    },
+    "wallet": {
+      "title": "Worker Wallet",
+      "tabs": {
+        "balance": "Balance",
+        "reconciliation": "Reconciliation Transactions"
+      },
+      "cards": {
+        "balance": "Balance",
+        "reconciliationBalance": "Reconciliation Balance",
+        "pendingWithdrawal": "Pending Withdrawal"
+      }
+    }
+  },
+  "escrow": {
+    "status": {
+      "holding": "Holding",
+      "released": "Released",
+      "refunded": "Refunded",
+      "partiallyReleased": "Partially Released",
+      "disputed": "Disputed"
+    },
+    "table": {
+      "bookingId": "Booking ID",
+      "amount": "Amount",
+      "workerPayout": "Worker Payout",
+      "status": "Status",
+      "heldAt": "Held At",
+      "releasedAt": "Released At"
     }
   },
   "privacy": {

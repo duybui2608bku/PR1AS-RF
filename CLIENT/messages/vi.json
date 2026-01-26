@@ -24,7 +24,12 @@
     "refresh": "Làm mới",
     "pagination": {
       "total": "Tổng {total} mục"
-    }
+    },
+    "error": {
+      "title": "Lỗi",
+      "message": "Đã xảy ra lỗi"
+    },
+    "loading": "Đang tải..."
   },
   "errors": {
     "network": {
@@ -691,6 +696,35 @@
       "hireNow": "Thuê ngay",
       "message": "Nhắn tin",
       "selectDate": "Chọn ngày"
+    },
+    "wallet": {
+      "title": "Ví Worker",
+      "tabs": {
+        "balance": "Số dư",
+        "reconciliation": "Giao dịch đối soát"
+      },
+      "cards": {
+        "balance": "Số dư",
+        "reconciliationBalance": "Số dư đối soát",
+        "pendingWithdrawal": "Đang chờ rút tiền"
+      }
+    }
+  },
+  "escrow": {
+    "status": {
+      "holding": "Đang giữ",
+      "released": "Đã giải phóng",
+      "refunded": "Đã hoàn tiền",
+      "partiallyReleased": "Giải phóng một phần",
+      "disputed": "Đang tranh chấp"
+    },
+    "table": {
+      "bookingId": "Mã đặt lịch",
+      "amount": "Số tiền",
+      "workerPayout": "Thanh toán Worker",
+      "status": "Trạng thái",
+      "heldAt": "Thời gian giữ",
+      "releasedAt": "Thời gian giải phóng"
     }
   },
   "privacy": {
