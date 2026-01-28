@@ -1011,6 +1011,15 @@
   "wallet": {
     "title": "Wallet",
     "balance": "Balance",
+    "filters": {
+      "dateRange": "Date Range",
+      "datePreset": "Quick selection",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7Days": "Last 7 days",
+      "last14Days": "Last 14 days",
+      "thisMonth": "This month"
+    },
     "deposit": {
       "title": "Deposit",
       "subtitle": "Deposit money into your account",
@@ -1073,7 +1082,8 @@
     "tabs": {
       "overview": "Overview",
       "depositHistory": "Deposit History",
-      "withdrawHistory": "Withdrawal History"
+      "withdrawHistory": "Withdrawal History",
+      "escrowHistory": "Escrow reconciliation"
     },
     "cards": {
       "totalBalance": "Total Balance",
@@ -1086,6 +1096,23 @@
       "status": "Status",
       "description": "Description",
       "createdAt": "Created At"
+    },
+    "escrow": {
+      "table": {
+        "amount": "Held amount",
+        "workerPayout": "Worker payout",
+        "platformFee": "Platform fee",
+        "status": "Status",
+        "serviceCode": "Service code",
+        "heldAt": "Held at"
+      },
+      "status": {
+        "holding": "Holding",
+        "released": "Released",
+        "refunded": "Refunded",
+        "partially_released": "Partially released",
+        "disputed": "Disputed"
+      }
     }
   },
   "booking": {

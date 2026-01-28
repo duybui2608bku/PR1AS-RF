@@ -39,6 +39,7 @@ export interface BookingPricing {
 }
 
 export interface CreateBookingInput {
+  client_id: string;
   worker_id: string;
   worker_service_id: string;
   service_id: string;

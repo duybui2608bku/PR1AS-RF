@@ -1019,6 +1019,15 @@
   "wallet": {
     "title": "Ví tiền",
     "balance": "Số dư",
+    "filters": {
+      "dateRange": "Khoảng thời gian",
+      "datePreset": "Chọn nhanh",
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "last7Days": "7 ngày qua",
+      "last14Days": "14 ngày qua",
+      "thisMonth": "Tháng này"
+    },
     "deposit": {
       "title": "Nạp tiền",
       "subtitle": "Nạp tiền vào tài khoản của bạn",
@@ -1081,7 +1090,8 @@
     "tabs": {
       "overview": "Tổng quan",
       "depositHistory": "Lịch sử nạp tiền",
-      "withdrawHistory": "Lịch sử rút tiền"
+      "withdrawHistory": "Lịch sử rút tiền",
+      "escrowHistory": "Lịch sử đối soát escrow"
     },
     "cards": {
       "totalBalance": "Tổng số dư",
@@ -1094,10 +1104,30 @@
       "status": "Trạng thái",
       "description": "Mô tả",
       "createdAt": "Ngày tạo"
+    },
+    "escrow": {
+      "table": {
+        "amount": "Số tiền giữ",
+        "workerPayout": "Thanh toán cho Worker",
+        "platformFee": "Phí nền tảng",
+        "status": "Trạng thái",
+        "serviceCode": "Mã dịch vụ",
+        "heldAt": "Thời gian giữ"
+      },
+      "status": {
+        "holding": "Đang giữ",
+        "released": "Đã giải phóng",
+        "refunded": "Đã hoàn tiền",
+        "partially_released": "Giải phóng một phần",
+        "disputed": "Đang tranh chấp"
+      }
     }
   },
   "booking": {
     "create": {
+      "dateRange": "Chọn khoảng thời gian",
+      "selectStartDate": "Chọn ngày bắt đầu",
+      "selectEndDate": "Chọn ngày kết thúc",
       "title": "Đặt lịch dịch vụ",
       "submit": "Đặt lịch",
       "date": "Ngày",

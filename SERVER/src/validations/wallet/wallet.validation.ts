@@ -26,6 +26,8 @@ export const createDepositSchema = z.object({
 export const transactionHistoryQuerySchema = z.object({
   type: z.nativeEnum(TransactionType).optional(),
   status: z.nativeEnum(TransactionStatus).optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
   user_id: z.string().optional(),
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),

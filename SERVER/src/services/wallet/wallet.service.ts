@@ -208,23 +208,17 @@ export const getWalletBalance = async (
 
 export const getTransactionHistory = async (
   userId: string,
-
-  query: TransactionHistoryQuery & { skip: number }
+  query: TransactionHistoryQuery
 ): Promise<TransactionHistoryResponse> => {
   const { transactions, total } = await walletRepository.findUserTransactions(
     userId,
-
     query
   );
-
   return {
     transactions,
-
     total,
-
-    page: query.page || 1,
-
-    limit: query.limit || 10,
+    page: query.page,
+    limit: query.limit,
   };
 };
 
@@ -311,7 +305,7 @@ export const holdBalanceForBooking = async (
   description?: string
 ): Promise<string> => {
   const currentBalance = await walletRepository.calculateUserBalance(userId);
-  
+
   if (currentBalance < amount) {
     throw AppError.badRequest(WALLET_MESSAGES.INSUFFICIENT_BALANCE, []);
   }

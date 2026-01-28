@@ -34,9 +34,7 @@ router.get("/balance", asyncHandler(getBalance.bind(getBalance)));
 
 router.get(
   "/transactions",
-
   pagination(),
-
   asyncHandler(getTransactionHistory.bind(getTransactionHistory))
 );
 

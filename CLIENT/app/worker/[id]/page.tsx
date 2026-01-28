@@ -137,9 +137,8 @@ export default function WorkerDetailPage() {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "#FFFFFF" }}>
+    <Layout style={{ minHeight: "100vh" }}>
       <Header />
-
       <Content
         style={{ background: "#FFFFFF", maxWidth: "100%", overflowX: "hidden" }}
       >
@@ -468,6 +467,7 @@ export default function WorkerDetailPage() {
         <BookingModal
           open={bookingModalOpen}
           onClose={() => setBookingModalOpen(false)}
+          clientId={currentUser?.id || ""}
           workerId={workerData.user.id}
           workerServiceId={selectedWorkerService._id}
           serviceId={selectedWorkerService.service_id}

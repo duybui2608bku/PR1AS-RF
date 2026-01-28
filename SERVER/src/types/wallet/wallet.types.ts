@@ -58,9 +58,12 @@ export interface WalletBalanceResponse {
 export interface TransactionHistoryQuery {
   type?: TransactionType;
   status?: TransactionStatus;
-  page?: number;
-  limit?: number;
-  user_id?: string;
+  start_date?: string;
+  end_date?: string;
+  page: number;
+  limit: number;
+  skip: number;
+  user_id: string;
 }
 
 export interface TransactionHistoryResponse {
@@ -71,7 +74,7 @@ export interface TransactionHistoryResponse {
 }
 
 export interface AdminTransactionHistoryQuery extends TransactionHistoryQuery {
-  user_id?: string;
+  user_id: string;
 }
 
 export interface AdminTransactionStatsQuery {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -41,6 +41,7 @@ interface BookingModalProps {
   workerServiceId: string;
   serviceId: string;
   serviceCode: string;
+  clientId: string;
   pricing: Array<{
     unit: string;
     duration: number;
@@ -57,6 +58,7 @@ export function BookingModal({
   workerServiceId,
   serviceId,
   serviceCode,
+  clientId,
   pricing,
   onSuccess,
 }: BookingModalProps) {
@@ -72,6 +74,22 @@ export function BookingModal({
     PricingUnit.HOURLY
   );
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
+
+  useEffect(() => {
+    if (!open || pricing.length === 0) {
+      return;
+    }
+    const defaultUnit = (pricing[0].unit as PricingUnit) || PricingUnit.HOURLY;
+    setSelectedPricingUnit(defaultUnit);
+    setSelectedQuantity(1);
+    setSelectedDate(null);
+    setSelectedDateRange(null);
+    form.setFieldsValue({
+      booking_date: null,
+      date_range: null,
+      start_time: null,
+    });
+  }, [open, pricing, form]);
 
   const { data: walletBalance, isLoading: isLoadingWalletBalance } =
     useApiQueryData<WalletBalanceResponse>(
@@ -259,6 +277,7 @@ export function BookingModal({
       };
 
       const bookingData: CreateBookingInput = {
+        client_id: clientId,
         worker_id: workerId,
         worker_service_id: workerServiceId,
         service_id: serviceId,
@@ -320,9 +339,10 @@ export function BookingModal({
 
   return (
     <Modal
-      open={open}
+    open={open}
       onCancel={handleClose}
       onOk={handleSubmit}
+    
       okText={t("booking.create.submit")}
       cancelText={t("common.cancel")}
       width={600}
@@ -504,7 +524,7 @@ export function BookingModal({
         {walletBalance && (
           <Form.Item label={t("wallet.title")}>
             <Alert
-              message={
+              title={
                 <Space>
                   <Text>{t("wallet.cards.totalBalance")}:</Text>
                   <Text strong>{formatCurrency(walletBalance.balance)}</Text>

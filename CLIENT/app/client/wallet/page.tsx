@@ -1,27 +1,18 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import {
   Layout,
-  Card,
   Tabs,
-  Row,
-  Col,
   Typography,
-  Table,
   Space,
-  Spin,
   Button,
-  Select,
-  DatePicker,
 } from "antd";
 import {
   WalletOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   PlusOutlined,
-  ReloadOutlined,
-  UndoOutlined,
 } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +22,9 @@ import type {
   WalletTransaction,
   TransactionHistoryQuery,
 } from "@/lib/api/wallet.api";
+import { escrowApi } from "@/lib/api/escrow.api";
+import type { Escrow, EscrowQuery } from "@/lib/types/escrow";
+import { EscrowStatus } from "@/lib/types/escrow";
 import { TransactionType } from "@/lib/constants/wallet";
 import { DateRangePreset } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
@@ -43,24 +37,26 @@ import {
   PAGE_SIZE_OPTIONS,
   DATE_FORMAT_ISO,
 } from "@/app/constants/constants";
-import { createWalletTransactionColumns } from "@/lib/utils/wallet.utils";
-import { TransactionCardGrid } from "@/app/client/wallet/components/TransactionCardGrid";
+import {
+  createWalletTransactionColumns,
+  createEscrowColumns,
+} from "@/app/client/wallet/constants";
 import { getDateRangeFromPreset } from "@/lib/utils/date.utils";
-import { Breakpoint, Spacing } from "@/lib/constants/ui.constants";
+import { Breakpoint } from "@/lib/constants/ui.constants";
+import { WalletOverviewTab } from "@/app/client/wallet/components/WalletOverviewTab";
+import { WalletHistoryTab } from "@/app/client/wallet/components/WalletHistoryTab";
+import { EscrowHistoryTab } from "@/app/client/wallet/components/EscrowHistoryTab";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Content } = Layout;
 const { TabPane } = Tabs;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 enum WalletTabKey {
   OVERVIEW = "overview",
   DEPOSIT_HISTORY = "deposit",
   WITHDRAW_HISTORY = "withdraw",
+  ESCROW_HISTORY = "escrow-history",
 }
-
-
 
 function WalletContent() {
   const { t } = useTranslation();
@@ -80,6 +76,12 @@ function WalletContent() {
   const [withdrawLimit, setWithdrawLimit] = useState<number>(
     PAGINATION_DEFAULTS.LIMIT
   );
+  const [escrowPage, setEscrowPage] = useState<number>(
+    PAGINATION_DEFAULTS.PAGE
+  );
+  const [escrowLimit, setEscrowLimit] = useState<number>(
+    PAGINATION_DEFAULTS.LIMIT
+  );
   const [depositModalOpen, setDepositModalOpen] = useState<boolean>(false);
   const [depositDateRange, setDepositDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
@@ -93,6 +95,13 @@ function WalletContent() {
   const [withdrawDatePreset, setWithdrawDatePreset] = useState<DateRangePreset | null>(
     null
   );
+  const [escrowDateRange, setEscrowDateRange] = useState<
+    [Dayjs | null, Dayjs | null] | null
+  >(null);
+  const [escrowDatePreset, setEscrowDatePreset] = useState<DateRangePreset | null>(
+    null
+  );
+  const [escrowStatus, setEscrowStatus] = useState<EscrowStatus | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
@@ -111,13 +120,43 @@ function WalletContent() {
     retry: false,
   });
 
-  const depositQuery: TransactionHistoryQuery = {
-    type: TransactionType.DEPOSIT,
-    page: depositPage,
-    limit: depositLimit,
-    start_date: depositDateRange?.[0]?.format(DATE_FORMAT_ISO),
-    end_date: depositDateRange?.[1]?.format(DATE_FORMAT_ISO),
+  const createTransactionHistoryQuery = (
+    type: TransactionType,
+    page: number,
+    limit: number,
+    dateRange: [Dayjs | null, Dayjs | null] | null
+  ): TransactionHistoryQuery => {
+    if (!dateRange) {
+      return {
+        type,
+        page,
+        limit,
+      };
+    }
+    const startDate = dateRange[0];
+    const endDate = dateRange[1];
+    if (startDate && endDate) {
+      return {
+        type,
+        page,
+        limit,
+        start_date: startDate.format(DATE_FORMAT_ISO),
+        end_date: endDate.format(DATE_FORMAT_ISO),
+      };
+    }
+    return {
+      type,
+      page,
+      limit,
+    };
   };
+
+  const depositQuery: TransactionHistoryQuery = createTransactionHistoryQuery(
+    TransactionType.DEPOSIT,
+    depositPage,
+    depositLimit,
+    depositDateRange
+  );
 
   const {
     data: depositHistory,
@@ -129,13 +168,12 @@ function WalletContent() {
     retry: false,
   });
 
-  const withdrawQuery: TransactionHistoryQuery = {
-    type: TransactionType.WITHDRAW,
-    page: withdrawPage,
-    limit: withdrawLimit,
-    start_date: withdrawDateRange?.[0]?.format(DATE_FORMAT_ISO),
-    end_date: withdrawDateRange?.[1]?.format(DATE_FORMAT_ISO),
-  };
+  const withdrawQuery: TransactionHistoryQuery = createTransactionHistoryQuery(
+    TransactionType.WITHDRAW,
+    withdrawPage,
+    withdrawLimit,
+    withdrawDateRange
+  );
 
   const {
     data: withdrawHistory,
@@ -159,6 +197,11 @@ function WalletContent() {
   const handleWithdrawTableChange = (page: number, pageSize: number): void => {
     setWithdrawPage(page);
     setWithdrawLimit(pageSize);
+  };
+
+  const handleEscrowTableChange = (page: number, pageSize: number): void => {
+    setEscrowPage(page);
+    setEscrowLimit(pageSize);
   };
 
   const handleDepositDateRangeChange = (
@@ -215,8 +258,93 @@ function WalletContent() {
     setWithdrawPage(PAGINATION_DEFAULTS.PAGE);
   };
 
+  const handleEscrowDateRangeChange = (
+    dates: [Dayjs | null, Dayjs | null] | null
+  ): void => {
+    setEscrowDateRange(dates);
+    setEscrowDatePreset(null);
+    setEscrowPage(PAGINATION_DEFAULTS.PAGE);
+  };
+
+  const handleEscrowDatePresetChange = (
+    preset: DateRangePreset | null
+  ): void => {
+    setEscrowDatePreset(preset);
+    if (preset) {
+      const [startDate, endDate] = getDateRangeFromPreset(preset);
+      setEscrowDateRange([startDate, endDate]);
+    } else {
+      setEscrowDateRange(null);
+    }
+    setEscrowPage(PAGINATION_DEFAULTS.PAGE);
+  };
+
+  const handleEscrowStatusChange = (value: EscrowStatus | null): void => {
+    setEscrowStatus(value);
+    setEscrowPage(PAGINATION_DEFAULTS.PAGE);
+  };
+
+  const handleEscrowResetFilters = (): void => {
+    setEscrowDateRange(null);
+    setEscrowDatePreset(null);
+    setEscrowStatus(null);
+    setEscrowPage(PAGINATION_DEFAULTS.PAGE);
+  };
+
   const depositColumns = createWalletTransactionColumns(t, formatCurrency);
   const withdrawColumns = createWalletTransactionColumns(t, formatCurrency);
+  const escrowColumns = createEscrowColumns(t, formatCurrency);
+
+  const escrowStatusOptions: EscrowStatus[] = [
+    EscrowStatus.HOLDING,
+    EscrowStatus.RELEASED,
+    EscrowStatus.REFUNDED,
+    EscrowStatus.PARTIALLY_RELEASED,
+    EscrowStatus.DISPUTED,
+  ];
+
+  const createEscrowQuery = (
+    page: number,
+    limit: number,
+    status: EscrowStatus | null,
+    dateRange: [Dayjs | null, Dayjs | null] | null
+  ): EscrowQuery => {
+    const query: EscrowQuery = {
+      page,
+      limit,
+    };
+    if (status) {
+      query.status = status;
+    }
+    if (dateRange) {
+      const startDate = dateRange[0];
+      const endDate = dateRange[1];
+      if (startDate && endDate) {
+        query.start_date = startDate.format(DATE_FORMAT_ISO);
+        query.end_date = endDate.format(DATE_FORMAT_ISO);
+      }
+    }
+    return query;
+  };
+
+  const escrowQuery: EscrowQuery = createEscrowQuery(
+    escrowPage,
+    escrowLimit,
+    escrowStatus,
+    escrowDateRange
+  );
+
+  const {
+    data: escrowHistory,
+    isLoading: isLoadingEscrows,
+    refetch: refetchEscrows,
+  } = useQuery({
+    queryKey: ["escrow-history-client", escrowQuery],
+    queryFn: () => escrowApi.getMyEscrows(escrowQuery),
+    retry: false,
+  });
+
+  const totalBalance = balanceData?.balance || 0;
 
   return (
     <Layout
@@ -267,119 +395,12 @@ function WalletContent() {
               }
               key={WalletTabKey.OVERVIEW}
             >
-              <Row gutter={[24, 24]}>
-                <Col xs={24} sm={12} md={6}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
-                      <Text type="secondary">
-                        {t("wallet.cards.totalBalance")}
-                      </Text>
-                      {isLoadingBalance ? (
-                        <Spin size="small" />
-                      ) : (
-                        <Title
-                          level={3}
-                          style={{
-                            margin: 0,
-                            color: "var(--ant-color-primary)",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {formatCurrency(balanceData?.balance || 0)}
-                        </Title>
-                      )}
-                    </Space>
-                  </Card>
-                </Col>
-
-                <Col xs={24} sm={12} md={6}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
-                      <Text type="secondary">
-                        {t("wallet.cards.reconciliationBalance")}
-                      </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {formatCurrency(0)}
-                      </Title>
-                    </Space>
-                  </Card>
-                </Col>
-
-                <Col xs={24} sm={12} md={6}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
-                      <Text type="secondary">
-                        {t("wallet.cards.totalDeposited")}
-                      </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {formatCurrency(0)}
-                      </Title>
-                    </Space>
-                  </Card>
-                </Col>
-
-                <Col xs={24} sm={12} md={6}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
-                      <Text type="secondary">
-                        {t("wallet.cards.totalWithdrawn")}
-                      </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {formatCurrency(0)}
-                      </Title>
-                    </Space>
-                  </Card>
-                </Col>
-              </Row>
+              <WalletOverviewTab
+                t={t}
+                formatCurrency={formatCurrency}
+                balance={totalBalance}
+                isLoadingBalance={isLoadingBalance}
+              />
             </TabPane>
 
             <TabPane
@@ -391,110 +412,24 @@ function WalletContent() {
               }
               key={WalletTabKey.DEPOSIT_HISTORY}
             >
-              <Card>
-                <Row gutter={[Spacing.MD, Spacing.MD]} style={{ marginBottom: Spacing.LG }}>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span>{t("wallet.filters.datePreset") || "Quick Date"}:</span>
-                      <Select
-                        style={{ width: "100%" }}
-                        value={depositDatePreset}
-                        onChange={handleDepositDatePresetChange}
-                        allowClear
-                        placeholder={t("wallet.filters.selectDatePreset") || "Select preset"}
-                      >
-                        <Option value={DateRangePreset.TODAY}>
-                          {t("wallet.filters.today") || "Today"}
-                        </Option>
-                        <Option value={DateRangePreset.YESTERDAY}>
-                          {t("wallet.filters.yesterday") || "Yesterday"}
-                        </Option>
-                        <Option value={DateRangePreset.LAST_7_DAYS}>
-                          {t("wallet.filters.last7Days") || "Last 7 Days"}
-                        </Option>
-                        <Option value={DateRangePreset.LAST_14_DAYS}>
-                          {t("wallet.filters.last14Days") || "Last 14 Days"}
-                        </Option>
-                        <Option value={DateRangePreset.THIS_MONTH}>
-                          {t("wallet.filters.thisMonth") || "This Month"}
-                        </Option>
-                      </Select>
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span>{t("wallet.filters.dateRange") || "Date Range"}:</span>
-                      <RangePicker
-                        style={{ width: "100%" }}
-                        value={depositDateRange}
-                        onChange={handleDepositDateRangeChange}
-                        format={DATE_FORMAT_ISO}
-                      />
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span />
-                      <Button
-                        icon={<UndoOutlined />}
-                        onClick={handleDepositResetFilters}
-                        style={{ width: "100%" }}
-                      >
-                        {t("common.reset") || "Reset"}
-                      </Button>
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span />
-                      <Button
-                        icon={<ReloadOutlined />}
-                        onClick={() => refetchDeposits()}
-                        loading={isLoadingDeposits}
-                        style={{ width: "100%" }}
-                      >
-                        {t("common.refresh") || "Refresh"}
-                      </Button>
-                    </Space>
-                  </Col>
-                </Row>
-
-                {isMobile ? (
-                  <TransactionCardGrid
-                    transactions={depositHistory?.data || []}
-                    formatCurrency={formatCurrency}
-                    t={t}
-                    currentPage={depositPage}
-                    pageSize={depositLimit}
-                    total={depositHistory?.pagination?.total || 0}
-                    onPageChange={handleDepositTableChange}
-                    isLoading={isLoadingDeposits}
-                  />
-                ) : (
-                  <Table<WalletTransaction>
-                    columns={depositColumns}
-                    dataSource={depositHistory?.data || []}
-                    loading={isLoadingDeposits}
-                    rowKey={(record) => record.id}
-                    pagination={{
-                      current: depositPage,
-                      pageSize: depositLimit,
-                      total: depositHistory?.pagination?.total || 0,
-                      showSizeChanger: true,
-                      showTotal: (total) =>
-                        t("common.pagination.total", { total }),
-                      pageSizeOptions: PAGE_SIZE_OPTIONS,
-                    }}
-                    onChange={(pagination) => {
-                      handleDepositTableChange(
-                        pagination.current || PAGINATION_DEFAULTS.PAGE,
-                        pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-                      );
-                    }}
-                    scroll={{ x: "max-content" }}
-                  />
-                )}
-              </Card>
+              <WalletHistoryTab
+                t={t}
+                formatCurrency={formatCurrency}
+                isMobile={isMobile}
+                transactions={depositHistory?.data || []}
+                columns={depositColumns}
+                currentPage={depositPage}
+                pageSize={depositLimit}
+                total={depositHistory?.pagination?.total || 0}
+                dateRange={depositDateRange}
+                datePreset={depositDatePreset}
+                isLoading={isLoadingDeposits}
+                onDateRangeChange={handleDepositDateRangeChange}
+                onDatePresetChange={handleDepositDatePresetChange}
+                onResetFilters={handleDepositResetFilters}
+                onPageChange={handleDepositTableChange}
+                onRefresh={refetchDeposits}
+              />
             </TabPane>
 
             <TabPane
@@ -506,110 +441,56 @@ function WalletContent() {
               }
               key={WalletTabKey.WITHDRAW_HISTORY}
             >
-              <Card>
-                <Row gutter={[Spacing.MD, Spacing.MD]} style={{ marginBottom: Spacing.LG }}>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span>{t("wallet.filters.datePreset") || "Quick Date"}:</span>
-                      <Select
-                        style={{ width: "100%" }}
-                        value={withdrawDatePreset}
-                        onChange={handleWithdrawDatePresetChange}
-                        allowClear
-                        placeholder={t("wallet.filters.selectDatePreset") || "Select preset"}
-                      >
-                        <Option value={DateRangePreset.TODAY}>
-                          {t("wallet.filters.today") || "Today"}
-                        </Option>
-                        <Option value={DateRangePreset.YESTERDAY}>
-                          {t("wallet.filters.yesterday") || "Yesterday"}
-                        </Option>
-                        <Option value={DateRangePreset.LAST_7_DAYS}>
-                          {t("wallet.filters.last7Days") || "Last 7 Days"}
-                        </Option>
-                        <Option value={DateRangePreset.LAST_14_DAYS}>
-                          {t("wallet.filters.last14Days") || "Last 14 Days"}
-                        </Option>
-                        <Option value={DateRangePreset.THIS_MONTH}>
-                          {t("wallet.filters.thisMonth") || "This Month"}
-                        </Option>
-                      </Select>
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span>{t("wallet.filters.dateRange") || "Date Range"}:</span>
-                      <RangePicker
-                        style={{ width: "100%" }}
-                        value={withdrawDateRange}
-                        onChange={handleWithdrawDateRangeChange}
-                        format={DATE_FORMAT_ISO}
-                      />
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span />
-                      <Button
-                        icon={<UndoOutlined />}
-                        onClick={handleWithdrawResetFilters}
-                        style={{ width: "100%" }}
-                      >
-                        {t("common.reset") || "Reset"}
-                      </Button>
-                    </Space>
-                  </Col>
-                  <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-                      <span />
-                      <Button
-                        icon={<ReloadOutlined />}
-                        onClick={() => refetchWithdraws()}
-                        loading={isLoadingWithdraws}
-                        style={{ width: "100%" }}
-                      >
-                        {t("common.refresh") || "Refresh"}
-                      </Button>
-                    </Space>
-                  </Col>
-                </Row>
+              <WalletHistoryTab
+                t={t}
+                formatCurrency={formatCurrency}
+                isMobile={isMobile}
+                transactions={withdrawHistory?.data || []}
+                columns={withdrawColumns}
+                currentPage={withdrawPage}
+                pageSize={withdrawLimit}
+                total={withdrawHistory?.pagination?.total || 0}
+                dateRange={withdrawDateRange}
+                datePreset={withdrawDatePreset}
+                isLoading={isLoadingWithdraws}
+                onDateRangeChange={handleWithdrawDateRangeChange}
+                onDatePresetChange={handleWithdrawDatePresetChange}
+                onResetFilters={handleWithdrawResetFilters}
+                onPageChange={handleWithdrawTableChange}
+                onRefresh={refetchWithdraws}
+              />
+            </TabPane>
 
-                {isMobile ? (
-                  <TransactionCardGrid
-                    transactions={withdrawHistory?.data || []}
-                    formatCurrency={formatCurrency}
-                    t={t}
-                    currentPage={withdrawPage}
-                    pageSize={withdrawLimit}
-                    total={withdrawHistory?.pagination?.total || 0}
-                    onPageChange={handleWithdrawTableChange}
-                    isLoading={isLoadingWithdraws}
-                  />
-                ) : (
-                  <Table<WalletTransaction>
-                    columns={withdrawColumns}
-                    dataSource={withdrawHistory?.data || []}
-                    loading={isLoadingWithdraws}
-                    rowKey={(record) => record.id}
-                    pagination={{
-                      current: withdrawPage,
-                      pageSize: withdrawLimit,
-                      total: withdrawHistory?.pagination?.total || 0,
-                      showSizeChanger: true,
-                      showTotal: (total) =>
-                        t("common.pagination.total", { total }),
-                      pageSizeOptions: PAGE_SIZE_OPTIONS,
-                    }}
-                    onChange={(pagination) => {
-                      handleWithdrawTableChange(
-                        pagination.current || PAGINATION_DEFAULTS.PAGE,
-                        pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-                      );
-                    }}
-                    scroll={{ x: "max-content" }}
-                  />
-                )}
-              </Card>
+            <TabPane
+              tab={
+                <span>
+                  <WalletOutlined />
+                  {t("wallet.tabs.escrowHistory")}
+                </span>
+              }
+              key={WalletTabKey.ESCROW_HISTORY}
+            >
+              <EscrowHistoryTab
+                t={t}
+                formatCurrency={formatCurrency}
+                isMobile={isMobile}
+                isLoading={isLoadingEscrows}
+                escrows={escrowHistory?.data || []}
+                columns={escrowColumns}
+                currentPage={escrowPage}
+                pageSize={escrowLimit}
+                total={escrowHistory?.pagination.total || 0}
+                dateRange={escrowDateRange}
+                datePreset={escrowDatePreset}
+                status={escrowStatus}
+                statusOptions={escrowStatusOptions}
+                onDateRangeChange={handleEscrowDateRangeChange}
+                onDatePresetChange={handleEscrowDatePresetChange}
+                onStatusChange={handleEscrowStatusChange}
+                onResetFilters={handleEscrowResetFilters}
+                onPageChange={handleEscrowTableChange}
+                onRefresh={refetchEscrows}
+              />
             </TabPane>
           </Tabs>
         </div>

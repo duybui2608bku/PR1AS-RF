@@ -910,6 +910,15 @@
   "wallet": {
     "title": "钱包",
     "balance": "余额",
+    "filters": {
+      "dateRange": "日期范围",
+      "datePreset": "快速选择",
+      "today": "今天",
+      "yesterday": "昨天",
+      "last7Days": "最近7天",
+      "last14Days": "最近14天",
+      "thisMonth": "本月"
+    },
     "deposit": {
       "title": "充值",
       "subtitle": "向您的账户充值",
@@ -972,7 +981,8 @@
     "tabs": {
       "overview": "概览",
       "depositHistory": "充值历史",
-      "withdrawHistory": "提现历史"
+      "withdrawHistory": "提现历史",
+      "escrowHistory": "托管对账"
     },
     "cards": {
       "totalBalance": "总余额",
@@ -985,6 +995,23 @@
       "status": "状态",
       "description": "描述",
       "createdAt": "创建时间"
+    },
+    "escrow": {
+      "table": {
+        "amount": "托管金额",
+        "workerPayout": "工作者结算金额",
+        "platformFee": "平台服务费",
+        "status": "状态",
+        "serviceCode": "服务编码",
+        "heldAt": "托管时间"
+      },
+      "status": {
+        "holding": "持有中",
+        "released": "已释放",
+        "refunded": "已退款",
+        "partially_released": "部分释放",
+        "disputed": "争议中"
+      }
     }
   },
   "booking": {

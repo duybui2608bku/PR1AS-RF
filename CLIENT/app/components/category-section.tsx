@@ -7,16 +7,21 @@ import {
 } from "@ant-design/icons";
 import { useRef, memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 import { Service } from "../data/services.mock";
 import { ServiceCard } from "./service-card";
 import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { ScrollAmount, Spacing, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
-import router from "next/router";
+import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 
 const { Title } = Typography;
 
 enum SkeletonCount {
   DEFAULT = 4,
+}
+
+enum PrimaryWorkerIndex {
+  FIRST = 0,
 }
 
 interface CategorySectionProps {
@@ -36,6 +41,7 @@ const CategorySectionComponent = ({
 }: CategorySectionProps) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const scroll = useCallback((direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -78,9 +84,19 @@ const CategorySectionComponent = ({
     e.currentTarget.style.transform = "scale(1)";
   }, []);
 
-  const handleServiceClick = useCallback((service: Service) => {
-    // router.push(`/worker/${service.users.id}`);
-  }, []);
+  const handleServiceClick = useCallback(
+    (service: Service) => {
+      if (!service.users || service.users.length === 0) {
+        return;
+      }
+      const primaryUser = service.users[PrimaryWorkerIndex.FIRST];
+      if (!primaryUser?.id) {
+        return;
+      }
+      router.push(buildWorkerProfileRoute(primaryUser.id));
+    },
+    [router]
+  );
 
   if (!isLoading && services.length === 0) return null;
 

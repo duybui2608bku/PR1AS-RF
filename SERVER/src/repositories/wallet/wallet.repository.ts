@@ -100,9 +100,9 @@ export class WalletRepository {
 
   async findUserTransactions(
     userId: string,
-    query: TransactionHistoryQuery & { skip: number }
+    query: TransactionHistoryQuery
   ): Promise<FindTransactionsResult> {
-    const { skip, limit = 10, type, status } = query;
+    const { skip, limit = 10, type, status, start_date, end_date } = query;
 
     const filter: Record<string, unknown> = {
       user_id: userId,
@@ -114,6 +114,14 @@ export class WalletRepository {
 
     if (status) {
       filter.status = status;
+    }
+
+    if (start_date) {
+      filter.created_at = { $gte: new Date(start_date) } as { $gte: Date };
+    }
+
+    if (end_date) {
+      filter.created_at = { $lte: new Date(end_date) } as { $lte: Date };
     }
 
     const [transactions, total] = await Promise.all([
