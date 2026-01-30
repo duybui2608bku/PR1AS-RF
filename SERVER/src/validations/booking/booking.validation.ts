@@ -136,6 +136,11 @@ export const cancelBookingSchema = z.object({
   notes: z.string().trim().max(500).optional().default(""),
 });
 
+export const cancelBookingReasonSchema = z.object({
+  reason: z.nativeEnum(CancellationReason),
+  notes: z.string().trim().max(500).optional().default(""),
+});
+
 export const updateBookingSchema = z
   .object({
     schedule: scheduleSchema.optional(),
@@ -182,5 +187,8 @@ export type UpdateBookingStatusSchemaType = z.infer<
   typeof updateBookingStatusSchema
 >;
 export type CancelBookingSchemaType = z.infer<typeof cancelBookingSchema>;
+export type CancelBookingReasonSchemaType = z.infer<
+  typeof cancelBookingReasonSchema
+>;
 export type UpdateBookingSchemaType = z.infer<typeof updateBookingSchema>;
 export type GetBookingsQuerySchemaType = z.infer<typeof getBookingsQuerySchema>;

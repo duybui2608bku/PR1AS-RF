@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, PopulateOptions } from "mongoose";
 import { Booking } from "../../models/booking/booking.model";
 import {
   IBookingDocument,
@@ -9,83 +9,25 @@ import { PaginatedResponse } from "../../utils/pagination";
 import { BookingStatus, BookingPaymentStatus } from "../../constants/booking";
 import { PaginationHelper } from "../../utils";
 
+const BOOKING_POPULATE: PopulateOptions[] = [
+  { path: "client_id", select: "email full_name" },
+  { path: "worker_id", select: "email full_name" },
+  { path: "worker_service_id" },
+  { path: "service_id" },
+  { path: "escrow_id" },
+];
+
 export class BookingRepository {
-  async create(data: CreateBookingInput): Promise<IBookingDocument> {
-    const booking = new Booking({
-      ...data,
-      status: BookingStatus.PENDING,
-      payment_status: BookingPaymentStatus.PENDING,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-    return booking.save();
-  }
+  private buildFilter(query: BookingQuery): Record<string, unknown> {
+    const filter: Record<string, unknown> = {};
 
-  async findById(id: string): Promise<IBookingDocument | null> {
-    return Booking.findById(id)
-      .populate("client_id", "email full_name")
-      .populate("worker_id", "email full_name")
-      .populate("worker_service_id")
-      .populate("service_id")
-      .populate("escrow_id");
-  }
-
-  async findByClientId(
-    query: BookingQuery
-  ): Promise<PaginatedResponse<IBookingDocument>> {
-    const filter: Record<string, any> = {
-      client_id: query.client_id,
-    };
-
-    if (query.status) {
-      filter.status = query.status;
+    if (query.client_id) {
+      filter.client_id = query.client_id;
     }
 
-    if (query.payment_status) {
-      filter.payment_status = query.payment_status;
+    if (query.worker_id) {
+      filter.worker_id = query.worker_id;
     }
-
-    if (query.service_code) {
-      filter.service_code = query.service_code.toUpperCase().trim();
-    }
-
-    if (query.start_date || query.end_date) {
-      filter["schedule.start_time"] = {};
-      if (query.start_date) {
-        filter["schedule.start_time"].$gte = query.start_date;
-      }
-      if (query.end_date) {
-        filter["schedule.start_time"].$lte = query.end_date;
-      }
-    }
-
-    const page = query.page;
-    const limit = query.limit;
-    const skip = query.skip;
-
-    const [bookings, total] = await Promise.all([
-      Booking.find(filter)
-        .populate("client_id", "email full_name")
-        .populate("worker_id", "email full_name")
-        .populate("worker_service_id")
-        .populate("service_id")
-        .populate("escrow_id")
-        .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Booking.countDocuments(filter),
-    ]);
-
-    return PaginationHelper.format(bookings, { page, limit, skip }, total);
-  }
-
-  async findByWorkerId(
-    query: BookingQuery
-  ): Promise<PaginatedResponse<IBookingDocument>> {
-    const filter: Record<string, unknown> = {
-      worker_id: query.worker_id,
-    };
 
     if (query.status) {
       filter.status = query.status;
@@ -110,17 +52,18 @@ export class BookingRepository {
       filter["schedule.start_time"] = scheduleFilter;
     }
 
-    const page = query.page;
-    const limit = query.limit;
-    const skip = query.skip;
+    return filter;
+  }
+
+  private async findWithPagination(
+    filter: Record<string, unknown>,
+    query: BookingQuery
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const { page, limit, skip } = query;
 
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
-        .populate("client_id", "email full_name")
-        .populate("worker_id", "email full_name")
-        .populate("worker_service_id")
-        .populate("service_id")
-        .populate("escrow_id")
+        .populate(BOOKING_POPULATE)
         .sort({ created_at: -1 })
         .skip(skip)
         .limit(limit)
@@ -135,64 +78,40 @@ export class BookingRepository {
     );
   }
 
-  async findAll(query: BookingQuery): Promise<{
-    bookings: IBookingDocument[];
-    total: number;
-  }> {
-    const filter: Record<string, any> = {};
+  async create(data: CreateBookingInput): Promise<IBookingDocument> {
+    const booking = new Booking({
+      ...data,
+      status: BookingStatus.PENDING,
+      payment_status: BookingPaymentStatus.PENDING,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    return booking.save();
+  }
 
-    if (query.client_id) {
-      filter.client_id = new Types.ObjectId(query.client_id.toString());
-    }
+  async findById(id: string): Promise<IBookingDocument | null> {
+    return Booking.findById(id).populate(BOOKING_POPULATE);
+  }
 
-    if (query.worker_id) {
-      filter.worker_id = new Types.ObjectId(query.worker_id.toString());
-    }
+  async findByClientId(
+    query: BookingQuery
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const filter = this.buildFilter({ ...query, client_id: query.client_id });
+    return this.findWithPagination(filter, query);
+  }
 
-    if (query.status) {
-      filter.status = query.status;
-    }
+  async findByWorkerId(
+    query: BookingQuery
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const filter = this.buildFilter({ ...query, worker_id: query.worker_id });
+    return this.findWithPagination(filter, query);
+  }
 
-    if (query.payment_status) {
-      filter.payment_status = query.payment_status;
-    }
-
-    if (query.service_code) {
-      filter.service_code = query.service_code.toUpperCase().trim();
-    }
-
-    if (query.start_date || query.end_date) {
-      filter["schedule.start_time"] = {};
-      if (query.start_date) {
-        filter["schedule.start_time"].$gte = query.start_date;
-      }
-      if (query.end_date) {
-        filter["schedule.start_time"].$lte = query.end_date;
-      }
-    }
-
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
-    const [bookings, total] = await Promise.all([
-      Booking.find(filter)
-        .populate("client_id", "email full_name")
-        .populate("worker_id", "email full_name")
-        .populate("worker_service_id")
-        .populate("service_id")
-        .populate("escrow_id")
-        .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Booking.countDocuments(filter),
-    ]);
-
-    return {
-      bookings: bookings as IBookingDocument[],
-      total,
-    };
+  async findAll(
+    query: BookingQuery
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const filter = this.buildFilter(query);
+    return this.findWithPagination(filter, query);
   }
 
   async updateStatus(
@@ -208,12 +127,7 @@ export class BookingRepository {
         updated_at: new Date(),
       },
       { new: true }
-    )
-      .populate("client_id", "email full_name")
-      .populate("worker_id", "email full_name")
-      .populate("worker_service_id")
-      .populate("service_id")
-      .populate("escrow_id");
+    ).populate(BOOKING_POPULATE);
   }
 
   async update(
@@ -227,20 +141,13 @@ export class BookingRepository {
         updated_at: new Date(),
       },
       { new: true }
-    )
-      .populate("client_id", "email full_name")
-      .populate("worker_id", "email full_name")
-      .populate("worker_service_id")
-      .populate("service_id")
-      .populate("escrow_id");
+    ).populate(BOOKING_POPULATE);
   }
 
   async findByEscrowId(escrowId: string): Promise<IBookingDocument | null> {
-    return Booking.findOne({ escrow_id: new Types.ObjectId(escrowId) })
-      .populate("client_id", "email full_name")
-      .populate("worker_id", "email full_name")
-      .populate("worker_service_id")
-      .populate("service_id");
+    return Booking.findOne({
+      escrow_id: new Types.ObjectId(escrowId),
+    }).populate(BOOKING_POPULATE);
   }
 
   async checkScheduleConflict(

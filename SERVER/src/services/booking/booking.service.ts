@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
@@ -22,6 +22,12 @@ import { BOOKING_MESSAGES } from "../../constants/messages";
 import { PaginatedResponse } from "../../utils/pagination";
 import { holdBalanceForBooking } from "../wallet/wallet.service";
 import { CreateEscrowInput } from "../../types/escrow/escrow.types";
+
+export interface RoleInfo {
+  isWorker: boolean;
+  isClient: boolean;
+  isAdmin?: boolean;
+}
 
 export class BookingService {
   private async getBookingOrThrow(
@@ -85,6 +91,25 @@ export class BookingService {
         ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
       );
     }
+  }
+
+  private isBookingOwner(
+    booking: IBookingDocument,
+    userId: string,
+    roleInfo: RoleInfo
+  ): boolean {
+    const isClient = booking.client_id._id.toString() === userId;
+    const isWorker = booking.worker_id._id.toString() === userId;
+    const isAdmin = roleInfo.isAdmin === true;
+    return isClient || isWorker || isAdmin;
+  }
+
+  private isBookingClient(booking: IBookingDocument, userId: string): boolean {
+    return booking.client_id._id.toString() === userId;
+  }
+
+  private isBookingWorker(booking: IBookingDocument, userId: string): boolean {
+    return booking.worker_id._id.toString() === userId;
   }
 
   private async validateWorkerService(
@@ -183,46 +208,63 @@ export class BookingService {
       input.schedule.end_time
     );
 
-    const bookingData: CreateBookingInput = {
-      ...input,
-      client_id: new Types.ObjectId(clientId),
-    };
-    const booking = await bookingRepository.create(bookingData);
+    const session = await mongoose.startSession();
 
-    const holdTransactionId = await holdBalanceForBooking(
-      clientId,
-      input.pricing.total_amount,
-      booking._id.toString(),
-      `Hold balance for booking ${booking._id.toString()}`
-    );
+    try {
+      session.startTransaction();
 
-    const escrowData: CreateEscrowInput = {
-      booking_id: booking._id,
-      client_id: new Types.ObjectId(clientId),
-      worker_id: input.worker_id,
-      amount: input.pricing.total_amount,
-      platform_fee: input.pricing.platform_fee,
-      worker_payout: input.pricing.worker_payout,
-      currency: input.pricing.currency,
-      hold_transaction_id: new Types.ObjectId(holdTransactionId),
-    };
-    await escrowRepository.create(escrowData);
+      const bookingData: CreateBookingInput = {
+        ...input,
+        client_id: new Types.ObjectId(clientId),
+      };
+      const booking = await bookingRepository.create(bookingData);
 
-    await bookingRepository.update(booking._id.toString(), {
-      escrow_id: escrowData.booking_id,
-      transaction_id: holdTransactionId,
-      payment_status: BookingPaymentStatus.PAID,
-    });
+      const holdTransactionId = await holdBalanceForBooking(
+        clientId,
+        input.pricing.total_amount,
+        booking._id.toString(),
+        `Hold balance for booking ${booking._id.toString()}`
+      );
 
-    return this.getBookingOrThrow(booking._id.toString());
+      const escrowData: CreateEscrowInput = {
+        booking_id: booking._id,
+        client_id: new Types.ObjectId(clientId),
+        worker_id: input.worker_id,
+        amount: input.pricing.total_amount,
+        platform_fee: input.pricing.platform_fee,
+        worker_payout: input.pricing.worker_payout,
+        currency: input.pricing.currency,
+        hold_transaction_id: new Types.ObjectId(holdTransactionId),
+      };
+      const escrow = await escrowRepository.create(escrowData);
+
+      await bookingRepository.update(booking._id.toString(), {
+        escrow_id: escrow._id,
+        transaction_id: holdTransactionId,
+        payment_status: BookingPaymentStatus.PAID,
+      });
+
+      await session.commitTransaction();
+
+      return this.getBookingOrThrow(booking._id.toString());
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   async getBookingById(
     bookingId: string,
-    roleInfo: { isWorker: boolean; isClient: boolean }
+    userId: string,
+    roleInfo: RoleInfo
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
-    this.ensureAuthorized(roleInfo.isWorker || roleInfo.isClient);
+    this.ensureAuthorized(
+      this.isBookingOwner(booking, userId, roleInfo),
+      BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
+    );
     return booking;
   }
 
@@ -241,18 +283,38 @@ export class BookingService {
 
   async updateBookingStatus(
     bookingId: string,
+    userId: string,
     status: BookingStatus,
-    roleInfo: { isWorker: boolean; isClient: boolean },
+    roleInfo: RoleInfo,
     workerResponse?: string
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
+
+    this.ensureAuthorized(
+      this.isBookingOwner(booking, userId, roleInfo),
+      BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
+    );
+
     this.validateBookingStatus(booking, "update");
 
     if (
       status === BookingStatus.CONFIRMED ||
       status === BookingStatus.REJECTED
     ) {
-      this.ensureAuthorized(roleInfo.isWorker);
+      this.ensureAuthorized(
+        this.isBookingWorker(booking, userId),
+        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_STATUS
+      );
+    }
+
+    if (
+      status === BookingStatus.IN_PROGRESS ||
+      status === BookingStatus.COMPLETED
+    ) {
+      this.ensureAuthorized(
+        this.isBookingWorker(booking, userId),
+        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_STATUS
+      );
     }
 
     const updateData: Partial<IBookingDocument> = {
@@ -282,18 +344,32 @@ export class BookingService {
 
   async cancelBooking(
     bookingId: string,
-    cancelledBy: CancelledBy,
+    userId: string,
     reason: CancellationReason,
     notes: string,
-    roleInfo: { isWorker: boolean; isClient: boolean }
+    roleInfo: RoleInfo
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
+    this.ensureAuthorized(
+      this.isBookingOwner(booking, userId, roleInfo),
+      BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
+    );
+
     this.validateBookingStatus(booking, "cancel");
 
-    if (cancelledBy === CancelledBy.CLIENT) {
-      this.ensureAuthorized(roleInfo.isClient);
-    } else if (cancelledBy === CancelledBy.WORKER) {
-      this.ensureAuthorized(roleInfo.isWorker);
+    let cancelledBy: CancelledBy;
+    if (this.isBookingClient(booking, userId)) {
+      cancelledBy = CancelledBy.CLIENT;
+    } else if (this.isBookingWorker(booking, userId)) {
+      cancelledBy = CancelledBy.WORKER;
+    } else if (roleInfo.isAdmin) {
+      cancelledBy = CancelledBy.ADMIN;
+    } else {
+      throw new AppError(
+        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
     }
 
     const cancellation = {
@@ -317,14 +393,27 @@ export class BookingService {
 
   async updateBooking(
     bookingId: string,
+    userId: string,
     updateData: Partial<IBookingDocument>,
-    roleInfo: { isWorker: boolean; isClient: boolean }
+    roleInfo: RoleInfo
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
+
+    this.ensureAuthorized(
+      this.isBookingOwner(booking, userId, roleInfo),
+      BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
+    );
+
     this.validateBookingStatus(booking, "update");
 
-    if (updateData.schedule || updateData.pricing) {
-      this.ensureAuthorized(roleInfo.isClient);
+    const isClient = this.isBookingClient(booking, userId);
+    const isWorker = this.isBookingWorker(booking, userId);
+
+    if (updateData.schedule || updateData.pricing || updateData.client_notes) {
+      this.ensureAuthorized(
+        isClient,
+        BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING
+      );
 
       if (updateData.schedule) {
         await this.validateScheduleConflict(
@@ -335,13 +424,41 @@ export class BookingService {
         );
       }
     }
+
     if (updateData.worker_response) {
-      this.ensureAuthorized(roleInfo.isWorker);
+      this.ensureAuthorized(
+        isWorker,
+        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE
+      );
+    }
+
+    const filteredUpdateData: Partial<IBookingDocument> = {};
+
+    if (isClient) {
+      if (updateData.schedule) {
+        filteredUpdateData.schedule = updateData.schedule;
+      }
+      if (updateData.pricing) {
+        filteredUpdateData.pricing = updateData.pricing;
+      }
+      if (updateData.client_notes !== undefined) {
+        filteredUpdateData.client_notes = updateData.client_notes;
+      }
+    }
+
+    if (isWorker) {
+      if (updateData.worker_response !== undefined) {
+        filteredUpdateData.worker_response = updateData.worker_response;
+      }
+    }
+
+    if (roleInfo.isAdmin) {
+      Object.assign(filteredUpdateData, updateData);
     }
 
     const updatedBooking = await bookingRepository.update(
       bookingId,
-      updateData
+      filteredUpdateData
     );
 
     if (!updatedBooking) {

@@ -1242,6 +1242,27 @@
         "other": "Khác"
       }
     },
+    "cancellation": {
+      "cancelledBy": "Hủy bởi",
+      "reason": "Lý do",
+      "notes": "Ghi chú",
+      "cancelledAt": "Thời gian hủy",
+      "refundAmount": "Số tiền hoàn lại",
+      "penaltyAmount": "Số tiền phạt",
+      "by": {
+        "client": "Khách hàng",
+        "worker": "Worker"
+      },
+      "reasons": {
+        "client_request": "Yêu cầu từ khách hàng",
+        "worker_unavailable": "Worker không có sẵn",
+        "schedule_conflict": "Xung đột lịch trình",
+        "emergency": "Tình huống khẩn cấp",
+        "payment_failed": "Thanh toán thất bại",
+        "policy_violation": "Vi phạm chính sách",
+        "other": "Khác"
+      }
+    },
     "client": {
       "actions": {
         "review": "Đánh giá",

@@ -160,6 +160,11 @@ export const BOOKING_MESSAGES = {
   WORKER_SERVICE_NOT_FOUND: "Worker service not found",
   SERVICE_NOT_FOUND: "Service not found",
   USER_NOT_FOUND: "User not found",
+  ONLY_WORKER_CAN_UPDATE_STATUS:
+    "Only the assigned worker can update booking status",
+  ONLY_CLIENT_CAN_UPDATE_BOOKING: "Only the client can update booking details",
+  ONLY_WORKER_CAN_UPDATE_RESPONSE:
+    "Only the assigned worker can update worker response",
 } as const;
 
 export const REVIEW_MESSAGES = {

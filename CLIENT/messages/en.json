@@ -1231,6 +1231,27 @@
         "other": "Other"
       }
     },
+    "cancellation": {
+      "cancelledBy": "Cancelled By",
+      "reason": "Reason",
+      "notes": "Notes",
+      "cancelledAt": "Cancelled At",
+      "refundAmount": "Refund Amount",
+      "penaltyAmount": "Penalty Amount",
+      "by": {
+        "client": "Client",
+        "worker": "Worker"
+      },
+      "reasons": {
+        "client_request": "Client Request",
+        "worker_unavailable": "Worker Unavailable",
+        "schedule_conflict": "Schedule Conflict",
+        "emergency": "Emergency",
+        "payment_failed": "Payment Failed",
+        "policy_violation": "Policy Violation",
+        "other": "Other"
+      }
+    },
     "client": {
       "actions": {
         "review": "Review",

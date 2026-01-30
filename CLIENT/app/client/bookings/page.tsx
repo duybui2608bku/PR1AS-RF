@@ -5,6 +5,7 @@ import {
   Layout,
   Card,
   Table,
+  Grid,
   Space,
   Typography,
   Select,
@@ -14,7 +15,7 @@ import {
   message,
   Button,
 } from "antd";
-import { CalendarOutlined, ReloadOutlined } from "@ant-design/icons";
+import { CalendarOutlined, ReloadOutlined, ClearOutlined } from "@ant-design/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { Dayjs } from "dayjs";
@@ -39,6 +40,7 @@ import { useI18n } from "@/lib/hooks/use-i18n";
 import { CancelledBy } from "@/app/client/bookings/constants/client-booking-constants";
 import { CancelBookingModal } from "@/app/client/bookings/components/CancelBookingModal";
 import { ReviewModal } from "@/app/client/bookings/components/ReviewModal";
+import { BookingListMobile } from "@/app/client/bookings/components/BookingListMobile";
 import type { CancellationReason } from "@/app/client/bookings/constants/client-booking-constants";
 
 const { Title } = Typography;
@@ -49,6 +51,7 @@ const { RangePicker } = DatePicker;
 function BookingsContent() {
   const { t } = useTranslation();
   const { locale } = useI18n();
+  const screens = Grid.useBreakpoint();
   const queryClient = useQueryClient();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
   const [page, setPage] = useState<number>(PAGINATION_DEFAULTS.PAGE);
@@ -126,6 +129,13 @@ function BookingsContent() {
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDateRange(dates);
+    setPage(PAGINATION_DEFAULTS.PAGE);
+  };
+
+  const handleResetFilters = (): void => {
+    setStatusFilter(undefined);
+    setPaymentStatusFilter(undefined);
+    setDateRange(null);
     setPage(PAGINATION_DEFAULTS.PAGE);
   };
 
@@ -251,29 +261,13 @@ function BookingsContent() {
       <Header />
       <Content style={{ padding: "24px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Space
-            style={{
-              marginBottom: 24,
-              width: "100%",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+          <Title
+            level={2}
+            style={{ margin: 0, marginBottom: 24, color: "var(--ant-color-primary)" }}
           >
-            <Title
-              level={2}
-              style={{ margin: 0, color: "var(--ant-color-primary)" }}
-            >
-              <CalendarOutlined style={{ marginRight: 8 }} />
-              {t("booking.list.title")}
-            </Title>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={handleRefreshBookings}
-              loading={isLoading}
-            >
-              {t("common.refresh")}
-            </Button>
-          </Space>
+            <CalendarOutlined style={{ marginRight: 8 }} />
+            {t("booking.list.title")}
+          </Title>
 
           <Card>
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
@@ -350,7 +344,7 @@ function BookingsContent() {
                   </Select>
                 </Space>
               </Col>
-              <Col xs={24} sm={24} md={12}>
+              <Col xs={24} sm={24} md={8}>
                 <Space
                   direction="vertical"
                   size="small"
@@ -365,29 +359,72 @@ function BookingsContent() {
                   />
                 </Space>
               </Col>
+              <Col xs={24} sm={24} md={4}>
+                <Space
+                  direction="vertical"
+                  size="small"
+                  style={{ width: "100%" }}
+                >
+                  <span style={{ visibility: "hidden" }}>&nbsp;</span>
+                  <Space>
+                    <Button
+                      icon={<ClearOutlined />}
+                      onClick={handleResetFilters}
+                    >
+                      {t("common.reset")}
+                    </Button>
+                    <Button
+                      icon={<ReloadOutlined />}
+                      onClick={handleRefreshBookings}
+                      loading={isLoading}
+                    >
+                      {t("common.refresh")}
+                    </Button>
+                  </Space>
+                </Space>
+              </Col>
             </Row>
 
-            <Table<Booking>
-              columns={columns}
-              dataSource={bookingsData?.data || []}
-              loading={isLoading}
-              rowKey={(record) => record.id}
-              pagination={{
-                current: page,
-                pageSize: limit,
-                total: bookingsData?.pagination?.total || 0,
-                showSizeChanger: true,
-                showTotal: (total) => t("common.pagination.total", { total }),
-                pageSizeOptions: PAGE_SIZE_OPTIONS,
-              }}
-              onChange={(pagination) => {
-                handleTableChange(
-                  pagination.current || PAGINATION_DEFAULTS.PAGE,
-                  pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-                );
-              }}
-              scroll={{ x: "max-content" }}
-            />
+            {screens.md ? (
+              <Table<Booking>
+                columns={columns}
+                dataSource={bookingsData?.data || []}
+                loading={isLoading}
+                rowKey={(record) => (record as { id?: string }).id || record._id}
+                pagination={{
+                  current: page,
+                  pageSize: limit,
+                  total: bookingsData?.pagination?.total || 0,
+                  showSizeChanger: true,
+                  showTotal: (totalCount) =>
+                    t("common.pagination.total", { total: totalCount }),
+                  pageSizeOptions: PAGE_SIZE_OPTIONS,
+                }}
+                onChange={(pagination) => {
+                  handleTableChange(
+                    pagination.current || PAGINATION_DEFAULTS.PAGE,
+                    pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
+                  );
+                }}
+                scroll={{ x: "max-content" }}
+              />
+            ) : (
+              <BookingListMobile
+                data={bookingsData?.data || []}
+                loading={isLoading}
+                serviceMap={serviceMap}
+                formatCurrency={formatCurrency}
+                locale={locale}
+                t={t}
+                currentPage={page}
+                pageSize={limit}
+                total={bookingsData?.pagination?.total || 0}
+                onPageChange={handleTableChange}
+                onCancelBooking={handleOpenCancelModal}
+                onReviewBooking={handleOpenReviewModal}
+                onComplainBooking={handleComplainBooking}
+              />
+            )}
           </Card>
         </div>
         <CancelBookingModal

@@ -16,6 +16,7 @@ import {
   getPricingUnitLabel,
 } from "@/lib/constants/booking";
 import { BookingPaymentStatus, PricingUnit } from "@/lib/types/booking";
+import { CancellationInfoTooltip } from "@/app/client/bookings/components/CancellationInfoTooltip";
 
 const { Text } = Typography;
 
@@ -31,7 +32,7 @@ interface CreateBookingColumnsOptions {
   onComplainBooking?: (bookingId: string) => void;
 }
 
-const canCancelBooking = (status: BookingStatus): boolean => {
+export const canCancelBooking = (status: BookingStatus): boolean => {
   return (
     status === BookingStatus.PENDING ||
     status === BookingStatus.CONFIRMED ||
@@ -39,7 +40,7 @@ const canCancelBooking = (status: BookingStatus): boolean => {
   );
 };
 
-const canReviewOrComplain = (status: BookingStatus): boolean => {
+export const canReviewOrComplain = (status: BookingStatus): boolean => {
   return status === BookingStatus.COMPLETED;
 };
 
@@ -125,10 +126,19 @@ export const createBookingColumns = ({
       dataIndex: BookingTableColumnKey.STATUS,
       key: BookingTableColumnKey.STATUS,
       width: BookingTableColumnWidth.STATUS,
-      render: (status: BookingStatus) => (
-        <Tag color={getBookingStatusTagColor(status)}>
-          {t(`booking.status.${status}`)}
-        </Tag>
+      render: (status: BookingStatus, record: Booking) => (
+        <Space size={4}>
+          <Tag color={getBookingStatusTagColor(status)}>
+            {t(`booking.status.${status}`)}
+          </Tag>
+          {status === BookingStatus.CANCELLED && record.cancellation && (
+            <CancellationInfoTooltip
+              cancellation={record.cancellation}
+              t={t}
+              formatCurrency={formatCurrency}
+            />
+          )}
+        </Space>
       ),
     },
     {

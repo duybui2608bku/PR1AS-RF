@@ -3,7 +3,7 @@ import { bookingService } from "../../services/booking/booking.service";
 import {
   createBookingSchema,
   updateBookingStatusSchema,
-  cancelBookingSchema,
+  cancelBookingReasonSchema,
   updateBookingSchema,
   getBookingsQuerySchema,
 } from "../../validations/booking/booking.validation";
@@ -15,7 +15,6 @@ import {
   extractUserIdFromRequest,
   AppError,
 } from "../../utils";
-import { CancelledBy } from "../../constants/booking";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { Types } from "mongoose";
 import { PaginationRequest } from "../../middleware";
@@ -34,10 +33,9 @@ export class BookingController {
 
   async getBookingById(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
-
     const { id } = req.params;
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
-    const result = await bookingService.getBookingById(id, roleInfo);
+    const result = await bookingService.getBookingById(id, userId, roleInfo);
     R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
 
@@ -70,18 +68,6 @@ export class BookingController {
     R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
   }
 
-  // async getAllBookings(req: AuthRequest, res: Response): Promise<void> {
-  //   extractUserIdFromRequest(req);
-  //   const query = validateWithSchema(
-  //     getBookingsQuerySchema,
-  //     req.query,
-  //     COMMON_MESSAGES.BAD_REQUEST
-  //   );
-
-  //   const result = await bookingService.getAllBookings(query);
-  //   R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
-  // }
-
   async updateBookingStatus(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { id } = req.params;
@@ -95,6 +81,7 @@ export class BookingController {
 
     const result = await bookingService.updateBookingStatus(
       id,
+      userId,
       data.status,
       roleInfo,
       data.worker_response
@@ -104,19 +91,17 @@ export class BookingController {
 
   async cancelBooking(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
-
     const { id } = req.params;
     const data = validateWithSchema(
-      cancelBookingSchema,
+      cancelBookingReasonSchema,
       req.body,
       COMMON_MESSAGES.BAD_REQUEST
     );
 
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
-    const cancelledBy = data.cancelled_by || CancelledBy.CLIENT;
     const result = await bookingService.cancelBooking(
       id,
-      cancelledBy,
+      userId,
       data.reason,
       data.notes || "",
       roleInfo
@@ -127,7 +112,6 @@ export class BookingController {
   async updateBooking(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
-
     const { id } = req.params;
     const data = validateWithSchema(
       updateBookingSchema,
@@ -135,7 +119,12 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const result = await bookingService.updateBooking(id, data, roleInfo);
+    const result = await bookingService.updateBooking(
+      id,
+      userId,
+      data,
+      roleInfo
+    );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_UPDATED, req);
   }
 }

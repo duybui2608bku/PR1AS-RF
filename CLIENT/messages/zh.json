@@ -1130,6 +1130,27 @@
         "other": "其他"
       }
     },
+    "cancellation": {
+      "cancelledBy": "取消者",
+      "reason": "原因",
+      "notes": "备注",
+      "cancelledAt": "取消时间",
+      "refundAmount": "退款金额",
+      "penaltyAmount": "罚款金额",
+      "by": {
+        "client": "客户",
+        "worker": "服务人员"
+      },
+      "reasons": {
+        "client_request": "客户要求",
+        "worker_unavailable": "服务人员不可用",
+        "schedule_conflict": "时间冲突",
+        "emergency": "紧急情况",
+        "payment_failed": "支付失败",
+        "policy_violation": "违反政策",
+        "other": "其他"
+      }
+    },
     "client": {
       "actions": {
         "review": "评价",

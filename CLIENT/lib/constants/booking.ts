@@ -94,3 +94,30 @@ export const getPricingUnitLabel = (unit: PricingUnit, t: TFunction): string => 
   };
   return unitMap[unit] || unit;
 };
+
+export const getCancellationReasonLabel = (
+  reason: CancellationReason | string,
+  t: TFunction
+): string => {
+  const reasonMap: Record<CancellationReason, string> = {
+    [CancellationReason.CLIENT_REQUEST]: t("booking.cancellation.reasons.client_request"),
+    [CancellationReason.WORKER_UNAVAILABLE]: t("booking.cancellation.reasons.worker_unavailable"),
+    [CancellationReason.SCHEDULE_CONFLICT]: t("booking.cancellation.reasons.schedule_conflict"),
+    [CancellationReason.EMERGENCY]: t("booking.cancellation.reasons.emergency"),
+    [CancellationReason.PAYMENT_FAILED]: t("booking.cancellation.reasons.payment_failed"),
+    [CancellationReason.POLICY_VIOLATION]: t("booking.cancellation.reasons.policy_violation"),
+    [CancellationReason.OTHER]: t("booking.cancellation.reasons.other"),
+  };
+  return reasonMap[reason as CancellationReason] || reason;
+};
+
+export const getCancelledByLabel = (
+  cancelledBy: CancelledBy | string,
+  t: TFunction
+): string => {
+  const cancelledByMap: Record<CancelledBy, string> = {
+    [CancelledBy.CLIENT]: t("booking.cancellation.by.client"),
+    [CancelledBy.WORKER]: t("booking.cancellation.by.worker"),
+  };
+  return cancelledByMap[cancelledBy as CancelledBy] || cancelledBy;
+};

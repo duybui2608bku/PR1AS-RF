@@ -1130,6 +1130,27 @@
         "other": "기타"
       }
     },
+    "cancellation": {
+      "cancelledBy": "취소자",
+      "reason": "사유",
+      "notes": "메모",
+      "cancelledAt": "취소 시간",
+      "refundAmount": "환불 금액",
+      "penaltyAmount": "페널티 금액",
+      "by": {
+        "client": "고객",
+        "worker": "작업자"
+      },
+      "reasons": {
+        "client_request": "고객 요청",
+        "worker_unavailable": "작업자 불가",
+        "schedule_conflict": "일정 충돌",
+        "emergency": "긴급 상황",
+        "payment_failed": "결제 실패",
+        "policy_violation": "정책 위반",
+        "other": "기타"
+      }
+    },
     "client": {
       "actions": {
         "review": "리뷰",
