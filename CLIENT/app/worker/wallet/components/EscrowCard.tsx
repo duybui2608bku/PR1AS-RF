@@ -3,15 +3,11 @@
 import { Card, Row, Col, Space, Tag, Typography } from "antd";
 import type { Escrow } from "@/lib/types/escrow";
 import { EscrowStatus } from "@/lib/types/escrow";
-import { FontSize, Spacing } from "@/lib/constants/ui.constants";
+import { FontSize, Spacing, ColSpan } from "@/lib/constants/ui.constants";
+import { TagColor } from "@/lib/constants/theme.constants";
 import type { TFunction } from "i18next";
 
 const { Text } = Typography;
-
-enum ColSpan {
-  FULL = 24,
-  HALF = 12,
-}
 
 type FormatCurrencyFunction = (amount: number, currency?: string) => string;
 
@@ -22,14 +18,14 @@ interface EscrowCardProps {
 }
 
 function getStatusTagColor(status: EscrowStatus): string {
-  const statusColorMap: Record<EscrowStatus, string> = {
-    [EscrowStatus.HOLDING]: "processing",
-    [EscrowStatus.RELEASED]: "success",
-    [EscrowStatus.REFUNDED]: "error",
-    [EscrowStatus.PARTIALLY_RELEASED]: "warning",
-    [EscrowStatus.DISPUTED]: "default",
+  const statusColorMap: Record<EscrowStatus, TagColor> = {
+    [EscrowStatus.HOLDING]: TagColor.PROCESSING,
+    [EscrowStatus.RELEASED]: TagColor.SUCCESS,
+    [EscrowStatus.REFUNDED]: TagColor.ERROR,
+    [EscrowStatus.PARTIALLY_RELEASED]: TagColor.WARNING,
+    [EscrowStatus.DISPUTED]: TagColor.DEFAULT,
   };
-  return statusColorMap[status] || "default";
+  return statusColorMap[status] || TagColor.DEFAULT;
 }
 
 function formatDate(dateString: string | null): string {

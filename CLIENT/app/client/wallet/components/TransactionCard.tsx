@@ -7,17 +7,12 @@ import {
   StatusTagColor,
   EMPTY_PLACEHOLDER,
 } from "@/lib/constants/wallet";
-import { FontSize, Spacing } from "@/lib/constants/ui.constants";
+import { FontSize, Spacing, ColSpan } from "@/lib/constants/ui.constants";
 import { ThemeCSSVariable } from "@/lib/constants/theme.constants";
 import { formatDateTime } from "@/app/func/func";
 import type { TFunction } from "i18next";
 
 const { Text } = Typography;
-
-enum ColSpan {
-  FULL = 24,
-  HALF = 12,
-}
 
 type FormatCurrencyFunction = (amount: number) => string;
 

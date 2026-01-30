@@ -1,3 +1,5 @@
+import { TagColor } from "@/lib/constants/theme.constants";
+
 export enum UserStatus {
   ACTIVE = "active",
   BANNED = "banned",
@@ -21,18 +23,18 @@ export enum TableColumnKeys {
 }
 
 export const getStatusTagColor = (status: UserStatus): string => {
-  const colorMap: Record<UserStatus, string> = {
-    [UserStatus.ACTIVE]: "green",
-    [UserStatus.BANNED]: "red",
+  const colorMap: Record<UserStatus, TagColor> = {
+    [UserStatus.ACTIVE]: TagColor.GREEN,
+    [UserStatus.BANNED]: TagColor.RED,
   };
-  return colorMap[status] || "default";
+  return colorMap[status] || TagColor.DEFAULT;
 };
 
 export const getRoleTagColor = (role: UserRole): string => {
-  const colorMap: Record<UserRole, string> = {
-    [UserRole.CLIENT]: "blue",
-    [UserRole.WORKER]: "purple",
-    [UserRole.ADMIN]: "red",
+  const colorMap: Record<UserRole, TagColor> = {
+    [UserRole.CLIENT]: TagColor.BLUE,
+    [UserRole.WORKER]: TagColor.PURPLE,
+    [UserRole.ADMIN]: TagColor.RED,
   };
-  return colorMap[role] || "default";
+  return colorMap[role] || TagColor.DEFAULT;
 };

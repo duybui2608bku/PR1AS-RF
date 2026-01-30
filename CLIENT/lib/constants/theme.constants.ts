@@ -68,3 +68,19 @@ export const ThemeDefault = {
   MODE: ThemeMode.LIGHT,
   PRIMARY_COLOR: ThemeColor.PRIMARY,
 } as const;
+
+export enum TagColor {
+  ORANGE = "orange",
+  BLUE = "blue",
+  GREEN = "green",
+  RED = "red",
+  PURPLE = "purple",
+  VOLCANO = "volcano",
+  CYAN = "cyan",
+  GOLD = "gold",
+  PROCESSING = "processing",
+  SUCCESS = "success",
+  ERROR = "error",
+  WARNING = "warning",
+  DEFAULT = "default",
+}

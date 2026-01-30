@@ -5,8 +5,9 @@ import {
   CreateBookingInput,
   BookingQuery,
 } from "../../types/booking/booking.types";
+import { PaginatedResponse } from "../../utils/pagination";
 import { BookingStatus, BookingPaymentStatus } from "../../constants/booking";
-import { getPagination } from "../../func/pagination.func";
+import { PaginationHelper } from "../../utils";
 
 export class BookingRepository {
   async create(data: CreateBookingInput): Promise<IBookingDocument> {
@@ -30,11 +31,10 @@ export class BookingRepository {
   }
 
   async findByClientId(
-    clientId: string,
     query: BookingQuery
-  ): Promise<{ bookings: IBookingDocument[]; total: number }> {
+  ): Promise<PaginatedResponse<IBookingDocument>> {
     const filter: Record<string, any> = {
-      client_id: new Types.ObjectId(clientId),
+      client_id: query.client_id,
     };
 
     if (query.status) {
@@ -59,9 +59,9 @@ export class BookingRepository {
       }
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+    const page = query.page;
+    const limit = query.limit;
+    const skip = query.skip;
 
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
@@ -77,18 +77,14 @@ export class BookingRepository {
       Booking.countDocuments(filter),
     ]);
 
-    return {
-      bookings: bookings as IBookingDocument[],
-      total,
-    };
+    return PaginationHelper.format(bookings, { page, limit, skip }, total);
   }
 
   async findByWorkerId(
-    workerId: string,
     query: BookingQuery
-  ): Promise<{ bookings: IBookingDocument[]; total: number }> {
-    const filter: Record<string, any> = {
-      worker_id: new Types.ObjectId(workerId),
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const filter: Record<string, unknown> = {
+      worker_id: query.worker_id,
     };
 
     if (query.status) {
@@ -104,14 +100,19 @@ export class BookingRepository {
     }
 
     if (query.start_date || query.end_date) {
-      filter["schedule.start_time"] = {};
+      const scheduleFilter: { $gte?: Date; $lte?: Date } = {};
       if (query.start_date) {
-        filter["schedule.start_time"].$gte = query.start_date;
+        scheduleFilter.$gte = query.start_date;
       }
       if (query.end_date) {
-        filter["schedule.start_time"].$lte = query.end_date;
+        scheduleFilter.$lte = query.end_date;
       }
+      filter["schedule.start_time"] = scheduleFilter;
     }
+
+    const page = query.page;
+    const limit = query.limit;
+    const skip = query.skip;
 
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
@@ -121,16 +122,17 @@ export class BookingRepository {
         .populate("service_id")
         .populate("escrow_id")
         .sort({ created_at: -1 })
-        .skip(query.skip)
-        .limit(query.limit)
+        .skip(skip)
+        .limit(limit)
         .lean(),
       Booking.countDocuments(filter),
     ]);
 
-    return {
-      bookings: bookings as IBookingDocument[],
-      total,
-    };
+    return PaginationHelper.format(
+      bookings as IBookingDocument[],
+      { page, limit, skip },
+      total
+    );
   }
 
   async findAll(query: BookingQuery): Promise<{

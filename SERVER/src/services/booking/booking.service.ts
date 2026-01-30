@@ -19,10 +19,9 @@ import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { BOOKING_MESSAGES } from "../../constants/messages";
-import { PaginationHelper } from "../../utils/pagination";
+import { PaginatedResponse } from "../../utils/pagination";
 import { holdBalanceForBooking } from "../wallet/wallet.service";
 import { CreateEscrowInput } from "../../types/escrow/escrow.types";
-import { getPagination } from "../../func/pagination.func";
 
 export class BookingService {
   private async getBookingOrThrow(
@@ -228,41 +227,18 @@ export class BookingService {
   }
 
   async getBookingsByClient(
-    clientId: string,
     query: BookingQuery
-  ): Promise<{
-    data: IBookingDocument[];
-    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
-  }> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const { bookings, total } = await bookingRepository.findByClientId(
-      clientId,
-      { ...query, page, limit }
-    );
-
-    return PaginationHelper.format(
-      bookings,
-      { page, limit, skip: (page - 1) * limit },
-      total
-    );
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const result = await bookingRepository.findByClientId(query);
+    return result;
   }
 
   async getBookingsByWorker(
-    workerId: string,
     query: BookingQuery
-  ): Promise<{
-    data: IBookingDocument[];
-    pagination: ReturnType<typeof PaginationHelper.format>["pagination"];
-  }> {
-    const { page, limit, skip } = query;
-    const { bookings, total } = await bookingRepository.findByWorkerId(
-      workerId,
-      { ...query, page, limit, skip }
-    );
-
-    return PaginationHelper.format(bookings, { page, limit, skip }, total);
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    return bookingRepository.findByWorkerId(query);
   }
+
   async updateBookingStatus(
     bookingId: string,
     status: BookingStatus,

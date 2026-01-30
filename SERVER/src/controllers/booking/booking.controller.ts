@@ -17,7 +17,8 @@ import {
 } from "../../utils";
 import { CancelledBy } from "../../constants/booking";
 import { userRepository } from "../../repositories/auth/user.repository";
-import { getPagination } from "../../func/pagination.func";
+import { Types } from "mongoose";
+import { PaginationRequest } from "../../middleware";
 
 export class BookingController {
   async createBooking(req: AuthRequest, res: Response): Promise<void> {
@@ -40,31 +41,27 @@ export class BookingController {
     R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
 
-  async getMyBookings(req: AuthRequest, res: Response): Promise<void> {
+  async getMyBookings(req: PaginationRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const query = validateWithSchema(
       getBookingsQuerySchema,
       req.query,
       COMMON_MESSAGES.BAD_REQUEST
     );
-    const { page, limit, skip } = getPagination(query.page, query.limit);
+    const { page, limit, skip } = req.pagination!;
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const { isWorker, isClient } = roleInfo;
-
+    const baseQuery = { ...query, page, limit, skip };
     let result;
     if (isWorker) {
-      result = await bookingService.getBookingsByWorker(userId, {
-        ...query,
-        page,
-        limit,
-        skip,
+      result = await bookingService.getBookingsByWorker({
+        ...baseQuery,
+        worker_id: new Types.ObjectId(userId),
       });
     } else if (isClient) {
-      result = await bookingService.getBookingsByClient(userId, {
-        ...query,
-        page,
-        limit,
-        skip,
+      result = await bookingService.getBookingsByClient({
+        ...baseQuery,
+        client_id: new Types.ObjectId(userId),
       });
     } else {
       throw AppError.forbidden();
@@ -73,17 +70,17 @@ export class BookingController {
     R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
   }
 
-  async getAllBookings(req: AuthRequest, res: Response): Promise<void> {
-    extractUserIdFromRequest(req);
-    const query = validateWithSchema(
-      getBookingsQuerySchema,
-      req.query,
-      COMMON_MESSAGES.BAD_REQUEST
-    );
+  // async getAllBookings(req: AuthRequest, res: Response): Promise<void> {
+  //   extractUserIdFromRequest(req);
+  //   const query = validateWithSchema(
+  //     getBookingsQuerySchema,
+  //     req.query,
+  //     COMMON_MESSAGES.BAD_REQUEST
+  //   );
 
-    const result = await bookingService.getAllBookings(query);
-    R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
-  }
+  //   const result = await bookingService.getAllBookings(query);
+  //   R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
+  // }
 
   async updateBookingStatus(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);

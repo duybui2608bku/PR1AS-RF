@@ -47,8 +47,8 @@ export class UserRepository {
     const roles = await this.getRolesById(userId);
     return {
       lastActiveRole,
-      isWorker: roles.includes(UserRole.WORKER),
-      isClient: roles.includes(UserRole.CLIENT),
+      isWorker: lastActiveRole === UserRole.WORKER,
+      isClient: lastActiveRole === UserRole.CLIENT,
       isAdmin: roles.includes(UserRole.ADMIN),
     };
   }

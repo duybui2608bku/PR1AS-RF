@@ -36,7 +36,7 @@ import {
 import {
   createWorkerBookingColumns,
   WorkerActionType,
-  CANCLE_REASON,
+  CancellationReason,
 } from "@/app/worker/bookings/constants/booking.constants";
 import { WorkerBookingCard } from "@/app/worker/bookings/components/WorkerBookingCard";
 import { WorkerBookingActionModal } from "@/app/worker/bookings/components/WorkerBookingActionModal";
@@ -73,7 +73,7 @@ function WorkerBookingsContent() {
     null
   );
   const [workerResponse, setWorkerResponse] = useState<string>("");
-  const [cancelReason, setCancelReason] = useState<CANCLE_REASON | undefined>(
+  const [cancelReason, setCancelReason] = useState<CancellationReason | undefined>(
     undefined
   );
   const [isMobile, setIsMobile] = useState<boolean>(false);

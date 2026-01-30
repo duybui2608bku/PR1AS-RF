@@ -82,13 +82,11 @@ export const pagination = (options: PaginationOptions = {}): RequestHandler => {
         maxLimit
       );
       const skip = (page - 1) * limit;
-
       req.pagination = {
         page,
         limit,
         skip,
       };
-
       next();
     } catch (error) {
       next(error);

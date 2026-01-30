@@ -36,12 +36,14 @@ export const DEPOSIT_AMOUNT_PRESETS = [
   50000, 100000, 200000, 500000, 1000000, 2000000, 5000000,
 ] as const;
 
+import { TagColor } from "./theme.constants";
+
 export enum StatusTagColor {
-  PENDING = "orange",
-  SUCCESS = "green",
-  FAILED = "red",
-  CANCELLED = "default",
-  DEFAULT = "default",
+  PENDING = TagColor.ORANGE,
+  SUCCESS = TagColor.GREEN,
+  FAILED = TagColor.RED,
+  CANCELLED = TagColor.DEFAULT,
+  DEFAULT = TagColor.DEFAULT,
 }
 
 export enum TableColumnWidth {

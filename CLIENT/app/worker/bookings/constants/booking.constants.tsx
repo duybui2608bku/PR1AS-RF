@@ -2,84 +2,25 @@ import type { ColumnsType } from "antd/es/table";
 import { Typography, Tag, Space, Popover } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import type { Booking } from "@/lib/types/booking";
-import {
-  BookingStatus,
-  BookingPaymentStatus,
-  PricingUnit,
-} from "@/lib/types/booking";
+import { BookingStatus, PricingUnit } from "@/lib/types/booking";
 import { formatDateTime } from "@/app/func/func";
 import type { TFunction } from "i18next";
 import { getServiceName } from "@/lib/utils/worker.utils";
 import type { Service } from "@/lib/types/worker";
 import { WorkerBookingActions } from "@/app/worker/bookings/components/WorkerBookingActions";
 import { FontSize } from "@/lib/constants/ui.constants";
+import {
+  CancellationReason,
+  WorkerActionType,
+  BookingTableColumnWidth,
+  BookingTableColumnKey,
+  getBookingStatusTagColor,
+  getPaymentStatusTagColor,
+  getPricingUnitLabel,
+} from "@/lib/constants/booking";
+import { BookingPaymentStatus } from "@/lib/types/booking";
 
 const { Text } = Typography;
-
-enum TableColumnWidth {
-  SERVICE_CODE = 150,
-  CLIENT = 150,
-  SCHEDULE = 200,
-  AMOUNT = 150,
-  STATUS = 120,
-  PAYMENT_STATUS = 200,
-  ACTIONS = 150,
-  CREATED_AT = 180,
-}
-
-enum TableColumnKeys {
-  SERVICE_CODE = "service_code",
-  CLIENT = "client_id",
-  SCHEDULE = "schedule",
-  AMOUNT = "amount",
-  STATUS = "status",
-  PAYMENT_STATUS = "payment_status",
-  ACTIONS = "actions",
-  CREATED_AT = "created_at",
-}
-
-enum WorkerActionType {
-  CONFIRM = "confirm",
-  REJECT = "reject",
-  START = "start",
-  COMPLETE = "complete",
-  CANCEL = "cancel",
-}
-
-export enum CANCLE_REASON {
-  CLIENT_REQUEST = "client_request",
-  WORKER_UNAVAILABLE = "worker_unavailable",
-  SCHEDULE_CONFLICT = "schedule_conflict",
-  EMERGENCY = "emergency",
-  PAYMENT_FAILED = "payment_failed",
-  POLICY_VIOLATION = "policy_violation",
-  OTHER = "other",
-}
-
-export const getBookingStatusTagColor = (status: BookingStatus): string => {
-  const colorMap: Record<BookingStatus, string> = {
-    [BookingStatus.PENDING]: "orange",
-    [BookingStatus.CONFIRMED]: "blue",
-    [BookingStatus.IN_PROGRESS]: "purple",
-    [BookingStatus.COMPLETED]: "green",
-    [BookingStatus.CANCELLED]: "default",
-    [BookingStatus.REJECTED]: "red",
-    [BookingStatus.DISPUTED]: "volcano",
-  };
-  return colorMap[status] || "default";
-};
-
-export const getPaymentStatusTagColor = (
-  status: BookingPaymentStatus
-): string => {
-  const colorMap: Record<BookingPaymentStatus, string> = {
-    [BookingPaymentStatus.PENDING]: "orange",
-    [BookingPaymentStatus.PAID]: "green",
-    [BookingPaymentStatus.PARTIALLY_REFUNDED]: "blue",
-    [BookingPaymentStatus.REFUNDED]: "default",
-  };
-  return colorMap[status] || "default";
-};
 
 export const getClientName = (record: Booking): string => {
   const client = (record as unknown as Record<string, unknown>).client_id;
@@ -90,33 +31,24 @@ export const getClientName = (record: Booking): string => {
 
 type FormatCurrencyFunction = (amount: number) => string;
 
-const getPricingUnitLabel = (unit: PricingUnit, t: TFunction): string => {
-  const unitMap: Record<PricingUnit, string> = {
-    [PricingUnit.HOURLY]: t("booking.pricing.hourly"),
-    [PricingUnit.DAILY]: t("booking.pricing.daily"),
-    [PricingUnit.MONTHLY]: t("booking.pricing.monthly"),
-  };
-  return unitMap[unit] || unit;
-};
-
 const getCancellationReasonLabel = (
   reason: string,
   t: TFunction
 ): string => {
   const reasonMap: Record<string, string> = {
-    [CANCLE_REASON.CLIENT_REQUEST]: t("booking.cancel.reasons.clientRequest"),
-    [CANCLE_REASON.WORKER_UNAVAILABLE]: t(
+    [CancellationReason.CLIENT_REQUEST]: t("booking.cancel.reasons.clientRequest"),
+    [CancellationReason.WORKER_UNAVAILABLE]: t(
       "booking.cancel.reasons.workerUnavailable"
     ),
-    [CANCLE_REASON.SCHEDULE_CONFLICT]: t(
+    [CancellationReason.SCHEDULE_CONFLICT]: t(
       "booking.cancel.reasons.scheduleConflict"
     ),
-    [CANCLE_REASON.EMERGENCY]: t("booking.cancel.reasons.emergency"),
-    [CANCLE_REASON.PAYMENT_FAILED]: t("booking.cancel.reasons.paymentFailed"),
-    [CANCLE_REASON.POLICY_VIOLATION]: t(
+    [CancellationReason.EMERGENCY]: t("booking.cancel.reasons.emergency"),
+    [CancellationReason.PAYMENT_FAILED]: t("booking.cancel.reasons.paymentFailed"),
+    [CancellationReason.POLICY_VIOLATION]: t(
       "booking.cancel.reasons.policyViolation"
     ),
-    [CANCLE_REASON.OTHER]: t("booking.cancel.reasons.other"),
+    [CancellationReason.OTHER]: t("booking.cancel.reasons.other"),
   };
   return reasonMap[reason] || reason;
 };
@@ -196,16 +128,16 @@ export const createWorkerBookingColumns = ({
   return [
     {
       title: t("booking.table.createdAt"),
-      dataIndex: TableColumnKeys.CREATED_AT,
-      key: TableColumnKeys.CREATED_AT,
-      width: TableColumnWidth.CREATED_AT,
+      dataIndex: BookingTableColumnKey.CREATED_AT,
+      key: BookingTableColumnKey.CREATED_AT,
+      width: BookingTableColumnWidth.CREATED_AT,
       render: (createdAt: string) => formatDateTime(createdAt),
     },
     {
       title: t("booking.table.serviceCode"),
-      dataIndex: TableColumnKeys.SERVICE_CODE,
-      key: TableColumnKeys.SERVICE_CODE,
-      width: TableColumnWidth.SERVICE_CODE,
+      dataIndex: BookingTableColumnKey.SERVICE_CODE,
+      key: BookingTableColumnKey.SERVICE_CODE,
+      width: BookingTableColumnWidth.SERVICE_CODE,
       render: (serviceCode: string) => {
         const serviceName = getServiceName({
           serviceCode,
@@ -221,18 +153,18 @@ export const createWorkerBookingColumns = ({
     },
     {
       title: t("booking.table.clientName"),
-      dataIndex: TableColumnKeys.CLIENT,
-      key: TableColumnKeys.CLIENT,
-      width: TableColumnWidth.CLIENT,
+      dataIndex: BookingTableColumnKey.CLIENT,
+      key: BookingTableColumnKey.CLIENT,
+      width: BookingTableColumnWidth.CLIENT,
       render: (_: unknown, record: Booking) => (
         <Text>{getClientName(record)}</Text>
       ),
     },
     {
       title: t("booking.table.schedule"),
-      dataIndex: TableColumnKeys.SCHEDULE,
-      key: TableColumnKeys.SCHEDULE,
-      width: TableColumnWidth.SCHEDULE,
+      dataIndex: BookingTableColumnKey.SCHEDULE,
+      key: BookingTableColumnKey.SCHEDULE,
+      width: BookingTableColumnWidth.SCHEDULE,
       render: (schedule: Booking["schedule"]) => (
         <Space orientation="vertical" size="small">
           <Text>
@@ -241,16 +173,16 @@ export const createWorkerBookingColumns = ({
           </Text>
           <Text type="secondary">
             {t("booking.table.duration")}: {schedule.duration_hours}{" "}
-            {t("booking.pricing.hourly")}
+            {getPricingUnitLabel(PricingUnit.HOURLY, t)}
           </Text>
         </Space>
       ),
     },
     {
       title: t("booking.table.totalAmount"),
-      dataIndex: TableColumnKeys.AMOUNT,
-      key: TableColumnKeys.AMOUNT,
-      width: TableColumnWidth.AMOUNT,
+      dataIndex: BookingTableColumnKey.AMOUNT,
+      key: BookingTableColumnKey.AMOUNT,
+      width: BookingTableColumnWidth.AMOUNT,
       render: (_: unknown, record: Booking) => (
         <Space orientation="vertical" size="small">
           <Text strong style={{ color: "var(--ant-color-primary)" }}>
@@ -265,9 +197,9 @@ export const createWorkerBookingColumns = ({
     },
     {
       title: t("booking.table.status"),
-      dataIndex: TableColumnKeys.STATUS,
-      key: TableColumnKeys.STATUS,
-      width: TableColumnWidth.STATUS,
+      dataIndex: BookingTableColumnKey.STATUS,
+      key: BookingTableColumnKey.STATUS,
+      width: BookingTableColumnWidth.STATUS,
       render: (status: BookingStatus, record: Booking) => {
         const isCancelledWithInfo =
           status === BookingStatus.CANCELLED && record.cancellation;
@@ -302,9 +234,9 @@ export const createWorkerBookingColumns = ({
     },
     {
       title: t("booking.table.paymentStatus"),
-      dataIndex: TableColumnKeys.PAYMENT_STATUS,
-      key: TableColumnKeys.PAYMENT_STATUS,
-      width: TableColumnWidth.PAYMENT_STATUS,
+      dataIndex: BookingTableColumnKey.PAYMENT_STATUS,
+      key: BookingTableColumnKey.PAYMENT_STATUS,
+      width: BookingTableColumnWidth.PAYMENT_STATUS,
       render: (paymentStatus: BookingPaymentStatus) => (
         <Tag color={getPaymentStatusTagColor(paymentStatus)}>
           {t(`booking.paymentStatus.${paymentStatus}`)}
@@ -313,9 +245,9 @@ export const createWorkerBookingColumns = ({
     },
     {
       title: t("booking.table.actions"),
-      dataIndex: TableColumnKeys.ACTIONS,
-      key: TableColumnKeys.ACTIONS,
-      width: TableColumnWidth.ACTIONS,
+      dataIndex: BookingTableColumnKey.ACTIONS,
+      key: BookingTableColumnKey.ACTIONS,
+      width: BookingTableColumnWidth.ACTIONS,
       fixed: "right",
       align: "center",
       render: (_: unknown, record: Booking) => (
@@ -326,4 +258,4 @@ export const createWorkerBookingColumns = ({
   ];
 };
 
-export { WorkerActionType };
+export { WorkerActionType, CancellationReason };

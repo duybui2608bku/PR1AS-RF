@@ -66,3 +66,16 @@ export enum LoadingState {
   ERROR = "error",
   EMPTY = "empty",
 }
+
+export enum ColSpan {
+  FULL = 24,
+  HALF = 12,
+}
+
+export enum GridColSpan {
+  XS = 24,
+  SM = 12,
+  MD = 12,
+  LG = 8,
+  XL = 6,
+}

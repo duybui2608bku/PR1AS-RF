@@ -3,17 +3,9 @@
 import { Row, Col, Space, Empty, Pagination } from "antd";
 import type { Escrow } from "@/lib/types/escrow";
 import { EscrowCard } from "./EscrowCard";
-import { Spacing } from "@/lib/constants/ui.constants";
+import { Spacing, GridColSpan } from "@/lib/constants/ui.constants";
 import { PAGINATION_DEFAULTS, PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
 import type { TFunction } from "i18next";
-
-enum GridColSpan {
-  XS = 24,
-  SM = 12,
-  MD = 12,
-  LG = 8,
-  XL = 6,
-}
 
 type FormatCurrencyFunction = (amount: number) => string;
 

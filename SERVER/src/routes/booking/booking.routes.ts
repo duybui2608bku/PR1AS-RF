@@ -3,7 +3,8 @@ import { bookingController } from "../../controllers/booking/booking.controller"
 import { authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
-import { adminOnly } from "../../middleware/auth";
+// import { adminOnly } from "../../middleware/auth";
+import { pagination } from "../../middleware";
 
 const router = Router();
 
@@ -18,19 +19,20 @@ router.post(
 router.get(
   "/my",
   authenticate,
+  pagination(),
   asyncHandler<AuthRequest>(
     bookingController.getMyBookings.bind(bookingController)
   )
 );
 
-router.get(
-  "/all",
-  authenticate,
-  adminOnly,
-  asyncHandler<AuthRequest>(
-    bookingController.getAllBookings.bind(bookingController)
-  )
-);
+// router.get(
+//   "/all",
+//   authenticate,
+//   adminOnly,
+//   asyncHandler<AuthRequest>(
+//     bookingController.getAllBookings.bind(bookingController)
+//   )
+// );
 
 router.get(
   "/:id",

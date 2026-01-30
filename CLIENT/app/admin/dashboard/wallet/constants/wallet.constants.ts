@@ -1,4 +1,5 @@
 import { TransactionStatus, TransactionType } from "@/lib/constants/wallet";
+import { TagColor } from "@/lib/constants/theme.constants";
 
 export enum TableColumnKeys {
   ID = "_id",
@@ -12,21 +13,21 @@ export enum TableColumnKeys {
 }
 
 export const getStatusTagColor = (status: TransactionStatus): string => {
-  const colorMap: Record<TransactionStatus, string> = {
-    [TransactionStatus.PENDING]: "orange",
-    [TransactionStatus.SUCCESS]: "green",
-    [TransactionStatus.FAILED]: "red",
-    [TransactionStatus.CANCELLED]: "default",
+  const colorMap: Record<TransactionStatus, TagColor> = {
+    [TransactionStatus.PENDING]: TagColor.ORANGE,
+    [TransactionStatus.SUCCESS]: TagColor.GREEN,
+    [TransactionStatus.FAILED]: TagColor.RED,
+    [TransactionStatus.CANCELLED]: TagColor.DEFAULT,
   };
-  return colorMap[status] || "default";
+  return colorMap[status] || TagColor.DEFAULT;
 };
 
 export const getTypeTagColor = (type: TransactionType): string => {
-  const colorMap: Record<TransactionType, string> = {
-    [TransactionType.DEPOSIT]: "blue",
-    [TransactionType.WITHDRAW]: "purple",
-    [TransactionType.PAYMENT]: "cyan",
-    [TransactionType.REFUND]: "gold",
+  const colorMap: Record<TransactionType, TagColor> = {
+    [TransactionType.DEPOSIT]: TagColor.BLUE,
+    [TransactionType.WITHDRAW]: TagColor.PURPLE,
+    [TransactionType.PAYMENT]: TagColor.CYAN,
+    [TransactionType.REFUND]: TagColor.GOLD,
   };
-  return colorMap[type] || "default";
+  return colorMap[type] || TagColor.DEFAULT;
 };

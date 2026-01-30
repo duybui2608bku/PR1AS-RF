@@ -2,7 +2,7 @@
 
 import { Modal, Space, Input, Select } from "antd";
 import type { TFunction } from "i18next";
-import { WorkerActionType, CANCLE_REASON } from "@/app/worker/bookings/constants/booking.constants";
+import { WorkerActionType, CancellationReason } from "@/app/worker/bookings/constants/booking.constants";
 import { Fragment } from "react";
 
 const { TextArea } = Input;
@@ -17,8 +17,8 @@ interface WorkerBookingActionModalProps {
   action: WorkerActionType | null;
   workerResponse: string;
   onWorkerResponseChange: (workerResponse: string) => void;
-  cancelReason: CANCLE_REASON | undefined;
-  onCancelReasonChange: (reason: CANCLE_REASON | undefined) => void;
+  cancelReason: CancellationReason | undefined;
+  onCancelReasonChange: (reason: CancellationReason | undefined) => void;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLoading: boolean;
@@ -82,25 +82,25 @@ export function WorkerBookingActionModal({
               onChange={onCancelReasonChange}
               style={{ width: "100%" }}
             >
-              <Option value={CANCLE_REASON.CLIENT_REQUEST}>
+              <Option value={CancellationReason.CLIENT_REQUEST}>
                 {t("booking.cancel.reasons.clientRequest")}
               </Option>
-              <Option value={CANCLE_REASON.WORKER_UNAVAILABLE}>
+              <Option value={CancellationReason.WORKER_UNAVAILABLE}>
                 {t("booking.cancel.reasons.workerUnavailable")}
               </Option>
-              <Option value={CANCLE_REASON.SCHEDULE_CONFLICT}>
+              <Option value={CancellationReason.SCHEDULE_CONFLICT}>
                 {t("booking.cancel.reasons.scheduleConflict")}
               </Option>
-              <Option value={CANCLE_REASON.EMERGENCY}>
+              <Option value={CancellationReason.EMERGENCY}>
                 {t("booking.cancel.reasons.emergency")}
               </Option>
-              <Option value={CANCLE_REASON.PAYMENT_FAILED}>
+              <Option value={CancellationReason.PAYMENT_FAILED}>
                 {t("booking.cancel.reasons.paymentFailed")}
               </Option>
-              <Option value={CANCLE_REASON.POLICY_VIOLATION}>
+              <Option value={CancellationReason.POLICY_VIOLATION}>
                 {t("booking.cancel.reasons.policyViolation")}
               </Option>
-              <Option value={CANCLE_REASON.OTHER}>
+              <Option value={CancellationReason.OTHER}>
                 {t("booking.cancel.reasons.other")}
               </Option>
             </Select>
