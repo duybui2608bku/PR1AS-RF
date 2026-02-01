@@ -20,6 +20,7 @@ import { useResetPassword } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import type { ResetPasswordRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "../auth.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -69,67 +70,39 @@ function ResetPasswordForm() {
 
   if (isSuccess) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 20px",
-        }}
-      >
-        <Card style={{ width: "100%", maxWidth: 420 }}>
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <CheckCircleOutlined
-                style={{
-                  fontSize: 48,
-                  marginBottom: 16,
-                  color: "var(--ant-color-success)",
-                }}
-              />
-              <Title level={2}>{t("auth.user.forgotPassword.resetSuccess")}</Title>
-              <Text type="secondary">
-                {t("auth.user.forgotPassword.redirecting")}
-              </Text>
-            </div>
-          </Card>
-        </div>
-      );
+      <div className={styles.centerBlock}>
+        <Card className={styles.card}>
+          <div className={styles.cardHeader}>
+            <CheckCircleOutlined className={styles.heroIconSuccess} />
+            <Title level={2}>{t("auth.user.forgotPassword.resetSuccess")}</Title>
+            <Text type="secondary">
+              {t("auth.user.forgotPassword.redirecting")}
+            </Text>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px",
-      }}
-    >
-      <Card style={{ width: "100%", maxWidth: 420 }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <SafetyOutlined
-              style={{
-                fontSize: 48,
-                marginBottom: 16,
-                color: "var(--ant-color-primary)",
-              }}
-            />
-            <Title level={2}>{t("auth.user.forgotPassword.resetTitle")}</Title>
-            <Text type="secondary">
-              {t("auth.user.forgotPassword.resetSubtitle")}
-            </Text>
-          </div>
+    <div className={styles.centerBlock}>
+      <Card className={styles.card}>
+        <div className={styles.cardHeader}>
+          <SafetyOutlined className={styles.heroIconPrimary} />
+          <Title level={2}>{t("auth.user.forgotPassword.resetTitle")}</Title>
+          <Text type="secondary">
+            {t("auth.user.forgotPassword.resetSubtitle")}
+          </Text>
+        </div>
 
-          {!token && (
-            <Alert
-              message={t("auth.user.forgotPassword.noToken")}
-              type="warning"
-              style={{ marginBottom: 24 }}
-              showIcon
-            />
-          )}
+        {!token && (
+          <Alert
+            message={t("auth.user.forgotPassword.noToken")}
+            type="warning"
+            className={styles.alertMargin}
+            showIcon
+          />
+        )}
 
           <Form
             form={form}
@@ -231,14 +204,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <div className={styles.suspenseFallback}>
           <Spin size="large" />
         </div>
       }

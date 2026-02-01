@@ -18,6 +18,7 @@ import { useAuthStore } from "@/lib/stores/auth.store";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import type { MenuProps } from "antd";
+import styles from "./layout.module.scss";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -92,33 +93,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className={styles.layout}>
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
         width={250}
-        style={{
-          overflow: "auto",
-          height: "100vh",
-          position: "fixed",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          background: "#000000",
-        }}
+        className={styles.sider}
       >
         <div
-          style={{
-            height: 64,
-            margin: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: collapsed ? "center" : "flex-start",
-            color: "white",
-            fontSize: collapsed ? 20 : 18,
-            fontWeight: "bold",
-          }}
+          className={`${styles.logoBlock} ${!collapsed ? styles.expanded : ""}`}
         >
           {collapsed ? "PR1AS" : "PR1AS Admin"}
         </div>
@@ -128,42 +112,29 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           selectedKeys={[pathname]}
           items={menuItems}
           onClick={handleMenuClick}
-          style={{
-            background: "#000000",
-            borderRight: "none",
-          }}
+          className={styles.menu}
         />
       </Sider>
       <Layout
-        style={{
-          marginLeft: collapsed ? 80 : 250,
-          transition: "margin-left 0.2s",
-          background: "#000000",
-        }}
+        className={`${styles.mainLayout} ${collapsed ? styles.collapsed : styles.expanded}`}
       >
-        <Header
-          style={{
-            padding: "0 24px",
-            background: "var(--ant-color-bg-container)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-        >
+        <Header className={styles.header}>
           <Space>
             <div
-              style={{ cursor: "pointer", fontSize: 18 }}
+              className={styles.trigger}
               onClick={() => setCollapsed(!collapsed)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setCollapsed(!collapsed)}
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </div>
-            <Text strong style={{ fontSize: 18 }}>
+            <Text strong className={styles.headerTitle}>
               {t("dashboard.title")}
             </Text>
           </Space>
           <Space size="middle">
-            <BellOutlined style={{ fontSize: 18, cursor: "pointer" }} />
+            <BellOutlined className={styles.headerIcon} />
             <ThemeToggle />
             <LanguageSwitcher />
             <Dropdown
@@ -173,22 +144,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               }}
               placement="bottomRight"
             >
-              <Space style={{ cursor: "pointer" }}>
+              <Space className={styles.avatarSpace}>
                 <Avatar icon={<UserOutlined />} />
                 {user?.email && <Text strong>{user.email.split("@")[0]}</Text>}
               </Space>
             </Dropdown>
           </Space>
         </Header>
-        <Content
-          style={{
-            margin: "24px 16px",
-            padding: 24,
-            minHeight: 280,
-            background: "#000000",
-            borderRadius: 8,
-          }}
-        >
+        <Content className={styles.content}>
           {children}
         </Content>
       </Layout>

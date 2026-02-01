@@ -4,6 +4,7 @@ import { Result, Button } from "antd";
 import { ReloadOutlined, HomeOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import styles from "./error.module.scss";
 
 export default function Error({
   error,
@@ -16,15 +17,7 @@ export default function Error({
   const { t } = useTranslation();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        padding: "20px",
-      }}
-    >
+    <div className={styles.wrapper}>
       <Result
         status="500"
         title={t("errorBoundary.title")}
@@ -48,26 +41,11 @@ export default function Error({
         ]}
       />
       {process.env.NODE_ENV === "development" && (
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "20px",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            borderRadius: "4px",
-            maxWidth: "800px",
-          }}
-        >
-          <h4 style={{ color: "#cf1322", marginBottom: "10px" }}>
+        <div className={styles.devDetails}>
+          <h4 className={styles.devTitle}>
             {t("errorBoundary.errorDetails")}
           </h4>
-          <pre
-            style={{
-              color: "#cf1322",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-            }}
-          >
+          <pre className={styles.devPre}>
             {error.message}
             {error.stack && `\n\n${error.stack}`}
             {error.digest && `\n\nDigest: ${error.digest}`}

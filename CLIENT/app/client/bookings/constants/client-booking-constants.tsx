@@ -17,6 +17,7 @@ import {
 } from "@/lib/constants/booking";
 import { BookingPaymentStatus, PricingUnit } from "@/lib/types/booking";
 import { CancellationInfoTooltip } from "@/app/client/bookings/components/CancellationInfoTooltip";
+import styles from "@/app/client/bookings/constants/client-booking-constants.module.scss";
 
 const { Text } = Typography;
 
@@ -110,10 +111,10 @@ export const createBookingColumns = ({
       width: BookingTableColumnWidth.AMOUNT,
       render: (_: unknown, record: Booking) => (
         <Space orientation="vertical" size="small">
-          <Text strong style={{ color: "var(--ant-color-primary)" }}>
+          <Text strong className={styles.amountPrimary}>
             {formatCurrency(record.pricing.total_amount)}
           </Text>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          <Text type="secondary" className={styles.cellSecondary}>
             {record.pricing.quantity}{" "}
             {getPricingUnitLabel(record.pricing.unit as PricingUnit, t)} ×{" "}
             {formatCurrency(record.pricing.unit_price)}

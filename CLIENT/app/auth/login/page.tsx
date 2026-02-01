@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useLogin } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
+import styles from "../auth.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -135,10 +136,10 @@ export default function LoginPage() {
 
         <Divider />
 
-        <div style={{ textAlign: "center" }}>
+        <div className={styles.footerBlock}>
           <Text type="secondary">
             {t("auth.user.noAccount")}{" "}
-            <Link href="/auth/register" style={{ fontWeight: 500 }}>
+            <Link href="/auth/register" className={styles.link}>
               {t("auth.user.register")}
             </Link>
           </Text>

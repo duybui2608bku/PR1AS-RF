@@ -7,6 +7,7 @@ import type { UploadProps } from "antd";
 import { uploadImage } from "@/lib/utils/upload";
 import { useTranslation } from "react-i18next";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "@/app/components/avatar-upload.module.scss";
 
 interface AvatarUploadProps {
   value?: string | null;
@@ -149,13 +150,7 @@ export function AvatarUpload({
       </Upload>
 
       {!disabled && (
-        <span
-          style={{
-            fontSize: 12,
-            color: "var(--ant-color-text-secondary)",
-            textAlign: "center",
-          }}
-        >
+        <span className={styles.hint}>
           {t("upload.avatar.changeHint")}
         </span>
       )}

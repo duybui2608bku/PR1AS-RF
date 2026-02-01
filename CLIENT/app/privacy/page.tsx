@@ -4,6 +4,7 @@ import { Layout, Typography, Divider } from "antd";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
 import { useTranslation } from "react-i18next";
+import styles from "./page.module.scss";
 
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -12,29 +13,22 @@ export default function PrivacyPolicyPage() {
   const { t } = useTranslation();
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "var(--ant-color-bg-container)" }}>
+    <Layout className={styles.layout}>
       <Header />
 
-      <Content
-        style={{
-          background: "var(--ant-color-bg-container)",
-          maxWidth: "100%",
-          overflowX: "hidden",
-          padding: "40px 24px",
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Title level={1} style={{ marginBottom: 24, textAlign: "center" }}>
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Title level={1} className={styles.mainTitle}>
             {t("privacy.title")}
           </Title>
 
-          <Paragraph style={{ fontSize: 16, color: "var(--ant-color-text-secondary)", marginBottom: 32 }}>
+          <Paragraph className={styles.lastUpdated}>
             {t("privacy.lastUpdated")}: {new Date().toLocaleDateString()}
           </Paragraph>
 
           <Divider />
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.introduction.title")}</Title>
             <Paragraph>
               {t("privacy.sections.introduction.content1")}
@@ -44,7 +38,7 @@ export default function PrivacyPolicyPage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.informationCollection.title")}</Title>
             
             <Title level={3}>{t("privacy.sections.informationCollection.providedInfo.title")}</Title>
@@ -69,7 +63,7 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.informationUse.title")}</Title>
             <Paragraph>{t("privacy.sections.informationUse.description")}</Paragraph>
             <ul>
@@ -81,7 +75,7 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.informationSharing.title")}</Title>
             <Paragraph>
               {t("privacy.sections.informationSharing.description")}
@@ -106,7 +100,7 @@ export default function PrivacyPolicyPage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.security.title")}</Title>
             <Paragraph>
               {t("privacy.sections.security.description")}
@@ -122,7 +116,7 @@ export default function PrivacyPolicyPage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.rights.title")}</Title>
             <Paragraph>{t("privacy.sections.rights.description")}</Paragraph>
             <ul>
@@ -152,28 +146,28 @@ export default function PrivacyPolicyPage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.cookies.title")}</Title>
             <Paragraph>
               {t("privacy.sections.cookies.description")}
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.children.title")}</Title>
             <Paragraph>
               {t("privacy.sections.children.description")}
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.changes.title")}</Title>
             <Paragraph>
               {t("privacy.sections.changes.description")}
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("privacy.sections.contact.title")}</Title>
             <Paragraph>
               {t("privacy.sections.contact.description")}
@@ -187,7 +181,7 @@ export default function PrivacyPolicyPage() {
 
           <Divider />
 
-          <Paragraph style={{ fontSize: 14, color: "var(--ant-color-text-tertiary)", textAlign: "center" }}>
+          <Paragraph className={styles.footerNote}>
             {t("privacy.sections.effectiveDate")} {new Date().toLocaleDateString()}
           </Paragraph>
         </div>

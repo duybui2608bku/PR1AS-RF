@@ -8,7 +8,6 @@ import type { TFunction } from "i18next";
 import { getServiceName } from "@/lib/utils/worker.utils";
 import type { Service } from "@/lib/types/worker";
 import { WorkerBookingActions } from "@/app/worker/bookings/components/WorkerBookingActions";
-import { FontSize } from "@/lib/constants/ui.constants";
 import {
   CancellationReason,
   WorkerActionType,
@@ -19,6 +18,7 @@ import {
   getPricingUnitLabel,
 } from "@/lib/constants/booking";
 import { BookingPaymentStatus } from "@/lib/types/booking";
+import styles from "@/app/worker/bookings/constants/booking.constants.module.scss";
 
 const { Text } = Typography;
 
@@ -63,7 +63,7 @@ const renderCancellationPopover = (
   }
 
   return (
-    <Space orientation="vertical" size="small" style={{ minWidth: 250 }}>
+    <Space orientation="vertical" size="small" className={styles.popoverContent}>
       <Space orientation="vertical" size={0}>
         <Text strong>{t("booking.cancel.cancelledAt")}:</Text>
         <Text>{formatDateTime(cancellation.cancelled_at)}</Text>
@@ -185,10 +185,10 @@ export const createWorkerBookingColumns = ({
       width: BookingTableColumnWidth.AMOUNT,
       render: (_: unknown, record: Booking) => (
         <Space orientation="vertical" size="small">
-          <Text strong style={{ color: "var(--ant-color-primary)" }}>
+          <Text strong className={styles.amountPrimary}>
             {formatCurrency(record.pricing.total_amount)}
           </Text>
-          <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+          <Text type="secondary" className={styles.cellSecondary}>
             {t("booking.worker.payout")}:{" "}
             {formatCurrency(record.pricing.worker_payout)}
           </Text>

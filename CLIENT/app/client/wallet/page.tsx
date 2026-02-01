@@ -44,6 +44,7 @@ import {
 import { getDateRangeFromPreset } from "@/lib/utils/date.utils";
 import { Breakpoint } from "@/lib/constants/ui.constants";
 import { WalletOverviewTab } from "@/app/client/wallet/components/WalletOverviewTab";
+import styles from "@/app/client/wallet/page.module.scss";
 import { WalletHistoryTab } from "@/app/client/wallet/components/WalletHistoryTab";
 import { EscrowHistoryTab } from "@/app/client/wallet/components/EscrowHistoryTab";
 
@@ -347,27 +348,12 @@ function WalletContent() {
   const totalBalance = balanceData?.balance || 0;
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Space
-            style={{
-              marginBottom: 24,
-              width: "100%",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Title
-              level={2}
-              style={{ margin: 0, color: "var(--ant-color-primary)" }}
-            >
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Space className={styles.headerSpace}>
+            <Title level={2} className={styles.title}>
               {t("wallet.title")}
             </Title>
             <Button
@@ -384,7 +370,7 @@ function WalletContent() {
             activeKey={activeTab}
             onChange={handleTabChange}
             size="large"
-            style={{ marginBottom: 24 }}
+            className={styles.tabs}
           >
             <TabPane
               tab={

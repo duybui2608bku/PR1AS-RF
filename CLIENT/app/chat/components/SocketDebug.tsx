@@ -5,8 +5,10 @@ import { Card, Button, Typography, Space, Tag, Divider } from "antd";
 import { ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { chatSocket } from "@/lib/socket";
 import { reconnectSocket } from "@/lib/socket/config";
+import { FontSize } from "@/lib/constants/ui.constants";
+import styles from "./SocketDebug.module.scss";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export const SocketDebug = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -74,23 +76,14 @@ export const SocketDebug = () => {
     <Card
       title="Socket Debug Panel"
       size="small"
-      style={{
-        position: "fixed",
-        bottom: 20,
-        right: 20,
-        width: 400,
-        maxHeight: 600,
-        overflow: "auto",
-        zIndex: 1000,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-      }}
+      className={styles.card}
       extra={
         <Button size="small" icon={<ReloadOutlined />} onClick={handleReconnect}>
           Reconnect
         </Button>
       }
     >
-      <Space orientation="vertical" style={{ width: "100%" }} size="small">
+      <Space direction="vertical" className={styles.spaceFull} size="small">
         <div>
           <Text strong>Connection Status: </Text>
           {isConnected ? (
@@ -118,38 +111,29 @@ export const SocketDebug = () => {
           )}
         </div>
 
-        <Divider style={{ margin: "8px 0" }} />
+        <Divider className={styles.dividerSpacing} />
 
         <div>
           <Text strong>Last Event:</Text>
-          <div style={{ marginTop: 4 }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+          <div className={styles.lastEventBlock}>
+            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
               {lastEvent || "No events yet"}
             </Text>
           </div>
         </div>
 
-        <Divider style={{ margin: "8px 0" }} />
+        <Divider className={styles.dividerSpacing} />
 
         <div>
           <Text strong>Recent Events:</Text>
-          <div
-            style={{
-              marginTop: 4,
-              maxHeight: 150,
-              overflow: "auto",
-              backgroundColor: "#f5f5f5",
-              padding: 8,
-              borderRadius: 4,
-            }}
-          >
+          <div className={styles.eventsList}>
             {events.length === 0 ? (
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" className={styles.eventText}>
                 No events
               </Text>
             ) : (
               events.map((event, index) => (
-                <div key={index} style={{ fontSize: 11, marginBottom: 4 }}>
+                <div key={index} className={styles.eventItem}>
                   <Text type="secondary">{event}</Text>
                 </div>
               ))

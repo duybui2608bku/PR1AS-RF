@@ -1,0 +1,67 @@
+.spaceFull {
+  width: 100%;
+}
+
+.statSuffix {
+  font-size: 14px;
+}
+
+.statDeposit {
+  color: #52c41a;
+}
+
+.statWithdraw {
+  color: #722ed1;
+}
+
+.statPayment {
+  color: #1677ff;
+}
+
+.statRefund {
+  color: #faad14;
+}
+
+.statSuccess {
+  color: #52c41a;
+}
+
+.statPending {
+  color: #faad14;
+}
+
+.statFailed {
+  color: #ff4d4f;
+}
+
+.toolbarRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+}
+
+.selectWidth {
+  width: 180px;
+}
+
+.spinWrapper {
+  text-align: center;
+  padding: 40px;
+}
+
+.chartHeight {
+  height: 400px;
+}
+
+.topUserAmount {
+  text-align: right;
+}
+
+.filterInput {
+  width: 200px;
+}
+
+.filterSelect {
+  width: 150px;
+}

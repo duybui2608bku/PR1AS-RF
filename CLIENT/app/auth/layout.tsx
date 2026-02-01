@@ -3,6 +3,7 @@
 import { Layout } from "antd";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
+import styles from "./layout.module.scss";
 
 const { Content } = Layout;
 
@@ -12,16 +13,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className={styles.layout}>
       <Header />
-      <Content
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--ant-color-bg-container)",
-        }}
-      >
+      <Content className={styles.content}>
         {children}
       </Content>
       <Footer />

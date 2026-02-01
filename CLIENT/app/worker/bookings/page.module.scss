@@ -1,0 +1,46 @@
+.layout {
+  min-height: 100vh;
+  background: var(--ant-color-bg-container);
+}
+
+.content {
+  padding: var(--ant-spacing-xl, 24px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.headerSpace {
+  margin-bottom: var(--ant-spacing-xl, 24px);
+  width: 100%;
+}
+
+.title {
+  margin: 0;
+  color: var(--ant-color-primary);
+}
+
+.titleIcon {
+  margin-right: 8px;
+}
+
+.filtersRow {
+  margin-bottom: var(--ant-spacing-lg, 16px);
+}
+
+.filterSpace {
+  width: 100%;
+}
+
+.filterSelect,
+.filterRangePicker,
+.filterButton {
+  width: 100%;
+}
+
+.mobileListSpace {
+  width: 100%;
+  margin-bottom: var(--ant-spacing-lg, 16px);
+}

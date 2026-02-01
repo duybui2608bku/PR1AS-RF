@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Form, Input, Button, Card, Typography, message, Space } from "antd";
+import { Form, Input, Button, Card, Typography, message, Space, Row, Col } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useLogin } from "@/lib/hooks/use-auth";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -24,11 +25,11 @@ export default function AdminAuthPage() {
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
 
-  const getUserRoles = (user: typeof user) => {
-    return Array.isArray(user?.roles)
-      ? user.roles
-      : user?.role
-      ? [user.role]
+  const getUserRoles = (u: { roles?: string[]; role?: string } | null | undefined) => {
+    return Array.isArray(u?.roles)
+      ? u.roles
+      : u?.role
+      ? [u.role]
       : [];
   };
 
@@ -50,7 +51,7 @@ export default function AdminAuthPage() {
 
       if (response.success && response.data) {
         const { user: loggedInUser } = response.data;
-        const roles = getUserRoles(loggedInUser as typeof user);
+        const roles = getUserRoles(loggedInUser as { roles?: string[]; role?: string });
 
         if (roles.includes(ADMIN_ROLE)) {
           message.success(t("auth.loginSuccess"));
@@ -66,38 +67,20 @@ export default function AdminAuthPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        padding: "20px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginBottom: 20,
-        }}
-      >
-        <Space>
-          <ThemeToggle />
-          <LanguageSwitcher />
-        </Space>
-      </div>
+    <div className={styles.wrapper}>
+      <Row justify="end" className={styles.toolbar}>
+        <Col>
+          <Space>
+            <ThemeToggle />
+            <LanguageSwitcher />
+          </Space>
+        </Col>
+      </Row>
 
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Card style={{ width: "100%", maxWidth: 420 }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+      <div className={styles.centerBlock}>
+        <Card className={styles.card}>
+          <div className={styles.cardHeader}>
+            <SafetyOutlined className={styles.heroIcon} />
             <Title level={2}>{t("auth.title")}</Title>
             <Text type="secondary">{t("auth.subtitle")}</Text>
           </div>
@@ -152,7 +135,7 @@ export default function AdminAuthPage() {
             </Form.Item>
           </Form>
 
-          <div style={{ marginTop: 24, textAlign: "center" }}>
+          <div className={styles.footerBlock}>
             <Text type="secondary">{t("auth.forAdminOnly")}</Text>
           </div>
         </Card>

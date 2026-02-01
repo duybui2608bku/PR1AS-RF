@@ -1,0 +1,92 @@
+@use "../../styles/variables" as *;
+
+.section {
+  margin-bottom: 80px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  width: 100%;
+}
+
+.titleCol {
+  flex: 1;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.viewAllButton {
+  padding: 0;
+  height: auto;
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--foreground-secondary);
+  font-size: 16px;
+}
+
+.scrollButtons {
+  margin-left: 24px;
+  flex-shrink: 0;
+}
+
+.scrollButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 50ms ease-out;
+
+  &:hover {
+    border-color: var(--foreground);
+    transform: scale(1.05);
+  }
+}
+
+.scrollContainer {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 24px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.cardSlot {
+  flex: 0 0 320px;
+  min-width: 0;
+}

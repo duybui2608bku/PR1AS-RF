@@ -14,6 +14,7 @@ import type {
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "@/app/worker/setup/page.module.scss";
 
 const { Paragraph } = Typography;
 
@@ -117,20 +118,10 @@ export default function WorkerSetupPage() {
 
         {/* Loading Overlay */}
         {profileMutation.isPending && (
-          <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-          >
+          <div className={styles.overlay}>
             <Card>
               <Spin size="large" />
-              <Paragraph style={{ marginTop: 16, textAlign: "center" }}>
+              <Paragraph className={styles.loadingText}>
                 {t("worker.setup.loading.savingProfile")}
               </Paragraph>
             </Card>
@@ -151,20 +142,10 @@ export default function WorkerSetupPage() {
 
         {/* Loading Overlay */}
         {servicesMutation.isPending && (
-          <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000,
-            }}
-          >
+          <div className={styles.overlay}>
             <Card>
               <Spin size="large" />
-              <Paragraph style={{ marginTop: 16, textAlign: "center" }}>
+              <Paragraph className={styles.loadingText}>
                 {t("worker.setup.loading.savingServices")}
               </Paragraph>
             </Card>

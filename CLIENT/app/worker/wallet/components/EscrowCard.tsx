@@ -6,6 +6,7 @@ import { EscrowStatus } from "@/lib/types/escrow";
 import { FontSize, Spacing, ColSpan } from "@/lib/constants/ui.constants";
 import { TagColor } from "@/lib/constants/theme.constants";
 import type { TFunction } from "i18next";
+import styles from "./EscrowCard.module.scss";
 
 const { Text } = Typography;
 
@@ -49,7 +50,7 @@ export function EscrowCard({
     <Card size="small">
       <Row gutter={[0, Spacing.SM]}>
         <Col span={ColSpan.FULL}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space direction="vertical" size="small" className={styles.spaceFull}>
             <Space>
               <Text strong>{t("escrow.table.bookingId")}:</Text>
               <Text copyable={{ text: bookingId }}>{bookingId.slice(-8)}</Text>
@@ -63,10 +64,10 @@ export function EscrowCard({
           </Space>
         </Col>
         <Col span={ColSpan.FULL}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space direction="vertical" size="small" className={styles.spaceFull}>
             <Space>
               <Text>{t("escrow.table.amount")}:</Text>
-              <Text strong style={{ color: "var(--ant-color-primary)" }}>
+              <Text strong className={styles.amountText}>
                 {formatCurrency(escrow.amount)}
               </Text>
             </Space>

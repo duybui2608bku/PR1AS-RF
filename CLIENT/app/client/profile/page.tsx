@@ -13,7 +13,6 @@ import {
   Divider,
   Layout,
   Descriptions,
-  Spin,
 } from "antd";
 import {
   UserOutlined,
@@ -30,6 +29,8 @@ import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
+import { Spacing } from "@/lib/constants/ui.constants";
+import styles from "./profile.module.scss";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -49,57 +50,38 @@ function ProfileContent() {
   };
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Space
-            style={{
-              marginBottom: 24,
-              width: "100%",
-              justifyContent: "space-between",
-            }}
-          >
-            <Title level={2} style={{ margin: 0 }}>
-              {t("profile.title")}
-            </Title>
-          </Space>
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Row justify="space-between" align="middle" className={styles.headerRow}>
+            <Col>
+              <Title level={2} className={styles.pageTitle}>
+                {t("profile.title")}
+              </Title>
+            </Col>
+          </Row>
 
           <Card loading={isLoading}>
-            <Row gutter={[32, 32]}>
+            <Row gutter={[Spacing.XXL, Spacing.XXL]}>
               <Col xs={24} sm={24} md={8} lg={7} xl={6}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: "24px",
-                    borderRadius: 8,
-                    background: "var(--ant-color-fill-tertiary)",
-                    height: "100%",
-                  }}
-                >
+                <div className={styles.avatarBlock}>
                   <Avatar
                     size={160}
                     src={profile?.avatar || undefined}
                     icon={!profile?.avatar ? <UserOutlined /> : undefined}
+                    className={styles.avatar}
                     style={{
                       backgroundColor: !profile?.avatar
                         ? "var(--ant-color-primary)"
                         : undefined,
-                      marginBottom: 24,
                     }}
                   />
-                  <Title level={4} style={{ margin: 0, textAlign: "center" }}>
+                  <Title level={4} className={styles.avatarTitle}>
                     {profile?.full_name || profile?.email || "User"}
                   </Title>
                   {profile?.roles && profile.roles.length > 0 && (
-                    <Space style={{ marginTop: 12 }} wrap>
+                    <Space className={styles.rolesSpace} wrap>
                       {profile.roles.map((role) => (
                         <Tag key={role} color="blue">
                           {role}
@@ -188,7 +170,7 @@ function ProfileContent() {
                   </Descriptions.Item>
 
                   <Descriptions.Item label={t("profile.info.userId")}>
-                    <Text code style={{ wordBreak: "break-all" }}>
+                    <Text code className={styles.userIdText}>
                       {profile?.id}
                     </Text>
                   </Descriptions.Item>

@@ -1,0 +1,27 @@
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.devDetails {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  max-width: 800px;
+}
+
+.devTitle {
+  color: #cf1322;
+  margin-bottom: 10px;
+}
+
+.devPre {
+  color: #cf1322;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

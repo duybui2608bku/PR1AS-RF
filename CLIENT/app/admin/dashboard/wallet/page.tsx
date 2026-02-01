@@ -63,6 +63,7 @@ import {
   getTypeTagColor,
   TableColumnKeys,
 } from "@/app/admin/dashboard/wallet/constants/wallet.constants";
+import styles from "./page.module.scss";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -406,11 +407,11 @@ export default function AdminWalletPage() {
             title={t("admin.wallet.stats.deposit")}
             value={stats.deposit.count}
             suffix={
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className={styles.statSuffix}>
                 ({formatCurrency(stats.deposit.total_amount)})
               </Text>
             }
-            prefix={<ArrowDownOutlined style={{ color: "#52c41a" }} />}
+            prefix={<ArrowDownOutlined className={styles.statDeposit} />}
             valueStyle={{ color: "#52c41a" }}
           />
         </Card>
@@ -421,11 +422,11 @@ export default function AdminWalletPage() {
             title={t("admin.wallet.stats.withdraw")}
             value={stats.withdraw.count}
             suffix={
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className={styles.statSuffix}>
                 ({formatCurrency(stats.withdraw.total_amount)})
               </Text>
             }
-            prefix={<ArrowUpOutlined style={{ color: "#722ed1" }} />}
+            prefix={<ArrowUpOutlined className={styles.statWithdraw} />}
             valueStyle={{ color: "#722ed1" }}
           />
         </Card>
@@ -436,11 +437,11 @@ export default function AdminWalletPage() {
             title={t("admin.wallet.stats.payment")}
             value={stats.payment.count}
             suffix={
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className={styles.statSuffix}>
                 ({formatCurrency(stats.payment.total_amount)})
               </Text>
             }
-            prefix={<DollarOutlined style={{ color: "#1677ff" }} />}
+            prefix={<DollarOutlined className={styles.statPayment} />}
             valueStyle={{ color: "#1677ff" }}
           />
         </Card>
@@ -451,11 +452,11 @@ export default function AdminWalletPage() {
             title={t("admin.wallet.stats.refund")}
             value={stats.refund.count}
             suffix={
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className={styles.statSuffix}>
                 ({formatCurrency(stats.refund.total_amount)})
               </Text>
             }
-            prefix={<DollarOutlined style={{ color: "#faad14" }} />}
+            prefix={<DollarOutlined className={styles.statRefund} />}
             valueStyle={{ color: "#faad14" }}
           />
         </Card>
@@ -465,7 +466,7 @@ export default function AdminWalletPage() {
           <Statistic
             title={t("admin.wallet.stats.success")}
             value={stats.success.count}
-            prefix={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+            prefix={<CheckCircleOutlined className={styles.statSuccess} />}
             valueStyle={{ color: "#52c41a" }}
           />
         </Card>
@@ -475,7 +476,7 @@ export default function AdminWalletPage() {
           <Statistic
             title={t("admin.wallet.stats.pending")}
             value={stats.pending.count}
-            prefix={<ClockCircleOutlined style={{ color: "#faad14" }} />}
+            prefix={<ClockCircleOutlined className={styles.statPending} />}
             valueStyle={{ color: "#faad14" }}
           />
         </Card>
@@ -485,7 +486,7 @@ export default function AdminWalletPage() {
           <Statistic
             title={t("admin.wallet.stats.failed")}
             value={stats.failed.count}
-            prefix={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />}
+            prefix={<CloseCircleOutlined className={styles.statFailed} />}
             valueStyle={{ color: "#ff4d4f" }}
           />
         </Card>
@@ -532,19 +533,12 @@ export default function AdminWalletPage() {
   );
 
   const renderStatisticsTab = () => (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
+      <div className={styles.toolbarRow}>
         <Select
           value={dateRange}
           onChange={handleDateRangeChange}
-          style={{ width: 180 }}
+          className={styles.selectWidth}
           size="large"
         >
           {DATE_RANGE_OPTIONS.map((option) => (
@@ -565,7 +559,7 @@ export default function AdminWalletPage() {
 
       {isLoadingStats ? (
         <Card>
-          <div style={{ textAlign: "center", padding: 40 }}>
+          <div className={styles.spinWrapper}>
             <Spin size="large" />
           </div>
         </Card>
@@ -577,15 +571,15 @@ export default function AdminWalletPage() {
         <Col xs={24} lg={16}>
           <Card title={t("admin.wallet.chart.title")}>
             {isLoadingChart ? (
-              <div style={{ textAlign: "center", padding: 40 }}>
+              <div className={styles.spinWrapper}>
                 <Spin size="large" />
               </div>
             ) : chartConfig ? (
-              <div style={{ height: 400 }}>
+              <div className={styles.chartHeight}>
                 <Line data={chartConfig} options={chartOptions} />
               </div>
             ) : (
-              <div style={{ textAlign: "center", padding: 40 }}>
+              <div className={styles.spinWrapper}>
                 <Text type="secondary">{t("common.noData")}</Text>
               </div>
             )}
@@ -594,13 +588,13 @@ export default function AdminWalletPage() {
         <Col xs={24} lg={8}>
           <Card title={t("admin.wallet.topUsers.title")}>
             {isLoadingTopUsers ? (
-              <div style={{ textAlign: "center", padding: 40 }}>
+              <div className={styles.spinWrapper}>
                 <Spin size="large" />
               </div>
             ) : topUsersData?.users && topUsersData.users.length > 0 ? (
               renderTopUsers(topUsersData.users)
             ) : (
-              <div style={{ textAlign: "center", padding: 40 }}>
+              <div className={styles.spinWrapper}>
                 <Text type="secondary">{t("common.noData")}</Text>
               </div>
             )}
@@ -611,16 +605,16 @@ export default function AdminWalletPage() {
   );
 
   const renderDataTab = () => (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Card>
-        <AntSpace direction="vertical" size="middle" style={{ width: "100%" }}>
+        <AntSpace direction="vertical" size="middle" className={styles.spaceFull}>
           <AntSpace wrap size={16}>
             <Input
               placeholder={t("admin.wallet.filters.userId")}
               value={userIdFilter}
               size="large"
               onChange={(e) => handleUserIdFilterChange(e.target.value)}
-              style={{ width: 200 }}
+              className={styles.filterInput}
               allowClear
             />
 
@@ -630,7 +624,7 @@ export default function AdminWalletPage() {
               onChange={(value) =>
                 handleFilterChange("type", value || undefined)
               }
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               allowClear
               size="large"
             >
@@ -739,7 +733,7 @@ export default function AdminWalletPage() {
   ];
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.wallet.title")}</Title>
       <Tabs
         activeKey={activeTab}

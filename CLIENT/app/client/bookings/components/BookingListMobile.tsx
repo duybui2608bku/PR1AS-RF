@@ -19,6 +19,8 @@ import {
 import { CancellationInfoTooltip } from "@/app/client/bookings/components/CancellationInfoTooltip";
 import type { TFunction } from "i18next";
 import { PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
+import { FontSize } from "@/lib/constants/ui.constants";
+import styles from "./BookingListMobile.module.scss";
 
 const { Text } = Typography;
 

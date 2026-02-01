@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Layout } from "antd";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/lib/components/auth-guard";
@@ -8,6 +8,7 @@ import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import { DepositModal } from "@/lib/components/deposit-modal";
 import { AppRoute } from "@/lib/constants/routes";
+import styles from "@/app/client/wallet/deposit/page.module.scss";
 
 const { Content } = Layout;
 
@@ -21,12 +22,7 @@ function DepositContent() {
   };
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
       <Content />
       <Footer />

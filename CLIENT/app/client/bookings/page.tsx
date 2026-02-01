@@ -42,6 +42,8 @@ import { CancelBookingModal } from "@/app/client/bookings/components/CancelBooki
 import { ReviewModal } from "@/app/client/bookings/components/ReviewModal";
 import { BookingListMobile } from "@/app/client/bookings/components/BookingListMobile";
 import type { CancellationReason } from "@/app/client/bookings/constants/client-booking-constants";
+import { Spacing } from "@/lib/constants/ui.constants";
+import styles from "./page.module.scss";
 
 const { Title } = Typography;
 const { Content } = Layout;
@@ -252,34 +254,26 @@ function BookingsContent() {
   });
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Title
-            level={2}
-            style={{ margin: 0, marginBottom: 24, color: "var(--ant-color-primary)" }}
-          >
-            <CalendarOutlined style={{ marginRight: 8 }} />
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Title level={2} className={styles.pageTitle}>
+            <CalendarOutlined className={styles.titleIcon} />
             {t("booking.list.title")}
           </Title>
 
           <Card>
-            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.filtersRow}>
               <Col xs={24} sm={12} md={6}>
                 <Space
                   direction="vertical"
                   size="small"
-                  style={{ width: "100%" }}
+                  className={styles.filterSpace}
                 >
                   <span>{t("booking.list.filters.status")}</span>
                   <Select
-                    style={{ width: "100%" }}
+                    className={styles.selectFull}
                     value={statusFilter || "all"}
                     onChange={handleStatusFilterChange}
                     allowClear
@@ -313,11 +307,11 @@ function BookingsContent() {
                 <Space
                   direction="vertical"
                   size="small"
-                  style={{ width: "100%" }}
+                  className={styles.filterSpace}
                 >
                   <span>{t("booking.list.filters.paymentStatus")}</span>
                   <Select
-                    style={{ width: "100%" }}
+                    className={styles.selectFull}
                     value={paymentStatusFilter || "all"}
                     onChange={handlePaymentStatusFilterChange}
                     allowClear
@@ -363,9 +357,9 @@ function BookingsContent() {
                 <Space
                   direction="vertical"
                   size="small"
-                  style={{ width: "100%" }}
+                  className={styles.filterSpace}
                 >
-                  <span style={{ visibility: "hidden" }}>&nbsp;</span>
+                  <span className={styles.placeholderLabel}>&nbsp;</span>
                   <Space>
                     <Button
                       icon={<ClearOutlined />}

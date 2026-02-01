@@ -6,6 +6,7 @@ import { TransactionCard } from "./TransactionCard";
 import { Spacing, GridColSpan } from "@/lib/constants/ui.constants";
 import { PAGINATION_DEFAULTS, PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
 import type { TFunction } from "i18next";
+import styles from "@/app/client/wallet/components/TransactionCardGrid.module.scss";
 
 type FormatCurrencyFunction = (amount: number) => string;
 
@@ -35,7 +36,7 @@ export function TransactionCardGrid({
   }
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.space}>
       <Row gutter={[Spacing.MD, Spacing.MD]}>
         {transactions.map((transaction) => (
           <Col
@@ -64,7 +65,7 @@ export function TransactionCardGrid({
         onChange={(newPage, newPageSize) => {
           onPageChange(newPage, newPageSize);
         }}
-        style={{ marginTop: Spacing.LG, textAlign: "center" }}
+        className={styles.pagination}
       />
     </Space>
   );

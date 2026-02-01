@@ -1,0 +1,37 @@
+.layout {
+  min-height: 100vh;
+  background: var(--ant-color-bg-container);
+}
+
+.content {
+  background: var(--ant-color-bg-container);
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 40px 24px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.mainTitle {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.lastUpdated {
+  font-size: 16px;
+  color: var(--ant-color-text-secondary);
+  margin-bottom: 32px;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.footerNote {
+  font-size: 14px;
+  color: var(--ant-color-text-tertiary);
+  text-align: center;
+}

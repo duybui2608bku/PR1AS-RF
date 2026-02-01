@@ -1,0 +1,58 @@
+.centerBlock {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.cardRegister {
+  width: 100%;
+  max-width: 480px;
+}
+
+.cardHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.heroIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.heroIconSuccess {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--ant-color-success);
+}
+
+.heroIconPrimary {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--ant-color-primary);
+}
+
+.footerBlock {
+  text-align: center;
+}
+
+.link {
+  font-weight: 500;
+}
+
+.alertMargin {
+  margin-bottom: 24px;
+}
+
+.suspenseFallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

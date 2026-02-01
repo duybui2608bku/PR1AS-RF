@@ -24,6 +24,7 @@ import { useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { PasswordStrength, validatePasswordComplexity } from "@/lib/components/password-strength";
 import type { RegisterRequest } from "@/lib/hooks/use-auth";
+import styles from "../auth.module.scss";
 
 const { Title, Text } = Typography;
 
@@ -237,16 +238,15 @@ export default function RegisterPage() {
 
           <Divider />
 
-          <div style={{ textAlign: "center" }}>
+          <div className={styles.footerBlock}>
             <Text type="secondary">
               {t("auth.user.haveAccount")}{" "}
-              <Link href="/auth/login" style={{ fontWeight: 500 }}>
+              <Link href="/auth/login" className={styles.link}>
                 {t("auth.user.login")}
               </Link>
             </Text>
           </div>
         </Card>
-      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Modal, Space, Input, Select } from "antd";
 import type { TFunction } from "i18next";
 import { WorkerActionType, CancellationReason } from "@/app/worker/bookings/constants/booking.constants";
 import { Fragment } from "react";
+import styles from "@/app/worker/bookings/components/WorkerBookingActionModal.module.scss";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -72,7 +73,7 @@ export function WorkerBookingActionModal({
       cancelText={t("common.cancel")}
       confirmLoading={confirmLoading}
     >
-      <Space orientation="vertical" style={{ width: "100%" }}>
+      <Space orientation="vertical" className={styles.modalSpace}>
         <span>{getModalMessage(action, t)}</span>
         {isCancelAction ? (
           <Fragment>
@@ -80,7 +81,7 @@ export function WorkerBookingActionModal({
               placeholder={t("booking.cancel.selectReason")}
               value={cancelReason}
               onChange={onCancelReasonChange}
-              style={{ width: "100%" }}
+              className={styles.selectFull}
             >
               <Option value={CancellationReason.CLIENT_REQUEST}>
                 {t("booking.cancel.reasons.clientRequest")}

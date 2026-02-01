@@ -603,6 +603,46 @@
 .bookingCard {
   border-radius: 12px;
   margin-bottom: 16px;
+}
+
+.bookingCardMargin {
+  margin-bottom: 16px;
+}
+
+.serviceCardInteractive {
+  cursor: pointer;
+  opacity: 1;
+}
+
+.serviceCardDisabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.servicePriceText {
+  display: block;
+  font-size: 12px;
+}
+
+.reviewRateSmall {
+  font-size: 12px;
+}
+
+.reviewDateText {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.reviewReplyLabel {
+  font-size: 12px;
+}
+
+.reviewReplyParagraph {
+  margin-top: 4px;
+}
+
+.reviewDivider {
+  margin: 12px 0;
 
   @media (prefers-color-scheme: dark) {
     background-color: #1a1a1a;
@@ -665,6 +705,45 @@
 
 .serviceCardContent {
   margin-left: 8px;
+}
+
+// Layout (page root)
+.layout {
+  min-height: 100vh;
+}
+
+.content {
+  background: #ffffff;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.tagPadding {
+  padding: 4px 12px;
+}
+
+.introTextClamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.introTextFull {
+  display: block;
+  overflow: visible;
+}
+
+.rateStar {
+  color: #fbbf24;
+}
+
+.infoCardsRow {
+  margin-bottom: 24px;
+}
+
+.hireButtonMargin {
+  margin-bottom: 16px;
 }
 
 // Buttons

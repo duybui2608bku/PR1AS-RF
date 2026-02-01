@@ -26,6 +26,7 @@ import {
 import { createWalletTransactionColumns } from "@/app/client/wallet/constants";
 import { TransactionCardGrid } from "@/app/client/wallet/components/TransactionCardGrid";
 import { Spacing } from "@/lib/constants/ui.constants";
+import styles from "@/app/client/wallet/components/WalletHistoryTab.module.scss";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -71,12 +72,12 @@ export function WalletHistoryTab({
 }: WalletHistoryTabProps) {
   return (
     <Card>
-      <Row gutter={[Spacing.MD, Spacing.MD]} style={{ marginBottom: Spacing.LG }}>
+      <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <span>{t("wallet.filters.datePreset") || "Quick Date"}:</span>
             <Select
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               value={datePreset}
               onChange={onDatePresetChange}
               allowClear
@@ -112,25 +113,25 @@ export function WalletHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <span />
             <Button
               icon={<UndoOutlined />}
               onClick={onResetFilters}
-              style={{ width: "100%" }}
+              className={styles.filterButton}
             >
               {t("common.reset") || "Reset"}
             </Button>
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <span />
             <Button
               icon={<ReloadOutlined />}
               onClick={onRefresh}
               loading={isLoading}
-              style={{ width: "100%" }}
+              className={styles.filterButton}
             >
               {t("common.refresh") || "Refresh"}
             </Button>

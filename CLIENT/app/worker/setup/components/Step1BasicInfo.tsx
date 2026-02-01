@@ -14,6 +14,8 @@ import {
   Tag,
   message,
   Card,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
@@ -23,7 +25,7 @@ import {
 } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import ImgCrop from "antd-img-crop";
-import dayjs, { type Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { useApiQueryData } from "@/lib/hooks/use-api";
 import type {
   WorkerProfile,
@@ -34,6 +36,7 @@ import { STAR_SIGNS, Experience } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { uploadImage } from "@/lib/utils/upload";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "./Step1BasicInfo.module.scss";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -406,17 +409,11 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     switch (currentStepType) {
       case "location":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.location.label")}
             </Title>
-            <Space orientation="vertical" style={{ width: "100%" }} size="large">
+            <Space direction="vertical" className={styles.spaceFull} size="large">
               <Button
                 icon={<EnvironmentOutlined />}
                 onClick={getLocation}
@@ -427,18 +424,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 {t("worker.setup.step1.location.getLocation")}
               </Button>
               {location.lat && location.lng && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: 16,
-                    background: "var(--ant-color-fill-tertiary)",
-                    borderRadius: 8,
-                  }}
-                >
-                  <Text
-                    type="secondary"
-                    style={{ display: "block", marginBottom: 8 }}
-                  >
+                <div className={styles.locationBox}>
+                  <Text type="secondary" className={styles.locationLabel}>
                     {t("worker.setup.step1.location.success")}
                   </Text>
                   <Text>
@@ -455,14 +442,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "birthday-gender":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.dateOfBirth.label")} &{" "}
               {t("worker.setup.step1.gender.label")}
             </Title>
@@ -478,7 +459,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 name="date_of_birth"
               >
                 <DatePicker
-                  style={{ width: "100%" }}
+                  className={styles.inputFull}
                   format="DD/MM/YYYY"
                   size="large"
                 />
@@ -511,14 +492,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "height-weight":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.heightWeight.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -527,7 +502,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 name="height_cm"
               >
                 <InputNumber
-                  style={{ width: "100%" }}
+                  className={styles.inputFull}
                   placeholder={t("worker.setup.step1.heightWeight.height")}
                   min={0}
                   max={300}
@@ -540,7 +515,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 name="weight_kg"
               >
                 <InputNumber
-                  style={{ width: "100%" }}
+                  className={styles.inputFull}
                   placeholder={t("worker.setup.step1.heightWeight.weight")}
                   min={0}
                   max={500}
@@ -554,14 +529,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "experience-title":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.experienceTitle.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -610,14 +579,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "star-sign":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.starSign.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -642,14 +605,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "lifestyle":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.lifestyle.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -668,18 +625,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "hobbies":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.hobbies.label")}
             </Title>
-            <Space orientation="vertical" style={{ width: "100%" }} size="large">
-              <Space.Compact style={{ width: "100%" }}>
+            <Space direction="vertical" className={styles.spaceFull} size="large">
+              <Space.Compact className={styles.spaceFull}>
                 <Input
                   value={hobbyInput}
                   onChange={(e) => setHobbyInput(e.target.value)}
@@ -697,17 +648,13 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 </Button>
               </Space.Compact>
               {hobbies.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div className={styles.hobbiesTags}>
                   {hobbies.map((hobby) => (
                     <Tag
                       key={hobby}
                       closable
                       onClose={() => handleRemoveHobby(hobby)}
-                      style={{
-                        marginBottom: 8,
-                        fontSize: 14,
-                        padding: "4px 12px",
-                      }}
+                      className={styles.tagItem}
                     >
                       {hobby}
                     </Tag>
@@ -720,14 +667,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "introduction":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.introduction.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -746,14 +687,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "quote":
         return (
-          <Card
-            style={{
-              maxWidth: "600px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.card}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.quote.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -772,14 +707,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
       case "gallery":
         return (
-          <Card
-            style={{
-              maxWidth: "800px",
-              margin: "0 auto",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <Title level={3} style={{ marginBottom: 24, textAlign: "center" }}>
+          <Card className={styles.cardGallery}>
+            <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.gallery.label")}
             </Title>
             <Form form={form} layout="vertical">
@@ -788,8 +717,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   aspect={5 / 4}
                   quality={0.9}
                   fillColor="transparent"
-                  zoom={true}
-                  rotate={true}
+                  zoom
+                  rotate
                 >
                   <Upload
                     listType="picture-card"
@@ -802,17 +731,14 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                     {fileList.length < 10 && (
                       <div>
                         <PlusOutlined />
-                        <div style={{ marginTop: 8 }}>
+                        <div className={styles.uploadAddText}>
                           {t("worker.setup.step1.gallery.upload")}
                         </div>
                       </div>
                     )}
                   </Upload>
                 </ImgCrop>
-                <Text
-                  type="secondary"
-                  style={{ display: "block", marginTop: 8 }}
-                >
+                <Text type="secondary" className={styles.uploadHint}>
                   {t("worker.setup.step1.gallery.maxImages")}
                 </Text>
               </Form.Item>
@@ -826,51 +752,46 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-      {/* Progress indicator */}
-      <div style={{ marginBottom: 48, textAlign: "center" }}>
-        <Text type="secondary">
-          {t("common.step")} {currentSubStep + 1} / {SUB_STEPS.length}
-        </Text>
-      </div>
-
-      {/* Sub-step content */}
+    <div className={styles.container}>
+      <Row justify="center">
+        <Col span={24}>
+          <div className={styles.progressBlock}>
+            <Text type="secondary">
+              {t("common.step")} {currentSubStep + 1} / {SUB_STEPS.length}
+            </Text>
+          </div>
+        </Col>
+      </Row>
       {renderSubStep()}
-
-      {/* Navigation buttons */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: 48,
-          paddingTop: 24,
-          borderTop: "1px solid var(--ant-color-border-secondary)",
-        }}
-      >
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={handleBack}
-          disabled={currentSubStep === 0}
-          size="large"
-        >
-          {t("common.back")}
-        </Button>
-        <Button
-          type="primary"
-          onClick={handleNext}
-          loading={isPending}
-          icon={
-            currentSubStep === SUB_STEPS.length - 1 ? undefined : (
-              <ArrowRightOutlined />
-            )
-          }
-          size="large"
-        >
-          {currentSubStep === SUB_STEPS.length - 1
-            ? t("worker.setup.step1.complete")
-            : t("common.next")}
-        </Button>
-      </div>
+      <Row justify="space-between" align="middle" className={styles.navRow}>
+        <Col>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
+            disabled={currentSubStep === 0}
+            size="large"
+          >
+            {t("common.back")}
+          </Button>
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            onClick={handleNext}
+            loading={isPending}
+            icon={
+              currentSubStep === SUB_STEPS.length - 1 ? undefined : (
+                <ArrowRightOutlined />
+              )
+            }
+            size="large"
+          >
+            {currentSubStep === SUB_STEPS.length - 1
+              ? t("worker.setup.step1.complete")
+              : t("common.next")}
+          </Button>
+        </Col>
+      </Row>
     </div>
   );
 };

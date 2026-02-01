@@ -8,6 +8,7 @@ import {
   RiseOutlined,
 } from "@ant-design/icons";
 import { useI18n } from "@/lib/hooks/use-i18n";
+import styles from "./page.module.scss";
 
 const { Title } = Typography;
 
@@ -15,7 +16,7 @@ export default function DashboardPage() {
   const { t } = useI18n();
 
   return (
-    <Space orientation="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("dashboard.welcome")}</Title>
 
       <Row gutter={[16, 16]}>
@@ -24,8 +25,7 @@ export default function DashboardPage() {
             <Statistic
               title={t("dashboard.stats.totalUsers")}
               value={1128}
-              prefix={<UserOutlined />}
-              style={{ color: "var(--color-success)" }}
+              prefix={<UserOutlined className={styles.statSuccess} />}
             />
           </Card>
         </Col>
@@ -34,8 +34,7 @@ export default function DashboardPage() {
             <Statistic
               title={t("dashboard.stats.totalOrders")}
               value={93}
-              prefix={<ShoppingCartOutlined />}
-              style={{ color: "var(--color-primary)" }}
+              prefix={<ShoppingCartOutlined className={styles.statPrimary} />}
             />
           </Card>
         </Col>
@@ -71,7 +70,7 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} lg={8}>
           <Card title={t("dashboard.quickActions")}>
-            <Space orientation="vertical" style={{ width: "100%" }}>
+            <Space direction="vertical" className={styles.quickActionsSpace}>
               <p>{t("dashboard.quickActionsDesc")}</p>
             </Space>
           </Card>

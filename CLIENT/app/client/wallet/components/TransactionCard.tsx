@@ -7,10 +7,10 @@ import {
   StatusTagColor,
   EMPTY_PLACEHOLDER,
 } from "@/lib/constants/wallet";
-import { FontSize, Spacing, ColSpan } from "@/lib/constants/ui.constants";
-import { ThemeCSSVariable } from "@/lib/constants/theme.constants";
+import { Spacing, ColSpan } from "@/lib/constants/ui.constants";
 import { formatDateTime } from "@/app/func/func";
 import type { TFunction } from "i18next";
+import styles from "@/app/client/wallet/components/TransactionCard.module.scss";
 
 const { Text } = Typography;
 
@@ -43,13 +43,10 @@ export function TransactionCard({
     <Card size="small">
       <Row gutter={[0, Spacing.SM]}>
         <Col span={ColSpan.FULL}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.space}>
             <Space>
               <Text>{t("wallet.table.amount")}:</Text>
-              <Text
-                strong
-                style={{ color: `var(${ThemeCSSVariable.ANT_COLOR_PRIMARY})` }}
-              >
+              <Text strong className={styles.amountPrimary}>
                 {formatCurrency(transaction.amount)}
               </Text>
             </Space>
@@ -62,7 +59,7 @@ export function TransactionCard({
           </Space>
         </Col>
         <Col span={ColSpan.FULL}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.space}>
             {transaction.description && (
               <Space>
                 <Text>{t("wallet.table.description")}:</Text>
@@ -70,7 +67,7 @@ export function TransactionCard({
               </Space>
             )}
             <Space>
-              <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+              <Text type="secondary" className={styles.secondaryText}>
                 {t("wallet.table.createdAt")}: {formatDateTime(transaction.created_at)}
               </Text>
             </Space>

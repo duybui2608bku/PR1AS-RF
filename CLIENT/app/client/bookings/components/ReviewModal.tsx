@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { JSX, useEffect, useState } from "react";
 import { Breakpoint, Spacing } from "@/lib/constants/ui.constants";
+import styles from "@/app/client/bookings/components/ReviewModal.module.scss";
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -108,7 +109,7 @@ export function ReviewModal({
       okText={t("common.submit")}
       cancelText={t("common.cancel")}
       title={
-        <Title level={4} style={{ margin: 0, color: "var(--ant-color-primary)" }}>
+        <Title level={4} className={styles.title}>
           {t("booking.review.title")}
         </Title>
       }
@@ -117,24 +118,14 @@ export function ReviewModal({
           padding: `${bodyPadding}px`,
         },
       }}
-      style={{
-        maxWidth: "calc(100vw - 32px)",
-      }}
+      className={styles.modal}
     >
       <Form form={form} layout="vertical">
-        <Card
-          bordered={false}
-          style={{
-            background: "var(--ant-color-fill-tertiary)",
-            borderRadius: "12px",
-            marginBottom: `${Spacing.XL}px`,
-            border: "1px solid var(--ant-color-border-secondary)",
-          }}
-        >
+        <Card bordered={false} className={styles.card}>
           <Form.Item
             name={ReviewFormField.RATING}
             label={
-              <Text strong style={{ color: "var(--ant-color-primary)" }}>
+              <Text strong className={styles.labelPrimary}>
                 {t("booking.review.overallRating")}
               </Text>
             }
@@ -144,31 +135,19 @@ export function ReviewModal({
                 message: t("booking.review.ratingRequired"),
               },
             ]}
-            style={{ marginBottom: 0 }}
+            className={styles.ratingItem}
           >
             <Space
               orientation="vertical"
               size={Spacing.SM}
-              style={{ width: "100%" }}
+              className={styles.ratingSpace}
             >
-              <Rate
-                style={{
-                  fontSize: RateSize.LARGE,
-                  color: "var(--ant-color-primary)",
-                }}
-              />
+              <Rate className={styles.rateLarge} />
             </Space>
           </Form.Item>
         </Card>
 
-        <Title
-          level={5}
-          style={{
-            marginTop: 0,
-            marginBottom: `${Spacing.LG}px`,
-            color: "var(--ant-color-primary)",
-          }}
-        >
+        <Title level={5} className={styles.sectionTitle}>
           {t("booking.review.detailedRatings")}
         </Title>
 
@@ -189,12 +168,7 @@ export function ReviewModal({
               label={t("booking.review.professionalism")}
               rules={[{ required: true }]}
             >
-              <Rate
-                style={{
-                  fontSize: RateSize.DEFAULT,
-                  color: "var(--ant-color-primary)",
-                }}
-              />
+              <Rate className={styles.rateDefault} />
             </Form.Item>
           </Col>
 
@@ -209,12 +183,7 @@ export function ReviewModal({
               label={t("booking.review.punctuality")}
               rules={[{ required: true }]}
             >
-              <Rate
-                style={{
-                  fontSize: RateSize.DEFAULT,
-                  color: "var(--ant-color-primary)",
-                }}
-              />
+              <Rate className={styles.rateDefault} />
             </Form.Item>
           </Col>
 
@@ -229,12 +198,7 @@ export function ReviewModal({
               label={t("booking.review.communication")}
               rules={[{ required: true }]}
             >
-              <Rate
-                style={{
-                  fontSize: RateSize.DEFAULT,
-                  color: "var(--ant-color-primary)",
-                }}
-              />
+              <Rate className={styles.rateDefault} />
             </Form.Item>
           </Col>
 
@@ -249,12 +213,7 @@ export function ReviewModal({
               label={t("booking.review.serviceQuality")}
               rules={[{ required: true }]}
             >
-              <Rate
-                style={{
-                  fontSize: RateSize.DEFAULT,
-                  color: "var(--ant-color-primary)",
-                }}
-              />
+              <Rate className={styles.rateDefault} />
             </Form.Item>
           </Col>
         </Row>
@@ -262,7 +221,7 @@ export function ReviewModal({
         <Form.Item
           name={ReviewFormField.COMMENT}
           label={
-            <Text strong style={{ color: "var(--ant-color-primary)" }}>
+            <Text strong className={styles.labelPrimary}>
               {t("booking.review.comment")}
             </Text>
           }
@@ -271,16 +230,14 @@ export function ReviewModal({
             { min: ReviewValidationRule.MIN_COMMENT_LENGTH },
             { max: ReviewValidationRule.MAX_COMMENT_LENGTH },
           ]}
-          style={{ marginTop: `${Spacing.XL}px` }}
+          className={styles.commentItem}
         >
           <TextArea
             rows={TextAreaRows.DEFAULT}
             showCount
             maxLength={ReviewValidationRule.MAX_COMMENT_LENGTH}
             placeholder={t("booking.review.commentPlaceholder")}
-            style={{
-              resize: "vertical",
-            }}
+            className={styles.textArea}
           />
         </Form.Item>
       </Form>

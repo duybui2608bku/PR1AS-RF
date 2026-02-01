@@ -28,6 +28,7 @@ import {
 import { BOOKING_CONSTANTS, BOOKING_TIME_SLOTS } from "@/lib/constants/booking";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import styles from "@/app/worker/components/BookingModal.module.scss";
 import { type WalletBalanceResponse } from "@/lib/api/wallet.api";
 
 const { Text, Title } = Typography;
@@ -410,7 +411,7 @@ export function BookingModal({
               ]}
             >
               <DatePicker
-                style={{ width: "100%" }}
+                className={styles.fullWidth}
                 format="DD/MM/YYYY"
                 placeholder={t("booking.create.selectDate")}
                 disabledDate={(current) => {
@@ -465,17 +466,7 @@ export function BookingModal({
                 key={p.unit}
                 type="button"
                 onClick={() => handlePricingUnitChange(p.unit as PricingUnit)}
-                style={{
-                  padding: "8px 16px",
-                  border:
-                    selectedPricingUnit === p.unit
-                      ? "2px solid #1890ff"
-                      : "1px solid #d9d9d9",
-                  borderRadius: "4px",
-                  background:
-                    selectedPricingUnit === p.unit ? "#e6f7ff" : "white",
-                  cursor: "pointer",
-                }}
+                className={`${styles.pricingButton} ${selectedPricingUnit === p.unit ? styles.pricingButtonSelected : ""}`}
               >
                 {p.unit === PricingUnit.HOURLY
                   ? t("booking.pricing.hourly")
@@ -495,12 +486,7 @@ export function BookingModal({
                 onClick={() =>
                   setSelectedQuantity((prev) => Math.max(1, prev - 1))
                 }
-                style={{
-                  padding: "4px 12px",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className={styles.quantityButton}
               >
                 -
               </button>
@@ -508,12 +494,7 @@ export function BookingModal({
               <button
                 type="button"
                 onClick={() => setSelectedQuantity((prev) => prev + 1)}
-                style={{
-                  padding: "4px 12px",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className={styles.quantityButton}
               >
                 +
               </button>
@@ -542,16 +523,16 @@ export function BookingModal({
           <Col span={12}>
             <Text type="secondary">{t("booking.pricing.subtotal")}</Text>
           </Col>
-          <Col span={12} style={{ textAlign: "right" }}>
+          <Col span={12} className={styles.summaryRowRight}>
             <Text>{formatCurrency(calculatePricing.subtotal)}</Text>
           </Col>
         </Row>
 
-        <Row gutter={16} style={{ marginTop: 8 }}>
+        <Row gutter={16} className={styles.summaryRow}>
           <Col span={12}>
             <Text type="secondary">{t("booking.pricing.platformFee")}</Text>
           </Col>
-          <Col span={12} style={{ textAlign: "right" }}>
+          <Col span={12} className={styles.summaryRowRight}>
             <Text>{formatCurrency(calculatePricing.platform_fee)}</Text>
           </Col>
         </Row>
@@ -560,12 +541,12 @@ export function BookingModal({
 
         <Row gutter={16}>
           <Col span={12}>
-            <Title level={5} style={{ margin: 0 }}>
+            <Title level={5} className={styles.totalLabel}>
               {t("booking.pricing.total")}
             </Title>
           </Col>
-          <Col span={12} style={{ textAlign: "right" }}>
-            <Title level={5} style={{ margin: 0, color: "#1890ff" }}>
+          <Col span={12} className={styles.summaryRowRight}>
+            <Title level={5} className={styles.totalValue}>
               {formatCurrency(calculatePricing.total_amount)}
             </Title>
           </Col>

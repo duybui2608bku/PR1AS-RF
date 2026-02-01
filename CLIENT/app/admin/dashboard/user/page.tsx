@@ -36,6 +36,7 @@ import {
 } from "@/app/constants/constants";
 import { formatDateTime } from "@/app/func/func";
 import type { ColumnsType } from "antd/es/table";
+import styles from "./page.module.scss";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -303,7 +304,7 @@ export default function AdminUserPage() {
               onChange={(value) =>
                 handleFilterChange("status", value || undefined)
               }
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               allowClear
             >
               {Object.values(UserStatus).map((status) => (
@@ -377,7 +378,7 @@ export default function AdminUserPage() {
         centered
       >
         {selectedUser && newStatus && (
-          <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
+          <Space direction="vertical" size="middle" className={styles.modalSpace}>
             <Typography.Text>
               {t("admin.user.updateStatus.message", {
                 email: selectedUser.email,

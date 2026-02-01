@@ -1,0 +1,15 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.item {
+  min-width: 0;
+  grid-column: span var(--bento-span, 4);
+  grid-row: span var(--bento-row-span, 1);
+}

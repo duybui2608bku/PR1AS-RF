@@ -39,7 +39,6 @@ import { ConversationList } from "./components/ConversationList";
 import { formatTime } from "@/lib/utils";
 import { uploadImage, isImageUrl } from "@/lib/utils/upload";
 import styles from "./chat.module.scss";
-import { SocketDebug } from "@/app/chat/components/SocketDebug";
 
 const { Content } = Layout;
 const { TextArea } = Input;
@@ -665,7 +664,7 @@ function ChatContent() {
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    style={{ display: "none" }}
+                    className={styles.hiddenInput}
                     onChange={handleImageSelect}
                   />
                   {replyingTo && (

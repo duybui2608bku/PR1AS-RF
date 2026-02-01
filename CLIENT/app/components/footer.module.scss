@@ -1,0 +1,44 @@
+.footer {
+  background: var(--ant-color-bg-container);
+  border-top: 1px solid var(--ant-color-border-secondary);
+  padding: 48px 24px 24px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  margin-bottom: 16px;
+}
+
+.descriptionBlock {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.socialSpace {
+  margin-top: 16px;
+}
+
+.socialLink {
+  color: var(--ant-color-text-secondary);
+}
+
+.socialIcon {
+  font-size: 20px;
+}
+
+.footerLink {
+  color: var(--ant-color-text-secondary);
+  display: block;
+}
+
+.divider {
+  margin: 32px 0;
+}
+
+.legalLink {
+  color: var(--ant-color-text-secondary);
+}

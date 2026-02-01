@@ -9,6 +9,7 @@ import {
   getCancellationReasonLabel,
   getCancelledByLabel,
 } from "@/lib/constants/booking";
+import styles from "./CancellationInfoTooltip.module.scss";
 
 const { Text } = Typography;
 
@@ -30,43 +31,43 @@ export function CancellationInfoTooltip({
 
   const tooltipContent = (
     <Space direction="vertical" size="small">
-      <Text style={{ color: "inherit" }}>
-        <Text strong style={{ color: "inherit" }}>
+      <Text className={styles.tooltipText}>
+        <Text strong className={styles.tooltipLabel}>
           {t("booking.cancellation.cancelledBy")}:
         </Text>{" "}
         {cancelledByLabel}
       </Text>
-      <Text style={{ color: "inherit" }}>
-        <Text strong style={{ color: "inherit" }}>
+      <Text className={styles.tooltipText}>
+        <Text strong className={styles.tooltipLabel}>
           {t("booking.cancellation.reason")}:
         </Text>{" "}
         {reasonLabel}
       </Text>
       {cancellation.notes && (
-        <Text style={{ color: "inherit" }}>
-          <Text strong style={{ color: "inherit" }}>
+        <Text className={styles.tooltipText}>
+          <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.notes")}:
           </Text>{" "}
           {cancellation.notes}
         </Text>
       )}
-      <Text style={{ color: "inherit" }}>
-        <Text strong style={{ color: "inherit" }}>
+      <Text className={styles.tooltipText}>
+        <Text strong className={styles.tooltipLabel}>
           {t("booking.cancellation.cancelledAt")}:
         </Text>{" "}
         {formatDateTime(cancellation.cancelled_at)}
       </Text>
       {cancellation.refund_amount > 0 && (
-        <Text style={{ color: "inherit" }}>
-          <Text strong style={{ color: "inherit" }}>
+        <Text className={styles.tooltipText}>
+          <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.refundAmount")}:
           </Text>{" "}
           {formatCurrency(cancellation.refund_amount)}
         </Text>
       )}
       {cancellation.penalty_amount > 0 && (
-        <Text style={{ color: "inherit" }}>
-          <Text strong style={{ color: "inherit" }}>
+        <Text className={styles.tooltipText}>
+          <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.penaltyAmount")}:
           </Text>{" "}
           {formatCurrency(cancellation.penalty_amount)}
@@ -77,13 +78,7 @@ export function CancellationInfoTooltip({
 
   return (
     <Tooltip title={tooltipContent} placement="top">
-      <InfoCircleOutlined
-        style={{
-          marginLeft: 4,
-          color: "var(--ant-color-text-secondary)",
-          cursor: "pointer",
-        }}
-      />
+      <InfoCircleOutlined className={styles.icon} />
     </Tooltip>
   );
 }

@@ -10,6 +10,7 @@ import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
+import styles from "@/app/wallet/deposit/callback/page.module.scss";
 
 const { Content } = Layout;
 
@@ -109,22 +110,10 @@ function CallbackContent() {
   };
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content
-        style={{
-          padding: "24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div style={{ maxWidth: 600, width: "100%" }}>
+      <Content className={styles.content}>
+        <div className={styles.container}>
           {status === "loading" && (
             <Result
               icon={<Spin size="large" />}
@@ -159,7 +148,7 @@ function CallbackContent() {
 
           {status === "error" && (
             <Result
-              icon={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />}
+              icon={<CloseCircleOutlined className={styles.iconError} />}
               title={t("wallet.deposit.callback.failed", {
                 defaultValue: "Payment Verification Failed",
               })}

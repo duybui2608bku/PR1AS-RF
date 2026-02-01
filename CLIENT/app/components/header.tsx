@@ -12,6 +12,8 @@ import {
   Popover,
   Select,
   Divider,
+  Row,
+  Col,
 } from "antd";
 import type { MenuProps } from "antd";
 import {
@@ -34,7 +36,8 @@ import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { getProfileRoute } from "@/lib/utils/profile-navigation";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
-import { Breakpoint, ZIndex,} from "@/lib/constants/ui.constants";
+import { Breakpoint, ScrollAmount } from "@/lib/constants/ui.constants";
+import styles from "./header.module.scss";
 
 const { Header: AntHeader } = Layout;
 
@@ -51,6 +54,7 @@ const HeaderComponent = () => {
     AUTH_MODAL_TABS[0]
   );
   const [isMobile, setIsMobile] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
   const { handleError } = useErrorHandler();
 
@@ -65,6 +69,20 @@ const HeaderComponent = () => {
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > ScrollAmount.HEADER_BLUR_THRESHOLD);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -246,7 +264,7 @@ const HeaderComponent = () => {
       placement="bottomRight"
       trigger={["hover"]}
     >
-      <div style={{ cursor: "pointer" }}>
+      <div className={styles.avatarWrapper}>
         <Avatar
           size="large"
           src={user?.avatar}
@@ -285,7 +303,7 @@ const HeaderComponent = () => {
         {renderAvatarDropdown(userData.isAdmin ? adminMenuItems : userMenuItems)}
       </Space>
     ) : (
-      <Space orientation="vertical" style={{ width: "100%" }}>
+      <Space orientation="vertical" className={styles.authSectionFullWidth}>
         <Button type="primary" onClick={handleOpenLogin} block>
           {t("auth.login")}
         </Button>
@@ -296,42 +314,44 @@ const HeaderComponent = () => {
     ), [isAuthenticated, user, renderAvatarDropdown, userData.isAdmin, adminMenuItems, userMenuItems, handleOpenLogin, handleOpenRegister, t]);
 
   const mobilePopoverContent = (
-    <div style={{ width: 280, padding: "8px 0" }}>
-      {!userData.isAdmin && <div style={{ marginBottom: 16 }}>{workerButton}</div>}
+    <div className={styles.popoverContent}>
+      {!userData.isAdmin && (
+        <div className={styles.workerButtonBlock}>{workerButton}</div>
+      )}
       {!userData.isAdmin && <SettingsPopover />}
-      <Divider style={{ margin: "12px 0" }} />
+      <Divider className={styles.dividerSpacing} />
 
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ fontWeight: 500 }}>{t("header.currency")}</span>
-      </div>
-      <Select
-        value={currency}
-        onChange={(value) => setCurrency(value as any)}
-        style={{ width: "100%" }}
-        size="middle"
-      >
-        {currencies.map((curr) => (
-          <Select.Option key={curr} value={curr}>
-            {getCurrencyLabel(curr as any)}
-          </Select.Option>
-        ))}
-      </Select>
+      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+        <span className={styles.settingsLabel}>{t("header.currency")}</span>
+        <Select
+          value={currency}
+          onChange={(value) => setCurrency(value as any)}
+          className={styles.selectFullWidth}
+          size="middle"
+        >
+          {currencies.map((curr) => (
+            <Select.Option key={curr} value={curr}>
+              {getCurrencyLabel(curr as any)}
+            </Select.Option>
+          ))}
+        </Select>
+      </Space>
 
-      <Divider style={{ margin: "12px 0" }} />
+      <Divider className={styles.dividerSpacing} />
 
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ fontWeight: 500 }}>{t("header.language")}</span>
-      </div>
-      <LanguageSwitcher />
+      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+        <span className={styles.settingsLabel}>{t("header.language")}</span>
+        <LanguageSwitcher />
+      </Space>
 
-      <Divider style={{ margin: "12px 0" }} />
+      <Divider className={styles.dividerSpacing} />
 
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ fontWeight: 500 }}>{t("header.theme")}</span>
-      </div>
-      <ThemeToggle />
+      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+        <span className={styles.settingsLabel}>{t("header.theme")}</span>
+        <ThemeToggle />
+      </Space>
 
-      <Divider style={{ margin: "12px 0" }} />
+      <Divider className={styles.dividerSpacing} />
 
       {authSectionMobile}
     </div>
@@ -339,44 +359,35 @@ const HeaderComponent = () => {
 
   return (
     <AntHeader
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 24px",
-        background: "var(--bg-dark-primary)",
-        borderBottom: "1px solid var(--bg-dark-secondary)",
-        position: "sticky",
-        top: 0,
-        zIndex: ZIndex.HEADER,
-      }}
+      className={`${styles.header} ${isScrolled ? styles.scrolled : ""}`}
     >
-      <Link
-        href={AppRoute.HOME}
-        style={{ fontSize: 20, fontWeight: "bold", color: "inherit" }}
-      >
-        {t("home.logo")}
-      </Link>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        {!isMobile && (
-          <Space size="middle">
-            {!userData.isAdmin && workerButton}
-            {!userData.isAdmin && <SettingsPopover />}
-            {authSectionDesktop}
+      <Row justify="space-between" align="middle" wrap={false} className={styles.headerRow}>
+        <Col flex="none">
+          <Link href={AppRoute.HOME} className={styles.logoLink}>
+            {t("home.logo")}
+          </Link>
+        </Col>
+        <Col flex="auto">
+          <Space className={styles.actionsRow} size="middle">
+            {!isMobile && (
+              <>
+                {!userData.isAdmin && workerButton}
+                {!userData.isAdmin && <SettingsPopover />}
+                {authSectionDesktop}
+              </>
+            )}
+            {isMobile && (
+              <Popover
+                content={mobilePopoverContent}
+                trigger="click"
+                placement="bottomRight"
+              >
+                <Button type="text" icon={<MenuOutlined />} />
+              </Popover>
+            )}
           </Space>
-        )}
-
-        {isMobile && (
-          <Popover
-            content={mobilePopoverContent}
-            trigger="click"
-            placement="bottomRight"
-          >
-            <Button type="text" icon={<MenuOutlined />} />
-          </Popover>
-        )}
-      </div>
+        </Col>
+      </Row>
 
       <AuthModal
         open={authModalOpen}

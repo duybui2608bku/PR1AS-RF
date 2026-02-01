@@ -12,8 +12,9 @@ import {
   WorkerActionType,
 } from "@/app/worker/bookings/constants/booking.constants";
 import { WorkerBookingActions } from "@/app/worker/bookings/components/WorkerBookingActions";
-  import { FontSize, Spacing } from "@/lib/constants/ui.constants";
-  import type { TFunction } from "i18next";
+import { Spacing } from "@/lib/constants/ui.constants";
+import type { TFunction } from "i18next";
+import styles from "@/app/worker/bookings/components/WorkerBookingCard.module.scss";
 
   const { Text } = Typography;
 
@@ -77,7 +78,7 @@ import { WorkerBookingActions } from "@/app/worker/bookings/components/WorkerBoo
               </Space>
               <Space>
               <Text>{t("booking.table.createdAt")}:</Text>
-                <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+                <Text type="secondary" className={styles.secondaryText}>
                   {formatDateTime(booking.created_at)}
                 </Text>
               </Space>
@@ -98,18 +99,18 @@ import { WorkerBookingActions } from "@/app/worker/bookings/components/WorkerBoo
             </Text>
           </Col>
           <Col span={ColSpan.FULL}>
-            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+            <Text type="secondary" className={styles.secondaryText}>
               {t("booking.table.duration")}: {booking.schedule.duration_hours}{" "}
               {t("booking.pricing.hourly")}
             </Text>
           </Col>
           <Col xs={ColSpan.FULL} sm={ColSpan.HALF}>
-            <Text strong style={{ color: "var(--ant-color-primary)" }}>
+            <Text strong className={styles.primaryAmount}>
               {formatCurrency(booking.pricing.total_amount)}
             </Text>
           </Col>
           <Col xs={ColSpan.FULL} sm={ColSpan.HALF}>
-            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+            <Text type="secondary" className={styles.payoutText}>
               {t("booking.worker.payout")}:{" "}
               {formatCurrency(booking.pricing.worker_payout)}
             </Text>

@@ -1,5 +1,9 @@
 @import "../../styles/variables";
 
+.hiddenInput {
+  display: none;
+}
+
 .chatLayout {
   min-height: 100vh;
   background: var(--ant-color-bg-container);

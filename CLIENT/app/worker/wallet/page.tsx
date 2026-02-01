@@ -46,6 +46,7 @@ import { Breakpoint, Spacing } from "@/lib/constants/ui.constants";
 import { EscrowCardGrid } from "@/app/worker/wallet/components/EscrowCardGrid";
 import { DateRangePreset } from "@/lib/constants/wallet";
 import { getDateRangeFromPreset } from "@/lib/utils/date.utils";
+import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -238,19 +239,11 @@ function WorkerWalletContent() {
   ];
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Title
-            level={2}
-            style={{ marginBottom: 24, color: "var(--ant-color-primary)" }}
-          >
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Title level={2} className={styles.pageTitle}>
             {t("worker.wallet.title") || "Worker Wallet"}
           </Title>
 
@@ -258,7 +251,7 @@ function WorkerWalletContent() {
             activeKey={activeTab}
             onChange={handleTabChange}
             size="large"
-            style={{ marginBottom: 24 }}
+            className={styles.tabs}
           >
             <Tabs.TabPane
               tab={
@@ -271,26 +264,12 @@ function WorkerWalletContent() {
             >
               <Row gutter={[24, 24]}>
                 <Col xs={24} sm={12} md={8}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
+                  <Card hoverable className={styles.balanceCard}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.balance") || "Balance"}
                       </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <Title level={3} className={styles.cardTitle}>
                         {formatCurrency(FAKE_BALANCE)}
                       </Title>
                     </Space>
@@ -298,27 +277,13 @@ function WorkerWalletContent() {
                 </Col>
 
                 <Col xs={24} sm={12} md={8}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
+                  <Card hoverable className={styles.balanceCard}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.reconciliationBalance") ||
                           "Reconciliation Balance"}
                       </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <Title level={3} className={styles.cardTitle}>
                         {formatCurrency(FAKE_RECONCILIATION_BALANCE)}
                       </Title>
                     </Space>
@@ -326,27 +291,13 @@ function WorkerWalletContent() {
                 </Col>
 
                 <Col xs={24} sm={12} md={8}>
-                  <Card
-                    hoverable
-                    style={{ cursor: "pointer",padding: "24px" }}
-                  >
-                    <Space
-                      orientation="vertical"
-                      size="small"
-                      style={{ width: "100%" }}
-                    >
+                  <Card hoverable className={styles.balanceCard}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.pendingWithdrawal") ||
                           "Pending Withdrawal"}
                       </Text>
-                      <Title
-                        level={3}
-                        style={{
-                          margin: 0,
-                          color: "var(--ant-color-primary)",
-                          fontWeight: "bold",
-                        }}
-                      >
+                      <Title level={3} className={styles.cardTitle}>
                         {formatCurrency(FAKE_PENDING_WITHDRAWAL)}
                       </Title>
                     </Space>
@@ -366,12 +317,12 @@ function WorkerWalletContent() {
               key={WorkerWalletTabKey.RECONCILIATION}
             >
               <Card>
-                <Row gutter={[Spacing.MD, Spacing.MD]} style={{ marginBottom: Spacing.LG }}>
+                <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
                   <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <span>{t("escrow.table.status")}:</span>
                       <Select
-                        style={{ width: "100%" }}
+                        className={styles.selectFull}
                         value={statusFilter || FilterValueAll.ALL}
                         onChange={handleStatusFilterChange}
                         allowClear
@@ -403,10 +354,10 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <span>{t("worker.wallet.filters.datePreset") || "Quick Date"}:</span>
                       <Select
-                        style={{ width: "100%" }}
+                        className={styles.selectFull}
                         value={datePreset}
                         onChange={handleDatePresetChange}
                         allowClear
@@ -431,10 +382,10 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={6}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <span>{t("booking.list.filters.dateRange") || "Date Range"}:</span>
                       <RangePicker
-                        style={{ width: "100%" }}
+                        className={styles.selectFull}
                         value={dateRange}
                         onChange={handleDateRangeChange}
                         format={DATE_FORMAT_ISO}
@@ -442,25 +393,25 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={3}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <span />
                       <Button
                         icon={<UndoOutlined />}
                         onClick={handleResetFilters}
-                        style={{ width: "100%" }}
+                        className={styles.buttonFull}
                       >
                         {t("common.reset") || "Reset"}
                       </Button>
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={3}>
-                    <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                    <Space direction="vertical" size="small" className={styles.spaceFull}>
                       <span />
                       <Button
                         icon={<ReloadOutlined />}
                         onClick={handleRefresh}
                         loading={isLoadingEscrows}
-                        style={{ width: "100%" }}
+                        className={styles.buttonFull}
                       >
                         {t("common.refresh") || "Refresh"}
                       </Button>

@@ -1,33 +1,19 @@
 "use client";
 
-import { ReactNode, memo, useMemo } from "react";
-import { Spacing } from "@/lib/constants/ui.constants";
+import { ReactNode, memo } from "react";
+import { BentoItemSpan } from "@/lib/constants/ui.constants";
+import styles from "./bento-grid.module.scss";
 
 interface BentoGridProps {
   children: ReactNode;
   className?: string;
 }
 
-const BentoGridComponent = ({ children, className = "" }: BentoGridProps) => {
-  const gridStyle = useMemo(() => ({
-    display: "grid",
-    gridTemplateColumns: "repeat(12, 1fr)",
-    gap: `${Spacing.XL}px`,
-    width: "100%",
-    maxWidth: "1400px",
-    margin: "0 auto",
-    padding: `0 ${Spacing.XL}px`,
-  }), []);
-
-  return (
-    <div
-      className={`bento-grid-desktop ${className}`}
-      style={gridStyle}
-    >
-      {children}
-    </div>
-  );
-};
+const BentoGridComponent = ({ children, className = "" }: BentoGridProps) => (
+  <div className={`${styles.grid} ${className}`}>
+    {children}
+  </div>
+);
 
 export const BentoGrid = memo(BentoGridComponent);
 
@@ -43,21 +29,19 @@ const BentoGridItemComponent = ({
   span = 4,
   rowSpan = 1,
   className = "",
-}: BentoGridItemProps) => {
-  const itemStyle = useMemo(() => ({
-    gridColumn: `span ${span}`,
-    gridRow: `span ${rowSpan}`,
-  }), [span, rowSpan]);
-
-  return (
-    <div
-      className={className}
-      style={itemStyle}
-    >
-      {children}
-    </div>
-  );
-};
+}: BentoGridItemProps) => (
+  <div
+    className={`${styles.item} ${className}`}
+    style={
+      {
+        ["--bento-span" as string]: String(span),
+        ["--bento-row-span" as string]: String(rowSpan),
+      } as React.CSSProperties
+    }
+  >
+    {children}
+  </div>
+);
 
 export const BentoGridItem = memo(BentoGridItemComponent);
 

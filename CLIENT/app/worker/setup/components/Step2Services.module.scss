@@ -1,0 +1,141 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.subtitleBlock {
+  margin-bottom: 32px;
+}
+
+.categorySection {
+  margin-bottom: 32px;
+}
+
+.subtitleText {
+  font-size: 16px;
+  margin-bottom: 0;
+}
+
+.categoryLabel {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.categoryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.categoryCard {
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.selected {
+    border: 2px solid var(--ant-color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--ant-color-primary-bg);
+
+    .categoryCardTitle {
+      color: var(--ant-color-primary);
+    }
+  }
+}
+
+.categoryCardInner {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.categoryCardTitle {
+  margin: 0;
+}
+
+.servicesSection {
+  margin-bottom: 32px;
+}
+
+.servicesLabel {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.spinWrapper {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.servicesGrid {
+  margin-top: 0;
+}
+
+.serviceCard {
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.selected {
+    border: 2px solid var(--ant-color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.serviceCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.serviceCardTitle {
+  margin-bottom: 8px;
+}
+
+.serviceCardDesc {
+  font-size: 14px;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.serviceCardRules {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pricingButton {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.selectedSection {
+  margin-top: 48px;
+}
+
+.selectedTitle {
+  margin-bottom: 16px;
+}
+
+.selectedList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alertMargin {
+  margin-top: 8px;
+}
+
+.navRow {
+  margin-top: 48px;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}

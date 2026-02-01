@@ -10,6 +10,7 @@ import { workerServicesApi } from "@/lib/api/worker.api";
 import { transformWorkersGroupedByServiceToServices } from "@/lib/utils/service-transform.utils";
 import { useMemo } from "react";
 import { SERVICE_CATEGORIES } from "./constants/constants";
+import styles from "./page.module.scss";
 
 const { Content } = Layout;
 
@@ -95,24 +96,10 @@ export default function Home() {
   );
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "var(--background)" }}>
+    <Layout className={styles.layout}>
       <Header />
-      <Content
-        style={{
-          background: "var(--background)",
-          maxWidth: "100%",
-          overflowX: "hidden",
-        }}
-      >
-        <section
-          id="services"
-          style={{
-            padding: "80px 0 120px",
-            background: "var(--background)",
-            maxWidth: "100%",
-            overflowX: "hidden",
-          }}
-        >
+      <Content className={styles.content}>
+        <section id="services" className={styles.section}>
           <CategorySection
             title={t("home.categories.assistance.title")}
             subtitle={t("home.categories.assistance.subtitle")}

@@ -1,0 +1,51 @@
+.modal {
+  max-width: calc(100vw - 32px);
+}
+
+.title {
+  margin: 0;
+  color: var(--ant-color-primary);
+}
+
+.card {
+  background: var(--ant-color-fill-tertiary);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.labelPrimary {
+  color: var(--ant-color-primary);
+}
+
+.ratingItem {
+  margin-bottom: 0;
+}
+
+.ratingSpace {
+  width: 100%;
+}
+
+.rateLarge {
+  font-size: 28px;
+  color: var(--ant-color-primary);
+}
+
+.rateDefault {
+  font-size: 20px;
+  color: var(--ant-color-primary);
+}
+
+.sectionTitle {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: var(--ant-color-primary);
+}
+
+.commentItem {
+  margin-top: 24px;
+}
+
+.textArea {
+  resize: vertical;
+}

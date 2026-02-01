@@ -1,12 +1,13 @@
 "use client";
 
-import { Card, Typography, Rate, Avatar, Space } from "antd";
+import { Card, Typography, Rate, Avatar, Space, Row, Col } from "antd";
 import { EnvironmentOutlined, UserOutlined, HeartOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { Service } from "../data/services.mock";
 import { useMemo, useState, memo, useCallback } from "react";
-import { ImageHeight, FontSize, BorderRadius, TransitionDuration } from "@/lib/constants/ui.constants";
+import { ImageHeight, FontSize } from "@/lib/constants/ui.constants";
+import styles from "./service-card.module.scss";
+import { Service } from "@/lib/api";
 
 const { Text, Title } = Typography;
 
@@ -28,22 +29,6 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
     }).format(price);
   }, []);
 
-  const cardStyles = useMemo(() => {
-    const baseStyles: React.CSSProperties = {
-      borderRadius: `${BorderRadius.LARGE}px`,
-      border: `1px solid var(--border-secondary)`,
-      overflow: "hidden",
-      background: "var(--background)",
-      cursor: "pointer",
-      transition: `all ${TransitionDuration.FAST}ms ease-out`,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-    };
-
-    return baseStyles;
-  }, []);
-
   const imageHeight = useMemo(() => {
     return size === "large" ? ImageHeight.LARGE : size === "medium" ? ImageHeight.MEDIUM : ImageHeight.SMALL;
   }, [size]);
@@ -59,117 +44,44 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
     setIsLiked((prev) => !prev);
   }, []);
 
-  const handleMouseEnter = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.transform = "translateY(-2px)";
-    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
-  }, []);
-
-  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.transform = "translateY(0)";
-    e.currentTarget.style.boxShadow = "none";
-  }, []);
-
   return (
     <Card
       hoverable
-      style={cardStyles}
+      className={styles.card}
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      styles={{
-        body: {
-          padding: 0,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
     >
       <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: imageHeight,
-          overflow: "hidden",
-          backgroundColor: "var(--background-secondary)",
-        }}
+        className={styles.imageWrapper}
+        style={{ height: imageHeight }}
       >
         <Image
           src={service.image}
           alt={service.title}
           fill
-          style={{
-            objectFit: "cover",
-            transition: `transform ${TransitionDuration.NORMAL}ms ease-out`,
-          }}
+          className={styles.image}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         {service.loved && (
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              left: 12,
-              background: "var(--background)",
-              color: "var(--foreground)",
-              opacity: 0.95,
-              padding: "6px 12px",
-              borderRadius: `${BorderRadius.EXTRA_LARGE}px`,
-              fontSize: FontSize.XS,
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            }}
-            >
-            <span style={{ fontSize: 14 }}>❤️</span>
+          <div className={styles.badge}>
+            <span>❤️</span>
             {t("serviceCard.loved")}
           </div>
         )}
 
         <button
+          type="button"
           onClick={handleLikeClick}
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            border: "none",
-            background: "var(--background)",
-            opacity: 0.95,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            transition: `all ${TransitionDuration.FAST}ms ease-out`,
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.background = "var(--background)";
-            e.currentTarget.style.opacity = "1";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.background = "var(--background)";
-            e.currentTarget.style.opacity = "0.95";
-          }}
+          className={styles.likeButton}
         >
           <HeartOutlined
-            style={{
-              fontSize: FontSize.LG,
-              color: isLiked ? "#FF385C" : "var(--foreground)",
-              transition: `color ${TransitionDuration.FAST}ms ease-out`,
-            }}
+            className={isLiked ? styles.lovedIcon : styles.heartIcon}
+            style={{ fontSize: FontSize.LG }}
           />
         </button>
       </div>
 
-      <div style={{ padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
-        <Space style={{ marginBottom: 8 }} size="small">
+      <div className={styles.contentBlock}>
+        <Space className={styles.metaSpace} size="small">
           <Text
             type="secondary"
             style={{
@@ -192,96 +104,60 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           </Space>
         </Space>
 
-        <Title
-          level={titleLevel}
-          style={{
-            margin: 0,
-            marginBottom: 8,
-            fontWeight: 700,
-            color: "var(--color-primary)",
-            lineHeight: 1.3,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
+        <Title level={titleLevel} className={styles.title}>
           {service.title}
         </Title>
 
-        <Space style={{ marginBottom: 12 }} size={4}>
+        <Space className={styles.ratingSpace} size={4}>
           <Rate
             disabled
             value={service.rating}
             allowHalf
             style={{ fontSize: FontSize.SM }}
           />
-          <Text
-            style={{
-              fontSize: FontSize.SM,
-              fontWeight: 500,
-              color: "var(--foreground)",
-            }}
-          >
+          <Text style={{ fontSize: FontSize.SM, fontWeight: 500, color: "var(--foreground)" }}>
             {service.rating}
           </Text>
           <Text type="secondary" style={{ fontSize: FontSize.SM }}>
             ({service.reviewCount})
           </Text>
         </Space>
-        <div
-          style={{
-            marginTop: "auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingTop: 12,
-            borderTop: `1px solid var(--border-secondary)`,
-          }}
-        >
-          <Space size={8}>
-            {service.users.length === 1 ? (
-              <>
-                <Avatar
+
+        <Row className={styles.footerRow} justify="space-between" align="middle">
+          <Col>
+            <Space size={8}>
+              {service.users.length === 1 ? (
+                <>
+                  <Avatar
+                    size={24}
+                    src={service.users[0].avatar}
+                    icon={<UserOutlined />}
+                  />
+                  <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+                    {service.users[0].name}
+                  </Text>
+                </>
+              ) : (
+                <Avatar.Group
+                  max={{ count: 2, style: { color: "var(--foreground)", backgroundColor: "var(--background-secondary)" } }}
                   size={24}
-                  src={service.users[0].avatar}
-                  icon={<UserOutlined />}
-                />
-                <Text type="secondary" style={{ fontSize: FontSize.XS }}>
-                  {service.users[0].name}
-                </Text>
-              </>
-            ) : (
-              <Avatar.Group
-                max={{ count: 2, style: { color: "var(--foreground)", backgroundColor: "var(--background-secondary)" } }}
-                size={24}
-              >
-                {service.users.map((user) => (
-                  <Avatar key={user.id} src={user.avatar} icon={<UserOutlined />} />
-                ))}
-              </Avatar.Group>
-            )}
-          </Space>
-          <Text
-            style={{
-              fontSize: priceFontSize,
-              fontWeight: 700,
-              color: "var(--color-primary)",
-            }}
-          >
-            {formattedPrice}
-            <Text
-              type="secondary"
-              style={{
-                fontSize: FontSize.XS,
-                fontWeight: 400,
-                marginLeft: 4,
-              }}
-            >
-              /{service.priceUnit}
+                >
+                  {service.users.map((user) => (
+                    <Avatar key={user.id} src={user.avatar} icon={<UserOutlined />} />
+                  ))}
+                </Avatar.Group>
+              )}
+            </Space>
+          </Col>
+          <Col>
+            <Text className={styles.priceText} style={{ fontSize: priceFontSize }}>
+              {formattedPrice}
+              <Text type="secondary" className={styles.priceUnit}>
+                /{service.priceUnit}
+              </Text>
             </Text>
-          </Text>
-        </div>
+          </Col>
+        </Row>
       </div>
     </Card>
   );

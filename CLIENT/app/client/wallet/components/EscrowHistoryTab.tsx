@@ -27,6 +27,7 @@ import {
 import { createEscrowColumns } from "@/app/client/wallet/constants";
 import { Spacing } from "@/lib/constants/ui.constants";
 import { EscrowCardGrid } from "@/app/worker/wallet/components/EscrowCardGrid";
+import styles from "@/app/client/wallet/components/EscrowHistoryTab.module.scss";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -108,10 +109,10 @@ export function EscrowHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <span>{t("wallet.filters.dateRange") || "Date Range"}:</span>
             <RangePicker
-              style={{ width: "100%" }}
+              className={styles.filterRangePicker}
               value={dateRange}
               onChange={onDateRangeChange}
               format={DATE_FORMAT_ISO}
@@ -137,9 +138,9 @@ export function EscrowHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <span />
-            <Space style={{ width: "100%", justifyContent: "space-between" }}>
+            <Space className={styles.actionsSpace}>
               <Button
                 icon={<UndoOutlined />}
                 onClick={onResetFilters}

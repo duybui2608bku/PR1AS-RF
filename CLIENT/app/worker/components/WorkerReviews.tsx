@@ -80,14 +80,11 @@ export function WorkerReviews({ reviews = [] }: WorkerReviewsProps) {
                     <Rate
                       disabled
                       value={review.rating}
-                      style={{ fontSize: 12 }}
+                      className={styles.reviewRateSmall}
                     />
                     <Text
                       type="secondary"
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 12,
-                      }}
+                      className={styles.reviewDateText}
                     >
                       {formatReviewDate(review.created_at)}
                     </Text>
@@ -100,16 +97,16 @@ export function WorkerReviews({ reviews = [] }: WorkerReviewsProps) {
             </Paragraph>
             {review.worker_reply && (
               <div className={styles.workerReply}>
-                <Text strong type="secondary" style={{ fontSize: 12 }}>
+                <Text strong type="secondary" className={styles.reviewReplyLabel}>
                   {t("worker.detail.reviews.workerReply") || "Phản hồi từ worker:"}
                 </Text>
-                <Paragraph className={styles.replyText} style={{ marginTop: 4 }}>
+                <Paragraph className={styles.reviewReplyParagraph}>
                   {review.worker_reply}
                 </Paragraph>
               </div>
             )}
             {index < reviews.length - 1 && (
-              <Divider style={{ margin: "12px 0" }} />
+              <Divider className={styles.reviewDivider} />
             )}
           </div>
         ))}

@@ -10,9 +10,9 @@ import {
   EMPTY_PLACEHOLDER,
 } from "@/lib/constants/wallet";
 import { EscrowStatus } from "@/lib/types/escrow";
-import { ThemeCSSVariable } from "@/lib/constants/theme.constants";
 import { formatDateTime } from "@/app/func/func";
 import type { TFunction } from "i18next";
+import styles from "@/app/client/wallet/constants/wallet.constants.module.scss";
 
 const { Text } = Typography;
 
@@ -50,7 +50,7 @@ export const createWalletTransactionColumns = (
       key: TableColumnKey.AMOUNT,
       width: TableColumnWidth.AMOUNT,
       render: (amount: number) => (
-        <Text strong style={{ color: `var(${ThemeCSSVariable.ANT_COLOR_PRIMARY})` }}>
+        <Text strong className={styles.amountPrimary}>
           {formatCurrency(amount)}
         </Text>
       ),
@@ -94,7 +94,7 @@ export const createEscrowColumns = (
       key: "amount",
       width: TableColumnWidth.AMOUNT,
       render: (amount: number) => (
-        <Text strong style={{ color: `var(${ThemeCSSVariable.ANT_COLOR_PRIMARY})` }}>
+        <Text strong className={styles.amountPrimary}>
           {formatCurrency(amount)}
         </Text>
       ),

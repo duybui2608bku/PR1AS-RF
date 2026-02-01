@@ -1,0 +1,75 @@
+@use "../../styles/variables" as *;
+
+.headerRow {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: transparent;
+  border-bottom: 1px solid var(--bg-dark-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: background 300ms ease, backdrop-filter 300ms ease;
+
+  &.scrolled {
+    background: var(--bg-dark-primary);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+.logoLink {
+  font-size: 20px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+}
+
+.avatarWrapper {
+  cursor: pointer;
+}
+
+.popoverContent {
+  width: 280px;
+  padding: 8px 0;
+}
+
+.workerButtonBlock {
+  margin-bottom: 16px;
+}
+
+.settingsBlock {
+  margin-bottom: 8px;
+}
+
+.settingsLabel {
+  font-weight: 500;
+}
+
+.dividerSpacing {
+  margin: 12px 0;
+}
+
+.selectFullWidth {
+  width: 100%;
+}
+
+.authSectionFullWidth {
+  width: 100%;
+}
+
+.mobileAuthFullWidth {
+  width: 100%;
+}

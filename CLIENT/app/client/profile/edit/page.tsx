@@ -28,6 +28,7 @@ import { AuthGuard } from "@/lib/components/auth-guard";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
+import styles from "@/app/client/profile/edit/page.module.scss";
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -214,7 +215,7 @@ function EditProfileContent() {
                   </Form.Item>
 
                   <Divider plain>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className={styles.dividerText}>
                       {t("profile.edit.changePassword.title")}
                     </Text>
                   </Divider>

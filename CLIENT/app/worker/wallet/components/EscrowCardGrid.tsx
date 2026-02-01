@@ -6,6 +6,7 @@ import { EscrowCard } from "./EscrowCard";
 import { Spacing, GridColSpan } from "@/lib/constants/ui.constants";
 import { PAGINATION_DEFAULTS, PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
 import type { TFunction } from "i18next";
+import styles from "./EscrowCardGrid.module.scss";
 
 type FormatCurrencyFunction = (amount: number) => string;
 
@@ -35,7 +36,7 @@ export function EscrowCardGrid({
   }
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Row gutter={[Spacing.MD, Spacing.MD]}>
         {escrows.map((escrow) => (
           <Col
@@ -64,7 +65,7 @@ export function EscrowCardGrid({
         onChange={(newPage, newPageSize) => {
           onPageChange(newPage, newPageSize);
         }}
-        style={{ marginTop: Spacing.LG, textAlign: "center" }}
+        className={styles.pagination}
       />
     </Space>
   );

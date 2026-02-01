@@ -6,6 +6,11 @@ export enum Breakpoint {
 
 export enum ScrollAmount {
   CATEGORY_SECTION = 400,
+  HEADER_BLUR_THRESHOLD = 8,
+}
+
+export enum BackdropBlur {
+  HEADER = 12,
 }
 
 export enum ImageHeight {
@@ -39,6 +44,16 @@ export enum FontSize {
   LG = 18,
   XL = 20,
   XXL = 28,
+}
+
+export enum FontWeight {
+  NORMAL = 400,
+  MEDIUM = 500,
+  BOLD = 700,
+}
+
+export enum PopoverWidth {
+  SETTINGS = 280,
 }
 
 export enum TransitionDuration {
@@ -78,4 +93,41 @@ export enum GridColSpan {
   MD = 12,
   LG = 8,
   XL = 6,
+}
+
+export enum ContentMaxWidth {
+  DEFAULT = 1200,
+  WIDE = 1400,
+}
+
+export enum ServiceCardMinWidth {
+  MEDIUM = 320,
+}
+
+export enum BentoItemSpan {
+  DEFAULT = 4,
+  ROW_DEFAULT = 1,
+}
+
+export enum StepCardMaxWidth {
+  FORM = 600,
+  GALLERY = 800,
+}
+
+export enum StepContainerMaxWidth {
+  DEFAULT = 1000,
+}
+
+export enum AuthCardMaxWidth {
+  LOGIN = 420,
+  REGISTER = 480,
+}
+
+export enum AuthIconSize {
+  HERO = 48,
+}
+
+export enum SiderWidth {
+  EXPANDED = 250,
+  COLLAPSED = 80,
 }

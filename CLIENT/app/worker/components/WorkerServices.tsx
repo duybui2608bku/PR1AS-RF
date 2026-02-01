@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import type { Service } from "@/lib/types/worker";
 import { formatPrice, getServiceName } from "@/lib/utils/worker.utils";
-import { Spacing, FontSize } from "@/lib/constants/ui.constants";
+import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "../[id]/worker-detail.module.scss";
 
 const { Text } = Typography;
@@ -46,9 +46,8 @@ export function WorkerServices({
   if (isLoading) {
     return (
       <Card
-        className={styles.bookingCard}
+        className={`${styles.bookingCard} ${styles.bookingCardMargin}`}
         title={t("worker.detail.services.title")}
-        style={{ marginBottom: Spacing.LG }}
       >
         <Text type="secondary">{t("common.loading")}</Text>
       </Card>
@@ -58,9 +57,8 @@ export function WorkerServices({
   if (!services || services.length === 0) {
     return (
       <Card
-        className={styles.bookingCard}
+        className={`${styles.bookingCard} ${styles.bookingCardMargin}`}
         title={t("worker.detail.services.title")}
-        style={{ marginBottom: Spacing.LG }}
       >
         <Text type="secondary">{t("worker.detail.services.noServices")}</Text>
       </Card>
@@ -119,13 +117,7 @@ export function WorkerServices({
                 >
                   <div className={styles.serviceCardContent}>
                     <Text strong>{serviceName}</Text>
-                    <Text
-                      type="secondary"
-                      style={{
-                        display: "block",
-                        fontSize: FontSize.XS,
-                      }}
-                    >
+                    <Text type="secondary" className={styles.servicePriceText}>
                       {priceText}
                     </Text>
                   </div>

@@ -1,0 +1,40 @@
+.card {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 400px;
+  max-height: 600px;
+  overflow: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.spaceFull {
+  width: 100%;
+}
+
+.dividerSpacing {
+  margin: 8px 0;
+}
+
+.lastEventBlock {
+  margin-top: 4px;
+}
+
+.eventText {
+  font-size: 12px;
+}
+
+.eventsList {
+  margin-top: 4px;
+  max-height: 150px;
+  overflow: auto;
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.eventItem {
+  font-size: 11px;
+  margin-bottom: 4px;
+}

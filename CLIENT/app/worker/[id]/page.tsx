@@ -137,11 +137,9 @@ export default function WorkerDetailPage() {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout className={styles.layout}>
       <Header />
-      <Content
-        style={{ background: "#FFFFFF", maxWidth: "100%", overflowX: "hidden" }}
-      >
+      <Content className={styles.content}>
         <QueryState
           isLoading={isLoading}
           isError={isError}
@@ -239,7 +237,7 @@ export default function WorkerDetailPage() {
                                   disabled
                                   value={workerData.review_stats?.average_rating || 0}
                                   allowHalf
-                                  style={{ color: "#fbbf24" }}
+                                  className={styles.rateStar}
                                 />
                               </Space>
                               <Text className={styles.commentText}>
@@ -277,12 +275,9 @@ export default function WorkerDetailPage() {
                               <div className={styles.tagsRow}>
                                 {worker_profile.hobbies.map((hobby, index) => (
                                   <Tag
-                                    style={{
-                                      padding: "4px 12px",
-                                    }}
                                     key={index}
                                     variant="solid"
-                                    className={styles.tag}
+                                    className={`${styles.tag} ${styles.tagPadding}`}
                                     color={randomColorTag()}
                                   >
                                     {hobby}
@@ -294,17 +289,7 @@ export default function WorkerDetailPage() {
                           {worker_profile.introduction && (
                             <div className={styles.introRow}>
                               <Paragraph
-                                className={styles.introText}
-                                style={{
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: showFullIntroduction
-                                    ? "unset"
-                                    : 3,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: showFullIntroduction
-                                    ? "visible"
-                                    : "hidden",
-                                }}
+                                className={`${styles.introText} ${showFullIntroduction ? styles.introTextFull : styles.introTextClamped}`}
                               >
                                 {displayIntroduction}
                               </Paragraph>
@@ -330,7 +315,7 @@ export default function WorkerDetailPage() {
                     </Row>
                     <Row gutter={[32, 32]} className={styles.section}>
                       <Col xs={24} lg={14}>
-                        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Row gutter={[16, 16]} className={styles.infoCardsRow}>
                           {(() => {
                             const age = calculateAge(
                               worker_profile.date_of_birth
@@ -388,7 +373,7 @@ export default function WorkerDetailPage() {
                             ));
                           })()}
                         </Row>
-                        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Row gutter={[16, 16]} className={styles.infoCardsRow}>
                           {worker_profile.lifestyle && (
                             <Col xs={24} sm={12}>
                               <Card
@@ -436,8 +421,7 @@ export default function WorkerDetailPage() {
                               size="large"
                               block
                               icon={<ShoppingCartOutlined />}
-                              className={styles.hireButton}
-                              style={{ marginBottom: 16 }}
+                              className={`${styles.hireButton} ${styles.hireButtonMargin}`}
                               onClick={handleHireClick}
                               disabled={selectedServices.length === 0}
                             >

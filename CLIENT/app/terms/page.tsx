@@ -4,6 +4,7 @@ import { Layout, Typography, Divider } from "antd";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
 import { useTranslation } from "react-i18next";
+import styles from "./page.module.scss";
 
 const { Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -12,29 +13,22 @@ export default function TermsOfUsePage() {
   const { t } = useTranslation();
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "var(--ant-color-bg-container)" }}>
+    <Layout className={styles.layout}>
       <Header />
 
-      <Content
-        style={{
-          background: "var(--ant-color-bg-container)",
-          maxWidth: "100%",
-          overflowX: "hidden",
-          padding: "40px 24px",
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Title level={1} style={{ marginBottom: 24, textAlign: "center" }}>
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Title level={1} className={styles.mainTitle}>
             {t("terms.title")}
           </Title>
 
-          <Paragraph style={{ fontSize: 16, color: "var(--ant-color-text-secondary)", marginBottom: 32 }}>
+          <Paragraph className={styles.lastUpdated}>
             {t("terms.lastUpdated")}: {new Date().toLocaleDateString()}
           </Paragraph>
 
           <Divider />
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.acceptance.title")}</Title>
             <Paragraph>
               {t("terms.sections.acceptance.content1")}
@@ -44,7 +38,7 @@ export default function TermsOfUsePage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.definitions.title")}</Title>
             <ul>
               <li>{t("terms.sections.definitions.items.platform")}</li>
@@ -55,7 +49,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.registration.title")}</Title>
             <Title level={3}>{t("terms.sections.registration.requirements.title")}</Title>
             <Paragraph>
@@ -75,7 +69,7 @@ export default function TermsOfUsePage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.usage.title")}</Title>
             <Title level={3}>{t("terms.sections.usage.rights.title")}</Title>
             <Paragraph>
@@ -96,7 +90,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.services.title")}</Title>
             <Title level={3}>{t("terms.sections.services.worker.title")}</Title>
             <Paragraph>
@@ -122,7 +116,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.payment.title")}</Title>
             <Paragraph>
               {t("terms.sections.payment.description")}
@@ -135,7 +129,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.intellectual.title")}</Title>
             <Paragraph>
               {t("terms.sections.intellectual.content1")}
@@ -145,7 +139,7 @@ export default function TermsOfUsePage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.userContent.title")}</Title>
             <Title level={3}>{t("terms.sections.userContent.ownership.title")}</Title>
             <Paragraph>
@@ -164,7 +158,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.disclaimer.title")}</Title>
             <Paragraph>
               {t("terms.sections.disclaimer.description")}
@@ -179,7 +173,7 @@ export default function TermsOfUsePage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.limitation.title")}</Title>
             <Paragraph>
               {t("terms.sections.limitation.description")}
@@ -191,7 +185,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.indemnification.title")}</Title>
             <Paragraph>
               {t("terms.sections.indemnification.description")}
@@ -203,7 +197,7 @@ export default function TermsOfUsePage() {
             </ul>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.termination.title")}</Title>
             <Paragraph>
               {t("terms.sections.termination.content1")}
@@ -213,14 +207,14 @@ export default function TermsOfUsePage() {
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.governing.title")}</Title>
             <Paragraph>
               {t("terms.sections.governing.description")}
             </Paragraph>
           </section>
 
-          <section style={{ marginBottom: 32 }}>
+          <section className={styles.section}>
             <Title level={2}>{t("terms.sections.contact.title")}</Title>
             <Paragraph>
               {t("terms.sections.contact.description")}
@@ -234,7 +228,7 @@ export default function TermsOfUsePage() {
 
           <Divider />
 
-          <Paragraph style={{ fontSize: 14, color: "var(--ant-color-text-tertiary)", textAlign: "center" }}>
+          <Paragraph className={styles.footerNote}>
             {t("terms.sections.effectiveDate")} {new Date().toLocaleDateString()}
           </Paragraph>
         </div>

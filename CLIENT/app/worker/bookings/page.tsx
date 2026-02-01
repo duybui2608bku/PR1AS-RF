@@ -43,6 +43,7 @@ import { WorkerBookingActionModal } from "@/app/worker/bookings/components/Worke
 import { UserRole } from "@/lib/constants/routes";
 import { Breakpoint, Spacing } from "@/lib/constants/ui.constants";
 import type { Service } from "@/lib/types/worker";
+import styles from "@/app/worker/bookings/page.module.scss";
 import { useApiQueryData } from "@/lib/hooks/use-api";
 import { useI18n } from "@/lib/hooks/use-i18n";
 
@@ -281,37 +282,24 @@ function WorkerBookingsContent() {
   });
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
+    <Layout className={styles.layout}>
       <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <Space
-            style={{
-              marginBottom: Spacing.XL,
-              width: "100%",
-            }}
-          >
-            <Title
-              level={2}
-              style={{ margin: 0, color: "var(--ant-color-primary)" }}
-            >
-              <CalendarOutlined style={{ marginRight: Spacing.SM }} />
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Space className={styles.headerSpace}>
+            <Title level={2} className={styles.title}>
+              <CalendarOutlined className={styles.titleIcon} />
               {t("booking.worker.list.title")}
             </Title>
           </Space>
 
           <Card>
-            <Row gutter={[Spacing.LG, Spacing.LG]} style={{ marginBottom: Spacing.LG }}>
+            <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.filtersRow}>
               <Col xs={24} sm={12} md={5}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                <Space orientation="vertical" size="small" className={styles.filterSpace}>
                   <span>{t("booking.list.filters.status")}:</span>
                   <Select
-                    style={{ width: "100%" }}
+                    className={styles.filterSelect}
                     value={statusFilter || "all"}
                     onChange={handleStatusFilterChange}
                     allowClear
@@ -342,10 +330,10 @@ function WorkerBookingsContent() {
                 </Space>
               </Col>
               <Col xs={24} sm={12} md={5}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                <Space orientation="vertical" size="small" className={styles.filterSpace}>
                   <span>{t("booking.list.filters.paymentStatus")}:</span>
                   <Select
-                    style={{ width: "100%" }}
+                    className={styles.filterSelect}
                     value={paymentStatusFilter || "all"}
                     onChange={handlePaymentStatusFilterChange}
                     allowClear
@@ -373,10 +361,10 @@ function WorkerBookingsContent() {
                 </Space>
               </Col>
               <Col xs={24} sm={12} md={6}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                <Space orientation="vertical" size="small" className={styles.filterSpace}>
                   <span>{t("booking.list.filters.dateRange")}:</span>
                   <RangePicker
-                    style={{ width: "100%" }}
+                    className={styles.filterRangePicker}
                     value={dateRange}
                     onChange={handleDateRangeChange}
                     format={DATE_FORMAT_ISO}
@@ -384,25 +372,25 @@ function WorkerBookingsContent() {
                 </Space>
               </Col>
               <Col xs={12} sm={6} md={4}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                <Space orientation="vertical" size="small" className={styles.filterSpace}>
                   <span />
                   <Button
                     icon={<UndoOutlined />}
                     onClick={handleResetFilters}
-                    style={{ width: "100%" }}
+                    className={styles.filterButton}
                   >
                     {t("common.reset")}
                   </Button>
                 </Space>
               </Col>
               <Col xs={12} sm={6} md={4}>
-                <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+                <Space orientation="vertical" size="small" className={styles.filterSpace}>
                   <span />
                   <Button
                     icon={<ReloadOutlined />}
                     onClick={handleRefreshBookings}
                     loading={isLoading}
-                    style={{ width: "100%" }}
+                    className={styles.filterButton}
                   >
                     {t("common.refresh")}
                   </Button>
@@ -419,7 +407,7 @@ function WorkerBookingsContent() {
                     <Space
                       orientation="vertical"
                       size="middle"
-                      style={{ width: "100%", marginBottom: Spacing.LG }}
+                      className={styles.mobileListSpace}
                     >
                       {(bookingsData?.data ?? []).map((record) => (
                         <WorkerBookingCard

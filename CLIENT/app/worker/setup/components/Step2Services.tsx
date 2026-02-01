@@ -16,6 +16,8 @@ import {
   Spin,
   Alert,
   Modal,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
@@ -24,7 +26,6 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useApiQueryData } from "@/lib/hooks/use-api";
-
 import type {
   Service,
   ServiceCategory,
@@ -38,6 +39,8 @@ import {
 } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
+import { Spacing } from "@/lib/constants/ui.constants";
+import styles from "./Step2Services.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -279,125 +282,64 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
   };
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-      <div style={{ marginBottom: 32 }}>
-        <Paragraph type="secondary" style={{ fontSize: 16, marginBottom: 0 }}>
+    <div className={styles.container}>
+      <div className={styles.subtitleBlock}>
+        <Paragraph type="secondary" className={styles.subtitleText}>
           {t("worker.setup.step2.subtitle")}
         </Paragraph>
       </div>
 
-      <div style={{ marginBottom: 32 }}>
-        <Text
-          strong
-          style={{ display: "block", marginBottom: 16, fontSize: 16 }}
-        >
+      <div className={styles.categorySection}>
+        <Text strong className={styles.categoryLabel}>
           {t("worker.setup.step2.category.label")}
         </Text>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: 16,
-          }}
-        >
-          <Card
-            hoverable
-            onClick={() => handleCategorySelect(ServiceCategoryEnum.ASSISTANCE)}
-            style={{
-              cursor: "pointer",
-              transition: "all 0.2s",
-              border:
-                selectedCategory === ServiceCategoryEnum.ASSISTANCE
-                  ? "2px solid var(--ant-color-primary)"
-                  : "1px solid var(--ant-color-border)",
-              boxShadow:
-                selectedCategory === ServiceCategoryEnum.ASSISTANCE
-                  ? "0 4px 12px rgba(0,0,0,0.15)"
-                  : "0 2px 8px rgba(0,0,0,0.1)",
-              backgroundColor:
-                selectedCategory === ServiceCategoryEnum.ASSISTANCE
-                  ? "var(--ant-color-primary-bg)"
-                  : undefined,
-            }}
-          >
-            <div style={{ textAlign: "center", padding: "8px 0" }}>
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  color:
-                    selectedCategory === ServiceCategoryEnum.ASSISTANCE
-                      ? "var(--ant-color-primary)"
-                      : undefined,
-                }}
-              >
-                {t("worker.setup.step2.category.assistance")}
-              </Title>
-            </div>
-          </Card>
-          <Card
-            hoverable
-            onClick={() =>
-              handleCategorySelect(ServiceCategoryEnum.COMPANIONSHIP)
-            }
-            style={{
-              cursor: "pointer",
-              transition: "all 0.2s",
-              border:
-                selectedCategory === ServiceCategoryEnum.COMPANIONSHIP
-                  ? "2px solid var(--ant-color-primary)"
-                  : "1px solid var(--ant-color-border)",
-              boxShadow:
-                selectedCategory === ServiceCategoryEnum.COMPANIONSHIP
-                  ? "0 4px 12px rgba(0,0,0,0.15)"
-                  : "0 2px 8px rgba(0,0,0,0.1)",
-              backgroundColor:
-                selectedCategory === ServiceCategoryEnum.COMPANIONSHIP
-                  ? "var(--ant-color-primary-bg)"
-                  : undefined,
-            }}
-          >
-            <div style={{ textAlign: "center", padding: "8px 0" }}>
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  color:
-                    selectedCategory === ServiceCategoryEnum.COMPANIONSHIP
-                      ? "var(--ant-color-primary)"
-                      : undefined,
-                }}
-              >
-                {t("worker.setup.step2.category.companionship")}
-              </Title>
-            </div>
-          </Card>
-        </div>
+        <Row gutter={[Spacing.LG, Spacing.LG]}>
+          <Col xs={24} sm={12}>
+            <Card
+              hoverable
+              onClick={() => handleCategorySelect(ServiceCategoryEnum.ASSISTANCE)}
+              className={`${styles.categoryCard} ${
+                selectedCategory === ServiceCategoryEnum.ASSISTANCE ? styles.selected : ""
+              }`}
+            >
+              <div className={styles.categoryCardInner}>
+                <Title level={4} className={styles.categoryCardTitle}>
+                  {t("worker.setup.step2.category.assistance")}
+                </Title>
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Card
+              hoverable
+              onClick={() =>
+                handleCategorySelect(ServiceCategoryEnum.COMPANIONSHIP)
+              }
+              className={`${styles.categoryCard} ${
+                selectedCategory === ServiceCategoryEnum.COMPANIONSHIP ? styles.selected : ""
+              }`}
+            >
+              <div className={styles.categoryCardInner}>
+                <Title level={4} className={styles.categoryCardTitle}>
+                  {t("worker.setup.step2.category.companionship")}
+                </Title>
+              </div>
+            </Card>
+          </Col>
+        </Row>
       </div>
 
       {selectedCategory && (
-        <div style={{ marginBottom: 32 }}>
-          <Text strong style={{ display: "block", marginBottom: 12 }}>
+        <div className={styles.servicesSection}>
+          <Text strong className={styles.servicesLabel}>
             {t("worker.setup.step2.services.label")}
           </Text>
           {isLoadingServices ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                padding: "32px 0",
-              }}
-            >
+            <div className={styles.spinWrapper}>
               <Spin size="large" />
             </div>
           ) : services && services.length > 0 ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: 16,
-              }}
-            >
+            <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.servicesGrid}>
               {services.map((service) => {
                 const isSelected = selectedServices.has(service.id);
                 const selectedService = selectedServices.get(service.id);
@@ -405,94 +347,66 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
                   selectedService && selectedService.pricing.length > 0;
 
                 return (
-                  <Card
-                    key={service.id}
-                    hoverable
-                    style={{
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                      border: isSelected
-                        ? "2px solid var(--ant-color-primary)"
-                        : undefined,
-                      boxShadow: isSelected
-                        ? "0 4px 12px rgba(0,0,0,0.15)"
-                        : undefined,
-                    }}
-                    onClick={() => handleServiceToggle(service)}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        marginBottom: 8,
-                      }}
+                  <Col xs={24} sm={12} lg={8} key={service.id}>
+                    <Card
+                      hoverable
+                      className={`${styles.serviceCard} ${isSelected ? styles.selected : ""}`}
+                      onClick={() => handleServiceToggle(service)}
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={() => handleServiceToggle(service)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      {hasPricing && (
-                        <Tag color="green" icon={<CheckCircleOutlined />}>
-                          {t("worker.setup.step2.services.pricingSet")}
-                        </Tag>
+                      <Row className={styles.serviceCardHeader} justify="space-between" align="top">
+                        <Col>
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => handleServiceToggle(service)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </Col>
+                        <Col>
+                          {hasPricing && (
+                            <Tag color="green" icon={<CheckCircleOutlined />}>
+                              {t("worker.setup.step2.services.pricingSet")}
+                            </Tag>
+                          )}
+                        </Col>
+                      </Row>
+                      <Title level={5} className={styles.serviceCardTitle}>
+                        {service.name.vi}
+                      </Title>
+                      <Paragraph type="secondary" className={styles.serviceCardDesc}>
+                        {service.description.vi}
+                      </Paragraph>
+                      {service.rules && (
+                        <Space className={styles.serviceCardRules} size={4} wrap>
+                          {service.rules.physical_touch && (
+                            <Tag color="orange">Physical Touch</Tag>
+                          )}
+                          {service.rules.intellectual_conversation_required && (
+                            <Tag color="blue">Intellectual Conversation</Tag>
+                          )}
+                          <Tag>{service.rules.dress_code}</Tag>
+                        </Space>
                       )}
-                    </div>
-                    <Title level={5} style={{ marginBottom: 8 }}>
-                      {service.name.vi}
-                    </Title>
-                    <Paragraph
-                      type="secondary"
-                      style={{
-                        fontSize: 14,
-                        marginBottom: 12,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {service.description.vi}
-                    </Paragraph>
-                    {service.rules && (
-                      <div
-                        style={{
-                          marginBottom: 12,
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 4,
-                        }}
-                      >
-                        {service.rules.physical_touch && (
-                          <Tag color="orange">Physical Touch</Tag>
-                        )}
-                        {service.rules.intellectual_conversation_required && (
-                          <Tag color="blue">Intellectual Conversation</Tag>
-                        )}
-                        <Tag>{service.rules.dress_code}</Tag>
-                      </div>
-                    )}
-                    {isSelected && (
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenPricingModal(service);
-                        }}
-                        style={{ width: "100%", marginTop: 8 }}
-                      >
-                        {hasPricing
-                          ? t("worker.setup.step2.services.updatePricing")
-                          : t("worker.setup.step2.services.setPricing")}
-                      </Button>
-                    )}
-                  </Card>
+                      {isSelected && (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<PlusOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenPricingModal(service);
+                          }}
+                          className={styles.pricingButton}
+                        >
+                          {hasPricing
+                            ? t("worker.setup.step2.services.updatePricing")
+                            : t("worker.setup.step2.services.setPricing")}
+                        </Button>
+                      )}
+                    </Card>
+                  </Col>
                 );
               })}
-            </div>
+            </Row>
           ) : (
             <Empty description={t("worker.setup.step2.services.noServices")} />
           )}
@@ -500,21 +414,21 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
       )}
 
       {selectedServices.size > 0 && (
-        <div style={{ marginTop: 48 }}>
+        <div className={styles.selectedSection}>
           <Divider />
-          <Title level={4} style={{ marginBottom: 16 }}>
+          <Title level={4} className={styles.selectedTitle}>
             {t("worker.setup.step2.selected.title")} ({selectedServices.size})
           </Title>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Space direction="vertical" size={Spacing.LG} className={styles.selectedList}>
             {Array.from(selectedServices.values()).map((service) => (
               <Card key={service.id} size="small">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <Title level={5} className="mb-1">
+                <Row justify="space-between" align="top">
+                  <Col flex={1}>
+                    <Title level={5} className={styles.serviceCardTitle}>
                       {service.name.vi}
                     </Title>
                     {service.pricing.length > 0 ? (
-                      <div className="space-y-1">
+                      <Space size={4} wrap>
                         {service.pricing.map((p, index) => (
                           <Tag key={index} color="green">
                             {formatCurrency(p.price)} / {p.duration}{" "}
@@ -525,64 +439,62 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
                               : t("worker.setup.step2.selected.month")}
                           </Tag>
                         ))}
-                      </div>
+                      </Space>
                     ) : (
                       <Alert
                         message={t("worker.setup.step2.services.noPricing")}
                         type="warning"
                         showIcon
-                        style={{ marginTop: 8 }}
+                        className={styles.alertMargin}
                       />
                     )}
-                  </div>
-                  <Space>
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={() => handleOpenPricingModal(service)}
-                    >
-                      {service.pricing.length > 0
-                        ? t("worker.setup.step2.services.editPricing")
-                        : t("worker.setup.step2.services.setPricing")}
-                    </Button>
-                    <Button
-                      type="link"
-                      danger
-                      size="small"
-                      icon={<DeleteOutlined />}
-                      onClick={() => handleRemoveService(service.id)}
-                    >
-                      {t("worker.setup.step2.services.remove")}
-                    </Button>
-                  </Space>
-                </div>
+                  </Col>
+                  <Col>
+                    <Space>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => handleOpenPricingModal(service)}
+                      >
+                        {service.pricing.length > 0
+                          ? t("worker.setup.step2.services.editPricing")
+                          : t("worker.setup.step2.services.setPricing")}
+                      </Button>
+                      <Button
+                        type="link"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleRemoveService(service.id)}
+                      >
+                        {t("worker.setup.step2.services.remove")}
+                      </Button>
+                    </Space>
+                  </Col>
+                </Row>
               </Card>
             ))}
-          </div>
+          </Space>
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: 48,
-          display: "flex",
-          justifyContent: "space-between",
-          paddingTop: 24,
-          borderTop: "1px solid var(--ant-color-border-secondary)",
-        }}
-      >
-        <Button onClick={onBack} size="large">
-          {t("worker.setup.step2.back")}
-        </Button>
-        <Button
-          type="primary"
-          onClick={handleSubmit}
-          loading={isPending}
-          size="large"
-        >
-          {t("worker.setup.step2.complete")}
-        </Button>
-      </div>
+      <Row justify="space-between" align="middle" className={styles.navRow}>
+        <Col>
+          <Button onClick={onBack} size="large">
+            {t("worker.setup.step2.back")}
+          </Button>
+        </Col>
+        <Col>
+          <Button
+            type="primary"
+            onClick={handleSubmit}
+            loading={isPending}
+            size="large"
+          >
+            {t("worker.setup.step2.complete")}
+          </Button>
+        </Col>
+      </Row>
 
       <Modal
         title={`${t("worker.setup.step2.pricing.title")}: ${
