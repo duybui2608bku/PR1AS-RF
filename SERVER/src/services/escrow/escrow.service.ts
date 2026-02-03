@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+import dayjs from "dayjs";
 import {
   escrowRepository,
   EscrowQueryParams,
@@ -10,6 +12,12 @@ import { ESCROW_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
 import { IPagination } from "../../types/common/pagination.type";
 import { getPagination } from "../../func/pagination.func";
+import {
+  EscrowStatus,
+  EscrowRefundReason,
+  ESCROW_FEE,
+} from "../../constants/escrow";
+import { refundBalanceToClient } from "../wallet/wallet.service";
 
 export class EscrowService {
   async getEscrowById(
@@ -87,6 +95,57 @@ export class EscrowService {
     });
 
     return PaginationHelper.format(escrows, { page, limit, skip }, total);
+  }
+
+  async refundEscrowForCancelledBooking(
+    bookingId: string,
+    clientId: string,
+    scheduleStartTime: Date
+  ): Promise<{ refundAmount: number; penaltyAmount: number } | null> {
+    const escrow = await escrowRepository.findByBookingId(bookingId);
+    if (!escrow || escrow.status !== EscrowStatus.HOLDING) {
+      return null;
+    }
+
+    const startTime = dayjs(scheduleStartTime);
+    const hoursUntilStart = startTime.diff(dayjs(), "hour");
+    const isFreeCancellation =
+      hoursUntilStart >= ESCROW_FEE.FREE_CANCELLATION_HOURS;
+
+    let refundAmount: number;
+    let penaltyAmount: number;
+    if (isFreeCancellation) {
+      refundAmount = escrow.amount;
+      penaltyAmount = 0;
+    } else {
+      penaltyAmount = Math.round(
+        (escrow.amount * ESCROW_FEE.CANCELLATION_PENALTY_PERCENT) / 100
+      );
+      refundAmount = escrow.amount - penaltyAmount;
+    }
+
+    const refundTransactionId = await refundBalanceToClient(
+      clientId,
+      refundAmount,
+      bookingId,
+      `Refund for cancelled booking ${bookingId}`
+    );
+
+    const escrowIdValue = escrow._id;
+    const escrowId =
+      escrowIdValue instanceof Types.ObjectId
+        ? escrowIdValue
+        : new Types.ObjectId(String(escrowIdValue));
+
+    await escrowRepository.refundEscrow({
+      escrow_id: escrowId,
+      refund_reason: EscrowRefundReason.BOOKING_CANCELLED,
+      refund_amount: refundAmount,
+      penalty_amount: penaltyAmount,
+      refund_transaction_id: new Types.ObjectId(refundTransactionId),
+    });
+
+    return { refundAmount, penaltyAmount };
   }
 }
 

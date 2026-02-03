@@ -3,6 +3,7 @@ import { Escrow } from "../../models/escrow/escrow.model";
 import {
   IEscrowDocument,
   CreateEscrowInput,
+  RefundEscrowInput,
 } from "../../types/escrow/escrow.types";
 import { EscrowStatus } from "../../constants/escrow";
 import { getPagination } from "../../func/pagination.func";
@@ -184,6 +185,28 @@ export class EscrowRepository {
       updated_at: new Date(),
     });
     return escrow.save();
+  }
+
+  async refundEscrow(data: RefundEscrowInput): Promise<IEscrowDocument | null> {
+    const escrowIdValue = data.escrow_id;
+    const escrowId =
+      escrowIdValue instanceof Types.ObjectId
+        ? escrowIdValue
+        : new Types.ObjectId(String(escrowIdValue));
+
+    return Escrow.findByIdAndUpdate(
+      escrowId,
+      {
+        status: EscrowStatus.REFUNDED,
+        refund_reason: data.refund_reason,
+        refund_amount: data.refund_amount,
+        penalty_amount: data.penalty_amount,
+        refund_transaction_id: data.refund_transaction_id,
+        refunded_at: new Date(),
+        updated_at: new Date(),
+      },
+      { new: true }
+    );
   }
 }
 

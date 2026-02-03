@@ -40,3 +40,29 @@ export const VNPAY_CONSTANTS = {
   ORDER_TYPE: "other",
   ORDER_INFO_PREFIX: "NAP TIEN VAO TAI KHOAN",
 } as const;
+
+export enum VNPayResponseCode {
+  SUCCESS = "00",
+}
+
+export const DATE_RANGE_OFFSETS = {
+  YESTERDAY_DAYS: 1,
+  LAST_7_DAYS_OFFSET: 6,
+  LAST_14_DAYS_OFFSET: 13,
+} as const;
+
+export const DATE_UNITS = {
+  DAY: "day",
+  MONTH: "month",
+} as const;
+
+export const TRANSACTION_DESCRIPTIONS = {
+  DEPOSIT_PREFIX: "Deposit",
+  REFUND_PREFIX: "Refund for cancelled booking",
+  HOLD_BALANCE_PREFIX: "Hold balance for booking",
+} as const;
+
+export const PAGINATION_DEFAULTS = {
+  PAGE: 1,
+  LIMIT: 10,
+} as const;

@@ -986,6 +986,7 @@
   "chat": {
     "inputPlaceholder": "Type a message...",
     "noMessages": "No messages yet",
+    "newChat": "New conversation",
     "selectConversation": "Select a conversation to start chatting",
     "typing": "Typing...",
     "unknownUser": "Unknown User",
@@ -1164,7 +1165,8 @@
       "completed": "Completed",
       "cancelled": "Cancelled",
       "rejected": "Rejected",
-      "disputed": "Disputed"
+      "disputed": "Disputed",
+      "expired": "Expired"
     },
     "paymentStatus": {
       "pending": "Pending",

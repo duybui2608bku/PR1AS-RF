@@ -2,22 +2,23 @@
 
 .headerRow {
   width: 100%;
+  background: var(--background);
 }
 
-.header {
+.header.ant-layout-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   background: transparent;
-  border-bottom: 1px solid var(--bg-dark-secondary);
+  border-bottom: 1px solid var(--border-secondary);
   position: sticky;
   top: 0;
   z-index: 1000;
-  transition: background 300ms ease, backdrop-filter 300ms ease;
+  transition: background 300ms ease, backdrop-filter 300ms ease, border-color 300ms ease;
 
   &.scrolled {
-    background: var(--bg-dark-primary);
+    background: var(--background);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }

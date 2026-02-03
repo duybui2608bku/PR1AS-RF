@@ -45,6 +45,15 @@ export const canReviewOrComplain = (status: BookingStatus): boolean => {
   return status === BookingStatus.COMPLETED;
 };
 
+export const isBookingExpired = (schedule: Booking["schedule"], status: BookingStatus): boolean => {
+  if (status !== BookingStatus.PENDING) {
+    return false;
+  }
+  const startTime = new Date(schedule.start_time).getTime();
+  const currentTime = new Date().getTime();
+  return startTime < currentTime;
+};
+
 export const createBookingColumns = ({
   t,
   formatCurrency,
@@ -127,20 +136,25 @@ export const createBookingColumns = ({
       dataIndex: BookingTableColumnKey.STATUS,
       key: BookingTableColumnKey.STATUS,
       width: BookingTableColumnWidth.STATUS,
-      render: (status: BookingStatus, record: Booking) => (
-        <Space size={4}>
-          <Tag color={getBookingStatusTagColor(status)}>
-            {t(`booking.status.${status}`)}
-          </Tag>
-          {status === BookingStatus.CANCELLED && record.cancellation && (
-            <CancellationInfoTooltip
-              cancellation={record.cancellation}
-              t={t}
-              formatCurrency={formatCurrency}
-            />
-          )}
-        </Space>
-      ),
+      render: (status: BookingStatus, record: Booking) => {
+        const isExpired = isBookingExpired(record.schedule, status);
+        const displayStatus = isExpired ? BookingStatus.EXPIRED : status;
+        
+        return (
+          <Space size={4}>
+            <Tag color={getBookingStatusTagColor(displayStatus)}>
+              {t(`booking.status.${displayStatus}`)}
+            </Tag>
+            {status === BookingStatus.CANCELLED && record.cancellation && (
+              <CancellationInfoTooltip
+                cancellation={record.cancellation}
+                t={t}
+                formatCurrency={formatCurrency}
+              />
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: t("booking.table.paymentStatus"),
@@ -168,6 +182,12 @@ export const createBookingColumns = ({
       fixed: "right",
       render: (_: unknown, record: Booking) => {
         const bookingId = (record as { id?: string }).id || record._id;
+        const isExpired = isBookingExpired(record.schedule, record.status);
+
+        // Không hiển thị actions cho booking đã expired
+        if (isExpired) {
+          return null;
+        }
 
         if (canReviewOrComplain(record.status)) {
           return (

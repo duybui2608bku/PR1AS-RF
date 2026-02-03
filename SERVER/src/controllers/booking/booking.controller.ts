@@ -92,6 +92,7 @@ export class BookingController {
   async cancelBooking(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { id } = req.params;
+
     const data = validateWithSchema(
       cancelBookingReasonSchema,
       req.body,

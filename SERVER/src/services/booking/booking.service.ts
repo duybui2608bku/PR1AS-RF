@@ -4,6 +4,7 @@ import { serviceRepository } from "../../repositories/service/service.repository
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { escrowRepository } from "../../repositories/escrow/escrow.repository";
+import { escrowService } from "../escrow/escrow.service";
 import {
   CreateBookingInput,
   BookingQuery,
@@ -372,23 +373,64 @@ export class BookingService {
       );
     }
 
-    const cancellation = {
-      cancelled_at: new Date(),
-      cancelled_by: cancelledBy,
-      reason,
-      notes,
-      refund_amount: 0,
-      penalty_amount: 0,
-    };
+    const session = await mongoose.startSession();
+    let refundAmount = 0;
+    let penaltyAmount = 0;
 
-    return this.getBookingOrThrow(
-      (
-        await bookingRepository.update(bookingId, {
-          status: BookingStatus.CANCELLED,
-          cancellation,
-        })
-      )?._id.toString() || bookingId
-    );
+    try {
+      session.startTransaction();
+
+      if (booking.payment_status === BookingPaymentStatus.PAID) {
+        const clientId =
+          typeof booking.client_id === "object" && booking.client_id?._id
+            ? booking.client_id._id.toString()
+            : String(booking.client_id);
+        const scheduleStartTime =
+          typeof booking.schedule.start_time === "string"
+            ? new Date(booking.schedule.start_time)
+            : booking.schedule.start_time;
+        const result = await escrowService.refundEscrowForCancelledBooking(
+          bookingId,
+          clientId,
+          scheduleStartTime
+        );
+        if (result) {
+          refundAmount = result.refundAmount;
+          penaltyAmount = result.penaltyAmount;
+        }
+      }
+
+      const cancellation = {
+        cancelled_at: new Date(),
+        cancelled_by: cancelledBy,
+        reason,
+        notes,
+        refund_amount: refundAmount,
+        penalty_amount: penaltyAmount,
+      };
+
+      const paymentStatus =
+        refundAmount > 0
+          ? BookingPaymentStatus.REFUNDED
+          : booking.payment_status;
+
+      const updatedBooking = await bookingRepository.update(bookingId, {
+        status: BookingStatus.CANCELLED,
+        cancellation,
+        payment_status: paymentStatus,
+      });
+
+      await session.commitTransaction();
+
+      return this.getBookingOrThrow(
+        updatedBooking?._id.toString() || bookingId
+      );
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   async updateBooking(

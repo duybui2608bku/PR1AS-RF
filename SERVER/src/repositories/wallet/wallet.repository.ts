@@ -188,7 +188,12 @@ export class WalletRepository {
           total: {
             $sum: {
               $cond: [
-                { $eq: ["$type", TransactionType.DEPOSIT] },
+                {
+                  $in: [
+                    "$type",
+                    [TransactionType.DEPOSIT, TransactionType.REFUND],
+                  ],
+                },
                 "$amount",
                 { $multiply: ["$amount", -1] },
               ],
@@ -257,7 +262,7 @@ export class WalletRepository {
     );
 
     const totalTransactions = Object.values(statusStatsMap).reduce(
-      (sum: number, item: { count: number }) => sum + item.count,
+      (sum, item) => sum + (item?.count ?? 0),
       0
     );
 

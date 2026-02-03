@@ -988,6 +988,7 @@
   "chat": {
     "inputPlaceholder": "Nhập tin nhắn...",
     "noMessages": "Chưa có tin nhắn",
+    "newChat": "Cuộc trò chuyện mới",
     "selectConversation": "Chọn một cuộc trò chuyện để bắt đầu",
     "typing": "Đang soạn tin nhắn...",
     "unknownUser": "Người dùng",
@@ -1091,7 +1092,7 @@
       "overview": "Tổng quan",
       "depositHistory": "Lịch sử nạp tiền",
       "withdrawHistory": "Lịch sử rút tiền",
-      "escrowHistory": "Lịch sử đối soát escrow"
+      "escrowHistory": "Lịch sử đối soát"
     },
     "cards": {
       "totalBalance": "Tổng số dư",
@@ -1175,7 +1176,8 @@
       "completed": "Hoàn thành",
       "cancelled": "Đã hủy",
       "rejected": "Đã từ chối",
-      "disputed": "Đang tranh chấp"
+      "disputed": "Đang tranh chấp",
+      "expired": "Đã hết hạn"
     },
     "paymentStatus": {
       "pending": "Đang chờ",

@@ -119,9 +119,14 @@ export interface UnreadCountResponse {
   unread_count: number;
 }
 
+export interface SendMessageResponse {
+  message: Message;
+  conversation: { _id: string };
+}
+
 export const chatApi = {
-  sendMessage: async (data: SendMessageInput): Promise<Message> => {
-    const response = await api.post<ApiResponse<Message>>(
+  sendMessage: async (data: SendMessageInput): Promise<SendMessageResponse> => {
+    const response = await api.post<ApiResponse<SendMessageResponse>>(
       ApiEndpoint.CHAT_MESSAGES,
       data
     );

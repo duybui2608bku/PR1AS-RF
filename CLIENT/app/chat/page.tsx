@@ -89,17 +89,15 @@ function ChatContent() {
 
   const sendMessageMutation = useStandardizedMutation(
     (content: string) => {
-      if (!selectedConversationId) {
-        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
-      }
-      const currentConversation = conversationsData?.conversations.find(
-        (c) => c.id === selectedConversationId
-      );
-      if (!currentConversation) {
-        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
-      }
-      const receiverId = getOtherParticipant(currentConversation);
-      if (!receiverId) {
+      const currentConversation = selectedConversationId
+        ? conversationsData?.conversations.find(
+            (c) => c.id === selectedConversationId
+          )
+        : null;
+      const receiverId = currentConversation
+        ? getOtherParticipant(currentConversation)
+        : targetUserId;
+      if (!receiverId || (receiverId === user?.id)) {
         throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const replyToId = replyingToRef.current?._id || null;
@@ -107,18 +105,27 @@ function ChatContent() {
         receiver_id: receiverId,
         content,
         type: "text",
-        conversation_id: selectedConversationId,
+        ...(selectedConversationId
+          ? { conversation_id: selectedConversationId }
+          : {}),
         reply_to_id: replyToId,
       });
     },
     {
-      onSuccess: () => {
+      onSuccess: (result) => {
         setMessageContent("");
         setReplyingTo(null);
         replyingToRef.current = null;
-        queryClient.invalidateQueries({
-          queryKey: ["chat-messages", selectedConversationId],
-        });
+        if (result.conversation && !selectedConversationId) {
+          setSelectedConversationId(result.conversation._id);
+        }
+        const conversationId =
+          result.conversation?._id ?? selectedConversationId;
+        if (conversationId) {
+          queryClient.invalidateQueries({
+            queryKey: ["chat-messages", conversationId],
+          });
+        }
         queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
       },
     }
@@ -199,35 +206,48 @@ function ChatContent() {
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedConversationId) return;
+    const showPanel = selectedConversationId || (targetUserId && user?.id);
+    if (!file || !showPanel) return;
     if (!file.type.startsWith("image/")) {
       message.error(t("chat.errors.invalidImageFile"));
+      return;
+    }
+
+    const currentConversation = selectedConversationId
+      ? conversationsData?.conversations.find(
+          (c) => c.id === selectedConversationId
+        )
+      : null;
+    const receiverId = currentConversation
+      ? getOtherParticipant(currentConversation)
+      : targetUserId;
+    if (!receiverId || receiverId === user?.id) {
+      message.error(t("chat.errors.imageUploadFailed"));
       return;
     }
 
     try {
       setUploadingImage(true);
       const imageUrl = await uploadImage(file);
-      const currentConversation = conversationsData?.conversations.find(
-        (c) => c.id === selectedConversationId
-      );
-      if (!currentConversation) {
-        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
-      }
-      const receiverId = getOtherParticipant(currentConversation);
-      if (!receiverId) {
-        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
-      }
-      await chatApi.sendMessage({
+      const sendResult = await chatApi.sendMessage({
         receiver_id: receiverId,
         content: imageUrl,
         type: "image",
-        conversation_id: selectedConversationId,
+        ...(selectedConversationId
+          ? { conversation_id: selectedConversationId }
+          : {}),
       });
 
-      queryClient.invalidateQueries({
-        queryKey: ["chat-messages", selectedConversationId],
-      });
+      if (sendResult.conversation && !selectedConversationId) {
+        setSelectedConversationId(sendResult.conversation._id);
+      }
+      const conversationId =
+        sendResult.conversation?._id ?? selectedConversationId;
+      if (conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["chat-messages", conversationId],
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["chat-conversations"] });
 
       message.success(t("chat.imageSentSuccess"));
@@ -286,10 +306,10 @@ function ChatContent() {
   }, []);
 
   useEffect(() => {
-    if (isMobile && !selectedConversationId) {
+    if (isMobile && !selectedConversationId && !targetUserId) {
       setShowConversationList(true);
     }
-  }, [isMobile, selectedConversationId]);
+  }, [isMobile, selectedConversationId, targetUserId]);
 
   useEffect(() => {
     if (!targetUserId || !conversationsData?.conversations || !user?.id) {
@@ -335,6 +355,8 @@ function ChatContent() {
                 queryKey: ["chat-conversations"],
               });
             }
+          } else if (isMobile) {
+            setShowConversationList(false);
           }
         })
         .catch(() => {});
@@ -396,6 +418,11 @@ function ChatContent() {
     (c) => c.id === selectedConversationId
   );
 
+  const showChatPanel =
+    !!selectedConversationId || !!(targetUserId && user?.id);
+  const isNewConversationMode =
+    !!(targetUserId && user?.id) && !selectedConversationId;
+
   const messages = messagesData?.messages || [];
 
   const getReplyMessage = (
@@ -424,7 +451,7 @@ function ChatContent() {
               getOtherParticipant={getOtherParticipant}
             />
           </div>
-          {isMobile && showConversationList && selectedConversationId && (
+          {isMobile && showConversationList && showChatPanel && (
             <div
               className={styles.overlay}
               onClick={() => setShowConversationList(false)}
@@ -459,7 +486,7 @@ function ChatContent() {
                   className={styles.messagesContainer}
                   ref={messagesContainerRef}
                 >
-                  {messagesLoading ? (
+                  {selectedConversationId && messagesLoading ? (
                     <div className={styles.loadingContainer}>
                       <Spin size="large" />
                     </div>

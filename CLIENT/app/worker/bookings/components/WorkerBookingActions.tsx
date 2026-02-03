@@ -22,18 +22,18 @@ interface WorkerBookingActionsProps {
   t: TFunction;
 }
 
-export function WorkerBookingActions({
+export function getWorkerBookingActionNodes({
   record,
   onAction,
   t,
-}: WorkerBookingActionsProps): React.ReactElement {
+}: WorkerBookingActionsProps): React.ReactNode[] {
   const scheduleExpired = expireDate(record.schedule.start_time);
   if (scheduleExpired) {
-    return (
-      <Button size="small" disabled>
+    return [
+      <Button key="expired" size="small" disabled>
         {t("booking.worker.actions.expired")}
-      </Button>
-    );
+      </Button>,
+    ];
   }
 
   const canConfirm = record.status === BookingStatus.PENDING;
@@ -42,9 +42,10 @@ export function WorkerBookingActions({
     record.payment_status === BookingPaymentStatus.PAID;
   const canComplete = record.status === BookingStatus.IN_PROGRESS;
 
-  const renderRejectOrCancel =
+  const rejectOrCancelNode =
     record.status === BookingStatus.CONFIRMED ? (
       <Popconfirm
+        key="cancel"
         title={t("booking.worker.actions.cancelConfirm")}
         onConfirm={() => onAction(record._id, WorkerActionType.CANCEL)}
         okText={t("common.confirm")}
@@ -56,6 +57,7 @@ export function WorkerBookingActions({
       </Popconfirm>
     ) : record.status === BookingStatus.PENDING ? (
       <Popconfirm
+        key="reject"
         title={t("booking.worker.actions.rejectConfirm")}
         onConfirm={() => onAction(record._id, WorkerActionType.REJECT)}
         okText={t("common.confirm")}
@@ -67,53 +69,72 @@ export function WorkerBookingActions({
       </Popconfirm>
     ) : null;
 
+  const nodes: React.ReactNode[] = [];
+  if (canConfirm) {
+    nodes.push(
+      <Popconfirm
+        key="confirm"
+        title={t("booking.worker.actions.confirmBooking")}
+        onConfirm={() => onAction(record._id, WorkerActionType.CONFIRM)}
+        okText={t("common.confirm")}
+        cancelText={t("common.cancel")}
+      >
+        <Button type="primary" size="small">
+          {t("booking.worker.actions.confirm")}
+        </Button>
+      </Popconfirm>
+    );
+  }
+  if (rejectOrCancelNode) {
+    nodes.push(rejectOrCancelNode);
+  }
+  if (canStart) {
+    nodes.push(
+      <Popconfirm
+        key="start"
+        title={t("booking.worker.actions.startConfirm")}
+        onConfirm={() => onAction(record._id, WorkerActionType.START)}
+        okText={t("common.confirm")}
+        cancelText={t("common.cancel")}
+      >
+        <Button type="primary" size="small">
+          {t("booking.worker.actions.start")}
+        </Button>
+      </Popconfirm>
+    );
+  }
+  if (canComplete) {
+    nodes.push(
+      <Popconfirm
+        key="complete"
+        title={t("booking.worker.actions.completeConfirm")}
+        onConfirm={() => onAction(record._id, WorkerActionType.COMPLETE)}
+        okText={t("common.confirm")}
+        cancelText={t("common.cancel")}
+      >
+        <Button type="primary" size="small">
+          {t("booking.worker.actions.complete")}
+        </Button>
+      </Popconfirm>
+    );
+  }
+  if (nodes.length === 0) {
+    nodes.push(
+      <Text key="no-actions" type="secondary">
+        {t("booking.worker.actions.noActionsAvailable")}
+      </Text>
+    );
+  }
+  return nodes;
+}
+
+export function WorkerBookingActions(
+  props: WorkerBookingActionsProps
+): React.ReactElement {
+  const nodes = getWorkerBookingActionNodes(props);
   return (
     <Space size="small" orientation="horizontal">
-      {canConfirm && (
-        <Popconfirm
-          title={t("booking.worker.actions.confirmBooking")}
-          onConfirm={() => onAction(record._id, WorkerActionType.CONFIRM)}
-          okText={t("common.confirm")}
-          cancelText={t("common.cancel")}
-        >
-          <Button type="primary" size="small">
-            {t("booking.worker.actions.confirm")}
-          </Button>
-        </Popconfirm>
-      )}
-      {renderRejectOrCancel}
-      {canStart && (
-        <Popconfirm
-          title={t("booking.worker.actions.startConfirm")}
-          onConfirm={() => onAction(record._id, WorkerActionType.START)}
-          okText={t("common.confirm")}
-          cancelText={t("common.cancel")}
-        >
-          <Button type="primary" size="small">
-            {t("booking.worker.actions.start")}
-          </Button>
-        </Popconfirm>
-      )}
-      {canComplete && (
-        <Popconfirm
-          title={t("booking.worker.actions.completeConfirm")}
-          onConfirm={() => onAction(record._id, WorkerActionType.COMPLETE)}
-          okText={t("common.confirm")}
-          cancelText={t("common.cancel")}
-        >
-          <Button type="primary" size="small">
-            {t("booking.worker.actions.complete")}
-          </Button>
-        </Popconfirm>
-      )}
-      {!canConfirm &&
-        !renderRejectOrCancel &&
-        !canStart &&
-        !canComplete && (
-          <Text type="secondary">
-            {t("booking.worker.actions.noActionsAvailable")}
-          </Text>
-        )}
+      {nodes}
     </Space>
   );
 }

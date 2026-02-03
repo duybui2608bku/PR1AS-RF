@@ -72,6 +72,7 @@ export const getBookingStatusTagColor = (status: BookingStatus): string => {
     [BookingStatus.CANCELLED]: TagColor.DEFAULT,
     [BookingStatus.REJECTED]: TagColor.RED,
     [BookingStatus.DISPUTED]: TagColor.VOLCANO,
+    [BookingStatus.EXPIRED]: TagColor.GRAY,
   };
   return colorMap[status] || TagColor.DEFAULT;
 };

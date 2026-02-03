@@ -885,6 +885,7 @@
   "chat": {
     "inputPlaceholder": "输入消息...",
     "noMessages": "还没有消息",
+    "newChat": "新对话",
     "selectConversation": "选择一个对话开始聊天",
     "typing": "正在输入...",
     "unknownUser": "未知用户",
@@ -1063,7 +1064,8 @@
       "completed": "已完成",
       "cancelled": "已取消",
       "rejected": "已拒绝",
-      "disputed": "争议中"
+      "disputed": "争议中",
+      "expired": "已过期"
     },
     "paymentStatus": {
       "pending": "待支付",

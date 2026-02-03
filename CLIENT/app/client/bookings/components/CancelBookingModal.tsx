@@ -14,12 +14,14 @@ interface CancelBookingModalProps {
     reason: CancellationReason;
     notes?: string;
   }) => Promise<void>;
+  loading?: boolean;
 }
 
 export function CancelBookingModal({
   open,
   onCancel,
   onOk,
+  loading = false,
 }: CancelBookingModalProps): JSX.Element {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -54,6 +56,7 @@ export function CancelBookingModal({
       onCancel={handleModalCancel}
       okText={t("common.confirm")}
       cancelText={t("common.cancel")}
+      confirmLoading={loading}
     >
       <Form form={form} layout="vertical">
         <Form.Item

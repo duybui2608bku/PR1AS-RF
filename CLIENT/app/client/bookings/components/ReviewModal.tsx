@@ -61,12 +61,14 @@ interface ReviewModalProps {
     };
     comment: string;
   }) => Promise<void>;
+  loading?: boolean;
 }
 
 export function ReviewModal({
   open,
   onCancel,
   onOk,
+  loading = false,
 }: ReviewModalProps): JSX.Element {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -108,6 +110,7 @@ export function ReviewModal({
       onCancel={handleModalCancel}
       okText={t("common.submit")}
       cancelText={t("common.cancel")}
+      confirmLoading={loading}
       title={
         <Title level={4} className={styles.title}>
           {t("booking.review.title")}

@@ -321,7 +321,7 @@ const HeaderComponent = () => {
       {!userData.isAdmin && <SettingsPopover />}
       <Divider className={styles.dividerSpacing} />
 
-      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
         <span className={styles.settingsLabel}>{t("header.currency")}</span>
         <Select
           value={currency}
@@ -339,14 +339,14 @@ const HeaderComponent = () => {
 
       <Divider className={styles.dividerSpacing} />
 
-      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
         <span className={styles.settingsLabel}>{t("header.language")}</span>
         <LanguageSwitcher />
       </Space>
 
       <Divider className={styles.dividerSpacing} />
 
-      <Space direction="vertical" size="small" className={styles.settingsBlock}>
+      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
         <span className={styles.settingsLabel}>{t("header.theme")}</span>
         <ThemeToggle />
       </Space>

@@ -83,4 +83,5 @@ export enum TagColor {
   ERROR = "error",
   WARNING = "warning",
   DEFAULT = "default",
+  GRAY = "gray",
 }

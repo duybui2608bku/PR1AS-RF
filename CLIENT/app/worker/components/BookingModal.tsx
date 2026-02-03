@@ -326,24 +326,12 @@ export function BookingModal({
     onClose();
   };
 
-  const handlePricingUnitChange = (unit: PricingUnit): void => {
-    setSelectedPricingUnit(unit);
-    setSelectedQuantity(1);
-    setSelectedDate(null);
-    setSelectedDateRange(null);
-    form.setFieldsValue({
-      booking_date: null,
-      date_range: null,
-      start_time: null,
-    });
-  };
-
   return (
     <Modal
-    open={open}
+      open={open}
+      centered
       onCancel={handleClose}
       onOk={handleSubmit}
-    
       okText={t("booking.create.submit")}
       cancelText={t("common.cancel")}
       width={600}
@@ -458,25 +446,6 @@ export function BookingModal({
             </Form.Item>
           </>
         )}
-
-        <Form.Item label={t("booking.create.pricingUnit")}>
-          <Space>
-            {pricing.map((p) => (
-              <button
-                key={p.unit}
-                type="button"
-                onClick={() => handlePricingUnitChange(p.unit as PricingUnit)}
-                className={`${styles.pricingButton} ${selectedPricingUnit === p.unit ? styles.pricingButtonSelected : ""}`}
-              >
-                {p.unit === PricingUnit.HOURLY
-                  ? t("booking.pricing.hourly")
-                  : p.unit === PricingUnit.DAILY
-                  ? t("booking.pricing.daily")
-                  : t("booking.pricing.monthly")}
-              </button>
-            ))}
-          </Space>
-        </Form.Item>
 
         {selectedPricingUnit !== PricingUnit.DAILY && (
           <Form.Item label={t("booking.create.quantity")}>

@@ -12,6 +12,8 @@ import {
   Button,
   Card,
   message,
+  Input,
+  Modal,
 } from "antd";
 import {
   CalendarOutlined,
@@ -46,6 +48,9 @@ import { WorkerServices } from "../components/WorkerServices";
 import { BookingModal } from "../components/BookingModal";
 import { buildChatRoute } from "@/lib/constants/routes";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
+import { chatApi } from "@/lib/api/chat.api";
+import { ChatErrorCode } from "@/lib/constants/error-codes";
 import type { Dayjs } from "dayjs";
 import styles from "./worker-detail.module.scss";
 
@@ -63,6 +68,8 @@ export default function WorkerDetailPage() {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [firstMessageContent, setFirstMessageContent] = useState("");
 
   const {
     data: workerData,
@@ -116,10 +123,45 @@ export default function WorkerDetailPage() {
     );
   };
 
+  const sendFirstMessageMutation = useStandardizedMutation(
+    (content: string) => {
+      if (!workerData?.user?.id) {
+        throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
+      }
+      return chatApi.sendMessage({
+        receiver_id: workerData.user.id,
+        content,
+        type: "text",
+      });
+    },
+    {
+      onSuccess: () => {
+        setFirstMessageContent("");
+        setMessageModalOpen(false);
+        if (workerData?.user?.id) {
+          router.push(buildChatRoute(workerData.user.id));
+        }
+      },
+    }
+  );
+
   const handleMessageClick = (): void => {
     if (workerData?.user?.id) {
-      router.push(buildChatRoute(workerData.user.id));
+      setMessageModalOpen(true);
     }
+  };
+
+  const handleCloseMessageModal = (): void => {
+    setMessageModalOpen(false);
+    setFirstMessageContent("");
+  };
+
+  const handleSendFirstMessage = (): void => {
+    const content = firstMessageContent.trim();
+    if (!content || !workerData?.user?.id) {
+      return;
+    }
+    sendFirstMessageMutation.mutate(content);
   };
 
   const handleHireClick = (): void => {
@@ -459,6 +501,24 @@ export default function WorkerDetailPage() {
           pricing={selectedWorkerService.pricing}
           onSuccess={handleBookingSuccess}
         />
+      )}
+
+      {workerData && (
+        <Modal
+          open={messageModalOpen}
+          title={t("worker.detail.message")}
+          onCancel={handleCloseMessageModal}
+          onOk={handleSendFirstMessage}
+          confirmLoading={sendFirstMessageMutation.isPending}
+          okText={t("common.submit")}
+          cancelText={t("common.cancel")}
+        >
+          <Input.TextArea
+            value={firstMessageContent}
+            onChange={(event) => setFirstMessageContent(event.target.value)}
+            autoSize={{ minRows: 3, maxRows: 6 }}
+          />
+        </Modal>
       )}
 
       <Footer />

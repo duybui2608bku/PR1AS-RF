@@ -22,6 +22,11 @@ import {
   TransactionStatus,
   WALLET_LIMITS,
   DateRangePreset,
+  VNPayResponseCode,
+  DATE_RANGE_OFFSETS,
+  DATE_UNITS,
+  TRANSACTION_DESCRIPTIONS,
+  PAGINATION_DEFAULTS,
 } from "../../constants/wallet";
 
 import { PaymentGateway } from "../../constants/wallet";
@@ -38,34 +43,15 @@ import dayjs from "dayjs";
 
 export const createDepositTransaction = async (
   userId: string,
-
   request: CreateDepositRequest,
-
   ipAddress: string
 ): Promise<CreateDepositResponse> => {
   const { amount } = request;
-
-  // if (amount < WALLET_LIMITS.MIN_DEPOSIT_AMOUNT) {
-
-  //   throw AppError.badRequest(WALLET_MESSAGES.DEPOSIT_AMOUNT_TOO_LOW, [
-
-  //     {
-
-  //       field: "amount",
-
-  //       message: `Minimum deposit amount is ${WALLET_LIMITS.MIN_DEPOSIT_AMOUNT}`,
-
-  //     },
-
-  //   ]);
-
-  // }
 
   if (amount > WALLET_LIMITS.MAX_DEPOSIT_AMOUNT) {
     throw AppError.badRequest(WALLET_MESSAGES.DEPOSIT_AMOUNT_TOO_HIGH, [
       {
         field: "amount",
-
         message: `Maximum deposit amount is ${WALLET_LIMITS.MAX_DEPOSIT_AMOUNT}`,
       },
     ]);
@@ -81,40 +67,29 @@ export const createDepositTransaction = async (
 
   const transaction = await walletRepository.create({
     user_id: userId,
-
     type: TransactionType.DEPOSIT,
-
     amount,
-
     status: TransactionStatus.PENDING,
-
     gateway: PaymentGateway.VNPAY,
-
     gateway_transaction_id: transactionId,
-
-    description: `Deposit ${amount}`,
+    description: `${TRANSACTION_DESCRIPTIONS.DEPOSIT_PREFIX} ${amount}`,
   });
 
   const paymentUrl = buildDepositPaymentUrl(
     amount,
-
     userId,
-
     transactionId,
-
     ipAddress
   );
 
   return {
     payment_url: paymentUrl,
-
     transaction_id: transaction._id.toString(),
   };
 };
 
 export const verifyDepositPayment = async (
   userId: string,
-
   queryParams: Record<string, string>
 ): Promise<void> => {
   const verifyResult = verifyPaymentReturn(queryParams);
@@ -127,9 +102,7 @@ export const verifyDepositPayment = async (
     if (transaction) {
       await walletRepository.updateStatus(
         transaction._id.toString(),
-
         TransactionStatus.FAILED,
-
         queryParams
       );
     }
@@ -145,7 +118,9 @@ export const verifyDepositPayment = async (
     throw AppError.notFound(WALLET_MESSAGES.TRANSACTION_NOT_FOUND);
   }
 
-  if (transaction.user_id !== userId) {
+  const transactionUserId = String(transaction.user_id);
+
+  if (transactionUserId !== userId) {
     throw AppError.forbidden(WALLET_MESSAGES.TRANSACTION_FAILED);
   }
 
@@ -153,12 +128,10 @@ export const verifyDepositPayment = async (
     return;
   }
 
-  if (verifyResult.responseCode !== "00") {
+  if (verifyResult.responseCode !== VNPayResponseCode.SUCCESS) {
     await walletRepository.updateStatus(
       transaction._id.toString(),
-
       TransactionStatus.FAILED,
-
       queryParams
     );
 
@@ -167,15 +140,12 @@ export const verifyDepositPayment = async (
 
   await walletRepository.updateStatus(
     transaction._id.toString(),
-
     TransactionStatus.SUCCESS,
-
     queryParams
   );
 
   await walletRepository.updateGatewayTransactionId(
     transaction._id.toString(),
-
     verifyResult.gatewayTransactionId
   );
 
@@ -231,8 +201,8 @@ export const getAdminTransactionHistory = async (
   return {
     transactions,
     total,
-    page: query.page || 1,
-    limit: query.limit || 10,
+    page: query.page || PAGINATION_DEFAULTS.PAGE,
+    limit: query.limit || PAGINATION_DEFAULTS.LIMIT,
   };
 };
 
@@ -244,28 +214,40 @@ const getDateRangeFromPreset = (
   switch (preset) {
     case DateRangePreset.TODAY:
       return {
-        startDate: now.startOf("day").toDate(),
-        endDate: now.endOf("day").toDate(),
+        startDate: now.startOf(DATE_UNITS.DAY).toDate(),
+        endDate: now.endOf(DATE_UNITS.DAY).toDate(),
       };
     case DateRangePreset.YESTERDAY:
       return {
-        startDate: now.subtract(1, "day").startOf("day").toDate(),
-        endDate: now.subtract(1, "day").endOf("day").toDate(),
+        startDate: now
+          .subtract(DATE_RANGE_OFFSETS.YESTERDAY_DAYS, DATE_UNITS.DAY)
+          .startOf(DATE_UNITS.DAY)
+          .toDate(),
+        endDate: now
+          .subtract(DATE_RANGE_OFFSETS.YESTERDAY_DAYS, DATE_UNITS.DAY)
+          .endOf(DATE_UNITS.DAY)
+          .toDate(),
       };
     case DateRangePreset.LAST_7_DAYS:
       return {
-        startDate: now.subtract(6, "day").startOf("day").toDate(),
-        endDate: now.endOf("day").toDate(),
+        startDate: now
+          .subtract(DATE_RANGE_OFFSETS.LAST_7_DAYS_OFFSET, DATE_UNITS.DAY)
+          .startOf(DATE_UNITS.DAY)
+          .toDate(),
+        endDate: now.endOf(DATE_UNITS.DAY).toDate(),
       };
     case DateRangePreset.LAST_14_DAYS:
       return {
-        startDate: now.subtract(13, "day").startOf("day").toDate(),
-        endDate: now.endOf("day").toDate(),
+        startDate: now
+          .subtract(DATE_RANGE_OFFSETS.LAST_14_DAYS_OFFSET, DATE_UNITS.DAY)
+          .startOf(DATE_UNITS.DAY)
+          .toDate(),
+        endDate: now.endOf(DATE_UNITS.DAY).toDate(),
       };
     case DateRangePreset.THIS_MONTH:
       return {
-        startDate: now.startOf("month").toDate(),
-        endDate: now.endOf("day").toDate(),
+        startDate: now.startOf(DATE_UNITS.MONTH).toDate(),
+        endDate: now.endOf(DATE_UNITS.DAY).toDate(),
       };
     default:
       throw AppError.badRequest(WALLET_MESSAGES.INVALID_DATE_RANGE);
@@ -310,15 +292,43 @@ export const holdBalanceForBooking = async (
     throw AppError.badRequest(WALLET_MESSAGES.INSUFFICIENT_BALANCE, []);
   }
 
+  const transactionDescription =
+    description ||
+    `${TRANSACTION_DESCRIPTIONS.HOLD_BALANCE_PREFIX} ${bookingId}`;
+
   const transaction = await walletRepository.create({
     user_id: userId,
     type: TransactionType.PAYMENT,
     amount,
     status: TransactionStatus.SUCCESS,
-    description: description || `Hold balance for booking ${bookingId}`,
+    description: transactionDescription,
   });
 
   const updatedBalance = currentBalance - amount;
+  await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+
+  return transaction._id.toString();
+};
+
+export const refundBalanceToClient = async (
+  userId: string,
+  amount: number,
+  bookingId: string,
+  description?: string
+): Promise<string> => {
+  const transactionDescription =
+    description || `${TRANSACTION_DESCRIPTIONS.REFUND_PREFIX} ${bookingId}`;
+
+  const transaction = await walletRepository.create({
+    user_id: userId,
+    type: TransactionType.REFUND,
+    amount,
+    status: TransactionStatus.SUCCESS,
+    description: transactionDescription,
+  });
+
+  const currentBalance = await walletRepository.calculateUserBalance(userId);
+  const updatedBalance = currentBalance + amount;
   await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
 
   return transaction._id.toString();

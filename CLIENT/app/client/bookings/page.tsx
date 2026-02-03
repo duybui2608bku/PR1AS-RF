@@ -16,11 +16,12 @@ import {
   Button,
 } from "antd";
 import { CalendarOutlined, ReloadOutlined, ClearOutlined } from "@ant-design/icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { Dayjs } from "dayjs";
 import { bookingApi } from "@/lib/api/booking.api";
 import { reviewApi } from "@/lib/api/review.api";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
 import { ReviewType } from "@/lib/types/review";
@@ -110,6 +111,52 @@ function BookingsContent() {
     retry: false,
   });
 
+  const cancelBookingMutation = useStandardizedMutation(
+    (params: {
+      bookingId: string;
+      cancelledBy: string;
+      reason: string;
+      notes: string;
+    }) =>
+      bookingApi.cancelBooking(
+        params.bookingId,
+        params.cancelledBy,
+        params.reason,
+        params.notes
+      ),
+    {
+      onSuccess: () => {
+        message.success(t("booking.worker.actions.cancelSuccess"));
+        queryClient.invalidateQueries({ queryKey: ["client-bookings"] });
+        handleCloseCancelModal();
+      },
+    }
+  );
+
+  const createReviewMutation = useStandardizedMutation(
+    (data: {
+      booking_id: string;
+      worker_id: string;
+      client_id: string;
+      review_type: ReviewType;
+      rating: number;
+      rating_details: {
+        professionalism: number;
+        punctuality: number;
+        communication: number;
+        service_quality: number;
+      };
+      comment: string;
+    }) => reviewApi.createReview(data),
+    {
+      onSuccess: () => {
+        message.success(t("booking.review.success"));
+        queryClient.invalidateQueries({ queryKey: ["client-bookings"] });
+        handleCloseReviewModal();
+      },
+    }
+  );
+
   const handleTableChange = (newPage: number, newPageSize: number): void => {
     setPage(newPage);
     setLimit(newPageSize);
@@ -155,22 +202,15 @@ function BookingsContent() {
     reason: CancellationReason;
     notes?: string;
   }): Promise<void> => {
-    try {
-      if (!selectedBookingId) {
-        return;
-      }
-      await bookingApi.cancelBooking(
-        selectedBookingId,
-        CancelledBy.CLIENT,
-        values.reason,
-        values.notes || ""
-      );
-      message.success(t("booking.worker.actions.cancelSuccess"));
-      queryClient.invalidateQueries({ queryKey: ["client-bookings"] });
-      handleCloseCancelModal();
-    } catch (error) {
-      message.error(t("booking.worker.actions.error"));
+    if (!selectedBookingId) {
+      return;
     }
+    cancelBookingMutation.mutate({
+      bookingId: selectedBookingId,
+      cancelledBy: CancelledBy.CLIENT,
+      reason: values.reason,
+      notes: values.notes || "",
+    });
   };
 
   const handleRefreshBookings = async (): Promise<void> => {
@@ -205,38 +245,30 @@ function BookingsContent() {
     };
     comment: string;
   }): Promise<void> => {
-    try {
-      if (!selectedBookingForReview || !user) {
-        return;
-      }
-
-      const bookingId =
-        (selectedBookingForReview as { id?: string }).id ||
-        selectedBookingForReview._id;
-
-      const workerId =
-        typeof selectedBookingForReview.worker_id === "object" &&
-        selectedBookingForReview.worker_id !== null &&
-        "_id" in selectedBookingForReview.worker_id
-          ? (selectedBookingForReview.worker_id as { _id: string })._id
-          : (selectedBookingForReview.worker_id as string);
-
-      await reviewApi.createReview({
-        booking_id: bookingId,
-        worker_id: workerId,
-        client_id: user.id,
-        review_type: ReviewType.CLIENT_TO_WORKER,
-        rating: values.rating,
-        rating_details: values.rating_details,
-        comment: values.comment,
-      });
-
-      message.success(t("booking.review.success"));
-      queryClient.invalidateQueries({ queryKey: ["client-bookings"] });
-      handleCloseReviewModal();
-    } catch (error) {
-      message.error(t("booking.review.error"));
+    if (!selectedBookingForReview || !user) {
+      return;
     }
+
+    const bookingId =
+      (selectedBookingForReview as { id?: string }).id ||
+      selectedBookingForReview._id;
+
+    const workerId =
+      typeof selectedBookingForReview.worker_id === "object" &&
+      selectedBookingForReview.worker_id !== null &&
+      "_id" in selectedBookingForReview.worker_id
+        ? (selectedBookingForReview.worker_id as { _id: string })._id
+        : (selectedBookingForReview.worker_id as string);
+
+    createReviewMutation.mutate({
+      booking_id: bookingId,
+      worker_id: workerId,
+      client_id: user.id,
+      review_type: ReviewType.CLIENT_TO_WORKER,
+      rating: values.rating,
+      rating_details: values.rating_details,
+      comment: values.comment,
+    });
   };
 
   const handleComplainBooking = (bookingId: string): void => {
@@ -305,7 +337,7 @@ function BookingsContent() {
               </Col>
               <Col xs={24} sm={12} md={6}>
                 <Space
-                  direction="vertical"
+                  orientation="vertical"
                   size="small"
                   className={styles.filterSpace}
                 >
@@ -340,7 +372,7 @@ function BookingsContent() {
               </Col>
               <Col xs={24} sm={24} md={8}>
                 <Space
-                  direction="vertical"
+                  orientation="vertical"
                   size="small"
                   style={{ width: "100%" }}
                 >
@@ -355,7 +387,7 @@ function BookingsContent() {
               </Col>
               <Col xs={24} sm={24} md={4}>
                 <Space
-                  direction="vertical"
+                  orientation="vertical"
                   size="small"
                   className={styles.filterSpace}
                 >
@@ -425,11 +457,13 @@ function BookingsContent() {
           open={cancelModalOpen}
           onCancel={handleCloseCancelModal}
           onOk={handleSubmitCancelBooking}
+          loading={cancelBookingMutation.isPending}
         />
         <ReviewModal
           open={reviewModalOpen}
           onCancel={handleCloseReviewModal}
           onOk={handleSubmitReview}
+          loading={createReviewMutation.isPending}
         />
       </Content>
       <Footer />
