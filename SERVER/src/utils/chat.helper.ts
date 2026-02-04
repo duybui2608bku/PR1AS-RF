@@ -25,3 +25,9 @@ export const getUserRoom = (userId: string): string => {
 export const getConversationRoom = (conversationId: string): string => {
   return `conversation:${conversationId}`;
 };
+
+export const getGroupConversationRoom = (
+  conversationGroupId: string
+): string => {
+  return `conversation_group:${conversationGroupId}`;
+};

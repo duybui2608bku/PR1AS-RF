@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useEffect, Fragment } from "react";
 import {
-  Layout,
   Card,
   Table,
   Space,
@@ -26,8 +25,6 @@ import type { BookingQuery, Booking } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import {
   PAGINATION_DEFAULTS,
   PAGE_SIZE_OPTIONS,
@@ -48,7 +45,6 @@ import { useApiQueryData } from "@/lib/hooks/use-api";
 import { useI18n } from "@/lib/hooks/use-i18n";
 
 const { Title } = Typography;
-const { Content } = Layout;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
@@ -282,10 +278,8 @@ function WorkerBookingsContent() {
   });
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <>
+    <div className={styles.container}>
           <Space className={styles.headerSpace}>
             <Title level={2} className={styles.title}>
               <CalendarOutlined className={styles.titleIcon} />
@@ -465,9 +459,7 @@ function WorkerBookingsContent() {
               />
             )}
           </Card>
-        </div>
-      </Content>
-      <Footer />
+    </div>
       <WorkerBookingActionModal
         open={actionModalOpen}
         action={currentAction}
@@ -482,7 +474,7 @@ function WorkerBookingsContent() {
         }
         t={t}
       />
-    </Layout>
+    </>
   );
 }
 

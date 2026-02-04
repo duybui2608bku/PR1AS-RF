@@ -11,7 +11,6 @@ import {
   Avatar,
   Tag,
   Divider,
-  Layout,
   Descriptions,
 } from "antd";
 import {
@@ -26,14 +25,11 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { userProfileApi } from "@/lib/api/user.api";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
 import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "./profile.module.scss";
 
 const { Title, Text } = Typography;
-const { Content } = Layout;
 
 function ProfileContent() {
   const router = useRouter();
@@ -50,10 +46,7 @@ function ProfileContent() {
   };
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <div className={styles.container}>
           <Row justify="space-between" align="middle" className={styles.headerRow}>
             <Col>
               <Title level={2} className={styles.pageTitle}>
@@ -191,10 +184,7 @@ function ProfileContent() {
               </Col>
             </Row>
           </Card>
-        </div>
-      </Content>
-      <Footer />
-    </Layout>
+    </div>
   );
 }
 

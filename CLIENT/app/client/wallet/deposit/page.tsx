@@ -1,16 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Layout } from "antd";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { DepositModal } from "@/lib/components/deposit-modal";
 import { AppRoute } from "@/lib/constants/routes";
-import styles from "@/app/client/wallet/deposit/page.module.scss";
-
-const { Content } = Layout;
 
 function DepositContent() {
   const router = useRouter();
@@ -21,14 +15,7 @@ function DepositContent() {
     router.push(AppRoute.CLIENT_WALLET);
   };
 
-  return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content />
-      <Footer />
-      <DepositModal open={depositModalOpen} onClose={handleClose} />
-    </Layout>
-  );
+  return <DepositModal open={depositModalOpen} onClose={handleClose} />;
 }
 
 export default function DepositPage() {

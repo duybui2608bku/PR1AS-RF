@@ -1,23 +1,16 @@
 "use client";
 
-import { Layout, Typography, Divider } from "antd";
-import { Header } from "../components/header";
-import { Footer } from "../components/footer";
+import { Typography, Divider } from "antd";
 import { useTranslation } from "react-i18next";
 import styles from "./page.module.scss";
 
-const { Content } = Layout;
 const { Title, Paragraph } = Typography;
 
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation();
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <div className={styles.container}>
           <Title level={1} className={styles.mainTitle}>
             {t("privacy.title")}
           </Title>
@@ -184,11 +177,7 @@ export default function PrivacyPolicyPage() {
           <Paragraph className={styles.footerNote}>
             {t("privacy.sections.effectiveDate")} {new Date().toLocaleDateString()}
           </Paragraph>
-        </div>
-      </Content>
-
-      <Footer />
-    </Layout>
+    </div>
   );
 }
 

@@ -105,6 +105,9 @@ export const CHAT_MESSAGES = {
   AUTHENTICATION_REQUIRED: "Authentication required",
   FAILED_JOIN_CONVERSATION: "Failed to join conversation",
   FAILED_MARK_READ: "Failed to mark messages as read",
+  GROUP_CONVERSATION_NOT_FOUND: "Group conversation not found",
+  GROUP_MESSAGE_NOT_FOUND: "Group message not found",
+  GROUP_CONVERSATION_ID_REQUIRED: "Group conversation ID is required",
 } as const;
 
 export const CSRF_MESSAGES = {

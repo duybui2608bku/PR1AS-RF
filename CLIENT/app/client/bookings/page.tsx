@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import {
-  Layout,
   Card,
   Table,
   Grid,
@@ -18,9 +17,11 @@ import {
 import { CalendarOutlined, ReloadOutlined, ClearOutlined } from "@ant-design/icons";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 import type { Dayjs } from "dayjs";
 import { bookingApi } from "@/lib/api/booking.api";
 import { reviewApi } from "@/lib/api/review.api";
+import { chatApi } from "@/lib/api/chat.api";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
@@ -28,8 +29,6 @@ import { ReviewType } from "@/lib/types/review";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import {
   PAGINATION_DEFAULTS,
   PAGE_SIZE_OPTIONS,
@@ -47,11 +46,11 @@ import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "./page.module.scss";
 
 const { Title } = Typography;
-const { Content } = Layout;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 function BookingsContent() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { locale } = useI18n();
   const screens = Grid.useBreakpoint();
@@ -271,8 +270,20 @@ function BookingsContent() {
     });
   };
 
+  const createComplaintMutation = useStandardizedMutation(
+    (bookingId: string) => chatApi.createComplaintConversation(bookingId),
+    {
+      onSuccess: (data) => {
+        router.push(`/chat?group=${data.conversation._id}`);
+      },
+      onError: () => {
+        message.error(t("booking.client.actions.complainError"));
+      },
+    }
+  );
+
   const handleComplainBooking = (bookingId: string): void => {
-    message.info(t("booking.client.actions.complainComingSoon"));
+    createComplaintMutation.mutate(bookingId);
   };
 
   const columns = createBookingColumns({
@@ -286,15 +297,12 @@ function BookingsContent() {
   });
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <div className={styles.container}>
           <Title level={2} className={styles.pageTitle}>
             <CalendarOutlined className={styles.titleIcon} />
             {t("booking.list.title")}
           </Title>
-
+    
           <Card>
             <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.filtersRow}>
               <Col xs={24} sm={12} md={6}>
@@ -465,9 +473,7 @@ function BookingsContent() {
           onOk={handleSubmitReview}
           loading={createReviewMutation.isPending}
         />
-      </Content>
-      <Footer />
-    </Layout>
+    </div>    
   );
 }
 

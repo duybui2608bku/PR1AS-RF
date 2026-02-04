@@ -124,6 +124,81 @@ export interface SendMessageResponse {
   conversation: { _id: string };
 }
 
+export interface SendGroupMessageInput {
+  booking_id: string;
+  content: string;
+  type: MessageType;
+  reply_to_id?: string | null;
+}
+
+export interface GroupMessageReadBy {
+  user_id: string;
+  read_at: string;
+}
+
+export interface GroupMessage {
+  _id: string;
+  conversation_group_id: string;
+  sender_id: string;
+  type: MessageType;
+  content: string;
+  read_by: GroupMessageReadBy[];
+  is_deleted: boolean;
+  reply_to_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiGroupConversation {
+  _id: string;
+  booking_id: string;
+  name: string;
+  members: string[];
+  last_message: string | null;
+  last_message_data?: GroupMessage;
+  unread_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiGetGroupConversationsResponse {
+  conversations: ApiGroupConversation[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface GetGroupMessagesQuery {
+  booking_id?: string;
+  conversation_group_id?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetGroupMessagesResponse {
+  messages: GroupMessage[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface GetGroupConversationsQuery {
+  page?: number;
+  limit?: number;
+}
+
+export interface GetGroupConversationsResponse {
+  conversations: ApiGroupConversation[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface MarkGroupMessagesReadInput {
+  message_ids?: string[];
+  conversation_group_id?: string;
+}
+
 export const chatApi = {
   sendMessage: async (data: SendMessageInput): Promise<SendMessageResponse> => {
     const response = await api.post<ApiResponse<SendMessageResponse>>(
@@ -227,5 +302,77 @@ export const chatApi = {
         message_id: messageId,
       })
     );
+  },
+
+  sendGroupMessage: async (
+    data: SendGroupMessageInput
+  ): Promise<{ message: GroupMessage; conversation: ApiGroupConversation }> => {
+    const response = await api.post<
+      ApiResponse<{ message: GroupMessage; conversation: ApiGroupConversation }>
+    >(ApiEndpoint.CHAT_GROUP_MESSAGES, data);
+    return extractData(response);
+  },
+
+  getGroupMessages: async (
+    query?: GetGroupMessagesQuery
+  ): Promise<GetGroupMessagesResponse> => {
+    const response = await api.get<ApiResponse<GetGroupMessagesResponse>>(
+      ApiEndpoint.CHAT_GROUP_MESSAGES,
+      { params: query }
+    );
+    return extractData(response);
+  },
+
+  getGroupConversations: async (
+    query?: GetGroupConversationsQuery
+  ): Promise<GetGroupConversationsResponse> => {
+    const response = await api.get<
+      ApiResponse<ApiGetGroupConversationsResponse>
+    >(ApiEndpoint.CHAT_GROUP_CONVERSATIONS, { params: query });
+    const data = extractData(response);
+    return data;
+  },
+
+  getGroupConversation: async (
+    conversationGroupId: string
+  ): Promise<ApiGroupConversation> => {
+    const response = await api.get<
+      ApiResponse<{ conversation: ApiGroupConversation }>
+    >(
+      buildEndpoint(ApiEndpoint.CHAT_GROUP_CONVERSATIONS_BY_ID, {
+        conversation_group_id: conversationGroupId,
+      })
+    );
+    return extractData(response).conversation;
+  },
+
+  markGroupMessagesRead: async (
+    data: MarkGroupMessagesReadInput
+  ): Promise<void> => {
+    await api.patch<ApiResponse<void>>(
+      ApiEndpoint.CHAT_GROUP_MESSAGES_READ,
+      data
+    );
+  },
+
+  getGroupUnreadCount: async (
+    conversationGroupId?: string
+  ): Promise<UnreadCountResponse> => {
+    const response = await api.get<ApiResponse<UnreadCountResponse>>(
+      ApiEndpoint.CHAT_GROUP_MESSAGES_UNREAD,
+      conversationGroupId
+        ? { params: { conversation_group_id: conversationGroupId } }
+        : undefined
+    );
+    return extractData(response);
+  },
+
+  createComplaintConversation: async (
+    bookingId: string
+  ): Promise<{ conversation: ApiGroupConversation }> => {
+    const response = await api.post<
+      ApiResponse<{ conversation: ApiGroupConversation }>
+    >(ApiEndpoint.CHAT_GROUP_COMPLAINT, { booking_id: bookingId });
+    return extractData(response);
   },
 };

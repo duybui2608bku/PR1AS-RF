@@ -27,6 +27,12 @@ export enum ApiEndpoint {
   CHAT_MESSAGES_UNREAD = "/chat/messages/unread",
   CHAT_CONVERSATIONS = "/chat/conversations",
   CHAT_CONVERSATIONS_BY_ID = "/chat/conversations/:conversation_id",
+  CHAT_GROUP_MESSAGES = "/chat/group/messages",
+  CHAT_GROUP_MESSAGES_READ = "/chat/group/messages/read",
+  CHAT_GROUP_MESSAGES_UNREAD = "/chat/group/messages/unread",
+  CHAT_GROUP_CONVERSATIONS = "/chat/group/conversations",
+  CHAT_GROUP_CONVERSATIONS_BY_ID = "/chat/group/conversations/:conversation_group_id",
+  CHAT_GROUP_COMPLAINT = "/chat/group/complaint",
   WALLET_DEPOSIT = "/wallet/deposit",
   WALLET_DEPOSIT_CALLBACK = "/wallet/deposit/callback",
   WALLET_BALANCE = "/wallet/balance",
@@ -53,7 +59,7 @@ export const buildEndpoint = (
   endpoint: ApiEndpoint,
   params?: Record<string, string>
 ): string => {
-  let path = endpoint;
+  let path: string = endpoint;
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       path = path.replace(`:${key}`, value);

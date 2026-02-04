@@ -379,6 +379,25 @@ Gửi message mới.
 
 **Socket**: Emits `message:new` event to receiver
 
+### POST `/api/chat/group/messages`
+Gửi group message mới dựa trên booking.
+
+**Request Body**:
+```typescript
+{
+  booking_id: string;
+  content: string;
+  type: MessageType; // text, image, video, audio, file
+  reply_to_id?: string;
+}
+```
+
+**Response**: Group message object với conversation group
+
+**Auth**: Required
+
+**Socket**: Emits `message:new` event to all group members
+
 ### GET `/api/chat/messages`
 Lấy messages với pagination.
 
@@ -392,6 +411,30 @@ Lấy messages với pagination.
 ```typescript
 {
   messages: Message[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+```
+
+**Auth**: Required
+
+### GET `/api/chat/group/messages`
+Lấy group messages với pagination.
+
+**Query Params**:
+- `conversation_group_id`: string (optional)
+- `booking_id`: string (optional, dùng để resolve conversation group)
+- `page`: number (default: 1)
+- `limit`: number (default: 20)
+
+**Response**:
+```typescript
+{
+  messages: GroupMessage[];
   pagination: {
     page: number;
     limit: number;
@@ -425,6 +468,28 @@ Lấy danh sách conversations.
 
 **Auth**: Required
 
+### GET `/api/chat/group/conversations`
+Lấy danh sách group conversations của user hiện tại.
+
+**Query Params**:
+- `page`: number (default: 1)
+- `limit`: number (default: 20)
+
+**Response**:
+```typescript
+{
+  conversations: GroupConversationWithLastMessage[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+```
+
+**Auth**: Required
+
 ### GET `/api/chat/conversations/:id`
 Lấy conversation details.
 
@@ -432,6 +497,18 @@ Lấy conversation details.
 ```typescript
 {
   conversation: Conversation;
+}
+```
+
+**Auth**: Required
+
+### GET `/api/chat/group/conversations/:id`
+Lấy group conversation details.
+
+**Response**:
+```typescript
+{
+  conversation: GroupConversationWithLastMessage;
 }
 ```
 
@@ -454,11 +531,43 @@ Lấy conversation details.
 
 **Socket**: Emits `message:read` event
 
+### PATCH `/api/chat/group/messages/read`
+Đánh dấu group messages đã đọc.
+
+**Request Body**:
+```typescript
+{
+  message_ids?: string[];
+  conversation_group_id?: string;
+}
+```
+
+**Response**: Success message
+
+**Auth**: Required
+
+**Socket**: Emits `message:read` event
+
 ### GET `/api/chat/messages/unread`
 Lấy số lượng unread messages.
 
 **Query Params**:
 - `conversation_id`: string (optional)
+
+**Response**:
+```typescript
+{
+  unread_count: number;
+}
+```
+
+**Auth**: Required
+
+### GET `/api/chat/group/messages/unread`
+Lấy số lượng unread group messages.
+
+**Query Params**:
+- `conversation_group_id`: string (optional)
 
 **Response**:
 ```typescript

@@ -889,6 +889,7 @@
     "selectConversation": "选择一个对话开始聊天",
     "typing": "正在输入...",
     "unknownUser": "未知用户",
+    "you": "你",
     "reply": "回复",
     "delete": "删除",
     "attachImage": "图片",
@@ -900,6 +901,12 @@
     "sentImage": "已发送1张图片",
     "conversations": "对话",
     "noConversations": "没有对话",
+    "tabChat": "聊天",
+    "tabComplaint": "投诉",
+    "complaintGroups": "投诉群组",
+    "noComplaintGroups": "暂无投诉群组",
+    "deleteMessage": "删除消息",
+    "deleteMessageConfirm": "确定要删除此消息吗？",
     "errors": {
       "noConversation": "未选择对话",
       "sendFailed": "发送消息失败",
@@ -1157,7 +1164,8 @@
       "actions": {
         "review": "评价",
         "complain": "投诉",
-        "complainComingSoon": "投诉功能即将推出"
+        "complainComingSoon": "投诉功能即将推出",
+        "complainError": "无法创建投诉对话。请重试。"
       }
     },
     "review": {

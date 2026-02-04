@@ -200,6 +200,15 @@ export class UserRepository {
       total,
     };
   }
+
+  async findFirstAdmin(): Promise<IUserDocument | null> {
+    return User.findOne({
+      roles: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
+    })
+      .select("_id")
+      .lean() as Promise<IUserDocument | null>;
+  }
 }
 
 export const userRepository = new UserRepository();

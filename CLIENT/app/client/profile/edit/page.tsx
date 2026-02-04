@@ -13,7 +13,6 @@ import {
   Row,
   Col,
   Divider,
-  Layout,
 } from "antd";
 import { UserOutlined, LockOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -25,13 +24,10 @@ import {
 } from "@/lib/api/user.api";
 import { AvatarUpload } from "@/app/components/avatar-upload";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
 import styles from "@/app/client/profile/edit/page.module.scss";
 
 const { Title, Text } = Typography;
-const { Content } = Layout;
 
 function EditProfileContent() {
   const router = useRouter();
@@ -130,15 +126,7 @@ function EditProfileContent() {
   };
 
   return (
-    <Layout
-      style={{
-        minHeight: "100vh",
-        background: "var(--ant-color-bg-container)",
-      }}
-    >
-      <Header />
-      <Content style={{ padding: "24px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
           <Space style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
               {t("profile.edit.title")}

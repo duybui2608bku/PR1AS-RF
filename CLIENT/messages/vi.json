@@ -992,6 +992,7 @@
     "selectConversation": "Chọn một cuộc trò chuyện để bắt đầu",
     "typing": "Đang soạn tin nhắn...",
     "unknownUser": "Người dùng",
+    "you": "Bạn",
     "reply": "Trả lời",
     "delete": "Xóa",
     "attachImage": "Ảnh",
@@ -1003,6 +1004,12 @@
     "sentImage": "Đã gửi 1 ảnh",
     "conversations": "Cuộc trò chuyện",
     "noConversations": "Chưa có cuộc trò chuyện nào",
+    "tabChat": "Chat",
+    "tabComplaint": "Khiếu nại",
+    "complaintGroups": "Nhóm khiếu nại",
+    "noComplaintGroups": "Chưa có nhóm khiếu nại nào",
+    "deleteMessage": "Xóa tin nhắn",
+    "deleteMessageConfirm": "Bạn có chắc muốn xóa tin nhắn này?",
     "time": {
       "justNow": "Vừa xong",
       "minutesAgo": "{{count}} phút trước",
@@ -1269,7 +1276,8 @@
       "actions": {
         "review": "Đánh giá",
         "complain": "Khiếu nại",
-        "complainComingSoon": "Tính năng khiếu nại sắp ra mắt"
+        "complainComingSoon": "Tính năng khiếu nại sắp ra mắt",
+        "complainError": "Không thể tạo cuộc trò chuyện khiếu nại. Vui lòng thử lại."
       }
     },
     "review": {

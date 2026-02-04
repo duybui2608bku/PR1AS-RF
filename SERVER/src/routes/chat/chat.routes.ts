@@ -45,4 +45,53 @@ router.delete(
   asyncHandler<AuthRequest>(chatController.deleteMessage.bind(chatController))
 );
 
+router.post(
+  "/group/messages",
+  asyncHandler<AuthRequest>(
+    chatController.sendGroupMessage.bind(chatController)
+  )
+);
+
+router.get(
+  "/group/messages",
+  asyncHandler<AuthRequest>(
+    chatController.getGroupMessages.bind(chatController)
+  )
+);
+
+router.get(
+  "/group/conversations",
+  asyncHandler<AuthRequest>(
+    chatController.getGroupConversations.bind(chatController)
+  )
+);
+
+router.get(
+  "/group/conversations/:conversation_group_id",
+  asyncHandler<AuthRequest>(
+    chatController.getGroupConversation.bind(chatController)
+  )
+);
+
+router.patch(
+  "/group/messages/read",
+  asyncHandler<AuthRequest>(
+    chatController.markGroupMessagesRead.bind(chatController)
+  )
+);
+
+router.get(
+  "/group/messages/unread",
+  asyncHandler<AuthRequest>(
+    chatController.getGroupUnreadCount.bind(chatController)
+  )
+);
+
+router.post(
+  "/group/complaint",
+  asyncHandler<AuthRequest>(
+    chatController.createComplaintConversation.bind(chatController)
+  )
+);
+
 export default router;

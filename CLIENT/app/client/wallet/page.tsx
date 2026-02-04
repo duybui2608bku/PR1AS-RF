@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Layout,
   Tabs,
   Typography,
   Space,
@@ -29,8 +28,6 @@ import { TransactionType } from "@/lib/constants/wallet";
 import { DateRangePreset } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { DepositModal } from "@/lib/components/deposit-modal";
 import {
   PAGINATION_DEFAULTS,
@@ -49,7 +46,6 @@ import { WalletHistoryTab } from "@/app/client/wallet/components/WalletHistoryTa
 import { EscrowHistoryTab } from "@/app/client/wallet/components/EscrowHistoryTab";
 
 const { Title } = Typography;
-const { Content } = Layout;
 const { TabPane } = Tabs;
 
 enum WalletTabKey {
@@ -348,10 +344,8 @@ function WalletContent() {
   const totalBalance = balanceData?.balance || 0;
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <>
+    <div className={styles.container}>
           <Space className={styles.headerSpace}>
             <Title level={2} className={styles.title}>
               {t("wallet.title")}
@@ -479,14 +473,12 @@ function WalletContent() {
               />
             </TabPane>
           </Tabs>
-        </div>
-      </Content>
-      <Footer />
+    </div>
       <DepositModal
         open={depositModalOpen}
         onClose={() => setDepositModalOpen(false)}
       />
-    </Layout>
+    </>
   );
 }
 

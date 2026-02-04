@@ -25,12 +25,50 @@
 
 .chatContainer {
   display: flex;
+  flex-direction: column;
   height: calc(100vh - 64px);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
   background: var(--ant-color-bg-container);
   position: relative;
+
+  :global(.ant-tabs) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  :global(.ant-tabs-content) {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  :global(.ant-tabs-tabpane) {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+.chatTabs {
+  flex-shrink: 0;
+  padding: 0 16px;
+  margin-bottom: 0;
+  background: var(--ant-color-bg-container);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+
+  :global(.ant-tabs-nav) {
+    margin-bottom: 0;
+  }
+}
+
+.chatTabContent {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .conversationList {

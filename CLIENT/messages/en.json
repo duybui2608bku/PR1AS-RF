@@ -990,6 +990,7 @@
     "selectConversation": "Select a conversation to start chatting",
     "typing": "Typing...",
     "unknownUser": "Unknown User",
+    "you": "You",
     "reply": "Reply",
     "delete": "Delete",
     "attachImage": "Image",
@@ -1001,6 +1002,12 @@
     "sentImage": "Sent an image",
     "conversations": "Conversations",
     "noConversations": "No conversations",
+    "tabChat": "Chat",
+    "tabComplaint": "Complaints",
+    "complaintGroups": "Complaint groups",
+    "noComplaintGroups": "No complaint groups",
+    "deleteMessage": "Delete message",
+    "deleteMessageConfirm": "Are you sure you want to delete this message?",
     "errors": {
       "noConversation": "No conversation selected",
       "sendFailed": "Failed to send message",
@@ -1258,7 +1265,8 @@
       "actions": {
         "review": "Review",
         "complain": "Complain",
-        "complainComingSoon": "Complain feature coming soon"
+        "complainComingSoon": "Complain feature coming soon",
+        "complainError": "Failed to create complaint conversation. Please try again."
       }
     },
     "review": {

@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  Layout,
   Row,
   Col,
   Rate,
@@ -40,8 +39,6 @@ import {
   randomColorTag,
   calculateAge,
 } from "@/lib/utils/worker.utils";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { WorkerReviews } from "../components/WorkerReviews";
 import { WorkerCalendar } from "../components/WorkerCalendar";
 import { WorkerServices } from "../components/WorkerServices";
@@ -55,7 +52,6 @@ import type { Dayjs } from "dayjs";
 import styles from "./worker-detail.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
-const { Content } = Layout;
 
 export default function WorkerDetailPage() {
   const params = useParams();
@@ -179,10 +175,7 @@ export default function WorkerDetailPage() {
   };
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <QueryState
+    <QueryState
           isLoading={isLoading}
           isError={isError}
           error={error}
@@ -487,7 +480,6 @@ export default function WorkerDetailPage() {
               );
             })()}
         </QueryState>
-      </Content>
 
       {workerData && selectedWorkerService && (
         <BookingModal
@@ -520,8 +512,6 @@ export default function WorkerDetailPage() {
           />
         </Modal>
       )}
-
-      <Footer />
-    </Layout>
+    </QueryState>
   );
 }

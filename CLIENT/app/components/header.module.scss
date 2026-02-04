@@ -1,6 +1,6 @@
 @use "../../styles/variables" as *;
 
-.headerRow {
+.headerRow:global(.ant-layout-header) {
   width: 100%;
   background: var(--background);
 }

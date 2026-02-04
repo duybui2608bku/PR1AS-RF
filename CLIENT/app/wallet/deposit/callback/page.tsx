@@ -2,17 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Layout, Spin, Result, Button } from "antd";
+import { Spin, Result, Button } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { walletApi } from "@/lib/api/wallet.api";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import { AppRoute } from "@/lib/constants/routes";
 import styles from "@/app/wallet/deposit/callback/page.module.scss";
-
-const { Content } = Layout;
 
 function CallbackContent() {
   const searchParams = useSearchParams();
@@ -110,10 +106,7 @@ function CallbackContent() {
   };
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <div className={styles.container}>
           {status === "loading" && (
             <Result
               icon={<Spin size="large" />}
@@ -162,10 +155,7 @@ function CallbackContent() {
               ]}
             />
           )}
-        </div>
-      </Content>
-      <Footer />
-    </Layout>
+    </div>
   );
 }
 

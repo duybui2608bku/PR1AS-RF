@@ -4,6 +4,7 @@ import "./globals.scss";
 import { Providers } from "@/lib/providers";
 import "@/i18n/config";
 import { BackTop } from "antd";
+import { MainLayout } from "@/app/components/main-layout";
 import styles from "./layout.module.scss";
 
 const workSans = Work_Sans({
@@ -33,7 +34,9 @@ export default function RootLayout({
       <body
         className={`${workSans.variable} ${outfit.variable} antialiased ${styles.body}`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <MainLayout>{children}</MainLayout>
+        </Providers>
       </body>
       <BackTop />
     </html>

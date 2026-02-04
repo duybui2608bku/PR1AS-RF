@@ -1,8 +1,5 @@
 "use client";
 
-import { Layout } from "antd";
-import { Header } from "./components/header";
-import { Footer } from "./components/footer";
 import { CategorySection } from "./components/category-section";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -11,8 +8,6 @@ import { transformWorkersGroupedByServiceToServices } from "@/lib/utils/service-
 import { useMemo } from "react";
 import { SERVICE_CATEGORIES } from "./constants/constants";
 import styles from "./page.module.scss";
-
-const { Content } = Layout;
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -96,10 +91,7 @@ export default function Home() {
   );
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <section id="services" className={styles.section}>
+    <section id="services" className={styles.section}>
           <CategorySection
             title={t("home.categories.assistance.title")}
             subtitle={t("home.categories.assistance.subtitle")}
@@ -161,9 +153,6 @@ export default function Home() {
             services={companionshipLevel3Services}
             isLoading={isLoading}
           />
-        </section>
-      </Content>
-      <Footer />
-    </Layout>
+    </section>
   );
 }

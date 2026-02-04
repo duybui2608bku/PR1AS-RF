@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Fragment } from "react";
 import {
-  Layout,
   Card,
   Tabs,
   Row,
@@ -34,8 +33,6 @@ import type { Escrow, EscrowQuery, EscrowListResponse } from "@/lib/types/escrow
 import { EscrowStatus } from "@/lib/types/escrow";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
-import { Footer } from "@/app/components/footer";
 import {
   PAGINATION_DEFAULTS,
   PAGE_SIZE_OPTIONS,
@@ -49,7 +46,6 @@ import { getDateRangeFromPreset } from "@/lib/utils/date.utils";
 import styles from "./page.module.scss";
 
 const { Title, Text } = Typography;
-const { Content } = Layout;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
@@ -239,10 +235,7 @@ function WorkerWalletContent() {
   ];
 
   return (
-    <Layout className={styles.layout}>
-      <Header />
-      <Content className={styles.content}>
-        <div className={styles.container}>
+    <div className={styles.container}>
           <Title level={2} className={styles.pageTitle}>
             {t("worker.wallet.title") || "Worker Wallet"}
           </Title>
@@ -477,10 +470,7 @@ function WorkerWalletContent() {
               </Card>
             </Tabs.TabPane>
           </Tabs>
-        </div>
-      </Content>
-      <Footer />
-    </Layout>
+    </div>
   );
 }
 
