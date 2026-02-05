@@ -1,6 +1,7 @@
 "use client";
 
-import { Progress, Typography, Space, CheckCircleOutlined, CloseCircleOutlined } from "antd";
+import { Progress, Typography, Space } from "antd";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useMemo } from "react";
 
 const { Text } = Typography;

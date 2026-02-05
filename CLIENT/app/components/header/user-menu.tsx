@@ -1,0 +1,132 @@
+"use client";
+
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Avatar, Dropdown, MenuProps } from "antd";
+import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { useLogout } from "@/lib/hooks/use-auth";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { AppRoute, UserRole } from "@/lib/constants/routes";
+import { getProfileRoute } from "@/lib/utils/profile-navigation";
+import styles from "../header.module.scss";
+
+export const UserMenu = () => {
+    const { t } = useTranslation();
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const logoutMutation = useLogout();
+    const { handleError } = useErrorHandler();
+
+    const userData = useMemo(() => {
+        const lastActiveRole = (user as unknown as { last_active_role?: string })?.last_active_role;
+        const userRoles = (user as unknown as { roles?: string[] })?.roles || [];
+        
+        return {
+            isAdmin: userRoles.includes(UserRole.ADMIN),
+            isWorkerActive: lastActiveRole === UserRole.WORKER,
+        };
+    }, [user]);
+
+    const handleLogout = async () => {
+        try {
+            await logoutMutation.mutateAsync();
+        } catch (error) {
+            handleError(error);
+        }
+    };
+
+    const handleNavigateToAdminDashboard = () => {
+        router.push(AppRoute.ADMIN_DASHBOARD);
+    };
+
+    const getUserInitial = (): string => {
+        const displayName = user?.name || user?.email || "";
+        return displayName.charAt(0).toUpperCase();
+    };
+
+    const userMenuItems: MenuProps["items"] = useMemo(() => [
+        {
+            key: "profile",
+            icon: <UserOutlined />,
+            label: t("dashboard.header.profile"),
+            onClick: () => {
+                const profileRoute = getProfileRoute(user);
+                router.push(profileRoute);
+            },
+        },
+        {
+            key: "messages",
+            icon: <MessageOutlined />,
+            label: t("dashboard.header.messages"),
+            onClick: () => {
+                router.push(AppRoute.CHAT);
+            },
+        },
+        {
+            key: "wallet",
+            icon: <WalletOutlined />,
+            label: t("dashboard.header.wallet"),
+            onClick: () => {
+                userData.isWorkerActive ? router.push(AppRoute.WORKER_WALLET) : router.push(AppRoute.CLIENT_WALLET);
+            },
+        },
+        {
+            key: "client-bookings",
+            icon: <BookOutlined />,
+            label: t("dashboard.header.clientBookings"),
+            onClick: () => {
+                userData.isWorkerActive ? router.push(AppRoute.WORKER_BOOKINGS) : router.push(AppRoute.CLIENT_BOOKINGS);
+            },
+        },
+        {
+            type: "divider",
+        },
+        {
+            key: "logout",
+            icon: <LogoutOutlined />,
+            label: t("dashboard.header.logout"),
+            onClick: handleLogout,
+            danger: true,
+        },
+    ], [t, user, router, userData.isWorkerActive]); // Removed handleLogout dependency cycle check if necessary, but handleLogout is stable or should be wrapped
+
+    const adminMenuItems: MenuProps["items"] = useMemo(() => [
+        {
+            key: "admin-dashboard",
+            icon: <SettingOutlined />,
+            label: t("dashboard.header.admin"),
+            onClick: handleNavigateToAdminDashboard,
+        },
+        {
+            type: "divider",
+        },
+        {
+            key: "logout",
+            icon: <LogoutOutlined />,
+            label: t("dashboard.header.logout"),
+            onClick: handleLogout,
+            danger: true,
+        },
+    ], [t]);
+
+    const items = userData.isAdmin ? adminMenuItems : userMenuItems;
+
+    return (
+        <Dropdown menu={{ items }} placement="bottomRight" trigger={["hover"]}>
+            <div className={styles.avatarWrapper}>
+                <Avatar
+                    size="large"
+                    src={user?.avatar}
+                    icon={!user?.avatar ? <UserOutlined /> : undefined}
+                    style={{
+                        backgroundColor: !user?.avatar ? "var(--ant-color-primary)" : undefined,
+                    }}
+                >
+                    {!user?.avatar && getUserInitial()}
+                </Avatar>
+            </div>
+        </Dropdown>
+    );
+};

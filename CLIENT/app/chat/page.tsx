@@ -12,8 +12,6 @@ import {
   Spin,
   Popover,
   Modal,
-  Tabs,
-  message,
 } from "antd";
 import {
   SendOutlined,
@@ -29,19 +27,14 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { message } from "antd";
 import { chatApi, type Conversation, type Message } from "@/lib/api/chat.api";
 import { ChatErrorCode } from "@/lib/constants/error-codes";
-import {
-  ChatTabKey,
-  ChatPagination,
-  ChatRefetchInterval,
-  TypingIndicatorTimeout,
-} from "@/lib/constants/chat.constants";
 import { useChatSocket } from "@/lib/hooks/use-socket";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
+import { Header } from "@/app/components/header";
 import { ConversationList } from "./components/ConversationList";
-import { GroupChatView } from "./components/GroupChatView";
 import { formatTime } from "@/lib/utils";
 import { uploadImage, isImageUrl } from "@/lib/utils/upload";
 import styles from "./chat.module.scss";
@@ -55,7 +48,6 @@ function ChatContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
-  const [activeTab, setActiveTab] = useState<ChatTabKey>(ChatTabKey.DIRECT);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
@@ -64,7 +56,6 @@ function ChatContent() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showConversationList, setShowConversationList] = useState(true);
-  const [showComplaintGroupList, setShowComplaintGroupList] = useState(true);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [mobileMenuOpenId, setMobileMenuOpenId] = useState<string | null>(null);
   const replyingToRef = useRef<Message | null>(null);
@@ -78,12 +69,8 @@ function ChatContent() {
   const { data: conversationsData, isLoading: conversationsLoading } = useQuery(
     {
       queryKey: ["chat-conversations"],
-      queryFn: () =>
-        chatApi.getConversations({
-          page: ChatPagination.PAGE_DEFAULT,
-          limit: ChatPagination.LIMIT_CONVERSATIONS,
-        }),
-      refetchInterval: ChatRefetchInterval.CONVERSATIONS_MS,
+      queryFn: () => chatApi.getConversations({ page: 1, limit: 50 }),
+      refetchInterval: 30000,
     }
   );
 
@@ -92,8 +79,8 @@ function ChatContent() {
     queryFn: () =>
       chatApi.getMessages({
         conversation_id: selectedConversationId || undefined,
-        page: ChatPagination.PAGE_DEFAULT,
-        limit: ChatPagination.LIMIT_MESSAGES,
+        page: 1,
+        limit: 100,
       }),
     enabled: !!selectedConversationId,
   });
@@ -108,7 +95,7 @@ function ChatContent() {
       const receiverId = currentConversation
         ? getOtherParticipant(currentConversation)
         : targetUserId;
-      if (!receiverId || receiverId === user?.id) {
+      if (!receiverId || (receiverId === user?.id)) {
         throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       const replyToId = replyingToRef.current?._id || null;
@@ -345,7 +332,7 @@ function ChatContent() {
     } else {
       const messagesQuery = chatApi.getMessages({
         receiver_id: targetUserId,
-        page: ChatPagination.PAGE_DEFAULT,
+        page: 1,
         limit: 1,
       });
 
@@ -402,7 +389,7 @@ function ChatContent() {
             next.delete(data.user_id);
             return next;
           });
-        }, TypingIndicatorTimeout.MS);
+        }, 3000);
       }
     },
     onMessageDeleted: (data) => {
@@ -431,6 +418,8 @@ function ChatContent() {
 
   const showChatPanel =
     !!selectedConversationId || !!(targetUserId && user?.id);
+  const isNewConversationMode =
+    !!(targetUserId && user?.id) && !selectedConversationId;
 
   const messages = messagesData?.messages || [];
 
@@ -442,26 +431,13 @@ function ChatContent() {
   };
 
   return (
-    <div className={`${styles.chatLayout} ${styles.chatContent}`}>
-      <div className={styles.chatContainer}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={(key) => setActiveTab(key as ChatTabKey)}
-            className={styles.chatTabs}
-            size="large"
+        <div className={styles.chatContainer}>
+          <div
+            className={`${styles.conversationList} ${
+              isMobile && !showConversationList ? styles.hidden : ""
+            }`}
           >
-            <Tabs.TabPane
-              key={ChatTabKey.DIRECT}
-              tab={t("chat.tabChat")}
-              forceRender={false}
-            >
-              <div className={styles.chatTabContent}>
-                <div
-                  className={`${styles.conversationList} ${
-                    isMobile && !showConversationList ? styles.hidden : ""
-                  }`}
-                >
-                  <ConversationList
+            <ConversationList
               conversations={conversationsData?.conversations || []}
               selectedConversationId={selectedConversationId}
               isLoading={conversationsLoading}
@@ -819,25 +795,7 @@ function ChatContent() {
               </div>
             )}
           </div>
-              </div>
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              key={ChatTabKey.COMPLAINT}
-              tab={t("chat.tabComplaint")}
-              forceRender={false}
-            >
-              <div className={styles.chatTabContent}>
-                <GroupChatView
-                  isMobile={isMobile}
-                  showGroupList={showComplaintGroupList}
-                  onBackToGroupList={() => setShowComplaintGroupList(true)}
-                  onGroupListVisibilityChange={setShowComplaintGroupList}
-                />
-              </div>
-            </Tabs.TabPane>
-          </Tabs>
-      </div>
-    </div>
+        </div>
   );
 }
 

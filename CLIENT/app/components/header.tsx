@@ -1,42 +1,32 @@
 "use client";
 
-import { useEffect, useState, memo, useMemo, useCallback } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Layout,
-  Avatar,
-  Dropdown,
   Button,
   Space,
   Popover,
-  Select,
-  Divider,
   Row,
   Col,
 } from "antd";
-import type { MenuProps } from "antd";
 import {
-  UserOutlined,
-  LogoutOutlined,
   MenuOutlined,
-  MessageOutlined,
-  SettingOutlined,
-  WalletOutlined,
-  BookOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
-import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth";
+import { useSwitchRole } from "@/lib/hooks/use-auth";
 import { SettingsPopover } from "@/lib/components/settings-popover";
-import { ThemeToggle } from "@/lib/components/theme-toggle";
-import { LanguageSwitcher } from "@/lib/components/language-switcher";
-import { useCurrency } from "@/lib/hooks/use-currency";
 import { AuthModal } from "@/lib/components/auth-modal";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
-import { getProfileRoute } from "@/lib/utils/profile-navigation";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
 import { Breakpoint, ScrollAmount } from "@/lib/constants/ui.constants";
+import { useWindowSize } from "@/lib/hooks/use-window-size";
+import { useScroll } from "@/lib/hooks/use-scroll";
+import { UserMenu } from "./header/user-menu";
+import { MobileMenu } from "./header/mobile-menu";
 import styles from "./header.module.scss";
 
 const { Header: AntHeader } = Layout;
@@ -47,44 +37,17 @@ const HeaderComponent = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
-  const logoutMutation = useLogout();
   const switchRoleMutation = useSwitchRole();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<typeof AUTH_MODAL_TABS[number]>(
     AUTH_MODAL_TABS[0]
   );
-  const [isMobile, setIsMobile] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { currency, setCurrency, currencies, getCurrencyLabel } = useCurrency();
+  
+  const { width } = useWindowSize();
+  const isMobile = width ? width < Breakpoint.MOBILE : false;
+  const isScrolled = useScroll(ScrollAmount.HEADER_BLUR_THRESHOLD);
+  
   const { handleError } = useErrorHandler();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < Breakpoint.MOBILE);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > ScrollAmount.HEADER_BLUR_THRESHOLD);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   const userData = useMemo(() => {
     const lastActiveRole = (user as unknown as { last_active_role?: string })
@@ -156,19 +119,6 @@ const HeaderComponent = () => {
     }
   }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError]);
 
-  const getUserInitial = useCallback((): string => {
-    const displayName = user?.name || user?.email || "";
-    return displayName.charAt(0).toUpperCase();
-  }, [user]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error) {
-      handleError(error);
-    }
-  }, [logoutMutation, handleError]);
-
   const handleOpenLogin = useCallback(() => {
     setAuthModalTab("login");
     setAuthModalOpen(true);
@@ -178,75 +128,6 @@ const HeaderComponent = () => {
     setAuthModalTab("register");
     setAuthModalOpen(true);
   }, []);
-
-  const handleNavigateToAdminDashboard = useCallback(() => {
-    router.push(AppRoute.ADMIN_DASHBOARD);
-  }, [router]);
-
-  const userMenuItems: MenuProps["items"] = useMemo(() => [
-    {
-      key: "profile",
-      icon: <UserOutlined />,
-      label: t("dashboard.header.profile"),
-      onClick: () => {
-        const profileRoute = getProfileRoute(user);
-        router.push(profileRoute);
-      },
-    },
-    {
-      key: "messages",
-      icon: <MessageOutlined />,
-      label: t("dashboard.header.messages"),
-      onClick: () => {
-        router.push(AppRoute.CHAT);
-      },
-    },
-    {
-      key: "wallet",
-      icon: <WalletOutlined />,
-      label: t("dashboard.header.wallet"),
-      onClick: () => {
-          userData.isWorkerActive ? router.push(AppRoute.WORKER_WALLET) : router.push(AppRoute.CLIENT_WALLET);
-      },
-    },
-    {
-      key: "client-bookings",
-      icon: <BookOutlined />,
-      label: t("dashboard.header.clientBookings"),
-      onClick: () => {
-        userData.isWorkerActive ? router.push(AppRoute.WORKER_BOOKINGS) : router.push(AppRoute.CLIENT_BOOKINGS);
-      },
-    },
-    {
-      type: "divider",
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: t("dashboard.header.logout"),
-      onClick: handleLogout,
-      danger: true,
-    },
-  ], [t, user, router, handleLogout]);
-
-  const adminMenuItems: MenuProps["items"] = useMemo(() => [
-    {
-      key: "admin-dashboard",
-      icon: <SettingOutlined />,
-      label: t("dashboard.header.admin"),
-      onClick: handleNavigateToAdminDashboard,
-    },
-    {
-      type: "divider",
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: t("dashboard.header.logout"),
-      onClick: handleLogout,
-      danger: true,
-    },
-  ], [t, handleNavigateToAdminDashboard, handleLogout]);
 
   const workerButton = useMemo(() => (
     <Button
@@ -258,33 +139,11 @@ const HeaderComponent = () => {
     </Button>
   ), [handleSwitchRole, switchRoleMutation.isPending, workerButtonLabel]);
 
-  const renderAvatarDropdown = useCallback((menuItems: MenuProps["items"]) => (
-    <Dropdown
-      menu={{ items: menuItems }}
-      placement="bottomRight"
-      trigger={["hover"]}
-    >
-      <div className={styles.avatarWrapper}>
-        <Avatar
-          size="large"
-          src={user?.avatar}
-          icon={!user?.avatar ? <UserOutlined /> : undefined}
-          style={{
-            backgroundColor: !user?.avatar
-              ? "var(--ant-color-primary)"
-              : undefined,
-          }}
-        >
-          {!user?.avatar && getUserInitial()}
-        </Avatar>
-      </div>
-    </Dropdown>
-  ), [user, getUserInitial]);
 
   const authSectionDesktop = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
-        {renderAvatarDropdown(userData.isAdmin ? adminMenuItems : userMenuItems)}
+        <UserMenu />
       </Space>
     ) : (
       <Space>
@@ -295,12 +154,12 @@ const HeaderComponent = () => {
           {t("auth.user.register")}
         </Button>
       </Space>
-    ), [isAuthenticated, user, renderAvatarDropdown, userData.isAdmin, adminMenuItems, userMenuItems, handleOpenLogin, handleOpenRegister, t]);
+    ), [isAuthenticated, user, handleOpenLogin, handleOpenRegister, t]);
 
   const authSectionMobile = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
-        {renderAvatarDropdown(userData.isAdmin ? adminMenuItems : userMenuItems)}
+         <UserMenu />
       </Space>
     ) : (
       <Space orientation="vertical" className={styles.authSectionFullWidth}>
@@ -311,51 +170,7 @@ const HeaderComponent = () => {
           {t("auth.user.register")}
         </Button>
       </Space>
-    ), [isAuthenticated, user, renderAvatarDropdown, userData.isAdmin, adminMenuItems, userMenuItems, handleOpenLogin, handleOpenRegister, t]);
-
-  const mobilePopoverContent = (
-    <div className={styles.popoverContent}>
-      {!userData.isAdmin && (
-        <div className={styles.workerButtonBlock}>{workerButton}</div>
-      )}
-      {!userData.isAdmin && <SettingsPopover />}
-      <Divider className={styles.dividerSpacing} />
-
-      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
-        <span className={styles.settingsLabel}>{t("header.currency")}</span>
-        <Select
-          value={currency}
-          onChange={(value) => setCurrency(value as any)}
-          className={styles.selectFullWidth}
-          size="middle"
-        >
-          {currencies.map((curr) => (
-            <Select.Option key={curr} value={curr}>
-              {getCurrencyLabel(curr as any)}
-            </Select.Option>
-          ))}
-        </Select>
-      </Space>
-
-      <Divider className={styles.dividerSpacing} />
-
-      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
-        <span className={styles.settingsLabel}>{t("header.language")}</span>
-        <LanguageSwitcher />
-      </Space>
-
-      <Divider className={styles.dividerSpacing} />
-
-      <Space orientation="vertical" size="small" className={styles.settingsBlock}>
-        <span className={styles.settingsLabel}>{t("header.theme")}</span>
-        <ThemeToggle />
-      </Space>
-
-      <Divider className={styles.dividerSpacing} />
-
-      {authSectionMobile}
-    </div>
-  );
+    ), [isAuthenticated, user, handleOpenLogin, handleOpenRegister, t]);
 
   return (
     <AntHeader
@@ -378,7 +193,13 @@ const HeaderComponent = () => {
             )}
             {isMobile && (
               <Popover
-                content={mobilePopoverContent}
+                content={
+                    <MobileMenu 
+                        isAdmin={userData.isAdmin} 
+                        workerButton={workerButton} 
+                        authSectionMobile={authSectionMobile} 
+                    />
+                }
                 trigger="click"
                 placement="bottomRight"
               >

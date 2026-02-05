@@ -7,12 +7,12 @@ import { useTranslation } from "react-i18next";
 import { useMemo, useState, memo, useCallback } from "react";
 import { ImageHeight, FontSize } from "@/lib/constants/ui.constants";
 import styles from "./service-card.module.scss";
-import { Service } from "@/lib/api";
+import { ServiceListing } from "@/lib/types/service-listing";
 
 const { Text, Title } = Typography;
 
 interface ServiceCardProps {
-  service: Service;
+  service: ServiceListing;
   size?: "small" | "medium" | "large";
   onClick?: () => void;
 }

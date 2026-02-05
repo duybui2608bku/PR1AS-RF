@@ -175,6 +175,7 @@ export default function WorkerDetailPage() {
   };
 
   return (
+    <>
     <QueryState
           isLoading={isLoading}
           isError={isError}
@@ -512,6 +513,6 @@ export default function WorkerDetailPage() {
           />
         </Modal>
       )}
-    </QueryState>
+    </>
   );
 }

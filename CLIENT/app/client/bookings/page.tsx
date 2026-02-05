@@ -297,6 +297,7 @@ function BookingsContent() {
   });
 
   return (
+    <div>
     <div className={styles.container}>
           <Title level={2} className={styles.pageTitle}>
             <CalendarOutlined className={styles.titleIcon} />

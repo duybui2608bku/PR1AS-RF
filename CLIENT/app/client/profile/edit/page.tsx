@@ -13,7 +13,10 @@ import {
   Row,
   Col,
   Divider,
+  Layout,
 } from "antd";
+
+const { Content, Footer } = Layout;
 import { UserOutlined, LockOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -126,7 +129,8 @@ function EditProfileContent() {
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
+    <Layout>
+      <Content style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
           <Space style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
               {t("profile.edit.title")}
@@ -272,7 +276,7 @@ function EditProfileContent() {
               </Col>
             </Row>
           </Card>
-        </div>
+
       </Content>
       <Footer />
     </Layout>

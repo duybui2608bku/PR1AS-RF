@@ -5,26 +5,24 @@ import { Layout } from "antd";
 import { Header } from "@/app/components/header";
 import { Footer } from "@/app/components/footer";
 import styles from "./main-layout.module.scss";
+import { Fragment } from "react";
 
 const { Content } = Layout;
 
-/**
- * Layout chung cho toàn app: Header + Content + Footer.
- * Chỉ khai báo 1 lần tại đây. Các route /admin/* không dùng (admin có layout riêng).
- */
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const showFooter = pathname === "/";
 
   if (isAdmin) {
-    return <>{children}</>;
+    return <Fragment>{children}</Fragment>;
   }
 
   return (
     <Layout className={styles.layout}>
       <Header />
       <Content className={styles.content}>{children}</Content>
-      <Footer />
+       <Footer />
     </Layout>
   );
 }

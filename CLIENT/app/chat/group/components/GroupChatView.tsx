@@ -3,15 +3,7 @@
 import { useState, useEffect, useRef, Fragment } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
-import {
-  Layout,
-  Input,
-  Button,
-  Typography,
-  Empty,
-  Spin,
-  Popover,
-} from "antd";
+import { Input, Button, Typography, Empty, Spin, Popover, Avatar } from "antd";
 import {
   SendOutlined,
   PlusOutlined,
@@ -22,22 +14,22 @@ import {
   ArrowLeftOutlined,
   CommentOutlined,
   CloseOutlined,
+  InfoCircleOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { message } from "antd";
-import {
-  chatApi,
-  type GroupMessage,
-} from "@/lib/api/chat.api";
+import { chatApi, type GroupMessage } from "@/lib/api/chat.api";
 import { ChatErrorCode } from "@/lib/constants/error-codes";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { formatTime } from "@/lib/utils";
 import { uploadImage, isImageUrl } from "@/lib/utils/upload";
 import { ComplaintGroupList } from "./ComplaintGroupList";
 import { ChatPagination, ChatRefetchInterval } from "@/lib/constants/chat.constants";
-import styles from "../chat.module.scss";
+import { BookingInfoPopover } from "./BookingInfoPopover";
+import styles from "../../chat.module.scss";
 
-const { Content } = Layout;
+
 const { TextArea } = Input;
 const { Text } = Typography;
 
@@ -86,6 +78,10 @@ export function GroupChatView({
       }),
     enabled: !!selectedGroupId,
   });
+
+  const selectedGroup = groupsData?.conversations.find(
+    (g) => g._id === selectedGroupId
+  );
 
   const sendGroupMessageMutation = useStandardizedMutation(
     (payload: { content: string; type: "text" | "image" }) => {
@@ -208,9 +204,6 @@ export function GroupChatView({
     scrollToBottom();
   }, [messagesData?.messages]);
 
-  const selectedGroup = groupsData?.conversations.find(
-    (g) => g._id === selectedGroupId
-  );
   const messages = messagesData?.messages ?? [];
   const groups = groupsData?.conversations ?? [];
 
@@ -261,6 +254,18 @@ export function GroupChatView({
               <Text strong className={styles.chatHeaderTitle}>
                 {selectedGroup?.name ?? t("chat.unknownUser")}
               </Text>
+              {selectedGroup?.booking_id && (
+                <BookingInfoPopover
+                  bookingId={selectedGroup.booking_id}
+                  isMobile={isMobile}
+                >
+                  <Button
+                    type="text"
+                    icon={<InfoCircleOutlined />}
+                    className={styles.bookingInfoButton}
+                  />
+                </BookingInfoPopover>
+              )}
             </div>
             <div
               className={styles.messagesContainer}
@@ -287,18 +292,12 @@ export function GroupChatView({
                           isOwn ? styles.ownMessage : styles.otherMessage
                         }`}
                       >
-                        {!isOwn && (
-                          <div className={styles.messageActions}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<CommentOutlined />}
-                              onClick={() => handleReplyMessage(msg)}
-                              className={styles.replyButton}
-                              title={t("chat.reply")}
-                            />
-                          </div>
-                        )}
+                        <div className={styles.messageAvatarWrapper}>
+                          <Avatar
+                            size={32}
+                            icon={<UserOutlined />}
+                          />
+                        </div>
                         <div className={styles.messageContent}>
                           {replyToMessage && (
                             <div className={styles.replyToPreview}>
@@ -348,18 +347,16 @@ export function GroupChatView({
                             </Text>
                           </div>
                         </div>
-                        {isOwn && (
-                          <div className={styles.messageActions}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<CommentOutlined />}
-                              onClick={() => handleReplyMessage(msg)}
-                              className={styles.replyButton}
-                              title={t("chat.reply")}
-                            />
-                          </div>
-                        )}
+                        <div className={styles.messageActions}>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<CommentOutlined />}
+                            onClick={() => handleReplyMessage(msg)}
+                            className={styles.replyButton}
+                            title={t("chat.reply")}
+                          />
+                        </div>
                       </div>
                     );
                   })}

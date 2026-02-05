@@ -94,11 +94,6 @@ const ConversationListComponent = ({
       className={styles.loadingContainer}
     >
       <Fragment>
-        <div className={styles.conversationListHeader}>
-          <Text strong className={styles.headerTitle}>
-            {t("chat.conversations")}
-          </Text>
-        </div>
         <List
           className={styles.conversationListItems}
           dataSource={conversations}

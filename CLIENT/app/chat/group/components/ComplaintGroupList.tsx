@@ -7,7 +7,7 @@ import type { ApiGroupConversation } from "@/lib/api/chat.api";
 import { formatTime } from "@/lib/utils";
 import { QueryState } from "@/lib/components/query-state";
 import { LoadingSize } from "@/lib/constants/ui.constants";
-import styles from "../chat.module.scss";
+import styles from "../../chat.module.scss";   
 import { Fragment, memo, useCallback, useMemo } from "react";
 
 const { Text } = Typography;
@@ -93,11 +93,6 @@ function ComplaintGroupListComponent({
       className={styles.loadingContainer}
     >
       <Fragment>
-        <div className={styles.conversationListHeader}>
-          <Text strong className={styles.headerTitle}>
-            {t("chat.complaintGroups")}
-          </Text>
-        </div>
         <List
           className={styles.conversationListItems}
           dataSource={groups}

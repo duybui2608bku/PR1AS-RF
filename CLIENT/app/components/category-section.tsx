@@ -9,7 +9,7 @@ import {
 import { useRef, memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
-import { Service } from "../data/services.mock";
+import { ServiceListing } from "@/lib/types/service-listing";
 import { ServiceCard } from "./service-card";
 import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { ScrollAmount, Spacing } from "@/lib/constants/ui.constants";
@@ -27,7 +27,7 @@ enum PrimaryWorkerIndex {
 interface CategorySectionProps {
   title: string;
   subtitle?: string;
-  services: Service[];
+  services: ServiceListing[];
   showViewAll?: boolean;
   isLoading?: boolean;
 }
@@ -64,7 +64,7 @@ const CategorySectionComponent = ({
   const showScrollButtons = useMemo(() => services.length > 3, [services.length]);
 
   const handleServiceClick = useCallback(
-    (service: Service) => {
+    (service: ServiceListing) => {
       if (!service.users || service.users.length === 0) {
         return;
       }
