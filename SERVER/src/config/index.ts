@@ -99,9 +99,9 @@ export const config = {
     },
   },
   vnpay: {
-    tmnCode: process.env.VNPAY_TMN_CODE || "PAJ1DL8M",
+    tmnCode: process.env.VNPAY_TMN_CODE || "7P42QZQ9",
     secureSecret:
-      process.env.VNPAY_SECURE_SECRET || "J4CKYRXGCC4XE94PNN4SFTZBZRMZRZH6",
+      process.env.VNPAY_SECURE_SECRET || "8U7IQVYQ01JKOSYSDD3RBI7KTVUTP04D",
     vnpayHost: process.env.VNPAY_HOST || "https://sandbox.vnpayment.vn",
     testMode: process.env.VNPAY_TEST_MODE === "true" || true,
     hashAlgorithm: process.env.VNPAY_HASH_ALGORITHM || "SHA512",
