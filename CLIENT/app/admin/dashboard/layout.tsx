@@ -104,7 +104,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div
           className={`${styles.logoBlock} ${!collapsed ? styles.expanded : ""}`}
         >
-          {collapsed ? "PR1AS" : "PR1AS Admin"}
+          {collapsed ? "PR1AS" : "ADMIN"}
         </div>
         <Menu
           theme="dark"

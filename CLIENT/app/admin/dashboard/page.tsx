@@ -16,9 +16,8 @@ export default function DashboardPage() {
   const { t } = useI18n();
 
   return (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("dashboard.welcome")}</Title>
-
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>

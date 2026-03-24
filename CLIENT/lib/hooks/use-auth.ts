@@ -140,7 +140,7 @@ export function useRefreshToken() {
     onError: () => {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("auth:logout"));
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
       }
     },
   });

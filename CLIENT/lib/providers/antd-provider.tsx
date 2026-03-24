@@ -48,7 +48,7 @@ export function AntdProvider({ children }: AntdProviderProps) {
   const { locale } = useLocaleStore();
   const { theme: themeMode } = useThemeStore();
   const antdLocale = antdLocaleMap[locale] || viVN;
-  const [primaryColor, setPrimaryColor] = useState(ThemeDefault.PRIMARY_COLOR);
+  const [primaryColor, setPrimaryColor] = useState<string>(ThemeDefault.PRIMARY_COLOR);
 
   useEffect(() => {
     const color = getCSSVariable(ThemeCSSVariable.ANT_COLOR_PRIMARY);
@@ -67,6 +67,12 @@ export function AntdProvider({ children }: AntdProviderProps) {
             fontSize: ThemeFontSize.SM,
             fontFamily:
               'var(--font-work-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            ...(themeMode === ThemeMode.DARK && {
+              colorBgBase: ThemeColor.DARK_BG_PRIMARY,
+              colorBgContainer: ThemeColor.DARK_BG_SECONDARY,
+              colorBgElevated: ThemeColor.DARK_BG_SECONDARY,
+              colorBgLayout: ThemeColor.DARK_BG_PRIMARY,
+            }),
           },
           components: {
             Button: {
@@ -88,6 +94,16 @@ export function AntdProvider({ children }: AntdProviderProps) {
               borderRadius: ThemeBorderRadius.LARGE,
             },
             Form: {},
+            Layout: {
+              siderBg: themeMode === ThemeMode.DARK ? ThemeColor.DARK_BG_PRIMARY : undefined,
+              headerBg: themeMode === ThemeMode.DARK ? ThemeColor.DARK_BG_PRIMARY : undefined,
+              bodyBg: themeMode === ThemeMode.DARK ? ThemeColor.DARK_BG_PRIMARY : undefined,
+            },
+            Menu: {
+              darkItemBg: ThemeColor.DARK_BG_PRIMARY,
+              darkSubMenuItemBg: ThemeColor.DARK_BG_PRIMARY,
+              darkPopupBg: ThemeColor.DARK_BG_PRIMARY,
+            },
           },
           algorithm:
             themeMode === ThemeMode.DARK

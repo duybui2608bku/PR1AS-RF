@@ -19,7 +19,7 @@ export const CURRENCY_LABELS: Record<Currency, string> = {
 interface CurrencyState {
   currency: Currency;
   setCurrency: (currency: Currency) => void;
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number, customCurrency?: Currency | string) => string;
 }
 
 /**
@@ -38,8 +38,8 @@ export const useCurrencyStore = create<CurrencyState>()(
           set({ currency });
         },
 
-        formatCurrency: (amount: number) => {
-          const currencySymbols: Record<Currency, string> = {
+        formatCurrency: (amount: number, customCurrency?: Currency | string) => {
+          const currencySymbols: Record<string, string> = {
             USD: "$",
             VND: "₫",
             EUR: "€",
@@ -47,8 +47,8 @@ export const useCurrencyStore = create<CurrencyState>()(
             CNY: "¥",
           };
 
-          const currency = get().currency;
-          const symbol = currencySymbols[currency];
+          const currency = customCurrency || get().currency;
+          const symbol = currencySymbols[currency] || currency; // fallback to currency code if no symbol
           
           const isVND = currency === "VND";
           const formattedAmount = new Intl.NumberFormat("en-US", {
@@ -56,7 +56,7 @@ export const useCurrencyStore = create<CurrencyState>()(
             maximumFractionDigits: isVND ? 0 : 2,
           }).format(amount);
 
-          return `${symbol}${formattedAmount}`;
+          return `${symbol === currency ? symbol + " " : symbol}${formattedAmount}`;
         },
       };
     },

@@ -1,16 +1,14 @@
 @use "../../styles/variables" as *;
 
-.headerRow:global(.ant-layout-header) {
+.headerRow {
   width: 100%;
-  background: var(--background);
 }
 
-.header.ant-layout-header {
+.header:global(.ant-layout-header) {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: var(--background);
   background: transparent;
   border-bottom: 1px solid var(--border-secondary);
   width: 100%;

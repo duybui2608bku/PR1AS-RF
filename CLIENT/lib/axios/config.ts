@@ -145,7 +145,9 @@ axiosInstance.interceptors.response.use(
   async (error: ApiError) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-    if (error.response?.status === HttpStatus.UNAUTHORIZED && !originalRequest._retry) {
+    const isAuthLoginRoute = originalRequest.url?.includes("/auth/login");
+
+    if (error.response?.status === HttpStatus.UNAUTHORIZED && !originalRequest._retry && !isAuthLoginRoute) {
       originalRequest._retry = true;
 
       const refreshed = await refreshAccessToken();
@@ -162,7 +164,7 @@ axiosInstance.interceptors.response.use(
           localStorage.removeItem("token");
           localStorage.removeItem("refreshToken");
           window.dispatchEvent(new CustomEvent("auth:logout"));
-          window.location.href = "/login";
+          window.location.href = "/auth/login";
         }
       }
 

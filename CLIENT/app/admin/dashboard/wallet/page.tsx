@@ -305,7 +305,7 @@ export default function AdminWalletPage() {
             label: (context: TooltipItem<"line">) => {
               const label = context.dataset.label || "";
               const value = context.parsed.y ?? 0;
-              return `${label}: ${formatCurrency(value)}`;
+              return `${label}: ${formatCurrency(value, "VND")}`;
             },
           },
         },
@@ -314,7 +314,7 @@ export default function AdminWalletPage() {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: (value: number | string) => formatCurrency(Number(value)),
+            callback: (value: number | string) => formatCurrency(Number(value), "VND"),
           },
         },
       },
@@ -354,7 +354,7 @@ export default function AdminWalletPage() {
       dataIndex: TableColumnKeys.AMOUNT,
       key: TableColumnKeys.AMOUNT,
       width: 150,
-      render: (amount: number) => formatCurrency(amount),
+      render: (amount: number, record: WalletTransaction) => formatCurrency(amount, record.currency),
     },
     {
       title: t("admin.wallet.table.status"),
@@ -408,7 +408,7 @@ export default function AdminWalletPage() {
             value={stats.deposit.count}
             suffix={
               <Text type="secondary" className={styles.statSuffix}>
-                ({formatCurrency(stats.deposit.total_amount)})
+                ({formatCurrency(stats.deposit.total_amount, "VND")})
               </Text>
             }
             prefix={<ArrowDownOutlined className={styles.statDeposit} />}
@@ -423,7 +423,7 @@ export default function AdminWalletPage() {
             value={stats.withdraw.count}
             suffix={
               <Text type="secondary" className={styles.statSuffix}>
-                ({formatCurrency(stats.withdraw.total_amount)})
+                ({formatCurrency(stats.withdraw.total_amount, "VND")})
               </Text>
             }
             prefix={<ArrowUpOutlined className={styles.statWithdraw} />}
@@ -438,7 +438,7 @@ export default function AdminWalletPage() {
             value={stats.payment.count}
             suffix={
               <Text type="secondary" className={styles.statSuffix}>
-                ({formatCurrency(stats.payment.total_amount)})
+                ({formatCurrency(stats.payment.total_amount, "VND")})
               </Text>
             }
             prefix={<DollarOutlined className={styles.statPayment} />}
@@ -453,7 +453,7 @@ export default function AdminWalletPage() {
             value={stats.refund.count}
             suffix={
               <Text type="secondary" className={styles.statSuffix}>
-                ({formatCurrency(stats.refund.total_amount)})
+                ({formatCurrency(stats.refund.total_amount, "VND")})
               </Text>
             }
             prefix={<DollarOutlined className={styles.statRefund} />}
@@ -524,7 +524,7 @@ export default function AdminWalletPage() {
               </Text>
             </div>
             <div>
-              <Text type="success">{formatCurrency(item.total_amount)}</Text>
+              <Text type="success">{formatCurrency(item.total_amount, "VND")}</Text>
             </div>
           </div>
         </List.Item>
