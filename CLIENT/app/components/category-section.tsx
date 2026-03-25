@@ -30,6 +30,7 @@ interface CategorySectionProps {
   services: ServiceListing[];
   showViewAll?: boolean;
   isLoading?: boolean;
+  categoryCode?: string;
 }
 
 const CategorySectionComponent = ({
@@ -38,6 +39,7 @@ const CategorySectionComponent = ({
   services,
   showViewAll = true,
   isLoading = false,
+  categoryCode,
 }: CategorySectionProps) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -85,12 +87,13 @@ const CategorySectionComponent = ({
         <Col flex={1} className={styles.titleCol}>
           <Space className={styles.titleRow} size={Spacing.MD}>
             <h2 className={styles.title}>{title}</h2>
-            {showViewAll && (
+            {showViewAll && categoryCode && (
               <Button
                 type="link"
                 icon={<ArrowRightOutlined />}
                 iconPlacement="end"
                 className={styles.viewAllButton}
+                onClick={() => router.push(`/services?category=${categoryCode}`)}
               >
                 {t("home.viewAll")}
               </Button>

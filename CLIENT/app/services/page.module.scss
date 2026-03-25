@@ -1,0 +1,82 @@
+.container {
+  padding: 40px 24px 120px;
+  max-width: 1400px;
+  // margin: 0 auto;
+  background: var(--background);
+  min-height: 100vh;
+}
+
+.backButton {
+  margin-bottom: 24px;
+  font-size: 15px;
+  color: var(--foreground-secondary);
+  padding: 0;
+
+  &:hover {
+    color: var(--primary);
+  }
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--foreground-secondary);
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardWrapper {
+  min-width: 0;
+  width: 100%;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--foreground-secondary);
+}
+
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}

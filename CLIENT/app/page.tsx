@@ -97,36 +97,42 @@ export default function Home() {
             subtitle={t("home.categories.assistance.subtitle")}
             services={assistanceServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.ASSISTANCE}
           />
 
           <CategorySection
             title={t("home.categories.personalAssistant.title")}
             services={personalAssistantServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.PERSONAL_ASSISTANT}
           />
 
           <CategorySection
             title={t("home.categories.onSiteProfessional.title")}
             services={onSiteServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.ON_SITE_PROFESSIONAL_ASSIST}
           />
 
           <CategorySection
             title={t("home.categories.virtualAssistant.title")}
             services={virtualAssistantServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.VIRTUAL_ASSISTANT}
           />
 
           <CategorySection
             title={t("home.categories.tourGuide.title")}
             services={tourGuideServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.TOUR_GUIDE}
           />
 
           <CategorySection
             title={t("home.categories.translator.title")}
             services={translatorServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.TRANSLATOR}
           />
 
           <CategorySection
@@ -134,24 +140,28 @@ export default function Home() {
             subtitle={t("home.categories.companionship.subtitle")}
             services={companionshipServices}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.COMPANIONSHIP}
           />
 
           <CategorySection
             title={t("home.categories.companionshipLevel1.title")}
             services={companionshipLevel1Services}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.COMPANIONSHIP_LEVEL_1}
           />
 
           <CategorySection
             title={t("home.categories.companionshipLevel2.title")}
             services={companionshipLevel2Services}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.COMPANIONSHIP_LEVEL_2}
           />
 
           <CategorySection
             title={t("home.categories.companionshipLevel3.title")}
             services={companionshipLevel3Services}
             isLoading={isLoading}
+            categoryCode={SERVICE_CATEGORIES.COMPANIONSHIP_LEVEL_3}
           />
     </section>
   );

@@ -1,0 +1,183 @@
+@use "../../styles/variables" as *;
+
+.categoryTabsWrapper {
+  position: sticky;
+  top: 64px;
+  z-index: 999;
+  background: var(--background);
+  border-bottom: 1px solid var(--border-secondary);
+  transition: box-shadow 200ms ease;
+
+  &.elevated {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.categoryTabsInner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+}
+
+.scrollWrapper {
+  overflow: hidden;
+  position: relative;
+}
+
+.scrollContainer {
+  display: flex;
+  gap: 32px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  transition: opacity 150ms ease;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: transparent;
+    border-radius: 1px;
+    transition: background 150ms ease;
+  }
+
+  &:hover::after {
+    background: var(--foreground-secondary);
+  }
+}
+
+.tabActive {
+  opacity: 1;
+
+  &::after {
+    background: var(--foreground) !important;
+  }
+}
+
+.tabIcon {
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  transition: transform 150ms ease;
+
+  .tab:hover & {
+    transform: scale(1.1);
+  }
+}
+
+.tabLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--foreground-secondary);
+  letter-spacing: 0.2px;
+  transition: color 150ms ease;
+
+  .tabActive & {
+    color: var(--foreground);
+  }
+}
+
+.scrollBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-secondary);
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 150ms ease;
+  padding: 0;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+.scrollBtnLeft {
+  left: 0;
+}
+
+.scrollBtnRight {
+  right: 0;
+}
+
+.fadeMask {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &.showLeftFade::before {
+    left: 0;
+    background: linear-gradient(to right, var(--background), transparent);
+  }
+
+  &.showRightFade::after {
+    right: 0;
+    background: linear-gradient(to left, var(--background), transparent);
+  }
+}
+
+@media (max-width: 768px) {
+  .scrollContainer {
+    gap: 20px;
+  }
+
+  .tabIcon {
+    font-size: 22px;
+  }
+
+  .tabLabel {
+    font-size: 10.5px;
+  }
+
+  .scrollBtn {
+    display: none;
+  }
+}

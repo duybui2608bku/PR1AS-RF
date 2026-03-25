@@ -4,6 +4,7 @@ export interface ServiceListing {
   image: string;
   loved?: boolean;
   category: string;
+  categoryCode: string;
   location: string;
   rating: number;
   reviewCount: number;
