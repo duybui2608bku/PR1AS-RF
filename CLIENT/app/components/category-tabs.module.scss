@@ -27,33 +27,41 @@
 
 .scrollContainer {
   display: flex;
-  gap: 32px;
+  gap: 48px;
+  justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 12px 0;
+  padding: 16px 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
+  transition: padding 300ms ease, gap 300ms ease;
 
   &::-webkit-scrollbar {
     display: none;
   }
 }
 
+// Parent wrapper for each tab (supports dropdown)
+.tabParent {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .tab {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 10px 16px;
   border: none;
   background: none;
   white-space: nowrap;
   flex-shrink: 0;
   position: relative;
-  transition: opacity 150ms ease;
-  opacity: 0.7;
+  transition: opacity 150ms ease, transform 150ms ease, flex-direction 300ms ease, padding 300ms ease, gap 300ms ease, border-radius 300ms ease;
+  opacity: 0.8;
 
   &:hover {
     opacity: 1;
@@ -76,6 +84,7 @@
   }
 }
 
+
 .tabActive {
   opacity: 1;
 
@@ -95,16 +104,113 @@
   }
 }
 
+// Image-based icon for parent categories
+.tabIconImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 200ms ease, width 300ms ease, height 300ms ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .tab:hover & {
+    transform: scale(1.1);
+  }
+}
+
 .tabLabel {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--foreground-secondary);
   letter-spacing: 0.2px;
-  transition: color 150ms ease;
+  transition: color 150ms ease, font-size 300ms ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   .tabActive & {
     color: var(--foreground);
   }
+}
+
+// Dropdown arrow icon
+.dropdownArrow {
+  font-size: 8px;
+  transition: transform 200ms ease;
+  opacity: 0.6;
+}
+
+.dropdownArrowOpen {
+  transform: rotate(180deg);
+}
+
+// Dropdown panel (position: fixed to escape overflow:hidden ancestors)
+.dropdownFixed {
+  position: fixed;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: var(--background);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 10000;
+  animation: dropdownFadeIn 150ms ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--foreground-secondary);
+  transition: all 150ms ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+    color: var(--foreground);
+  }
+}
+
+.dropdownItemActive {
+  color: var(--foreground);
+  font-weight: 600;
+  background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+}
+
+.dropdownItemIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dropdownItemLabel {
+  font-weight: 500;
+  letter-spacing: 0.1px;
 }
 
 .scrollBtn {
@@ -164,9 +270,66 @@
   }
 }
 
+// Compact mode: horizontal layout when page is scrolled
+.compact {
+  .scrollContainer {
+    padding: 8px 0;
+    gap: 24px;
+  }
+
+  .tab {
+    flex-direction: row;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+
+    &:hover {
+      background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+    }
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .tabActive {
+    background: var(--background-secondary, rgba(0, 0, 0, 0.06));
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .tabIconImage {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .tabIcon {
+    font-size: 18px;
+  }
+
+  .tabLabel {
+    font-size: 12px;
+  }
+}
+
+// Overlay backdrop (mobile)
+.dropdownOverlay {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .scrollContainer {
-    gap: 20px;
+    gap: 24px;
+    justify-content: flex-start;
+  }
+
+  .tabIconImage {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
   }
 
   .tabIcon {
@@ -174,10 +337,50 @@
   }
 
   .tabLabel {
-    font-size: 10.5px;
+    font-size: 11px;
   }
 
   .scrollBtn {
     display: none;
+  }
+
+  // On mobile, dropdown becomes a bottom sheet style
+  .dropdownFixed {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: auto;
+    top: auto !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: unset !important;
+    max-width: none !important;
+    border-radius: 12px;
+    animation: dropdownSlideUp 200ms ease;
+  }
+
+  .dropdownOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.3);
+    animation: overlayFadeIn 150ms ease;
+  }
+
+  @keyframes dropdownSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
