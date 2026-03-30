@@ -1,0 +1,39 @@
+---
+alwaysApply: true
+---
+
+Technical conventions for this codebase (TypeScript + Next.js App Router + React 19):
+
+Code style and structure
+- Write concise, technical TypeScript code.
+- Use functional and declarative patterns; avoid classes.
+- Prefer modularization over duplication.
+- Use clear variable names with helper verbs (for example: `isLoading`, `hasError`).
+- Keep files organized by exported component/function, helpers, constants, and interfaces.
+
+Naming conventions
+- Use lowercase with dashes for directories.
+- Favor named exports for reusable components and utilities.
+
+TypeScript conventions
+- Use TypeScript for all application code.
+- Prefer `interface` for object contracts used across modules.
+- Avoid enums when a union or constant map is clearer.
+- Keep function signatures explicit at module boundaries.
+
+Next.js and React conventions
+- Default to Server Components; use client components only when browser APIs or local interactivity are required.
+- Keep `useEffect` minimal and avoid client-side fetching when server-side patterns are sufficient.
+- Use dynamic imports for heavy or non-critical client modules.
+- Follow App Router patterns for routing, data fetching, and rendering.
+
+UI and state conventions
+- Prioritize Ant Design (`antd`) and existing design patterns in the repository.
+- Use axios + TanStack React Query for API data flow.
+- Use Zustand only for cross-page or shared client state.
+- Use Zod when request/form/schema validation is needed.
+
+Quality baseline
+- Handle loading, empty, and error states in UI flows.
+- Validate untrusted input and avoid exposing sensitive data.
+- Keep changes backward-compatible unless the task explicitly requires breaking changes.

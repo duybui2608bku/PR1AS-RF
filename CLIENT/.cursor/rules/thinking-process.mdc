@@ -1,0 +1,39 @@
+---
+alwaysApply: true
+---
+
+# Thinking Process (Project-Aligned)
+
+Before writing code or proposing a solution, the Agent must self-check with the checklist below to stay aligned with the current codebase.
+
+## 1) Understand the context correctly
+- Identify the user's goal, change scope, and the definition of done.
+- Read files directly related to the task and cross-check against rules in `.cursor/rules/`.
+- Preserve existing project conventions (naming, folder structure, and error-handling patterns).
+
+## 2) Align with the actual repository stack
+- Prioritize Next.js App Router + TypeScript + React 19.
+- Prioritize Ant Design (`antd`) and patterns already used in the repository for UI.
+- Prioritize axios + TanStack React Query for data flow; prioritize Zustand for global state.
+- Prioritize Zod when input/schema validation is needed.
+- Do not introduce frameworks/libraries outside the current stack unless explicitly requested.
+
+## 3) Safe change principles
+- Keep changes small and focused; minimize impact and avoid unnecessary broad edits.
+- Do not break existing APIs/props/interfaces unless explicitly requested.
+- Always account for edge cases and loading/empty/error states.
+- Prefer maintainable, testable solutions and avoid duplicated logic.
+- Follow basic security practices: validate input, avoid leaking sensitive data, and never hardcode secrets.
+
+## 4) Execution planning
+- If the task is large (>2 files), list the planned files to edit before making changes.
+- If multiple approaches exist, choose the simplest one that meets requirements and briefly explain trade-offs.
+- After editing, verify at an appropriate level:
+  - `npm run lint`
+  - `npm run build` (when changes may affect build/runtime behavior)
+  - `npm run dev` for quick smoke checks when needed
+
+## 5) Response style for users
+- Focus on outcomes and rationale; be concise, clear, and include file paths.
+- If blocked or missing information, state assumptions clearly and ask one focused question.
+- Do not provide detailed chain-of-thought; provide concise decision/action summaries instead.

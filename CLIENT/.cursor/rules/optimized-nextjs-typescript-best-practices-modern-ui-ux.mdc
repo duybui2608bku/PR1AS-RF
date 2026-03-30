@@ -1,0 +1,43 @@
+---
+alwaysApply: true
+---
+
+Optimization-focused guidance for this repository:
+
+Objective
+- Deliver maintainable Next.js features with strong performance, reliability, and security.
+
+Performance priorities
+- Prefer Server Components and server-side data strategies by default.
+- Minimize unnecessary client JavaScript, re-renders, and broad state updates.
+- Use dynamic import/lazy loading for heavy client-only modules.
+- Avoid over-fetching; cache and deduplicate requests through React Query patterns.
+- Keep bundle impact in mind when adding dependencies.
+
+Runtime and UX quality
+- Always provide loading, empty, and error states for async UI.
+- Favor incremental, low-risk refactors over broad rewrites.
+- Keep responsive behavior consistent with existing layouts and component patterns.
+- Preserve accessibility basics (semantic structure, keyboard flow, readable labels).
+
+Data and validation
+- Use axios + TanStack React Query for API interaction and cache lifecycle.
+- Use Zod for validating untrusted data at boundaries (forms, params, payloads).
+- Normalize and type API responses to reduce runtime surprises.
+
+Security and robustness
+- Treat all external input as untrusted.
+- Do not leak internal errors or sensitive values to the UI.
+- Never hardcode credentials, keys, or secrets.
+- Fail safely with clear, user-oriented error messages.
+
+Testing and verification
+- Add or update focused tests for changed behavior when test infrastructure exists.
+- Always run `npm run lint` after substantive edits.
+- Run `npm run build` for potentially risky runtime/build changes.
+- Use `npm run dev` for smoke checks on affected flows.
+
+Decision-making style
+- Choose the simplest solution that satisfies current requirements.
+- Explain trade-offs briefly when there are multiple valid approaches.
+- Prefer consistency with existing repository patterns over introducing new paradigms.
