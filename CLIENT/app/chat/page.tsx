@@ -62,6 +62,8 @@ function ChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastMarkedAsReadConversationIdRef = useRef<string | null>(null);
+  const hasManualConversationSelectionRef = useRef(false);
 
   const { setupListeners, joinConversation, leaveConversation, sendTyping } =
     useChatSocket();
@@ -167,9 +169,11 @@ function ChatContent() {
   };
 
   const handleConversationSelect = (conversationId: string) => {
+    hasManualConversationSelectionRef.current = true;
     setSelectedConversationId(conversationId);
     setReplyingTo(null);
     replyingToRef.current = null;
+    lastMarkedAsReadConversationIdRef.current = conversationId;
     markAsReadMutation.mutate(conversationId);
     if (isMobile) {
       setShowConversationList(false);
@@ -324,8 +328,22 @@ function ChatContent() {
     );
 
     if (existingConversation) {
+      if (
+        hasManualConversationSelectionRef.current &&
+        selectedConversationId &&
+        selectedConversationId !== existingConversation.id
+      ) {
+        return;
+      }
+
       setSelectedConversationId(existingConversation.id);
-      markAsReadMutation.mutate(existingConversation.id);
+
+      // Prevent a fetch/invalidate loop: marking as read invalidates
+      // `chat-conversations`, which retriggers this effect.
+      if (lastMarkedAsReadConversationIdRef.current !== existingConversation.id) {
+        lastMarkedAsReadConversationIdRef.current = existingConversation.id;
+        markAsReadMutation.mutate(existingConversation.id);
+      }
       if (isMobile) {
         setShowConversationList(false);
       }
@@ -345,7 +363,13 @@ function ChatContent() {
             const firstMessage = messagesResponse.messages[0];
             if (firstMessage.conversation_id) {
               setSelectedConversationId(firstMessage.conversation_id);
-              markAsReadMutation.mutate(firstMessage.conversation_id);
+              if (
+                lastMarkedAsReadConversationIdRef.current !==
+                firstMessage.conversation_id
+              ) {
+                lastMarkedAsReadConversationIdRef.current = firstMessage.conversation_id;
+                markAsReadMutation.mutate(firstMessage.conversation_id);
+              }
               if (isMobile) {
                 setShowConversationList(false);
               }
@@ -364,6 +388,7 @@ function ChatContent() {
     conversationsData,
     user?.id,
     isMobile,
+    selectedConversationId,
     markAsReadMutation,
     queryClient,
   ]);
