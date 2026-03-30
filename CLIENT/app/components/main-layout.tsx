@@ -13,6 +13,7 @@ const { Content } = Layout;
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const isChatPage = pathname?.startsWith("/chat");
   const showFooter = pathname === "/";
 
   if (isAdmin) {
@@ -22,11 +23,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <Layout className={styles.layout}>
       <Header />
-      <Suspense fallback={null}>
-        <CategoryTabs />
-      </Suspense>
+      {!isChatPage && (
+        <Suspense fallback={null}>
+          <CategoryTabs />
+        </Suspense>
+      )}
       <Content className={styles.content}>{children}</Content>
-       <Footer />
+      {!isChatPage && <Footer />}
     </Layout>
   );
 }

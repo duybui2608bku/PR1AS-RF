@@ -133,9 +133,15 @@ const CategoryTabsComponent = () => {
 
   // Detect page scroll to toggle compact mode
   useEffect(() => {
-    const COMPACT_THRESHOLD = 100;
+    const COMPACT_ENTER_THRESHOLD = 120;
+    const COMPACT_EXIT_THRESHOLD = 8;
     const handlePageScroll = () => {
-      setIsCompact(window.scrollY > COMPACT_THRESHOLD);
+      const currentScrollY = window.scrollY;
+      setIsCompact((prev) => {
+        if (!prev && currentScrollY > COMPACT_ENTER_THRESHOLD) return true;
+        if (prev && currentScrollY < COMPACT_EXIT_THRESHOLD) return false;
+        return prev;
+      });
     };
     handlePageScroll(); // check initial state
     window.addEventListener("scroll", handlePageScroll, { passive: true });
