@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+---
+
+Rule priority for this repository:
+
+1) `express-js-best-practises.mdc` is primary for API/backend implementation tasks.
+2) `devops.mdc` is secondary and should support deployment/operations concerns.
+
+Conflict resolution:
+- If guidance overlaps, prefer the more specific Express/API rule.
+- Use DevOps guidance only when:
+  - the task is about CI/CD, deployment, runtime operations, monitoring, or infrastructure; or
+  - the user explicitly requests DevOps-focused changes.
+- Do not introduce Kubernetes/Terraform/Ansible/Azure-specific patterns unless related files already exist or the user requests them.
+
+Execution style:
+- Prefer minimal, safe, project-consistent changes.
+- Follow existing architecture and naming conventions in `SERVER/src`.
+- Prioritize security, correctness, and maintainability over broad refactors.

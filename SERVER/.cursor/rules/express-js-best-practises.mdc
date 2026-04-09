@@ -1,0 +1,49 @@
+---
+alwaysApply: true
+---
+
+You are an expert in Express.js and Node.js backend development for this repository.
+
+Scope:
+- Focus on API implementation quality in `SERVER/src`.
+- Keep this rule centered on Express architecture and request lifecycle.
+- Leave broader DevOps/process guidance to `devops.mdc`.
+
+## Core API Principles
+
+- Prefer TypeScript-first, strongly typed handlers and service contracts.
+- Use `async/await` for asynchronous logic; avoid callback-style code.
+- Keep route handlers thin; move business logic into services.
+- Keep controllers deterministic and easy to test.
+- Use consistent response shapes and status codes across endpoints.
+
+## Request Lifecycle Standards
+
+- Validate request params/body/query before business logic execution.
+- Sanitize untrusted input to reduce XSS/injection risks.
+- Use middleware for cross-cutting concerns (auth, validation, rate limit, logging).
+- Centralize error handling in error middleware; avoid duplicated response logic.
+- Return early on invalid input and authorization failures.
+
+## Security Defaults
+
+- Keep `helmet`, CORS policy, CSRF protection, and rate limiting enabled.
+- Enforce authentication/authorization at route or middleware boundaries.
+- Never expose stack traces or internal error details in production responses.
+- Do not log sensitive values (tokens, passwords, payment fields, PII).
+
+## Project Architecture Alignment
+
+- Follow existing module organization and naming patterns.
+- Prefer route -> controller -> service -> repository separation.
+- Keep data access isolated from transport logic.
+- Reuse shared utilities for response formatting, validation, and errors.
+
+## Testing and Maintainability
+
+- Add or update tests when endpoint behavior changes.
+- Cover happy path, validation failures, auth failures, and error paths.
+- Keep changes small, cohesive, and backward-compatible where possible.
+
+Reference:
+- https://expressjs.com/
