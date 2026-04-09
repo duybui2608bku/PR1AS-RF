@@ -29,6 +29,8 @@ import { useTranslation } from "react-i18next";
 import type { AxiosError } from "axios";
 import type { ApiResponse } from "@/lib/axios/config";
 import { escrowApi } from "@/lib/api/escrow.api";
+import { walletApi } from "@/lib/api/wallet.api";
+import type { WalletBalanceResponse } from "@/lib/api/wallet.api";
 import type { Escrow, EscrowQuery, EscrowListResponse } from "@/lib/types/escrow";
 import { EscrowStatus } from "@/lib/types/escrow";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
@@ -58,9 +60,7 @@ enum FilterValueAll {
   ALL = "all",
 }
 
-const FAKE_BALANCE = 5000000;
-const FAKE_RECONCILIATION_BALANCE = 3000000;
-const FAKE_PENDING_WITHDRAWAL = 2000000;
+
 
 function WorkerWalletContent() {
   const { t } = useTranslation();
@@ -96,6 +96,15 @@ function WorkerWalletContent() {
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
     end_date: dateRange?.[1]?.format(DATE_FORMAT_ISO),
   };
+
+  const {
+    data: balanceData,
+    isLoading: isLoadingBalance,
+  } = useQuery<WalletBalanceResponse, AxiosError<ApiResponse>>({
+    queryKey: ["worker-wallet-balance"],
+    queryFn: () => walletApi.getBalance(),
+    retry: false,
+  });
 
   const {
     data: escrowData,
@@ -235,7 +244,7 @@ function WorkerWalletContent() {
   ];
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} >
           <Title level={2} className={styles.pageTitle}>
             {t("worker.wallet.title") || "Worker Wallet"}
           </Title>
@@ -262,9 +271,11 @@ function WorkerWalletContent() {
                       <Text type="secondary">
                         {t("worker.wallet.cards.balance") || "Balance"}
                       </Text>
-                      <Title level={3} className={styles.cardTitle}>
-                        {formatCurrency(FAKE_BALANCE)}
-                      </Title>
+                      <Spin spinning={isLoadingBalance}>
+                        <Title level={3} className={styles.cardTitle}>
+                          {formatCurrency(balanceData?.balance ?? 0)}
+                        </Title>
+                      </Spin>
                     </Space>
                   </Card>
                 </Col>
@@ -276,9 +287,11 @@ function WorkerWalletContent() {
                         {t("worker.wallet.cards.reconciliationBalance") ||
                           "Reconciliation Balance"}
                       </Text>
-                      <Title level={3} className={styles.cardTitle}>
-                        {formatCurrency(FAKE_RECONCILIATION_BALANCE)}
-                      </Title>
+                      <Spin spinning={isLoadingBalance}>
+                        <Title level={3} className={styles.cardTitle}>
+                          {formatCurrency(balanceData?.balance ?? 0)}
+                        </Title>
+                      </Spin>
                     </Space>
                   </Card>
                 </Col>
@@ -290,9 +303,11 @@ function WorkerWalletContent() {
                         {t("worker.wallet.cards.pendingWithdrawal") ||
                           "Pending Withdrawal"}
                       </Text>
-                      <Title level={3} className={styles.cardTitle}>
-                        {formatCurrency(FAKE_PENDING_WITHDRAWAL)}
-                      </Title>
+                      <Spin spinning={isLoadingBalance}>
+                        <Title level={3} className={styles.cardTitle}>
+                          {formatCurrency(0)}
+                        </Title>
+                      </Spin>
                     </Space>
                   </Card>
                 </Col>

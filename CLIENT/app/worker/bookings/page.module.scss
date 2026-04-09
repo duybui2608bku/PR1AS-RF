@@ -9,7 +9,9 @@
 
 .container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
+  padding: 24px 0;
 }
 
 .headerSpace {
@@ -43,4 +45,13 @@
 .mobileListSpace {
   width: 100%;
   margin-bottom: var(--ant-spacing-lg, 16px);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 24px;
+  }
+  .title {
+    font-size:22px !important;
+  }
 }

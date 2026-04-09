@@ -16,6 +16,7 @@ import { walletApi } from "@/lib/api/wallet.api";
 import { WALLET_LIMITS, DEPOSIT_AMOUNT_PRESETS } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 
+
 interface DepositFormValues {
   amount: number;
 }
@@ -30,17 +31,19 @@ export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element 
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
   const [form] = Form.useForm<DepositFormValues>();
 
-  const createDepositMutation = useStandardizedMutation({
-    mutationFn: walletApi.createDeposit,
-    onSuccess: (data) => {
-      message.success(t("wallet.deposit.success"));
-      form.resetFields();
-      onClose();
-      if (data.payment_url) {
-        window.location.href = data.payment_url;
-      }
-    },
-  });
+  const createDepositMutation = useStandardizedMutation(
+    walletApi.createDeposit,
+    {
+      onSuccess: (data) => {
+        message.success(t("wallet.deposit.success"));
+        form.resetFields();
+        onClose();
+        if (data.payment_url) {
+          window.location.href = data.payment_url;
+        }
+      },
+    }
+  );
 
   useEffect(() => {
     if (!open) {
@@ -63,6 +66,7 @@ export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element 
       title={t("wallet.deposit.title")}
       footer={null}
       width={600}
+      centered
     >
       <Form
         form={form}

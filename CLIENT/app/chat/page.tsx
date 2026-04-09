@@ -33,7 +33,6 @@ import { ChatErrorCode } from "@/lib/constants/error-codes";
 import { useChatSocket } from "@/lib/hooks/use-socket";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
-import { Header } from "@/app/components/header";
 import { ConversationList } from "./components/ConversationList";
 import { formatTime } from "@/lib/utils";
 import { uploadImage, isImageUrl } from "@/lib/utils/upload";

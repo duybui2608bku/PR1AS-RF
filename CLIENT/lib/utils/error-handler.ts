@@ -135,11 +135,12 @@ export function getErrorDescription(error: ApiError): string | undefined {
 
 export function showErrorNotification(
   error: ApiError,
-  customMessage?: string
+  customMessage?: string,
+  bypassUnauthorizedCheck?: boolean
 ): void {
   const errorType = getErrorType(error.response?.status);
 
-  if (errorType === ErrorType.UNAUTHORIZED) {
+  if (errorType === ErrorType.UNAUTHORIZED && !bypassUnauthorizedCheck) {
     return;
   }
 

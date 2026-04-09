@@ -9,7 +9,9 @@
 
 .container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
+  padding: 24px 0;
 }
 
 .pageTitle {
@@ -46,4 +48,10 @@
 
 .buttonFull {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 24px;
+  }
 }

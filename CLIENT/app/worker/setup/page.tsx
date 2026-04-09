@@ -115,8 +115,6 @@ export default function WorkerSetupPage() {
               : null
           }
         />
-
-        {/* Loading Overlay */}
         {profileMutation.isPending && (
           <div className={styles.overlay}>
             <Card>
@@ -139,8 +137,6 @@ export default function WorkerSetupPage() {
           onBack={handleStep2Back}
           isPending={servicesMutation.isPending}
         />
-
-        {/* Loading Overlay */}
         {servicesMutation.isPending && (
           <div className={styles.overlay}>
             <Card>

@@ -367,7 +367,7 @@ function WorkerBookingsContent() {
               </Col>
               <Col xs={12} sm={6} md={4}>
                 <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <span />
+                  <p style={{paddingTop:22}}> </p>
                   <Button
                     icon={<UndoOutlined />}
                     onClick={handleResetFilters}
@@ -379,7 +379,7 @@ function WorkerBookingsContent() {
               </Col>
               <Col xs={12} sm={6} md={4}>
                 <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <span />
+                  <p style={{paddingTop:22}}> </p>
                   <Button
                     icon={<ReloadOutlined />}
                     onClick={handleRefreshBookings}
