@@ -9,7 +9,7 @@
   transition: box-shadow 200ms ease;
 
   &.elevated {
-    box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-card-warm);
   }
 }
 
@@ -62,11 +62,17 @@
   position: relative;
   transition: opacity 150ms ease, transform 150ms ease, flex-direction 300ms ease, padding 300ms ease, gap 300ms ease, border-radius 300ms ease;
   opacity: 0.84;
-  border-radius: 1.25rem;
+  border-radius: var(--radius-card);
 
   &:hover {
     opacity: 1;
     background: var(--surface-hover);
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
   }
 
   &::after {
@@ -162,12 +168,9 @@
   min-width: 12.5rem;
   background: var(--background);
   border: 1px solid var(--border-soft);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-badge);
   padding: 0.5rem 0;
-  box-shadow:
-    rgba(0, 0, 0, 0.02) 0 0 0 1px,
-    rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
-    rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
+  box-shadow: var(--shadow-card-warm);
   z-index: 10000;
   animation: dropdownFadeIn 150ms ease;
 }
@@ -201,6 +204,11 @@
     background: var(--surface-hover);
     color: var(--foreground);
   }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: -0.125rem;
+  }
 }
 
 .dropdownItemActive {
@@ -224,25 +232,27 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-circle);
   border: 1px solid var(--border-soft-strong);
   background: var(--surface-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow:
-    rgba(0, 0, 0, 0.02) 0 0 0 1px,
-    rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
-    rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
+  box-shadow: var(--shadow-card-warm);
   transition: all 150ms ease;
   padding: 0;
 
   &:hover {
     box-shadow: rgba(0, 0, 0, 0.08) 0 0.25rem 0.75rem;
     transform: translateY(-50%) scale(1.05);
+  }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
   }
 }
 
@@ -290,7 +300,7 @@
     flex-direction: row;
     gap: 0.5rem;
     padding: 0.375rem 0.75rem;
-    border-radius: 62.4375rem;
+    border-radius: var(--radius-circle);
 
     &:hover {
       background: var(--surface-hover);
@@ -312,7 +322,7 @@
   .tabIconImage {
     width: 1.75rem;
     height: 1.75rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-standard);
   }
 
   .tabIcon {
@@ -364,7 +374,7 @@
     width: auto !important;
     min-width: unset !important;
     max-width: none !important;
-    border-radius: 0.75rem;
+    border-radius: var(--radius-badge);
     animation: dropdownSlideUp 200ms ease;
   }
 

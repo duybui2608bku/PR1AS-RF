@@ -151,13 +151,25 @@ export function useSwitchRole() {
   const queryClient = useQueryClient();
 
   return useMutation<
-    ApiResponse<{ user: AuthResponse["user"] & { last_active_role?: string } }>,
+    ApiResponse<
+      {
+        user: AuthResponse["user"] & {
+          last_active_role?: "client" | "worker" | "admin";
+        };
+      }
+    >,
     Error,
     "client" | "worker"
   >({
     mutationFn: async (role) => {
       const response = await api.patch<
-        ApiResponse<{ user: AuthResponse["user"] & { last_active_role?: string } }>
+        ApiResponse<
+          {
+            user: AuthResponse["user"] & {
+              last_active_role?: "client" | "worker" | "admin";
+            };
+          }
+        >
       >("/auth/switch-role", {
         last_active_role: role,
       });

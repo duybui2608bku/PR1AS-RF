@@ -13,7 +13,7 @@ enum SkeletonRows {
   CARD = 2,
 }
 
-export function PageSkeleton(): JSX.Element {
+export function PageSkeleton() {
   return (
     <Layout style={{ minHeight: "100vh", background: "var(--ant-color-bg-container)" }}>
       <Header />

@@ -12,7 +12,7 @@ enum SkeletonRows {
   CONTENT = 3,
 }
 
-function ServiceCardSkeletonComponent({ size = "medium" }: ServiceCardSkeletonProps): JSX.Element {
+function ServiceCardSkeletonComponent({ size = "medium" }: ServiceCardSkeletonProps) {
   const imageHeight = size === "large" ? ImageHeight.LARGE : size === "medium" ? ImageHeight.MEDIUM : ImageHeight.SMALL;
 
   return (

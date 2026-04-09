@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Work_Sans } from "next/font/google";
+import { Work_Sans } from "next/font/google";
 import "./globals.scss";
 import { Providers } from "@/lib/providers";
 import "@/i18n/config";
@@ -9,12 +9,6 @@ import styles from "./layout.module.scss";
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -32,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${workSans.variable} ${outfit.variable} antialiased ${styles.body}`}
+        className={`${workSans.variable} antialiased ${styles.body}`}
       >
         <Providers>
           <MainLayout>{children}</MainLayout>

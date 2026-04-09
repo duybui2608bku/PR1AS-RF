@@ -7,8 +7,8 @@ import {
   showSuccessNotification,
   showWarningNotification,
   showInfoNotification,
-  type ApiError,
 } from "../utils/error-handler";
+import type { ApiError } from "../axios/config";
 
 export function useErrorHandler() {
   const { t } = useTranslation();

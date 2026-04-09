@@ -1,4 +1,9 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  AxiosResponseHeaders,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { showErrorNotification, getErrorType, ErrorType, HttpStatus } from "../utils/error-handler";
 
 export interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -19,15 +24,7 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-export interface ApiError extends AxiosError<ApiResponse> {
-  response?: {
-    data: ApiResponse;
-    status: number;
-    statusText: string;
-    headers: unknown;
-    config: InternalAxiosRequestConfig;
-  };
-}
+export interface ApiError extends AxiosError<ApiResponse> {}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3052/api";
 const REQUEST_TIMEOUT = 30000;
@@ -207,9 +204,9 @@ export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
     data: response.data,
     status: response.data.statusCode || 500,
     statusText: "Invalid Response",
-    headers: {},
+    headers: {} as AxiosResponseHeaders,
     config: {} as InternalAxiosRequestConfig,
-  };
+  } as AxiosResponse<ApiResponse>;
   throw error;
 };
 

@@ -69,7 +69,7 @@ export function ReviewModal({
   onCancel,
   onOk,
   loading = false,
-}: ReviewModalProps): JSX.Element {
+}: ReviewModalProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [modalWidth, setModalWidth] = useState<number>(ModalWidth.DESKTOP);

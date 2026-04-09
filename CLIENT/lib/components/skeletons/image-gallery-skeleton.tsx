@@ -12,7 +12,7 @@ enum AspectRatio {
   THUMBNAIL = 5 / 4,
 }
 
-function ImageGallerySkeletonComponent(): JSX.Element {
+function ImageGallerySkeletonComponent() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <Skeleton.Image

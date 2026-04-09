@@ -1,14 +1,14 @@
 "use client";
 
-import { Form, Input, Button, Row, Col } from "antd";
+import { Form, Input, Button, Row, Col, App } from "antd";
 import { MailOutlined, PhoneOutlined, UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useRegister, RegisterRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
-import { message } from "antd";
 
 export const RegisterForm = () => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const registerMutation = useRegister();
   const { handleError } = useErrorHandler();
   const [form] = Form.useForm();

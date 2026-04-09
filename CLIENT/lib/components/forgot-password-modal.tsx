@@ -7,7 +7,7 @@ import {
   Input,
   Button,
   Typography,
-  message,
+  App,
   Alert,
 } from "antd";
 import {
@@ -34,6 +34,7 @@ export function ForgotPasswordModal({
   initialEmail = "",
 }: ForgotPasswordModalProps) {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const forgotPasswordMutation = useForgotPassword();
   const [forgotForm] = Form.useForm();
   const [isSuccess, setIsSuccess] = useState(false);

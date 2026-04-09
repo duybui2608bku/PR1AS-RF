@@ -2,16 +2,16 @@
 
 .workerDetailPage {
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: var(--background-secondary);
   padding: 2rem 0;
 
   @media (prefers-color-scheme: dark) {
-    background-color: #000000;
+    background-color: var(--background);
   }
 }
 
 :global([data-theme="dark"]) .workerDetailPage {
-  background-color: #000000;
+  background-color: var(--background);
 }
 
 .container {
@@ -43,7 +43,7 @@
   width: 100%;
   border-radius: 0.75rem;
   overflow: hidden;
-  background-color: #e5e7eb;
+  background-color: var(--surface-muted);
   aspect-ratio: 5/4;
 
   @media (prefers-color-scheme: dark) {
@@ -78,7 +78,7 @@
   flex-shrink: 0;
   border-radius: 0.75rem;
   overflow: hidden;
-  background-color: #e5e7eb;
+  background-color: var(--surface-muted);
   aspect-ratio: 5/4;
   width: 7.5rem;
   border: none;
@@ -96,7 +96,7 @@
 
   &.active {
     opacity: 1;
-    outline: 0.125rem solid var(--color-primary, #1890ff);
+    outline: 0.125rem solid var(--brand-accent);
     outline-offset: 0.25rem;
   }
 }
@@ -121,7 +121,7 @@
 
 .nameTitle {
   margin-bottom: 0.5rem !important;
-  color: #111827 !important;
+  color: var(--foreground) !important;
 
   @media (prefers-color-scheme: dark) {
     color: #f3f4f6 !important;
@@ -129,7 +129,7 @@
 }
 
 .titleText {
-  color: #4b5563;
+  color: var(--foreground-secondary);
   font-weight: 400;
   font-size: 1.25rem;
   margin-left: 0.5rem;
@@ -153,7 +153,7 @@
 
 .ratingValue {
   font-weight: 600;
-  color: #111827;
+  color: var(--foreground);
 
   @media (prefers-color-scheme: dark) {
     color: #f3f4f6;
@@ -161,7 +161,7 @@
 }
 
 .commentText {
-  color: #4b5563;
+  color: var(--foreground-secondary);
 
   @media (prefers-color-scheme: dark) {
     color: #9ca3af;
@@ -181,7 +181,7 @@
 }
 
 .infoIcon {
-  color: #4b5563;
+  color: var(--foreground-secondary);
   font-size: 1.125rem;
 
   @media (prefers-color-scheme: dark) {
@@ -190,7 +190,7 @@
 }
 
 .infoText {
-  color: #111827;
+  color: var(--foreground);
 
   @media (prefers-color-scheme: dark) {
     color: #f3f4f6;
@@ -210,7 +210,7 @@
 }
 
 .introText {
-  color: #374151;
+  color: var(--foreground-secondary);
   line-height: 1.75;
   white-space: pre-line;
   @media (prefers-color-scheme: dark) {
@@ -240,7 +240,7 @@
 }
 
 .errorText {
-  color: #ef4444;
+  color: var(--palette-bg-tertiary-core);
   text-align: center;
 
   @media (prefers-color-scheme: dark) {
@@ -281,10 +281,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary, #1890ff);
+  color: var(--brand-accent);
 
   @media (prefers-color-scheme: dark) {
-    color: var(--color-primary, #1890ff);
+    color: var(--brand-accent);
   }
 }
 
@@ -295,7 +295,7 @@
 
 .infoCardTitle {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--foreground-secondary);
   margin-bottom: 0.25rem;
 
   @media (prefers-color-scheme: dark) {
@@ -306,7 +306,7 @@
 .infoCardValue {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--foreground);
 
   @media (prefers-color-scheme: dark) {
     color: #f3f4f6;
@@ -330,7 +330,7 @@
 }
 
 .contentText {
-  color: #374151;
+  color: var(--foreground-secondary);
   line-height: 1.6;
   margin-bottom: 0;
 
@@ -340,7 +340,7 @@
 }
 
 .quoteText {
-  color: #111827;
+  color: var(--foreground);
   font-style: italic;
   line-height: 1.6;
   margin-bottom: 0;
@@ -380,7 +380,7 @@
 }
 
 .reviewComment {
-  color: #4b5563;
+  color: var(--foreground-secondary);
   margin-bottom: 0;
   line-height: 1.6;
 
@@ -390,10 +390,10 @@
 }
 
 .customCalendarCard {
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   padding: 1.25rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  background-color: var(--background);
+  border: 1px solid var(--border-soft-strong);
   margin-bottom: 1rem;
   transition: all 0.2s ease;
 
@@ -421,17 +421,17 @@
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  color: #374151;
+  border-radius: var(--radius-standard);
+  border: 1px solid var(--border-soft-strong);
+  background-color: var(--background);
+  color: var(--foreground-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
-    color: #111827;
+    background-color: var(--surface-hover);
+    border-color: var(--border-soft-stronger);
+    color: var(--foreground);
   }
 
   &:active:not(:disabled) {
@@ -466,7 +466,7 @@
 .calendarTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--foreground);
   text-align: center;
   flex: 1;
 
@@ -490,7 +490,7 @@
   text-align: center;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--foreground-secondary);
   padding: 0.5rem 0.25rem;
 
   @media (prefers-color-scheme: dark) {
@@ -514,19 +514,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
   border: 1px solid transparent;
   background-color: transparent;
-  color: #374151;
+  color: var(--foreground-secondary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: #f3f4f6;
-    border-color: #e5e7eb;
-    color: #111827;
+    background-color: var(--surface-hover);
+    border-color: var(--border-soft-strong);
+    color: var(--foreground);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -556,8 +556,8 @@
 }
 
 .calendarDayToday {
-  border-color: var(--color-primary, #711111);
-  color: var(--color-primary, #711111);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
   font-weight: 600;
   background-color: rgba(113, 17, 17, 0.05);
 
@@ -584,13 +584,13 @@
 }
 
 .calendarDaySelected {
-  background-color: var(--color-primary, #711111);
+  background-color: var(--brand-accent);
   color: #ffffff;
-  border-color: var(--color-primary, #711111);
+  border-color: var(--brand-accent);
   font-weight: 600;
 
   &:hover:not(:disabled) {
-    background-color: var(--color-primary, #711111);
+    background-color: var(--brand-accent);
     opacity: 0.9;
   }
 }
@@ -660,18 +660,18 @@
 }
 
 .serviceCard {
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
   transition: all 0.2s ease;
   border: 0.125rem solid transparent;
   height: 100%;
 
   &:hover {
-    border-color: var(--color-primary, #1890ff);
+    border-color: var(--brand-accent);
   }
 
   &.serviceCardSelected {
-    border-color: var(--color-primary, #1890ff);
-    background-color: rgba(24, 144, 255, 0.1);
+    border-color: var(--brand-accent);
+    background-color: color-mix(in srgb, var(--brand-accent) 10%, transparent);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -679,12 +679,12 @@
     border-color: #333333;
 
     &:hover {
-      border-color: var(--color-primary, #1890ff);
+      border-color: var(--brand-accent);
     }
 
     &.serviceCardSelected {
-      background-color: rgba(24, 144, 255, 0.2);
-      border-color: var(--color-primary, #1890ff);
+      background-color: color-mix(in srgb, var(--brand-accent) 20%, transparent);
+      border-color: var(--brand-accent);
     }
   }
 }
@@ -694,12 +694,12 @@
   border-color: #333333;
 
   &:hover {
-    border-color: var(--color-primary, #1890ff);
+    border-color: var(--brand-accent);
   }
 
   &.serviceCardSelected {
     background-color: rgba(24, 144, 255, 0.2);
-    border-color: var(--color-primary, #1890ff);
+    border-color: var(--brand-accent);
   }
 }
 
@@ -751,11 +751,11 @@
   height: 3rem;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
 }
 
 .messageButton {
   height: 3rem;
   font-size: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
 }

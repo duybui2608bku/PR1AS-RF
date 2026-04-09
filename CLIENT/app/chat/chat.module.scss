@@ -137,6 +137,11 @@
     transform: translateX(0);
   }
 
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: -0.125rem;
+  }
+
   &.selected {
     background-color: rgba($color-primary, 0.1);
     border-left: 0.25rem solid $color-primary;
@@ -223,6 +228,11 @@
 
   &:active {
     transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
   }
 }
 
@@ -505,6 +515,11 @@
   &:active {
     transform: scale(0.95);
   }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
+  }
 }
 
 .messageImage {
@@ -553,6 +568,11 @@
 
   &:active {
     transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
   }
 }
 
@@ -684,6 +704,11 @@
   &:active {
     transform: scale(0.95);
   }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
+  }
 }
 
 .attachMenu {
@@ -772,6 +797,11 @@
     box-shadow: none;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  &:focus-visible {
+    outline: 0.125rem solid var(--brand-accent);
+    outline-offset: 0.125rem;
   }
 }
 
@@ -946,5 +976,20 @@
 
   .imagePreview {
     max-height: 15.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversationList,
+  .chatView,
+  .conversationItem,
+  .messageItem,
+  .replyButton,
+  .deleteButton,
+  .attachButton,
+  .sendButton {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
   }
 }

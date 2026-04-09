@@ -1,11 +1,10 @@
 "use client";
 
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, App } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useLogin, LoginRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
-import { message } from "antd";
 
 interface LoginFormProps {
   onForgotPassword: (email: string) => void;
@@ -13,6 +12,7 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onForgotPassword }: LoginFormProps) => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const loginMutation = useLogin();
   const { handleError } = useErrorHandler();
   const [form] = Form.useForm();

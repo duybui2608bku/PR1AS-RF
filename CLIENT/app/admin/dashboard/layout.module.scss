@@ -9,7 +9,7 @@
   left: 0;
   top: 0;
   bottom: 0;
-  background: #000000;
+  background: var(--palette-text-primary);
   border-right: 1px solid var(--border-secondary);
 }
 
@@ -29,7 +29,7 @@
 }
 
 .menu {
-  background: #000000;
+  background: var(--palette-text-primary);
   border-right: none;
 }
 
@@ -52,7 +52,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card-warm);
   border-bottom: 1px solid var(--border-secondary);
 }
 
@@ -79,5 +79,5 @@
   padding: 1.5rem;
   min-height: 17.5rem;
   background: var(--ant-color-bg-container);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-card);
 }

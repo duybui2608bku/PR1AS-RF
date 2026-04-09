@@ -7,7 +7,7 @@ import {
   InputNumber,
   Button,
   Space,
-  message,
+  App,
 } from "antd";
 import { WalletOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -25,13 +25,13 @@ interface DepositModalProps {
   onClose: () => void;
 }
 
-export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element {
+export function DepositModal({ open, onClose }: DepositModalProps) {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
   const [form] = Form.useForm<DepositFormValues>();
 
-  const createDepositMutation = useStandardizedMutation({
-    mutationFn: walletApi.createDeposit,
+  const createDepositMutation = useStandardizedMutation(walletApi.createDeposit, {
     onSuccess: (data) => {
       message.success(t("wallet.deposit.success"));
       form.resetFields();

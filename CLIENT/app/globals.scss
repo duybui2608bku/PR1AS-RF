@@ -5,30 +5,50 @@
 @include meta.load-css("tailwindcss");
 
 :root {
-  --color-primary: #{$color-primary};
-  --text-on-primary: #{$text-on-primary-light};
-}
-
-:root[data-theme="light"] {
-  --background: #{$bg-light-primary};
-  --background-secondary: #{$bg-light-secondary};
-  --foreground: #{$text-light-primary};
-  --foreground-secondary: #{$text-light-secondary};
-  --text-on-primary: #{$text-on-primary-light};
-  --border-secondary: #{$border-light};
-  --fill-tertiary: #{$fill-light};
-  --brand-accent: #ff385c;
-  --surface-muted: #f2f2f2;
-  --surface-hover: #f7f7f7;
-  --text-secondary-soft: #6a6a6a;
-  --border-soft: rgba(34, 34, 34, 0.08);
-  --border-soft-strong: rgba(34, 34, 34, 0.12);
-  --border-soft-stronger: rgba(34, 34, 34, 0.2);
+  --palette-bg-primary-core: #ff385c;
+  --palette-bg-tertiary-core: #e00b41;
+  --palette-bg-base: #ffffff;
+  --palette-bg-surface-muted: #f2f2f2;
+  --palette-bg-surface-hover: #f7f7f7;
+  --palette-text-primary: #222222;
+  --palette-text-secondary: #6a6a6a;
+  --palette-border-soft: rgba(34, 34, 34, 0.08);
+  --palette-border-soft-strong: rgba(34, 34, 34, 0.12);
+  --palette-border-soft-stronger: rgba(34, 34, 34, 0.2);
+  --palette-focus-ring: rgba(255, 56, 92, 0.28);
+  --palette-text-on-dark: #ffffff;
+  --palette-text-on-light: #222222;
   --shadow-card-warm:
     rgba(0, 0, 0, 0.02) 0 0 0 1px,
     rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
     rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
   --shadow-hover-soft: rgba(0, 0, 0, 0.08) 0 0.25rem 0.75rem;
+  --radius-standard: 0.5rem;
+  --radius-badge: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-large: 2rem;
+  --radius-circle: 50%;
+
+  // Backward-compatible aliases while migrating modules.
+  --color-primary: var(--palette-bg-primary-core);
+  --text-on-primary: var(--palette-text-on-dark);
+}
+
+:root[data-theme="light"] {
+  --background: #{$bg-light-primary};
+  --background-secondary: #{$bg-light-secondary};
+  --foreground: var(--palette-text-primary);
+  --foreground-secondary: var(--palette-text-secondary);
+  --text-on-primary: #{$text-on-primary-light};
+  --border-secondary: #{$border-light};
+  --fill-tertiary: #{$fill-light};
+  --brand-accent: var(--palette-bg-primary-core);
+  --surface-muted: var(--palette-bg-surface-muted);
+  --surface-hover: var(--palette-bg-surface-hover);
+  --text-secondary-soft: var(--palette-text-secondary);
+  --border-soft: var(--palette-border-soft);
+  --border-soft-strong: var(--palette-border-soft-strong);
+  --border-soft-stronger: var(--palette-border-soft-stronger);
 }
 
 :root[data-theme="dark"] {
@@ -39,7 +59,7 @@
   --text-on-primary: #{$text-on-primary-dark};
   --border-secondary: #{$border-dark};
   --fill-tertiary: #{$fill-dark};
-  --brand-accent: #ff385c;
+  --brand-accent: var(--palette-bg-primary-core);
   --surface-muted: rgba(255, 255, 255, 0.08);
   --surface-hover: rgba(255, 255, 255, 0.12);
   --text-secondary-soft: #{$text-dark-secondary};
@@ -56,23 +76,18 @@
 :root:not([data-theme]) {
   --background: #{$bg-light-primary};
   --background-secondary: #{$bg-light-secondary};
-  --foreground: #{$text-light-primary};
-  --foreground-secondary: #{$text-light-secondary};
+  --foreground: var(--palette-text-primary);
+  --foreground-secondary: var(--palette-text-secondary);
   --text-on-primary: #{$text-on-primary-light};
   --border-secondary: #{$border-light};
   --fill-tertiary: #{$fill-light};
-  --brand-accent: #ff385c;
-  --surface-muted: #f2f2f2;
-  --surface-hover: #f7f7f7;
-  --text-secondary-soft: #6a6a6a;
-  --border-soft: rgba(34, 34, 34, 0.08);
-  --border-soft-strong: rgba(34, 34, 34, 0.12);
-  --border-soft-stronger: rgba(34, 34, 34, 0.2);
-  --shadow-card-warm:
-    rgba(0, 0, 0, 0.02) 0 0 0 1px,
-    rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
-    rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
-  --shadow-hover-soft: rgba(0, 0, 0, 0.08) 0 0.25rem 0.75rem;
+  --brand-accent: var(--palette-bg-primary-core);
+  --surface-muted: var(--palette-bg-surface-muted);
+  --surface-hover: var(--palette-bg-surface-hover);
+  --text-secondary-soft: var(--palette-text-secondary);
+  --border-soft: var(--palette-border-soft);
+  --border-soft-strong: var(--palette-border-soft-strong);
+  --border-soft-stronger: var(--palette-border-soft-stronger);
 }
 
 :root {
@@ -91,14 +106,16 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family: "Airbnb Cereal VF", var(--font-work-sans), -apple-system,
+    BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   transition: background-color 200ms ease-in-out, color 200ms ease-in-out;
 }
 
 h1,
 h2 {
-  font-family: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family: "Airbnb Cereal VF", var(--font-work-sans), -apple-system,
+    BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -108,8 +125,8 @@ h5,
 h6,
 .subtitle,
 .subheading {
-  font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: "Airbnb Cereal VF", var(--font-work-sans), -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .bg-primary {
@@ -153,9 +170,9 @@ h6,
 }
 
 *:focus-visible {
-  outline: 0.125rem solid var(--color-primary);
+  outline: 0.125rem solid var(--palette-bg-primary-core);
   outline-offset: 0.125rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
 }
 
 button,
@@ -181,7 +198,7 @@ h3,
 h4,
 h5,
 h6 {
-  color: var(--color-primary);
+  color: var(--foreground);
   transition: color 200ms ease-in-out;
 }
 
@@ -229,12 +246,13 @@ section[style*="marginBottom"] {
 }
 
 .ant-btn {
-  border-radius: 0.5rem !important;
+  border-radius: var(--radius-standard) !important;
 }
 
 .ant-card {
-  border-radius: 0.75rem !important;
+  border-radius: var(--radius-card) !important;
   overflow: hidden;
+  box-shadow: var(--shadow-card-warm);
 }
 
 .ant-input,
@@ -242,7 +260,7 @@ section[style*="marginBottom"] {
 .ant-input-number,
 .ant-select-selector,
 .ant-picker {
-  border-radius: 0.5rem !important;
+  border-radius: var(--radius-standard) !important;
 }
 
 .ant-form-item {
@@ -256,17 +274,17 @@ section[style*="marginBottom"] {
 }
 
 button:not(.ant-btn):not([class*="ant-"]) {
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
 }
 
 [class*="card"]:not(.ant-card):not([class*="ant-"]) {
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
 }
 
 input:not(.ant-input):not([class*="ant-"]),
 textarea:not([class*="ant-"]),
 select:not([class*="ant-"]) {
-  border-radius: 0.5rem;
+  border-radius: var(--radius-standard);
 }
 
 .ant-typography {
