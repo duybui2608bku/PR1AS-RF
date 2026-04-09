@@ -40,7 +40,7 @@ export const buildDepositPaymentUrl = (
   );
 
   const paymentParams = {
-    vnp_Amount: amount * 100,
+    vnp_Amount: amount,
     vnp_Command: "pay",
     vnp_CreateDate: vnpCreateDate,
     vnp_CurrCode: "VND" as const,

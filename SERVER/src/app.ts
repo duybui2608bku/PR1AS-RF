@@ -55,7 +55,7 @@ export const createApp = (): express.Application => {
     standardHeaders: true,
     legacyHeaders: false,
   });
-  app.use("/api/", limiter);
+  // app.use("/api/", limiter);
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

@@ -733,7 +733,7 @@ export default function AdminWalletPage() {
   ];
 
   return (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.wallet.title")}</Title>
       <Tabs
         activeKey={activeTab}

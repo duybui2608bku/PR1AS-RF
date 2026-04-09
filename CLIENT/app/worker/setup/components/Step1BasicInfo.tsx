@@ -413,7 +413,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.location.label")}
             </Title>
-            <Space direction="vertical" className={styles.spaceFull} size="large">
+            <Space orientation="vertical" className={styles.spaceFull} size="large">
               <Button
                 icon={<EnvironmentOutlined />}
                 onClick={getLocation}
@@ -503,6 +503,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               >
                 <InputNumber
                   className={styles.inputFull}
+                  style={{ width: '100%' }}
                   placeholder={t("worker.setup.step1.heightWeight.height")}
                   min={0}
                   max={300}
@@ -516,6 +517,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               >
                 <InputNumber
                   className={styles.inputFull}
+                  style={{ width: '100%' }}
                   placeholder={t("worker.setup.step1.heightWeight.weight")}
                   min={0}
                   max={500}

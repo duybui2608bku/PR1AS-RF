@@ -172,10 +172,10 @@ axiosInstance.interceptors.response.use(
       const errorType = getErrorType(error.response.status);
       
       if (
-        errorType !== ErrorType.UNAUTHORIZED &&
+        (errorType !== ErrorType.UNAUTHORIZED || isAuthLoginRoute) &&
         !originalRequest.skipErrorNotification
       ) {
-        showErrorNotification(error);
+        showErrorNotification(error, undefined, isAuthLoginRoute);
       }
     } else if (!error.response && typeof window !== "undefined") {
       if (!originalRequest.skipErrorNotification) {
