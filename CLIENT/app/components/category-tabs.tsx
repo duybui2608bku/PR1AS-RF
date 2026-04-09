@@ -4,7 +4,6 @@ import { useRef, useState, useCallback, useEffect, memo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { LeftOutlined, RightOutlined, DownOutlined } from "@ant-design/icons";
-import Image from "next/image";
 import { SERVICE_CATEGORIES } from "@/app/constants/constants";
 import styles from "./category-tabs.module.scss";
 
@@ -26,7 +25,7 @@ const CATEGORY_TABS: CategoryTab[] = [
   {
     code: SERVICE_CATEGORIES.ASSISTANCE,
     icon: "🛎️",
-    iconImage: "/icons/assistance.png",
+    iconImage: "/icons/assistance-3d.svg",
     labelKey: "home.categories.assistance.title",
     children: [
       {
@@ -59,7 +58,7 @@ const CATEGORY_TABS: CategoryTab[] = [
   {
     code: SERVICE_CATEGORIES.COMPANIONSHIP,
     icon: "🤝",
-    iconImage: "/icons/companionship.png",
+    iconImage: "/icons/companionship-3d.svg",
     labelKey: "home.categories.companionship.title",
     children: [
       {
@@ -92,7 +91,12 @@ enum ScrollConfig {
   THRESHOLD = 10,
 }
 
-const CategoryTabsComponent = () => {
+interface CategoryTabsProps {
+  forceCompact?: boolean;
+  className?: string;
+}
+
+const CategoryTabsComponent = ({ forceCompact = false, className }: CategoryTabsProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -102,7 +106,8 @@ const CategoryTabsComponent = () => {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
-  const [isCompact, setIsCompact] = useState(false);
+  const [isCompactByScroll, setIsCompactByScroll] = useState(false);
+  const [brokenIconCodes, setBrokenIconCodes] = useState<Set<string>>(new Set());
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
@@ -137,7 +142,7 @@ const CategoryTabsComponent = () => {
     const COMPACT_EXIT_THRESHOLD = 8;
     const handlePageScroll = () => {
       const currentScrollY = window.scrollY;
-      setIsCompact((prev) => {
+      setIsCompactByScroll((prev) => {
         if (!prev && currentScrollY > COMPACT_ENTER_THRESHOLD) return true;
         if (prev && currentScrollY < COMPACT_EXIT_THRESHOLD) return false;
         return prev;
@@ -157,7 +162,7 @@ const CategoryTabsComponent = () => {
 
   const updateDropdownPos = useCallback((tabCode: string) => {
     const btn = tabButtonRefs.current.get(tabCode);
-    if (!btn) return;
+    if (!btn || !btn.isConnected) return;
     const rect = btn.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     // Clamp so dropdown doesn't go off-screen
@@ -165,7 +170,7 @@ const CategoryTabsComponent = () => {
     const maxLeft = window.innerWidth - 110;
     setDropdownPos({
       left: Math.max(minLeft, Math.min(maxLeft, centerX)),
-      top: rect.bottom + 4,
+      top: rect.bottom + 8,
     });
   }, []);
 
@@ -209,6 +214,33 @@ const CategoryTabsComponent = () => {
     }, 200);
   }, []);
 
+  // Keep dropdown anchored while layout is animating/scrolling.
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    let frameId = 0;
+    let isActive = true;
+
+    const syncDropdownPosition = () => {
+      updateDropdownPos(openDropdown);
+      if (!isActive) return;
+      frameId = window.requestAnimationFrame(syncDropdownPosition);
+    };
+
+    syncDropdownPosition();
+
+    const syncNow = () => updateDropdownPos(openDropdown);
+    window.addEventListener("scroll", syncNow, { passive: true });
+    window.addEventListener("resize", syncNow);
+
+    return () => {
+      isActive = false;
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("scroll", syncNow);
+      window.removeEventListener("resize", syncNow);
+    };
+  }, [openDropdown, updateDropdownPos]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -222,7 +254,7 @@ const CategoryTabsComponent = () => {
   }, []);
 
   return (
-    <div className={`${styles.categoryTabsWrapper} ${isCompact ? styles.compact : ""}`}>
+    <div className={`${styles.categoryTabsWrapper} ${forceCompact || isCompactByScroll ? styles.compact : ""} ${className ?? ""}`}>
       <div className={styles.categoryTabsInner}>
         <div
           className={`${styles.fadeMask} ${canScrollLeft ? styles.showLeftFade : ""} ${canScrollRight ? styles.showRightFade : ""}`}
@@ -242,19 +274,31 @@ const CategoryTabsComponent = () => {
                     onMouseLeave={handleMouseLeave}
                   >
                     <button
-                      ref={(el) => { if (el) tabButtonRefs.current.set(tab.code, el); }}
+                      ref={(el) => {
+                        if (el) {
+                          tabButtonRefs.current.set(tab.code, el);
+                        } else {
+                          tabButtonRefs.current.delete(tab.code);
+                        }
+                      }}
                       className={`${styles.tab} ${parentActive ? styles.tabActive : ""} ${hasChildren ? styles.tabHasChildren : ""}`}
                       onClick={() => handleTabClick(tab)}
                       type="button"
                     >
-                      {tab.iconImage ? (
+                      {tab.iconImage && !brokenIconCodes.has(tab.code) ? (
                         <span className={styles.tabIconImage}>
-                          <Image
+                          <img
                             src={tab.iconImage}
                             alt={tab.code}
-                            width={150}
-                            height={150}
-                            unoptimized
+                            loading="lazy"
+                            decoding="async"
+                            onError={() => {
+                              setBrokenIconCodes((prev) => {
+                                const next = new Set(prev);
+                                next.add(tab.code);
+                                return next;
+                              });
+                            }}
                           />
                         </span>
                       ) : (

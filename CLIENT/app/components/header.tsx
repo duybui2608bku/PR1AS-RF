@@ -10,10 +10,11 @@ import {
   Popover,
   Row,
   Col,
+  Input,
 } from "antd";
 import {
   MenuOutlined,
-  UserOutlined
+  SearchOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -25,6 +26,7 @@ import { AppRoute, UserRole } from "@/lib/constants/routes";
 import { Breakpoint, ScrollAmount } from "@/lib/constants/ui.constants";
 import { useWindowSize } from "@/lib/hooks/use-window-size";
 import { useScroll } from "@/lib/hooks/use-scroll";
+import { CategoryTabs } from "@/app/components/category-tabs";
 import { UserMenu } from "./header/user-menu";
 import { MobileMenu } from "./header/mobile-menu";
 import styles from "./header.module.scss";
@@ -33,7 +35,11 @@ const { Header: AntHeader } = Layout;
 
 const AUTH_MODAL_TABS = ["login", "register"] as const;
 
-const HeaderComponent = () => {
+interface HeaderProps {
+  showCategoryTabs?: boolean;
+}
+
+const HeaderComponent = ({ showCategoryTabs = true }: HeaderProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -42,6 +48,7 @@ const HeaderComponent = () => {
   const [authModalTab, setAuthModalTab] = useState<typeof AUTH_MODAL_TABS[number]>(
     AUTH_MODAL_TABS[0]
   );
+  const [searchValue, setSearchValue] = useState("");
   
   const { width } = useWindowSize();
   const isMobile = width ? width < Breakpoint.MOBILE : false;
@@ -129,6 +136,15 @@ const HeaderComponent = () => {
     setAuthModalOpen(true);
   }, []);
 
+  const handleSearch = useCallback(() => {
+    const keyword = searchValue.trim();
+    if (!keyword) {
+      router.push("/services");
+      return;
+    }
+    router.push(`/services?search=${encodeURIComponent(keyword)}`);
+  }, [router, searchValue]);
+
   const workerButton = useMemo(() => (
     <Button
       type="primary"
@@ -176,39 +192,73 @@ const HeaderComponent = () => {
     <AntHeader
       className={`${styles.header} ${isScrolled ? styles.scrolled : ""}`}
     >
-      <Row justify="space-between" align="middle" wrap={false} className={styles.headerRow}>
-        <Col flex="none">
-          <Link href={AppRoute.HOME} className={styles.logoLink}>
-            {t("home.logo")}
-          </Link>
-        </Col>
-        <Col flex="auto">
-          <Space className={styles.actionsRow} size="middle">
-            {!isMobile && (
-              <>
-                {!userData.isAdmin && workerButton}
-                {!userData.isAdmin && <SettingsPopover />}
-                {authSectionDesktop}
-              </>
-            )}
-            {isMobile && (
-              <Popover
-                content={
-                    <MobileMenu 
-                        isAdmin={userData.isAdmin} 
-                        workerButton={workerButton} 
-                        authSectionMobile={authSectionMobile} 
-                    />
-                }
-                trigger="click"
-                placement="bottomRight"
-              >
-                <Button type="text" icon={<MenuOutlined />} />
-              </Popover>
-            )}
-          </Space>
-        </Col>
-      </Row>
+      <div className={styles.headerTop}>
+        {showCategoryTabs && isScrolled && (
+          <div className={styles.headerTabsInline}>
+            <CategoryTabs forceCompact className={styles.headerTabsInlineContent} />
+          </div>
+        )}
+        <Row justify="space-between" align="middle" wrap={false} className={styles.headerRow}>
+          <Col flex="none">
+            <Link href={AppRoute.HOME} className={styles.logoLink}>
+              {t("home.logo")}
+            </Link>
+          </Col>
+          <Col flex="auto">
+            <Space className={styles.actionsRow} size="middle">
+              {!isMobile && (
+                <>
+                  {!userData.isAdmin && workerButton}
+                  {!userData.isAdmin && <SettingsPopover />}
+                  {authSectionDesktop}
+                </>
+              )}
+              {isMobile && (
+                <Popover
+                  content={
+                      <MobileMenu
+                          isAdmin={userData.isAdmin}
+                          workerButton={workerButton}
+                          authSectionMobile={authSectionMobile}
+                      />
+                  }
+                  trigger="click"
+                  placement="bottomRight"
+                >
+                  <Button type="text" icon={<MenuOutlined />} />
+                </Popover>
+              )}
+            </Space>
+          </Col>
+        </Row>
+      </div>
+      {showCategoryTabs && !isScrolled && (
+        <div className={styles.headerTabs}>
+          <CategoryTabs forceCompact={isScrolled} className={styles.headerTabsContent} />
+        </div>
+      )}
+      {showCategoryTabs && !isScrolled && (
+        <div className={styles.headerSearchRow}>
+          <div className={styles.headerSearch}>
+            <Input
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onPressEnter={handleSearch}
+              placeholder={t("header.searchPlaceholder", { defaultValue: "Tìm kiếm dịch vụ..." })}
+              bordered={false}
+              className={styles.headerSearchInput}
+            />
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<SearchOutlined />}
+              aria-label={t("header.search", { defaultValue: "Tìm kiếm" })}
+              onClick={handleSearch}
+              className={styles.headerSearchButton}
+            />
+          </div>
+        </div>
+      )}
 
       <AuthModal
         open={authModalOpen}
