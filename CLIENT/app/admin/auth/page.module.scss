@@ -2,13 +2,13 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .toolbar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .centerBlock {
@@ -20,20 +20,20 @@
 
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 26.25rem;
 }
 
 .cardHeader {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
 }
 
 .heroIcon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
 .footerBlock {
-  margin-top: 24px;
+  margin-top: 1.5rem;
   text-align: center;
 }

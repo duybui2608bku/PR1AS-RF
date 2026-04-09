@@ -2,21 +2,21 @@
 
 .categoryTabsWrapper {
   position: sticky;
-  top: 64px;
+  top: 4rem;
   z-index: 999;
   background: var(--background);
-  border-bottom: 1px solid var(--border-secondary);
+  border-bottom: 1px solid var(--border-soft);
   transition: box-shadow 200ms ease;
 
   &.elevated {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.06);
   }
 }
 
 .categoryTabsInner {
-  max-width: 1400px;
+  max-width: 87.5rem;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 1.5rem;
   position: relative;
 }
 
@@ -27,11 +27,11 @@
 
 .scrollContainer {
   display: flex;
-  gap: 48px;
+  gap: 1.75rem;
   justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 16px 0;
+  padding: 1.125rem 0 0.875rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
@@ -52,19 +52,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   cursor: pointer;
-  padding: 10px 16px;
+  padding: 0.5rem 0.875rem;
   border: none;
-  background: none;
+  background: var(--background);
   white-space: nowrap;
   flex-shrink: 0;
   position: relative;
   transition: opacity 150ms ease, transform 150ms ease, flex-direction 300ms ease, padding 300ms ease, gap 300ms ease, border-radius 300ms ease;
-  opacity: 0.8;
+  opacity: 0.84;
+  border-radius: 1.25rem;
 
   &:hover {
     opacity: 1;
+    background: var(--surface-hover);
   }
 
   &::after {
@@ -73,20 +75,21 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 0.125rem;
     background: transparent;
     border-radius: 1px;
     transition: background 150ms ease;
   }
 
   &:hover::after {
-    background: var(--foreground-secondary);
+    background: var(--text-secondary-soft);
   }
 }
 
 
 .tabActive {
   opacity: 1;
+  background: var(--surface-hover);
 
   &::after {
     background: var(--foreground) !important;
@@ -94,9 +97,9 @@
 }
 
 .tabIcon {
-  font-size: 24px;
+  font-size: 1.5rem;
   line-height: 1;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 0.125rem rgba(0, 0, 0, 0.1));
   transition: transform 150ms ease;
 
   .tab:hover & {
@@ -109,9 +112,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 3.125rem;
+  height: 3.125rem;
+  border-radius: 0.875rem;
   overflow: hidden;
   transition: transform 200ms ease, width 300ms ease, height 300ms ease;
 
@@ -127,14 +130,14 @@
 }
 
 .tabLabel {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--foreground-secondary);
+  color: var(--text-secondary-soft);
   letter-spacing: 0.2px;
   transition: color 150ms ease, font-size 300ms ease;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 
   .tabActive & {
     color: var(--foreground);
@@ -143,7 +146,7 @@
 
 // Dropdown arrow icon
 .dropdownArrow {
-  font-size: 8px;
+  font-size: 0.5rem;
   transition: transform 200ms ease;
   opacity: 0.6;
 }
@@ -156,12 +159,15 @@
 .dropdownFixed {
   position: fixed;
   transform: translateX(-50%);
-  min-width: 200px;
+  min-width: 12.5rem;
   background: var(--background);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-  padding: 8px 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-soft);
+  border-radius: 0.875rem;
+  padding: 0.5rem 0;
+  box-shadow:
+    rgba(0, 0, 0, 0.02) 0 0 0 1px,
+    rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
+    rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
   z-index: 10000;
   animation: dropdownFadeIn 150ms ease;
 }
@@ -169,7 +175,7 @@
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-4px);
+    transform: translateX(-50%) translateY(-0.25rem);
   }
   to {
     opacity: 1;
@@ -180,19 +186,19 @@
 .dropdownItem {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
-  padding: 10px 16px;
+  padding: 0.625rem 1rem;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 13px;
-  color: var(--foreground-secondary);
+  font-size: 0.8125rem;
+  color: var(--text-secondary-soft);
   transition: all 150ms ease;
   white-space: nowrap;
 
   &:hover {
-    background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+    background: var(--surface-hover);
     color: var(--foreground);
   }
 }
@@ -200,11 +206,11 @@
 .dropdownItemActive {
   color: var(--foreground);
   font-weight: 600;
-  background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+  background: var(--surface-hover);
 }
 
 .dropdownItemIcon {
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
 }
 
@@ -218,21 +224,24 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
-  border: 1px solid var(--border-secondary);
-  background: var(--background);
+  border: 1px solid var(--border-soft-strong);
+  background: var(--surface-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    rgba(0, 0, 0, 0.02) 0 0 0 1px,
+    rgba(0, 0, 0, 0.04) 0 0.125rem 0.375rem,
+    rgba(0, 0, 0, 0.1) 0 0.25rem 0.5rem;
   transition: all 150ms ease;
   padding: 0;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: rgba(0, 0, 0, 0.08) 0 0.25rem 0.75rem;
     transform: translateY(-50%) scale(1.05);
   }
 }
@@ -254,7 +263,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 40px;
+    width: 2.5rem;
     z-index: 1;
     pointer-events: none;
   }
@@ -273,18 +282,18 @@
 // Compact mode: horizontal layout when page is scrolled
 .compact {
   .scrollContainer {
-    padding: 8px 0;
-    gap: 24px;
+    padding: 0.5rem 0;
+    gap: 1.5rem;
   }
 
   .tab {
     flex-direction: row;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 20px;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 62.4375rem;
 
     &:hover {
-      background: var(--background-secondary, rgba(0, 0, 0, 0.04));
+      background: var(--surface-hover);
     }
 
     &::after {
@@ -293,7 +302,7 @@
   }
 
   .tabActive {
-    background: var(--background-secondary, rgba(0, 0, 0, 0.06));
+    background: var(--surface-hover);
 
     &::after {
       display: none;
@@ -301,17 +310,17 @@
   }
 
   .tabIconImage {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
   }
 
   .tabIcon {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   .tabLabel {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 }
 
@@ -320,24 +329,24 @@
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .scrollContainer {
-    gap: 24px;
+    gap: 1.5rem;
     justify-content: flex-start;
   }
 
   .tabIconImage {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
   }
 
   .tabIcon {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 
   .tabLabel {
-    font-size: 11px;
+    font-size: 0.6875rem;
   }
 
   .scrollBtn {
@@ -347,15 +356,15 @@
   // On mobile, dropdown becomes a bottom sheet style
   .dropdownFixed {
     position: fixed !important;
-    left: 12px !important;
-    right: 12px !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
     bottom: auto;
     top: auto !important;
     transform: none !important;
     width: auto !important;
     min-width: unset !important;
     max-width: none !important;
-    border-radius: 12px;
+    border-radius: 0.75rem;
     animation: dropdownSlideUp 200ms ease;
   }
 
@@ -371,7 +380,7 @@
   @keyframes dropdownSlideUp {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(0.5rem);
     }
     to {
       opacity: 1;

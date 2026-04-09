@@ -130,7 +130,7 @@ function EditProfileContent() {
 
   return (
     <Layout>
-      <Content style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
+      <Content style={{ padding: "1.5rem", maxWidth: 1200, margin: "0 auto" }}>
           <Space style={{ marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>
               {t("profile.edit.title")}
@@ -145,7 +145,7 @@ function EditProfileContent() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    padding: "24px",
+                    padding: "1.5rem",
 
                     borderRadius: 8,
                     height: "100%",

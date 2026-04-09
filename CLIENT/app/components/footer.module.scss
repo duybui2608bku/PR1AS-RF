@@ -1,25 +1,25 @@
 .footer {
   background: var(--ant-color-bg-container);
   border-top: 1px solid var(--ant-color-border-secondary);
-  padding: 48px 24px 24px;
+  padding: 3rem 1.5rem 1.5rem;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
 }
 
 .sectionTitle {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .descriptionBlock {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .socialSpace {
-  margin-top: 16px;
+  margin-top: 1rem;
 }
 
 .socialLink {
@@ -27,7 +27,7 @@
 }
 
 .socialIcon {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .footerLink {
@@ -36,7 +36,7 @@
 }
 
 .divider {
-  margin: 32px 0;
+  margin: 2rem 0;
 }
 
 .legalLink {

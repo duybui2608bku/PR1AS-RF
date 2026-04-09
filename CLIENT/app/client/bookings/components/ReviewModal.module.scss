@@ -1,5 +1,5 @@
 .modal {
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 2rem);
 }
 
 .title {
@@ -9,8 +9,8 @@
 
 .card {
   background: var(--ant-color-fill-tertiary);
-  border-radius: 12px;
-  margin-bottom: 24px;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
   border: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -27,23 +27,23 @@
 }
 
 .rateLarge {
-  font-size: 28px;
+  font-size: 1.75rem;
   color: var(--ant-color-primary);
 }
 
 .rateDefault {
-  font-size: 20px;
+  font-size: 1.25rem;
   color: var(--ant-color-primary);
 }
 
 .sectionTitle {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   color: var(--ant-color-primary);
 }
 
 .commentItem {
-  margin-top: 24px;
+  margin-top: 1.5rem;
 }
 
 .textArea {

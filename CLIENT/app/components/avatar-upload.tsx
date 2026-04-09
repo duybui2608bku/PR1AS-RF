@@ -124,8 +124,8 @@ export function AvatarUpload({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "3px solid var(--ant-color-bg-container)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              border: "0.1875rem solid var(--ant-color-bg-container)",
+              boxShadow: "0 0.125rem 0.5rem rgba(0,0,0,0.15)",
             }}
           >
             <CameraOutlined style={{ color: "#fff", fontSize: 16 }} />

@@ -59,7 +59,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           alt={service.title}
           fill
           className={styles.image}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 48rem) 100vw, (max-width: 75rem) 50vw, 33vw"
         />
         {service.loved && (
           <div className={styles.badge}>

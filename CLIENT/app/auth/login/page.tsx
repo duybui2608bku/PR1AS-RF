@@ -74,7 +74,7 @@ export default function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 20px",
+        padding: "2.5rem 1.25rem",
       }}
     >
       <Card style={{ width: "100%", maxWidth: 420 }}>

@@ -31,7 +31,7 @@ export function SettingsPopover() {
         </Select>
       </div>
 
-      <Divider style={{ margin: "8px 0" }} />
+      <Divider style={{ margin: "0.5rem 0" }} />
 
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Ngôn ngữ</div>
@@ -48,7 +48,7 @@ export function SettingsPopover() {
         </Select>
       </div>
 
-      <Divider style={{ margin: "8px 0" }} />
+      <Divider style={{ margin: "0.5rem 0" }} />
 
       <div>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>Giao diện</div>

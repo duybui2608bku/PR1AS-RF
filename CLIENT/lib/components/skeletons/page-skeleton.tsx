@@ -17,7 +17,7 @@ export function PageSkeleton(): JSX.Element {
   return (
     <Layout style={{ minHeight: "100vh", background: "var(--ant-color-bg-container)" }}>
       <Header />
-      <Content style={{ padding: "24px" }}>
+      <Content style={{ padding: "1.5rem" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <Skeleton
             active

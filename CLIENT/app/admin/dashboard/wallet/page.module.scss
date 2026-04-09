@@ -3,7 +3,7 @@
 }
 
 .statSuffix {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .statDeposit {
@@ -38,20 +38,20 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .selectWidth {
-  width: 180px;
+  width: 11.25rem;
 }
 
 .spinWrapper {
   text-align: center;
-  padding: 40px;
+  padding: 2.5rem;
 }
 
 .chartHeight {
-  height: 400px;
+  height: 25rem;
 }
 
 .topUserAmount {
@@ -59,9 +59,9 @@
 }
 
 .filterInput {
-  width: 200px;
+  width: 12.5rem;
 }
 
 .filterSelect {
-  width: 150px;
+  width: 9.375rem;
 }

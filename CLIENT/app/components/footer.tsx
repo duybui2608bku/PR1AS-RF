@@ -53,7 +53,7 @@ const FooterComponent = () => {
             <Title level={4} className={styles.sectionTitle}>
               {t("home.footer.links.title")}
             </Title>
-            <Space direction="vertical" size="small">
+            <Space orientation="vertical" size="small">
               <Link href="/" className={styles.footerLink}>
                 {t("home.nav.home")}
               </Link>
@@ -73,7 +73,7 @@ const FooterComponent = () => {
             <Title level={4} className={styles.sectionTitle}>
               {t("home.footer.services.title")}
             </Title>
-            <Space direction="vertical" size="small">
+            <Space orientation="vertical" size="small">
               <Text type="secondary" className={styles.descriptionBlock}>
                 {t("home.footer.services.item1")}
               </Text>
@@ -90,7 +90,7 @@ const FooterComponent = () => {
             <Title level={4} className={styles.sectionTitle}>
               {t("home.footer.contact.title")}
             </Title>
-            <Space direction="vertical" size="middle">
+            <Space orientation="vertical" size="middle">
               <Space>
                 <MailOutlined />
                 <Text type="secondary">info@example.com</Text>

@@ -42,7 +42,7 @@ function ServiceCardSkeletonComponent({ size = "medium" }: ServiceCardSkeletonPr
         }}
         active
       />
-      <div style={{ padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "1rem", flex: 1, display: "flex", flexDirection: "column" }}>
         <Skeleton
           active
           paragraph={{ rows: SkeletonRows.CONTENT }}

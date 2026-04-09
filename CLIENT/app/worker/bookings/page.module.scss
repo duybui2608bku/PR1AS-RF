@@ -4,16 +4,16 @@
 }
 
 .content {
-  padding: var(--ant-spacing-xl, 24px);
+  padding: var(--ant-spacing-xl, 1.5rem);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
 }
 
 .headerSpace {
-  margin-bottom: var(--ant-spacing-xl, 24px);
+  margin-bottom: var(--ant-spacing-xl, 1.5rem);
   width: 100%;
 }
 
@@ -23,11 +23,11 @@
 }
 
 .titleIcon {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
 .filtersRow {
-  margin-bottom: var(--ant-spacing-lg, 16px);
+  margin-bottom: var(--ant-spacing-lg, 1rem);
 }
 
 .filterSpace {
@@ -42,5 +42,5 @@
 
 .mobileListSpace {
   width: 100%;
-  margin-bottom: var(--ant-spacing-lg, 16px);
+  margin-bottom: var(--ant-spacing-lg, 1rem);
 }

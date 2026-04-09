@@ -100,7 +100,7 @@ function ErrorBoundaryContent({
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        padding: "20px",
+        padding: "1.25rem",
       }}
     >
       <Result
@@ -128,15 +128,15 @@ function ErrorBoundaryContent({
       {process.env.NODE_ENV !== "production" && error && (
         <div
           style={{
-            marginTop: "20px",
-            padding: "20px",
+            marginTop: "1.25rem",
+            padding: "1.25rem",
             backgroundColor: "#fff2f0",
             border: "1px solid #ffccc7",
-            borderRadius: "4px",
-            maxWidth: "800px",
+            borderRadius: "0.25rem",
+            maxWidth: "50rem",
           }}
         >
-          <h4 style={{ color: "#cf1322", marginBottom: "10px" }}>
+          <h4 style={{ color: "#cf1322", marginBottom: "0.625rem" }}>
             {errorDetailsText}
           </h4>
           <pre

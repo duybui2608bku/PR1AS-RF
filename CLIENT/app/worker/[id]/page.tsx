@@ -221,7 +221,7 @@ export default function WorkerDetailPage() {
                                   fill
                                   className={styles.mainImage}
                                   priority
-                                  sizes="(max-width: 1024px) 100vw, 50vw"
+                                  sizes="(max-width: 64rem) 100vw, 50vw"
                                 />
                               </div>
                             )}
@@ -243,7 +243,7 @@ export default function WorkerDetailPage() {
                                       alt={`Gallery ${index + 1}`}
                                       fill
                                       className={styles.thumbnailImage}
-                                      sizes="120px"
+                                      sizes="7.5rem"
                                     />
                                   </button>
                                 ))}

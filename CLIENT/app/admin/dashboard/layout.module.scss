@@ -14,17 +14,17 @@
 }
 
 .logoBlock {
-  height: 64px;
-  margin: 16px;
+  height: 4rem;
+  margin: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: bold;
   &.expanded {
     justify-content: flex-start;
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 }
 
@@ -38,35 +38,35 @@
   background: var(--background);
 
   &.collapsed {
-    margin-left: 80px;
+    margin-left: 5rem;
   }
 
   &.expanded {
-    margin-left: 250px;
+    margin-left: 15.625rem;
   }
 }
 
 .header {
-  padding: 0 24px;
+  padding: 0 1.5rem;
   background: var(--ant-color-bg-container);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid var(--border-secondary);
 }
 
 .trigger {
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .headerTitle {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .headerIcon {
-  font-size: 18px;
+  font-size: 1.125rem;
   cursor: pointer;
 }
 
@@ -75,9 +75,9 @@
 }
 
 .content {
-  margin: 24px 16px;
-  padding: 24px;
-  min-height: 280px;
+  margin: 1.5rem 1rem;
+  padding: 1.5rem;
+  min-height: 17.5rem;
   background: var(--ant-color-bg-container);
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }

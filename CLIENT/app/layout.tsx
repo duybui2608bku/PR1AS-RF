@@ -3,7 +3,7 @@ import { Outfit, Work_Sans } from "next/font/google";
 import "./globals.scss";
 import { Providers } from "@/lib/providers";
 import "@/i18n/config";
-import { BackTop } from "antd";
+import { BackToTopButton } from "@/app/components/back-to-top-button";
 import { MainLayout } from "@/app/components/main-layout";
 import styles from "./layout.module.scss";
 
@@ -37,8 +37,8 @@ export default function RootLayout({
         <Providers>
           <MainLayout>{children}</MainLayout>
         </Providers>
+        <BackToTopButton />
       </body>
-      <BackTop />
     </html>
   );
 }
