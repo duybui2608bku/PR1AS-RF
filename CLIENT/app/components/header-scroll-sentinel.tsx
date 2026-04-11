@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { ScrollAmount } from "@/lib/constants/ui.constants";
 import styles from "./header-scroll-sentinel.module.scss";
 
@@ -15,6 +15,9 @@ const COMPACT_EXIT_TOP = 56;
 const LAYOUT_LOCK_MS = 220;
 
 interface HeaderScrollSentinelProps {
+  /** When false (non-home routes), listeners are detached; home-only full header. */
+  enabled: boolean;
+  pathname: string;
   onCompactChange: (compact: boolean) => void;
 }
 
@@ -22,13 +25,19 @@ interface HeaderScrollSentinelProps {
  * Drives sticky header compact mode from viewport geometry instead of
  * `window.scrollY`, so header height changes do not push scroll across a
  * scroll-based threshold and fight the layout (flicker).
+ * Only active on the home page (`enabled`).
  */
-export function HeaderScrollSentinel({ onCompactChange }: HeaderScrollSentinelProps) {
+export function HeaderScrollSentinel({
+  enabled,
+  pathname,
+  onCompactChange,
+}: HeaderScrollSentinelProps) {
   const elRef = useRef<HTMLDivElement>(null);
   const compactRef = useRef(false);
   const lockUntilRef = useRef(0);
 
   const tick = useCallback(() => {
+    if (!enabled) return;
     const el = elRef.current;
     if (!el) return;
     if (typeof performance !== "undefined" && performance.now() < lockUntilRef.current) {
@@ -54,9 +63,19 @@ export function HeaderScrollSentinel({ onCompactChange }: HeaderScrollSentinelPr
       lockUntilRef.current = performance.now() + LAYOUT_LOCK_MS;
       onCompactChange(next);
     }
-  }, [onCompactChange]);
+  }, [onCompactChange, enabled]);
+
+  useLayoutEffect(() => {
+    if (!enabled) return;
+    lockUntilRef.current = 0;
+    const id = requestAnimationFrame(() => {
+      tick();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pathname, enabled, tick]);
 
   useEffect(() => {
+    if (!enabled) return;
     const el = elRef.current;
     if (!el) return;
 
@@ -80,7 +99,7 @@ export function HeaderScrollSentinel({ onCompactChange }: HeaderScrollSentinelPr
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [tick]);
+  }, [tick, enabled]);
 
   return <div ref={elRef} className={styles.sentinel} aria-hidden />;
 }
