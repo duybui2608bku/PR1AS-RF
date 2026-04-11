@@ -21,7 +21,7 @@
     "close": "닫기",
     "step": "단계",
     "pagination": {
-      "total": "총 {total}개 항목"
+      "total": "총 {{total}}개 항목"
     },
     "error": {
       "title": "오류",

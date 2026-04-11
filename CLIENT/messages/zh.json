@@ -21,7 +21,7 @@
     "close": "关闭",
     "step": "步骤",
     "pagination": {
-      "total": "共 {total} 项"
+      "total": "共 {{total}} 项"
     },
     "error": {
       "title": "错误",

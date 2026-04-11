@@ -23,7 +23,7 @@
     "clear": "Xóa bộ lọc",
     "refresh": "Làm mới",
     "pagination": {
-      "total": "Tổng {total} mục"
+      "total": "Tổng {{total}} mục"
     },
     "error": {
       "title": "Lỗi",

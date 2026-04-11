@@ -23,7 +23,7 @@
     "clear": "Clear",
     "refresh": "Refresh",
     "pagination": {
-      "total": "Total {total} items"
+      "total": "Total {{total}} items"
     },
     "error": {
       "title": "Error",
