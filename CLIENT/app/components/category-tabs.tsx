@@ -106,7 +106,6 @@ const CategoryTabsComponent = ({ forceCompact = false, className }: CategoryTabs
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
-  const [isCompactByScroll, setIsCompactByScroll] = useState(false);
   const [brokenIconCodes, setBrokenIconCodes] = useState<Set<string>>(new Set());
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -135,23 +134,6 @@ const CategoryTabsComponent = ({ forceCompact = false, className }: CategoryTabs
       window.removeEventListener("resize", updateScrollState);
     };
   }, [updateScrollState]);
-
-  // Detect page scroll to toggle compact mode
-  useEffect(() => {
-    const COMPACT_ENTER_THRESHOLD = 120;
-    const COMPACT_EXIT_THRESHOLD = 8;
-    const handlePageScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsCompactByScroll((prev) => {
-        if (!prev && currentScrollY > COMPACT_ENTER_THRESHOLD) return true;
-        if (prev && currentScrollY < COMPACT_EXIT_THRESHOLD) return false;
-        return prev;
-      });
-    };
-    handlePageScroll(); // check initial state
-    window.addEventListener("scroll", handlePageScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handlePageScroll);
-  }, []);
 
   const handleScroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
@@ -254,7 +236,7 @@ const CategoryTabsComponent = ({ forceCompact = false, className }: CategoryTabs
   }, []);
 
   return (
-    <div className={`${styles.categoryTabsWrapper} ${forceCompact || isCompactByScroll ? styles.compact : ""} ${className ?? ""}`}>
+    <div className={`${styles.categoryTabsWrapper} ${forceCompact ? styles.compact : ""} ${className ?? ""}`}>
       <div className={styles.categoryTabsInner}>
         <div
           className={`${styles.fadeMask} ${canScrollLeft ? styles.showLeftFade : ""} ${canScrollRight ? styles.showRightFade : ""}`}

@@ -37,9 +37,11 @@ const AUTH_MODAL_TABS = ["login", "register"] as const;
 
 interface HeaderProps {
   showCategoryTabs?: boolean;
+  /** When provided (MainLayout), driven by viewport sentinel — avoids scroll↔layout jitter. */
+  compact?: boolean;
 }
 
-const HeaderComponent = ({ showCategoryTabs = true }: HeaderProps) => {
+const HeaderComponent = ({ showCategoryTabs = true, compact: compactControlled }: HeaderProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -49,11 +51,17 @@ const HeaderComponent = ({ showCategoryTabs = true }: HeaderProps) => {
     AUTH_MODAL_TABS[0]
   );
   const [searchValue, setSearchValue] = useState("");
-  
+
   const { width } = useWindowSize();
   const isMobile = width ? width < Breakpoint.MOBILE : false;
-  const isScrolled = useScroll(ScrollAmount.HEADER_BLUR_THRESHOLD);
-  
+  const headerScrollControlled = compactControlled !== undefined;
+  const isScrolledFromScroll = useScroll(
+    ScrollAmount.HEADER_SCROLL_ENTER,
+    ScrollAmount.HEADER_SCROLL_EXIT,
+    { disabled: headerScrollControlled }
+  );
+  const isScrolled = headerScrollControlled ? compactControlled! : isScrolledFromScroll;
+
   const { handleError } = useErrorHandler();
 
   const userData = useMemo(() => {
@@ -234,7 +242,7 @@ const HeaderComponent = ({ showCategoryTabs = true }: HeaderProps) => {
       </div>
       {showCategoryTabs && !isScrolled && (
         <div className={styles.headerTabs}>
-          <CategoryTabs forceCompact={isScrolled} className={styles.headerTabsContent} />
+          <CategoryTabs forceCompact={false} className={styles.headerTabsContent} />
         </div>
       )}
       {showCategoryTabs && !isScrolled && (

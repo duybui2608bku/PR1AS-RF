@@ -18,6 +18,8 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  /* Avoid scroll anchoring fighting sticky header height changes (scrollY “bounce”). */
+  overflow-anchor: none;
   transition: background 300ms ease, box-shadow 300ms ease;
 
   &.scrolled {
@@ -49,16 +51,16 @@
   pointer-events: none;
 }
 
-.headerTabsInlineContent {
-  width: min(34rem, calc(100% - 18rem));
-  pointer-events: auto;
-}
-
 .headerTabs {
   width: 100%;
   display: flex;
   justify-content: center;
   margin-top: 0.25rem;
+}
+
+.headerTabsInlineContent {
+  width: min(34rem, calc(100% - 18rem));
+  pointer-events: auto;
 }
 
 .headerTabsContent {
