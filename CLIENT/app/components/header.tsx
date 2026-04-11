@@ -207,12 +207,12 @@ const HeaderComponent = ({ showCategoryTabs = true, compact: compactControlled }
           </div>
         )}
         <Row justify="space-between" align="middle" wrap={false} className={styles.headerRow}>
-          <Col flex="none">
+          <Col flex="none" className={styles.logoCol}>
             <Link href={AppRoute.HOME} className={styles.logoLink}>
               {t("home.logo")}
             </Link>
           </Col>
-          <Col flex="auto">
+          <Col flex="auto" className={styles.actionsCol}>
             <Space className={styles.actionsRow} size="middle">
               {!isMobile && (
                 <>

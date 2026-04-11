@@ -6,7 +6,12 @@ export enum Breakpoint {
 
 export enum ScrollAmount {
   CATEGORY_SECTION = 400,
-  HEADER_BLUR_THRESHOLD = 8,
+  /**
+   * Hysteresis: compact only after the user scrolls past the tall header block,
+   * and expand only when well back at the top — avoids layout/scroll feedback.
+   */
+  HEADER_SCROLL_ENTER = 120,
+  HEADER_SCROLL_EXIT = 48,
 }
 
 export enum BackdropBlur {

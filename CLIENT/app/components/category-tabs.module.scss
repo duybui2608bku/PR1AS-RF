@@ -289,6 +289,12 @@
 
 // Compact mode: horizontal layout when page is scrolled
 .compact {
+  /* Only two parent tabs in header; overflow is tiny — chevrons overlap labels
+     in the narrow strip. Touch/trackpad/wheel still scrolls .scrollContainer. */
+  .scrollBtn {
+    display: none;
+  }
+
   .scrollContainer {
     padding: 0 0 0.0625rem;
     gap: 1.5rem;

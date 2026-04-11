@@ -1,7 +1,16 @@
 @use "../../styles/variables" as *;
 
-.headerRow {
+/* headerTop is flex: Row must grow to full width or it shrink-wraps and
+   pushes logo + actions to the left together. */
+.headerRow:global(.ant-row) {
+  flex: 1 1 auto;
   width: 100%;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.logoCol {
+  pointer-events: auto;
 }
 
 .header:global(.ant-layout-header) {
@@ -60,7 +69,29 @@
 
 .headerTabsInlineContent {
   width: min(34rem, calc(100% - 18rem));
+  max-width: 100%;
+  min-width: 0;
   pointer-events: auto;
+}
+
+/* Tablet / narrow desktop: reserve horizontal space for logo + actions so
+   centered category tabs never overlap the worker button (see layout bug). */
+@media (max-width: 75rem) and (min-width: 48.0625rem) {
+  .headerTabsInline {
+    left: clamp(4.5rem, 11vw, 6.5rem);
+    right: clamp(11rem, 36vw, 20rem);
+  }
+
+  .headerTabsInlineContent {
+    width: 100%;
+  }
+}
+
+@media (max-width: 64rem) and (min-width: 48.0625rem) {
+  .headerTabsInline {
+    left: clamp(4.5rem, 12vw, 6.25rem);
+    right: clamp(12.5rem, 40vw, 21rem);
+  }
 }
 
 .headerTabsContent {
@@ -123,12 +154,27 @@
   letter-spacing: -0.44px;
 }
 
+/* Let clicks pass through empty area to inline tabs; column fills remainder and
+   pins the action cluster to the right. */
+.actionsCol:global(.ant-col) {
+  pointer-events: none;
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .actionsRow {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
+  position: relative;
+  pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .avatarWrapper {

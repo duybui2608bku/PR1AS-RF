@@ -2,14 +2,33 @@
 
 import { useState, useEffect } from "react";
 
-export function useScroll(threshold: number = 0): boolean {
+export interface UseScrollOptions {
+  /** When true, no listeners are attached (e.g. scroll driven by parent). */
+  disabled?: boolean;
+}
+
+/**
+ * Scroll gate with hysteresis: enter when scrollY > enter, leave when scrollY < exit.
+ * Omit `exit` to use the same value for both (no hysteresis).
+ */
+export function useScroll(
+  enter: number,
+  exit: number = enter,
+  options?: UseScrollOptions
+): boolean {
+  const disabled = options?.disabled ?? false;
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || disabled) return;
 
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > threshold);
+      const y = window.scrollY;
+      setIsScrolled((prev) => {
+        if (!prev && y > enter) return true;
+        if (prev && y < exit) return false;
+        return prev;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -18,7 +37,7 @@ export function useScroll(threshold: number = 0): boolean {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [threshold]);
+  }, [enter, exit, disabled]);
 
   return isScrolled;
 }
