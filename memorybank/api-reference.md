@@ -58,7 +58,13 @@ Tất cả API responses sử dụng format chuẩn:
 }
 ```
 
-**Response**: User object với tokens
+**Response**:
+```typescript
+{
+  user: User;
+  requires_email_verification: boolean;
+}
+```
 
 **Auth**: Not required
 
@@ -73,7 +79,7 @@ Tất cả API responses sử dụng format chuẩn:
 }
 ```
 
-**Response**: User object với access token và refresh token
+**Response**: User object với access token và refresh token (chỉ khi email đã xác minh)
 
 **Auth**: Not required
 
@@ -589,6 +595,7 @@ Xóa message.
 
 ### Authentication Errors
 - `AUTH_INVALID_CREDENTIALS`: Invalid email or password
+- `AUTH_EMAIL_NOT_VERIFIED`: Email has not been verified
 - `AUTH_TOKEN_EXPIRED`: Access token expired
 - `AUTH_TOKEN_INVALID`: Invalid token
 - `AUTH_UNAUTHORIZED`: Unauthorized access

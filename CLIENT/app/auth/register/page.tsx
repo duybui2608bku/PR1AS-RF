@@ -24,6 +24,7 @@ import { useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { PasswordStrength, validatePasswordComplexity } from "@/lib/components/password-strength";
+import { normalizeEmail } from "@/lib/utils/auth-input.utils";
 import type { RegisterRequest } from "@/lib/hooks/use-auth";
 import styles from "../auth.module.scss";
 
@@ -61,28 +62,12 @@ export default function RegisterPage() {
       const response = await registerMutation.mutateAsync(registerData);
 
       if (response.success && response.data) {
-        const { user: registeredUser } = response.data;
-
+        const normalizedEmail = normalizeEmail(registerData.email);
         message.success(t("auth.user.registerSuccess"));
         message.info(t("auth.user.verifyEmail.checkEmailNotice"), 6);
-
-        const userRoles = (
-          registeredUser as { roles?: string[]; role?: string }
-        ).roles;
-        const userRole = (registeredUser as { roles?: string[]; role?: string })
-          .role;
-
-        const roles = Array.isArray(userRoles)
-          ? userRoles
-          : userRole
-          ? [userRole]
-          : [];
-
-        if (roles.includes("admin")) {
-          router.push("/admin");
-        } else {
-          router.push("/");
-        }
+        router.push(
+          `/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`
+        );
       }
     } catch (error: unknown) {
       handleError(error);

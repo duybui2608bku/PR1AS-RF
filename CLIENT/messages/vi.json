@@ -161,6 +161,8 @@
         "title": "Xác minh Email",
         "subtitle": "Đang xác minh email của bạn...",
         "verifying": "Đang xác minh...",
+        "emailNotVerified": "Email của bạn chưa được xác minh.",
+        "emailNotVerifiedHint": "Vui lòng gửi lại email xác minh rồi kiểm tra hộp thư.",
         "success": "Email đã được xác minh thành công!",
         "successMessage": "Bạn có thể đăng nhập và sử dụng đầy đủ các tính năng.",
         "error": "Xác minh thất bại",

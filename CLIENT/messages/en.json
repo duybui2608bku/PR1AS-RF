@@ -161,6 +161,8 @@
         "title": "Verify Email",
         "subtitle": "Verifying your email...",
         "verifying": "Verifying...",
+        "emailNotVerified": "Your email has not been verified yet.",
+        "emailNotVerifiedHint": "Please resend the verification email and check your inbox.",
         "success": "Email verified successfully!",
         "successMessage": "You can now log in and use all features.",
         "error": "Verification Failed",

@@ -109,3 +109,8 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
 }
+
+export interface RegisterResponse {
+  user: IUserPublic;
+  requires_email_verification: boolean;
+}

@@ -159,6 +159,8 @@
         "title": "验证邮箱",
         "subtitle": "正在验证您的邮箱...",
         "verifying": "验证中...",
+        "emailNotVerified": "您的邮箱尚未完成验证。",
+        "emailNotVerifiedHint": "请重新发送验证邮件并检查收件箱。",
         "success": "邮箱验证成功！",
         "successMessage": "您现在可以登录并使用所有功能。",
         "error": "验证失败",

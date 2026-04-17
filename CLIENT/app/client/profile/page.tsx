@@ -45,6 +45,14 @@ function ProfileContent() {
     router.push(AppRoute.CLIENT_PROFILE_EDIT);
   };
 
+  const handleVerifyEmail = () => {
+    if (!profile?.email) {
+      return;
+    }
+
+    router.push(`/auth/verify-email?email=${encodeURIComponent(profile.email)}`);
+  };
+
   return (
     <div className={styles.container}>
           <Row justify="space-between" align="middle" className={styles.headerRow}>
@@ -167,6 +175,11 @@ function ProfileContent() {
                 <Divider />
 
                 <Space>
+                  {!profile?.verify_email && profile?.email ? (
+                    <Button onClick={handleVerifyEmail} size="large">
+                      {t("auth.user.verifyEmail.title")}
+                    </Button>
+                  ) : null}
                   <Button
                     type="primary"
                     icon={<EditOutlined />}

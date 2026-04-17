@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Form, Input, Button, Card, Typography, message, Divider } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { useLogin } from "@/lib/hooks/use-auth";
+import { useLogin, useResendVerification } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { isEmailNotVerifiedError } from "@/lib/utils/auth-error.utils";
+import { normalizeEmail } from "@/lib/utils/auth-input.utils";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
 import styles from "../auth.module.scss";
 
@@ -18,9 +20,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const loginMutation = useLogin();
+  const resendVerificationMutation = useResendVerification();
   const [form] = Form.useForm();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -40,6 +46,7 @@ export default function LoginPage() {
 
   const handleLogin = async (values: LoginRequest) => {
     try {
+      setPendingVerificationEmail(null);
       const response = await loginMutation.mutateAsync(values);
 
       if (response.success && response.data) {
@@ -65,7 +72,29 @@ export default function LoginPage() {
         }
       }
     } catch (error: unknown) {
+      if (isEmailNotVerifiedError(error)) {
+        const normalizedEmail = normalizeEmail(values.email);
+        setPendingVerificationEmail(normalizedEmail);
+        message.warning(t("auth.user.verifyEmail.emailNotVerified"));
+        return;
+      }
+
       handleError(error, t("auth.user.loginError"));
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) {
+      return;
+    }
+
+    try {
+      await resendVerificationMutation.mutateAsync({
+        email: pendingVerificationEmail,
+      });
+      message.success(t("auth.user.verifyEmail.resendSuccess"));
+    } catch (error: unknown) {
+      handleError(error);
     }
   };
 
@@ -82,6 +111,11 @@ export default function LoginPage() {
           form={form}
           name="user-login"
           onFinish={handleLogin}
+          onValuesChange={() => {
+            if (pendingVerificationEmail) {
+              setPendingVerificationEmail(null);
+            }
+          }}
           autoComplete="off"
           layout="vertical"
           size="large"
@@ -126,6 +160,24 @@ export default function LoginPage() {
               {t("auth.user.login")}
             </Button>
           </Form.Item>
+
+          {pendingVerificationEmail ? (
+            <Form.Item>
+              <Text type="warning">
+                {t("auth.user.verifyEmail.emailNotVerifiedHint")}
+              </Text>
+              <div>
+                <Button
+                  type="link"
+                  style={{ paddingInline: 0 }}
+                  loading={resendVerificationMutation.isPending}
+                  onClick={handleResendVerification}
+                >
+                  {t("auth.user.verifyEmail.resendEmail")}
+                </Button>
+              </div>
+            </Form.Item>
+          ) : null}
         </Form>
 
         <Divider />

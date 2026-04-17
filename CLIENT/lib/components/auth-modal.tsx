@@ -11,6 +11,7 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { normalizeEmail } from "@/lib/utils/auth-input.utils";
 import { ForgotPasswordModal } from "./forgot-password-modal";
 import { LoginForm } from "./auth/login-form";
 import { RegisterForm } from "./auth/register-form";
@@ -51,7 +52,7 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
   };
 
   const handleForgotPassword = (email: string) => {
-    setInitialEmail(email);
+    setInitialEmail(normalizeEmail(email));
     setForgotPasswordModalOpen(true);
   };
 

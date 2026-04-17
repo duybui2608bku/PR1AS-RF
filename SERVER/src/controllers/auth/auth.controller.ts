@@ -39,7 +39,7 @@ export class AuthController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const result = await authService.register(data);
-    R.created(res, result, undefined, req);
+    R.created(res, result, AUTH_MESSAGES.REGISTER_VERIFY_REQUIRED, req);
   }
 
   async login(req: Request, res: Response): Promise<void> {

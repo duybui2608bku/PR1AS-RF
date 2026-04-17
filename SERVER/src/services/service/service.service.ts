@@ -11,10 +11,6 @@ export interface SearchServicesQuery {
 }
 
 export class ServiceService {
-  /**
-   * Tìm kiếm dịch vụ theo query
-   * @param query - Query parameters (category, is_active)
-   */
   async searchServices(
     query: SearchServicesQuery
   ): Promise<IServiceDocument[]> {
@@ -27,9 +23,6 @@ export class ServiceService {
     return serviceRepository.findAll(is_active);
   }
 
-  /**
-   * Lấy dịch vụ theo ID
-   */
   async getServiceById(id: string): Promise<IServiceDocument> {
     const service = await serviceRepository.findById(id);
     if (!service) {
@@ -37,10 +30,6 @@ export class ServiceService {
     }
     return service;
   }
-
-  /**
-   * Lấy dịch vụ theo code
-   */
   async getServiceByCode(code: string): Promise<IServiceDocument> {
     const service = await serviceRepository.findByCode(code);
     if (!service) {

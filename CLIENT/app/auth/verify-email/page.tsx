@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useVerifyEmail, useResendVerification } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { normalizeEmail } from "@/lib/utils/auth-input.utils";
 import styles from "../auth.module.scss";
 
 const { Title, Text } = Typography;
@@ -68,6 +69,13 @@ function VerifyEmailContent() {
     }
   }, [searchParams, doVerify, hasVerified]);
 
+  useEffect(() => {
+    const email = searchParams?.get("email");
+    if (email) {
+      resendForm.setFieldValue("email", normalizeEmail(email));
+    }
+  }, [searchParams, resendForm]);
+
   const handleResend = async (values: { email: string }) => {
     try {
       await resendMutation.mutateAsync({ email: values.email });
@@ -77,7 +85,6 @@ function VerifyEmailContent() {
     }
   };
 
-  // Loading state
   if (status === "loading") {
     return (
       <div className={styles.centerBlock}>

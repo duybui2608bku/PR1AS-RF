@@ -10,6 +10,7 @@ import {
   RegisterInput,
   LoginInput,
   AuthResponse,
+  RegisterResponse,
   IUserPublic,
   IUserDocument,
   UserStatus,
@@ -35,7 +36,7 @@ export class AuthService {
     return crypto.createHash("sha256").update(token).digest("hex");
   }
 
-  async register(input: RegisterInput): Promise<AuthResponse> {
+  async register(input: RegisterInput): Promise<RegisterResponse> {
     const emailExists = await userRepository.emailExists(input.email);
     if (emailExists) {
       throw new AppError(
@@ -62,12 +63,9 @@ export class AuthService {
       });
     });
 
-    const { token, refreshToken } = await generateAuthTokens(user);
-
     return {
       user: toPublicUser(user),
-      token,
-      refreshToken,
+      requires_email_verification: true,
     };
   }
 
@@ -101,6 +99,14 @@ export class AuthService {
       );
     }
 
+    if (!user.verify_email) {
+      throw new AppError(
+        AUTH_MESSAGES.EMAIL_NOT_VERIFIED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.EMAIL_NOT_VERIFIED
+      );
+    }
+
     const { token, refreshToken } = await generateAuthTokens(user);
 
     return {
@@ -125,6 +131,14 @@ export class AuthService {
 
     if (user.status === UserStatus.BANNED) {
       throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (!user.verify_email) {
+      throw new AppError(
+        AUTH_MESSAGES.EMAIL_NOT_VERIFIED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.EMAIL_NOT_VERIFIED
+      );
     }
 
     const isValid = await comparePassword(

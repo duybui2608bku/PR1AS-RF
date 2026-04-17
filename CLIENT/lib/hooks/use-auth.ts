@@ -5,6 +5,7 @@ import { api } from "../axios";
 import { useAuthStore } from "../stores/auth.store";
 import type { User as AuthUser } from "../stores/auth.store";
 import type { ApiResponse } from "../axios";
+import { normalizeEmail } from "../utils/auth-input.utils";
 
 const AUTH_QUERY_KEY = ["auth", "me"];
 const STALE_TIME_MS = 1000 * 60 * 5;
@@ -33,15 +34,32 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface RegisterResponse {
+  user: {
+    id: string;
+    email: string;
+    name?: string;
+    avatar?: string;
+    role?: string;
+    roles?: string[];
+    verify_email?: boolean;
+  };
+  requires_email_verification: boolean;
+}
+
 export function useLogin() {
   const { login } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation<ApiResponse<AuthResponse>, Error, LoginRequest>({
     mutationFn: async (credentials) => {
+      const payload: LoginRequest = {
+        ...credentials,
+        email: normalizeEmail(credentials.email),
+      };
       const response = await api.post<ApiResponse<AuthResponse>>(
         "/auth/login",
-        credentials
+        payload
       );
       return response.data;
     },
@@ -56,23 +74,17 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const { login } = useAuthStore();
-  const queryClient = useQueryClient();
-
-  return useMutation<ApiResponse<AuthResponse>, Error, RegisterRequest>({
+  return useMutation<ApiResponse<RegisterResponse>, Error, RegisterRequest>({
     mutationFn: async (data) => {
-      const response = await api.post<ApiResponse<AuthResponse>>(
+      const payload: RegisterRequest = {
+        ...data,
+        email: normalizeEmail(data.email),
+      };
+      const response = await api.post<ApiResponse<RegisterResponse>>(
         "/auth/register",
-        data
+        payload
       );
       return response.data;
-    },
-    onSuccess: (data) => {
-      if (data.success && data.data) {
-        const { user, token, refreshToken } = data.data;
-        login(user, token, refreshToken);
-        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-      }
     },
   });
 }
@@ -198,9 +210,13 @@ export interface ResetPasswordRequest {
 export function useForgotPassword() {
   return useMutation<ApiResponse<{ message: string }>, Error, ForgotPasswordRequest>({
     mutationFn: async (data) => {
+      const payload: ForgotPasswordRequest = {
+        ...data,
+        email: normalizeEmail(data.email),
+      };
       const response = await api.post<ApiResponse<{ message: string }>>(
         "/auth/forgot-password",
-        data
+        payload
       );
       return response.data;
     },
@@ -242,9 +258,12 @@ export function useVerifyEmail() {
 export function useResendVerification() {
   return useMutation<ApiResponse<{ message: string }>, Error, ResendVerificationRequest>({
     mutationFn: async (data) => {
+      const payload: ResendVerificationRequest = {
+        email: normalizeEmail(data.email),
+      };
       const response = await api.post<ApiResponse<{ message: string }>>(
         "/auth/resend-verification",
-        data
+        payload
       );
       return response.data;
     },

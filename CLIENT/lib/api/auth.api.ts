@@ -3,6 +3,7 @@
 import { api, extractData } from "../axios/index";
 import type { ApiResponse } from "../axios";
 import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
+import { normalizeEmail } from "../utils/auth-input.utils";
 
 export interface RegisterInput {
   email: string;
@@ -24,6 +25,11 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   user: UserProfile;
+}
+
+export interface RegisterResponse {
+  user: UserProfile;
+  requires_email_verification: boolean;
 }
 
 export interface UserProfile {
@@ -80,18 +86,26 @@ export const authApi = {
     return extractData(response);
   },
 
-  register: async (data: RegisterInput): Promise<AuthResponse> => {
-    const response = await api.post<ApiResponse<AuthResponse>>(
+  register: async (data: RegisterInput): Promise<RegisterResponse> => {
+    const payload: RegisterInput = {
+      ...data,
+      email: normalizeEmail(data.email),
+    };
+    const response = await api.post<ApiResponse<RegisterResponse>>(
       ApiEndpoint.AUTH_REGISTER,
-      data
+      payload
     );
     return extractData(response);
   },
 
   login: async (data: LoginInput): Promise<AuthResponse> => {
+    const payload: LoginInput = {
+      ...data,
+      email: normalizeEmail(data.email),
+    };
     const response = await api.post<ApiResponse<AuthResponse>>(
       ApiEndpoint.AUTH_LOGIN,
-      data
+      payload
     );
     return extractData(response);
   },
@@ -143,7 +157,11 @@ export const authApi = {
   },
 
   forgotPassword: async (data: ForgotPasswordInput): Promise<void> => {
-    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_FORGOT_PASSWORD, data);
+    const payload: ForgotPasswordInput = {
+      ...data,
+      email: normalizeEmail(data.email),
+    };
+    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_FORGOT_PASSWORD, payload);
   },
 
   resetPassword: async (data: ResetPasswordInput): Promise<void> => {
@@ -155,7 +173,9 @@ export const authApi = {
   },
 
   resendVerification: async (data: { email: string }): Promise<void> => {
-    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_RESEND_VERIFICATION, data);
+    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_RESEND_VERIFICATION, {
+      email: normalizeEmail(data.email),
+    });
   },
 };
 

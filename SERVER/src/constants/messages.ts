@@ -14,6 +14,7 @@ export const AUTH_MESSAGES = {
   USER_BANNED: "Account has been banned",
   USER_NOT_FOUND: "User not found",
   EMAIL_EXISTS: "Email already registered",
+  EMAIL_NOT_VERIFIED: "Please verify your email before logging in",
   INVALID_CREDENTIALS: "Invalid email or password",
   LOGIN_REQUIRED: "Login required",
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
@@ -37,6 +38,8 @@ export const AUTH_MESSAGES = {
     "Too many authentication attempts, please try again later",
   LOGOUT_SUCCESS: "Logout successful",
   REGISTER_SUCCESS: "Registration successful",
+  REGISTER_VERIFY_REQUIRED:
+    "Registration successful. Please check your email to verify your account",
   LOGIN_SUCCESS: "Login successful",
   PROFILE_UPDATED: "Profile updated successfully",
 } as const;
