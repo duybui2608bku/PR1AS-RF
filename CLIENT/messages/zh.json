@@ -520,7 +520,7 @@
         },
         "pricing": {
           "title": "设置价格",
-          "info": "您可以为此服务设置多个价格等级",
+          "info": "请按小时/天/月设置单价。每个单位仅保留一个价格。",
           "unit": {
             "label": "单位",
             "required": "请选择单位！",
@@ -606,7 +606,8 @@
       },
       "services": {
         "title": "服务",
-        "noServices": "无可用服务"
+        "noServices": "无可用服务",
+        "startingFrom": "起价"
       },
       "hireNow": "立即雇佣",
       "message": "消息",
@@ -1050,12 +1051,12 @@
       "startTime": "开始时间",
       "startTimeRequired": "请选择开始时间",
       "selectStartTime": "选择开始时间",
-      "pricingUnit": "单位",
+      "pricingUnit": "计价单位",
       "quantity": "数量",
       "notes": "备注",
       "notesPlaceholder": "输入备注（可选）",
       "success": "预订成功",
-      "invalidDuration": "时长无效（1-24小时）",
+      "invalidDuration": "所选计价单位的时长无效",
       "minAdvance": "必须提前至少 {hours} 小时预订",
       "maxAdvance": "不能提前超过 {days} 天预订"
     },

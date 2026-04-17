@@ -14,6 +14,7 @@ import {
   Divider,
   message,
   Alert,
+  Select,
 } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
@@ -44,7 +45,7 @@ interface BookingModalProps {
   serviceCode: string;
   pricing: Array<{
     unit: string;
-    duration: number;
+    duration?: number;
     price: number;
     currency: string;
   }>;
@@ -121,6 +122,12 @@ export function BookingModal({
     return pricing.find((p) => p.unit === selectedPricingUnit) || pricing[0];
   }, [pricing, selectedPricingUnit]);
 
+  const availablePricingUnits = useMemo<PricingUnit[]>(() => {
+    return Array.from(
+      new Set(pricing.map((item) => item.unit as PricingUnit))
+    );
+  }, [pricing]);
+
   const calculatePricing = useMemo((): BookingPricing => {
     if (!selectedPricing) {
       return {
@@ -191,6 +198,11 @@ export function BookingModal({
       let startTime: Dayjs;
       let endTime: Dayjs;
 
+      if (!selectedPricing) {
+        message.error(t("booking.selectService"));
+        return;
+      }
+
       if (selectedPricingUnit === PricingUnit.DAILY) {
         if (
           !selectedDateRange ||
@@ -227,7 +239,7 @@ export function BookingModal({
           .millisecond(0);
 
         endTime = startTime.add(
-          selectedQuantity * selectedPricing.duration,
+          selectedQuantity,
           selectedPricingUnit === PricingUnit.HOURLY ? "hour" : "month"
         );
       }
@@ -236,8 +248,27 @@ export function BookingModal({
       const durationHours = durationMs / (1000 * 60 * 60);
 
       if (
-        durationHours < BOOKING_CONSTANTS.MIN_DURATION_HOURS ||
-        durationHours > BOOKING_CONSTANTS.MAX_DURATION_HOURS
+        selectedPricingUnit === PricingUnit.HOURLY &&
+        (selectedQuantity < BOOKING_CONSTANTS.MIN_DURATION_HOURS ||
+          selectedQuantity > BOOKING_CONSTANTS.MAX_HOURLY_DURATION_HOURS)
+      ) {
+        message.error(t("booking.create.invalidDuration"));
+        return;
+      }
+
+      if (
+        selectedPricingUnit === PricingUnit.DAILY &&
+        (calculatePricing.quantity < BOOKING_CONSTANTS.MIN_DAILY_DURATION_DAYS ||
+          calculatePricing.quantity > BOOKING_CONSTANTS.MAX_DAILY_DURATION_DAYS)
+      ) {
+        message.error(t("booking.create.invalidDuration"));
+        return;
+      }
+
+      if (
+        selectedPricingUnit === PricingUnit.MONTHLY &&
+        (selectedQuantity < BOOKING_CONSTANTS.MIN_MONTHLY_DURATION_MONTHS ||
+          selectedQuantity > BOOKING_CONSTANTS.MAX_MONTHLY_DURATION_MONTHS)
       ) {
         message.error(t("booking.create.invalidDuration"));
         return;
@@ -339,6 +370,32 @@ export function BookingModal({
       }}
     >
       <Form form={form} layout="vertical">
+        <Form.Item label={t("booking.create.pricingUnit")}>
+          <Select<PricingUnit>
+            value={selectedPricingUnit}
+            onChange={(nextUnit) => {
+              setSelectedPricingUnit(nextUnit);
+              setSelectedQuantity(1);
+              setSelectedDate(null);
+              setSelectedDateRange(null);
+              form.setFieldsValue({
+                booking_date: null,
+                date_range: null,
+                start_time: null,
+              });
+            }}
+            options={availablePricingUnits.map((unit) => ({
+              value: unit,
+              label:
+                unit === PricingUnit.HOURLY
+                  ? t("booking.pricing.hourly")
+                  : unit === PricingUnit.DAILY
+                  ? t("booking.pricing.daily")
+                  : t("booking.pricing.monthly"),
+            }))}
+          />
+        </Form.Item>
+
         {selectedPricingUnit === PricingUnit.DAILY ? (
           <Form.Item
             name="date_range"
@@ -445,7 +502,13 @@ export function BookingModal({
         )}
 
         {selectedPricingUnit !== PricingUnit.DAILY && (
-          <Form.Item label={t("booking.create.quantity")}>
+          <Form.Item
+            label={
+              selectedPricingUnit === PricingUnit.MONTHLY
+                ? t("worker.setup.step2.selected.month")
+                : t("booking.create.quantity")
+            }
+          >
             <Space>
               <button
                 type="button"

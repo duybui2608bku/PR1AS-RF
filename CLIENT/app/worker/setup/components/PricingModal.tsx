@@ -5,12 +5,6 @@ import type { TFunction } from "i18next";
 import { PricingUnit } from "@/lib/types/worker";
 import styles from "./Step2Services.module.scss";
 
-interface PricingFormItem {
-  unit?: PricingUnit;
-  duration?: number;
-  price?: number;
-}
-
 interface PricingModalProps {
   open: boolean;
   currentServiceName: string;
@@ -79,52 +73,6 @@ export function PricingModal({
                   </Form.Item>
                   <Form.Item
                     {...restField}
-                    name={[name, "duration"]}
-                    label={t("worker.setup.step2.pricing.duration.label")}
-                    rules={[
-                      {
-                        required: true,
-                        message: t("worker.setup.step2.pricing.duration.required"),
-                      },
-                      {
-                        type: "number",
-                        min: 1,
-                        message: t("worker.setup.step2.pricing.duration.min"),
-                      },
-                    ]}
-                    className={styles.modalPricingField}
-                  >
-                    <InputNumber
-                      placeholder={t("worker.setup.step2.pricing.duration.placeholder")}
-                      min={1}
-                      className={styles.modalNumberInput}
-                      addonAfter={
-                        <Form.Item
-                          {...restField}
-                          name={[name, "unit"]}
-                          noStyle
-                          shouldUpdate={(prevValues, currentValues) =>
-                            (prevValues as { pricing?: PricingFormItem[] }).pricing?.[name]
-                              ?.unit !==
-                            (currentValues as { pricing?: PricingFormItem[] }).pricing?.[
-                              name
-                            ]?.unit
-                          }
-                        >
-                          {({ getFieldValue }) => {
-                            const unit = getFieldValue(["pricing", name, "unit"]);
-                            return unit === PricingUnit.HOURLY
-                              ? t("worker.setup.step2.selected.hour")
-                              : unit === PricingUnit.DAILY
-                              ? t("worker.setup.step2.selected.day")
-                              : t("worker.setup.step2.selected.month");
-                          }}
-                        </Form.Item>
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
                     name={[name, "price"]}
                     label={t("worker.setup.step2.pricing.price.label")}
                     rules={[
@@ -142,7 +90,7 @@ export function PricingModal({
                   >
                     <InputNumber
                       placeholder={t("worker.setup.step2.pricing.price.placeholder")}
-                      min={0}
+                      min={0.01}
                       step={0.01}
                       className={styles.modalNumberInput}
                       addonAfter={currency}
@@ -159,7 +107,7 @@ export function PricingModal({
               ))}
               <Button
                 type="dashed"
-                onClick={() => add()}
+                onClick={() => add({ duration: 1 })}
                 block
                 icon={<PlusOutlined />}
               >

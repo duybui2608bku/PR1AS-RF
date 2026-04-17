@@ -623,7 +623,7 @@
         },
         "pricing": {
           "title": "Thiết lập giá",
-          "info": "Bạn có thể thiết lập nhiều mức giá cho dịch vụ này",
+          "info": "Thiết lập đơn giá theo giờ/ngày/tháng. Mỗi đơn vị chỉ một mức giá.",
           "unit": {
             "label": "Đơn vị",
             "required": "Vui lòng chọn đơn vị!",
@@ -709,7 +709,8 @@
       },
       "services": {
         "title": "Dịch vụ",
-        "noServices": "Không có dịch vụ"
+        "noServices": "Không có dịch vụ",
+        "startingFrom": "Giá từ"
       },
       "hireNow": "Thuê ngay",
       "message": "Nhắn tin",
@@ -1162,12 +1163,12 @@
       "startTime": "Giờ bắt đầu",
       "startTimeRequired": "Vui lòng chọn giờ bắt đầu",
       "selectStartTime": "Chọn giờ bắt đầu",
-      "pricingUnit": "Đơn vị",
+      "pricingUnit": "Đơn vị tính giá",
       "quantity": "Số lượng",
       "notes": "Ghi chú",
       "notesPlaceholder": "Nhập ghi chú (tùy chọn)",
       "success": "Đặt lịch thành công",
-      "invalidDuration": "Thời lượng không hợp lệ (1-24 giờ)",
+      "invalidDuration": "Thời lượng không hợp lệ cho đơn vị đã chọn",
       "minAdvance": "Phải đặt trước ít nhất {hours} giờ",
       "maxAdvance": "Không thể đặt quá {days} ngày"
     },

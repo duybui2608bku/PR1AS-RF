@@ -16,7 +16,7 @@ interface WorkerService {
   service_code: string;
   pricing: Array<{
     unit: string;
-    duration: number;
+    duration?: number;
     price: number;
     currency: string;
   }>;
@@ -80,17 +80,20 @@ export function WorkerServices({
     >
       <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.servicesList}>
         {activeServices.map((workerService) => {
-          const firstPricing = workerService.pricing[0];
-          if (!firstPricing) return null;
+          const sortedPricing = [...workerService.pricing].sort(
+            (a, b) => a.price - b.price
+          );
+          const displayPricing = sortedPricing[0];
+          if (!displayPricing) return null;
           const serviceName = getServiceName({
             serviceCode: workerService.service_code,
             serviceMap,
             locale,
           });
           const priceText = formatPrice({
-            price: firstPricing.price,
-            unit: firstPricing.unit,
-            currencyCode: firstPricing.currency || currency,
+            price: displayPricing.price,
+            unit: displayPricing.unit,
+            currencyCode: displayPricing.currency || currency,
             unitLabels,
           });
 
@@ -116,7 +119,7 @@ export function WorkerServices({
                   <div className={styles.serviceCardContent}>
                     <Text strong>{serviceName}</Text>
                     <Text type="secondary" className={styles.servicePriceText}>
-                      {priceText}
+                      {t("worker.detail.services.startingFrom")} {priceText}
                     </Text>
                   </div>
                 </Radio>

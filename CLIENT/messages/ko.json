@@ -520,7 +520,7 @@
         },
         "pricing": {
           "title": "가격 설정",
-          "info": "이 서비스에 대해 여러 가격 등급을 설정할 수 있습니다",
+          "info": "시간/일/월 기준 단가를 설정하세요. 단위별 가격은 1개만 설정할 수 있습니다.",
           "unit": {
             "label": "단위",
             "required": "단위를 선택해 주세요!",
@@ -606,7 +606,8 @@
       },
       "services": {
         "title": "서비스",
-        "noServices": "서비스 없음"
+        "noServices": "서비스 없음",
+        "startingFrom": "최저"
       },
       "hireNow": "지금 고용하기",
       "message": "메시지",
@@ -1050,12 +1051,12 @@
       "startTime": "시작 시간",
       "startTimeRequired": "시작 시간을 선택하세요",
       "selectStartTime": "시작 시간 선택",
-      "pricingUnit": "단위",
+      "pricingUnit": "요금 단위",
       "quantity": "수량",
       "notes": "메모",
       "notesPlaceholder": "메모 입력 (선택사항)",
       "success": "예약이 성공적으로 생성되었습니다",
-      "invalidDuration": "유효하지 않은 기간 (1-24시간)",
+      "invalidDuration": "선택한 단위에 유효하지 않은 기간입니다",
       "minAdvance": "최소 {hours}시간 전에 예약해야 합니다",
       "maxAdvance": "{days}일 이상 미리 예약할 수 없습니다"
     },

@@ -1,8 +1,29 @@
 "use client";
 
-import type { Service, ServiceUser } from "@/app/data/services.mock";
 import type { WorkersGroupedByServiceResponse } from "@/lib/api/worker.api";
 import { PricingUnit } from "@/lib/types/worker";
+
+interface ServiceUser {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+interface Service {
+  id: string;
+  title: string;
+  category: string;
+  categoryCode: string;
+  location: string;
+  price: number;
+  priceUnit: string;
+  rating: number;
+  reviewCount: number;
+  image: string;
+  users: ServiceUser[];
+  featured: boolean;
+  loved: boolean;
+}
 
 enum DefaultPrice {
   MIN = 0,
@@ -92,7 +113,7 @@ function getPriceUnitFromPricingUnit(unit: string): string {
 function getLowestPrice(
   pricing: Array<{
     unit: string;
-    duration: number;
+    duration?: number;
     price: number;
     currency: string;
   }>

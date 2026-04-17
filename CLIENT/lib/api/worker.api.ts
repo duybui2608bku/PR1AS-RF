@@ -57,7 +57,7 @@ export interface WorkerDetailResponse {
     service_code: string;
     pricing: Array<{
       unit: string;
-      duration: number;
+      duration?: number;
       price: number;
       currency: string;
     }>;
@@ -153,7 +153,7 @@ export interface WorkersGroupedByServiceResponse {
     } | null;
     pricing: Array<{
       unit: string;
-      duration: number;
+      duration?: number;
       price: number;
       currency: string;
     }>;
@@ -167,7 +167,7 @@ export const workerServicesApi = {
       service_code: string;
       pricing: Array<{
         unit: string;
-        duration: number;
+        duration?: number;
         price: number;
         currency: string;
       }>;
@@ -181,7 +181,7 @@ export const workerServicesApi = {
           service_code: string;
           pricing: Array<{
             unit: string;
-            duration: number;
+            duration?: number;
             price: number;
             currency: string;
           }>;

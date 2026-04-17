@@ -70,7 +70,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     useState<Service | null>(null);
   const [pricingForm] = Form.useForm();
 
-  const { data: allServicesResponse, isLoading: isLoadingAllServices } =
+  const { data: allServicesResponse } =
     useApiQueryData<{ services: Service[]; count: number }>(
       ["services", "all"],
       "/services",
@@ -99,16 +99,13 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
 
   const services = servicesResponse?.services || [];
 
-  const {
-    data: existingWorkerServicesResponse,
-    isLoading: isLoadingExistingServices,
-  } = useApiQueryData<{
+  const { data: existingWorkerServicesResponse } = useApiQueryData<{
     services: Array<{
       service_id: string;
       service_code: string;
       pricing: Array<{
         unit: string;
-        duration: number;
+        duration?: number;
         price: number;
         currency: string;
       }>;
@@ -149,7 +146,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
             ...service,
             pricing: workerService.pricing.map((p) => ({
               unit: p.unit as PricingUnit,
-              duration: p.duration,
+              duration: p.duration ?? 1,
               price: p.price,
             })),
             is_active: workerService.is_active,
@@ -191,7 +188,6 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     if (existingService && existingService.pricing.length > 0) {
       const pricingValues = existingService.pricing.map((p) => ({
         unit: p.unit,
-        duration: p.duration,
         price: p.price,
       }));
       pricingForm.setFieldsValue({ pricing: pricingValues });
@@ -205,11 +201,16 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     pricingForm.validateFields().then((values) => {
       if (!currentServiceForPricing) return;
 
-      const pricing: ServicePricing[] = values.pricing
-        .filter((p: any) => p && p.unit && p.duration && p.price)
-        .map((p: any) => ({
+      const pricingRows = (values.pricing || []) as Array<{
+        unit?: PricingUnit;
+        price?: number | string;
+      }>;
+
+      const pricing: ServicePricing[] = pricingRows
+        .filter((p) => p && p.unit && p.price)
+        .map((p) => ({
           unit: p.unit as PricingUnit,
-          duration: Number(p.duration),
+          duration: 1,
           price: Number(p.price),
         }));
 
@@ -217,6 +218,16 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         Modal.error({
           title: t("common.error"),
           content: t("worker.setup.step2.validation.minPricing"),
+          centered: true,
+        });
+        return;
+      }
+
+      const hasDuplicateUnits = new Set(pricing.map((item) => item.unit)).size !== pricing.length;
+      if (hasDuplicateUnits) {
+        Modal.error({
+          title: t("common.error"),
+          content: "Mỗi đơn vị giá (giờ/ngày/tháng) chỉ được thiết lập một lần.",
           centered: true,
         });
         return;
@@ -434,7 +445,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
                       <Space size={4} wrap>
                         {service.pricing.map((p, index) => (
                           <Tag key={index} color="green">
-                            {formatCurrency(p.price)} / {p.duration}{" "}
+                            {formatCurrency(p.price)} /{" "}
                             {p.unit === PricingUnitEnum.HOURLY
                               ? t("worker.setup.step2.selected.hour")
                               : p.unit === PricingUnitEnum.DAILY

@@ -621,7 +621,7 @@
         },
         "pricing": {
           "title": "Set Pricing",
-          "info": "You can set multiple pricing tiers for this service",
+          "info": "Set unit rates by hour/day/month. One rate per unit.",
           "unit": {
             "label": "Unit",
             "required": "Please select unit!",
@@ -707,7 +707,8 @@
       },
       "services": {
         "title": "Services",
-        "noServices": "No services available"
+        "noServices": "No services available",
+        "startingFrom": "From"
       },
       "hireNow": "Hire Now",
       "message": "Message",
@@ -1151,12 +1152,12 @@
       "startTime": "Start time",
       "startTimeRequired": "Please select start time",
       "selectStartTime": "Select start time",
-      "pricingUnit": "Unit",
+      "pricingUnit": "Pricing unit",
       "quantity": "Quantity",
       "notes": "Notes",
       "notesPlaceholder": "Enter notes (optional)",
       "success": "Booking created successfully",
-      "invalidDuration": "Invalid duration (1-24 hours)",
+      "invalidDuration": "Invalid duration for selected unit",
       "minAdvance": "Must book at least {hours} hours in advance",
       "maxAdvance": "Cannot book more than {days} days in advance"
     },

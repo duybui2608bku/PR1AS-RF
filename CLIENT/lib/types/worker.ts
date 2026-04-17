@@ -94,7 +94,7 @@ export enum PricingUnit {
 
 export interface ServicePricing {
   unit: PricingUnit;
-  duration: number; // Số lượng đơn vị (ví dụ: 1 giờ, 2 giờ, 3 ngày)
+  duration?: number; // Legacy compatibility with backend. Unit-rate flow uses 1.
   price: number; // Giá theo đơn vị tiền tệ của user
 }
 
