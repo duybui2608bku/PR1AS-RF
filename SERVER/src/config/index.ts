@@ -28,13 +28,27 @@ const getCorsOrigin = () => {
   return "http://localhost:3000";
 };
 
+const nodeEnv = process.env.NODE_ENV || "development";
+const jwtSecret = process.env.JWT_SECRET || "jwt_secret";
+const jwtRefreshSecret =
+  process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret";
+
+if (
+  nodeEnv === "production" &&
+  (jwtSecret === "jwt_secret" || jwtRefreshSecret === "jwt_refresh_secret")
+) {
+  throw new Error(
+    "JWT secrets are not configured for production environment"
+  );
+}
+
 export const config = {
   port: parseInt(process.env.PORT || "3000", 10),
   emailAccount: process.env.EMAIL_ACCOUNT || "no-reply@example.com",
   googleAppPassword:
     process.env.GOGGLE_APP_PASSWORD || "your-google-app-password",
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-  nodeEnv: process.env.NODE_ENV || "development",
+  nodeEnv,
   corsOrigin: getCorsOrigin(),
   corsMethods: process.env.CORS_METHODS?.split(",") || [
     "GET",
@@ -43,10 +57,12 @@ export const config = {
     "DELETE",
     "PATCH",
   ],
-  corsCredentials: process.env.CORS_CREDENTIALS === "true" || true,
-  jwtSecret: process.env.JWT_SECRET || "jwt_secret",
+  corsCredentials: process.env.CORS_CREDENTIALS
+    ? process.env.CORS_CREDENTIALS === "true"
+    : true,
+  jwtSecret,
   jwtExpire: process.env.JWT_EXPIRE || "15m",
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret",
+  jwtRefreshSecret,
   jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || "7d",
   mongodbUri: process.env.MONGODB_URI || "mongodb://localhost:27017",
   dbName: process.env.DB_NAME || "db_name",

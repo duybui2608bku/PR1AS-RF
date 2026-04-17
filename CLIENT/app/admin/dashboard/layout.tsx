@@ -15,6 +15,8 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useLogout } from "@/lib/hooks/use-auth";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import type { MenuProps } from "antd";
@@ -32,7 +34,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useI18n();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
+  const { handleError } = useErrorHandler();
 
   const menuItems: MenuProps["items"] = [
     {
@@ -79,9 +83,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     },
   ];
 
-  const handleMenuClick = ({ key }: { key: string }) => {
+  const handleMenuClick = async ({ key }: { key: string }) => {
     if (key === "logout") {
-      logout();
+      try {
+        await logoutMutation.mutateAsync();
+      } catch (error: unknown) {
+        handleError(error);
+      }
       router.push("/admin/auth");
     } else if (key === "profile") {
       router.push("/admin/profile");

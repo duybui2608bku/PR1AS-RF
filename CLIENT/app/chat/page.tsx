@@ -372,7 +372,7 @@ function ChatContent() {
   ]);
 
   useEffect(() => {
-    setupListeners({
+    return setupListeners({
       onNewMessage: (data) => {
         if (data.message.conversation_id === selectedConversationId) {
           queryClient.invalidateQueries({

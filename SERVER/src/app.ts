@@ -4,7 +4,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import { config } from "./config";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { sanitizeInput } from "./middleware/xss";
@@ -48,14 +47,6 @@ export const createApp = (): express.Application => {
       credentials: config.corsCredentials,
     })
   );
-
-  const limiter = rateLimit({
-    windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.max,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-  // app.use("/api/", limiter);
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

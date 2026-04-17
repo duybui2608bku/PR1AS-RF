@@ -14,6 +14,7 @@ import {
   Col,
   Statistic,
   Avatar,
+  Tag,
   List,
   Spin,
   Tabs,

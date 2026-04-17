@@ -243,27 +243,21 @@ export class WalletRepository {
       ]),
     ]);
 
-    const typeStatsMap = typeStats.reduce(
-      (
-        acc: Record<string, { count: number; total_amount: number }>,
-        item: { _id: string; count: number; total_amount: number }
-      ) => {
-        acc[item._id] = { count: item.count, total_amount: item.total_amount };
-        return acc;
-      },
-      {}
+    const typeStatsMap: Record<string, { count: number; total_amount: number }> =
+      {};
+    (typeStats as Array<{ _id: string; count: number; total_amount: number }>).forEach(
+      (item) => {
+        typeStatsMap[item._id] = {
+          count: item.count,
+          total_amount: item.total_amount,
+        };
+      }
     );
 
-    const statusStatsMap = statusStats.reduce(
-      (
-        acc: Record<string, { count: number }>,
-        item: { _id: string; count: number }
-      ) => {
-        acc[item._id] = { count: item.count };
-        return acc;
-      },
-      {}
-    );
+    const statusStatsMap: Record<string, { count: number }> = {};
+    (statusStats as Array<{ _id: string; count: number }>).forEach((item) => {
+      statusStatsMap[item._id] = { count: item.count };
+    });
 
     const totalTransactions = Object.values(statusStatsMap).reduce(
       (sum, item) => sum + (item?.count ?? 0),

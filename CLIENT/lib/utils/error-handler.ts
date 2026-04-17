@@ -3,6 +3,8 @@ import { getTranslationSync, formatMessage } from "./i18n-helper";
 import { getNotificationApi } from "./notification.service";
 import { resolveErrorMessage } from "./error-message-resolver";
 
+export type { ApiError };
+
 export enum ErrorType {
   API = "api",
   NETWORK = "network",

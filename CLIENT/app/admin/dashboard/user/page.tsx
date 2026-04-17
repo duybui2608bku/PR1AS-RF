@@ -23,6 +23,7 @@ import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { userApi, type GetUsersQuery, type User } from "@/lib/api/user.api";
 import {
+  UserRole,
   UserStatus,
 } from "./constants/user.constants";
 import {

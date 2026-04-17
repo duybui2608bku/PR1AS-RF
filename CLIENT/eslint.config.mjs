@@ -9,7 +9,6 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "linebreak-style": "off",
-      "prettier/prettier": ["error", { endOfLine: "crlf" }],
     },
   },
   // Override default ignores of eslint-config-next.

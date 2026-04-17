@@ -37,7 +37,7 @@ export class WalletBalanceRepository {
 
   async findAllUserIds(): Promise<string[]> {
     const wallets = await Wallet.find({}).select("user_id").lean();
-    return wallets.map((wallet) => wallet.user_id);
+    return wallets.map((wallet) => String(wallet.user_id));
   }
 }
 

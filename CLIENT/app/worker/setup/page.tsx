@@ -14,16 +14,23 @@ import type {
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 import styles from "@/app/worker/setup/page.module.scss";
 
 const { Paragraph } = Typography;
 
 export type StepStatus = "wait" | "process" | "finish" | "error";
 
-export default function WorkerSetupPage() {
+interface WorkerSetupFlowProps {
+  isEditMode?: boolean;
+}
+
+export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
   const router = useRouter();
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
+  const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<WorkerProfileUpdateInput | null>(
     null
@@ -53,6 +60,11 @@ export default function WorkerSetupPage() {
     onSuccess: () => {
       message.success(t("worker.setup.success.setupComplete"));
       setStepStatus(["finish", "finish"]);
+      if (isEditMode && user?.id) {
+        router.push(buildWorkerProfileRoute(user.id));
+        return;
+      }
+
       setTimeout(() => {
         router.push("/");
       }, REDIRECT_DELAY_MS);
@@ -152,4 +164,8 @@ export default function WorkerSetupPage() {
   }
 
   return null;
+}
+
+export default function WorkerSetupPage() {
+  return <WorkerSetupFlow />;
 }

@@ -26,7 +26,7 @@ interface DepositModalProps {
   onClose: () => void;
 }
 
-export function DepositModal({ open, onClose }: DepositModalProps): JSX.Element {
+export function DepositModal({ open, onClose }: DepositModalProps) {
   const { t } = useTranslation();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
   const [form] = Form.useForm<DepositFormValues>();

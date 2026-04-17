@@ -63,7 +63,7 @@ export interface TransactionHistoryQuery {
   page: number;
   limit: number;
   skip: number;
-  user_id: string;
+  user_id?: string;
 }
 
 export interface TransactionHistoryResponse {
@@ -74,7 +74,7 @@ export interface TransactionHistoryResponse {
 }
 
 export interface AdminTransactionHistoryQuery extends TransactionHistoryQuery {
-  user_id: string;
+  user_id?: string;
 }
 
 export interface AdminTransactionStatsQuery {

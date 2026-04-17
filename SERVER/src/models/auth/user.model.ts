@@ -158,5 +158,7 @@ const userSchema = new Schema<IUserDocument>(
 );
 
 userSchema.index({ email: 1 });
+userSchema.index({ password_reset_token: 1 });
+userSchema.index({ email_verification_token: 1 });
 
 export const User = mongoose.model<IUserDocument>(modelsName.USER, userSchema);

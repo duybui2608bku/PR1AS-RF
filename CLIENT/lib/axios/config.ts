@@ -19,19 +19,12 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-export interface ApiError extends AxiosError<ApiResponse> {
-  response?: {
-    data: ApiResponse;
-    status: number;
-    statusText: string;
-    headers: unknown;
-    config: InternalAxiosRequestConfig;
-  };
-}
+export type ApiError = AxiosError<ApiResponse>;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3052/api";
 const REQUEST_TIMEOUT = 30000;
 const NETWORK_ERROR_THROTTLE_MS = 5000;
+const CSRF_TOKEN_ENDPOINT = `${API_BASE_URL}/auth/csrf-token`;
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -44,18 +37,44 @@ export const axiosInstance = axios.create({
 
 const CSRF_TOKEN_COOKIE_NAME = "XSRF-TOKEN";
 const CSRF_TOKEN_HEADER = "X-CSRF-Token";
+let csrfBootstrapPromise: Promise<void> | null = null;
 
 const getCsrfToken = (): string | null => {
   if (typeof window === "undefined") return null;
-  
+
   const cookies = document.cookie.split("; ");
   const csrfCookie = cookies.find((row) => row.startsWith(`${CSRF_TOKEN_COOKIE_NAME}=`));
-  
+
   if (csrfCookie) {
-    return csrfCookie.split("=")[1];
+    const value = csrfCookie.slice(CSRF_TOKEN_COOKIE_NAME.length + 1);
+    return decodeURIComponent(value);
   }
-  
+
   return null;
+};
+
+const ensureCsrfToken = async (): Promise<void> => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (getCsrfToken()) {
+    return;
+  }
+
+  if (!csrfBootstrapPromise) {
+    csrfBootstrapPromise = axios
+      .get<ApiResponse<{ csrfToken: string }>>(CSRF_TOKEN_ENDPOINT, {
+        withCredentials: true,
+        timeout: REQUEST_TIMEOUT,
+      })
+      .then(() => undefined)
+      .finally(() => {
+        csrfBootstrapPromise = null;
+      });
+  }
+
+  await csrfBootstrapPromise;
 };
 
 const refreshAccessToken = async (): Promise<boolean> => {
@@ -67,6 +86,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
   }
 
   try {
+    await ensureCsrfToken();
     const csrfToken = getCsrfToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -114,7 +134,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
 const HTTP_METHODS_NEEDING_CSRF = ["POST", "PATCH", "PUT", "DELETE"];
 
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     if (token && config.headers) {
@@ -123,8 +143,9 @@ axiosInstance.interceptors.request.use(
 
     const method = config.method?.toUpperCase();
     const needsCsrfToken = method && HTTP_METHODS_NEEDING_CSRF.includes(method);
-    
+
     if (needsCsrfToken && config.headers) {
+      await ensureCsrfToken();
       const csrfToken = getCsrfToken();
       if (csrfToken) {
         config.headers[CSRF_TOKEN_HEADER] = csrfToken;
@@ -209,7 +230,7 @@ export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
     statusText: "Invalid Response",
     headers: {},
     config: {} as InternalAxiosRequestConfig,
-  };
+  } as ApiError["response"];
   throw error;
 };
 

@@ -4,6 +4,7 @@ import {
   WorkerServicePricing,
 } from "../../types/worker/worker-service";
 import { modelsName } from "../../models/models.name";
+import mongoose from "mongoose";
 
 export interface UpsertWorkerServicePayload {
   serviceId: string;
@@ -27,31 +28,39 @@ class WorkerServiceRepository {
       return [];
     }
 
-    const operations = payloads.map((item) => ({
+    const workerObjectId = new mongoose.Types.ObjectId(workerId);
+    const operations: Parameters<typeof WorkerService.bulkWrite>[0] =
+      payloads.map((item) => {
+        const serviceObjectId = new mongoose.Types.ObjectId(item.serviceId);
+        return {
       updateOne: {
-        filter: { worker_id: workerId, service_id: item.serviceId },
+            filter: {
+              worker_id: workerObjectId,
+              service_id: serviceObjectId,
+            },
         update: {
           $set: {
-            service_id: item.serviceId,
+                service_id: serviceObjectId,
             service_code: item.serviceCode,
             pricing: item.pricing,
             is_active: true,
             updated_at: now,
           },
           $setOnInsert: {
-            worker_id: workerId,
+                worker_id: workerObjectId,
             created_at: now,
           },
         },
         upsert: true,
       },
-    }));
+        };
+      });
 
     await WorkerService.bulkWrite(operations);
 
-    const serviceIds = payloads.map((p) => p.serviceId);
+    const serviceIds = payloads.map((p) => new mongoose.Types.ObjectId(p.serviceId));
     return WorkerService.find({
-      worker_id: workerId,
+      worker_id: workerObjectId,
       service_id: { $in: serviceIds },
     }).sort({ created_at: -1, service_code: 1 });
   }

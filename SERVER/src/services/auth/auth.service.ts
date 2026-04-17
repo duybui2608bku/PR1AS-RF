@@ -31,6 +31,10 @@ import {
 import { toPublicUser } from "../../utils/user.helper";
 
 export class AuthService {
+  private hashOpaqueToken(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
+  }
+
   async register(input: RegisterInput): Promise<AuthResponse> {
     const emailExists = await userRepository.emailExists(input.email);
     if (emailExists) {
@@ -153,12 +157,18 @@ export class AuthService {
     return toPublicUser(user);
   }
 
+  async logout(userId: string): Promise<void> {
+    await User.findByIdAndUpdate(userId, {
+      refresh_token_hash: null,
+    });
+  }
+
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await userRepository.findByEmail(email);
 
     if (user) {
       const resetToken = crypto.randomBytes(32).toString("hex");
-      const resetTokenHash = await hashPassword(resetToken);
+      const resetTokenHash = this.hashOpaqueToken(resetToken);
       const resetExpires = createPasswordResetExpiry();
 
       await User.findByIdAndUpdate(user._id, {
@@ -190,23 +200,10 @@ export class AuthService {
     token: string,
     newPassword: string
   ): Promise<{ message: string }> {
-    const users = await User.find({
-      password_reset_expires: { $gt: new Date() },
+    const tokenHash = this.hashOpaqueToken(token);
+    const user = await User.findOne({
+      password_reset_token: tokenHash,
     }).select("+password_reset_token +password_reset_expires");
-
-    let user: IUserDocument | null = null;
-
-    for (const u of users) {
-      const resetToken = (u as IUserDocument).password_reset_token;
-      const resetExpires = (u as IUserDocument).password_reset_expires;
-      if (resetToken && resetExpires) {
-        const isValid = await comparePassword(token, resetToken);
-        if (isValid) {
-          user = u;
-          break;
-        }
-      }
-    }
 
     if (!user) {
       throw new AppError(
@@ -254,7 +251,7 @@ export class AuthService {
     }
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationTokenHash = await hashPassword(verificationToken);
+    const verificationTokenHash = this.hashOpaqueToken(verificationToken);
     const verificationExpires = createEmailVerificationExpiry();
 
     await User.findByIdAndUpdate(user._id, {
@@ -279,24 +276,10 @@ export class AuthService {
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
-    const users = await User.find({
-      email_verification_expires: { $gt: new Date() },
+    const tokenHash = this.hashOpaqueToken(token);
+    const user = await User.findOne({
+      email_verification_token: tokenHash,
     }).select("+email_verification_token +email_verification_expires");
-
-    let user: IUserDocument | null = null;
-
-    for (const u of users) {
-      const verificationToken = (u as IUserDocument).email_verification_token;
-      const verificationExpires = (u as IUserDocument)
-        .email_verification_expires;
-      if (verificationToken && verificationExpires) {
-        const isValid = await comparePassword(token, verificationToken);
-        if (isValid) {
-          user = u;
-          break;
-        }
-      }
-    }
 
     if (!user) {
       throw new AppError(

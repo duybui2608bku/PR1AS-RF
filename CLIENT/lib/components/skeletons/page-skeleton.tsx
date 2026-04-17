@@ -8,7 +8,7 @@ enum SkeletonRows {
   CARD = 2,
 }
 
-export function PageSkeleton(): JSX.Element {
+export function PageSkeleton() {
   return (
     <div style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
       <Skeleton

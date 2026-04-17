@@ -17,6 +17,7 @@ import {
   MessageOutlined,
   ShoppingCartOutlined,
   UserOutlined,
+  EditOutlined,
   ArrowsAltOutlined,
   DashboardOutlined,
   StarOutlined,
@@ -40,7 +41,7 @@ import { WorkerCalendar } from "../components/WorkerCalendar";
 import { WorkerServices } from "../components/WorkerServices";
 import { BookingModal } from "../components/BookingModal";
 import { WorkerMessageModal } from "../components/WorkerMessageModal";
-import { buildChatRoute } from "@/lib/constants/routes";
+import { AppRoute, buildChatRoute } from "@/lib/constants/routes";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useServicesMap } from "@/lib/hooks/use-services-map";
@@ -243,6 +244,14 @@ export default function WorkerDetailPage() {
                                 </span>
                               )}
                             </Title>
+                            {isViewingOwnProfile && (
+                              <Button
+                                icon={<EditOutlined />}
+                                onClick={() => router.push(AppRoute.WORKER_PROFILE_EDIT)}
+                              >
+                                {t("profile.editProfile")}
+                              </Button>
+                            )}
                           </div>
 
                           <div className={styles.ratingRow}>

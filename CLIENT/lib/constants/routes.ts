@@ -7,6 +7,7 @@ export enum AppRoute {
   CLIENT_WALLET_DEPOSIT = "/client/wallet/deposit",
   CLIENT_WALLET = "/client/wallet",
   WORKER_WALLET = "/worker/wallet",
+  WORKER_PROFILE_EDIT = "/worker/profile/edit",
   CLIENT_BOOKINGS = "/client/bookings",
   WORKER_SETUP = "/worker/setup",
   WORKER_BOOKINGS = "/worker/bookings",

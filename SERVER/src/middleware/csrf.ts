@@ -41,15 +41,6 @@ export const validateCsrf = (
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
   }
-  if (config.nodeEnv === "development") {
-    const headerToken =
-      req.headers[CSRF_CONSTANTS.HEADER_NAME_LOWER] ||
-      req.headers[CSRF_CONSTANTS.HEADER_NAME_XSRF];
-    const cookieToken = req.cookies?.[CSRF_CONSTANTS.COOKIE_NAME];
-    if (!headerToken && !cookieToken) {
-      return next();
-    }
-  }
 
   const headerToken =
     req.headers[CSRF_CONSTANTS.HEADER_NAME_LOWER] ||

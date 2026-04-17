@@ -22,7 +22,7 @@ export function CancelBookingModal({
   onCancel,
   onOk,
   loading = false,
-}: CancelBookingModalProps): JSX.Element {
+}: CancelBookingModalProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm();
 

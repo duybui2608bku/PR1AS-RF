@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../axios";
 import { useAuthStore } from "../stores/auth.store";
+import type { User as AuthUser } from "../stores/auth.store";
 import type { ApiResponse } from "../axios";
 
 const AUTH_QUERY_KEY = ["auth", "me"];
@@ -109,7 +110,7 @@ export function useLogout() {
     mutationFn: async () => {
       await api.post("/auth/logout");
     },
-    onSuccess: () => {
+    onSettled: () => {
       logout();
       queryClient.clear();
     },
@@ -165,10 +166,18 @@ export function useSwitchRole() {
     },
     onSuccess: (data) => {
       if (data.success && data.data?.user) {
-        const updatedUser = {
+        const lastActiveRole = data.data.user.last_active_role;
+        const normalizedLastActiveRole =
+          lastActiveRole === "client" ||
+          lastActiveRole === "worker" ||
+          lastActiveRole === "admin"
+            ? lastActiveRole
+            : undefined;
+
+        const updatedUser: AuthUser = {
           ...user!,
           ...data.data.user,
-          last_active_role: data.data.user.last_active_role,
+          last_active_role: normalizedLastActiveRole,
         };
         setUser(updatedUser);
         queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });

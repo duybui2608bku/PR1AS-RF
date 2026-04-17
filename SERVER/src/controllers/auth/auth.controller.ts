@@ -69,7 +69,12 @@ export class AuthController {
     R.success(res, { user }, undefined, req);
   }
 
-  async logout(req: Request, res: Response): Promise<void> {
+  async logout(req: AuthRequest, res: Response): Promise<void> {
+    if (!req.user?.sub) {
+      throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_INVALID);
+    }
+
+    await authService.logout(req.user.sub);
     res.clearCookie("token");
     R.success(res, { message: AUTH_MESSAGES.LOGOUT_SUCCESS }, undefined, req);
   }

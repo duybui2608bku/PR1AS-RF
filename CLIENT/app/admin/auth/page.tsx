@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Form, Input, Button, Card, Typography, message, Space, Row, Col } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useLogin } from "@/lib/hooks/use-auth";
+import { useLogin, useLogout } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
 import { LanguageSwitcher } from "@/lib/components/language-switcher";
@@ -21,6 +21,7 @@ export default function AdminAuthPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const loginMutation = useLogin();
+  const logoutMutation = useLogout();
   const [form] = Form.useForm();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
@@ -58,7 +59,7 @@ export default function AdminAuthPage() {
           router.push("/admin");
         } else {
           message.error(t("auth.loginError"));
-          useAuthStore.getState().logout();
+          await logoutMutation.mutateAsync();
         }
       }
     } catch (error: unknown) {
