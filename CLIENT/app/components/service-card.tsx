@@ -5,7 +5,6 @@ import { EnvironmentOutlined, UserOutlined, HeartOutlined } from "@ant-design/ic
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { useMemo, useState, memo, useCallback } from "react";
-import { ImageHeight, FontSize } from "@/lib/constants/ui.constants";
 import styles from "./service-card.module.scss";
 import { ServiceListing } from "@/lib/types/service-listing";
 
@@ -29,15 +28,14 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
     }).format(price);
   }, []);
 
-  const imageHeight = useMemo(() => {
-    return size === "large" ? ImageHeight.LARGE : size === "medium" ? ImageHeight.MEDIUM : ImageHeight.SMALL;
-  }, [size]);
-
   const formattedPrice = useMemo(() => formatPrice(service.price), [service.price, formatPrice]);
 
   const titleLevel = useMemo(() => size === "large" ? 4 : 5, [size]);
-
-  const priceFontSize = useMemo(() => size === "large" ? FontSize.LG : FontSize.MD, [size]);
+  const sizeClassName = useMemo(() => {
+    if (size === "large") return styles.sizeLarge;
+    if (size === "small") return styles.sizeSmall;
+    return styles.sizeMedium;
+  }, [size]);
 
   const handleLikeClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -51,8 +49,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
       onClick={onClick}
     >
       <div
-        className={styles.imageWrapper}
-        style={{ height: imageHeight }}
+        className={`${styles.imageWrapper} ${sizeClassName}`}
       >
         <Image
           src={service.image}
@@ -74,31 +71,22 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
           className={styles.likeButton}
         >
           <HeartOutlined
-            className={isLiked ? styles.lovedIcon : styles.heartIcon}
-            style={{ fontSize: FontSize.LG }}
+            className={`${styles.heartIconSize} ${isLiked ? styles.lovedIcon : styles.heartIcon}`}
           />
         </button>
       </div>
 
       <div className={styles.contentBlock}>
         <Space className={styles.metaSpace} size="small">
-          <Text
-            type="secondary"
-            style={{
-              fontSize: FontSize.XS,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              fontWeight: 500,
-            }}
-          >
+          <Text type="secondary" className={styles.metaText}>
             {service.category}
           </Text>
-          <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+          <Text type="secondary" className={styles.metaText}>
             •
           </Text>
           <Space size={4}>
-            <EnvironmentOutlined style={{ fontSize: FontSize.XS, color: "var(--foreground-secondary)" }} />
-            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+            <EnvironmentOutlined className={styles.locationIcon} />
+            <Text type="secondary" className={styles.metaText}>
               {service.location}
             </Text>
           </Space>
@@ -113,12 +101,12 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             disabled
             value={service.rating}
             allowHalf
-            style={{ fontSize: FontSize.SM }}
+            className={styles.ratingStars}
           />
-          <Text style={{ fontSize: FontSize.SM, fontWeight: 500, color: "var(--foreground)" }}>
+          <Text className={styles.ratingText}>
             {service.rating}
           </Text>
-          <Text type="secondary" style={{ fontSize: FontSize.SM }}>
+          <Text type="secondary" className={styles.ratingCountText}>
             ({service.reviewCount})
           </Text>
         </Space>
@@ -133,14 +121,15 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
                     src={service.users[0].avatar}
                     icon={<UserOutlined />}
                   />
-                  <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+                  <Text type="secondary" className={styles.userNameText}>
                     {service.users[0].name}
                   </Text>
                 </>
               ) : (
                 <Avatar.Group
-                  max={{ count: 2, style: { color: "var(--foreground)", backgroundColor: "var(--background-secondary)" } }}
+                  max={{ count: 2 }}
                   size={24}
+                  className={styles.avatarGroup}
                 >
                   {service.users.map((user) => (
                     <Avatar key={user.id} src={user.avatar} icon={<UserOutlined />} />
@@ -150,7 +139,7 @@ const ServiceCardComponent = ({ service, size = "medium", onClick }: ServiceCard
             </Space>
           </Col>
           <Col>
-            <Text className={styles.priceText} style={{ fontSize: priceFontSize }}>
+            <Text className={`${styles.priceText} ${size === "large" ? styles.priceTextLarge : styles.priceTextDefault}`}>
               {formattedPrice}
               <Text type="secondary" className={styles.priceUnit}>
                 /{service.priceUnit}

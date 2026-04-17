@@ -56,4 +56,21 @@ router.patch(
   )
 );
 
+router.post(
+  "/:id/dispute",
+  authenticate,
+  asyncHandler<AuthRequest>(
+    bookingController.createDispute.bind(bookingController)
+  )
+);
+
+router.patch(
+  "/:id/dispute/resolve",
+  authenticate,
+  asyncHandler<AuthRequest>(
+    bookingController.resolveDispute.bind(bookingController)
+  )
+);
+
 export default router;
+

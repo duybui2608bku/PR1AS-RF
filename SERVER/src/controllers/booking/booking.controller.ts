@@ -6,6 +6,8 @@ import {
   cancelBookingReasonSchema,
   updateBookingSchema,
   getBookingsQuerySchema,
+  createDisputeSchema,
+  resolveDisputeSchema,
 } from "../../validations/booking/booking.validation";
 import { BOOKING_MESSAGES, COMMON_MESSAGES } from "../../constants/messages";
 import { AuthRequest } from "../../middleware/auth";
@@ -127,6 +129,48 @@ export class BookingController {
       roleInfo
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_UPDATED, req);
+  }
+
+  async createDispute(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    const data = validateWithSchema(
+      createDisputeSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    const result = await bookingService.createDispute(
+      id,
+      userId,
+      data.reason,
+      data.description,
+      data.evidence_urls,
+      roleInfo
+    );
+    R.success(res, result, BOOKING_MESSAGES.DISPUTE_CREATED, req);
+  }
+
+  async resolveDispute(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    const data = validateWithSchema(
+      resolveDisputeSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    const result = await bookingService.resolveDispute(
+      id,
+      userId,
+      data.resolution,
+      data.resolution_notes,
+      data.refund_amount,
+      roleInfo
+    );
+    R.success(res, result, BOOKING_MESSAGES.DISPUTE_RESOLVED, req);
   }
 }
 

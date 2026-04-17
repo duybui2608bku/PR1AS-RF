@@ -75,9 +75,8 @@ export function WorkerServices({
 
   return (
     <Card
-      className={styles.bookingCard}
+      className={`${styles.bookingCard} ${styles.bookingCardMargin}`}
       title={t("worker.detail.services.title")}
-      style={{ marginBottom: Spacing.LG }}
     >
       <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.servicesList}>
         {activeServices.map((workerService) => {
@@ -104,10 +103,9 @@ export function WorkerServices({
               <Card
                 className={`${styles.serviceCard} ${
                   isSelected ? styles.serviceCardSelected : ""
-                }`}
+                } ${disabled ? styles.serviceCardDisabled : styles.serviceCardInteractive}`}
                 hoverable={!disabled}
                 onClick={disabled ? undefined : () => onServiceToggle(workerService.service_id)}
-                style={{ cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.6 : 1 }}
               >
                 <Radio
                   checked={isSelected}

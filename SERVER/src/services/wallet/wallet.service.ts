@@ -333,3 +333,29 @@ export const refundBalanceToClient = async (
 
   return transaction._id.toString();
 };
+
+export const releasePayoutToWorker = async (
+  workerId: string,
+  amount: number,
+  bookingId: string,
+  description?: string
+): Promise<string> => {
+  const transactionDescription =
+    description ||
+    `${TRANSACTION_DESCRIPTIONS.PAYOUT_PREFIX} ${bookingId}`;
+
+  const transaction = await walletRepository.create({
+    user_id: workerId,
+    type: TransactionType.PAYOUT,
+    amount,
+    status: TransactionStatus.SUCCESS,
+    description: transactionDescription,
+  });
+
+  const currentBalance = await walletRepository.calculateUserBalance(workerId);
+  const updatedBalance = currentBalance + amount;
+  await walletBalanceRepository.createOrUpdate(workerId, updatedBalance);
+
+  return transaction._id.toString();
+};
+

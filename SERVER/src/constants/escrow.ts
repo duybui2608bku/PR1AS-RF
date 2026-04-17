@@ -15,6 +15,7 @@ export enum EscrowReleaseReason {
 export enum EscrowRefundReason {
   BOOKING_CANCELLED = "booking_cancelled",
   BOOKING_REJECTED = "booking_rejected",
+  BOOKING_EXPIRED = "booking_expired",
   DISPUTE_RESOLVED = "dispute_resolved",
   ADMIN_REFUND = "admin_refund",
   WORKER_NO_SHOW = "worker_no_show",
@@ -25,6 +26,7 @@ export const ESCROW_LIMITS = {
   DISPUTE_WINDOW_HOURS: 48,
   MAX_HOLD_DAYS: 30,
 } as const;
+
 
 export const ESCROW_FEE = {
   PLATFORM_FEE_PERCENT: 10,

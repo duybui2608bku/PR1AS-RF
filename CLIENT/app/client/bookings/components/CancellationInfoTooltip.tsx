@@ -30,7 +30,7 @@ export function CancellationInfoTooltip({
   const reasonLabel = getCancellationReasonLabel(cancellation.reason, t);
 
   const tooltipContent = (
-    <Space direction="vertical" size="small">
+    <Space orientation="vertical" size="small">
       <Text className={styles.tooltipText}>
         <Text strong className={styles.tooltipLabel}>
           {t("booking.cancellation.cancelledBy")}:

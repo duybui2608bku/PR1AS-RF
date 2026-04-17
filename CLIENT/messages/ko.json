@@ -154,7 +154,25 @@
           "placeholder": "이메일의 토큰을 입력하세요",
           "required": "재설정 토큰을 입력해 주세요!"
         }
-      }
+      },
+      "verifyEmail": {
+        "title": "이메일 인증",
+        "subtitle": "이메일을 인증하는 중...",
+        "verifying": "인증 중...",
+        "success": "이메일이 성공적으로 인증되었습니다!",
+        "successMessage": "이제 로그인하여 모든 기능을 사용할 수 있습니다.",
+        "error": "인증 실패",
+        "errorMessage": "인증 토큰이 유효하지 않거나 만료되었습니다.",
+        "noToken": "토큰을 찾을 수 없습니다. 이메일의 링크를 사용하세요.",
+        "goToLogin": "로그인으로 이동",
+        "resendEmail": "인증 이메일 재전송",
+        "resendSuccess": "인증 이메일이 재전송되었습니다!",
+        "resendEmailLabel": "인증 링크를 재전송하려면 이메일을 입력하세요",
+        "alreadyVerified": "이메일이 이미 인증되었습니다",
+        "checkEmailNotice": "인증 이메일이 발송되었습니다. 이메일을 확인하여 계정을 인증해 주세요."
+      },
+      "loginError": "이메일 또는 비밀번호가 잘못되었습니다",
+      "registerError": "등록에 실패했습니다"
     }
   },
   "dashboard": {

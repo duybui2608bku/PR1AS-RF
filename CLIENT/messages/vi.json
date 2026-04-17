@@ -156,7 +156,25 @@
           "placeholder": "Nhập token từ email",
           "required": "Vui lòng nhập token đặt lại!"
         }
-      }
+      },
+      "verifyEmail": {
+        "title": "Xác minh Email",
+        "subtitle": "Đang xác minh email của bạn...",
+        "verifying": "Đang xác minh...",
+        "success": "Email đã được xác minh thành công!",
+        "successMessage": "Bạn có thể đăng nhập và sử dụng đầy đủ các tính năng.",
+        "error": "Xác minh thất bại",
+        "errorMessage": "Token xác minh không hợp lệ hoặc đã hết hạn.",
+        "noToken": "Không tìm thấy token. Vui lòng sử dụng liên kết từ email.",
+        "goToLogin": "Đi đến Đăng nhập",
+        "resendEmail": "Gửi lại email xác minh",
+        "resendSuccess": "Email xác minh đã được gửi lại!",
+        "resendEmailLabel": "Nhập email để gửi lại liên kết xác minh",
+        "alreadyVerified": "Email đã được xác minh trước đó",
+        "checkEmailNotice": "Một email xác minh đã được gửi đến hộp thư của bạn. Vui lòng kiểm tra email để xác minh tài khoản."
+      },
+      "loginError": "Sai email hoặc mật khẩu",
+      "registerError": "Đăng ký thất bại"
     }
   },
   "admin": {

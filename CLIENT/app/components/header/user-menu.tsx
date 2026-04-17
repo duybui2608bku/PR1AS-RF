@@ -120,9 +120,7 @@ export const UserMenu = () => {
                     size="large"
                     src={user?.avatar}
                     icon={!user?.avatar ? <UserOutlined /> : undefined}
-                    style={{
-                        backgroundColor: !user?.avatar ? "var(--ant-color-primary)" : undefined,
-                    }}
+                    className={!user?.avatar ? styles.placeholderAvatar : undefined}
                 >
                     {!user?.avatar && getUserInitial()}
                 </Avatar>

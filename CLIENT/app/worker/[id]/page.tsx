@@ -11,11 +11,8 @@ import {
   Button,
   Card,
   message,
-  Input,
-  Modal,
 } from "antd";
 import {
-  CalendarOutlined,
   TrophyFilled,
   MessageOutlined,
   ShoppingCartOutlined,
@@ -28,8 +25,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useApiQueryData } from "@/lib/hooks/use-api";
-import { type WorkerDetailResponse, servicesApi } from "@/lib/api/worker.api";
-import type { Service } from "@/lib/types/worker";
+import { type WorkerDetailResponse } from "@/lib/api/worker.api";
 import { QueryState } from "@/lib/components/query-state";
 import { ImageGallerySkeleton } from "@/lib/components/skeletons";
 import {
@@ -43,9 +39,11 @@ import { WorkerReviews } from "../components/WorkerReviews";
 import { WorkerCalendar } from "../components/WorkerCalendar";
 import { WorkerServices } from "../components/WorkerServices";
 import { BookingModal } from "../components/BookingModal";
+import { WorkerMessageModal } from "../components/WorkerMessageModal";
 import { buildChatRoute } from "@/lib/constants/routes";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
+import { useServicesMap } from "@/lib/hooks/use-services-map";
 import { chatApi } from "@/lib/api/chat.api";
 import { ChatErrorCode } from "@/lib/constants/error-codes";
 import type { Dayjs } from "dayjs";
@@ -92,26 +90,7 @@ export default function WorkerDetailPage() {
     return currentUser?.id === workerData?.user?.id;
   }, [currentUser?.id, workerData?.user?.id]);
 
-  const { data: allServicesResponse, isLoading: isLoadingAllServices } =
-    useApiQueryData<{ services: Service[]; count: number }>(
-      ["all-services"],
-      "/services",
-      {
-        enabled: true,
-      }
-    );
-
-  const serviceMap = React.useMemo(() => {
-    const services = allServicesResponse?.services || [];
-    if (!Array.isArray(services) || services.length === 0) {
-      return new Map<string, Service>();
-    }
-    const map = new Map<string, Service>();
-    services.forEach((service) => {
-      map.set(service.code, service);
-    });
-    return map;
-  }, [allServicesResponse]);
+  const { serviceMap, isLoading: isLoadingAllServices } = useServicesMap();
 
   const handleServiceToggle = (serviceId: string): void => {
     setSelectedServices((prev) =>
@@ -486,7 +465,6 @@ export default function WorkerDetailPage() {
         <BookingModal
           open={bookingModalOpen}
           onClose={() => setBookingModalOpen(false)}
-          clientId={currentUser?.id || ""}
           workerId={workerData.user.id}
           workerServiceId={selectedWorkerService._id}
           serviceId={selectedWorkerService.service_id}
@@ -497,21 +475,15 @@ export default function WorkerDetailPage() {
       )}
 
       {workerData && (
-        <Modal
+        <WorkerMessageModal
           open={messageModalOpen}
-          title={t("worker.detail.message")}
+          content={firstMessageContent}
+          isSubmitting={sendFirstMessageMutation.isPending}
+          onChangeContent={setFirstMessageContent}
           onCancel={handleCloseMessageModal}
-          onOk={handleSendFirstMessage}
-          confirmLoading={sendFirstMessageMutation.isPending}
-          okText={t("common.submit")}
-          cancelText={t("common.cancel")}
-        >
-          <Input.TextArea
-            value={firstMessageContent}
-            onChange={(event) => setFirstMessageContent(event.target.value)}
-            autoSize={{ minRows: 3, maxRows: 6 }}
-          />
-        </Modal>
+          onSubmit={handleSendFirstMessage}
+          t={t}
+        />
       )}
     </>
   );

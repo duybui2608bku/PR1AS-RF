@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Space, Row, Col } from "antd";
+import { Button, Space, Row, Col, Typography } from "antd";
 import {
   ArrowRightOutlined,
   LeftOutlined,
@@ -15,6 +15,8 @@ import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { ScrollAmount, Spacing } from "@/lib/constants/ui.constants";
 import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 import styles from "./category-section.module.scss";
+
+const { Title, Paragraph } = Typography;
 
 enum SkeletonCount {
   DEFAULT = 4,
@@ -86,7 +88,9 @@ const CategorySectionComponent = ({
       <Row className={styles.headerRow} justify="space-between" align="middle">
         <Col flex={1} className={styles.titleCol}>
           <Space className={styles.titleRow} size={Spacing.MD}>
-            <h2 className={styles.title}>{title}</h2>
+            <Title level={2} className={styles.title}>
+              {title}
+            </Title>
             {showViewAll && categoryCode && (
               <Button
                 type="link"
@@ -99,7 +103,7 @@ const CategorySectionComponent = ({
               </Button>
             )}
           </Space>
-          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+          {subtitle && <Paragraph className={styles.subtitle}>{subtitle}</Paragraph>}
         </Col>
         {showScrollButtons && (
           <Col flex="none">

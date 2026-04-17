@@ -3,7 +3,7 @@
 import { Card, Row, Col, Space, Tag, Typography } from "antd";
 import type { Escrow } from "@/lib/types/escrow";
 import { EscrowStatus } from "@/lib/types/escrow";
-import { FontSize, Spacing, ColSpan } from "@/lib/constants/ui.constants";
+import { Spacing, ColSpan } from "@/lib/constants/ui.constants";
 import { TagColor } from "@/lib/constants/theme.constants";
 import type { TFunction } from "i18next";
 import styles from "./EscrowCard.module.scss";
@@ -78,15 +78,15 @@ export function EscrowCard({
           </Space>
         </Col>
         <Col span={ColSpan.FULL}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+          <Space direction="vertical" size="small" className={styles.spaceFull}>
             <Space>
-              <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+              <Text type="secondary" className={styles.metaText}>
                 {t("escrow.table.heldAt")}: {formatDate(escrow.held_at)}
               </Text>
             </Space>
             {escrow.released_at && (
               <Space>
-                <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+                <Text type="secondary" className={styles.metaText}>
                   {t("escrow.table.releasedAt")}: {formatDate(escrow.released_at)}
                 </Text>
               </Space>

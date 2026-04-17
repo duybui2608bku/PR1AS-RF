@@ -9,7 +9,6 @@ import {
   Select,
   Input,
   Button,
-  Tag,
   Space as AntSpace,
   Row,
   Col,
@@ -51,18 +50,16 @@ import {
   DateRangePreset,
 } from "@/lib/constants/wallet";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
-import type { ColumnsType } from "antd/es/table";
-import { UserProfile } from "@/lib/api";
 import {
   PAGE_SIZE_OPTIONS,
   PAGINATION_DEFAULTS,
 } from "@/app/constants/constants";
-import { formatDateTime } from "@/app/func/func";
 import {
-  getStatusTagColor,
-  getTypeTagColor,
-  TableColumnKeys,
+  DATE_RANGE_OPTIONS,
+  CHART_COLORS,
+  TabKey,
 } from "@/app/admin/dashboard/wallet/constants/wallet.constants";
+import { buildWalletColumns } from "./constants/wallet-table-columns";
 import styles from "./page.module.scss";
 import {
   Chart as ChartJS,
@@ -91,42 +88,6 @@ ChartJS.register(
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-
-enum TabKey {
-  STATISTICS = "statistics",
-  DATA = "data",
-}
-
-const DATE_RANGE_OPTIONS = [
-  { value: DateRangePreset.TODAY, labelKey: "admin.wallet.dateRange.today" },
-  {
-    value: DateRangePreset.YESTERDAY,
-    labelKey: "admin.wallet.dateRange.yesterday",
-  },
-  {
-    value: DateRangePreset.LAST_7_DAYS,
-    labelKey: "admin.wallet.dateRange.last7Days",
-  },
-  {
-    value: DateRangePreset.LAST_14_DAYS,
-    labelKey: "admin.wallet.dateRange.last14Days",
-  },
-  {
-    value: DateRangePreset.THIS_MONTH,
-    labelKey: "admin.wallet.dateRange.thisMonth",
-  },
-];
-
-const CHART_COLORS = {
-  deposit: "rgba(82, 196, 26, 1)",
-  withdraw: "rgba(114, 46, 209, 1)",
-  payment: "rgba(22, 119, 255, 1)",
-  refund: "rgba(250, 173, 20, 1)",
-  depositBg: "rgba(82, 196, 26, 0.1)",
-  withdrawBg: "rgba(114, 46, 209, 0.1)",
-  paymentBg: "rgba(22, 119, 255, 0.1)",
-  refundBg: "rgba(250, 173, 20, 0.1)",
-};
 
 export default function AdminWalletPage() {
   const { t } = useI18n();
@@ -322,73 +283,7 @@ export default function AdminWalletPage() {
     [formatCurrency]
   );
 
-  const columns: ColumnsType<WalletTransaction> = [
-    {
-      title: t("admin.wallet.table.id"),
-      dataIndex: TableColumnKeys.ID,
-      key: TableColumnKeys.ID,
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: t("admin.wallet.table.userId"),
-      dataIndex: TableColumnKeys.USER_ID,
-      key: TableColumnKeys.USER_ID,
-      width: 150,
-      render: (user: UserProfile | string) =>
-        (user as UserProfile).full_name || (user as string),
-    },
-    {
-      title: t("admin.wallet.table.type"),
-      dataIndex: TableColumnKeys.TYPE,
-      key: TableColumnKeys.TYPE,
-      width: 120,
-      render: (type: TransactionType) => (
-        <Tag color={getTypeTagColor(type)}>
-          {t(`wallet.transactionType.${type}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: t("admin.wallet.table.amount"),
-      dataIndex: TableColumnKeys.AMOUNT,
-      key: TableColumnKeys.AMOUNT,
-      width: 150,
-      render: (amount: number, record: WalletTransaction) => formatCurrency(amount, record.currency),
-    },
-    {
-      title: t("admin.wallet.table.status"),
-      dataIndex: TableColumnKeys.STATUS,
-      key: TableColumnKeys.STATUS,
-      width: 120,
-      render: (status: TransactionStatus) => (
-        <Tag color={getStatusTagColor(status)}>
-          {t(`wallet.transactionStatus.${status}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: t("admin.wallet.table.gateway"),
-      dataIndex: TableColumnKeys.GATEWAY,
-      key: TableColumnKeys.GATEWAY,
-      width: 150,
-      render: (gateway: string | undefined) => gateway || "-",
-    },
-    {
-      title: t("admin.wallet.table.description"),
-      dataIndex: TableColumnKeys.DESCRIPTION,
-      key: TableColumnKeys.DESCRIPTION,
-      ellipsis: true,
-      render: (description: string | undefined) => description || "-",
-    },
-    {
-      title: t("admin.wallet.table.createdAt"),
-      dataIndex: TableColumnKeys.CREATED_AT,
-      key: TableColumnKeys.CREATED_AT,
-      width: 180,
-      render: (createdAt: string) => formatDateTime(createdAt),
-    },
-  ];
+  const columns = buildWalletColumns({ t, formatCurrency });
 
   const renderStatCards = (stats: AdminTransactionStatsResponse) => (
     <Row gutter={[16, 16]}>
@@ -516,7 +411,7 @@ export default function AdminWalletPage() {
             }
             description={item.email}
           />
-          <div style={{ textAlign: "right" }}>
+          <div className={styles.topUserAmount}>
             <div>
               <Text strong>{item.transaction_count}</Text>{" "}
               <Text type="secondary">
@@ -642,7 +537,7 @@ export default function AdminWalletPage() {
               onChange={(value) =>
                 handleFilterChange("status", value || undefined)
               }
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               allowClear
             >
               {Object.values(TransactionStatus).map((status) => (
@@ -733,7 +628,7 @@ export default function AdminWalletPage() {
   ];
 
   return (
-    <Space orientation="vertical" size="large" className={styles.spaceFull}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.wallet.title")}</Title>
       <Tabs
         activeKey={activeTab}

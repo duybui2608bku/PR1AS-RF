@@ -42,7 +42,6 @@ interface BookingModalProps {
   workerServiceId: string;
   serviceId: string;
   serviceCode: string;
-  clientId: string;
   pricing: Array<{
     unit: string;
     duration: number;
@@ -59,7 +58,6 @@ export function BookingModal({
   workerServiceId,
   serviceId,
   serviceCode,
-  clientId,
   pricing,
   onSuccess,
 }: BookingModalProps) {
@@ -278,7 +276,6 @@ export function BookingModal({
       };
 
       const bookingData: CreateBookingInput = {
-        client_id: clientId,
         worker_id: workerId,
         worker_service_id: workerServiceId,
         service_id: serviceId,
@@ -354,7 +351,7 @@ export function BookingModal({
             ]}
           >
             <RangePicker
-              style={{ width: "100%" }}
+              className={styles.fullWidth}
               format="DD/MM/YYYY"
               placeholder={[
                 t("booking.create.selectStartDate"),
@@ -440,7 +437,7 @@ export function BookingModal({
                 format="HH:mm"
                 minuteStep={BOOKING_TIME_SLOTS.SLOT_DURATION_MINUTES}
                 disabledTime={disabledTime}
-                style={{ width: "100%" }}
+                className={styles.fullWidth}
                 placeholder={t("booking.create.selectStartTime")}
               />
             </Form.Item>

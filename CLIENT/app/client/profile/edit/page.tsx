@@ -19,7 +19,8 @@ import {
 const { Content, Footer } = Layout;
 import { UserOutlined, LockOutlined, PhoneOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import {
   userProfileApi,
@@ -48,31 +49,26 @@ function EditProfileContent() {
     retry: false,
   });
 
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: UpdateBasicProfileInput) =>
+  const updateProfileMutation = useStandardizedMutation(
+    (data: UpdateBasicProfileInput) =>
       userProfileApi.updateBasicProfile(data),
-    onSuccess: (updatedUser) => {
-      if (user) {
-        setUser({
-          ...user,
-          avatar: updatedUser.avatar || user.avatar,
-          name: updatedUser.full_name || user.name,
-          phone: updatedUser.phone || (user as any).phone,
-        });
-      }
+    {
+      onSuccess: (updatedUser) => {
+        if (user) {
+          setUser({
+            ...user,
+            avatar: updatedUser.avatar || user.avatar,
+            name: updatedUser.full_name || user.name,
+            phone: updatedUser.phone || (user as any).phone,
+          });
+        }
 
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      message.success(t("profile.edit.success"));
-      router.push(AppRoute.CLIENT_PROFILE);
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        t("profile.edit.error");
-      message.error(errorMessage);
-    },
-  });
+        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+        message.success(t("profile.edit.success"));
+        router.push(AppRoute.CLIENT_PROFILE);
+      },
+    }
+  );
 
   useEffect(() => {
     if (profile) {
@@ -129,10 +125,11 @@ function EditProfileContent() {
   };
 
   return (
-    <Layout>
-      <Content style={{ padding: "24px", maxWidth: 1200, margin: "0 auto" }}>
-          <Space style={{ marginBottom: 24 }}>
-            <Title level={2} style={{ margin: 0 }}>
+    <Layout className={styles.layout}>
+      <Content className={styles.content}>
+        <div className={styles.container}>
+          <Space className={styles.headerSpace}>
+            <Title level={2} className={styles.title}>
               {t("profile.edit.title")}
             </Title>
           </Space>
@@ -140,17 +137,7 @@ function EditProfileContent() {
           <Card loading={isLoadingProfile}>
             <Row gutter={[32, 32]}>
               <Col xs={24} sm={24} md={8} lg={7} xl={6}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: "24px",
-
-                    borderRadius: 8,
-                    height: "100%",
-                  }}
-                >
+                <div className={styles.avatarBlock}>
                   <AvatarUpload
                     value={avatarUrl}
                     onChange={handleAvatarChange}
@@ -276,7 +263,7 @@ function EditProfileContent() {
               </Col>
             </Row>
           </Card>
-
+        </div>
       </Content>
       <Footer />
     </Layout>

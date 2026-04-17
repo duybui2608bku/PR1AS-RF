@@ -156,7 +156,25 @@
           "placeholder": "Enter token from email",
           "required": "Please enter the reset token!"
         }
-      }
+      },
+      "verifyEmail": {
+        "title": "Verify Email",
+        "subtitle": "Verifying your email...",
+        "verifying": "Verifying...",
+        "success": "Email verified successfully!",
+        "successMessage": "You can now log in and use all features.",
+        "error": "Verification Failed",
+        "errorMessage": "The verification token is invalid or has expired.",
+        "noToken": "Token not found. Please use the link from your email.",
+        "goToLogin": "Go to Login",
+        "resendEmail": "Resend Verification Email",
+        "resendSuccess": "Verification email has been resent!",
+        "resendEmailLabel": "Enter your email to resend the verification link",
+        "alreadyVerified": "Email has already been verified",
+        "checkEmailNotice": "A verification email has been sent to your inbox. Please check your email to verify your account."
+      },
+      "loginError": "Incorrect email or password",
+      "registerError": "Registration failed"
     }
   },
   "admin": {

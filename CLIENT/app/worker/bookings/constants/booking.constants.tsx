@@ -63,12 +63,12 @@ const renderCancellationPopover = (
   }
 
   return (
-    <Space orientation="vertical" size="small" className={styles.popoverContent}>
-      <Space orientation="vertical" size={0}>
+    <Space direction="vertical" size="small" className={styles.popoverContent}>
+      <Space direction="vertical" size={0}>
         <Text strong>{t("booking.cancel.cancelledAt")}:</Text>
         <Text>{formatDateTime(cancellation.cancelled_at)}</Text>
       </Space>
-      <Space orientation="vertical" size={0}>
+      <Space direction="vertical" size={0}>
         <Text strong>{t("booking.cancel.cancelledBy")}:</Text>
         <Text>
           {cancellation.cancelled_by === "worker"
@@ -76,21 +76,21 @@ const renderCancellationPopover = (
             : t("booking.cancel.cancelledByClient")}
         </Text>
       </Space>
-      <Space orientation="vertical" size={0}>
+      <Space direction="vertical" size={0}>
         <Text strong>{t("booking.cancel.reason")}:</Text>
         <Text>{getCancellationReasonLabel(cancellation.reason, t)}</Text>
       </Space>
       {cancellation.notes && (
-        <Space orientation="vertical" size={0}>
+        <Space direction="vertical" size={0}>
           <Text strong>{t("booking.cancel.notes")}:</Text>
           <Text>{cancellation.notes}</Text>
         </Space>
       )}
-      <Space orientation="vertical" size={0}>
+      <Space direction="vertical" size={0}>
         <Text strong>{t("booking.cancel.refundAmount")}:</Text>
         <Text>{formatCurrency(cancellation.refund_amount)}</Text>
       </Space>
-      <Space orientation="vertical" size={0}>
+      <Space direction="vertical" size={0}>
         <Text strong>{t("booking.cancel.penaltyAmount")}:</Text>
         <Text>{formatCurrency(cancellation.penalty_amount)}</Text>
       </Space>
@@ -145,7 +145,7 @@ export const createWorkerBookingColumns = ({
           locale,
         });
         return (
-          <Space orientation="vertical" size="small">
+          <Space direction="vertical" size="small">
             <Text strong>{serviceName}</Text>
           </Space>
         );
@@ -166,7 +166,7 @@ export const createWorkerBookingColumns = ({
       key: BookingTableColumnKey.SCHEDULE,
       width: BookingTableColumnWidth.SCHEDULE,
       render: (schedule: Booking["schedule"]) => (
-        <Space orientation="vertical" size="small">
+        <Space direction="vertical" size="small">
           <Text>
             {t("booking.table.startTime")}:{" "}
             {formatDateTime(schedule.start_time)}
@@ -184,7 +184,7 @@ export const createWorkerBookingColumns = ({
       key: BookingTableColumnKey.AMOUNT,
       width: BookingTableColumnWidth.AMOUNT,
       render: (_: unknown, record: Booking) => (
-        <Space orientation="vertical" size="small">
+        <Space direction="vertical" size="small">
           <Text strong className={styles.amountPrimary}>
             {formatCurrency(record.pricing.total_amount)}
           </Text>

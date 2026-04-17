@@ -3,6 +3,7 @@ export enum TransactionType {
   WITHDRAW = "withdraw",
   PAYMENT = "payment",
   REFUND = "refund",
+  PAYOUT = "payout",
 }
 
 export enum TransactionStatus {
@@ -60,6 +61,7 @@ export const TRANSACTION_DESCRIPTIONS = {
   DEPOSIT_PREFIX: "Deposit",
   REFUND_PREFIX: "Refund for cancelled booking",
   HOLD_BALANCE_PREFIX: "Hold balance for booking",
+  PAYOUT_PREFIX: "Payout for completed booking",
 } as const;
 
 export const PAGINATION_DEFAULTS = {

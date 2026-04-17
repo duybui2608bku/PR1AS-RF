@@ -48,9 +48,7 @@ function ComplaintGroupListComponent({
           <List.Item.Meta
             avatar={
               <Badge count={group.unread_count ?? 0} offset={[-5, 5]}>
-                <TeamOutlined
-                  style={{ fontSize: 24, color: "var(--ant-color-text-secondary)" }}
-                />
+                <TeamOutlined className={styles.groupListIcon} />
               </Badge>
             }
             title={

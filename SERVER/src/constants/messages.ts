@@ -168,6 +168,16 @@ export const BOOKING_MESSAGES = {
   ONLY_CLIENT_CAN_UPDATE_BOOKING: "Only the client can update booking details",
   ONLY_WORKER_CAN_UPDATE_RESPONSE:
     "Only the assigned worker can update worker response",
+  SELF_BOOKING_NOT_ALLOWED: "You cannot book your own service",
+  INVALID_STATUS_TRANSITION_DETAIL: "Cannot transition from '%s' to '%s'",
+  DISPUTE_CREATED: "Dispute created successfully",
+  DISPUTE_RESOLVED: "Dispute resolved successfully",
+  BOOKING_ALREADY_DISPUTED: "This booking already has an active dispute",
+  BOOKING_NOT_DISPUTED: "This booking is not in disputed status",
+  ONLY_CLIENT_CAN_DISPUTE: "Only the client can open a dispute",
+  ONLY_ADMIN_CAN_RESOLVE_DISPUTE: "Only admin can resolve disputes",
+  DISPUTE_INVALID_REFUND_AMOUNT:
+    "Refund amount cannot exceed the escrow amount",
 } as const;
 
 export const REVIEW_MESSAGES = {
@@ -200,6 +210,9 @@ export const ESCROW_MESSAGES = {
   ESCROW_FETCHED: "Escrow transaction fetched successfully",
   UNAUTHORIZED_ACCESS:
     "You do not have permission to access this escrow transaction",
+  ESCROW_RELEASED: "Escrow released successfully",
+  ESCROW_RELEASE_FAILED: "Failed to release escrow",
+  ESCROW_ALREADY_RELEASED: "Escrow has already been released",
 } as const;
 
 export const WORKER_MESSAGES = {

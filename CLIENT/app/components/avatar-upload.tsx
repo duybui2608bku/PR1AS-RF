@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Avatar, Upload, Spin } from "antd";
+import { Avatar, Upload, Spin, Typography } from "antd";
 import { CameraOutlined, UserOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import { uploadImage } from "@/lib/utils/upload";
@@ -16,6 +16,8 @@ interface AvatarUploadProps {
   disabled?: boolean;
   className?: string;
 }
+
+const { Text } = Typography;
 
 export function AvatarUpload({
   value,
@@ -81,22 +83,12 @@ export function AvatarUpload({
     }
   };
 
+  const isDisabledState = disabled || loading;
+
   return (
-    <div
-      className={className}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 16,
-      }}
-    >
+    <div className={`${styles.wrapper} ${className || ""}`}>
       <div
-        style={{
-          position: "relative",
-          cursor: disabled || loading ? "not-allowed" : "pointer",
-          opacity: disabled || loading ? 0.6 : 1,
-        }}
+        className={`${styles.avatarWrap} ${isDisabledState ? styles.disabled : ""}`}
         onClick={handleClick}
       >
         <Spin spinning={loading}>
@@ -104,31 +96,12 @@ export function AvatarUpload({
             size={size}
             src={previewUrl || undefined}
             icon={!previewUrl ? <UserOutlined /> : undefined}
-            style={{
-              backgroundColor: !previewUrl
-                ? "var(--ant-color-primary)"
-                : undefined,
-            }}
+            className={!previewUrl ? styles.placeholderAvatar : undefined}
           />
         </Spin>
         {!disabled && !loading && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              right: 0,
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              backgroundColor: "var(--ant-color-primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "3px solid var(--ant-color-bg-container)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            }}
-          >
-            <CameraOutlined style={{ color: "#fff", fontSize: 16 }} />
+          <div className={styles.badge}>
+            <CameraOutlined className={styles.badgeIcon} />
           </div>
         )}
       </div>
@@ -138,7 +111,7 @@ export function AvatarUpload({
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          style={{ display: "none" }}
+          className={styles.hiddenInput}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
@@ -150,9 +123,9 @@ export function AvatarUpload({
       </Upload>
 
       {!disabled && (
-        <span className={styles.hint}>
+        <Text className={styles.hint}>
           {t("upload.avatar.changeHint")}
-        </span>
+        </Text>
       )}
     </div>
   );

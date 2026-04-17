@@ -104,6 +104,7 @@ const CategoryTabsComponent = () => {
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const [isCompact, setIsCompact] = useState(false);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const activeCategory = pathname === "/services"
@@ -221,6 +222,13 @@ const CategoryTabsComponent = () => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const dropdownElement = dropdownRef.current;
+    if (!dropdownElement || !openDropdown) return;
+    dropdownElement.style.left = `${dropdownPos.left}px`;
+    dropdownElement.style.top = `${dropdownPos.top}px`;
+  }, [dropdownPos, openDropdown]);
+
   return (
     <div className={`${styles.categoryTabsWrapper} ${isCompact ? styles.compact : ""}`}>
       <div className={styles.categoryTabsInner}>
@@ -288,8 +296,8 @@ const CategoryTabsComponent = () => {
                 onClick={() => setOpenDropdown(null)}
               />
               <div
+                ref={dropdownRef}
                 className={styles.dropdownFixed}
-                style={{ left: dropdownPos.left, top: dropdownPos.top }}
                 onMouseEnter={() => {
                   if (dropdownTimeoutRef.current) {
                     clearTimeout(dropdownTimeoutRef.current);
@@ -321,7 +329,7 @@ const CategoryTabsComponent = () => {
             type="button"
             aria-label="Scroll left"
           >
-            <LeftOutlined style={{ fontSize: 10 }} />
+            <LeftOutlined className={styles.scrollIcon} />
           </button>
         )}
 
@@ -332,7 +340,7 @@ const CategoryTabsComponent = () => {
             type="button"
             aria-label="Scroll right"
           >
-            <RightOutlined style={{ fontSize: 10 }} />
+            <RightOutlined className={styles.scrollIcon} />
           </button>
         )}
       </div>

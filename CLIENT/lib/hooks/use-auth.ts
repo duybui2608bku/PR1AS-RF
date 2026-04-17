@@ -209,3 +209,35 @@ export function useResetPassword() {
     },
   });
 }
+
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export function useVerifyEmail() {
+  return useMutation<ApiResponse<{ message: string }>, Error, VerifyEmailRequest>({
+    mutationFn: async (data) => {
+      const response = await api.post<ApiResponse<{ message: string }>>(
+        "/auth/verify-email",
+        data
+      );
+      return response.data;
+    },
+  });
+}
+
+export function useResendVerification() {
+  return useMutation<ApiResponse<{ message: string }>, Error, ResendVerificationRequest>({
+    mutationFn: async (data) => {
+      const response = await api.post<ApiResponse<{ message: string }>>(
+        "/auth/resend-verification",
+        data
+      );
+      return response.data;
+    },
+  });
+}

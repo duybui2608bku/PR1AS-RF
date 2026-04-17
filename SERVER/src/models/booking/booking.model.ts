@@ -4,7 +4,8 @@ import {
   BookingPaymentStatus,
   CancellationReason,
   CancelledBy,
-  BOOKING_LIMITS,
+  DisputeReason,
+  DisputeResolution,
 } from "../../constants/booking";
 import { PricingUnit } from "../../types/worker/worker-service";
 import { IBookingDocument } from "../../types/booking";
@@ -25,8 +26,7 @@ const scheduleSchema = new Schema(
     duration_hours: {
       type: Number,
       default: 0,
-      min: BOOKING_LIMITS.MIN_DURATION_HOURS,
-      max: BOOKING_LIMITS.MAX_DURATION_HOURS,
+      min: 0,
     },
   },
   { _id: false }
@@ -99,6 +99,66 @@ const cancellationSchema = new Schema(
       type: String,
       default: "",
       trim: true,
+    },
+    refund_amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    penalty_amount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+  },
+  { _id: false }
+);
+
+const disputeSchema = new Schema(
+  {
+    reason: {
+      type: String,
+      enum: Object.values(DisputeReason),
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2000,
+    },
+    evidence_urls: {
+      type: [String],
+      default: [],
+    },
+    disputed_by: {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
+    disputed_at: {
+      type: Date,
+      required: true,
+    },
+    resolution: {
+      type: String,
+      enum: Object.values(DisputeResolution),
+      default: null,
+    },
+    resolution_notes: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 2000,
+    },
+    resolved_by: {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      default: null,
+    },
+    resolved_at: {
+      type: Date,
+      default: null,
     },
     refund_amount: {
       type: Number,
@@ -202,6 +262,14 @@ const bookingSchema = new Schema<IBookingDocument>(
     },
     cancellation: {
       type: cancellationSchema,
+      default: null,
+    },
+    dispute: {
+      type: disputeSchema,
+      default: null,
+    },
+    disputed_at: {
+      type: Date,
       default: null,
     },
     created_at: {

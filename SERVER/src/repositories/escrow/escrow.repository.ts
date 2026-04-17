@@ -1,8 +1,9 @@
-import { Types } from "mongoose";
+import { Types, ClientSession } from "mongoose";
 import { Escrow } from "../../models/escrow/escrow.model";
 import {
   IEscrowDocument,
   CreateEscrowInput,
+  ReleaseEscrowInput,
   RefundEscrowInput,
 } from "../../types/escrow/escrow.types";
 import { EscrowStatus } from "../../constants/escrow";
@@ -176,7 +177,7 @@ export class EscrowRepository {
       .populate("booking_id");
   }
 
-  async create(data: CreateEscrowInput): Promise<IEscrowDocument> {
+  async create(data: CreateEscrowInput, session?: ClientSession): Promise<IEscrowDocument> {
     const escrow = new Escrow({
       ...data,
       status: EscrowStatus.HOLDING,
@@ -184,7 +185,27 @@ export class EscrowRepository {
       created_at: new Date(),
       updated_at: new Date(),
     });
-    return escrow.save();
+    return escrow.save({ session });
+  }
+
+  async releaseEscrow(data: ReleaseEscrowInput): Promise<IEscrowDocument | null> {
+    const escrowIdValue = data.escrow_id;
+    const escrowId =
+      escrowIdValue instanceof Types.ObjectId
+        ? escrowIdValue
+        : new Types.ObjectId(String(escrowIdValue));
+
+    return Escrow.findByIdAndUpdate(
+      escrowId,
+      {
+        status: EscrowStatus.RELEASED,
+        release_reason: data.release_reason,
+        release_transaction_id: data.release_transaction_id,
+        released_at: new Date(),
+        updated_at: new Date(),
+      },
+      { new: true }
+    );
   }
 
   async refundEscrow(data: RefundEscrowInput): Promise<IEscrowDocument | null> {
@@ -211,3 +232,4 @@ export class EscrowRepository {
 }
 
 export const escrowRepository = new EscrowRepository();
+

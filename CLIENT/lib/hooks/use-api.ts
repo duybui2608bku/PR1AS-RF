@@ -1,12 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { api, extractData, type ApiResponse } from "../axios";
 import type { AxiosError } from "axios";
 
-/**
- * Generic API Query Hook
- */
+
 export function useApiQuery<TData = unknown, TError = AxiosError<ApiResponse>>(
   key: string[],
   url: string,
@@ -22,16 +20,12 @@ export function useApiQuery<TData = unknown, TError = AxiosError<ApiResponse>>(
   });
 }
 
-/**
- * Generic API Mutation Hook
- */
+
 export function useApiMutation<TData = unknown, TVariables = unknown, TError = AxiosError<ApiResponse>>(
   url: string,
   method: "POST" | "PUT" | "PATCH" | "DELETE" = "POST",
   options?: Omit<UseMutationOptions<ApiResponse<TData>, TError, TVariables>, "mutationFn">
 ) {
-  const queryClient = useQueryClient();
-
   return useMutation<ApiResponse<TData>, TError, TVariables>({
     mutationFn: async (variables) => {
       let response;
@@ -53,17 +47,11 @@ export function useApiMutation<TData = unknown, TVariables = unknown, TError = A
       }
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate queries sau khi mutation thành công
-      queryClient.invalidateQueries();
-    },
     ...options,
   });
 }
 
-/**
- * Helper để extract data từ query result
- */
+
 export function useApiQueryData<TData = unknown>(
   key: string[],
   url: string,

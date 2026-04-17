@@ -47,6 +47,8 @@ export enum ApiEndpoint {
   BOOKINGS_BY_ID = "/bookings/:id",
   BOOKINGS_BY_ID_STATUS = "/bookings/:id/status",
   BOOKINGS_BY_ID_CANCEL = "/bookings/:id/cancel",
+  BOOKINGS_BY_ID_DISPUTE = "/bookings/:id/dispute",
+  BOOKINGS_BY_ID_DISPUTE_RESOLVE = "/bookings/:id/dispute/resolve",
   REVIEWS = "/reviews",
   REVIEWS_MY = "/reviews/my",
   REVIEWS_BY_ID = "/reviews/:id",

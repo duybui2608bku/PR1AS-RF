@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useLogin } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
 import styles from "../auth.module.scss";
 
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const loginMutation = useLogin();
   const [form] = Form.useForm();
   const { t } = useTranslation();
+  const { handleError } = useErrorHandler();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -63,23 +65,15 @@ export default function LoginPage() {
         }
       }
     } catch (error: unknown) {
-      message.error(t("auth.user.loginError"));
+      handleError(error, t("auth.user.loginError"));
     }
   };
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px",
-      }}
-    >
-      <Card style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+    <div className={styles.centerBlock}>
+      <Card className={styles.card}>
+        <div className={styles.cardHeader}>
+          <SafetyOutlined className={styles.heroIcon} />
           <Title level={2}>{t("auth.user.loginTitle")}</Title>
           <Text type="secondary">{t("auth.user.loginSubtitle")}</Text>
         </div>

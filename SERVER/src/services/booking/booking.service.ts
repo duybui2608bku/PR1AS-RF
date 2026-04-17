@@ -15,6 +15,9 @@ import {
   BookingPaymentStatus,
   CancellationReason,
   CancelledBy,
+  BOOKING_STATUS_TRANSITIONS,
+  DisputeReason,
+  DisputeResolution,
 } from "../../constants/booking";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
@@ -31,6 +34,7 @@ export interface RoleInfo {
 }
 
 export class BookingService {
+
   private async getBookingOrThrow(
     bookingId: string
   ): Promise<IBookingDocument> {
@@ -43,6 +47,21 @@ export class BookingService {
       );
     }
     return booking;
+  }
+
+  private validateStatusTransition(
+    currentStatus: BookingStatus,
+    targetStatus: BookingStatus
+  ): void {
+    const allowedTargets = BOOKING_STATUS_TRANSITIONS[currentStatus];
+
+    if (!allowedTargets || !allowedTargets.includes(targetStatus)) {
+      throw new AppError(
+        BOOKING_MESSAGES.INVALID_STATUS_TRANSITION,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_INVALID_STATUS_TRANSITION
+      );
+    }
   }
 
   private validateBookingStatus(
@@ -174,11 +193,22 @@ export class BookingService {
     return updates;
   }
 
+
   async createBooking(
     clientId: string,
     input: CreateBookingInput
   ): Promise<IBookingDocument> {
-    const worker = await userRepository.findById(input.worker_id.toString());
+    const workerId = input.worker_id.toString();
+
+    if (clientId === workerId) {
+      throw new AppError(
+        BOOKING_MESSAGES.SELF_BOOKING_NOT_ALLOWED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_SELF_BOOKING_NOT_ALLOWED
+      );
+    }
+
+    const worker = await userRepository.findById(workerId);
     if (!worker) {
       throw new AppError(
         BOOKING_MESSAGES.USER_NOT_FOUND,
@@ -189,7 +219,7 @@ export class BookingService {
 
     await this.validateWorkerService(
       input.worker_service_id.toString(),
-      input.worker_id.toString()
+      workerId
     );
 
     const service = await serviceRepository.findById(
@@ -204,7 +234,7 @@ export class BookingService {
     }
 
     await this.validateScheduleConflict(
-      input.worker_id.toString(),
+      workerId,
       input.schedule.start_time,
       input.schedule.end_time
     );
@@ -218,7 +248,7 @@ export class BookingService {
         ...input,
         client_id: new Types.ObjectId(clientId),
       };
-      const booking = await bookingRepository.create(bookingData);
+      const booking = await bookingRepository.create(bookingData, session);
 
       const holdTransactionId = await holdBalanceForBooking(
         clientId,
@@ -237,13 +267,17 @@ export class BookingService {
         currency: input.pricing.currency,
         hold_transaction_id: new Types.ObjectId(holdTransactionId),
       };
-      const escrow = await escrowRepository.create(escrowData);
+      const escrow = await escrowRepository.create(escrowData, session);
 
-      await bookingRepository.update(booking._id.toString(), {
-        escrow_id: escrow._id,
-        transaction_id: holdTransactionId,
-        payment_status: BookingPaymentStatus.PAID,
-      });
+      await bookingRepository.update(
+        booking._id.toString(),
+        {
+          escrow_id: escrow._id,
+          transaction_id: holdTransactionId,
+          payment_status: BookingPaymentStatus.PAID,
+        },
+        session
+      );
 
       await session.commitTransaction();
 
@@ -296,19 +330,13 @@ export class BookingService {
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
 
-    this.validateBookingStatus(booking, "update");
-
+    this.validateStatusTransition(
+      booking.status as BookingStatus,
+      status
+    );
     if (
       status === BookingStatus.CONFIRMED ||
-      status === BookingStatus.REJECTED
-    ) {
-      this.ensureAuthorized(
-        this.isBookingWorker(booking, userId),
-        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_STATUS
-      );
-    }
-
-    if (
+      status === BookingStatus.REJECTED ||
       status === BookingStatus.IN_PROGRESS ||
       status === BookingStatus.COMPLETED
     ) {
@@ -324,6 +352,25 @@ export class BookingService {
 
     if (workerResponse !== undefined) {
       updateData.worker_response = workerResponse;
+    }
+    if (status === BookingStatus.COMPLETED) {
+      await escrowService.releaseEscrowForCompletedBooking(bookingId);
+      updateData.payout_transaction_id = bookingId;
+    }
+
+    if (status === BookingStatus.REJECTED) {
+      if (booking.payment_status === BookingPaymentStatus.PAID) {
+        const clientId =
+          typeof booking.client_id === "object" && booking.client_id?._id
+            ? booking.client_id._id.toString()
+            : String(booking.client_id);
+        await escrowService.refundEscrowForCancelledBooking(
+          bookingId,
+          clientId,
+          booking.schedule.start_time
+        );
+        updateData.payment_status = BookingPaymentStatus.REFUNDED;
+      }
     }
 
     const updatedBooking = await bookingRepository.updateStatus(
@@ -355,9 +402,10 @@ export class BookingService {
       this.isBookingOwner(booking, userId, roleInfo),
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
-
-    this.validateBookingStatus(booking, "cancel");
-
+    this.validateStatusTransition(
+      booking.status as BookingStatus,
+      BookingStatus.CANCELLED
+    );
     let cancelledBy: CancelledBy;
     if (this.isBookingClient(booking, userId)) {
       cancelledBy = CancelledBy.CLIENT;
@@ -501,6 +549,180 @@ export class BookingService {
     const updatedBooking = await bookingRepository.update(
       bookingId,
       filteredUpdateData
+    );
+
+    if (!updatedBooking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
+
+    return updatedBooking;
+  }
+
+  async createDispute(
+    bookingId: string,
+    userId: string,
+    reason: DisputeReason,
+    description: string,
+    evidenceUrls: string[],
+    _roleInfo: RoleInfo
+  ): Promise<IBookingDocument> {
+    const booking = await this.getBookingOrThrow(bookingId);
+
+    this.ensureAuthorized(
+      this.isBookingClient(booking, userId),
+      BOOKING_MESSAGES.ONLY_CLIENT_CAN_DISPUTE
+    );
+    this.validateStatusTransition(
+      booking.status as BookingStatus,
+      BookingStatus.DISPUTED
+    );
+    if (booking.dispute) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_ALREADY_DISPUTED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_ALREADY_DISPUTED
+      );
+    }
+
+    const dispute = {
+      reason,
+      description,
+      evidence_urls: evidenceUrls,
+      disputed_by: userId,
+      disputed_at: new Date(),
+      resolution: null,
+      resolution_notes: "",
+      resolved_by: null,
+      resolved_at: null,
+      refund_amount: 0,
+      penalty_amount: 0,
+    };
+
+    const updatedBooking = await bookingRepository.updateStatus(
+      bookingId,
+      BookingStatus.DISPUTED,
+      {
+        dispute,
+        disputed_at: new Date(),
+      } as Partial<IBookingDocument>
+    );
+
+    if (!updatedBooking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
+
+    return updatedBooking;
+  }
+
+  async resolveDispute(
+    bookingId: string,
+    adminUserId: string,
+    resolution: DisputeResolution,
+    resolutionNotes: string,
+    refundAmount?: number,
+    roleInfo?: RoleInfo
+  ): Promise<IBookingDocument> {
+    if (!roleInfo?.isAdmin) {
+      throw new AppError(
+        BOOKING_MESSAGES.ONLY_ADMIN_CAN_RESOLVE_DISPUTE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.DISPUTE_CANNOT_RESOLVE
+      );
+    }
+
+    const booking = await this.getBookingOrThrow(bookingId);
+
+    if (booking.status !== BookingStatus.DISPUTED) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_DISPUTED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_NOT_DISPUTED
+      );
+    }
+
+    const clientId =
+      typeof booking.client_id === "object" && booking.client_id?._id
+        ? booking.client_id._id.toString()
+        : String(booking.client_id);
+
+    let finalStatus: BookingStatus;
+    let paymentStatus: BookingPaymentStatus = booking.payment_status as BookingPaymentStatus;
+    let disputeRefundAmount = 0;
+    let disputePenaltyAmount = 0;
+
+    if (resolution === DisputeResolution.FAVOR_CLIENT) {
+      const result = await escrowService.refundEscrowForCancelledBooking(
+        bookingId,
+        clientId,
+        booking.schedule.start_time
+      );
+      if (result) {
+        disputeRefundAmount = result.refundAmount;
+        disputePenaltyAmount = result.penaltyAmount;
+      }
+      finalStatus = BookingStatus.CANCELLED;
+      paymentStatus = BookingPaymentStatus.REFUNDED;
+    } else if (resolution === DisputeResolution.FAVOR_WORKER) {
+      await escrowService.releaseEscrowForCompletedBooking(bookingId);
+      finalStatus = BookingStatus.COMPLETED;
+    } else if (resolution === DisputeResolution.PARTIAL_REFUND) {
+      if (refundAmount === undefined || refundAmount <= 0) {
+        throw new AppError(
+          BOOKING_MESSAGES.DISPUTE_INVALID_REFUND_AMOUNT,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.DISPUTE_CANNOT_RESOLVE
+        );
+      }
+      const result = await escrowService.refundEscrowForCancelledBooking(
+        bookingId,
+        clientId,
+        booking.schedule.start_time
+      );
+      if (result) {
+        disputeRefundAmount = result.refundAmount;
+        disputePenaltyAmount = result.penaltyAmount;
+      }
+      finalStatus = BookingStatus.COMPLETED;
+      paymentStatus = BookingPaymentStatus.PARTIALLY_REFUNDED;
+    } else {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_DISPUTED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.DISPUTE_CANNOT_RESOLVE
+      );
+    }
+
+    const disputeUpdate = {
+      ...booking.dispute,
+      resolution,
+      resolution_notes: resolutionNotes,
+      resolved_by: adminUserId,
+      resolved_at: new Date(),
+      refund_amount: disputeRefundAmount,
+      penalty_amount: disputePenaltyAmount,
+    };
+
+    const updateData: Partial<IBookingDocument> = {
+      dispute: disputeUpdate as any,
+      payment_status: paymentStatus,
+    };
+
+    if (finalStatus === BookingStatus.COMPLETED) {
+      updateData.completed_at = new Date();
+    }
+
+    const updatedBooking = await bookingRepository.updateStatus(
+      bookingId,
+      finalStatus,
+      updateData
     );
 
     if (!updatedBooking) {

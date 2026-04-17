@@ -191,7 +191,11 @@ export class WalletRepository {
                 {
                   $in: [
                     "$type",
-                    [TransactionType.DEPOSIT, TransactionType.REFUND],
+                    [
+                      TransactionType.DEPOSIT,
+                      TransactionType.REFUND,
+                      TransactionType.PAYOUT,
+                    ],
                   ],
                 },
                 "$amount",

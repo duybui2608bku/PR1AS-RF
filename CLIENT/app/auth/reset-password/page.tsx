@@ -188,9 +188,9 @@ function ResetPasswordForm() {
 
           <Divider />
 
-          <div style={{ textAlign: "center" }}>
+          <div className={styles.footerBlock}>
             <Text type="secondary">
-              <Link href="/auth/login" style={{ fontWeight: 500 }}>
+              <Link href="/auth/login" className={styles.link}>
                 {t("auth.user.forgotPassword.backToLogin")}
               </Link>
             </Text>

@@ -9,6 +9,7 @@ import {
   Button,
   Select,
   DatePicker,
+  Typography,
 } from "antd";
 import {
   ReloadOutlined,
@@ -31,6 +32,7 @@ import styles from "@/app/client/wallet/components/EscrowHistoryTab.module.scss"
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 type FormatCurrencyFunction = (amount: number) => string;
 
@@ -79,12 +81,12 @@ export function EscrowHistoryTab({
 }: EscrowHistoryTabProps): React.ReactElement {
   return (
     <Card>
-      <Row gutter={[Spacing.MD, Spacing.MD]} style={{ marginBottom: Spacing.LG }}>
+      <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-            <span>{t("wallet.filters.datePreset") || "Quick Date"}:</span>
+          <Space direction="vertical" size="small" className={styles.filterSpace}>
+            <Text>{t("wallet.filters.datePreset") || "Quick Date"}:</Text>
             <Select
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               value={datePreset}
               onChange={onDatePresetChange}
               allowClear
@@ -109,8 +111,8 @@ export function EscrowHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" className={styles.filterSpace}>
-            <span>{t("wallet.filters.dateRange") || "Date Range"}:</span>
+          <Space direction="vertical" size="small" className={styles.filterSpace}>
+            <Text>{t("wallet.filters.dateRange") || "Date Range"}:</Text>
             <RangePicker
               className={styles.filterRangePicker}
               value={dateRange}
@@ -120,11 +122,11 @@ export function EscrowHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-            <span>{t("wallet.filters.status") || "Status"}:</span>
+          <Space direction="vertical" size="small" className={styles.filterSpace}>
+            <Text>{t("wallet.filters.status") || "Status"}:</Text>
             <Select
               allowClear
-              style={{ width: "100%" }}
+              className={styles.filterSelect}
               value={status}
               onChange={onStatusChange}
               placeholder={t("wallet.filters.selectStatus") || "Select status"}
@@ -138,8 +140,8 @@ export function EscrowHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space orientation="vertical" size="small" className={styles.filterSpace}>
-            <span />
+          <Space direction="vertical" size="small" className={styles.filterSpace}>
+            <Text />
             <Space className={styles.actionsSpace}>
               <Button
                 icon={<UndoOutlined />}

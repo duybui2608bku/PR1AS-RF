@@ -121,7 +121,7 @@ function CallbackContent() {
 
           {status === "success" && (
             <Result
-              icon={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+              icon={<CheckCircleOutlined className={styles.iconSuccess} />}
               title={t("wallet.deposit.callback.success", {
                 defaultValue: "Payment Successful",
               })}

@@ -9,9 +9,7 @@ import {
   Select,
   Input,
   Button,
-  Tag,
   Space as AntSpace,
-  Modal,
   message,
 } from "antd";
 import {
@@ -19,23 +17,20 @@ import {
   SearchOutlined,
   ClearOutlined,
 } from "@ant-design/icons";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { userApi, type GetUsersQuery, type User } from "@/lib/api/user.api";
 import {
   UserStatus,
-  UserRole,
-  TableColumnKeys,
-  getStatusTagColor,
-  getRoleTagColor,
 } from "./constants/user.constants";
 import {
   PAGE_SIZE_OPTIONS,
   PAGINATION_DEFAULTS,
 } from "@/app/constants/constants";
-import { formatDateTime } from "@/app/func/func";
-import type { ColumnsType } from "antd/es/table";
+import { buildUserColumns } from "./constants/user-table-columns";
+import { UpdateStatusModal } from "./components/UpdateStatusModal";
 import styles from "./page.module.scss";
 
 const { Title } = Typography;
@@ -65,8 +60,8 @@ export default function AdminUserPage() {
     queryFn: () => userApi.getUsers(filters),
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({
+  const updateStatusMutation = useStandardizedMutation(
+    async ({
       userId,
       status,
     }: {
@@ -75,17 +70,16 @@ export default function AdminUserPage() {
     }) => {
       return await userApi.updateUserStatus(userId, { status });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      message.success(t("admin.user.updateStatus.success"));
-      setStatusModalVisible(false);
-      setSelectedUser(null);
-      setNewStatus(null);
-    },
-    onError: (error: unknown) => {
-      handleError(error);
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        message.success(t("admin.user.updateStatus.success"));
+        setStatusModalVisible(false);
+        setSelectedUser(null);
+        setNewStatus(null);
+      },
+    }
+  );
 
   useEffect(() => {
     if (error) {
@@ -158,124 +152,23 @@ export default function AdminUserPage() {
     setNewStatus(null);
   };
 
-  const columns: ColumnsType<User> = [
-    {
-      title: t("admin.user.table.id"),
-      dataIndex: TableColumnKeys.ID,
-      key: TableColumnKeys.ID,
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: t("admin.user.table.email"),
-      dataIndex: TableColumnKeys.EMAIL,
-      key: TableColumnKeys.EMAIL,
-      width: 200,
-      ellipsis: true,
-    },
-    {
-      title: t("admin.user.table.fullName"),
-      dataIndex: TableColumnKeys.FULL_NAME,
-      key: TableColumnKeys.FULL_NAME,
-      width: 150,
-      render: (fullName: string | null | undefined) => fullName || "-",
-    },
-    {
-      title: t("admin.user.table.phone"),
-      dataIndex: TableColumnKeys.PHONE,
-      key: TableColumnKeys.PHONE,
-      width: 120,
-      render: (phone: string | null | undefined) => phone || "-",
-    },
-    {
-      title: t("admin.user.table.roles"),
-      dataIndex: TableColumnKeys.ROLES,
-      key: TableColumnKeys.ROLES,
-      width: 150,
-      render: (roles: string[] | undefined) => {
-        if (!roles || roles.length === 0) return "-";
-        return (
-          <Space wrap size={4}>
-            {roles.map((role) => {
-              const roleEnum = role as UserRole;
-              return (
-                <Tag key={role} color={getRoleTagColor(roleEnum)}>
-                  {t(`admin.user.role.${roleEnum}`)}
-                </Tag>
-              );
-            })}
-          </Space>
-        );
-      },
-    },
-    {
-      title: t("admin.user.table.status"),
-      dataIndex: TableColumnKeys.STATUS,
-      key: TableColumnKeys.STATUS,
-      width: 100,
-      render: (status: string | undefined) => {
-        if (!status) return "-";
-        const statusEnum = status as UserStatus;
-        return (
-          <Tag color={getStatusTagColor(statusEnum)}>
-            {t(`admin.user.status.${statusEnum}`)}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t("admin.user.table.verifyEmail"),
-      dataIndex: TableColumnKeys.VERIFY_EMAIL,
-      key: TableColumnKeys.VERIFY_EMAIL,
-      width: 100,
-      render: (verifyEmail: boolean | undefined) => (
-        <Tag color={verifyEmail ? "green" : "orange"}>
-          {verifyEmail
-            ? t("admin.user.verifyEmail.verified")
-            : t("admin.user.verifyEmail.unverified")}
-        </Tag>
-      ),
-    },
-    {
-      title: t("admin.user.table.createdAt"),
-      dataIndex: TableColumnKeys.CREATED_AT,
-      key: TableColumnKeys.CREATED_AT,
-      width: 180,
-      render: (createdAt: string) => formatDateTime(createdAt),
-    },
-    {
-      title: t("admin.user.table.actions"),
-      key: "actions",
-      width: 120,
-      fixed: "right",
-      render: (_: unknown, record: User) => (
-        <Button
-          type="link"
-          size="small"
-          onClick={() => handleStatusUpdateClick(record)}
-        >
-          {t("admin.user.actions.updateStatus")}
-        </Button>
-      ),
-    },
-  ];
+  const columns = buildUserColumns({
+    t,
+    onUpdateStatus: handleStatusUpdateClick,
+  });
 
   return (
-    <Space orientation="vertical" size="large" style={{ width: "100%" }}>
+    <Space direction="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.user.title")}</Title>
       <Card>
-        <AntSpace
-          orientation="vertical"
-          size="middle"
-          style={{ width: "100%" }}
-        >
+        <AntSpace direction="vertical" size="middle" className={styles.spaceFull}>
           <AntSpace wrap size={16}>
             <Input
               placeholder={t("admin.user.filters.search")}
               value={searchText}
               size="large"
               onChange={(e) => handleSearchTextChange(e.target.value)}
-              style={{ width: 400 }}
+              className={styles.searchInput}
               allowClear
               onPressEnter={handleSearch}
             />
@@ -286,7 +179,7 @@ export default function AdminUserPage() {
               onChange={(value) =>
                 handleFilterChange("role", value || undefined)
               }
-              style={{ width: 150 }}
+              className={styles.filterSelect}
               allowClear
               size="large"
             >
@@ -367,28 +260,15 @@ export default function AdminUserPage() {
         />
       </Card>
 
-      <Modal
-        title={t("admin.user.updateStatus.title")}
+      <UpdateStatusModal
         open={statusModalVisible}
-        onOk={handleStatusUpdateConfirm}
+        selectedUser={selectedUser}
+        newStatus={newStatus}
+        isSubmitting={updateStatusMutation.isPending}
+        onConfirm={handleStatusUpdateConfirm}
         onCancel={handleStatusModalCancel}
-        confirmLoading={updateStatusMutation.isPending}
-        okText={t("common.confirm")}
-        cancelText={t("common.cancel")}
-        centered
-      >
-        {selectedUser && newStatus && (
-          <Space direction="vertical" size="middle" className={styles.modalSpace}>
-            <Typography.Text>
-              {t("admin.user.updateStatus.message", {
-                email: selectedUser.email,
-                currentStatus: t(`admin.user.status.${selectedUser.status}`),
-                newStatus: t(`admin.user.status.${newStatus}`),
-              })}
-            </Typography.Text>
-          </Space>
-        )}
-      </Modal>
+        t={t}
+      />
     </Space>
   );
 }

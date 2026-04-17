@@ -63,12 +63,7 @@ function ProfileContent() {
                     size={160}
                     src={profile?.avatar || undefined}
                     icon={!profile?.avatar ? <UserOutlined /> : undefined}
-                    className={styles.avatar}
-                    style={{
-                      backgroundColor: !profile?.avatar
-                        ? "var(--ant-color-primary)"
-                        : undefined,
-                    }}
+                    className={`${styles.avatar} ${!profile?.avatar ? styles.avatarPlaceholder : ""}`}
                   />
                   <Title level={4} className={styles.avatarTitle}>
                     {profile?.full_name || profile?.email || "User"}
@@ -96,7 +91,7 @@ function ProfileContent() {
                     label={
                       <Space>
                         <UserOutlined />
-                        <span>{t("profile.info.fullName")}</span>
+                        <Text>{t("profile.info.fullName")}</Text>
                       </Space>
                     }
                   >
@@ -109,7 +104,7 @@ function ProfileContent() {
                     label={
                       <Space>
                         <MailOutlined />
-                        <span>{t("profile.info.email")}</span>
+                        <Text>{t("profile.info.email")}</Text>
                       </Space>
                     }
                   >
@@ -131,7 +126,7 @@ function ProfileContent() {
                     label={
                       <Space>
                         <PhoneOutlined />
-                        <span>{t("profile.info.phone")}</span>
+                        <Text>{t("profile.info.phone")}</Text>
                       </Space>
                     }
                   >

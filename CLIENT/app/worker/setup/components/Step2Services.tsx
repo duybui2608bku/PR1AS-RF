@@ -8,8 +8,6 @@ import {
   Space,
   Checkbox,
   Form,
-  InputNumber,
-  Select,
   Divider,
   Tag,
   Empty,
@@ -23,7 +21,6 @@ import {
   PlusOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
-  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useApiQueryData } from "@/lib/hooks/use-api";
 import type {
@@ -40,6 +37,7 @@ import {
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { Spacing } from "@/lib/constants/ui.constants";
+import { PricingModal } from "./PricingModal";
 import styles from "./Step2Services.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -238,6 +236,11 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
       setPricingModalVisible(false);
       pricingForm.resetFields();
     });
+  };
+
+  const handleClosePricingModal = () => {
+    setPricingModalVisible(false);
+    pricingForm.resetFields();
   };
 
   const handleRemoveService = (serviceId: string) => {
@@ -496,163 +499,15 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         </Col>
       </Row>
 
-      <Modal
-        title={`${t("worker.setup.step2.pricing.title")}: ${
-          currentServiceForPricing?.name.vi || ""
-        }`}
+      <PricingModal
         open={pricingModalVisible}
-        onOk={handleSavePricing}
-        onCancel={() => {
-          setPricingModalVisible(false);
-          pricingForm.resetFields();
-        }}
-        width={600}
-        okText={t("worker.setup.step2.pricing.save")}
-        cancelText={t("worker.setup.step2.pricing.cancel")}
-        centered
-      >
-        <Alert
-          message={t("worker.setup.step2.pricing.info")}
-          type="info"
-          icon={<InfoCircleOutlined />}
-          className="mb-4"
-        />
-        <Form form={pricingForm} layout="vertical">
-          <Form.List name="pricing">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <div key={key} className="flex gap-2 items-start mb-4">
-                    <Form.Item
-                      {...restField}
-                      name={[name, "unit"]}
-                      label={t("worker.setup.step2.pricing.unit.label")}
-                      rules={[
-                        {
-                          required: true,
-                          message: t(
-                            "worker.setup.step2.pricing.unit.required"
-                          ),
-                        },
-                      ]}
-                      className="flex-1"
-                    >
-                      <Select
-                        placeholder={t("worker.setup.step2.pricing.unit.label")}
-                      >
-                        <Select.Option value={PricingUnitEnum.HOURLY}>
-                          {t("worker.setup.step2.pricing.unit.hour")}
-                        </Select.Option>
-                        <Select.Option value={PricingUnitEnum.DAILY}>
-                          {t("worker.setup.step2.pricing.unit.day")}
-                        </Select.Option>
-                        <Select.Option value={PricingUnitEnum.MONTHLY}>
-                          {t("worker.setup.step2.pricing.unit.month")}
-                        </Select.Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "duration"]}
-                      label={t("worker.setup.step2.pricing.duration.label")}
-                      rules={[
-                        {
-                          required: true,
-                          message: t(
-                            "worker.setup.step2.pricing.duration.required"
-                          ),
-                        },
-                        {
-                          type: "number",
-                          min: 1,
-                          message: t("worker.setup.step2.pricing.duration.min"),
-                        },
-                      ]}
-                      className="flex-1"
-                    >
-                      <InputNumber
-                        placeholder={t(
-                          "worker.setup.step2.pricing.duration.placeholder"
-                        )}
-                        min={1}
-                        className="w-full"
-                        addonAfter={
-                          <Form.Item
-                            {...restField}
-                            name={[name, "unit"]}
-                            noStyle
-                            shouldUpdate={(prevValues, currentValues) =>
-                              (prevValues as any).pricing?.[name]?.unit !==
-                              (currentValues as any).pricing?.[name]?.unit
-                            }
-                          >
-                            {({ getFieldValue }) => {
-                              const unit = getFieldValue([
-                                "pricing",
-                                name,
-                                "unit",
-                              ]);
-                              return unit === PricingUnitEnum.HOURLY
-                                ? t("worker.setup.step2.selected.hour")
-                                : unit === PricingUnitEnum.DAILY
-                                ? t("worker.setup.step2.selected.day")
-                                : t("worker.setup.step2.selected.month");
-                            }}
-                          </Form.Item>
-                        }
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[name, "price"]}
-                      label={t("worker.setup.step2.pricing.price.label")}
-                      rules={[
-                        {
-                          required: true,
-                          message: t(
-                            "worker.setup.step2.pricing.price.required"
-                          ),
-                        },
-                        {
-                          type: "number",
-                          min: 0.01,
-                          message: t("worker.setup.step2.pricing.price.min"),
-                        },
-                      ]}
-                      className="flex-1"
-                    >
-                      <InputNumber
-                        placeholder={t(
-                          "worker.setup.step2.pricing.price.placeholder"
-                        )}
-                        min={0}
-                        step={0.01}
-                        className="w-full"
-                        addonAfter={currency}
-                      />
-                    </Form.Item>
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => remove(name)}
-                      className="mt-6"
-                    />
-                  </div>
-                ))}
-                <Button
-                  type="dashed"
-                  onClick={() => add()}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  {t("worker.setup.step2.pricing.add")}
-                </Button>
-              </>
-            )}
-          </Form.List>
-        </Form>
-      </Modal>
+        currentServiceName={currentServiceForPricing?.name.vi || ""}
+        form={pricingForm}
+        currency={currency}
+        onSave={handleSavePricing}
+        onCancel={handleClosePricingModal}
+        t={t}
+      />
     </div>
   );
 };

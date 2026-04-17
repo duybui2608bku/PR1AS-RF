@@ -600,6 +600,34 @@
   cursor: not-allowed;
 }
 
+.calendarCol1 {
+  grid-column-start: 1;
+}
+
+.calendarCol2 {
+  grid-column-start: 2;
+}
+
+.calendarCol3 {
+  grid-column-start: 3;
+}
+
+.calendarCol4 {
+  grid-column-start: 4;
+}
+
+.calendarCol5 {
+  grid-column-start: 5;
+}
+
+.calendarCol6 {
+  grid-column-start: 6;
+}
+
+.calendarCol7 {
+  grid-column-start: 7;
+}
+
 .bookingCard {
   border-radius: 12px;
   margin-bottom: 16px;

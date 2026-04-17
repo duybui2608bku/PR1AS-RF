@@ -14,10 +14,14 @@ import { IPagination } from "../../types/common/pagination.type";
 import { getPagination } from "../../func/pagination.func";
 import {
   EscrowStatus,
+  EscrowReleaseReason,
   EscrowRefundReason,
   ESCROW_FEE,
 } from "../../constants/escrow";
-import { refundBalanceToClient } from "../wallet/wallet.service";
+import {
+  refundBalanceToClient,
+  releasePayoutToWorker,
+} from "../wallet/wallet.service";
 
 export class EscrowService {
   async getEscrowById(
@@ -96,6 +100,53 @@ export class EscrowService {
 
     return PaginationHelper.format(escrows, { page, limit, skip }, total);
   }
+
+  async releaseEscrowForCompletedBooking(
+    bookingId: string
+  ): Promise<{ workerPayout: number; platformFee: number } | null> {
+    const escrow = await escrowRepository.findByBookingId(bookingId);
+    if (!escrow) {
+      return null;
+    }
+
+    if (escrow.status !== EscrowStatus.HOLDING) {
+      throw new AppError(
+        ESCROW_MESSAGES.ESCROW_ALREADY_RELEASED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.ESCROW_RELEASE_FAILED
+      );
+    }
+
+    const workerId =
+      typeof escrow.worker_id === "object" && escrow.worker_id?._id
+        ? escrow.worker_id._id.toString()
+        : String(escrow.worker_id);
+
+    const releaseTransactionId = await releasePayoutToWorker(
+      workerId,
+      escrow.worker_payout,
+      bookingId,
+      `Payout for completed booking ${bookingId}`
+    );
+
+    const escrowIdValue = escrow._id;
+    const escrowId =
+      escrowIdValue instanceof Types.ObjectId
+        ? escrowIdValue
+        : new Types.ObjectId(String(escrowIdValue));
+
+    await escrowRepository.releaseEscrow({
+      escrow_id: escrowId,
+      release_reason: EscrowReleaseReason.BOOKING_COMPLETED,
+      release_transaction_id: new Types.ObjectId(releaseTransactionId),
+    });
+
+    return {
+      workerPayout: escrow.worker_payout,
+      platformFee: escrow.platform_fee,
+    };
+  }
+
 
   async refundEscrowForCancelledBooking(
     bookingId: string,

@@ -1,4 +1,4 @@
-import { Types, PopulateOptions } from "mongoose";
+import { Types, PopulateOptions, ClientSession } from "mongoose";
 import { Booking } from "../../models/booking/booking.model";
 import {
   IBookingDocument,
@@ -78,7 +78,10 @@ export class BookingRepository {
     );
   }
 
-  async create(data: CreateBookingInput): Promise<IBookingDocument> {
+  async create(
+    data: CreateBookingInput,
+    session?: ClientSession
+  ): Promise<IBookingDocument> {
     const booking = new Booking({
       ...data,
       status: BookingStatus.PENDING,
@@ -86,7 +89,7 @@ export class BookingRepository {
       created_at: new Date(),
       updated_at: new Date(),
     });
-    return booking.save();
+    return booking.save({ session });
   }
 
   async findById(id: string): Promise<IBookingDocument | null> {
@@ -117,7 +120,8 @@ export class BookingRepository {
   async updateStatus(
     id: string,
     status: BookingStatus,
-    updateData: Partial<IBookingDocument>
+    updateData: Partial<IBookingDocument>,
+    session?: ClientSession
   ): Promise<IBookingDocument | null> {
     return Booking.findByIdAndUpdate(
       id,
@@ -126,13 +130,14 @@ export class BookingRepository {
         status,
         updated_at: new Date(),
       },
-      { new: true }
+      { new: true, session }
     ).populate(BOOKING_POPULATE);
   }
 
   async update(
     id: string,
-    updateData: Partial<IBookingDocument>
+    updateData: Partial<IBookingDocument>,
+    session?: ClientSession
   ): Promise<IBookingDocument | null> {
     return Booking.findByIdAndUpdate(
       id,
@@ -140,7 +145,7 @@ export class BookingRepository {
         ...updateData,
         updated_at: new Date(),
       },
-      { new: true }
+      { new: true, session }
     ).populate(BOOKING_POPULATE);
   }
 

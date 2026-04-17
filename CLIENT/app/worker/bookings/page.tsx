@@ -1,24 +1,21 @@
 "use client";
 
-import { useMemo, useState, useEffect, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import {
   Card,
   Table,
   Space,
   Typography,
-  Select,
-  Row,
-  Col,
   message,
-  DatePicker,
   Button,
   Pagination,
   Empty,
   Spin,
 } from "antd";
-import { CalendarOutlined, ReloadOutlined, UndoOutlined } from "@ant-design/icons";
+import { CalendarOutlined } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useTranslation } from "react-i18next";
 import { bookingApi } from "@/lib/api/booking.api";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
@@ -37,24 +34,28 @@ import {
 } from "@/app/worker/bookings/constants/booking.constants";
 import { WorkerBookingCard } from "@/app/worker/bookings/components/WorkerBookingCard";
 import { WorkerBookingActionModal } from "@/app/worker/bookings/components/WorkerBookingActionModal";
-import { UserRole } from "@/lib/constants/routes";
-import { Breakpoint, Spacing } from "@/lib/constants/ui.constants";
-import type { Service } from "@/lib/types/worker";
+import { BookingFilters } from "@/app/components/BookingFilters";
 import styles from "@/app/worker/bookings/page.module.scss";
-import { useApiQueryData } from "@/lib/hooks/use-api";
 import { useI18n } from "@/lib/hooks/use-i18n";
+import { useMobile } from "@/lib/hooks/use-mobile";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { useServicesMap } from "@/lib/hooks/use-services-map";
+import {
+  BOOKING_QUERY_KEYS,
+  BookingPageConfig,
+  FILTER_VALUE_ALL,
+} from "@/app/bookings/constants/bookings-page.constants";
 
 const { Title } = Typography;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 function WorkerBookingsContent() {
   const { t } = useTranslation();
+  const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
   const { locale } = useI18n();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
-  const [page, setPage] = useState<number>(PAGINATION_DEFAULTS.PAGE);
-  const [limit, setLimit] = useState<number>(PAGINATION_DEFAULTS.LIMIT);
+  const { page, limit, handleTableChange, resetPage } = usePagination();
   const [statusFilter, setStatusFilter] = useState<BookingStatus | undefined>(
     undefined
   );
@@ -73,24 +74,28 @@ function WorkerBookingsContent() {
   const [cancelReason, setCancelReason] = useState<CancellationReason | undefined>(
     undefined
   );
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const isMobile = useMobile();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleResize = (): void => {
-      setIsMobile(window.innerWidth < Breakpoint.MOBILE);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const { serviceMap } = useServicesMap();
 
-  const { data: allServicesResponse } = useApiQueryData<{
-    services: Service[];
-    count: number;
-  }>(["all-services"], "/services", {
-    enabled: true,
-  });
+  const resetActionModalState = (): void => {
+    setActionModalOpen(false);
+    setCurrentBookingId("");
+    setCurrentAction(null);
+    setWorkerResponse("");
+    setCancelReason(undefined);
+  };
+
+  const invalidateWorkerBookingQueries = () => {
+    return Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: [BOOKING_QUERY_KEYS.WORKER_BOOKINGS],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: [BOOKING_QUERY_KEYS.ALL_SERVICES],
+      }),
+    ]);
+  };
 
   const query: BookingQuery = {
     page,
@@ -101,14 +106,14 @@ function WorkerBookingsContent() {
     end_date: dateRange?.[1]?.format(DATE_FORMAT_ISO),
   };
 
-  const { data: bookingsData, isLoading } = useQuery({
-    queryKey: ["worker-bookings", query],
+  const { data: bookingsData, isLoading, error: bookingsError } = useQuery({
+    queryKey: [BOOKING_QUERY_KEYS.WORKER_BOOKINGS, query],
     queryFn: () => bookingApi.getMyBookings(query),
     retry: false,
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({
+  const updateStatusMutation = useStandardizedMutation(
+    ({
       bookingId,
       status,
       workerResponse,
@@ -117,22 +122,17 @@ function WorkerBookingsContent() {
       status: BookingStatus;
       workerResponse?: string;
     }) => bookingApi.updateBookingStatus(bookingId, status, workerResponse),
-    onSuccess: () => {
-      message.success(t("booking.worker.actions.success"));
-      queryClient.invalidateQueries({ queryKey: ["worker-bookings"] });
-      setActionModalOpen(false);
-      setCurrentBookingId("");
-      setCurrentAction(null);
-      setWorkerResponse("");
-      setCancelReason(undefined);
-    },
-    onError: () => {
-      message.error(t("booking.worker.actions.error"));
-    },
-  });
+    {
+      onSuccess: () => {
+        message.success(t("booking.worker.actions.success"));
+        void invalidateWorkerBookingQueries();
+        resetActionModalState();
+      },
+    }
+  );
 
-  const cancelBookingMutation = useMutation({
-    mutationFn: ({
+  const cancelBookingMutation = useStandardizedMutation(
+    ({
       bookingId,
       reason,
       notes,
@@ -140,70 +140,52 @@ function WorkerBookingsContent() {
       bookingId: string;
       reason: string;
       notes?: string;
-    }) => bookingApi.cancelBooking(bookingId, UserRole.WORKER, reason, notes),
-    onSuccess: () => {
-      message.success(t("booking.worker.actions.cancelSuccess"));
-      queryClient.invalidateQueries({ queryKey: ["worker-bookings"] });
-      setActionModalOpen(false);
-      setCurrentBookingId("");
-      setCurrentAction(null);
-      setWorkerResponse("");
-      setCancelReason(undefined);
-    },
-    onError: () => {
-      message.error(t("booking.worker.actions.error"));
-    },
-  });
+    }) => bookingApi.cancelBooking(bookingId, reason, notes),
+    {
+      onSuccess: () => {
+        message.success(t("booking.worker.actions.cancelSuccess"));
+        void invalidateWorkerBookingQueries();
+        resetActionModalState();
+      },
+    }
+  );
 
-  const handleTableChange = (newPage: number, newPageSize: number): void => {
-    setPage(newPage);
-    setLimit(newPageSize);
-  };
-
-  const handleStatusFilterChange = (value: BookingStatus | "all"): void => {
-    setStatusFilter(value === "all" ? undefined : value);
-    setPage(PAGINATION_DEFAULTS.PAGE);
+  const handleStatusFilterChange = (
+    value: BookingStatus | typeof FILTER_VALUE_ALL
+  ): void => {
+    setStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
+    resetPage();
   };
 
   const handlePaymentStatusFilterChange = (
-    value: BookingPaymentStatus | "all"
+    value: BookingPaymentStatus | typeof FILTER_VALUE_ALL
   ): void => {
-    setPaymentStatusFilter(value === "all" ? undefined : value);
-    setPage(PAGINATION_DEFAULTS.PAGE);
+    setPaymentStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
+    resetPage();
   };
 
   const handleDateRangeChange = (
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDateRange(dates);
-    setPage(PAGINATION_DEFAULTS.PAGE);
+    resetPage();
   };
 
   const handleResetFilters = (): void => {
     setStatusFilter(undefined);
     setPaymentStatusFilter(undefined);
     setDateRange(null);
-    setPage(PAGINATION_DEFAULTS.PAGE);
+    resetPage();
   };
 
   const handleRefreshBookings = async (): Promise<void> => {
-    queryClient.invalidateQueries({ queryKey: ["worker-bookings"] });
-    queryClient.invalidateQueries({ queryKey: ["all-services"] });
-    await message.loading(t("booking.worker.actions.refreshing"), 3);
+    await invalidateWorkerBookingQueries();
+    await message.loading(
+      t("booking.worker.actions.refreshing"),
+      BookingPageConfig.REFRESH_MESSAGE_DURATION_SECONDS
+    );
     message.success(t("booking.worker.actions.refreshSuccess"));
   };
-
-  const serviceMap = useMemo(() => {
-    const services = allServicesResponse?.services || [];
-    if (!Array.isArray(services) || services.length === 0) {
-      return new Map<string, Service>();
-    }
-    const map = new Map<string, Service>();
-    services.forEach((service) => {
-      map.set(service.code, service);
-    });
-    return map;
-  }, [allServicesResponse]);
 
   const handleAction = (
     bookingId: string,
@@ -261,14 +243,6 @@ function WorkerBookingsContent() {
     }
   };
 
-  const handleModalCancel = (): void => {
-    setActionModalOpen(false);
-    setCurrentBookingId("");
-    setCurrentAction(null);
-    setWorkerResponse("");
-    setCancelReason(undefined);
-  };
-
   const columns = createWorkerBookingColumns({
     t,
     formatCurrency,
@@ -277,9 +251,15 @@ function WorkerBookingsContent() {
     locale,
   });
 
+  useEffect(() => {
+    if (bookingsError) {
+      handleError(bookingsError);
+    }
+  }, [bookingsError, handleError]);
+
   return (
     <>
-    <div className={styles.container}>
+      <div className={styles.container}>
           <Space className={styles.headerSpace}>
             <Title level={2} className={styles.title}>
               <CalendarOutlined className={styles.titleIcon} />
@@ -288,109 +268,18 @@ function WorkerBookingsContent() {
           </Space>
 
           <Card>
-            <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.filtersRow}>
-              <Col xs={24} sm={12} md={5}>
-                <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <span>{t("booking.list.filters.status")}:</span>
-                  <Select
-                    className={styles.filterSelect}
-                    value={statusFilter || "all"}
-                    onChange={handleStatusFilterChange}
-                    allowClear
-                  >
-                    <Option value="all">{t("booking.list.filters.all")}</Option>
-                    <Option value={BookingStatus.PENDING}>
-                      {t(`booking.status.${BookingStatus.PENDING}`)}
-                    </Option>
-                    <Option value={BookingStatus.CONFIRMED}>
-                      {t(`booking.status.${BookingStatus.CONFIRMED}`)}
-                    </Option>
-                    <Option value={BookingStatus.IN_PROGRESS}>
-                      {t(`booking.status.${BookingStatus.IN_PROGRESS}`)}
-                    </Option>
-                    <Option value={BookingStatus.COMPLETED}>
-                      {t(`booking.status.${BookingStatus.COMPLETED}`)}
-                    </Option>
-                    <Option value={BookingStatus.CANCELLED}>
-                      {t(`booking.status.${BookingStatus.CANCELLED}`)}
-                    </Option>
-                    <Option value={BookingStatus.REJECTED}>
-                      {t(`booking.status.${BookingStatus.REJECTED}`)}
-                    </Option>
-                    <Option value={BookingStatus.DISPUTED}>
-                      {t(`booking.status.${BookingStatus.DISPUTED}`)}
-                    </Option>
-                  </Select>
-                </Space>
-              </Col>
-              <Col xs={24} sm={12} md={5}>
-                <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <span>{t("booking.list.filters.paymentStatus")}:</span>
-                  <Select
-                    className={styles.filterSelect}
-                    value={paymentStatusFilter || "all"}
-                    onChange={handlePaymentStatusFilterChange}
-                    allowClear
-                  >
-                    <Option value="all">{t("booking.list.filters.all")}</Option>
-                    <Option value={BookingPaymentStatus.PENDING}>
-                      {t(
-                        `booking.paymentStatus.${BookingPaymentStatus.PENDING}`
-                      )}
-                    </Option>
-                    <Option value={BookingPaymentStatus.PAID}>
-                      {t(`booking.paymentStatus.${BookingPaymentStatus.PAID}`)}
-                    </Option>
-                    <Option value={BookingPaymentStatus.PARTIALLY_REFUNDED}>
-                      {t(
-                        `booking.paymentStatus.${BookingPaymentStatus.PARTIALLY_REFUNDED}`
-                      )}
-                    </Option>
-                    <Option value={BookingPaymentStatus.REFUNDED}>
-                      {t(
-                        `booking.paymentStatus.${BookingPaymentStatus.REFUNDED}`
-                      )}
-                    </Option>
-                  </Select>
-                </Space>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
-                <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <span>{t("booking.list.filters.dateRange")}:</span>
-                  <RangePicker
-                    className={styles.filterRangePicker}
-                    value={dateRange}
-                    onChange={handleDateRangeChange}
-                    format={DATE_FORMAT_ISO}
-                  />
-                </Space>
-              </Col>
-              <Col xs={12} sm={6} md={4}>
-                <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <p style={{paddingTop:22}}> </p>
-                  <Button
-                    icon={<UndoOutlined />}
-                    onClick={handleResetFilters}
-                    className={styles.filterButton}
-                  >
-                    {t("common.reset")}
-                  </Button>
-                </Space>
-              </Col>
-              <Col xs={12} sm={6} md={4}>
-                <Space orientation="vertical" size="small" className={styles.filterSpace}>
-                  <p style={{paddingTop:22}}> </p>
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={handleRefreshBookings}
-                    loading={isLoading}
-                    className={styles.filterButton}
-                  >
-                    {t("common.refresh")}
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
+            <BookingFilters
+              statusFilter={statusFilter}
+              paymentStatusFilter={paymentStatusFilter}
+              dateRange={dateRange}
+              isLoading={isLoading}
+              onStatusChange={handleStatusFilterChange}
+              onPaymentStatusChange={handlePaymentStatusFilterChange}
+              onDateRangeChange={handleDateRangeChange}
+              onReset={handleResetFilters}
+              onRefresh={handleRefreshBookings}
+              className={styles.filtersRow}
+            />
 
             {isMobile ? (
               <Spin spinning={isLoading}>
@@ -399,7 +288,7 @@ function WorkerBookingsContent() {
                 ) : (
                   <Fragment>
                     <Space
-                      orientation="vertical"
+                      direction="vertical"
                       size="middle"
                       className={styles.mobileListSpace}
                     >
@@ -459,7 +348,7 @@ function WorkerBookingsContent() {
               />
             )}
           </Card>
-    </div>
+      </div>
       <WorkerBookingActionModal
         open={actionModalOpen}
         action={currentAction}
@@ -468,7 +357,7 @@ function WorkerBookingsContent() {
         cancelReason={cancelReason}
         onCancelReasonChange={setCancelReason}
         onConfirm={handleModalConfirm}
-        onCancel={handleModalCancel}
+        onCancel={resetActionModalState}
         confirmLoading={
           updateStatusMutation.isPending || cancelBookingMutation.isPending
         }

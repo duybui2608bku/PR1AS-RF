@@ -154,7 +154,25 @@
           "placeholder": "输入邮件中的令牌",
           "required": "请输入重置令牌！"
         }
-      }
+      },
+      "verifyEmail": {
+        "title": "验证邮箱",
+        "subtitle": "正在验证您的邮箱...",
+        "verifying": "验证中...",
+        "success": "邮箱验证成功！",
+        "successMessage": "您现在可以登录并使用所有功能。",
+        "error": "验证失败",
+        "errorMessage": "验证令牌无效或已过期。",
+        "noToken": "未找到令牌。请使用邮件中的链接。",
+        "goToLogin": "前往登录",
+        "resendEmail": "重新发送验证邮件",
+        "resendSuccess": "验证邮件已重新发送！",
+        "resendEmailLabel": "输入您的邮箱以重新发送验证链接",
+        "alreadyVerified": "邮箱已经验证过了",
+        "checkEmailNotice": "验证邮件已发送到您的邮箱。请查看邮件以验证您的账户。"
+      },
+      "loginError": "邮箱或密码不正确",
+      "registerError": "注册失败"
     }
   },
   "dashboard": {

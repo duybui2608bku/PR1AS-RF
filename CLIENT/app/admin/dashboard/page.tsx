@@ -69,7 +69,7 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} lg={8}>
           <Card title={t("dashboard.quickActions")}>
-            <Space direction="vertical" className={styles.quickActionsSpace}>
+            <Space orientation="vertical" className={styles.quickActionsSpace}>
               <p>{t("dashboard.quickActionsDesc")}</p>
             </Space>
           </Card>

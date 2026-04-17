@@ -5,7 +5,6 @@ import { Card, Button, Typography, Space, Tag, Divider } from "antd";
 import { ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { chatSocket } from "@/lib/socket";
 import { reconnectSocket } from "@/lib/socket/config";
-import { FontSize } from "@/lib/constants/ui.constants";
 import styles from "./SocketDebug.module.scss";
 
 const { Text } = Typography;
@@ -116,7 +115,7 @@ export const SocketDebug = () => {
         <div>
           <Text strong>Last Event:</Text>
           <div className={styles.lastEventBlock}>
-            <Text type="secondary" style={{ fontSize: FontSize.XS }}>
+            <Text type="secondary" className={styles.lastEventText}>
               {lastEvent || "No events yet"}
             </Text>
           </div>

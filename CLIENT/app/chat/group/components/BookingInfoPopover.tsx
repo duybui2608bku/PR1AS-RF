@@ -6,7 +6,6 @@ import { Popover, Spin, Empty, Typography, Space, Divider, Descriptions } from "
 import { useTranslation } from "react-i18next";
 import { bookingApi } from "@/lib/api/booking.api";
 import type { Booking } from "@/lib/types/booking";
-import { PopoverWidth } from "@/lib/constants/ui.constants";
 import { formatTime } from "@/lib/utils";
 import styles from "../../chat.module.scss";
 
@@ -157,7 +156,7 @@ export function BookingInfoPopover({
       open={open}
       onOpenChange={handleOpenChange}
       placement={isMobile ? "bottom" : "bottomRight"}
-      overlayStyle={{ width: PopoverWidth.SETTINGS }}
+      overlayClassName={styles.bookingPopoverOverlay}
       title="Chi tiết đặt chỗ"
     >
       {children}

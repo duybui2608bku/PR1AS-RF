@@ -19,7 +19,6 @@ import {
 import { CancellationInfoTooltip } from "@/app/client/bookings/components/CancellationInfoTooltip";
 import type { TFunction } from "i18next";
 import { PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
-import { FontSize } from "@/lib/constants/ui.constants";
 import styles from "./BookingListMobile.module.scss";
 
 const { Text } = Typography;
@@ -129,10 +128,10 @@ export function BookingListMobile({
           <List.Item>
             <Card
               size="small"
-              style={{ width: "100%" }}
+              className={styles.card}
               actions={actions.length > 0 ? actions : undefined}
             >
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <Space direction="vertical" size="small" className={styles.spaceFull}>
                 <Text strong>{serviceName}</Text>
                 <Text type="secondary">
                   {t("booking.table.workerName")}: {getWorkerName(record.worker_id)}
@@ -148,10 +147,10 @@ export function BookingListMobile({
                   </Text>
                 </Space>
                 <Space wrap>
-                  <Text strong style={{ color: "var(--ant-color-primary)" }}>
+                  <Text strong className={styles.priceText}>
                     {formatCurrency(record.pricing.total_amount)}
                   </Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" className={styles.metaText}>
                     {record.pricing.quantity}{" "}
                     {getPricingUnitLabel(record.pricing.unit as PricingUnit, t)} ×{" "}
                     {formatCurrency(record.pricing.unit_price)}
@@ -175,7 +174,7 @@ export function BookingListMobile({
                     {t(`booking.paymentStatus.${record.payment_status}`)}
                   </Tag>
                 </Space>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className={styles.metaText}>
                   {t("booking.table.createdAt")}: {formatDateTime(record.created_at)}
                 </Text>
               </Space>

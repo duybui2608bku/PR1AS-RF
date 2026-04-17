@@ -154,8 +154,8 @@ export const authApi = {
     await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_VERIFY_EMAIL, data);
   },
 
-  resendVerification: async (): Promise<void> => {
-    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_RESEND_VERIFICATION);
+  resendVerification: async (data: { email: string }): Promise<void> => {
+    await api.post<ApiResponse<void>>(ApiEndpoint.AUTH_RESEND_VERIFICATION, data);
   },
 };
 

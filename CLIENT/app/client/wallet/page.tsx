@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Tabs,
   Typography,
@@ -39,25 +39,22 @@ import {
   createEscrowColumns,
 } from "@/app/client/wallet/constants";
 import { getDateRangeFromPreset } from "@/lib/utils/date.utils";
-import { Breakpoint } from "@/lib/constants/ui.constants";
+import { useMobile } from "@/lib/hooks/use-mobile";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { WalletOverviewTab } from "@/app/client/wallet/components/WalletOverviewTab";
+import { WalletTabKey } from "@/app/client/wallet/constants/wallet-page.constants";
 import styles from "@/app/client/wallet/page.module.scss";
 import { WalletHistoryTab } from "@/app/client/wallet/components/WalletHistoryTab";
 import { EscrowHistoryTab } from "@/app/client/wallet/components/EscrowHistoryTab";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-
-enum WalletTabKey {
-  OVERVIEW = "overview",
-  DEPOSIT_HISTORY = "deposit",
-  WITHDRAW_HISTORY = "withdraw",
-  ESCROW_HISTORY = "escrow-history",
-}
 
 function WalletContent() {
   const { t } = useTranslation();
+  const { handleError } = useErrorHandler();
   const formatCurrency = useCurrencyStore((state) => state.formatCurrency);
+  const isMobile = useMobile();
   const [activeTab, setActiveTab] = useState<WalletTabKey>(
     WalletTabKey.OVERVIEW
   );
@@ -99,19 +96,12 @@ function WalletContent() {
     null
   );
   const [escrowStatus, setEscrowStatus] = useState<EscrowStatus | null>(null);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleResize = (): void => {
-      setIsMobile(window.innerWidth < Breakpoint.MOBILE);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const { data: balanceData, isLoading: isLoadingBalance } = useQuery({
+  const {
+    data: balanceData,
+    isLoading: isLoadingBalance,
+    error: balanceError,
+  } = useQuery({
     queryKey: ["wallet-balance"],
     queryFn: walletApi.getBalance,
     retry: false,
@@ -159,6 +149,7 @@ function WalletContent() {
     data: depositHistory,
     isLoading: isLoadingDeposits,
     refetch: refetchDeposits,
+    error: depositHistoryError,
   } = useQuery({
     queryKey: ["wallet-deposit-history", depositQuery],
     queryFn: () => walletApi.getTransactionHistory(depositQuery),
@@ -176,6 +167,7 @@ function WalletContent() {
     data: withdrawHistory,
     isLoading: isLoadingWithdraws,
     refetch: refetchWithdraws,
+    error: withdrawHistoryError,
   } = useQuery({
     queryKey: ["wallet-withdraw-history", withdrawQuery],
     queryFn: () => walletApi.getTransactionHistory(withdrawQuery),
@@ -335,6 +327,7 @@ function WalletContent() {
     data: escrowHistory,
     isLoading: isLoadingEscrows,
     refetch: refetchEscrows,
+    error: escrowHistoryError,
   } = useQuery({
     queryKey: ["escrow-history-client", escrowQuery],
     queryFn: () => escrowApi.getMyEscrows(escrowQuery),
@@ -343,9 +336,33 @@ function WalletContent() {
 
   const totalBalance = balanceData?.balance || 0;
 
+  useEffect(() => {
+    if (balanceError) {
+      handleError(balanceError);
+    }
+  }, [balanceError, handleError]);
+
+  useEffect(() => {
+    if (depositHistoryError) {
+      handleError(depositHistoryError);
+    }
+  }, [depositHistoryError, handleError]);
+
+  useEffect(() => {
+    if (withdrawHistoryError) {
+      handleError(withdrawHistoryError);
+    }
+  }, [withdrawHistoryError, handleError]);
+
+  useEffect(() => {
+    if (escrowHistoryError) {
+      handleError(escrowHistoryError);
+    }
+  }, [escrowHistoryError, handleError]);
+
   return (
     <>
-    <div className={styles.container}>
+      <div className={styles.container}>
           <Space className={styles.headerSpace}>
             <Title level={2} className={styles.title}>
               {t("wallet.title")}
@@ -368,10 +385,10 @@ function WalletContent() {
           >
             <TabPane
               tab={
-                <span>
+                <Text>
                   <WalletOutlined />
                   {t("wallet.tabs.overview")}
-                </span>
+                </Text>
               }
               key={WalletTabKey.OVERVIEW}
             >
@@ -385,10 +402,10 @@ function WalletContent() {
 
             <TabPane
               tab={
-                <span>
+                <Text>
                   <ArrowUpOutlined />
                   {t("wallet.tabs.depositHistory")}
-                </span>
+                </Text>
               }
               key={WalletTabKey.DEPOSIT_HISTORY}
             >
@@ -414,10 +431,10 @@ function WalletContent() {
 
             <TabPane
               tab={
-                <span>
+                <Text>
                   <ArrowDownOutlined />
                   {t("wallet.tabs.withdrawHistory")}
-                </span>
+                </Text>
               }
               key={WalletTabKey.WITHDRAW_HISTORY}
             >
@@ -443,10 +460,10 @@ function WalletContent() {
 
             <TabPane
               tab={
-                <span>
+                <Text>
                   <WalletOutlined />
                   {t("wallet.tabs.escrowHistory")}
-                </span>
+                </Text>
               }
               key={WalletTabKey.ESCROW_HISTORY}
             >
@@ -473,7 +490,7 @@ function WalletContent() {
               />
             </TabPane>
           </Tabs>
-    </div>
+      </div>
       <DepositModal
         open={depositModalOpen}
         onClose={() => setDepositModalOpen(false)}

@@ -36,7 +36,7 @@ export function TransactionCardGrid({
   }
 
   return (
-    <Space direction="vertical" size="large" className={styles.space}>
+    <Space orientation="vertical" size="large" className={styles.space}>
       <Row gutter={[Spacing.MD, Spacing.MD]}>
         {transactions.map((transaction) => (
           <Col

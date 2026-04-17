@@ -405,7 +405,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
   const renderSubStep = () => {
     const currentStepType = SUB_STEPS[currentSubStep];
-
     switch (currentStepType) {
       case "location":
         return (
@@ -413,7 +412,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             <Title level={3} className={styles.cardTitle}>
               {t("worker.setup.step1.location.label")}
             </Title>
-            <Space orientation="vertical" className={styles.spaceFull} size="large">
+            <Space direction="vertical" className={styles.spaceFull} size="large">
               <Button
                 icon={<EnvironmentOutlined />}
                 onClick={getLocation}
@@ -503,7 +502,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               >
                 <InputNumber
                   className={styles.inputFull}
-                  style={{ width: '100%' }}
                   placeholder={t("worker.setup.step1.heightWeight.height")}
                   min={0}
                   max={300}
@@ -517,7 +515,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               >
                 <InputNumber
                   className={styles.inputFull}
-                  style={{ width: '100%' }}
                   placeholder={t("worker.setup.step1.heightWeight.weight")}
                   min={0}
                   max={500}
@@ -638,7 +635,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   onChange={(e) => setHobbyInput(e.target.value)}
                   onPressEnter={handleAddHobby}
                   placeholder={t("worker.setup.step1.hobbies.placeholder")}
-                  style={{ flex: 1 }}
+                  className={styles.hobbyInput}
                   size="large"
                 />
                 <Button

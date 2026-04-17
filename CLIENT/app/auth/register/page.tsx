@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { PasswordStrength, validatePasswordComplexity } from "@/lib/components/password-strength";
 import type { RegisterRequest } from "@/lib/hooks/use-auth";
 import styles from "../auth.module.scss";
@@ -34,6 +35,7 @@ export default function RegisterPage() {
   const registerMutation = useRegister();
   const [form] = Form.useForm();
   const { t } = useTranslation();
+  const { handleError } = useErrorHandler();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -62,6 +64,7 @@ export default function RegisterPage() {
         const { user: registeredUser } = response.data;
 
         message.success(t("auth.user.registerSuccess"));
+        message.info(t("auth.user.verifyEmail.checkEmailNotice"), 6);
 
         const userRoles = (
           registeredUser as { roles?: string[]; role?: string }
@@ -82,23 +85,15 @@ export default function RegisterPage() {
         }
       }
     } catch (error: unknown) {
-      message.error(t("auth.user.registerError"));
+      handleError(error);
     }
   };
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px",
-      }}
-    >
-      <Card style={{ width: "100%", maxWidth: 480 }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <SafetyOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+    <div className={styles.centerBlock}>
+      <Card className={styles.cardRegister}>
+          <div className={styles.cardHeader}>
+            <SafetyOutlined className={styles.heroIcon} />
             <Title level={2}>{t("auth.user.registerTitle")}</Title>
             <Text type="secondary">{t("auth.user.registerSubtitle")}</Text>
           </div>

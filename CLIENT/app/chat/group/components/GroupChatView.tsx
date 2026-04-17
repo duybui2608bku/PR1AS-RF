@@ -1,9 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef, Fragment } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
-import { Input, Button, Typography, Empty, Spin, Popover, Avatar } from "antd";
+import {
+  Input,
+  Button,
+  Typography,
+  Empty,
+  Spin,
+  Popover,
+  Avatar,
+  Image,
+} from "antd";
 import {
   SendOutlined,
   PlusOutlined,
@@ -24,6 +33,7 @@ import { ChatErrorCode } from "@/lib/constants/error-codes";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { formatTime } from "@/lib/utils";
 import { uploadImage, isImageUrl } from "@/lib/utils/upload";
+import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { ComplaintGroupList } from "./ComplaintGroupList";
 import { ChatPagination, ChatRefetchInterval } from "@/lib/constants/chat.constants";
 import { BookingInfoPopover } from "./BookingInfoPopover";
@@ -48,6 +58,7 @@ export function GroupChatView({
 }: GroupChatViewProps) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -58,7 +69,11 @@ export function GroupChatView({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: groupsData, isLoading: groupsLoading } = useQuery({
+  const {
+    data: groupsData,
+    isLoading: groupsLoading,
+    error: groupsError,
+  } = useQuery({
     queryKey: ["chat-group-conversations"],
     queryFn: () =>
       chatApi.getGroupConversations({
@@ -68,7 +83,11 @@ export function GroupChatView({
     refetchInterval: ChatRefetchInterval.CONVERSATIONS_MS,
   });
 
-  const { data: messagesData, isLoading: messagesLoading } = useQuery({
+  const {
+    data: messagesData,
+    isLoading: messagesLoading,
+    error: messagesError,
+  } = useQuery({
     queryKey: ["chat-group-messages", selectedGroupId],
     queryFn: () =>
       chatApi.getGroupMessages({
@@ -113,16 +132,19 @@ export function GroupChatView({
     }
   );
 
-  const markGroupReadMutation = useMutation({
-    mutationFn: (conversationGroupId: string) =>
+  const markGroupReadMutation = useStandardizedMutation(
+    (conversationGroupId: string) =>
       chatApi.markGroupMessagesRead({ conversation_group_id: conversationGroupId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat-group-conversations"] });
-      queryClient.invalidateQueries({
-        queryKey: ["chat-group-messages", selectedGroupId],
-      });
-    },
-  });
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["chat-group-conversations"] });
+        queryClient.invalidateQueries({
+          queryKey: ["chat-group-messages", selectedGroupId],
+        });
+      },
+      skipErrorNotification: true,
+    }
+  );
 
   const handleSendMessage = () => {
     if (!messageContent.trim()) return;
@@ -173,15 +195,7 @@ export function GroupChatView({
     try {
       setUploadingImage(true);
       const imageUrl = await uploadImage(file);
-      await chatApi.sendGroupMessage({
-        booking_id: selectedGroup.booking_id,
-        content: imageUrl,
-        type: "image",
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["chat-group-messages", selectedGroupId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["chat-group-conversations"] });
+      sendGroupMessageMutation.mutate({ content: imageUrl, type: "image" });
       message.success(t("chat.imageSentSuccess"));
     } catch {
       message.error(t("chat.errors.imageUploadFailed"));
@@ -204,6 +218,18 @@ export function GroupChatView({
     scrollToBottom();
   }, [messagesData?.messages]);
 
+  useEffect(() => {
+    if (groupsError) {
+      handleError(groupsError);
+    }
+  }, [groupsError, handleError]);
+
+  useEffect(() => {
+    if (messagesError) {
+      handleError(messagesError);
+    }
+  }, [messagesError, handleError]);
+
   const messages = messagesData?.messages ?? [];
   const groups = groupsData?.conversations ?? [];
 
@@ -216,6 +242,43 @@ export function GroupChatView({
 
   const showChatPanel = !!selectedGroupId;
   const isListHidden = isMobile && !showGroupList;
+
+  const renderAttachActions = () => (
+    <div className={styles.attachMenu}>
+      <Button
+        type="text"
+        icon={<PictureOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => handleAttachClick("image")}
+      >
+        {t("chat.attachImage")}
+      </Button>
+      <Button
+        type="text"
+        icon={<FileOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => handleAttachClick("file")}
+      >
+        {t("chat.attachFile")}
+      </Button>
+      <Button
+        type="text"
+        icon={<VideoCameraOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => handleAttachClick("video")}
+      >
+        {t("chat.attachVideo")}
+      </Button>
+      <Button
+        type="text"
+        icon={<UnorderedListOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => handleAttachClick("list")}
+      >
+        {t("chat.attachList")}
+      </Button>
+    </div>
+  );
 
   return (
     <Fragment>
@@ -326,13 +389,13 @@ export function GroupChatView({
                           {msg.type === "image" ||
                           (msg.type === "text" && isImageUrl(msg.content)) ? (
                             <div className={styles.messageImage}>
-                              <img
+                              <Image
                                 src={msg.content}
                                 alt="Sent image"
                                 className={styles.imagePreview}
-                                onClick={() =>
-                                  window.open(msg.content, "_blank")
-                                }
+                                preview={{
+                                  src: msg.content,
+                                }}
                               />
                             </div>
                           ) : (
@@ -404,38 +467,7 @@ export function GroupChatView({
               )}
               <div className={styles.messageInputWrapper}>
                 <Popover
-                  content={
-                    <div className={styles.attachMenu}>
-                      <div
-                        className={styles.attachMenuItem}
-                        onClick={() => handleAttachClick("image")}
-                      >
-                        <PictureOutlined />
-                        <span>{t("chat.attachImage")}</span>
-                      </div>
-                      <div
-                        className={styles.attachMenuItem}
-                        onClick={() => handleAttachClick("file")}
-                      >
-                        <FileOutlined />
-                        <span>{t("chat.attachFile")}</span>
-                      </div>
-                      <div
-                        className={styles.attachMenuItem}
-                        onClick={() => handleAttachClick("video")}
-                      >
-                        <VideoCameraOutlined />
-                        <span>{t("chat.attachVideo")}</span>
-                      </div>
-                      <div
-                        className={styles.attachMenuItem}
-                        onClick={() => handleAttachClick("list")}
-                      >
-                        <UnorderedListOutlined />
-                        <span>{t("chat.attachList")}</span>
-                      </div>
-                    </div>
-                  }
+                  content={renderAttachActions()}
                   trigger="click"
                   placement="topLeft"
                 >
@@ -449,7 +481,7 @@ export function GroupChatView({
                 <TextArea
                   value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   placeholder={t("chat.inputPlaceholder")}
                   autoSize={{ minRows: 1, maxRows: 4 }}
                   className={styles.messageInput}

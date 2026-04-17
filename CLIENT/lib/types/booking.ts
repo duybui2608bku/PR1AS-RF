@@ -22,6 +22,22 @@ export enum BookingPaymentStatus {
   REFUNDED = "refunded",
 }
 
+export enum DisputeReason {
+  SERVICE_NOT_AS_DESCRIBED = "service_not_as_described",
+  WORKER_NO_SHOW = "worker_no_show",
+  POOR_QUALITY = "poor_quality",
+  INCOMPLETE_SERVICE = "incomplete_service",
+  UNPROFESSIONAL_BEHAVIOR = "unprofessional_behavior",
+  SAFETY_CONCERN = "safety_concern",
+  OTHER = "other",
+}
+
+export enum DisputeResolution {
+  FAVOR_CLIENT = "favor_client",
+  FAVOR_WORKER = "favor_worker",
+  PARTIAL_REFUND = "partial_refund",
+}
+
 export interface BookingSchedule {
   start_time: string;
   end_time: string;
@@ -39,8 +55,25 @@ export interface BookingPricing {
   currency: string;
 }
 
+export interface BookingDispute {
+  reason: DisputeReason;
+  description: string;
+  evidence_urls: string[];
+  disputed_by: string;
+  disputed_at: string;
+  resolution: DisputeResolution | null;
+  resolution_notes: string;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  refund_amount: number;
+  penalty_amount: number;
+}
+
+/**
+ * Input for creating a booking.
+ * Note: client_id is NOT included — it's derived from the auth token on the server.
+ */
 export interface CreateBookingInput {
-  client_id: string;
   worker_id: string;
   worker_service_id: string;
   service_id: string;
@@ -69,6 +102,7 @@ export interface Booking {
   confirmed_at: string | null;
   started_at: string | null;
   completed_at: string | null;
+  disputed_at: string | null;
   cancellation: {
     cancelled_at: string;
     cancelled_by: string;
@@ -77,6 +111,7 @@ export interface Booking {
     refund_amount: number;
     penalty_amount: number;
   } | null;
+  dispute: BookingDispute | null;
   created_at: string;
   updated_at: string;
 }

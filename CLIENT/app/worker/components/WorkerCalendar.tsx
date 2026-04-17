@@ -74,6 +74,25 @@ export function WorkerCalendar({
 
   const gridCells = renderCalendarGrid();
 
+  const getColumnClassName = (columnStart: number): string => {
+    switch (columnStart) {
+      case 1:
+        return styles.calendarCol1;
+      case 2:
+        return styles.calendarCol2;
+      case 3:
+        return styles.calendarCol3;
+      case 4:
+        return styles.calendarCol4;
+      case 5:
+        return styles.calendarCol5;
+      case 6:
+        return styles.calendarCol6;
+      default:
+        return styles.calendarCol7;
+    }
+  };
+
   return (
     <div className={styles.customCalendarCard}>
       <div className={styles.calendarHeader}>
@@ -152,10 +171,7 @@ export function WorkerCalendar({
                 isSelected ? styles.calendarDaySelected : ""
               } ${isToday ? styles.calendarDayToday : ""} ${
                 isDisabled ? styles.calendarDayDisabled : ""
-              }`}
-              style={{
-                gridColumnStart: columnStart,
-              }}
+              } ${getColumnClassName(columnStart)}`}
             >
               {date.date()}
             </button>

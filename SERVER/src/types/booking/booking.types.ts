@@ -4,6 +4,8 @@ import {
   BookingPaymentStatus,
   CancellationReason,
   CancelledBy,
+  DisputeReason,
+  DisputeResolution,
 } from "../../constants/booking";
 import { PricingUnit } from "../worker/worker-service";
 
@@ -42,6 +44,20 @@ export interface BookingCancellation {
   penalty_amount: number;
 }
 
+export interface BookingDispute {
+  reason: DisputeReason;
+  description: string;
+  evidence_urls: string[];
+  disputed_by: string;
+  disputed_at: Date;
+  resolution: DisputeResolution | null;
+  resolution_notes: string;
+  resolved_by: string | null;
+  resolved_at: Date | null;
+  refund_amount: number;
+  penalty_amount: number;
+}
+
 export interface IBooking {
   client_id: Types.ObjectId;
   worker_id: Types.ObjectId;
@@ -65,8 +81,10 @@ export interface IBooking {
   confirmed_at: Date | null;
   started_at: Date | null;
   completed_at: Date | null;
+  disputed_at: Date | null;
 
   cancellation: BookingCancellation | null;
+  dispute: BookingDispute | null;
 
   created_at: Date;
   updated_at: Date;
@@ -74,8 +92,13 @@ export interface IBooking {
 
 export interface IBookingDocument extends IBooking, Document {}
 
+/**
+ * Input for creating a booking.
+ * client_id is optional here because it's injected by the service layer
+ * from the auth token rather than from request body.
+ */
 export interface CreateBookingInput {
-  client_id: Types.ObjectId;
+  client_id?: Types.ObjectId;
   worker_id: Types.ObjectId;
   worker_service_id: Types.ObjectId;
   service_id: Types.ObjectId;
