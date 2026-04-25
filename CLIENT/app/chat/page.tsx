@@ -505,7 +505,12 @@ function ChatContent() {
                             isMobile={isMobile}
                             replyToMessage={replyToMessage}
                             currentUserId={user?.id}
+                            currentUserName={user?.name || user?.email}
+                            currentUserAvatar={
+                              typeof user?.avatar === "string" ? user.avatar : null
+                            }
                             otherUserName={selectedConversation?.other_user?.full_name}
+                            otherUserAvatar={selectedConversation?.other_user?.avatar}
                             mobileMenuOpenId={mobileMenuOpenId}
                             onReply={handleReplyMessage}
                             onDelete={handleDeleteMessage}

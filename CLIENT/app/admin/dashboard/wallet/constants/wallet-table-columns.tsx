@@ -1,7 +1,6 @@
 import { Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { TFunction } from "i18next";
-import type { UserProfile } from "@/lib/api";
 import type { WalletTransaction } from "@/lib/api/wallet.api";
 import type { TransactionStatus, TransactionType } from "@/lib/constants/wallet";
 import { formatDateTime } from "@/app/func/func";
@@ -15,6 +14,18 @@ interface BuildWalletColumnsParams {
   t: TFunction;
   formatCurrency: (amount: number, currency: string) => string;
 }
+
+const renderUserLabel = (user: WalletTransaction["user_id"]) => {
+  if (!user) {
+    return "-";
+  }
+
+  if (typeof user === "string") {
+    return user;
+  }
+
+  return user.full_name || user.email || user.id || "-";
+};
 
 export const buildWalletColumns = ({
   t,
@@ -32,8 +43,7 @@ export const buildWalletColumns = ({
     dataIndex: TableColumnKeys.USER_ID,
     key: TableColumnKeys.USER_ID,
     width: 150,
-    render: (user: UserProfile | string) =>
-      (user as UserProfile).full_name || (user as string),
+    render: renderUserLabel,
   },
   {
     title: t("admin.wallet.table.type"),

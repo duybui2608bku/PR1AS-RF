@@ -5,7 +5,6 @@ import {
   Card,
   Table,
   Grid,
-  Space,
   Typography,
   message,
 } from "antd";
@@ -18,7 +17,7 @@ import { bookingApi } from "@/lib/api/booking.api";
 import { reviewApi } from "@/lib/api/review.api";
 import { chatApi } from "@/lib/api/chat.api";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
-import type { BookingQuery, Booking } from "@/lib/types/booking";
+import type { BookingQuery, Booking, DisputeReason } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
 import { ReviewType } from "@/lib/types/review";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
@@ -33,6 +32,7 @@ import { createBookingColumns } from "@/app/client/bookings/constants/client-boo
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { CancelBookingModal } from "@/app/client/bookings/components/CancelBookingModal";
 import { ReviewModal } from "@/app/client/bookings/components/ReviewModal";
+import { ComplaintModal } from "@/app/client/bookings/components/ComplaintModal";
 import { BookingListMobile } from "@/app/client/bookings/components/BookingListMobile";
 import { BookingFilters } from "@/app/components/BookingFilters";
 import type { CancellationReason } from "@/app/client/bookings/constants/client-booking-constants";
@@ -74,6 +74,9 @@ function BookingsContent() {
   const [reviewModalOpen, setReviewModalOpen] = useState<boolean>(false);
   const [selectedBookingForReview, setSelectedBookingForReview] =
     useState<Booking | null>(null);
+  const [complaintModalOpen, setComplaintModalOpen] = useState<boolean>(false);
+  const [selectedBookingIdForComplaint, setSelectedBookingIdForComplaint] =
+    useState<string | null>(null);
 
   const { serviceMap } = useServicesMap();
 
@@ -85,6 +88,11 @@ function BookingsContent() {
   const resetReviewModalState = (): void => {
     setReviewModalOpen(false);
     setSelectedBookingForReview(null);
+  };
+
+  const resetComplaintModalState = (): void => {
+    setComplaintModalOpen(false);
+    setSelectedBookingIdForComplaint(null);
   };
 
   const invalidateClientBookingQueries = () => {
@@ -101,6 +109,7 @@ function BookingsContent() {
   const query: BookingQuery = {
     page,
     limit,
+    role: "client",
     status: statusFilter,
     payment_status: paymentStatusFilter,
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
@@ -267,11 +276,11 @@ function BookingsContent() {
     });
   };
 
-  const createComplaintMutation = useStandardizedMutation(
+  const openComplaintChatMutation = useStandardizedMutation(
     (bookingId: string) => chatApi.createComplaintConversation(bookingId),
     {
       onSuccess: (data) => {
-        router.push(`/chat?group=${data.conversation._id}`);
+        router.push(`/chat/group?group=${data.conversation._id}`);
       },
       onError: () => {
         message.error(t("booking.client.actions.complainError"));
@@ -280,7 +289,55 @@ function BookingsContent() {
   );
 
   const handleComplainBooking = (bookingId: string): void => {
-    createComplaintMutation.mutate(bookingId);
+    setSelectedBookingIdForComplaint(bookingId);
+    setComplaintModalOpen(true);
+  };
+
+  const handleOpenComplaintChat = (bookingId: string): void => {
+    openComplaintChatMutation.mutate(bookingId);
+  };
+
+  const createComplaintMutation = useStandardizedMutation(
+    async (values: {
+      bookingId: string;
+      reason: DisputeReason;
+      description: string;
+      evidenceUrls: string[];
+    }) => {
+      await bookingApi.createDispute(
+        values.bookingId,
+        values.reason,
+        values.description,
+        values.evidenceUrls
+      );
+      return chatApi.createComplaintConversation(values.bookingId);
+    },
+    {
+      onSuccess: (data) => {
+        message.success(t("booking.complaint.success"));
+        void invalidateClientBookingQueries();
+        resetComplaintModalState();
+        router.push(`/chat/group?group=${data.conversation._id}`);
+      },
+      onError: () => {
+        message.error(t("booking.complaint.error"));
+      },
+    }
+  );
+
+  const handleSubmitComplaint = async (values: {
+    reason: DisputeReason;
+    description: string;
+    evidenceUrls: string[];
+  }): Promise<void> => {
+    if (!selectedBookingIdForComplaint) {
+      return;
+    }
+
+    createComplaintMutation.mutate({
+      bookingId: selectedBookingIdForComplaint,
+      ...values,
+    });
   };
 
   const columns = createBookingColumns({
@@ -291,6 +348,7 @@ function BookingsContent() {
     onCancelBooking: handleOpenCancelModal,
     onReviewBooking: handleOpenReviewModal,
     onComplainBooking: handleComplainBooking,
+    onOpenComplaintChat: handleOpenComplaintChat,
   });
 
   useEffect(() => {
@@ -358,6 +416,7 @@ function BookingsContent() {
             onCancelBooking={handleOpenCancelModal}
             onReviewBooking={handleOpenReviewModal}
             onComplainBooking={handleComplainBooking}
+            onOpenComplaintChat={handleOpenComplaintChat}
           />
         )}
       </Card>
@@ -372,6 +431,12 @@ function BookingsContent() {
         onCancel={handleCloseReviewModal}
         onOk={handleSubmitReview}
         loading={createReviewMutation.isPending}
+      />
+      <ComplaintModal
+        open={complaintModalOpen}
+        onCancel={resetComplaintModalState}
+        onOk={handleSubmitComplaint}
+        loading={createComplaintMutation.isPending}
       />
     </div>
   );

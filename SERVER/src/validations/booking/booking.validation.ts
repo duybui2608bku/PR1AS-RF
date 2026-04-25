@@ -158,6 +158,7 @@ export const updateBookingSchema = z
 export const getBookingsQuerySchema = z.object({
   client_id: objectIdSchema.optional(),
   worker_id: objectIdSchema.optional(),
+  role: z.enum(["client", "worker"]).optional(),
   status: z.nativeEnum(BookingStatus).optional(),
   payment_status: z.nativeEnum(BookingPaymentStatus).optional(),
   service_code: z.string().optional(),

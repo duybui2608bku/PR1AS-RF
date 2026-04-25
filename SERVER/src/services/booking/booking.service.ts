@@ -34,7 +34,6 @@ export interface RoleInfo {
 }
 
 export class BookingService {
-
   private async getBookingOrThrow(
     bookingId: string
   ): Promise<IBookingDocument> {
@@ -193,7 +192,6 @@ export class BookingService {
     return updates;
   }
 
-
   async createBooking(
     clientId: string,
     input: CreateBookingInput
@@ -330,10 +328,7 @@ export class BookingService {
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
 
-    this.validateStatusTransition(
-      booking.status as BookingStatus,
-      status
-    );
+    this.validateStatusTransition(booking.status as BookingStatus, status);
     if (
       status === BookingStatus.CONFIRMED ||
       status === BookingStatus.REJECTED ||
@@ -567,8 +562,7 @@ export class BookingService {
     userId: string,
     reason: DisputeReason,
     description: string,
-    evidenceUrls: string[],
-    _roleInfo: RoleInfo
+    evidenceUrls: string[]
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
 
@@ -576,10 +570,18 @@ export class BookingService {
       this.isBookingClient(booking, userId),
       BOOKING_MESSAGES.ONLY_CLIENT_CAN_DISPUTE
     );
-    this.validateStatusTransition(
-      booking.status as BookingStatus,
-      BookingStatus.DISPUTED
-    );
+    const canCreateDispute =
+      booking.status === BookingStatus.IN_PROGRESS ||
+      booking.status === BookingStatus.COMPLETED;
+
+    if (!canCreateDispute) {
+      throw new AppError(
+        BOOKING_MESSAGES.INVALID_STATUS_TRANSITION,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_INVALID_STATUS_TRANSITION
+      );
+    }
+
     if (booking.dispute) {
       throw new AppError(
         BOOKING_MESSAGES.BOOKING_ALREADY_DISPUTED,
@@ -654,7 +656,8 @@ export class BookingService {
         : String(booking.client_id);
 
     let finalStatus: BookingStatus;
-    let paymentStatus: BookingPaymentStatus = booking.payment_status as BookingPaymentStatus;
+    let paymentStatus: BookingPaymentStatus =
+      booking.payment_status as BookingPaymentStatus;
     let disputeRefundAmount = 0;
     let disputePenaltyAmount = 0;
 

@@ -604,7 +604,8 @@
       "lifestyle": "라이프스타일",
       "quote": "명언",
       "reviews": {
-        "title": "리뷰 및 피드백"
+        "title": "리뷰 및 피드백",
+        "noReviews": "아직 리뷰가 없습니다"
       },
       "services": {
         "title": "서비스",
@@ -1116,7 +1117,9 @@
       "payout": "수익",
       "actions": {
         "confirm": "확인",
+        "confirmBooking": "이 예약을 확인하시겠습니까?",
         "reject": "거부",
+        "startConfirm": "이 예약을 시작하시겠습니까?",
         "start": "시작",
         "complete": "완료",
         "cancel": "취소",
@@ -1185,8 +1188,35 @@
       "actions": {
         "review": "리뷰",
         "complain": "불만",
+        "openComplaintChat": "불만 그룹 열기",
         "complainComingSoon": "불만 기능 곧 출시 예정",
         "complainError": "불만 대화를 생성하지 못했습니다. 다시 시도해 주세요."
+      }
+    },
+    "complaint": {
+      "title": "예약 불만 생성",
+      "reason": "불만 사유",
+      "reasonRequired": "불만 사유를 선택해 주세요",
+      "reasonPlaceholder": "사유 선택",
+      "description": "상세 설명",
+      "descriptionRequired": "불만 설명을 입력해 주세요",
+      "descriptionMinLength": "설명은 최소 10자 이상이어야 합니다",
+      "descriptionMaxLength": "설명은 2000자를 초과할 수 없습니다",
+      "descriptionPlaceholder": "발생한 문제를 설명해 주세요...",
+      "evidenceUrls": "증거 링크",
+      "evidenceUrlsHelp": "한 줄에 하나의 URL을 입력하거나 쉼표로 구분하세요. 선택 사항입니다.",
+      "evidenceUrlsPlaceholder": "https://example.com/evidence.jpg",
+      "submit": "불만 제출",
+      "success": "불만이 생성되었습니다. 토론 그룹을 여는 중입니다.",
+      "error": "불만을 생성하지 못했습니다. 다시 시도해 주세요.",
+      "reasons": {
+        "service_not_as_described": "서비스가 설명과 다름",
+        "worker_no_show": "워커 미출석",
+        "poor_quality": "서비스 품질 불량",
+        "incomplete_service": "서비스 미완료",
+        "unprofessional_behavior": "비전문적인 행동",
+        "safety_concern": "안전 우려",
+        "other": "기타"
       }
     },
     "review": {

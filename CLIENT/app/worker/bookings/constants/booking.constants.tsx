@@ -104,16 +104,11 @@ type OnActionCallback = (
   workerResponse?: string
 ) => void;
 
-interface WorkerBookingActionsProps {
-  record: Booking;
-  onAction: OnActionCallback;
-  t: TFunction;
-}
-
 interface CreateWorkerBookingColumnsParams {
   t: TFunction;
   formatCurrency: FormatCurrencyFunction;
   onAction: OnActionCallback;
+  onOpenComplaintChat?: (bookingId: string) => void;
   serviceMap: Map<string, Service>;
   locale: string;
 }
@@ -122,6 +117,7 @@ export const createWorkerBookingColumns = ({
   t,
   formatCurrency,
   onAction,
+  onOpenComplaintChat,
   serviceMap,
   locale,
 }: CreateWorkerBookingColumnsParams): ColumnsType<Booking> => {
@@ -251,7 +247,12 @@ export const createWorkerBookingColumns = ({
       fixed: "right",
       align: "center",
       render: (_: unknown, record: Booking) => (
-        <WorkerBookingActions record={record} onAction={onAction} t={t} />
+        <WorkerBookingActions
+          record={record}
+          onAction={onAction}
+          onOpenComplaintChat={onOpenComplaintChat}
+          t={t}
+        />
       ),
     },
 

@@ -19,16 +19,18 @@ interface WorkerBookingActionsProps {
     action: WorkerActionType,
     workerResponse?: string
   ) => void;
+  onOpenComplaintChat?: (bookingId: string) => void;
   t: TFunction;
 }
 
 export function getWorkerBookingActionNodes({
   record,
   onAction,
+  onOpenComplaintChat,
   t,
 }: WorkerBookingActionsProps): React.ReactNode[] {
   const scheduleExpired = expireDate(record.schedule.start_time);
-  if (scheduleExpired) {
+  if (scheduleExpired && record.status !== BookingStatus.DISPUTED) {
     return [
       <Button key="expired" size="small" disabled>
         {t("booking.worker.actions.expired")}
@@ -41,6 +43,7 @@ export function getWorkerBookingActionNodes({
     record.status === BookingStatus.CONFIRMED &&
     record.payment_status === BookingPaymentStatus.PAID;
   const canComplete = record.status === BookingStatus.IN_PROGRESS;
+  const canOpenComplaintChat = record.status === BookingStatus.DISPUTED;
 
   const rejectOrCancelNode =
     record.status === BookingStatus.CONFIRMED ? (
@@ -116,6 +119,19 @@ export function getWorkerBookingActionNodes({
           {t("booking.worker.actions.complete")}
         </Button>
       </Popconfirm>
+    );
+  }
+  if (canOpenComplaintChat) {
+    nodes.push(
+      <Button
+        key="complaint-chat"
+        type="primary"
+        size="small"
+        onClick={() => onOpenComplaintChat?.(record._id)}
+        disabled={!onOpenComplaintChat}
+      >
+        {t("booking.client.actions.openComplaintChat")}
+      </Button>
     );
   }
   if (nodes.length === 0) {

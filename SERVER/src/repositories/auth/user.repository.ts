@@ -39,6 +39,7 @@ export class UserRepository {
 
   async getUserRoleInfoById(userId: string): Promise<{
     lastActiveRole: UserRole | null;
+    roles: UserRole[];
     isWorker: boolean;
     isClient: boolean;
     isAdmin: boolean;
@@ -47,6 +48,7 @@ export class UserRepository {
     const roles = await this.getRolesById(userId);
     return {
       lastActiveRole,
+      roles,
       isWorker: lastActiveRole === UserRole.WORKER,
       isClient: lastActiveRole === UserRole.CLIENT,
       isAdmin: roles.includes(UserRole.ADMIN),

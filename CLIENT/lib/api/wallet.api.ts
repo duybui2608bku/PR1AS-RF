@@ -37,7 +37,7 @@ export interface AdminTransactionHistoryQuery extends TransactionHistoryQuery {
 
 export interface WalletTransaction {
   id: string;
-  user_id: string | UserProfile;
+  user_id: string | UserProfile | null;
   type: TransactionType;
   amount: number;
   status: TransactionStatus;

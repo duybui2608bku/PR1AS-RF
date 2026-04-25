@@ -14,6 +14,7 @@ import type {
 import { getSocketIO } from "../../config/socket";
 import { getGroupConversationRoom, getUserRoom } from "../../utils/chat.helper";
 import { CHAT_MESSAGES, BOOKING_MESSAGES } from "../../constants/messages";
+import { BookingStatus } from "../../constants/booking";
 import { SOCKET_EVENTS } from "../../constants/socket";
 import { groupChatRepository } from "../../repositories/chat";
 import { userRepository } from "../../repositories/auth/user.repository";
@@ -338,6 +339,14 @@ export class GroupChatService {
         BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
         ErrorCode.FORBIDDEN
+      );
+    }
+
+    if (booking.status !== BookingStatus.DISPUTED) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_DISPUTED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_NOT_DISPUTED
       );
     }
 

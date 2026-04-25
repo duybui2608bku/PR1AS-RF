@@ -604,7 +604,8 @@
       "lifestyle": "生活方式",
       "quote": "名言",
       "reviews": {
-        "title": "评价与反馈"
+        "title": "评价与反馈",
+        "noReviews": "暂无评价"
       },
       "services": {
         "title": "服务",
@@ -1116,7 +1117,9 @@
       "payout": "收入",
       "actions": {
         "confirm": "确认",
+        "confirmBooking": "确定要确认此预订吗？",
         "reject": "拒绝",
+        "startConfirm": "确定要开始此预订吗？",
         "start": "开始",
         "complete": "完成",
         "cancel": "取消",
@@ -1185,8 +1188,35 @@
       "actions": {
         "review": "评价",
         "complain": "投诉",
+        "openComplaintChat": "打开投诉群组",
         "complainComingSoon": "投诉功能即将推出",
         "complainError": "无法创建投诉对话。请重试。"
+      }
+    },
+    "complaint": {
+      "title": "创建预订投诉",
+      "reason": "投诉原因",
+      "reasonRequired": "请选择投诉原因",
+      "reasonPlaceholder": "选择原因",
+      "description": "详细说明",
+      "descriptionRequired": "请输入投诉说明",
+      "descriptionMinLength": "说明至少需要 10 个字符",
+      "descriptionMaxLength": "说明不能超过 2000 个字符",
+      "descriptionPlaceholder": "描述您遇到的问题...",
+      "evidenceUrls": "证据链接",
+      "evidenceUrlsHelp": "每行一个 URL，或用逗号分隔。可选。",
+      "evidenceUrlsPlaceholder": "https://example.com/evidence.jpg",
+      "submit": "提交投诉",
+      "success": "投诉已创建。正在打开讨论群组。",
+      "error": "无法创建投诉。请重试。",
+      "reasons": {
+        "service_not_as_described": "服务与描述不符",
+        "worker_no_show": "Worker 未出现",
+        "poor_quality": "服务质量差",
+        "incomplete_service": "服务未完成",
+        "unprofessional_behavior": "行为不专业",
+        "safety_concern": "安全问题",
+        "other": "其他"
       }
     },
     "review": {

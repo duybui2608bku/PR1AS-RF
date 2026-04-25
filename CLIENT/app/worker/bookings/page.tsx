@@ -7,7 +7,6 @@ import {
   Space,
   Typography,
   message,
-  Button,
   Pagination,
   Empty,
   Spin,
@@ -17,7 +16,9 @@ import type { Dayjs } from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
 import { bookingApi } from "@/lib/api/booking.api";
+import { chatApi } from "@/lib/api/chat.api";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
 import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
@@ -50,6 +51,7 @@ import {
 const { Title } = Typography;
 
 function WorkerBookingsContent() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
@@ -100,6 +102,7 @@ function WorkerBookingsContent() {
   const query: BookingQuery = {
     page,
     limit,
+    role: "worker",
     status: statusFilter,
     payment_status: paymentStatusFilter,
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
@@ -146,6 +149,18 @@ function WorkerBookingsContent() {
         message.success(t("booking.worker.actions.cancelSuccess"));
         void invalidateWorkerBookingQueries();
         resetActionModalState();
+      },
+    }
+  );
+
+  const openComplaintChatMutation = useStandardizedMutation(
+    (bookingId: string) => chatApi.createComplaintConversation(bookingId),
+    {
+      onSuccess: (data) => {
+        router.push(`/chat/group?group=${data.conversation._id}`);
+      },
+      onError: () => {
+        message.error(t("booking.client.actions.complainError"));
       },
     }
   );
@@ -224,6 +239,10 @@ function WorkerBookingsContent() {
     });
   };
 
+  const handleOpenComplaintChat = (bookingId: string): void => {
+    openComplaintChatMutation.mutate(bookingId);
+  };
+
   const handleModalConfirm = (): void => {
     if (!currentAction || !currentBookingId) return;
 
@@ -247,6 +266,7 @@ function WorkerBookingsContent() {
     t,
     formatCurrency,
     onAction: handleAction, 
+    onOpenComplaintChat: handleOpenComplaintChat,
     serviceMap,
     locale,
   });
@@ -297,6 +317,7 @@ function WorkerBookingsContent() {
                           key={record._id}
                           booking={record}
                           onAction={handleAction}
+                          onOpenComplaintChat={handleOpenComplaintChat}
                           formatCurrency={formatCurrency}
                           serviceMap={serviceMap}
                           locale={locale}

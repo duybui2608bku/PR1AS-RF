@@ -119,6 +119,7 @@ export interface Booking {
 export interface BookingQuery {
   client_id?: string;
   worker_id?: string;
+  role?: "client" | "worker";
   status?: BookingStatus;
   payment_status?: BookingPaymentStatus;
   service_code?: string;

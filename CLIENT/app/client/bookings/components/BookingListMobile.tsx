@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Card, List, Typography, Tag, Space, Button } from "antd";
 import type { Booking } from "@/lib/types/booking";
-import { BookingStatus, BookingPaymentStatus, PricingUnit } from "@/lib/types/booking";
+import { BookingStatus, PricingUnit } from "@/lib/types/booking";
 import type { Service } from "@/lib/types/worker";
 import { getServiceName } from "@/lib/utils/worker.utils";
 import { formatDateTime } from "@/app/func/func";
@@ -14,7 +14,9 @@ import {
 } from "@/lib/constants/booking";
 import {
   canCancelBooking,
-  canReviewOrComplain,
+  canComplainBooking,
+  canOpenComplaintChat,
+  canReviewBooking,
 } from "@/app/client/bookings/constants/client-booking-constants";
 import { CancellationInfoTooltip } from "@/app/client/bookings/components/CancellationInfoTooltip";
 import type { TFunction } from "i18next";
@@ -39,6 +41,7 @@ interface BookingListMobileProps {
   onCancelBooking?: (bookingId: string) => void;
   onReviewBooking?: (bookingId: string) => void;
   onComplainBooking?: (bookingId: string) => void;
+  onOpenComplaintChat?: (bookingId: string) => void;
 }
 
 const getWorkerName = (worker: unknown): string => {
@@ -61,6 +64,7 @@ export function BookingListMobile({
   onCancelBooking,
   onReviewBooking,
   onComplainBooking,
+  onOpenComplaintChat,
 }: BookingListMobileProps) {
   return (
     <List<Booking>
@@ -85,7 +89,7 @@ export function BookingListMobile({
         });
 
         const actions: ReactNode[] = [];
-        if (canReviewOrComplain(record.status)) {
+        if (canReviewBooking(record.status)) {
           if (onReviewBooking) {
             actions.push(
               <Button
@@ -98,18 +102,30 @@ export function BookingListMobile({
               </Button>
             );
           }
-          if (onComplainBooking) {
-            actions.push(
-              <Button
-                key="complain"
-                danger
-                size="small"
-                onClick={() => onComplainBooking(bookingId)}
-              >
-                {t("booking.client.actions.complain")}
-              </Button>
-            );
-          }
+        }
+        if (canComplainBooking(record.status) && onComplainBooking) {
+          actions.push(
+            <Button
+              key="complain"
+              danger
+              size="small"
+              onClick={() => onComplainBooking(bookingId)}
+            >
+              {t("booking.client.actions.complain")}
+            </Button>
+          );
+        }
+        if (canOpenComplaintChat(record.status) && onOpenComplaintChat) {
+          actions.push(
+            <Button
+              key="complaint-chat"
+              type="primary"
+              size="small"
+              onClick={() => onOpenComplaintChat(bookingId)}
+            >
+              {t("booking.client.actions.openComplaintChat")}
+            </Button>
+          );
         }
         if (canCancelBooking(record.status) && onCancelBooking) {
           actions.push(

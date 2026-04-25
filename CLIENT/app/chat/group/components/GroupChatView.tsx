@@ -27,6 +27,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import { chatApi, type GroupMessage } from "@/lib/api/chat.api";
 import { ChatErrorCode } from "@/lib/constants/error-codes";
@@ -57,6 +58,7 @@ export function GroupChatView({
   onGroupListVisibilityChange,
 }: GroupChatViewProps) {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { handleError } = useErrorHandler();
   const queryClient = useQueryClient();
@@ -64,6 +66,8 @@ export function GroupChatView({
   const [messageContent, setMessageContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<GroupMessage | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const initialGroupId = searchParams.get("group");
+  const initialGroupSelectedRef = useRef(false);
   const replyingToRef = useRef<GroupMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -167,6 +171,33 @@ export function GroupChatView({
       onGroupListVisibilityChange(false);
     }
   };
+
+  useEffect(() => {
+    if (!initialGroupId || initialGroupSelectedRef.current) {
+      return;
+    }
+
+    const groupExists = groupsData?.conversations.some(
+      (group) => group._id === initialGroupId
+    );
+
+    if (!groupExists && groupsData) {
+      return;
+    }
+
+    initialGroupSelectedRef.current = true;
+    setSelectedGroupId(initialGroupId);
+    markGroupReadMutation.mutate(initialGroupId);
+    if (isMobile) {
+      onGroupListVisibilityChange(false);
+    }
+  }, [
+    groupsData,
+    initialGroupId,
+    isMobile,
+    markGroupReadMutation,
+    onGroupListVisibilityChange,
+  ]);
 
   const handleBackToGroupList = () => {
     onBackToGroupList();

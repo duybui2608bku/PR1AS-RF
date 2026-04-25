@@ -707,7 +707,8 @@
       "lifestyle": "Lifestyle",
       "quote": "Quote",
       "reviews": {
-        "title": "Đánh giá & Phản hồi"
+        "title": "Đánh giá & Phản hồi",
+        "noReviews": "Chưa có đánh giá nào"
       },
       "services": {
         "title": "Dịch vụ",
@@ -1228,7 +1229,9 @@
       "payout": "Thu nhập",
       "actions": {
         "confirm": "Xác nhận",
+        "confirmBooking": "Bạn có chắc chắn muốn xác nhận đặt lịch này không?",
         "reject": "Từ chối",
+        "startConfirm": "Bạn có chắc chắn muốn bắt đầu lịch đặt này không?",
         "start": "Bắt đầu",
         "complete": "Hoàn thành",
         "cancel": "Hủy",
@@ -1297,8 +1300,35 @@
       "actions": {
         "review": "Đánh giá",
         "complain": "Khiếu nại",
+        "openComplaintChat": "Mở nhóm khiếu nại",
         "complainComingSoon": "Tính năng khiếu nại sắp ra mắt",
         "complainError": "Không thể tạo cuộc trò chuyện khiếu nại. Vui lòng thử lại."
+      }
+    },
+    "complaint": {
+      "title": "Tạo khiếu nại đặt lịch",
+      "reason": "Lý do khiếu nại",
+      "reasonRequired": "Vui lòng chọn lý do khiếu nại",
+      "reasonPlaceholder": "Chọn lý do",
+      "description": "Mô tả chi tiết",
+      "descriptionRequired": "Vui lòng nhập mô tả khiếu nại",
+      "descriptionMinLength": "Mô tả phải có ít nhất 10 ký tự",
+      "descriptionMaxLength": "Mô tả không được vượt quá 2000 ký tự",
+      "descriptionPlaceholder": "Mô tả vấn đề bạn gặp phải...",
+      "evidenceUrls": "Liên kết bằng chứng",
+      "evidenceUrlsHelp": "Mỗi dòng hoặc mỗi dấu phẩy là một URL. Có thể bỏ trống.",
+      "evidenceUrlsPlaceholder": "https://example.com/evidence.jpg",
+      "submit": "Gửi khiếu nại",
+      "success": "Khiếu nại đã được tạo. Đang mở nhóm trao đổi.",
+      "error": "Không thể tạo khiếu nại. Vui lòng thử lại.",
+      "reasons": {
+        "service_not_as_described": "Dịch vụ không đúng mô tả",
+        "worker_no_show": "Worker không xuất hiện",
+        "poor_quality": "Chất lượng dịch vụ kém",
+        "incomplete_service": "Dịch vụ chưa hoàn tất",
+        "unprofessional_behavior": "Hành vi thiếu chuyên nghiệp",
+        "safety_concern": "Lo ngại về an toàn",
+        "other": "Khác"
       }
     },
     "review": {

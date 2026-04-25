@@ -124,6 +124,7 @@ export interface CancelBookingInput {
 export interface BookingQuery {
   client_id?: Types.ObjectId;
   worker_id?: Types.ObjectId;
+  role?: "client" | "worker";
   status?: BookingStatus;
   payment_status?: BookingPaymentStatus;
   service_code?: string;

@@ -34,6 +34,7 @@ interface WorkerBookingCardProps {
     action: WorkerActionType,
     workerResponse?: string
   ) => void;
+  onOpenComplaintChat?: (bookingId: string) => void;
   formatCurrency: FormatCurrencyFunction;
   serviceMap: Map<string, Service>;
   locale: string;
@@ -43,6 +44,7 @@ interface WorkerBookingCardProps {
 export function WorkerBookingCard({
   booking,
   onAction,
+  onOpenComplaintChat,
   formatCurrency,
   serviceMap,
   locale,
@@ -57,6 +59,7 @@ export function WorkerBookingCard({
   const cardActions = getWorkerBookingActionNodes({
     record: booking,
     onAction,
+    onOpenComplaintChat,
     t,
   });
 

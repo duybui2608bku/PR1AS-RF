@@ -18,6 +18,7 @@ import {
   MailOutlined,
   PhoneOutlined,
   EditOutlined,
+  SafetyOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
@@ -123,9 +124,18 @@ function ProfileContent() {
                           {t("profile.info.verified")}
                         </Tag>
                       ) : (
-                        <Tag icon={<CloseCircleOutlined />} color="warning">
-                          {t("profile.info.unverified")}
-                        </Tag>
+                        <>
+                          <Tag icon={<CloseCircleOutlined />} color="warning">
+                            {t("profile.info.unverified")}
+                          </Tag>
+                          <Button
+                            type="link"
+                            icon={<SafetyOutlined />}
+                            onClick={handleVerifyEmail}
+                            aria-label={t("auth.user.verifyEmail.title")}
+                            title={t("auth.user.verifyEmail.title")}
+                          />
+                        </>
                       )}
                     </Space>
                   </Descriptions.Item>
@@ -175,11 +185,6 @@ function ProfileContent() {
                 <Divider />
 
                 <Space>
-                  {!profile?.verify_email && profile?.email ? (
-                    <Button onClick={handleVerifyEmail} size="large">
-                      {t("auth.user.verifyEmail.title")}
-                    </Button>
-                  ) : null}
                   <Button
                     type="primary"
                     icon={<EditOutlined />}

@@ -73,6 +73,7 @@ Hệ thống Chat cho phép users gửi và nhận messages real-time qua Socket
 
 #### Pages (`CLIENT/app/chat/`)
 - `/chat`: Chat page với conversation list và message view
+- `/chat/group`: Group chat cho các khiếu nại booking; hỗ trợ mở trực tiếp bằng query `?group=<conversation_group_id>`
 
 #### Components (`CLIENT/app/chat/components/`)
 - Chat interface components
@@ -295,6 +296,12 @@ Xóa message.
 - Messages được gửi qua Socket.IO để real-time delivery
 - Nếu Socket.IO không available, fallback về HTTP API
 - Messages được persist trong database
+
+### Complaint Group Chat
+- Client mở khiếu nại từ booking đang `IN_PROGRESS` hoặc `COMPLETED`, nhập lý do/mô tả/bằng chứng và gọi `POST /api/bookings/:id/dispute`.
+- Sau khi dispute được tạo, frontend gọi `POST /api/chat/group/complaint` để tạo hoặc mở group gồm client, worker và admin đầu tiên.
+- Client và worker có thể mở lại group từ booking `DISPUTED`; backend chỉ cho tạo/mở complaint group khi booking đang ở trạng thái `DISPUTED`.
+- Endpoint tạo complaint group sẽ bổ sung admin vào group cũ cùng booking nếu group đã tồn tại, tránh lỗi unique `booking_id`.
 
 ### Read Receipts
 - `is_read` flag được update khi user đọc message

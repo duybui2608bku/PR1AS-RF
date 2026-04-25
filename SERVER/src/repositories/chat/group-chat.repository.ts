@@ -10,9 +10,7 @@ import type {
 } from "../../types/chat/group-chat.types";
 
 export class GroupChatRepository {
-  private mapConversationGroup(
-    conversation: any
-  ): IConversationGroup {
+  private mapConversationGroup(conversation: any): IConversationGroup {
     return {
       _id: conversation._id.toString(),
       booking_id: conversation.booking_id.toString(),
@@ -42,9 +40,7 @@ export class GroupChatRepository {
         })
       ),
       is_deleted: message.is_deleted,
-      reply_to_id: message.reply_to_id
-        ? message.reply_to_id.toString()
-        : null,
+      reply_to_id: message.reply_to_id ? message.reply_to_id.toString() : null,
       created_at: message.created_at,
       updated_at: message.updated_at,
     };
@@ -96,17 +92,27 @@ export class GroupChatRepository {
 
     const existing = await ConversationGroup.findOne({
       booking_id: new Types.ObjectId(booking_id),
-      members: {
-        $all: [
-          new Types.ObjectId(booking.client_id),
-          new Types.ObjectId(booking.worker_id),
-          new Types.ObjectId(admin_id),
-        ],
-      },
     }).lean();
 
     if (existing) {
-      return this.mapConversationGroup(existing);
+      const requiredMembers = [
+        new Types.ObjectId(booking.client_id),
+        new Types.ObjectId(booking.worker_id),
+        new Types.ObjectId(admin_id),
+      ];
+      const updated = await ConversationGroup.findByIdAndUpdate(
+        existing._id,
+        {
+          $addToSet: { members: { $each: requiredMembers } },
+          $set: {
+            name: `Complaint - ${booking.service_code}`,
+            updated_at: new Date(),
+          },
+        },
+        { new: true }
+      ).lean();
+
+      return this.mapConversationGroup(updated ?? existing);
     }
 
     const conversation = new ConversationGroup({
@@ -226,9 +232,7 @@ export class GroupChatRepository {
         },
       ],
       is_deleted: false,
-      reply_to_id: reply_to_id
-        ? new Types.ObjectId(reply_to_id)
-        : null,
+      reply_to_id: reply_to_id ? new Types.ObjectId(reply_to_id) : null,
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -267,9 +271,7 @@ export class GroupChatRepository {
     ]);
 
     return {
-      messages: messages
-        .map((msg) => this.mapMessageGroup(msg))
-        .reverse(),
+      messages: messages.map((msg) => this.mapMessageGroup(msg)).reverse(),
       total,
     };
   }
@@ -310,9 +312,7 @@ export class GroupChatRepository {
     };
 
     if (conversation_group_id) {
-      filter.conversation_group_id = new Types.ObjectId(
-        conversation_group_id
-      );
+      filter.conversation_group_id = new Types.ObjectId(conversation_group_id);
     }
 
     if (message_ids && message_ids.length > 0) {
@@ -371,4 +371,3 @@ export class GroupChatRepository {
 }
 
 export const groupChatRepository = new GroupChatRepository();
-

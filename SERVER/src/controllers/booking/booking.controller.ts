@@ -20,6 +20,7 @@ import {
 import { userRepository } from "../../repositories/auth/user.repository";
 import { Types } from "mongoose";
 import { PaginationRequest } from "../../middleware";
+import { UserRole } from "../../types/auth/user.types";
 
 export class BookingController {
   async createBooking(req: AuthRequest, res: Response): Promise<void> {
@@ -50,15 +51,21 @@ export class BookingController {
     );
     const { page, limit, skip } = req.pagination!;
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
-    const { isWorker, isClient } = roleInfo;
+    const requestedRole = query.role || roleInfo.lastActiveRole;
     const baseQuery = { ...query, page, limit, skip };
     let result;
-    if (isWorker) {
+    if (
+      requestedRole === UserRole.WORKER &&
+      roleInfo.roles.includes(UserRole.WORKER)
+    ) {
       result = await bookingService.getBookingsByWorker({
         ...baseQuery,
         worker_id: new Types.ObjectId(userId),
       });
-    } else if (isClient) {
+    } else if (
+      requestedRole === UserRole.CLIENT &&
+      roleInfo.roles.includes(UserRole.CLIENT)
+    ) {
       result = await bookingService.getBookingsByClient({
         ...baseQuery,
         client_id: new Types.ObjectId(userId),
@@ -140,14 +147,12 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const result = await bookingService.createDispute(
       id,
       userId,
       data.reason,
       data.description,
-      data.evidence_urls,
-      roleInfo
+      data.evidence_urls
     );
     R.success(res, result, BOOKING_MESSAGES.DISPUTE_CREATED, req);
   }

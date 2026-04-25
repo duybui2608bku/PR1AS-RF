@@ -31,6 +31,7 @@ interface CreateBookingColumnsOptions {
   onCancelBooking?: (bookingId: string) => void;
   onReviewBooking?: (bookingId: string) => void;
   onComplainBooking?: (bookingId: string) => void;
+  onOpenComplaintChat?: (bookingId: string) => void;
 }
 
 export const canCancelBooking = (status: BookingStatus): boolean => {
@@ -41,8 +42,18 @@ export const canCancelBooking = (status: BookingStatus): boolean => {
   );
 };
 
-export const canReviewOrComplain = (status: BookingStatus): boolean => {
+export const canReviewBooking = (status: BookingStatus): boolean => {
   return status === BookingStatus.COMPLETED;
+};
+
+export const canComplainBooking = (status: BookingStatus): boolean => {
+  return (
+    status === BookingStatus.IN_PROGRESS || status === BookingStatus.COMPLETED
+  );
+};
+
+export const canOpenComplaintChat = (status: BookingStatus): boolean => {
+  return status === BookingStatus.DISPUTED;
 };
 
 export const isBookingExpired = (schedule: Booking["schedule"], status: BookingStatus): boolean => {
@@ -62,6 +73,7 @@ export const createBookingColumns = ({
   onCancelBooking,
   onReviewBooking,
   onComplainBooking,
+  onOpenComplaintChat,
 }: CreateBookingColumnsOptions): ColumnsType<Booking> => {
   return [
     {
@@ -189,10 +201,10 @@ export const createBookingColumns = ({
           return null;
         }
 
-        if (canReviewOrComplain(record.status)) {
+        if (canReviewBooking(record.status) || canComplainBooking(record.status)) {
           return (
             <Space size="small">
-              {onReviewBooking && (
+              {onReviewBooking && canReviewBooking(record.status) && (
                 <Button
                   type="primary"
                   size="small"
@@ -201,7 +213,7 @@ export const createBookingColumns = ({
                   {t("booking.client.actions.review")}
                 </Button>
               )}
-              {onComplainBooking && (
+              {onComplainBooking && canComplainBooking(record.status) && (
                 <Button
                   danger
                   size="small"
@@ -210,7 +222,28 @@ export const createBookingColumns = ({
                   {t("booking.client.actions.complain")}
                 </Button>
               )}
+              {onCancelBooking && canCancelBooking(record.status) && (
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => onCancelBooking(bookingId)}
+                >
+                  {t("booking.worker.actions.cancel")}
+                </Button>
+              )}
             </Space>
+          );
+        }
+
+        if (onOpenComplaintChat && canOpenComplaintChat(record.status)) {
+          return (
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => onOpenComplaintChat(bookingId)}
+            >
+              {t("booking.client.actions.openComplaintChat")}
+            </Button>
           );
         }
 

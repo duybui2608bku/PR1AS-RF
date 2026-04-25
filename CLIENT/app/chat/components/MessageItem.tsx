@@ -1,11 +1,12 @@
 "use client";
 
 import React, { memo } from "react";
-import { Button, Typography, Popover, Image } from "antd";
+import { Button, Typography, Popover, Image, Avatar } from "antd";
 import {
   CommentOutlined,
   DeleteOutlined,
   MoreOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import type { Message } from "@/lib/api/chat.api";
@@ -21,7 +22,10 @@ interface MessageItemProps {
   isMobile: boolean;
   replyToMessage: Message | null;
   currentUserId?: string;
+  currentUserName?: string;
+  currentUserAvatar?: string | null;
   otherUserName?: string;
+  otherUserAvatar?: string | null;
   mobileMenuOpenId: string | null;
   onReply: (message: Message) => void;
   onDelete: (messageId: string) => void;
@@ -34,7 +38,10 @@ export const MessageItem = memo(function MessageItem({
   isMobile,
   replyToMessage,
   currentUserId,
+  currentUserName,
+  currentUserAvatar,
   otherUserName,
+  otherUserAvatar,
   mobileMenuOpenId,
   onReply,
   onDelete,
@@ -42,6 +49,10 @@ export const MessageItem = memo(function MessageItem({
 }: MessageItemProps) {
   const { t } = useTranslation();
   const isMobileMenuOpen = mobileMenuOpenId === msg._id;
+  const avatarName = isOwn
+    ? currentUserName || t("chat.you")
+    : otherUserName || t("chat.unknownUser");
+  const avatarSrc = isOwn ? currentUserAvatar : otherUserAvatar;
 
   return (
     <div
@@ -108,6 +119,11 @@ export const MessageItem = memo(function MessageItem({
           />
         </Popover>
       )}
+      <div className={styles.messageAvatarWrapper}>
+        <Avatar src={avatarSrc || undefined} icon={<UserOutlined />} size={32}>
+          {avatarName.charAt(0).toUpperCase()}
+        </Avatar>
+      </div>
       <div className={styles.messageContent}>
         {replyToMessage && (
           <div className={styles.replyToPreview}>

@@ -705,7 +705,8 @@
       "lifestyle": "Lifestyle",
       "quote": "Quote",
       "reviews": {
-        "title": "Reviews & Feedback"
+        "title": "Reviews & Feedback",
+        "noReviews": "No reviews yet"
       },
       "services": {
         "title": "Services",
@@ -1217,7 +1218,9 @@
       "payout": "Payout",
       "actions": {
         "confirm": "Confirm",
+        "confirmBooking": "Are you sure you want to confirm this booking?",
         "reject": "Reject",
+        "startConfirm": "Are you sure you want to start this booking?",
         "start": "Start",
         "complete": "Complete",
         "cancel": "Cancel",
@@ -1286,8 +1289,35 @@
       "actions": {
         "review": "Review",
         "complain": "Complain",
+        "openComplaintChat": "Open complaint group",
         "complainComingSoon": "Complain feature coming soon",
         "complainError": "Failed to create complaint conversation. Please try again."
+      }
+    },
+    "complaint": {
+      "title": "Create booking complaint",
+      "reason": "Complaint reason",
+      "reasonRequired": "Please select a complaint reason",
+      "reasonPlaceholder": "Select a reason",
+      "description": "Detailed description",
+      "descriptionRequired": "Please enter a complaint description",
+      "descriptionMinLength": "Description must be at least 10 characters",
+      "descriptionMaxLength": "Description must not exceed 2000 characters",
+      "descriptionPlaceholder": "Describe the issue you encountered...",
+      "evidenceUrls": "Evidence links",
+      "evidenceUrlsHelp": "Use one URL per line or separate URLs with commas. Optional.",
+      "evidenceUrlsPlaceholder": "https://example.com/evidence.jpg",
+      "submit": "Submit complaint",
+      "success": "Complaint created. Opening the discussion group.",
+      "error": "Failed to create complaint. Please try again.",
+      "reasons": {
+        "service_not_as_described": "Service not as described",
+        "worker_no_show": "Worker no-show",
+        "poor_quality": "Poor service quality",
+        "incomplete_service": "Incomplete service",
+        "unprofessional_behavior": "Unprofessional behavior",
+        "safety_concern": "Safety concern",
+        "other": "Other"
       }
     },
     "review": {

@@ -37,6 +37,8 @@ const ConversationListComponent = ({
 
   const renderConversationItem = useCallback((conversation: Conversation) => {
     const otherId = getOtherParticipant(conversation);
+    const otherUserName =
+      conversation.other_user?.full_name || otherId || t("chat.unknownUser");
     const isSelected = conversation.id === selectedConversationId;
     return (
       <List.Item
@@ -51,16 +53,17 @@ const ConversationListComponent = ({
               count={conversation.unread_count || 0}
               offset={[-5, 5]}
             >
-              <Avatar icon={<UserOutlined />} />
+              <Avatar
+                src={conversation.other_user?.avatar || undefined}
+                icon={<UserOutlined />}
+              >
+                {otherUserName.charAt(0).toUpperCase()}
+              </Avatar>
             </Badge>
           }
           title={
             <Space>
-              <Text strong>
-                {conversation.other_user?.full_name ||
-                  otherId ||
-                  t("chat.unknownUser")}
-              </Text>
+              <Text strong>{otherUserName}</Text>
               {conversation.last_message && (
                 <Text type="secondary" className={styles.lastMessageTime}>
                   {formatTime(conversation.last_message.created_at, t)}
