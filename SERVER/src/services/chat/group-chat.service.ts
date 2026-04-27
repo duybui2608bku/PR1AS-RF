@@ -19,6 +19,8 @@ import { SOCKET_EVENTS } from "../../constants/socket";
 import { groupChatRepository } from "../../repositories/chat";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
+import { notificationEventService } from "../notification";
+import { logger } from "../../utils/logger";
 
 export class GroupChatService {
   private async ensureUserInConversation(
@@ -106,6 +108,35 @@ export class GroupChatService {
         conversation,
       }
     );
+
+    const groupRoom = getGroupConversationRoom(conversation._id);
+    const notificationRecipients = (
+      await Promise.all(
+        conversation.members
+          .filter((memberId) => memberId !== sender_id)
+          .map(async (memberId) => {
+            const sockets = await io.in(getUserRoom(memberId)).fetchSockets();
+            const isViewingGroup = sockets.some((socket) =>
+              socket.rooms.has(groupRoom)
+            );
+            return isViewingGroup ? null : memberId;
+          })
+      )
+    ).filter((memberId): memberId is string => memberId !== null);
+
+    if (notificationRecipients.length > 0) {
+      void notificationEventService
+        .chatMessage({
+          recipientIds: notificationRecipients,
+          actorId: sender_id,
+          messageId: message._id.toString(),
+          conversationGroupId: conversation._id.toString(),
+          isGroup: true,
+        })
+        .catch((error) =>
+          logger.error("Group chat message notification failed:", error)
+        );
+    }
 
     return {
       message,

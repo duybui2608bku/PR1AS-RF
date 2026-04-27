@@ -11,4 +11,8 @@ export const modelsName = {
   ESCROW: "escrows",
   BOOKING: "bookings",
   REVIEW: "reviews",
+  NOTIFICATION: "notifications",
+  NOTIFICATION_PREFERENCE: "notification_preferences",
+  PUSH_SUBSCRIPTION: "push_subscriptions",
+  NOTIFICATION_DELIVERY_LOG: "notification_delivery_logs",
 };

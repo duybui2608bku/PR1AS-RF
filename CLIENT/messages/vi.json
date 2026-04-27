@@ -86,7 +86,19 @@
     "success": "Thao tác thành công!",
     "error": "Đã xảy ra lỗi",
     "warning": "Cảnh báo",
-    "info": "Thông tin"
+    "info": "Thông tin",
+    "title": "Thông báo",
+    "empty": "Chưa có thông báo",
+    "viewAll": "Xem tất cả",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "preferences": "Tùy chọn thông báo",
+    "pushHint": "Thông báo đẩy cần được trình duyệt cho phép và chỉ hoạt động trên HTTPS hoặc localhost.",
+    "enablePush": "Bật thông báo đẩy",
+    "channels": {
+      "inApp": "Thông báo trong ứng dụng",
+      "email": "Email",
+      "push": "Thông báo đẩy"
+    }
   },
   "auth": {
     "title": "Đăng nhập Admin",

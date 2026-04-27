@@ -26,6 +26,8 @@ import { BOOKING_MESSAGES } from "../../constants/messages";
 import { PaginatedResponse } from "../../utils/pagination";
 import { holdBalanceForBooking } from "../wallet/wallet.service";
 import { CreateEscrowInput } from "../../types/escrow/escrow.types";
+import { notificationEventService } from "../notification";
+import { logger } from "../../utils/logger";
 
 export interface RoleInfo {
   isWorker: boolean;
@@ -279,7 +281,13 @@ export class BookingService {
 
       await session.commitTransaction();
 
-      return this.getBookingOrThrow(booking._id.toString());
+      const createdBooking = await this.getBookingOrThrow(
+        booking._id.toString()
+      );
+      void notificationEventService
+        .bookingCreated(createdBooking)
+        .catch((error) => logger.error("Booking notification failed:", error));
+      return createdBooking;
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -382,6 +390,12 @@ export class BookingService {
       );
     }
 
+    void notificationEventService
+      .bookingStatusUpdated(updatedBooking, status, userId)
+      .catch((error) =>
+        logger.error("Booking status notification failed:", error)
+      );
+
     return updatedBooking;
   }
 
@@ -465,9 +479,16 @@ export class BookingService {
 
       await session.commitTransaction();
 
-      return this.getBookingOrThrow(
+      const cancelledBooking = await this.getBookingOrThrow(
         updatedBooking?._id.toString() || bookingId
       );
+      void notificationEventService
+        .bookingCancelled(cancelledBooking, userId, cancelledBy)
+        .catch((error) =>
+          logger.error("Booking cancellation notification failed:", error)
+        );
+
+      return cancelledBooking;
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -553,6 +574,10 @@ export class BookingService {
         ErrorCode.BOOKING_NOT_FOUND
       );
     }
+
+    void notificationEventService
+      .disputeCreated(updatedBooking, userId)
+      .catch((error) => logger.error("Dispute notification failed:", error));
 
     return updatedBooking;
   }
@@ -735,6 +760,12 @@ export class BookingService {
         ErrorCode.BOOKING_NOT_FOUND
       );
     }
+
+    void notificationEventService
+      .disputeResolved(updatedBooking, adminUserId, resolution)
+      .catch((error) =>
+        logger.error("Dispute resolution notification failed:", error)
+      );
 
     return updatedBooking;
   }

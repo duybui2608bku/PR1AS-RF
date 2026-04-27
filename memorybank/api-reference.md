@@ -591,6 +591,92 @@ Xóa message.
 
 **Auth**: Required
 
+## Notification APIs
+
+### GET `/api/notifications`
+Lấy danh sách notifications với pagination và filters.
+
+**Query Params**:
+- `page`: number (default: 1)
+- `limit`: number (default: 20)
+- `unread`: boolean (optional)
+- `category`: notification category (optional)
+- `type`: notification type (optional)
+
+**Auth**: Required
+
+### GET `/api/notifications/unread-count`
+Lấy số notification chưa đọc.
+
+**Response**:
+```typescript
+{
+  unread_count: number;
+}
+```
+
+**Auth**: Required
+
+### PATCH `/api/notifications/:id/read`
+Đánh dấu một notification đã đọc.
+
+**Auth**: Required
+
+### PATCH `/api/notifications/read-all`
+Đánh dấu tất cả notifications đã đọc.
+
+**Response**:
+```typescript
+{
+  updated_count: number;
+}
+```
+
+**Auth**: Required
+
+### GET/PATCH `/api/notifications/preferences`
+Lấy hoặc cập nhật preferences theo user.
+
+**Request Body for PATCH**:
+```typescript
+{
+  channels?: {
+    in_app?: boolean;
+    email?: boolean;
+    push?: boolean;
+  };
+  muted_types?: string[];
+}
+```
+
+**Auth**: Required
+
+### GET `/api/notifications/push-public-key`
+Lấy Web Push public VAPID key.
+
+**Auth**: Required
+
+### POST `/api/notifications/push-subscriptions`
+Lưu browser push subscription.
+
+**Request Body**:
+```typescript
+{
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
+```
+
+**Auth**: Required
+
+### DELETE `/api/notifications/push-subscriptions/:id`
+Deactivate push subscription của user hiện tại.
+
+**Auth**: Required
+
 ## Error Codes
 
 ### Authentication Errors

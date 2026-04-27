@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Popover, Spin, Empty, Typography, Space, Divider, Descriptions } from "antd";
+import {
+  Popover,
+  Spin,
+  Empty,
+  Typography,
+  Space,
+  Divider,
+  Descriptions,
+} from "antd";
 import { useTranslation } from "react-i18next";
 import { bookingApi } from "@/lib/api/booking.api";
 import type { Booking } from "@/lib/types/booking";
@@ -10,6 +18,13 @@ import { formatTime } from "@/lib/utils";
 import styles from "../../chat.module.scss";
 
 const { Text } = Typography;
+
+const formatVnd = (amount: number): string =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount);
 
 interface BookingParticipant {
   id: string;
@@ -77,7 +92,11 @@ export function BookingInfoPopover({
 
     return (
       <div className={styles.bookingInfoContent}>
-        <Space direction="vertical" size="middle" className={styles.bookingInfoSection}>
+        <Space
+          orientation="vertical"
+          size="middle"
+          className={styles.bookingInfoSection}
+        >
           <Text type="secondary">Thông tin đặt chỗ</Text>
           <Divider className={styles.bookingInfoDivider} />
           <Descriptions
@@ -88,12 +107,12 @@ export function BookingInfoPopover({
           >
             <Descriptions.Item label="Khách hàng">
               {getParticipantDisplay(
-                bookingData.client_id as unknown as string | BookingParticipant
+                bookingData.client_id as unknown as string | BookingParticipant,
               )}
             </Descriptions.Item>
             <Descriptions.Item label="Người thực hiện">
               {getParticipantDisplay(
-                bookingData.worker_id as unknown as string | BookingParticipant
+                bookingData.worker_id as unknown as string | BookingParticipant,
               )}
             </Descriptions.Item>
           </Descriptions>
@@ -110,15 +129,13 @@ export function BookingInfoPopover({
               {bookingData.service_code}
             </Descriptions.Item>
             <Descriptions.Item label="Giá">
-              <Space direction="vertical" size={2}>
-                <Text>
-                  {bookingData.pricing.unit_price} {bookingData.pricing.currency}
-                </Text>
+              <Space orientation="vertical" size={2}>
+                <Text>{formatVnd(bookingData.pricing.unit_price)}</Text>
                 <Text type="secondary">
                   {bookingData.pricing.quantity} × {bookingData.pricing.unit}
                 </Text>
                 <Text strong>
-                  {bookingData.pricing.total_amount} {bookingData.pricing.currency}
+                  {formatVnd(bookingData.pricing.total_amount)}
                 </Text>
               </Space>
             </Descriptions.Item>
@@ -133,7 +150,7 @@ export function BookingInfoPopover({
             className={styles.bookingInfoDescriptions}
           >
             <Descriptions.Item label="Lịch làm việc">
-              <Space direction="vertical" size={2}>
+              <Space orientation="vertical" size={2}>
                 <Text>
                   {formatTime(bookingData.schedule.start_time, t)} đến{" "}
                   {formatTime(bookingData.schedule.end_time, t)}
@@ -163,4 +180,3 @@ export function BookingInfoPopover({
     </Popover>
   );
 }
-

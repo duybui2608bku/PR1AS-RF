@@ -2,7 +2,7 @@
 
 ## Tổng quan dự án
 
-PR1AS Client là một ứng dụng frontend được xây dựng bằng Next.js 16 (App Router) + React 19 + TypeScript. Ứng dụng hỗ trợ đa ngôn ngữ (i18n), theme switching, state management với Zustand, và tích hợp với Ant Design UI library.
+PR1AS Client là một ứng dụng frontend được xây dựng bằng Next.js 16 (App Router) + React 19 + TypeScript. Ứng dụng giữ nền tảng i18n nhưng hiện tạm khóa tiếng Việt (vi), theme switching, state management với Zustand, và tích hợp với Ant Design UI library.
 
 ## Kiến trúc
 
@@ -130,12 +130,12 @@ CLIENT/
 - Theme persistence
 
 #### Locale Store (`lib/stores/locale.store.ts`)
-- Current language
-- Language switching
+- Current language locked to `vi`
+- Language switching state retained but disabled in UI
 
 #### Currency Store (`lib/stores/currency.store.ts`)
-- Currency selection
-- Currency conversion
+- Current currency locked to `VND`
+- Currency selection state retained but disabled in UI
 
 ### React Query
 - Server state management
@@ -200,10 +200,8 @@ interface ApiResponse<T> {
 ## Internationalization (i18n)
 
 ### Supported Languages
-- Vietnamese (vi) - Default
-- English (en)
-- Korean (ko)
-- Chinese (zh)
+- Vietnamese (vi) - Default and currently active
+- English (en), Korean (ko), Chinese (zh) - Translation files retained for future unlock
 
 ### Translation Files
 - Location: `messages/{locale}.json`
@@ -220,7 +218,7 @@ interface ApiResponse<T> {
 ### Usage
 - Hook: `useI18n()` từ `lib/hooks/use-i18n.ts`
 - Component: `useTranslations()` từ next-intl
-- Language switching qua `locale.store.ts`
+- `locale.store.ts` hiện ép `vi`; language switching UI đang ẩn để mở lại sau
 
 ## Theming
 
@@ -313,7 +311,6 @@ interface ApiResponse<T> {
 
 ### `Header` (`app/components/header.tsx`)
 - Main navigation header
-- Language switcher
 - Theme toggle
 - User menu
 - "Become Worker" button
@@ -333,8 +330,8 @@ interface ApiResponse<T> {
 - Error reporting
 
 ### `LanguageSwitcher` (`lib/components/language-switcher.tsx`)
-- Language selection dropdown
-- i18n integration
+- Language selection dropdown retained for future unlock
+- Currently not rendered in header/admin UI while app is locked to Vietnamese
 
 ### `ThemeToggle` (`lib/components/theme-toggle.tsx`)
 - Theme switching button
@@ -346,6 +343,7 @@ interface ApiResponse<T> {
 - Deposit với VNPay
 - Balance management
 - Transaction history
+- Currency display and transaction flows are currently locked to VND
 - Payment callback handling
 
 ### Wallet Pages
@@ -374,6 +372,20 @@ Xem chi tiết: `memorybank/wallet.md`
 
 Xem chi tiết: `memorybank/chat.md`
 
+## Notification Integration
+
+### Notification API (`lib/api/notification.api.ts`)
+- List notifications, unread count, mark read/read all
+- Preferences cho `in_app`, `email`, `push`
+- Push public key và push subscription lifecycle
+
+### Notification UI
+- Global provider lắng nghe Socket.IO events và hiển thị realtime toast
+- Header notification badge/popover
+- `/notifications` notification center với list và preferences
+
+Xem chi tiết: `memorybank/notification.md`
+
 ## Environment Variables
 
 ### Required Variables
@@ -400,6 +412,7 @@ NEXT_PUBLIC_DEFAULT_LOCALE=vi
 - `/client/wallet/deposit` - Deposit page với VNPay integration
 - `/wallet/deposit/callback` - Payment callback page
 - `/chat` - Chat page với conversation list và message view
+- `/notifications` - Notification center và preferences
 - `/worker/setup` - Worker profile setup (multi-step)
   - Step 1: Basic information (location, personal details, gallery)
   - Step 2: Services selection và pricing

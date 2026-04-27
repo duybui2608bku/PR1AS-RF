@@ -3,6 +3,10 @@
 import { Socket } from "socket.io-client";
 import { SocketEvent } from "../constants/socket-events";
 import { getSocket } from "./config";
+import type {
+  RealtimeNotificationPayload,
+  RealtimeUnreadCountPayload,
+} from "../types/notification";
 
 export interface JoinConversationData {
   conversation_id: string;
@@ -35,7 +39,7 @@ export interface NewMessageData {
     created_at: string;
     updated_at: string;
   };
-  conversation?: any;
+  conversation?: unknown;
 }
 
 export interface UserTypingData {
@@ -228,6 +232,42 @@ export class ChatSocket {
     const socket = this.getSocketInstance();
     if (socket) {
       socket.off(SocketEvent.CONNECTED, callback);
+    }
+  }
+
+  onNotificationNew(
+    callback: (data: RealtimeNotificationPayload) => void
+  ): void {
+    const socket = this.getSocketInstance();
+    if (socket) {
+      socket.on(SocketEvent.NOTIFICATION_NEW, callback);
+    }
+  }
+
+  offNotificationNew(
+    callback?: (data: RealtimeNotificationPayload) => void
+  ): void {
+    const socket = this.getSocketInstance();
+    if (socket) {
+      socket.off(SocketEvent.NOTIFICATION_NEW, callback);
+    }
+  }
+
+  onNotificationUnreadCount(
+    callback: (data: RealtimeUnreadCountPayload) => void
+  ): void {
+    const socket = this.getSocketInstance();
+    if (socket) {
+      socket.on(SocketEvent.NOTIFICATION_UNREAD_COUNT, callback);
+    }
+  }
+
+  offNotificationUnreadCount(
+    callback?: (data: RealtimeUnreadCountPayload) => void
+  ): void {
+    const socket = this.getSocketInstance();
+    if (socket) {
+      socket.off(SocketEvent.NOTIFICATION_UNREAD_COUNT, callback);
     }
   }
 

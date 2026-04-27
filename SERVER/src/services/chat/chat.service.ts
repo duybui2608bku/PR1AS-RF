@@ -27,6 +27,8 @@ import {
 import { CHAT_MESSAGES } from "../../constants/messages";
 import { chatRepository } from "../../repositories/chat/chat.repository";
 import { SOCKET_EVENTS } from "../../constants/socket";
+import { notificationEventService } from "../notification";
+import { logger } from "../../utils/logger";
 
 export class ChatService {
   async sendMessage(
@@ -94,6 +96,30 @@ export class ChatService {
           conversation,
         }
       );
+    }
+
+    if (message.conversation_id) {
+      const conversationRoom = getConversationRoom(message.conversation_id);
+      const receiverSockets = await io
+        .in(getUserRoom(input.receiver_id))
+        .fetchSockets();
+      const isReceiverViewingConversation = receiverSockets.some((socket) =>
+        socket.rooms.has(conversationRoom)
+      );
+
+      if (!isReceiverViewingConversation) {
+        void notificationEventService
+          .chatMessage({
+            recipientIds: [input.receiver_id],
+            actorId: sender_id,
+            messageId: message._id.toString(),
+            conversationId: message.conversation_id,
+            isGroup: false,
+          })
+          .catch((error) =>
+            logger.error("Chat message notification failed:", error)
+          );
+      }
     }
 
     return {

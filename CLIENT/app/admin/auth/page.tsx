@@ -2,13 +2,22 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Form, Input, Button, Card, Typography, message, Space, Row, Col } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  message,
+  Space,
+  Row,
+  Col,
+} from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useLogin, useLogout } from "@/lib/hooks/use-auth";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
-import { LanguageSwitcher } from "@/lib/components/language-switcher";
 import type { LoginRequest } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import styles from "./page.module.scss";
@@ -26,12 +35,10 @@ export default function AdminAuthPage() {
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
 
-  const getUserRoles = (u: { roles?: string[]; role?: string } | null | undefined) => {
-    return Array.isArray(u?.roles)
-      ? u.roles
-      : u?.role
-      ? [u.role]
-      : [];
+  const getUserRoles = (
+    u: { roles?: string[]; role?: string } | null | undefined,
+  ) => {
+    return Array.isArray(u?.roles) ? u.roles : u?.role ? [u.role] : [];
   };
 
   useEffect(() => {
@@ -52,7 +59,9 @@ export default function AdminAuthPage() {
 
       if (response.success && response.data) {
         const { user: loggedInUser } = response.data;
-        const roles = getUserRoles(loggedInUser as { roles?: string[]; role?: string });
+        const roles = getUserRoles(
+          loggedInUser as { roles?: string[]; role?: string },
+        );
 
         if (roles.includes(ADMIN_ROLE)) {
           message.success(t("auth.loginSuccess"));
@@ -73,7 +82,6 @@ export default function AdminAuthPage() {
         <Col>
           <Space>
             <ThemeToggle />
-            <LanguageSwitcher />
           </Space>
         </Col>
       </Row>

@@ -16,6 +16,8 @@ import { REVIEW_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
 import { IBookingDocument, UserRole } from "../../types";
 import { VALIDATION_LIMITS } from "../../constants/validation";
+import { notificationEventService } from "../notification";
+import { logger } from "../../utils/logger";
 
 export class ReviewService {
   private async checkBookingExists(
@@ -71,6 +73,9 @@ export class ReviewService {
     };
 
     const review = await reviewRepository.create(reviewData);
+    void notificationEventService
+      .reviewCreated(review, userId)
+      .catch((error) => logger.error("Review notification failed:", error));
     return review;
   }
 
@@ -236,6 +241,12 @@ export class ReviewService {
         ErrorCode.REVIEW_NOT_FOUND
       );
     }
+
+    void notificationEventService
+      .reviewUpdated(updatedReview, userId)
+      .catch((error) =>
+        logger.error("Review update notification failed:", error)
+      );
 
     return updatedReview;
   }

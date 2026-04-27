@@ -82,7 +82,7 @@ export const SocketDebug = () => {
         </Button>
       }
     >
-      <Space direction="vertical" className={styles.spaceFull} size="small">
+      <Space orientation="vertical" className={styles.spaceFull} size="small">
         <div>
           <Text strong>Connection Status: </Text>
           {isConnected ? (

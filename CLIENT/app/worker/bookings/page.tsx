@@ -308,7 +308,7 @@ function WorkerBookingsContent() {
                 ) : (
                   <Fragment>
                     <Space
-                      direction="vertical"
+                      orientation="vertical"
                       size="middle"
                       className={styles.mobileListSpace}
                     >

@@ -85,7 +85,7 @@ class WorkerServiceService {
       unit: item.unit,
       duration: item.duration,
       price: Number(item.price),
-      currency: (item.currency || "USD").toUpperCase(),
+      currency: "VND",
     }));
   }
 

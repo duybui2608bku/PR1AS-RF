@@ -433,7 +433,7 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
           <Title level={4} className={styles.selectedTitle}>
             {t("worker.setup.step2.selected.title")} ({selectedServices.size})
           </Title>
-          <Space direction="vertical" size={Spacing.LG} className={styles.selectedList}>
+          <Space orientation="vertical" size={Spacing.LG} className={styles.selectedList}>
             {Array.from(selectedServices.values()).map((service) => (
               <Card key={service.id} size="small">
                 <Row justify="space-between" align="top">

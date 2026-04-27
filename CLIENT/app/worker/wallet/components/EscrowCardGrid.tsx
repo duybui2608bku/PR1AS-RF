@@ -36,7 +36,7 @@ export function EscrowCardGrid({
   }
 
   return (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Row gutter={[Spacing.MD, Spacing.MD]}>
         {escrows.map((escrow) => (
           <Col

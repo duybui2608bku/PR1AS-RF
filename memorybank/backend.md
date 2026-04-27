@@ -336,6 +336,18 @@ COMBINED_LOG_FILE=combined.log
   - `GET /messages/unread` - Get unread count
   - `DELETE /messages/:id` - Delete message
 
+- `/api/notifications` - Notification endpoints
+
+  - `GET /` - List notifications with pagination and filters
+  - `GET /unread-count` - Get unread notification count
+  - `PATCH /:id/read` - Mark notification as read
+  - `PATCH /read-all` - Mark all notifications as read
+  - `GET /preferences` - Get notification preferences
+  - `PATCH /preferences` - Update notification preferences
+  - `GET /push-public-key` - Get Web Push public VAPID key
+  - `POST /push-subscriptions` - Save browser push subscription
+  - `DELETE /push-subscriptions/:id` - Deactivate push subscription
+
 - `/health` - Health check endpoint (không có prefix `/api`)
 
 ## Quy ước Coding

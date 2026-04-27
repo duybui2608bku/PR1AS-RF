@@ -193,7 +193,7 @@ function WorkerWalletContent() {
               <Row gutter={[24, 24]}>
                 <Col xs={24} sm={12} md={8}>
                   <Card hoverable className={styles.balanceCard}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.balance") || "Balance"}
                       </Text>
@@ -208,7 +208,7 @@ function WorkerWalletContent() {
 
                 <Col xs={24} sm={12} md={8}>
                   <Card hoverable className={styles.balanceCard}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.reconciliationBalance") ||
                           "Reconciliation Balance"}
@@ -224,7 +224,7 @@ function WorkerWalletContent() {
 
                 <Col xs={24} sm={12} md={8}>
                   <Card hoverable className={styles.balanceCard}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text type="secondary">
                         {t("worker.wallet.cards.pendingWithdrawal") ||
                           "Pending Withdrawal"}
@@ -253,7 +253,7 @@ function WorkerWalletContent() {
               <Card>
                 <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
                   <Col xs={24} sm={12} md={6}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text>{t("escrow.table.status")}:</Text>
                       <Select
                         className={styles.selectFull}
@@ -273,7 +273,7 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={6}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text>{t("worker.wallet.filters.datePreset") || "Quick Date"}:</Text>
                       <Select
                         className={styles.selectFull}
@@ -291,7 +291,7 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={6}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text>{t("booking.list.filters.dateRange") || "Date Range"}:</Text>
                       <RangePicker
                         className={styles.selectFull}
@@ -302,7 +302,7 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={3}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text />
                       <Button
                         icon={<UndoOutlined />}
@@ -314,7 +314,7 @@ function WorkerWalletContent() {
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} md={3}>
-                    <Space direction="vertical" size="small" className={styles.spaceFull}>
+                    <Space orientation="vertical" size="small" className={styles.spaceFull}>
                       <Text />
                       <Button
                         icon={<ReloadOutlined />}

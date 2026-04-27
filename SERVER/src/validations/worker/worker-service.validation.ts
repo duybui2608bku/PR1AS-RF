@@ -48,7 +48,7 @@ const pricingSchema = z
       .min(3, { message: "currency must be a 3-letter code" })
       .max(3, { message: "currency must be a 3-letter code" })
       .optional()
-      .transform((val) => (val ? val.toUpperCase() : "USD")),
+      .transform(() => "VND"),
   })
   .strict();
 
@@ -82,19 +82,13 @@ export const updateWorkerServiceSchema = z
       })
       .optional(),
   })
-  .refine(
-    (data) => typeof data.is_active !== "undefined" || data.pricing,
-    {
-      message: "At least one of pricing or is_active must be provided",
-      path: ["pricing"],
-    }
-  );
+  .refine((data) => typeof data.is_active !== "undefined" || data.pricing, {
+    message: "At least one of pricing or is_active must be provided",
+    path: ["pricing"],
+  });
 
 export type CreateWorkerServicesBody = z.infer<
   typeof createWorkerServicesSchema
 >;
 
-export type UpdateWorkerServiceBody = z.infer<
-  typeof updateWorkerServiceSchema
->;
-
+export type UpdateWorkerServiceBody = z.infer<typeof updateWorkerServiceSchema>;

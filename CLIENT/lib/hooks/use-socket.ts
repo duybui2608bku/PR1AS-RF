@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { chatSocket, ChatSocket } from "../socket";
+import { useEffect } from "react";
+import { chatSocket } from "../socket";
 import type {
   NewMessageData,
   UserTypingData,
@@ -9,18 +9,19 @@ import type {
   ConversationLeftData,
   ReadConfirmedData,
   SocketErrorData,
+  RealtimeNotificationPayload,
+  RealtimeUnreadCountPayload,
 } from "../socket";
 
 export const useSocket = () => {
-  const socketRef = useRef<ChatSocket>(chatSocket);
-
   useEffect(() => {
+    const socket = chatSocket;
     return () => {
-      socketRef.current.disconnect();
+      socket.disconnect();
     };
   }, []);
 
-  return socketRef.current;
+  return chatSocket;
 };
 
 export const useChatSocket = () => {
@@ -36,6 +37,8 @@ export const useChatSocket = () => {
     onMessageDeleted?: (data: { message_id: string }) => void;
     onError?: (data: SocketErrorData) => void;
     onConnected?: (data: { user_id: string }) => void;
+    onNotificationNew?: (data: RealtimeNotificationPayload) => void;
+    onNotificationUnreadCount?: (data: RealtimeUnreadCountPayload) => void;
   }) => {
     if (callbacks.onNewMessage) {
       socket.onNewMessage(callbacks.onNewMessage);
@@ -63,6 +66,12 @@ export const useChatSocket = () => {
     }
     if (callbacks.onConnected) {
       socket.onConnected(callbacks.onConnected);
+    }
+    if (callbacks.onNotificationNew) {
+      socket.onNotificationNew(callbacks.onNotificationNew);
+    }
+    if (callbacks.onNotificationUnreadCount) {
+      socket.onNotificationUnreadCount(callbacks.onNotificationUnreadCount);
     }
 
     return () => {
@@ -92,6 +101,12 @@ export const useChatSocket = () => {
       }
       if (callbacks.onConnected) {
         socket.offConnected(callbacks.onConnected);
+      }
+      if (callbacks.onNotificationNew) {
+        socket.offNotificationNew(callbacks.onNotificationNew);
+      }
+      if (callbacks.onNotificationUnreadCount) {
+        socket.offNotificationUnreadCount(callbacks.onNotificationUnreadCount);
       }
     };
   };

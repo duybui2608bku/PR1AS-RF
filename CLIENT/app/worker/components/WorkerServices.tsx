@@ -81,7 +81,7 @@ export function WorkerServices({
       <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.servicesList}>
         {activeServices.map((workerService) => {
           const sortedPricing = [...workerService.pricing].sort(
-            (a, b) => a.price - b.price
+            (a, b) => a.price - b.price,
           );
           const displayPricing = sortedPricing[0];
           if (!displayPricing) return null;
@@ -93,12 +93,12 @@ export function WorkerServices({
           const priceText = formatPrice({
             price: displayPricing.price,
             unit: displayPricing.unit,
-            currencyCode: displayPricing.currency || currency,
+            currencyCode: currency,
             unitLabels,
           });
 
           const isSelected = selectedServices.includes(
-            workerService.service_id
+            workerService.service_id,
           );
 
           return (
@@ -108,12 +108,20 @@ export function WorkerServices({
                   isSelected ? styles.serviceCardSelected : ""
                 } ${disabled ? styles.serviceCardDisabled : styles.serviceCardInteractive}`}
                 hoverable={!disabled}
-                onClick={disabled ? undefined : () => onServiceToggle(workerService.service_id)}
+                onClick={
+                  disabled
+                    ? undefined
+                    : () => onServiceToggle(workerService.service_id)
+                }
               >
                 <Radio
                   checked={isSelected}
                   disabled={disabled}
-                  onChange={disabled ? undefined : () => onServiceToggle(workerService.service_id)}
+                  onChange={
+                    disabled
+                      ? undefined
+                      : () => onServiceToggle(workerService.service_id)
+                  }
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className={styles.serviceCardContent}>

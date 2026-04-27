@@ -50,7 +50,7 @@ export function EscrowCard({
     <Card size="small">
       <Row gutter={[0, Spacing.SM]}>
         <Col span={ColSpan.FULL}>
-          <Space direction="vertical" size="small" className={styles.spaceFull}>
+          <Space orientation="vertical" size="small" className={styles.spaceFull}>
             <Space>
               <Text strong>{t("escrow.table.bookingId")}:</Text>
               <Text copyable={{ text: bookingId }}>{bookingId.slice(-8)}</Text>
@@ -64,7 +64,7 @@ export function EscrowCard({
           </Space>
         </Col>
         <Col span={ColSpan.FULL}>
-          <Space direction="vertical" size="small" className={styles.spaceFull}>
+          <Space orientation="vertical" size="small" className={styles.spaceFull}>
             <Space>
               <Text>{t("escrow.table.amount")}:</Text>
               <Text strong className={styles.amountText}>
@@ -78,7 +78,7 @@ export function EscrowCard({
           </Space>
         </Col>
         <Col span={ColSpan.FULL}>
-          <Space direction="vertical" size="small" className={styles.spaceFull}>
+          <Space orientation="vertical" size="small" className={styles.spaceFull}>
             <Space>
               <Text type="secondary" className={styles.metaText}>
                 {t("escrow.table.heldAt")}: {formatDate(escrow.held_at)}

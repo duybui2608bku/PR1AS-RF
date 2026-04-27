@@ -36,6 +36,9 @@ import { AppError } from "../../utils/AppError";
 import { WALLET_MESSAGES } from "../../constants/messages";
 
 import { buildDepositPaymentUrl, verifyPaymentReturn } from "../vnpay";
+import { notificationEventService } from "../notification";
+import { NotificationType } from "../../constants/notification";
+import { logger } from "../../utils/logger";
 
 import mongoose from "mongoose";
 
@@ -105,6 +108,18 @@ export const verifyDepositPayment = async (
         TransactionStatus.FAILED,
         queryParams
       );
+      void notificationEventService
+        .walletEvent({
+          userId: String(transaction.user_id),
+          type: NotificationType.WALLET_DEPOSIT_FAILED,
+          title: "Deposit failed",
+          body: "Your wallet deposit could not be verified.",
+          data: { transaction_id: transaction._id.toString() },
+          dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
+        })
+        .catch((error) =>
+          logger.error("Wallet deposit failure notification failed:", error)
+        );
     }
 
     throw AppError.badRequest(WALLET_MESSAGES.PAYMENT_VERIFICATION_FAILED, []);
@@ -134,6 +149,18 @@ export const verifyDepositPayment = async (
       TransactionStatus.FAILED,
       queryParams
     );
+    void notificationEventService
+      .walletEvent({
+        userId,
+        type: NotificationType.WALLET_DEPOSIT_FAILED,
+        title: "Deposit failed",
+        body: "Your wallet deposit was not completed successfully.",
+        data: { transaction_id: transaction._id.toString() },
+        dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
+      })
+      .catch((error) =>
+        logger.error("Wallet deposit failure notification failed:", error)
+      );
 
     throw AppError.badRequest(WALLET_MESSAGES.TRANSACTION_FAILED, []);
   }
@@ -152,6 +179,22 @@ export const verifyDepositPayment = async (
   const currentBalance = await walletRepository.calculateUserBalance(userId);
 
   await walletBalanceRepository.createOrUpdate(userId, currentBalance);
+  void notificationEventService
+    .walletEvent({
+      userId,
+      type: NotificationType.WALLET_DEPOSIT_SUCCESS,
+      title: "Deposit successful",
+      body: `Your wallet deposit of ${transaction.amount} was successful.`,
+      data: {
+        transaction_id: transaction._id.toString(),
+        amount: transaction.amount,
+        balance: currentBalance,
+      },
+      dedupeKey: `wallet-deposit-success:${transaction._id.toString()}`,
+    })
+    .catch((error) =>
+      logger.error("Wallet deposit success notification failed:", error)
+    );
 };
 
 export const getWalletBalance = async (
@@ -306,6 +349,16 @@ export const holdBalanceForBooking = async (
 
   const updatedBalance = currentBalance - amount;
   await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+  void notificationEventService
+    .walletEvent({
+      userId,
+      type: NotificationType.WALLET_HOLD_CREATED,
+      title: "Balance held for booking",
+      body: `A wallet hold of ${amount} was created for your booking.`,
+      data: { booking_id: bookingId, amount, balance: updatedBalance },
+      dedupeKey: `wallet-hold:${bookingId}:${transaction._id.toString()}`,
+    })
+    .catch((error) => logger.error("Wallet hold notification failed:", error));
 
   return transaction._id.toString();
 };
@@ -330,6 +383,18 @@ export const refundBalanceToClient = async (
   const currentBalance = await walletRepository.calculateUserBalance(userId);
   const updatedBalance = currentBalance + amount;
   await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+  void notificationEventService
+    .walletEvent({
+      userId,
+      type: NotificationType.WALLET_REFUND_CREATED,
+      title: "Refund received",
+      body: `A refund of ${amount} was added to your wallet.`,
+      data: { booking_id: bookingId, amount, balance: updatedBalance },
+      dedupeKey: `wallet-refund:${bookingId}:${transaction._id.toString()}`,
+    })
+    .catch((error) =>
+      logger.error("Wallet refund notification failed:", error)
+    );
 
   return transaction._id.toString();
 };
@@ -341,8 +406,7 @@ export const releasePayoutToWorker = async (
   description?: string
 ): Promise<string> => {
   const transactionDescription =
-    description ||
-    `${TRANSACTION_DESCRIPTIONS.PAYOUT_PREFIX} ${bookingId}`;
+    description || `${TRANSACTION_DESCRIPTIONS.PAYOUT_PREFIX} ${bookingId}`;
 
   const transaction = await walletRepository.create({
     user_id: workerId,
@@ -355,7 +419,18 @@ export const releasePayoutToWorker = async (
   const currentBalance = await walletRepository.calculateUserBalance(workerId);
   const updatedBalance = currentBalance + amount;
   await walletBalanceRepository.createOrUpdate(workerId, updatedBalance);
+  void notificationEventService
+    .walletEvent({
+      userId: workerId,
+      type: NotificationType.WALLET_PAYOUT_CREATED,
+      title: "Payout received",
+      body: `A payout of ${amount} was added to your wallet.`,
+      data: { booking_id: bookingId, amount, balance: updatedBalance },
+      dedupeKey: `wallet-payout:${bookingId}:${transaction._id.toString()}`,
+    })
+    .catch((error) =>
+      logger.error("Wallet payout notification failed:", error)
+    );
 
   return transaction._id.toString();
 };
-

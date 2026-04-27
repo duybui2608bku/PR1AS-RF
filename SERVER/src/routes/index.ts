@@ -10,6 +10,7 @@ import adminWalletRoutes from "./wallet/admin-wallet.routes";
 import bookingRoutes from "./booking";
 import reviewRoutes from "./review";
 import escrowRoutes from "./escrow";
+import notificationRoutes from "./notification";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/admin/wallet", adminWalletRoutes);
 router.use("/bookings", bookingRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/escrows", escrowRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;

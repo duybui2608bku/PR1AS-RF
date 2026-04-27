@@ -10,7 +10,8 @@ import { useLocaleStore } from "../stores/locale.store";
 import { useThemeStore } from "../stores/theme.store";
 import { ThemeSync } from "../components/theme-sync";
 import { AppNotificationInit } from "../components/app-notification-init";
-import { useEffect, useState } from "react";
+import { NotificationProvider } from "../components/notification-provider";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Locale } from "@/i18n/config";
 import {
@@ -48,12 +49,9 @@ export function AntdProvider({ children }: AntdProviderProps) {
   const { locale } = useLocaleStore();
   const { theme: themeMode } = useThemeStore();
   const antdLocale = antdLocaleMap[locale] || viVN;
-  const [primaryColor, setPrimaryColor] = useState<string>(ThemeDefault.PRIMARY_COLOR);
-
-  useEffect(() => {
-    const color = getCSSVariable(ThemeCSSVariable.ANT_COLOR_PRIMARY);
-    setPrimaryColor(color);
-  }, []);
+  const [primaryColor] = useState<string>(() =>
+    getCSSVariable(ThemeCSSVariable.ANT_COLOR_PRIMARY)
+  );
 
   return (
     <AntdRegistry>
@@ -112,7 +110,9 @@ export function AntdProvider({ children }: AntdProviderProps) {
         }}
       >
         <App>
-          <AppNotificationInit>{children}</AppNotificationInit>
+          <AppNotificationInit>
+            <NotificationProvider>{children}</NotificationProvider>
+          </AppNotificationInit>
         </App>
       </ConfigProvider>
     </AntdRegistry>

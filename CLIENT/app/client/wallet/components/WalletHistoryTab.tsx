@@ -76,7 +76,7 @@ export function WalletHistoryTab({
     <Card>
       <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
         <Col xs={24} sm={12} md={6}>
-          <Space direction="vertical" size="small" className={styles.filterSpace}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <Text>{t("wallet.filters.datePreset") || "Quick Date"}:</Text>
             <Select
               className={styles.filterSelect}
@@ -104,7 +104,7 @@ export function WalletHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space direction="vertical" size="small" className={styles.filterSpace}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <Text>{t("wallet.filters.dateRange") || "Date Range"}:</Text>
             <RangePicker
               className={styles.filterRangePicker}
@@ -115,7 +115,7 @@ export function WalletHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space direction="vertical" size="small" className={styles.filterSpace}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <Text />
             <Button
               icon={<UndoOutlined />}
@@ -127,7 +127,7 @@ export function WalletHistoryTab({
           </Space>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Space direction="vertical" size="small" className={styles.filterSpace}>
+          <Space orientation="vertical" size="small" className={styles.filterSpace}>
             <Text />
             <Button
               icon={<ReloadOutlined />}

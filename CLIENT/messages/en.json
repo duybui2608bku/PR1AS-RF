@@ -86,7 +86,19 @@
     "success": "Operation successful!",
     "error": "An error occurred",
     "warning": "Warning",
-    "info": "Information"
+    "info": "Information",
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "viewAll": "View all",
+    "markAllRead": "Mark all as read",
+    "preferences": "Notification preferences",
+    "pushHint": "Push notifications require browser permission and only work on HTTPS or localhost.",
+    "enablePush": "Enable push notifications",
+    "channels": {
+      "inApp": "In-app notifications",
+      "email": "Email",
+      "push": "Push notifications"
+    }
   },
   "auth": {
     "title": "Admin Login",

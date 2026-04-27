@@ -13,13 +13,13 @@ import {
 } from "antd";
 import {
   MenuOutlined,
-  UserOutlined
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useSwitchRole } from "@/lib/hooks/use-auth";
 import { SettingsPopover } from "@/lib/components/settings-popover";
 import { AuthModal } from "@/lib/components/auth-modal";
+import { NotificationBell } from "@/lib/components/notification-bell";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
 import { Breakpoint, ScrollAmount } from "@/lib/constants/ui.constants";
@@ -80,6 +80,16 @@ const HeaderComponent = () => {
     }
   }, [userData.isWorkerActive, userData.hasWorkerProfile, t]);
 
+  const handleOpenLogin = useCallback(() => {
+    setAuthModalTab("login");
+    setAuthModalOpen(true);
+  }, []);
+
+  const handleOpenRegister = useCallback(() => {
+    setAuthModalTab("register");
+    setAuthModalOpen(true);
+  }, []);
+
   const handleSwitchRole = useCallback(async () => {
     if (!isAuthenticated || !user) {
       handleOpenLogin();
@@ -117,17 +127,7 @@ const HeaderComponent = () => {
         router.push(AppRoute.WORKER_SETUP);
       }
     }
-  }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError]);
-
-  const handleOpenLogin = useCallback(() => {
-    setAuthModalTab("login");
-    setAuthModalOpen(true);
-  }, []);
-
-  const handleOpenRegister = useCallback(() => {
-    setAuthModalTab("register");
-    setAuthModalOpen(true);
-  }, []);
+  }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError, handleOpenLogin]);
 
   const workerButton = useMemo(() => (
     <Button
@@ -143,6 +143,7 @@ const HeaderComponent = () => {
   const authSectionDesktop = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
+        <NotificationBell />
         <UserMenu />
       </Space>
     ) : (
@@ -159,7 +160,8 @@ const HeaderComponent = () => {
   const authSectionMobile = useMemo(() =>
     isAuthenticated && user ? (
       <Space size="middle">
-         <UserMenu />
+        <NotificationBell />
+        <UserMenu />
       </Space>
     ) : (
       <Space orientation="vertical" className={styles.authSectionFullWidth}>

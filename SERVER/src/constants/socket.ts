@@ -6,4 +6,7 @@ export const SOCKET_EVENTS = {
   MESSAGE_DELETED: "message_deleted",
   MESSAGE_READ: "message_read",
   MESSAGE_UPDATED: "message_updated",
+  NOTIFICATION_NEW: "notification:new",
+  NOTIFICATION_READ: "notification:read",
+  NOTIFICATION_UNREAD_COUNT: "notification:unread_count",
 } as const;

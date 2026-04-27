@@ -8,7 +8,6 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BellOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
@@ -18,7 +17,7 @@ import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { ThemeToggle } from "@/lib/components/theme-toggle";
-import { LanguageSwitcher } from "@/lib/components/language-switcher";
+import { NotificationBell } from "@/lib/components/notification-bell";
 import type { MenuProps } from "antd";
 import styles from "./layout.module.scss";
 
@@ -142,9 +141,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Text>
           </Space>
           <Space size="middle">
-            <BellOutlined className={styles.headerIcon} />
+            <NotificationBell />
             <ThemeToggle />
-            <LanguageSwitcher />
             <Dropdown
               menu={{
                 items: userMenuItems,
@@ -159,9 +157,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Dropdown>
           </Space>
         </Header>
-        <Content className={styles.content}>
-          {children}
-        </Content>
+        <Content className={styles.content}>{children}</Content>
       </Layout>
     </Layout>
   );

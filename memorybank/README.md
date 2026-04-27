@@ -15,6 +15,7 @@ Memory Bank là tập hợp tài liệu tổng hợp về kiến trúc, patterns
 
 - **[wallet.md](./wallet.md)**: Hệ thống Wallet với VNPay integration
 - **[chat.md](./chat.md)**: Hệ thống Chat/Messaging với Socket.IO
+- **[notification.md](./notification.md)**: Notification system dùng chung với in-app, email và browser push
 
 ## Cách sử dụng Memory Bank
 
@@ -89,12 +90,14 @@ Memory Bank là tập hợp tài liệu tổng hợp về kiến trúc, patterns
 - [API Reference](./api-reference.md)
 - [Wallet System](./wallet.md)
 - [Chat System](./chat.md)
+- [Notification System](./notification.md)
 
 ### Frontend
 - [Frontend Architecture](./frontend.md)
 - [API Reference](./api-reference.md)
 - [Wallet Integration](./wallet.md#frontend-components)
 - [Chat Integration](./chat.md#frontend-components)
+- [Notification Integration](./notification.md#frontend-components)
 
 ### General
 - [Project Overview](./project-overview.md)

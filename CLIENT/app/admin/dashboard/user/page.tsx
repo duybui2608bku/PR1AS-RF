@@ -159,10 +159,10 @@ export default function AdminUserPage() {
   });
 
   return (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.user.title")}</Title>
       <Card>
-        <AntSpace direction="vertical" size="middle" className={styles.spaceFull}>
+        <AntSpace orientation="vertical" size="middle" className={styles.spaceFull}>
           <AntSpace wrap size={16}>
             <Input
               placeholder={t("admin.user.filters.search")}

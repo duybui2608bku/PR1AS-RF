@@ -30,16 +30,13 @@ const getCorsOrigin = () => {
 
 const nodeEnv = process.env.NODE_ENV || "development";
 const jwtSecret = process.env.JWT_SECRET || "jwt_secret";
-const jwtRefreshSecret =
-  process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret";
+const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret";
 
 if (
   nodeEnv === "production" &&
   (jwtSecret === "jwt_secret" || jwtRefreshSecret === "jwt_refresh_secret")
 ) {
-  throw new Error(
-    "JWT secrets are not configured for production environment"
-  );
+  throw new Error("JWT secrets are not configured for production environment");
 }
 
 export const config = {
@@ -77,6 +74,13 @@ export const config = {
   socket: {
     pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT || "60000", 10),
     methods: process.env.SOCKET_METHODS?.split(",") || ["GET", "POST"],
+  },
+  notification: {
+    vapidSubject:
+      process.env.WEB_PUSH_VAPID_SUBJECT ||
+      `mailto:${process.env.EMAIL_ACCOUNT || "no-reply@example.com"}`,
+    vapidPublicKey: process.env.WEB_PUSH_VAPID_PUBLIC_KEY || "",
+    vapidPrivateKey: process.env.WEB_PUSH_VAPID_PRIVATE_KEY || "",
   },
   logger: {
     logDir: process.env.LOG_DIR || "logs",

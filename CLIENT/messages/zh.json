@@ -84,7 +84,19 @@
     "success": "操作成功！",
     "error": "发生错误",
     "warning": "警告",
-    "info": "信息"
+    "info": "信息",
+    "title": "通知",
+    "empty": "暂无通知",
+    "viewAll": "查看全部",
+    "markAllRead": "全部标为已读",
+    "preferences": "通知偏好",
+    "pushHint": "推送通知需要浏览器授权，并且仅在 HTTPS 或 localhost 上可用。",
+    "enablePush": "启用推送通知",
+    "channels": {
+      "inApp": "应用内通知",
+      "email": "电子邮件",
+      "push": "推送通知"
+    }
   },
   "auth": {
     "title": "管理员登录",

@@ -88,7 +88,7 @@ export const createBookingColumns = ({
           locale,
         });
         return (
-          <Space direction="vertical" size="small">
+          <Space orientation="vertical" size="small">
             <Text strong>{serviceName}</Text>
           </Space>
         );
@@ -113,7 +113,7 @@ export const createBookingColumns = ({
       key: BookingTableColumnKey.SCHEDULE,
       width: BookingTableColumnWidth.SCHEDULE,
       render: (schedule: Booking["schedule"]) => (
-        <Space direction="vertical" size="small">
+        <Space orientation="vertical" size="small">
           <Text>
             {t("booking.table.startTime")}:{" "}
             {formatDateTime(schedule.start_time)}
@@ -131,7 +131,7 @@ export const createBookingColumns = ({
       key: BookingTableColumnKey.AMOUNT,
       width: BookingTableColumnWidth.AMOUNT,
       render: (_: unknown, record: Booking) => (
-        <Space direction="vertical" size="small">
+        <Space orientation="vertical" size="small">
           <Text strong className={styles.amountPrimary}>
             {formatCurrency(record.pricing.total_amount)}
           </Text>

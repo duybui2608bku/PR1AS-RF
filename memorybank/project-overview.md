@@ -54,7 +54,7 @@ UI Update ← Components ← Hooks ← API Client ← Backend API
 
 ### Real-time Communication
 - **Protocol**: WebSocket (Socket.IO)
-- **Use Cases**: Real-time notifications, live updates
+- **Use Cases**: Chat, in-app realtime notifications, live updates
 
 ## Authentication Flow
 
@@ -267,10 +267,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ## Internationalization (i18n)
 
 ### Supported Languages
-- Vietnamese (vi) - Default
-- English (en)
-- Korean (ko)
-- Chinese (zh)
+- Vietnamese (vi) - Default and currently active
+- English (en), Korean (ko), Chinese (zh) - Translation files retained but multi-language switching is temporarily locked
 
 ### Translation Files
 - Location: `CLIENT/messages/{locale}.json`
@@ -283,6 +281,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - Deposit với VNPay integration
 - Transaction history tracking
 - Balance management
+- Currency is currently locked to VND across wallet, booking, escrow, and worker pricing flows
 - Payment gateway callbacks
 - Xem chi tiết: `memorybank/wallet.md`
 
@@ -293,6 +292,13 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 - Unread count tracking
 - Message history với pagination
 - Xem chi tiết: `memorybank/chat.md`
+
+### Notification System
+- In-app notification history và unread count
+- Realtime notification events qua Socket.IO
+- Email delivery qua Nodemailer và browser push qua Web Push
+- Preferences theo user và dedupe keys chống duplicate
+- Xem chi tiết: `memorybank/notification.md`
 
 ### Worker Services
 - Worker profile setup (multi-step)
@@ -308,11 +314,11 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 
 ## Future Enhancements
 
-- [x] Real-time notifications với Socket.IO (configured)
+- [x] Real-time notifications với Socket.IO, email và browser push (implemented)
 - [x] Payment integration với VNPay (implemented)
 - [x] Chat/Messaging system với Socket.IO (implemented)
 - [ ] File upload với multer
-- [ ] Email service
+- [x] Email service cho notification delivery
 - [ ] Advanced search và filtering
 - [ ] Analytics và reporting
 - [ ] Mobile app (React Native)

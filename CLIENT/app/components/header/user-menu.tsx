@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Dropdown, MenuProps } from "antd";
-import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined } from "@ant-design/icons";
+import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
@@ -29,17 +29,17 @@ export const UserMenu = () => {
         };
     }, [user]);
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         try {
             await logoutMutation.mutateAsync();
         } catch (error) {
             handleError(error);
         }
-    };
+    }, [logoutMutation, handleError]);
 
-    const handleNavigateToAdminDashboard = () => {
+    const handleNavigateToAdminDashboard = useCallback(() => {
         router.push(AppRoute.ADMIN_DASHBOARD);
-    };
+    }, [router]);
 
     const getUserInitial = (): string => {
         const displayName = user?.name || user?.email || "";
@@ -65,11 +65,23 @@ export const UserMenu = () => {
             },
         },
         {
+            key: "notifications",
+            icon: <BellOutlined />,
+            label: t("notifications.title"),
+            onClick: () => {
+                router.push(AppRoute.NOTIFICATIONS);
+            },
+        },
+        {
             key: "wallet",
             icon: <WalletOutlined />,
             label: t("dashboard.header.wallet"),
             onClick: () => {
-                userData.isWorkerActive ? router.push(AppRoute.WORKER_WALLET) : router.push(AppRoute.CLIENT_WALLET);
+                if (userData.isWorkerActive) {
+                    router.push(AppRoute.WORKER_WALLET);
+                } else {
+                    router.push(AppRoute.CLIENT_WALLET);
+                }
             },
         },
         {
@@ -77,7 +89,11 @@ export const UserMenu = () => {
             icon: <BookOutlined />,
             label: t("dashboard.header.clientBookings"),
             onClick: () => {
-                userData.isWorkerActive ? router.push(AppRoute.WORKER_BOOKINGS) : router.push(AppRoute.CLIENT_BOOKINGS);
+                if (userData.isWorkerActive) {
+                    router.push(AppRoute.WORKER_BOOKINGS);
+                } else {
+                    router.push(AppRoute.CLIENT_BOOKINGS);
+                }
             },
         },
         {
@@ -90,7 +106,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t, user, router, userData.isWorkerActive]); // Removed handleLogout dependency cycle check if necessary, but handleLogout is stable or should be wrapped
+    ], [t, user, router, userData.isWorkerActive, handleLogout]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {
@@ -109,7 +125,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t]);
+    ], [t, handleNavigateToAdminDashboard, handleLogout]);
 
     const items = userData.isAdmin ? adminMenuItems : userMenuItems;
 

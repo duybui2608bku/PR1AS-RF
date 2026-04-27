@@ -6,6 +6,7 @@ export enum ApiEndpoint {
   AUTH_ME = "/auth/me",
   AUTH_LOGOUT = "/auth/logout",
   AUTH_SWITCH_ROLE = "/auth/switch-role",
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   AUTH_PROFILE = "/auth/me",
   AUTH_UPDATE_PROFILE = "/auth/update-profile",
   AUTH_FORGOT_PASSWORD = "/auth/forgot-password",
@@ -55,6 +56,14 @@ export enum ApiEndpoint {
   ESCROWS_MY = "/escrows/my",
   ESCROWS_ALL = "/escrows/all",
   ESCROWS_BY_ID = "/escrows/:id",
+  NOTIFICATIONS = "/notifications",
+  NOTIFICATIONS_UNREAD_COUNT = "/notifications/unread-count",
+  NOTIFICATIONS_BY_ID_READ = "/notifications/:id/read",
+  NOTIFICATIONS_READ_ALL = "/notifications/read-all",
+  NOTIFICATIONS_PREFERENCES = "/notifications/preferences",
+  NOTIFICATIONS_PUSH_PUBLIC_KEY = "/notifications/push-public-key",
+  NOTIFICATIONS_PUSH_SUBSCRIPTIONS = "/notifications/push-subscriptions",
+  NOTIFICATIONS_PUSH_SUBSCRIPTIONS_BY_ID = "/notifications/push-subscriptions/:id",
 }
 
 export const buildEndpoint = (

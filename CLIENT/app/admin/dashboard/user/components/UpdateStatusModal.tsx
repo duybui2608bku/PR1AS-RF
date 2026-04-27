@@ -35,7 +35,7 @@ export function UpdateStatusModal({
       centered
     >
       {selectedUser && newStatus && (
-        <Space direction="vertical" size="middle" className={styles.modalSpace}>
+        <Space orientation="vertical" size="middle" className={styles.modalSpace}>
           <Typography.Text>
             {t("admin.user.updateStatus.message", {
               email: selectedUser.email,

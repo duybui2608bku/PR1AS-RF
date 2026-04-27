@@ -147,12 +147,12 @@ export function BookingListMobile({
               className={styles.card}
               actions={actions.length > 0 ? actions : undefined}
             >
-              <Space direction="vertical" size="small" className={styles.spaceFull}>
+              <Space orientation="vertical" size="small" className={styles.spaceFull}>
                 <Text strong>{serviceName}</Text>
                 <Text type="secondary">
                   {t("booking.table.workerName")}: {getWorkerName(record.worker_id)}
                 </Text>
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                   <Text>
                     {t("booking.table.startTime")}:{" "}
                     {formatDateTime(record.schedule.start_time)}

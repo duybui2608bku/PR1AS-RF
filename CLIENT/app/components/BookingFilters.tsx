@@ -62,7 +62,7 @@ export const BookingFilters = memo(function BookingFilters({
   return (
     <Row gutter={[Spacing.LG, Spacing.LG]} className={className}>
       <Col xs={24} sm={12} md={5}>
-        <Space direction="vertical" size="small" className={styles.filterSpace}>
+        <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text>{t("booking.list.filters.status")}:</Text>
           <Select
             className={styles.filterControl}
@@ -80,7 +80,7 @@ export const BookingFilters = memo(function BookingFilters({
         </Space>
       </Col>
       <Col xs={24} sm={12} md={5}>
-        <Space direction="vertical" size="small" className={styles.filterSpace}>
+        <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text>{t("booking.list.filters.paymentStatus")}:</Text>
           <Select
             className={styles.filterControl}
@@ -98,7 +98,7 @@ export const BookingFilters = memo(function BookingFilters({
         </Space>
       </Col>
       <Col xs={24} sm={12} md={6}>
-        <Space direction="vertical" size="small" className={styles.filterSpace}>
+        <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text>{t("booking.list.filters.dateRange")}:</Text>
           <RangePicker
             className={styles.filterControl}
@@ -109,7 +109,7 @@ export const BookingFilters = memo(function BookingFilters({
         </Space>
       </Col>
       <Col xs={12} sm={6} md={4}>
-        <Space direction="vertical" size="small" className={styles.filterSpace}>
+        <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text className={styles.actionSpacer}> </Text>
           <Button
             icon={<UndoOutlined />}
@@ -121,7 +121,7 @@ export const BookingFilters = memo(function BookingFilters({
         </Space>
       </Col>
       <Col xs={12} sm={6} md={4}>
-        <Space direction="vertical" size="small" className={styles.filterSpace}>
+        <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text className={styles.actionSpacer}> </Text>
           <Button
             icon={<ReloadOutlined />}

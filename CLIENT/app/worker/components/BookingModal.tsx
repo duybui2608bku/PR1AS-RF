@@ -71,7 +71,7 @@ export function BookingModal({
     [Dayjs | null, Dayjs | null] | null
   >(null);
   const [selectedPricingUnit, setSelectedPricingUnit] = useState<PricingUnit>(
-    PricingUnit.HOURLY
+    PricingUnit.HOURLY,
   );
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
 
@@ -80,15 +80,26 @@ export function BookingModal({
       return;
     }
     const defaultUnit = (pricing[0].unit as PricingUnit) || PricingUnit.HOURLY;
-    setSelectedPricingUnit(defaultUnit);
-    setSelectedQuantity(1);
-    setSelectedDate(null);
-    setSelectedDateRange(null);
-    form.setFieldsValue({
-      booking_date: null,
-      date_range: null,
-      start_time: null,
+    let isCancelled = false;
+
+    queueMicrotask(() => {
+      if (isCancelled) {
+        return;
+      }
+      setSelectedPricingUnit(defaultUnit);
+      setSelectedQuantity(1);
+      setSelectedDate(null);
+      setSelectedDateRange(null);
+      form.setFieldsValue({
+        booking_date: null,
+        date_range: null,
+        start_time: null,
+      });
     });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [open, pricing, form]);
 
   const { data: walletBalance, isLoading: isLoadingWalletBalance } =
@@ -97,7 +108,7 @@ export function BookingModal({
       "/wallet/balance",
       {
         enabled: open,
-      }
+      },
     );
 
   const createBookingMutation = useApiMutation<unknown, CreateBookingInput>(
@@ -115,7 +126,7 @@ export function BookingModal({
       onError: (error) => {
         handleError(error);
       },
-    }
+    },
   );
 
   const selectedPricing = useMemo(() => {
@@ -123,9 +134,7 @@ export function BookingModal({
   }, [pricing, selectedPricingUnit]);
 
   const availablePricingUnits = useMemo<PricingUnit[]>(() => {
-    return Array.from(
-      new Set(pricing.map((item) => item.unit as PricingUnit))
-    );
+    return Array.from(new Set(pricing.map((item) => item.unit as PricingUnit)));
   }, [pricing]);
 
   const calculatePricing = useMemo((): BookingPricing => {
@@ -156,7 +165,7 @@ export function BookingModal({
     const subtotal = unitPrice * quantity;
     const platformFee =
       Math.round(
-        ((subtotal * BOOKING_CONSTANTS.PLATFORM_FEE_PERCENT) / 100) * 100
+        ((subtotal * BOOKING_CONSTANTS.PLATFORM_FEE_PERCENT) / 100) * 100,
       ) / 100;
     const totalAmount = subtotal + platformFee;
     const workerPayout = subtotal - platformFee;
@@ -169,7 +178,7 @@ export function BookingModal({
       platform_fee: platformFee,
       total_amount: Math.round(totalAmount * 100) / 100,
       worker_payout: Math.round(workerPayout * 100) / 100,
-      currency: selectedPricing.currency || currency,
+      currency,
     };
   }, [
     selectedPricing,
@@ -240,7 +249,7 @@ export function BookingModal({
 
         endTime = startTime.add(
           selectedQuantity,
-          selectedPricingUnit === PricingUnit.HOURLY ? "hour" : "month"
+          selectedPricingUnit === PricingUnit.HOURLY ? "hour" : "month",
         );
       }
 
@@ -258,7 +267,8 @@ export function BookingModal({
 
       if (
         selectedPricingUnit === PricingUnit.DAILY &&
-        (calculatePricing.quantity < BOOKING_CONSTANTS.MIN_DAILY_DURATION_DAYS ||
+        (calculatePricing.quantity <
+          BOOKING_CONSTANTS.MIN_DAILY_DURATION_DAYS ||
           calculatePricing.quantity > BOOKING_CONSTANTS.MAX_DAILY_DURATION_DAYS)
       ) {
         message.error(t("booking.create.invalidDuration"));
@@ -276,26 +286,26 @@ export function BookingModal({
 
       const minAdvanceTime = dayjs().add(
         BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-        "hour"
+        "hour",
       );
       if (startTime.isBefore(minAdvanceTime)) {
         message.error(
           t("booking.create.minAdvance", {
             hours: BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-          })
+          }),
         );
         return;
       }
 
       const maxAdvanceTime = dayjs().add(
         BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-        "day"
+        "day",
       );
       if (startTime.isAfter(maxAdvanceTime)) {
         message.error(
           t("booking.create.maxAdvance", {
             days: BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-          })
+          }),
         );
         return;
       }
@@ -390,8 +400,8 @@ export function BookingModal({
                 unit === PricingUnit.HOURLY
                   ? t("booking.pricing.hourly")
                   : unit === PricingUnit.DAILY
-                  ? t("booking.pricing.daily")
-                  : t("booking.pricing.monthly"),
+                    ? t("booking.pricing.daily")
+                    : t("booking.pricing.monthly"),
             }))}
           />
         </Form.Item>
@@ -419,11 +429,11 @@ export function BookingModal({
                 const today = dayjs().startOf("day");
                 const minDate = today.add(
                   BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-                  "hour"
+                  "hour",
                 );
                 const maxDate = today.add(
                   BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-                  "day"
+                  "day",
                 );
                 return (
                   current.isBefore(minDate, "day") ||
@@ -461,11 +471,11 @@ export function BookingModal({
                   const today = dayjs().startOf("day");
                   const minDate = today.add(
                     BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-                    "hour"
+                    "hour",
                   );
                   const maxDate = today.add(
                     BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-                    "day"
+                    "day",
                   );
                   return (
                     current.isBefore(minDate, "day") ||

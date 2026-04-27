@@ -429,7 +429,7 @@ export default function AdminWalletPage() {
   );
 
   const renderStatisticsTab = () => (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <div className={styles.toolbarRow}>
         <Select
           value={dateRange}
@@ -501,9 +501,9 @@ export default function AdminWalletPage() {
   );
 
   const renderDataTab = () => (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Card>
-        <AntSpace direction="vertical" size="middle" className={styles.spaceFull}>
+        <AntSpace orientation="vertical" size="middle" className={styles.spaceFull}>
           <AntSpace wrap size={16}>
             <Input
               placeholder={t("admin.wallet.filters.userId")}
@@ -629,7 +629,7 @@ export default function AdminWalletPage() {
   ];
 
   return (
-    <Space direction="vertical" size="large" className={styles.spaceFull}>
+    <Space orientation="vertical" size="large" className={styles.spaceFull}>
       <Title level={2}>{t("admin.wallet.title")}</Title>
       <Tabs
         activeKey={activeTab}

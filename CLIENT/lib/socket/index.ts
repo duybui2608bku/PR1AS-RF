@@ -12,4 +12,8 @@ export type {
   ReadConfirmedData,
   SocketErrorData,
 } from "./chat";
+export type {
+  RealtimeNotificationPayload,
+  RealtimeUnreadCountPayload,
+} from "../types/notification";
 
