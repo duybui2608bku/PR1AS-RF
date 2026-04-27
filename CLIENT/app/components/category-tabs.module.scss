@@ -13,6 +13,55 @@
   }
 }
 
+.inline {
+  position: static;
+  top: auto;
+  border-bottom: none;
+  background: transparent;
+
+  .categoryTabsInner {
+    max-width: none;
+    padding: 0;
+  }
+
+  .fadeMask::before,
+  .fadeMask::after {
+    display: none;
+  }
+
+  .scrollWrapper {
+    overflow: visible;
+  }
+
+  .scrollContainer {
+    justify-content: center;
+    gap: 20px;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .tab {
+    flex-direction: row;
+    gap: 6px;
+    padding: 6px 2px;
+  }
+
+  .tabLabel {
+    font-size: 22px;
+    font-style: italic;
+    font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .dropdownArrow {
+    font-size: 10px;
+  }
+
+  .scrollBtn {
+    display: none;
+  }
+}
+
 .categoryTabsInner {
   max-width: 1400px;
   margin: 0 auto;
@@ -386,5 +435,9 @@
   @keyframes overlayFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  .inline {
+    display: none;
   }
 }

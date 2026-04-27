@@ -133,7 +133,7 @@ export const UserMenu = () => {
         <Dropdown menu={{ items }} placement="bottomRight" trigger={["hover"]}>
             <div className={styles.avatarWrapper}>
                 <Avatar
-                    size="large"
+                    size={32}
                     src={user?.avatar}
                     icon={!user?.avatar ? <UserOutlined /> : undefined}
                     className={!user?.avatar ? styles.placeholderAvatar : undefined}
