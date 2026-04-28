@@ -29,7 +29,7 @@ class WorkerServiceController {
       services: body.services,
     });
 
-    R.created(res, { services }, COMMON_MESSAGES.CREATED);
+    R.created(res, { services }, COMMON_MESSAGES.CREATED, req);
   }
 
   async updateWorkerService(req: AuthRequest, res: Response): Promise<void> {
@@ -52,7 +52,7 @@ class WorkerServiceController {
       body,
     });
 
-    R.success(res, { service }, COMMON_MESSAGES.UPDATED);
+    R.success(res, { service }, COMMON_MESSAGES.UPDATED, req);
   }
 
   async deleteWorkerService(req: AuthRequest, res: Response): Promise<void> {
@@ -79,7 +79,7 @@ class WorkerServiceController {
   async getWorkerServices(req: AuthRequest, res: Response): Promise<void> {
     const workerId = this.getAuthenticatedWorkerId(req);
     const services = await workerServiceService.getWorkerServices(workerId);
-    R.success(res, { services }, COMMON_MESSAGES.SUCCESS);
+    R.success(res, { services }, COMMON_MESSAGES.SUCCESS, req);
   }
 }
 

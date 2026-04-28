@@ -7,7 +7,7 @@ import {
   RefundEscrowInput,
 } from "../../types/escrow/escrow.types";
 import { EscrowStatus } from "../../constants/escrow";
-import { getPagination } from "../../func/pagination.func";
+import { getPagination } from "../../utils/pagination";
 
 export interface EscrowQueryParams {
   client_id?: string;

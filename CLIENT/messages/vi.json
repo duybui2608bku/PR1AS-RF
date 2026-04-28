@@ -461,7 +461,8 @@
       "copyright": "PR1AS",
       "rights": "Tất cả quyền được bảo lưu",
       "privacy": "Chính sách bảo mật",
-      "terms": "Điều khoản sử dụng"
+      "terms": "Điều khoản sử dụng",
+      "pricing": "Bảng giá"
     }
   },
   "profile": {
@@ -1359,6 +1360,55 @@
       "commentPlaceholder": "Chia sẻ trải nghiệm của bạn với dịch vụ này...",
       "success": "Đánh giá đã được gửi thành công",
       "error": "Gửi đánh giá thất bại. Vui lòng thử lại."
+    }
+  },
+  "pricing": {
+    "title": "Chọn gói phù hợp với bạn",
+    "subtitle": "Nâng cấp tài khoản để mở khóa toàn bộ tính năng và phát triển công việc của bạn",
+    "popular": "Phổ biến nhất",
+    "compareTitle": "So sánh các gói",
+    "plans": {
+      "standard": {
+        "name": "Thường",
+        "price": "Miễn phí",
+        "period": "",
+        "description": "Dành cho người mới bắt đầu",
+        "cta": "Bắt đầu miễn phí"
+      },
+      "gold": {
+        "name": "Gold",
+        "price": "99.000đ",
+        "period": "tháng",
+        "description": "Dành cho người dùng tích cực",
+        "cta": "Nâng cấp Gold"
+      },
+      "diamond": {
+        "name": "Diamond",
+        "price": "199.000đ",
+        "period": "tháng",
+        "description": "Dành cho chuyên gia",
+        "cta": "Nâng cấp Diamond"
+      }
+    },
+    "features": {
+      "label": "Tính năng",
+      "messaging": "Nhắn tin",
+      "messagingGold": "Tối đa 3 người",
+      "messagingDiamond": "Không giới hạn",
+      "createJob": "Tạo job",
+      "createJobStandard": "1 job",
+      "createJobGold": "Tối đa 3 job",
+      "createJobDiamond": "Không giới hạn",
+      "boostProfile": "Boost hồ sơ worker",
+      "boostProfileGold": "1 lần/tháng",
+      "boostProfileDiamond": "3 lần/tháng",
+      "ads": "Quảng cáo",
+      "adsDiamond": "Tắt quảng cáo"
+    },
+    "faq": {
+      "title": "Có câu hỏi?",
+      "contactText": "Liên hệ với chúng tôi để được tư vấn gói phù hợp nhất",
+      "contactLink": "tại đây"
     }
   }
 }

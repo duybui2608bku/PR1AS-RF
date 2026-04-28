@@ -1,10 +1,5 @@
 import { Router } from "express";
-import {
-  getAdminTransactionHistory,
-  getTransactionStats,
-  getTopUsers,
-  getTransactionChartData,
-} from "../../controllers/wallet/admin-wallet.controller";
+import { adminWalletController } from "../../controllers/wallet/admin-wallet.controller";
 import { authenticate, adminOnly } from "../../middleware/auth";
 import { pagination } from "../../middleware/pagination";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -17,19 +12,28 @@ router.use(adminOnly);
 router.get(
   "/transactions",
   pagination(),
-  asyncHandler(getAdminTransactionHistory.bind(getAdminTransactionHistory))
+  asyncHandler(
+    adminWalletController.getAdminTransactionHistory.bind(adminWalletController)
+  )
 );
 
 router.get(
   "/stats",
-  asyncHandler(getTransactionStats.bind(getTransactionStats))
+  asyncHandler(
+    adminWalletController.getTransactionStats.bind(adminWalletController)
+  )
 );
 
-router.get("/top-users", asyncHandler(getTopUsers.bind(getTopUsers)));
+router.get(
+  "/top-users",
+  asyncHandler(adminWalletController.getTopUsers.bind(adminWalletController))
+);
 
 router.get(
   "/chart",
-  asyncHandler(getTransactionChartData.bind(getTransactionChartData))
+  asyncHandler(
+    adminWalletController.getTransactionChartData.bind(adminWalletController)
+  )
 );
 
 export default router;

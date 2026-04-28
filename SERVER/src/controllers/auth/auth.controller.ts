@@ -21,7 +21,7 @@ import {
 import { CSRF_CONSTANTS } from "../../constants/csrf";
 import { AuthRequest } from "../../middleware/auth";
 import { AppError, R, validateWithSchema } from "../../utils";
-import * as userService from "../../services/user/user.service";
+import { userService } from "../../services/user/user.service";
 import { WorkerProfile } from "../../types";
 import { toPublicUser } from "../../utils/user.helper";
 

@@ -1,7 +1,7 @@
 import { userRepository } from "../../repositories/auth/user.repository";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
 import { verifyRefreshToken } from "../../utils/jwt";
-import { generateAuthTokens } from "../../helpers/token.helper";
+import { generateAuthTokens } from "../../utils/token";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -12,16 +12,14 @@ import {
   AuthResponse,
   RegisterResponse,
   IUserPublic,
-  IUserDocument,
   UserStatus,
 } from "../../types/auth/user.types";
-import { User } from "../../models/auth/user.model";
 import crypto from "crypto";
 import nodemailerUtils from "../../utils/nodemailer";
 import {
   passwordResetTemplate,
   emailVerificationTemplate,
-} from "../../utils/templage-mail";
+} from "../../utils/template-mail";
 import { config } from "../../config";
 import { logger } from "../../utils/logger";
 import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
@@ -119,7 +117,7 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     const payload = verifyRefreshToken(refreshToken);
 
-    const user = await User.findById(payload.sub).select("+refresh_token_hash");
+    const user = await userRepository.findByIdWithRefreshToken(payload.sub);
 
     if (!user || !user.refresh_token_hash) {
       throw new AppError(
@@ -146,7 +144,7 @@ export class AuthService {
       user.refresh_token_hash
     );
     if (!isValid) {
-      await User.findByIdAndUpdate(user._id, { refresh_token_hash: null });
+      await userRepository.clearRefreshToken(user._id.toString());
       throw new AppError(
         AUTH_MESSAGES.REFRESH_TOKEN_REUSE_DETECTED,
         HTTP_STATUS.UNAUTHORIZED,
@@ -172,9 +170,7 @@ export class AuthService {
   }
 
   async logout(userId: string): Promise<void> {
-    await User.findByIdAndUpdate(userId, {
-      refresh_token_hash: null,
-    });
+    await userRepository.clearRefreshToken(userId);
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {
@@ -185,10 +181,11 @@ export class AuthService {
       const resetTokenHash = this.hashOpaqueToken(resetToken);
       const resetExpires = createPasswordResetExpiry();
 
-      await User.findByIdAndUpdate(user._id, {
-        password_reset_token: resetTokenHash,
-        password_reset_expires: resetExpires,
-      });
+      await userRepository.setPasswordResetToken(
+        user._id.toString(),
+        resetTokenHash,
+        resetExpires
+      );
 
       const resetLink = `${config.frontendUrl}/auth/reset-password?token=${resetToken}`;
 
@@ -215,9 +212,7 @@ export class AuthService {
     newPassword: string
   ): Promise<{ message: string }> {
     const tokenHash = this.hashOpaqueToken(token);
-    const user = await User.findOne({
-      password_reset_token: tokenHash,
-    }).select("+password_reset_token +password_reset_expires");
+    const user = await userRepository.findByPasswordResetToken(tokenHash);
 
     if (!user) {
       throw new AppError(
@@ -227,12 +222,11 @@ export class AuthService {
       );
     }
 
-    const resetExpires = (user as IUserDocument).password_reset_expires;
-    if (!resetExpires || resetExpires < new Date()) {
-      await User.findByIdAndUpdate(user._id, {
-        password_reset_token: null,
-        password_reset_expires: null,
-      });
+    if (
+      !user.password_reset_expires ||
+      user.password_reset_expires < new Date()
+    ) {
+      await userRepository.clearPasswordResetToken(user._id.toString());
       throw new AppError(
         AUTH_MESSAGES.RESET_TOKEN_EXPIRED,
         HTTP_STATUS.BAD_REQUEST,
@@ -242,12 +236,7 @@ export class AuthService {
 
     const passwordHash = await hashPassword(newPassword);
 
-    await User.findByIdAndUpdate(user._id, {
-      password_hash: passwordHash,
-      password_reset_token: null,
-      password_reset_expires: null,
-      refresh_token_hash: null,
-    });
+    await userRepository.resetPassword(user._id.toString(), passwordHash);
 
     return {
       message: AUTH_MESSAGES.PASSWORD_RESET_SUCCESS,
@@ -268,10 +257,11 @@ export class AuthService {
     const verificationTokenHash = this.hashOpaqueToken(verificationToken);
     const verificationExpires = createEmailVerificationExpiry();
 
-    await User.findByIdAndUpdate(user._id, {
-      email_verification_token: verificationTokenHash,
-      email_verification_expires: verificationExpires,
-    });
+    await userRepository.setEmailVerificationToken(
+      user._id.toString(),
+      verificationTokenHash,
+      verificationExpires
+    );
 
     const verificationLink = `${config.frontendUrl}/auth/verify-email?token=${verificationToken}`;
 
@@ -291,9 +281,7 @@ export class AuthService {
 
   async verifyEmail(token: string): Promise<{ message: string }> {
     const tokenHash = this.hashOpaqueToken(token);
-    const user = await User.findOne({
-      email_verification_token: tokenHash,
-    }).select("+email_verification_token +email_verification_expires");
+    const user = await userRepository.findByEmailVerificationToken(tokenHash);
 
     if (!user) {
       throw new AppError(
@@ -303,13 +291,11 @@ export class AuthService {
       );
     }
 
-    const verificationExpires = (user as IUserDocument)
-      .email_verification_expires;
-    if (!verificationExpires || verificationExpires < new Date()) {
-      await User.findByIdAndUpdate(user._id, {
-        email_verification_token: null,
-        email_verification_expires: null,
-      });
+    if (
+      !user.email_verification_expires ||
+      user.email_verification_expires < new Date()
+    ) {
+      await userRepository.clearEmailVerificationToken(user._id.toString());
       throw new AppError(
         AUTH_MESSAGES.VERIFICATION_TOKEN_EXPIRED,
         HTTP_STATUS.BAD_REQUEST,
@@ -318,10 +304,7 @@ export class AuthService {
     }
 
     if (user.verify_email) {
-      await User.findByIdAndUpdate(user._id, {
-        email_verification_token: null,
-        email_verification_expires: null,
-      });
+      await userRepository.clearEmailVerificationToken(user._id.toString());
       throw new AppError(
         AUTH_MESSAGES.EMAIL_ALREADY_VERIFIED,
         HTTP_STATUS.BAD_REQUEST,
@@ -329,11 +312,7 @@ export class AuthService {
       );
     }
 
-    await User.findByIdAndUpdate(user._id, {
-      verify_email: true,
-      email_verification_token: null,
-      email_verification_expires: null,
-    });
+    await userRepository.markEmailVerified(user._id.toString());
 
     return {
       message: AUTH_MESSAGES.EMAIL_VERIFICATION_SUCCESS,

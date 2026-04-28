@@ -9,7 +9,7 @@ import {
   R,
   validateWithSchema,
 } from "../../utils";
-import { userRepository } from "../../repositories";
+import { userRepository } from "../../repositories/auth/user.repository";
 import { UserRole } from "../../types";
 
 export class EscrowController {

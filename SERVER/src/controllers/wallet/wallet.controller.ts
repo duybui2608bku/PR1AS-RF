@@ -1,6 +1,5 @@
 import { Response } from "express";
-
-import * as walletService from "../../services/wallet/wallet.service";
+import { walletService } from "../../services/wallet/wallet.service";
 import { WALLET_MESSAGES } from "../../constants/messages";
 import {
   createDepositSchema,
@@ -8,87 +7,82 @@ import {
 } from "../../validations/wallet/wallet.validation";
 import {
   validateWithSchema,
-  ResponseHelper,
+  R,
   extractUserIdFromRequest,
+  PaginationHelper,
 } from "../../utils";
 import { PaginationRequest } from "../../middleware/pagination";
-import { PaginationHelper } from "../../utils/pagination";
 import { AuthRequest } from "../../middleware/auth";
 
-const getClientIp = (req: AuthRequest): string => {
-  const forwarded = req.headers["x-forwarded-for"];
+export class WalletController {
+  private getClientIp(req: AuthRequest): string {
+    const forwarded = req.headers["x-forwarded-for"];
 
-  if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
+    if (typeof forwarded === "string") {
+      return forwarded.split(",")[0].trim();
+    }
+
+    if (Array.isArray(forwarded) && forwarded[0]) {
+      return forwarded[0].trim();
+    }
+
+    return req.socket.remoteAddress || "127.0.0.1";
   }
 
-  if (Array.isArray(forwarded) && forwarded[0]) {
-    return forwarded[0].trim();
+  async createDeposit(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const body = validateWithSchema(createDepositSchema, req.body);
+    const ipAddress = this.getClientIp(req);
+
+    const result = await walletService.createDepositTransaction(
+      userId,
+      body,
+      ipAddress
+    );
+
+    R.success(res, result, WALLET_MESSAGES.DEPOSIT_CREATED, req);
   }
 
-  return req.socket.remoteAddress || "127.0.0.1";
-};
+  async verifyDepositCallback(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    await walletService.verifyDepositPayment(
+      userId,
+      req.query as Record<string, string>
+    );
 
-export const createDeposit = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  const userId = extractUserIdFromRequest(req);
-  const body = validateWithSchema(createDepositSchema, req.body);
-  const ipAddress = getClientIp(req);
+    R.success(res, null, WALLET_MESSAGES.PAYMENT_VERIFIED, req);
+  }
 
-  const result = await walletService.createDepositTransaction(
-    userId,
-    body,
-    ipAddress
-  );
+  async getBalance(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const balance = await walletService.getWalletBalance(userId);
 
-  ResponseHelper.success(res, result, WALLET_MESSAGES.DEPOSIT_CREATED);
-};
+    R.success(res, balance, WALLET_MESSAGES.BALANCE_FETCHED, req);
+  }
 
-export const verifyDepositCallback = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  const userId = extractUserIdFromRequest(req);
-  await walletService.verifyDepositPayment(
-    userId,
-    req.query as Record<string, string>
-  );
+  async getTransactionHistory(
+    req: PaginationRequest & AuthRequest,
+    res: Response
+  ): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const query = validateWithSchema(transactionHistoryQuerySchema, req.query);
+    const { page, limit, skip } = req.pagination!;
+    const result = await walletService.getTransactionHistory(userId, {
+      ...query,
+      user_id: userId,
+      page,
+      limit,
+      skip,
+    });
 
-  ResponseHelper.success(res, null, WALLET_MESSAGES.PAYMENT_VERIFIED);
-};
+    const response = PaginationHelper.format(
+      result.transactions,
+      req.pagination!,
+      result.total
+    );
 
-export const getBalance = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  const userId = extractUserIdFromRequest(req);
-  const balance = await walletService.getWalletBalance(userId);
+    R.success(res, response, WALLET_MESSAGES.TRANSACTIONS_FETCHED, req);
+  }
+}
 
-  ResponseHelper.success(res, balance, WALLET_MESSAGES.BALANCE_FETCHED);
-};
-
-export const getTransactionHistory = async (
-  req: PaginationRequest & AuthRequest,
-  res: Response
-): Promise<void> => {
-  const userId = extractUserIdFromRequest(req);
-  const query = validateWithSchema(transactionHistoryQuerySchema, req.query);
-  const { page, limit, skip } = req.pagination!;
-  const result = await walletService.getTransactionHistory(userId, {
-    ...query,
-    user_id: userId,
-    page,
-    limit,
-    skip,
-  });
-
-  const response = PaginationHelper.format(
-    result.transactions,
-    req.pagination!,
-    result.total
-  );
-
-  ResponseHelper.success(res, response, WALLET_MESSAGES.TRANSACTIONS_FETCHED);
-};
+export const walletController = new WalletController();

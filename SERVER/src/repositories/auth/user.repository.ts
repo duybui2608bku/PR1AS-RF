@@ -211,6 +211,93 @@ export class UserRepository {
       .select("_id")
       .lean() as Promise<IUserDocument | null>;
   }
+
+  async findByIdWithRefreshToken(id: string): Promise<IUserDocument | null> {
+    return User.findById(id).select("+refresh_token_hash");
+  }
+
+  async setRefreshTokenHash(
+    id: string,
+    refresh_token_hash: string | null
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      refresh_token_hash,
+      ...(refresh_token_hash !== null && { last_login: new Date() }),
+    });
+  }
+
+  async clearRefreshToken(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, { refresh_token_hash: null });
+  }
+
+  async setPasswordResetToken(
+    id: string,
+    tokenHash: string,
+    expires: Date
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      password_reset_token: tokenHash,
+      password_reset_expires: expires,
+    });
+  }
+
+  async findByPasswordResetToken(
+    tokenHash: string
+  ): Promise<IUserDocument | null> {
+    return User.findOne({ password_reset_token: tokenHash }).select(
+      "+password_reset_token +password_reset_expires"
+    );
+  }
+
+  async clearPasswordResetToken(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      password_reset_token: null,
+      password_reset_expires: null,
+    });
+  }
+
+  async resetPassword(id: string, password_hash: string): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      password_hash,
+      password_reset_token: null,
+      password_reset_expires: null,
+      refresh_token_hash: null,
+    });
+  }
+
+  async setEmailVerificationToken(
+    id: string,
+    tokenHash: string,
+    expires: Date
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      email_verification_token: tokenHash,
+      email_verification_expires: expires,
+    });
+  }
+
+  async findByEmailVerificationToken(
+    tokenHash: string
+  ): Promise<IUserDocument | null> {
+    return User.findOne({ email_verification_token: tokenHash }).select(
+      "+email_verification_token +email_verification_expires"
+    );
+  }
+
+  async clearEmailVerificationToken(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      email_verification_token: null,
+      email_verification_expires: null,
+    });
+  }
+
+  async markEmailVerified(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      verify_email: true,
+      email_verification_token: null,
+      email_verification_expires: null,
+    });
+  }
 }
 
 export const userRepository = new UserRepository();

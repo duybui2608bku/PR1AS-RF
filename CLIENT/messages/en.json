@@ -459,7 +459,8 @@
       "copyright": "PR1AS",
       "rights": "All rights reserved",
       "privacy": "Privacy Policy",
-      "terms": "Terms of Service"
+      "terms": "Terms of Service",
+      "pricing": "Pricing"
     }
   },
   "profile": {
@@ -1348,6 +1349,55 @@
       "commentPlaceholder": "Share your experience with this service...",
       "success": "Review submitted successfully",
       "error": "Failed to submit review. Please try again."
+    }
+  },
+  "pricing": {
+    "title": "Choose the right plan for you",
+    "subtitle": "Upgrade your account to unlock all features and grow your work",
+    "popular": "Most Popular",
+    "compareTitle": "Compare Plans",
+    "plans": {
+      "standard": {
+        "name": "Standard",
+        "price": "Free",
+        "period": "",
+        "description": "For those just getting started",
+        "cta": "Get Started Free"
+      },
+      "gold": {
+        "name": "Gold",
+        "price": "99,000₫",
+        "period": "month",
+        "description": "For active users",
+        "cta": "Upgrade to Gold"
+      },
+      "diamond": {
+        "name": "Diamond",
+        "price": "199,000₫",
+        "period": "month",
+        "description": "For professionals",
+        "cta": "Upgrade to Diamond"
+      }
+    },
+    "features": {
+      "label": "Feature",
+      "messaging": "Messaging",
+      "messagingGold": "Up to 3 people",
+      "messagingDiamond": "Unlimited",
+      "createJob": "Create jobs",
+      "createJobStandard": "1 job",
+      "createJobGold": "Up to 3 jobs",
+      "createJobDiamond": "Unlimited",
+      "boostProfile": "Boost worker profile",
+      "boostProfileGold": "1x per month",
+      "boostProfileDiamond": "3x per month",
+      "ads": "Advertisements",
+      "adsDiamond": "Ad-free"
+    },
+    "faq": {
+      "title": "Have questions?",
+      "contactText": "Contact us to find the best plan for you",
+      "contactLink": "here"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { IUserDocument } from "../types/auth/user.types";
 import { generateToken, generateRefreshToken } from "../utils/jwt";
 import { hashPassword } from "../utils/bcrypt";
-import { User } from "../models/auth/user.model";
+import { userRepository } from "../repositories/auth/user.repository";
 
 export const generateAuthTokens = async (
   user: IUserDocument
@@ -15,10 +15,10 @@ export const generateAuthTokens = async (
   const token = generateToken(payload);
   const refreshToken = generateRefreshToken(payload);
   const refreshTokenHash = await hashPassword(refreshToken);
-  await User.findByIdAndUpdate(user._id, {
-    refresh_token_hash: refreshTokenHash,
-    last_login: new Date(),
-  });
+  await userRepository.setRefreshTokenHash(
+    user._id.toString(),
+    refreshTokenHash
+  );
 
   return { token, refreshToken };
 };

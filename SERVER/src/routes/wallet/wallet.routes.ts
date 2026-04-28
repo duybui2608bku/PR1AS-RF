@@ -1,18 +1,8 @@
 import { Router } from "express";
-
-import {
-  createDeposit,
-  verifyDepositCallback,
-  getBalance,
-  getTransactionHistory,
-} from "../../controllers/wallet/wallet.controller";
-
+import { walletController } from "../../controllers/wallet/wallet.controller";
 import { authenticate } from "../../middleware/auth";
-
 import { pagination } from "../../middleware/pagination";
-
 import { asyncHandler } from "../../utils/asyncHandler";
-
 import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
@@ -22,20 +12,23 @@ router.use(authenticate);
 router.post(
   "/deposit",
   ...csrfProtection,
-  asyncHandler(createDeposit.bind(createDeposit))
+  asyncHandler(walletController.createDeposit.bind(walletController))
 );
 
 router.get(
   "/deposit/callback",
-  asyncHandler(verifyDepositCallback.bind(verifyDepositCallback))
+  asyncHandler(walletController.verifyDepositCallback.bind(walletController))
 );
 
-router.get("/balance", asyncHandler(getBalance.bind(getBalance)));
+router.get(
+  "/balance",
+  asyncHandler(walletController.getBalance.bind(walletController))
+);
 
 router.get(
   "/transactions",
   pagination(),
-  asyncHandler(getTransactionHistory.bind(getTransactionHistory))
+  asyncHandler(walletController.getTransactionHistory.bind(walletController))
 );
 
 export default router;
