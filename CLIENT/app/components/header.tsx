@@ -27,7 +27,6 @@ import { useWindowSize } from "@/lib/hooks/use-window-size";
 import { useScroll } from "@/lib/hooks/use-scroll";
 import { UserMenu } from "./header/user-menu";
 import { MobileMenu } from "./header/mobile-menu";
-import { CategoryTabs } from "./category-tabs";
 import styles from "./header.module.scss";
 
 const { Header: AntHeader } = Layout;
@@ -200,11 +199,6 @@ const HeaderComponent = () => {
             {t("home.logo")}
           </Link>
         </Col>
-        {!isMobile && (
-          <Col flex="auto" className={styles.navCol}>
-            <CategoryTabs variant="inline" />
-          </Col>
-        )}
         <Col flex="none" className={styles.actionsCol}>
           <Space className={styles.actionsRow} size="middle">
             {!isMobile && (

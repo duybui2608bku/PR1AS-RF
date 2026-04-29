@@ -221,4 +221,5 @@ export const ESCROW_MESSAGES = {
 export const WORKER_MESSAGES = {
   WORKERS_GROUPED_BY_SERVICE_FETCHED:
     "Workers grouped by service fetched successfully",
+  LOCATION_SUGGESTIONS_FETCHED: "Location suggestions fetched successfully",
 } as const;

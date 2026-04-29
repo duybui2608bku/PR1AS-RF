@@ -34,11 +34,6 @@ const CATEGORY_TABS: CategoryTab[] = [
     labelKey: "home.categories.assistance.title",
     children: [
       {
-        code: SERVICE_CATEGORIES.PERSONAL_ASSISTANT,
-        icon: "💼",
-        labelKey: "home.categories.personalAssistant.title",
-      },
-      {
         code: SERVICE_CATEGORIES.ON_SITE_PROFESSIONAL_ASSIST,
         icon: "🏢",
         labelKey: "home.categories.onSiteProfessional.title",

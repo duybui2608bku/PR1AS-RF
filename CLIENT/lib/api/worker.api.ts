@@ -8,6 +8,7 @@ import type {
   Service,
   WorkerServiceInput,
 } from "../types/worker";
+import type { LocationSuggestion } from "../types/location";
 import { Gender } from "../types/worker";
 import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
 
@@ -160,6 +161,15 @@ export interface WorkersGroupedByServiceResponse {
   }>;
 }
 
+export interface WorkerServiceSearchParams {
+  q?: string;
+  category?: string;
+  location?: string;
+  schedule?: string;
+}
+
+export type LocationSuggestionLanguage = "vi" | "en";
+
 export const workerServicesApi = {
   getServices: async (): Promise<
     Array<{
@@ -192,12 +202,40 @@ export const workerServicesApi = {
     return extractData(response).services;
   },
 
-  getWorkersGroupedByService: async (): Promise<
+  getWorkersGroupedByService: async (
+    params?: WorkerServiceSearchParams
+  ): Promise<
     WorkersGroupedByServiceResponse[]
   > => {
     const response = await api.get<
       ApiResponse<WorkersGroupedByServiceResponse[]>
-    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE);
+    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, { params });
+    return extractData(response);
+  },
+
+  searchServices: async (
+    params: WorkerServiceSearchParams
+  ): Promise<WorkersGroupedByServiceResponse[] | unknown[]> => {
+    const response = await api.get<
+      ApiResponse<WorkersGroupedByServiceResponse[] | unknown[]>
+    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, { params });
+    return extractData(response);
+  },
+
+  getLocationSuggestions: async (
+    q: string,
+    language: LocationSuggestionLanguage,
+    limit?: number
+  ): Promise<LocationSuggestion[]> => {
+    const response = await api.get<ApiResponse<LocationSuggestion[]>>(
+      ApiEndpoint.WORKERS_LOCATION_SUGGESTIONS,
+      {
+        params: { q, limit },
+        headers: {
+          "accept-language": language,
+        },
+      }
+    );
     return extractData(response);
   },
 

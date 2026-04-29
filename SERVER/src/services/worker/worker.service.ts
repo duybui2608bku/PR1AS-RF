@@ -6,10 +6,12 @@ import { AUTH_MESSAGES } from "../../constants/messages";
 
 import { IUserDocument } from "../../types/auth/user.types";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { reviewRepository } from "../../repositories/review/review.repository";
 import { ReviewStats, IReviewDocument } from "../../types/review/review.types";
 import { ReviewType } from "../../constants/review";
 import { VALIDATION_LIMITS } from "../../constants/validation";
+import { WorkerGroupedByServiceQuery } from "../../validations/worker/worker-grouped-query.validation";
 
 export interface WorkerReviewItem {
   id: string;
@@ -48,6 +50,62 @@ export interface WorkerDetailResponse {
   review_stats?: ReviewStats;
   reviews?: WorkerReviewItem[];
 }
+
+export interface WorkersGroupedByServiceItem {
+  service: {
+    id: string;
+    code: string;
+    name: {
+      en: string;
+      vi: string;
+      zh?: string | null;
+      ko?: string | null;
+    };
+    description: {
+      en: string;
+      vi: string;
+      zh?: string | null;
+      ko?: string | null;
+    };
+    category: string;
+  };
+  workers: Array<{
+    id: string;
+    full_name: string | null;
+    avatar: string | null;
+    worker_profile: {
+      title: string | null;
+      introduction: string | null;
+      gallery_urls: string[];
+    } | null;
+    pricing: Array<{
+      unit: string;
+      duration: number;
+      price: number;
+      currency: string;
+    }>;
+  }>;
+}
+
+const parseLocation = (
+  location?: string
+): { latitude: number; longitude: number } | undefined => {
+  if (!location) {
+    return undefined;
+  }
+  const [latText, lngText] = location.split(",");
+  return {
+    latitude: Number(latText),
+    longitude: Number(lngText),
+  };
+};
+
+const hasTimeOverlap = (
+  startA: Date,
+  endA: Date,
+  startB: Date,
+  endB: Date
+): boolean => startA < endB && endA > startB;
 
 export class WorkerService {
   async getWorkerById(workerId: string): Promise<WorkerDetailResponse> {
@@ -137,44 +195,86 @@ export class WorkerService {
     };
   }
 
-  async getWorkersGroupedByService(): Promise<
-    Array<{
-      service: {
-        id: string;
-        code: string;
-        name: {
-          en: string;
-          vi: string;
-          zh?: string | null;
-          ko?: string | null;
+  async getWorkersGroupedByService(
+    query: WorkerGroupedByServiceQuery
+  ): Promise<WorkersGroupedByServiceItem[]> {
+    const groupedWorkers =
+      await workerServiceRepository.findWorkersGroupedByService({
+        q: query.q,
+        category: query.category,
+        location: parseLocation(query.location),
+      });
+
+    if (!query.schedule) {
+      return groupedWorkers;
+    }
+    const scheduleAt = query.schedule;
+
+    const availabilityCache = new Map<string, boolean>();
+
+    const groupsWithAvailability = await Promise.all(
+      groupedWorkers.map(async (group) => {
+        const availableWorkers = await Promise.all(
+          group.workers.map(async (worker) => {
+            const durations = Array.from(
+              new Set(worker.pricing.map((item) => item.duration))
+            )
+              .filter((duration) => duration > 0)
+              .sort((a, b) => a - b);
+
+            if (!durations.length) {
+              return null;
+            }
+
+            const cacheKey = `${worker.id}:${scheduleAt.toISOString()}:${durations.join(",")}`;
+            const cachedAvailability = availabilityCache.get(cacheKey);
+            if (typeof cachedAvailability !== "undefined") {
+              return cachedAvailability ? worker : null;
+            }
+
+            const maxDurationMinutes = durations[durations.length - 1];
+            const maxEndTime = new Date(
+              scheduleAt.getTime() + maxDurationMinutes * 60 * 1000
+            );
+
+            const conflicts =
+              await bookingRepository.findConflictsForWorkerInWindow(
+                worker.id,
+                scheduleAt,
+                maxEndTime
+              );
+
+            const isAvailable = durations.some((durationMinutes) => {
+              const candidateEnd = new Date(
+                scheduleAt.getTime() + durationMinutes * 60 * 1000
+              );
+              return !conflicts.some((conflict) =>
+                hasTimeOverlap(
+                  scheduleAt,
+                  candidateEnd,
+                  conflict.start_time,
+                  conflict.end_time
+                )
+              );
+            });
+
+            availabilityCache.set(cacheKey, isAvailable);
+            return isAvailable ? worker : null;
+          })
+        );
+
+        const filteredWorkers = availableWorkers.filter(
+          (worker): worker is NonNullable<typeof worker> => worker !== null
+        );
+
+        return {
+          service: group.service,
+          workers: filteredWorkers,
         };
-        description: {
-          en: string;
-          vi: string;
-          zh?: string | null;
-          ko?: string | null;
-        };
-        category: string;
-      };
-      workers: Array<{
-        id: string;
-        full_name: string | null;
-        avatar: string | null;
-        worker_profile: {
-          title: string | null;
-          introduction: string | null;
-          gallery_urls: string[];
-        } | null;
-        pricing: Array<{
-          unit: string;
-          duration: number;
-          price: number;
-          currency: string;
-        }>;
-      }>;
-    }>
-  > {
-    return workerServiceRepository.findWorkersGroupedByService();
+      })
+    );
+
+    return groupsWithAvailability.filter((group) => group.workers.length > 0);
   }
 }
 
