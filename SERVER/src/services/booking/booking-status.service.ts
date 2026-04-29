@@ -1,4 +1,4 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { escrowService } from "../escrow/escrow.service";
 import { IBookingDocument } from "../../types/booking/booking.types";
@@ -57,9 +57,8 @@ export class BookingStatusService extends BookingCrudService {
     if (status === BookingStatus.COMPLETED) {
       const escrowResult =
         await escrowService.releaseEscrowForCompletedBooking(bookingId);
-      if (escrowResult) {
-        updateData.payout_transaction_id =
-          escrowResult.releaseTransactionId as unknown as Types.ObjectId;
+      if (escrowResult?.releaseTransactionId) {
+        updateData.payout_transaction_id = escrowResult.releaseTransactionId;
       }
     }
 

@@ -195,6 +195,8 @@
     "menu": {
       "dashboard": "대시보드",
       "users": "사용자",
+      "transactions": "거래",
+      "pricing": "요금제",
       "settings": "설정"
     },
     "header": {
@@ -1073,7 +1075,8 @@
       "success": "예약이 성공적으로 생성되었습니다",
       "invalidDuration": "선택한 단위에 유효하지 않은 기간입니다",
       "minAdvance": "최소 {hours}시간 전에 예약해야 합니다",
-      "maxAdvance": "{days}일 이상 미리 예약할 수 없습니다"
+      "maxAdvance": "{days}일 이상 미리 예약할 수 없습니다",
+      "noPlatformCharge": "예약 시 플랫폼을 통해 결제가 이뤄지지 않으며 지갑 잔액이 필요하지 않습니다."
     },
     "list": {
       "title": "내 예약",

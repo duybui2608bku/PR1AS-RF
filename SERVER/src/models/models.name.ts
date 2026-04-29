@@ -10,6 +10,7 @@ export const modelsName = {
   WALLET: "wallets",
   ESCROW: "escrows",
   BOOKING: "bookings",
+  PRICING_PACKAGE: "pricing_packages",
   REVIEW: "reviews",
   NOTIFICATION: "notifications",
   NOTIFICATION_PREFERENCE: "notification_preferences",

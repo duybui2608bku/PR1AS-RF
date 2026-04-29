@@ -9,9 +9,6 @@ import {
   Input,
   Typography,
   Space,
-  Row,
-  Col,
-  Divider,
   message,
   Alert,
   Select,
@@ -19,7 +16,7 @@ import {
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useI18n } from "@/lib/hooks/use-i18n";
-import { useApiMutation, useApiQueryData } from "@/lib/hooks/use-api";
+import { useApiMutation } from "@/lib/hooks/use-api";
 import {
   CreateBookingInput,
   PricingUnit,
@@ -30,9 +27,8 @@ import { BOOKING_CONSTANTS, BOOKING_TIME_SLOTS } from "@/lib/constants/booking";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import styles from "@/app/worker/components/BookingModal.module.scss";
-import { type WalletBalanceResponse } from "@/lib/api/wallet.api";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 
@@ -102,15 +98,6 @@ export function BookingModal({
     };
   }, [open, pricing, form]);
 
-  const { data: walletBalance, isLoading: isLoadingWalletBalance } =
-    useApiQueryData<WalletBalanceResponse>(
-      ["wallet-balance"],
-      "/wallet/balance",
-      {
-        enabled: open,
-      },
-    );
-
   const createBookingMutation = useApiMutation<unknown, CreateBookingInput>(
     "/bookings",
     "POST",
@@ -151,7 +138,6 @@ export function BookingModal({
       };
     }
 
-    const unitPrice = selectedPricing.price;
     let quantity = selectedQuantity;
 
     if (selectedPricingUnit === PricingUnit.DAILY && selectedDateRange) {
@@ -162,22 +148,14 @@ export function BookingModal({
       }
     }
 
-    const subtotal = unitPrice * quantity;
-    const platformFee =
-      Math.round(
-        ((subtotal * BOOKING_CONSTANTS.PLATFORM_FEE_PERCENT) / 100) * 100,
-      ) / 100;
-    const totalAmount = subtotal + platformFee;
-    const workerPayout = subtotal - platformFee;
-
     return {
       unit: selectedPricingUnit,
-      unit_price: unitPrice,
-      quantity: quantity,
-      subtotal: Math.round(subtotal * 100) / 100,
-      platform_fee: platformFee,
-      total_amount: Math.round(totalAmount * 100) / 100,
-      worker_payout: Math.round(workerPayout * 100) / 100,
+      unit_price: 0,
+      quantity,
+      subtotal: 0,
+      platform_fee: 0,
+      total_amount: 0,
+      worker_payout: 0,
       currency,
     };
   }, [
@@ -188,20 +166,8 @@ export function BookingModal({
     currency,
   ]);
 
-  const hasInsufficientBalance = useMemo((): boolean => {
-    if (!walletBalance || isLoadingWalletBalance) {
-      return false;
-    }
-    return walletBalance.balance < calculatePricing.total_amount;
-  }, [walletBalance, calculatePricing.total_amount, isLoadingWalletBalance]);
-
   const handleSubmit = async (): Promise<void> => {
     try {
-      if (hasInsufficientBalance) {
-        message.error(t("errors.wallet.insufficientBalance.message"));
-        return;
-      }
-
       const values = await form.validateFields();
 
       let startTime: Dayjs;
@@ -350,13 +316,6 @@ export function BookingModal({
     };
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: calculatePricing.currency,
-    }).format(amount);
-  };
-
   const handleClose = (): void => {
     setSelectedDate(null);
     setSelectedDateRange(null);
@@ -375,9 +334,6 @@ export function BookingModal({
       width={600}
       confirmLoading={createBookingMutation.isPending}
       title={t("booking.create.title")}
-      okButtonProps={{
-        disabled: hasInsufficientBalance || isLoadingWalletBalance,
-      }}
     >
       <Form form={form} layout="vertical">
         <Form.Item label={t("booking.create.pricingUnit")}>
@@ -541,55 +497,7 @@ export function BookingModal({
           </Form.Item>
         )}
 
-        {walletBalance && (
-          <Form.Item label={t("wallet.title")}>
-            <Alert
-              title={
-                <Space>
-                  <Text>{t("wallet.cards.totalBalance")}:</Text>
-                  <Text strong>{formatCurrency(walletBalance.balance)}</Text>
-                </Space>
-              }
-              type={hasInsufficientBalance ? "error" : "info"}
-              showIcon
-            />
-          </Form.Item>
-        )}
-
-        <Divider />
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Text type="secondary">{t("booking.pricing.subtotal")}</Text>
-          </Col>
-          <Col span={12} className={styles.summaryRowRight}>
-            <Text>{formatCurrency(calculatePricing.subtotal)}</Text>
-          </Col>
-        </Row>
-
-        <Row gutter={16} className={styles.summaryRow}>
-          <Col span={12}>
-            <Text type="secondary">{t("booking.pricing.platformFee")}</Text>
-          </Col>
-          <Col span={12} className={styles.summaryRowRight}>
-            <Text>{formatCurrency(calculatePricing.platform_fee)}</Text>
-          </Col>
-        </Row>
-
-        <Divider />
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Title level={5} className={styles.totalLabel}>
-              {t("booking.pricing.total")}
-            </Title>
-          </Col>
-          <Col span={12} className={styles.summaryRowRight}>
-            <Title level={5} className={styles.totalValue}>
-              {formatCurrency(calculatePricing.total_amount)}
-            </Title>
-          </Col>
-        </Row>
+        <Alert type="info" showIcon message={t("booking.create.noPlatformCharge")} />
 
         <Form.Item name="client_notes" label={t("booking.create.notes")}>
           <TextArea

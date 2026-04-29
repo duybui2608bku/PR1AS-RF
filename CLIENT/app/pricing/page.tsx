@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Typography } from "antd";
+import { type ReactNode, useMemo } from "react";
+import { Alert, Button, Empty, Spin, Typography } from "antd";
 import {
   CheckCircleFilled,
   CloseCircleFilled,
@@ -10,6 +11,8 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { pricingApi, PricingPackage, PricingPlanCode } from "@/lib/api/pricing.api";
 import styles from "./page.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,74 +34,190 @@ const PricingIcon = ({ value }: { value: string | false }) => {
 export default function PricingPage() {
   const { t } = useTranslation();
 
+  const {
+    data: packages,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["public-pricing-packages"],
+    queryFn: () => pricingApi.getPublicPackages(),
+  });
+
+  const packageByCode = useMemo(() => {
+    const map = new Map<PricingPlanCode, PricingPackage>();
+    (packages || []).forEach((item) => map.set(item.package_code, item));
+    return map;
+  }, [packages]);
+
+  const getPlanValue = (
+    packageCode: PricingPlanCode,
+    valueBuilder: (pkg: PricingPackage) => string | false
+  ): string | false => {
+    const pkg = packageByCode.get(packageCode);
+    if (!pkg) {
+      return false;
+    }
+    return valueBuilder(pkg);
+  };
+
+  const formatLimit = (
+    limit: number | null,
+    unitKey: "people" | "jobs" | "times"
+  ): string => {
+    if (limit === null) {
+      return t("pricing.features.unlimited");
+    }
+    if (unitKey === "times") {
+      return t("pricing.features.boostPerMonth", { count: limit });
+    }
+    if (unitKey === "people") {
+      return t("pricing.features.upToPeople", { count: limit });
+    }
+    return t("pricing.features.upToJobs", { count: limit });
+  };
+
+  const activePlans = useMemo(() => {
+    const planOrder: PricingPlanCode[] = ["standard", "gold", "diamond"];
+    return planOrder
+      .map((code) => packageByCode.get(code))
+      .filter((pkg): pkg is PricingPackage => Boolean(pkg && pkg.is_active));
+  }, [packageByCode]);
+
   const features: Feature[] = [
     {
       label: t("pricing.features.messaging"),
-      standard: false,
-      gold: t("pricing.features.messagingGold"),
-      diamond: t("pricing.features.messagingDiamond"),
+      standard: getPlanValue("standard", (pkg) =>
+        pkg.features.messaging_enabled
+          ? formatLimit(pkg.features.messaging_max_recipients, "people")
+          : false
+      ),
+      gold: getPlanValue("gold", (pkg) =>
+        pkg.features.messaging_enabled
+          ? formatLimit(pkg.features.messaging_max_recipients, "people")
+          : false
+      ),
+      diamond: getPlanValue("diamond", (pkg) =>
+        pkg.features.messaging_enabled
+          ? formatLimit(pkg.features.messaging_max_recipients, "people")
+          : false
+      ),
     },
     {
       label: t("pricing.features.createJob"),
-      standard: t("pricing.features.createJobStandard"),
-      gold: t("pricing.features.createJobGold"),
-      diamond: t("pricing.features.createJobDiamond"),
+      standard: getPlanValue("standard", (pkg) =>
+        pkg.features.create_job_enabled
+          ? formatLimit(pkg.features.create_job_limit, "jobs")
+          : false
+      ),
+      gold: getPlanValue("gold", (pkg) =>
+        pkg.features.create_job_enabled
+          ? formatLimit(pkg.features.create_job_limit, "jobs")
+          : false
+      ),
+      diamond: getPlanValue("diamond", (pkg) =>
+        pkg.features.create_job_enabled
+          ? formatLimit(pkg.features.create_job_limit, "jobs")
+          : false
+      ),
     },
     {
       label: t("pricing.features.boostProfile"),
-      standard: false,
-      gold: t("pricing.features.boostProfileGold"),
-      diamond: t("pricing.features.boostProfileDiamond"),
+      standard: getPlanValue("standard", (pkg) =>
+        pkg.features.boost_profile_enabled
+          ? formatLimit(pkg.features.boost_profile_monthly_limit, "times")
+          : false
+      ),
+      gold: getPlanValue("gold", (pkg) =>
+        pkg.features.boost_profile_enabled
+          ? formatLimit(pkg.features.boost_profile_monthly_limit, "times")
+          : false
+      ),
+      diamond: getPlanValue("diamond", (pkg) =>
+        pkg.features.boost_profile_enabled
+          ? formatLimit(pkg.features.boost_profile_monthly_limit, "times")
+          : false
+      ),
     },
     {
       label: t("pricing.features.ads"),
-      standard: false,
-      gold: false,
-      diamond: t("pricing.features.adsDiamond"),
+      standard: getPlanValue("standard", (pkg) =>
+        pkg.features.ads_enabled ? false : t("pricing.features.adsDiamond")
+      ),
+      gold: getPlanValue("gold", (pkg) =>
+        pkg.features.ads_enabled ? false : t("pricing.features.adsDiamond")
+      ),
+      diamond: getPlanValue("diamond", (pkg) =>
+        pkg.features.ads_enabled ? false : t("pricing.features.adsDiamond")
+      ),
     },
   ];
 
-  const plans = [
+  const planUiMap: Record<
+    PricingPlanCode,
     {
-      key: "standard",
-      name: t("pricing.plans.standard.name"),
+      fallbackName: string;
+      price: string;
+      period: string;
+      description: string;
+      icon: ReactNode;
+      cta: string;
+      ctaType: "default" | "primary";
+      highlighted: boolean;
+      className: string;
+      headerClass: string;
+      thClassName: string;
+      tdClassName?: string;
+      valueClassName?: string;
+    }
+  > = {
+    standard: {
+      fallbackName: t("pricing.plans.standard.name"),
       price: t("pricing.plans.standard.price"),
       period: t("pricing.plans.standard.period"),
       description: t("pricing.plans.standard.description"),
       icon: <StarFilled />,
       cta: t("pricing.plans.standard.cta"),
-      ctaType: "default" as const,
+      ctaType: "default",
       highlighted: false,
       className: styles.cardStandard,
       headerClass: styles.headerStandard,
+      thClassName: styles.thStandard,
     },
-    {
-      key: "gold",
-      name: t("pricing.plans.gold.name"),
+    gold: {
+      fallbackName: t("pricing.plans.gold.name"),
       price: t("pricing.plans.gold.price"),
       period: t("pricing.plans.gold.period"),
       description: t("pricing.plans.gold.description"),
       icon: <CrownFilled />,
       cta: t("pricing.plans.gold.cta"),
-      ctaType: "primary" as const,
+      ctaType: "primary",
       highlighted: true,
       className: styles.cardGold,
       headerClass: styles.headerGold,
+      thClassName: `${styles.thGold} ${styles.thHighlight}`,
+      tdClassName: styles.tdHighlight,
     },
-    {
-      key: "diamond",
-      name: t("pricing.plans.diamond.name"),
+    diamond: {
+      fallbackName: t("pricing.plans.diamond.name"),
       price: t("pricing.plans.diamond.price"),
       period: t("pricing.plans.diamond.period"),
       description: t("pricing.plans.diamond.description"),
       icon: <ThunderboltFilled />,
       cta: t("pricing.plans.diamond.cta"),
-      ctaType: "default" as const,
+      ctaType: "default",
       highlighted: false,
       className: styles.cardDiamond,
       headerClass: styles.headerDiamond,
+      thClassName: styles.thDiamond,
+      valueClassName: styles.valueTextDiamond,
     },
-  ];
+  };
+
+  const plans = activePlans.map((pkg) => ({
+    key: pkg.package_code,
+    name: pkg.display_name || planUiMap[pkg.package_code].fallbackName,
+    ...planUiMap[pkg.package_code],
+  }));
 
   return (
     <div className={styles.page}>
@@ -112,7 +231,14 @@ export default function PricingPage() {
       </div>
 
       <div className={styles.cardsRow}>
-        {plans.map((plan) => (
+        {isLoading ? (
+          <Spin size="large" />
+        ) : isError ? (
+          <Alert type="error" showIcon message={t("errors.unknown.title")} />
+        ) : plans.length === 0 ? (
+          <Empty description={t("pricing.subtitle")} />
+        ) : (
+          plans.map((plan) => (
           <div key={plan.key} className={`${styles.cardWrapper} ${plan.highlighted ? styles.highlighted : ""}`}>
             {plan.highlighted && (
               <div className={styles.popularBadge}>
@@ -167,7 +293,8 @@ export default function PricingPage() {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
 
       <div className={styles.tableSection}>
@@ -179,36 +306,32 @@ export default function PricingPage() {
             <thead>
               <tr>
                 <th className={styles.thFeature}>{t("pricing.features.label")}</th>
-                <th className={styles.thStandard}>{t("pricing.plans.standard.name")}</th>
-                <th className={`${styles.thGold} ${styles.thHighlight}`}>{t("pricing.plans.gold.name")}</th>
-                <th className={styles.thDiamond}>{t("pricing.plans.diamond.name")}</th>
+                {plans.map((plan) => (
+                  <th key={plan.key} className={plan.thClassName}>
+                    {plan.name}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {features.map((feature, idx) => (
                 <tr key={feature.label} className={idx % 2 === 0 ? styles.rowEven : styles.rowOdd}>
                   <td className={styles.tdFeature}>{feature.label}</td>
-                  <td className={styles.tdValue}>
-                    {feature.standard === false ? (
-                      <CloseCircleFilled className={styles.iconNo} />
-                    ) : (
-                      <span className={styles.valueText}>{feature.standard}</span>
-                    )}
-                  </td>
-                  <td className={`${styles.tdValue} ${styles.tdHighlight}`}>
-                    {feature.gold === false ? (
-                      <CloseCircleFilled className={styles.iconNo} />
-                    ) : (
-                      <span className={styles.valueText}>{feature.gold}</span>
-                    )}
-                  </td>
-                  <td className={styles.tdValue}>
-                    {feature.diamond === false ? (
-                      <CloseCircleFilled className={styles.iconNo} />
-                    ) : (
-                      <span className={styles.valueTextDiamond}>{feature.diamond}</span>
-                    )}
-                  </td>
+                  {plans.map((plan) => {
+                    const value = feature[plan.key];
+                    return (
+                      <td
+                        key={`${feature.label}-${plan.key}`}
+                        className={`${styles.tdValue} ${plan.tdClassName || ""}`}
+                      >
+                        {value === false ? (
+                          <CloseCircleFilled className={styles.iconNo} />
+                        ) : (
+                          <span className={plan.valueClassName || styles.valueText}>{value}</span>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

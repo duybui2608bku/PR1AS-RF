@@ -8,4 +8,5 @@ export * from "./booking.api";
 export * from "./review.api";
 export * from "./escrow.api";
 export * from "./notification.api";
+export * from "./pricing.api";
 

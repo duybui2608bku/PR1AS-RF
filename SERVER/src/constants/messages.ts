@@ -222,3 +222,13 @@ export const WORKER_MESSAGES = {
   WORKERS_GROUPED_BY_SERVICE_FETCHED:
     "Workers grouped by service fetched successfully",
 } as const;
+
+export const PRICING_MESSAGES = {
+  PRICING_PACKAGES_FETCHED: "Pricing packages fetched successfully",
+  PRICING_PACKAGE_FETCHED: "Pricing package fetched successfully",
+  PRICING_PACKAGE_CREATED: "Pricing package created successfully",
+  PRICING_PACKAGE_UPDATED: "Pricing package updated successfully",
+  PRICING_PACKAGE_DELETED: "Pricing package deleted successfully",
+  PRICING_PACKAGE_NOT_FOUND: "Pricing package not found",
+  PRICING_PACKAGE_EXISTS: "Pricing package already exists",
+} as const;

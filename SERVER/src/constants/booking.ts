@@ -88,8 +88,3 @@ export const BOOKING_LIMITS = {
   AUTO_CONFIRM_HOURS: 24,
   AUTO_COMPLETE_HOURS: 2,
 } as const;
-
-export const BOOKING_FEE = {
-  PLATFORM_FEE_PERCENT: 10,
-  WORKER_PAYOUT_PERCENT: 90,
-} as const;

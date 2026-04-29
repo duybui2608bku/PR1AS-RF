@@ -100,7 +100,11 @@ export class EscrowService {
 
   async releaseEscrowForCompletedBooking(
     bookingId: string
-  ): Promise<{ workerPayout: number; platformFee: number; releaseTransactionId: string } | null> {
+  ): Promise<{
+    workerPayout: number;
+    platformFee: number;
+    releaseTransactionId: string | null;
+  } | null> {
     const escrow = await escrowRepository.findByBookingId(bookingId);
     if (!escrow) {
       return null;
@@ -119,12 +123,15 @@ export class EscrowService {
         ? escrow.worker_id._id.toString()
         : String(escrow.worker_id);
 
-    const releaseTransactionId = await walletService.releasePayoutToWorker(
-      workerId,
-      escrow.worker_payout,
-      bookingId,
-      `Payout for completed booking ${bookingId}`
-    );
+    let releaseTransactionId: string | null = null;
+    if (escrow.worker_payout > 0) {
+      releaseTransactionId = await walletService.releasePayoutToWorker(
+        workerId,
+        escrow.worker_payout,
+        bookingId,
+        `Payout for completed booking ${bookingId}`
+      );
+    }
 
     const escrowIdValue = escrow._id;
     const escrowId =
@@ -135,7 +142,9 @@ export class EscrowService {
     await escrowRepository.releaseEscrow({
       escrow_id: escrowId,
       release_reason: EscrowReleaseReason.BOOKING_COMPLETED,
-      release_transaction_id: new Types.ObjectId(releaseTransactionId),
+      release_transaction_id: releaseTransactionId
+        ? new Types.ObjectId(releaseTransactionId)
+        : null,
     });
 
     return {
@@ -172,12 +181,15 @@ export class EscrowService {
       refundAmount = escrow.amount - penaltyAmount;
     }
 
-    const refundTransactionId = await walletService.refundBalanceToClient(
-      clientId,
-      refundAmount,
-      bookingId,
-      `Refund for cancelled booking ${bookingId}`
-    );
+    let refundTransactionId: string | null = null;
+    if (refundAmount > 0) {
+      refundTransactionId = await walletService.refundBalanceToClient(
+        clientId,
+        refundAmount,
+        bookingId,
+        `Refund for cancelled booking ${bookingId}`
+      );
+    }
 
     const escrowIdValue = escrow._id;
     const escrowId =
@@ -190,7 +202,9 @@ export class EscrowService {
       refund_reason: EscrowRefundReason.BOOKING_CANCELLED,
       refund_amount: refundAmount,
       penalty_amount: penaltyAmount,
-      refund_transaction_id: new Types.ObjectId(refundTransactionId),
+      refund_transaction_id: refundTransactionId
+        ? new Types.ObjectId(refundTransactionId)
+        : null,
     });
 
     return { refundAmount, penaltyAmount };

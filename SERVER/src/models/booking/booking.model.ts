@@ -42,7 +42,7 @@ const pricingSchema = new Schema(
     unit_price: {
       type: Number,
       required: true,
-      min: 0.01,
+      min: 0,
     },
     quantity: {
       type: Number,

@@ -9,6 +9,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   WalletOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -52,6 +53,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       key: "/admin/dashboard/wallet",
       icon: <WalletOutlined />,
       label: t("dashboard.menu.transactions"),
+    },
+    {
+      key: "/admin/dashboard/pricing",
+      icon: <TagsOutlined />,
+      label: t("dashboard.menu.pricing"),
     },
     {
       key: "/admin/settings",
