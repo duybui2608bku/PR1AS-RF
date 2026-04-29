@@ -16,7 +16,7 @@ import { userRepository } from "../../repositories/auth/user.repository";
 
 import { getSocketIO } from "../../config/socket";
 
-import Message from "../../models/chat/message";
+import Message from "../../models/chat/message.model";
 
 import {
   getOtherUserId,

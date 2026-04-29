@@ -26,6 +26,7 @@ export enum NotificationPriority {
 export enum NotificationType {
   BOOKING_CREATED = "booking.created",
   BOOKING_STATUS_UPDATED = "booking.status_updated",
+  BOOKING_UPDATED = "booking.updated",
   BOOKING_CANCELLED = "booking.cancelled",
   DISPUTE_CREATED = "dispute.created",
   DISPUTE_RESOLVED = "dispute.resolved",

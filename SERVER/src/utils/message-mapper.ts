@@ -4,6 +4,7 @@ import {
   AUTHZ_MESSAGES,
 } from "../constants/messages";
 
+
 export const MESSAGE_KEY_MAP: Record<string, string> = {
   [AUTH_MESSAGES.INVALID_DATA]: "auth.invalidData",
   [AUTH_MESSAGES.EMAIL_REQUIRED]: "auth.emailRequired",
@@ -35,6 +36,9 @@ export const MESSAGE_KEY_MAP: Record<string, string> = {
   [COMMON_MESSAGES.NOT_FOUND]: "common.notFound",
   [COMMON_MESSAGES.BAD_REQUEST]: "common.badRequest",
   [COMMON_MESSAGES.SUCCESS]: "common.success",
+  [COMMON_MESSAGES.CREATED]: "common.created",
+  [COMMON_MESSAGES.UPDATED]: "common.updated",
+  [COMMON_MESSAGES.DELETED]: "common.deleted",
   [AUTHZ_MESSAGES.FORBIDDEN]: "common.forbidden",
 };
 

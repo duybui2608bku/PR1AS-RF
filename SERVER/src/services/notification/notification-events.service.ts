@@ -90,6 +90,29 @@ export class NotificationEventService {
     });
   }
 
+  async bookingUpdated(
+    booking: IBookingDocument,
+    actorId: string
+  ): Promise<void> {
+    const bookingId = toId(booking._id);
+    const clientId = toId(booking.client_id);
+    const workerId = toId(booking.worker_id);
+    const recipients = [clientId, workerId].filter((id) => id !== actorId);
+
+    await notificationService.notify({
+      recipient_ids: recipients,
+      actor_id: actorId,
+      type: NotificationType.BOOKING_UPDATED,
+      category: NotificationCategory.BOOKING,
+      title: "Booking updated",
+      body: "A booking has been updated.",
+      data: { booking_id: bookingId },
+      link: bookingLink(bookingId),
+      priority: NotificationPriority.NORMAL,
+      dedupe_key: `booking-updated:${bookingId}:${Date.now()}`,
+    });
+  }
+
   async disputeCreated(
     booking: IBookingDocument,
     actorId: string

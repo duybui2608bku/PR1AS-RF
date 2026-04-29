@@ -63,6 +63,9 @@ const FooterComponent = () => {
               <Link href="/#services" className={styles.footerLink}>
                 {t("home.nav.services")}
               </Link>
+              <Link href="/pricing" className={styles.footerLink}>
+                {t("home.footer.pricing")}
+              </Link>
               <Link href="/#contact" className={styles.footerLink}>
                 {t("home.nav.contact")}
               </Link>
@@ -120,6 +123,10 @@ const FooterComponent = () => {
               <Text type="secondary">|</Text>
               <Link href="/terms" className={styles.legalLink}>
                 {t("home.footer.terms")}
+              </Link>
+              <Text type="secondary">|</Text>
+              <Link href="/pricing" className={styles.legalLink}>
+                {t("home.footer.pricing")}
               </Link>
             </Space>
           </Col>

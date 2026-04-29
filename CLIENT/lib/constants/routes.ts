@@ -14,6 +14,7 @@ export enum AppRoute {
   CHAT = "/chat",
   NOTIFICATIONS = "/notifications",
   ADMIN_DASHBOARD = "/admin/dashboard",
+  PRICING = "/pricing",
 }
 
 export enum UserRole {

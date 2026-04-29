@@ -181,6 +181,24 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "성공",
     zh: "成功",
   },
+  "common.created": {
+    en: "Created successfully",
+    vi: "Tạo thành công",
+    ko: "생성되었습니다",
+    zh: "创建成功",
+  },
+  "common.updated": {
+    en: "Updated successfully",
+    vi: "Cập nhật thành công",
+    ko: "업데이트되었습니다",
+    zh: "更新成功",
+  },
+  "common.deleted": {
+    en: "Deleted successfully",
+    vi: "Xóa thành công",
+    ko: "삭제되었습니다",
+    zh: "删除成功",
+  },
   "common.forbidden": {
     en: "You do not have permission to perform this action",
     vi: "Bạn không có quyền thực hiện hành động này",

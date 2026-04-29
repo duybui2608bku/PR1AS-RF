@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import ConversationGroup from "../../models/chat/conversationsGroup";
-import MessageGroup from "../../models/chat/messageGroup";
+import ConversationGroup from "../../models/chat/conversation-group.model";
+import MessageGroup from "../../models/chat/message-group.model";
 import { Booking } from "../../models/booking/booking.model";
 import type {
   IConversationGroup,

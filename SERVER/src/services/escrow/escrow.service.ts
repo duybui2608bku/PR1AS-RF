@@ -11,17 +11,14 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ESCROW_MESSAGES } from "../../constants/messages";
 import { PaginationHelper } from "../../utils/pagination";
 import { IPagination } from "../../types/common/pagination.type";
-import { getPagination } from "../../func/pagination.func";
+import { getPagination } from "../../utils/pagination";
 import {
   EscrowStatus,
   EscrowReleaseReason,
   EscrowRefundReason,
   ESCROW_FEE,
 } from "../../constants/escrow";
-import {
-  refundBalanceToClient,
-  releasePayoutToWorker,
-} from "../wallet/wallet.service";
+import { walletService } from "../wallet/wallet.service";
 
 export class EscrowService {
   async getEscrowById(
@@ -103,7 +100,7 @@ export class EscrowService {
 
   async releaseEscrowForCompletedBooking(
     bookingId: string
-  ): Promise<{ workerPayout: number; platformFee: number } | null> {
+  ): Promise<{ workerPayout: number; platformFee: number; releaseTransactionId: string } | null> {
     const escrow = await escrowRepository.findByBookingId(bookingId);
     if (!escrow) {
       return null;
@@ -122,7 +119,7 @@ export class EscrowService {
         ? escrow.worker_id._id.toString()
         : String(escrow.worker_id);
 
-    const releaseTransactionId = await releasePayoutToWorker(
+    const releaseTransactionId = await walletService.releasePayoutToWorker(
       workerId,
       escrow.worker_payout,
       bookingId,
@@ -144,9 +141,9 @@ export class EscrowService {
     return {
       workerPayout: escrow.worker_payout,
       platformFee: escrow.platform_fee,
+      releaseTransactionId,
     };
   }
-
 
   async refundEscrowForCancelledBooking(
     bookingId: string,
@@ -175,7 +172,7 @@ export class EscrowService {
       refundAmount = escrow.amount - penaltyAmount;
     }
 
-    const refundTransactionId = await refundBalanceToClient(
+    const refundTransactionId = await walletService.refundBalanceToClient(
       clientId,
       refundAmount,
       bookingId,
