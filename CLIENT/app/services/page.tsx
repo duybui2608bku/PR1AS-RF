@@ -7,7 +7,7 @@ import { useMemo, useCallback, Suspense, useEffect } from "react";
 import { Button, Empty, Spin, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { workerServicesApi } from "@/lib/api/worker.api";
-import { transformWorkersGroupedByServiceToServices } from "@/lib/utils/service-transform.utils";
+import { transformSearchResultsToServices } from "@/lib/utils/service-transform.utils";
 import { ServiceCard } from "@/app/components/service-card";
 import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { buildWorkerProfileRoute } from "@/lib/constants/routes";
@@ -27,15 +27,37 @@ function ServicesContent() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { handleError } = useErrorHandler();
+  const query = searchParams.get("q") || "";
+  const location = searchParams.get("location") || "";
+  const schedule = searchParams.get("schedule") || "";
   const categoryCode = searchParams.get("category") || "";
+  const hasSearchFilters = Boolean(query || location || schedule || categoryCode);
 
   const {
-    data: workersGroupedByService,
+    data: serviceResults,
     isLoading,
     error: workersGroupedByServiceError,
   } = useQuery({
-    queryKey: ["workers-grouped-by-service"],
-    queryFn: () => workerServicesApi.getWorkersGroupedByService(),
+    queryKey: [
+      "workers-grouped-by-service",
+      {
+        q: query,
+        location,
+        schedule,
+        category: categoryCode,
+      },
+    ],
+    queryFn: () => {
+      if (!hasSearchFilters) {
+        return workerServicesApi.getWorkersGroupedByService();
+      }
+      return workerServicesApi.searchServices({
+        q: query || undefined,
+        location: location || undefined,
+        schedule: schedule || undefined,
+        category: categoryCode || undefined,
+      });
+    },
   });
 
   useEffect(() => {
@@ -45,13 +67,10 @@ function ServicesContent() {
   }, [workersGroupedByServiceError, handleError]);
 
   const allServices = useMemo(() => {
-    if (!workersGroupedByService) return [];
+    if (!serviceResults) return [];
     const locale = i18n.language;
-    return transformWorkersGroupedByServiceToServices(
-      workersGroupedByService,
-      locale
-    );
-  }, [workersGroupedByService, i18n.language]);
+    return transformSearchResultsToServices(serviceResults, locale);
+  }, [serviceResults, i18n.language]);
 
   const filteredServices = useMemo(() => {
     if (!categoryCode) return allServices;

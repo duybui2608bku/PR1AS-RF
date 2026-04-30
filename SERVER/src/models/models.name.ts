@@ -10,10 +10,11 @@ export const modelsName = {
   WALLET: "wallets",
   ESCROW: "escrows",
   BOOKING: "bookings",
-  PRICING_PACKAGE: "pricing_packages",
   REVIEW: "reviews",
   NOTIFICATION: "notifications",
   NOTIFICATION_PREFERENCE: "notification_preferences",
   PUSH_SUBSCRIPTION: "push_subscriptions",
   NOTIFICATION_DELIVERY_LOG: "notification_delivery_logs",
+  LOCATION: "locations",
 };
+

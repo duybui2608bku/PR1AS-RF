@@ -197,6 +197,32 @@ export class BookingRepository {
     const conflict = await Booking.findOne(filter);
     return !!conflict;
   }
+
+  async findConflictsForWorkerInWindow(
+    workerId: string,
+    startTime: Date,
+    endTime: Date
+  ): Promise<Array<{ start_time: Date; end_time: Date }>> {
+    const conflicts = await Booking.find({
+      worker_id: new Types.ObjectId(workerId),
+      status: {
+        $in: [
+          BookingStatus.PENDING,
+          BookingStatus.CONFIRMED,
+          BookingStatus.IN_PROGRESS,
+        ],
+      },
+      "schedule.start_time": { $lt: endTime },
+      "schedule.end_time": { $gt: startTime },
+    })
+      .select("schedule.start_time schedule.end_time")
+      .lean();
+
+    return conflicts.map((booking) => ({
+      start_time: booking.schedule.start_time,
+      end_time: booking.schedule.end_time,
+    }));
+  }
 }
 
 export const bookingRepository = new BookingRepository();

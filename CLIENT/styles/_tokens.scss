@@ -1,0 +1,138 @@
+// ============================================================================
+// Design Tokens — extends _variables.scss
+// Drop into: styles/_tokens.scss
+// Import in app/globals.scss: @import "../styles/tokens";
+// ============================================================================
+
+// ----- Type scale ----------------------------------------------------------
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 32px;
+$font-size-4xl: 44px;
+$font-size-5xl: 60px;
+
+$line-height-tight: 1.1;
+$line-height-snug: 1.25;
+$line-height-base: 1.5;
+$line-height-relaxed: 1.6;
+
+$letter-spacing-eyebrow: 0.18em;
+$letter-spacing-tight: -0.02em;
+
+// ----- Spacing scale (4px base) -------------------------------------------
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-8: 32px;
+$space-10: 40px;
+$space-12: 48px;
+$space-16: 64px;
+$space-20: 80px;
+$space-24: 96px;
+
+// ----- Radius -------------------------------------------------------------
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 20px;
+$radius-pill: 999px;
+
+// ----- Shadow (warm-tinted, not pure black) -------------------------------
+$shadow-xs: 0 1px 2px rgba(35, 12, 12, 0.04);
+$shadow-sm: 0 2px 6px rgba(35, 12, 12, 0.06);
+$shadow-md: 0 8px 24px rgba(35, 12, 12, 0.08);
+$shadow-lg: 0 18px 40px rgba(35, 12, 12, 0.12);
+$shadow-card-hover: 0 16px 32px rgba(113, 17, 17, 0.14);
+
+// ----- Transition ---------------------------------------------------------
+$ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+$dur-fast: 120ms;
+$dur-normal: 200ms;
+$dur-slow: 320ms;
+
+// ----- Layout -------------------------------------------------------------
+$container-max: 1320px;
+$container-pad-desktop: 32px;
+$container-pad-tablet: 24px;
+$container-pad-mobile: 16px;
+
+// ----- Breakpoints --------------------------------------------------------
+$bp-mobile: 640px;
+$bp-tablet: 768px;
+$bp-desktop: 1024px;
+$bp-wide: 1280px;
+
+// ----- Surface variants (computed from primary) ---------------------------
+// Cream surface — pulled from your $color-primary (#711111) at low chroma.
+$surface-cream-light: #fbf6f1;
+$surface-cream-dark: #1a1110;
+
+// Accent gold for editorial badges (used sparingly)
+$accent-gold: #b88a3a;
+$accent-rose: #c47e6f;
+
+// ----- CSS custom property bindings ---------------------------------------
+// Re-export tokens as CSS vars so components can consume both ways.
+:root {
+  // Surfaces
+  --surface-cream: #{$surface-cream-light};
+  --accent-gold: #{$accent-gold};
+  --accent-rose: #{$accent-rose};
+
+  // Type
+  --fs-xs: #{$font-size-xs};
+  --fs-sm: #{$font-size-sm};
+  --fs-md: #{$font-size-md};
+  --fs-lg: #{$font-size-lg};
+  --fs-xl: #{$font-size-xl};
+  --fs-2xl: #{$font-size-2xl};
+  --fs-3xl: #{$font-size-3xl};
+  --fs-4xl: #{$font-size-4xl};
+  --fs-5xl: #{$font-size-5xl};
+
+  // Spacing
+  --sp-1: #{$space-1};
+  --sp-2: #{$space-2};
+  --sp-3: #{$space-3};
+  --sp-4: #{$space-4};
+  --sp-6: #{$space-6};
+  --sp-8: #{$space-8};
+  --sp-10: #{$space-10};
+  --sp-12: #{$space-12};
+  --sp-16: #{$space-16};
+  --sp-20: #{$space-20};
+
+  // Radius
+  --r-sm: #{$radius-sm};
+  --r-md: #{$radius-md};
+  --r-lg: #{$radius-lg};
+  --r-xl: #{$radius-xl};
+  --r-pill: #{$radius-pill};
+
+  // Shadow
+  --sh-xs: #{$shadow-xs};
+  --sh-sm: #{$shadow-sm};
+  --sh-md: #{$shadow-md};
+  --sh-lg: #{$shadow-lg};
+  --sh-card-hover: #{$shadow-card-hover};
+
+  // Motion
+  --ease-std: #{$ease-standard};
+  --dur-fast: #{$dur-fast};
+  --dur-normal: #{$dur-normal};
+  --dur-slow: #{$dur-slow};
+
+  // Layout
+  --container-max: #{$container-max};
+}
+
+:root[data-theme="dark"] {
+  --surface-cream: #{$surface-cream-dark};
+}

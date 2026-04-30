@@ -134,28 +134,43 @@ const HeaderComponent = () => {
       type="primary"
       onClick={handleSwitchRole}
       loading={switchRoleMutation.isPending}
+      className={styles.workerButton}
     >
       {workerButtonLabel}
     </Button>
   ), [handleSwitchRole, switchRoleMutation.isPending, workerButtonLabel]);
 
 
-  const authSectionDesktop = useMemo(() =>
-    isAuthenticated && user ? (
-      <Space size="middle">
-        <NotificationBell />
-        <UserMenu />
-      </Space>
-    ) : (
-      <Space>
-        <Button type="text" onClick={handleOpenLogin}>
-          {t("auth.login")}
-        </Button>
-        <Button type="primary" onClick={handleOpenRegister}>
-          {t("auth.user.register")}
-        </Button>
-      </Space>
-    ), [isAuthenticated, user, handleOpenLogin, handleOpenRegister, t]);
+  const authSectionDesktop = useMemo(
+    () =>
+      isAuthenticated && user ? (
+        <Space size="middle">
+          <NotificationBell />
+          <div className={styles.accountControlGroup}>
+            {!userData.isAdmin && <SettingsPopover />}
+            <UserMenu />
+          </div>
+        </Space>
+      ) : (
+        <Space>
+          {!userData.isAdmin && <SettingsPopover />}
+          <Button type="text" onClick={handleOpenLogin}>
+            {t("auth.login")}
+          </Button>
+          <Button type="primary" onClick={handleOpenRegister}>
+            {t("auth.user.register")}
+          </Button>
+        </Space>
+      ),
+    [
+      isAuthenticated,
+      user,
+      userData.isAdmin,
+      handleOpenLogin,
+      handleOpenRegister,
+      t,
+    ]
+  );
 
   const authSectionMobile = useMemo(() =>
     isAuthenticated && user ? (
@@ -179,17 +194,16 @@ const HeaderComponent = () => {
       className={`${styles.header} ${isScrolled ? styles.scrolled : ""}`}
     >
       <Row justify="space-between" align="middle" wrap={false} className={styles.headerRow}>
-        <Col flex="none">
+        <Col flex="none" className={styles.logoCol}>
           <Link href={AppRoute.HOME} className={styles.logoLink}>
             {t("home.logo")}
           </Link>
         </Col>
-        <Col flex="auto">
+        <Col flex="none" className={styles.actionsCol}>
           <Space className={styles.actionsRow} size="middle">
             {!isMobile && (
               <>
                 {!userData.isAdmin && workerButton}
-                {!userData.isAdmin && <SettingsPopover />}
                 {authSectionDesktop}
               </>
             )}

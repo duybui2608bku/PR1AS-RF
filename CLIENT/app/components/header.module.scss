@@ -2,6 +2,8 @@
 
 .headerRow {
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .header:global(.ant-layout-header) {
@@ -9,7 +11,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: transparent;
+  background: var(--background);
   border-bottom: 1px solid var(--border-secondary);
   width: 100%;
   position: sticky;
@@ -25,21 +27,76 @@
 }
 
 .logoLink {
-  font-size: 20px;
+  font-size: 30px;
+  font-style: italic;
   font-weight: 700;
   color: inherit;
+}
+
+.logoCol {
+  min-width: 120px;
+}
+
+.actionsCol {
+  min-width: max-content;
 }
 
 .actionsRow {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
+}
+
+.accountControlGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 999px;
+  background: var(--background);
+}
+
+.accountControlGroup :global(.ant-btn.ant-btn-icon-only) {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+}
+
+.workerButton {
+  height: 36px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+
+  &:hover,
+  &:focus {
+    background: color-mix(in oklab, var(--color-primary) 88%, black) !important;
+    border-color: color-mix(in oklab, var(--color-primary) 88%, black) !important;
+  }
+
+  &:active {
+    background: color-mix(in oklab, var(--color-primary) 80%, black) !important;
+    border-color: color-mix(in oklab, var(--color-primary) 80%, black) !important;
+  }
 }
 
 .avatarWrapper {
   cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .placeholderAvatar {

@@ -22,6 +22,10 @@ interface CategoryTab {
   children?: CategoryChild[];
 }
 
+interface CategoryTabsProps {
+  variant?: "default" | "inline";
+}
+
 const CATEGORY_TABS: CategoryTab[] = [
   {
     code: SERVICE_CATEGORIES.ASSISTANCE,
@@ -29,11 +33,6 @@ const CATEGORY_TABS: CategoryTab[] = [
     iconImage: "/icons/assistance.png",
     labelKey: "home.categories.assistance.title",
     children: [
-      {
-        code: SERVICE_CATEGORIES.PERSONAL_ASSISTANT,
-        icon: "💼",
-        labelKey: "home.categories.personalAssistant.title",
-      },
       {
         code: SERVICE_CATEGORIES.ON_SITE_PROFESSIONAL_ASSIST,
         icon: "🏢",
@@ -92,7 +91,7 @@ enum ScrollConfig {
   THRESHOLD = 10,
 }
 
-const CategoryTabsComponent = () => {
+const CategoryTabsComponent = ({ variant = "default" }: CategoryTabsProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -107,9 +106,12 @@ const CategoryTabsComponent = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-  const activeCategory = pathname === "/services"
-    ? searchParams.get("category") || ""
-    : "";
+  const activeCategory =
+    pathname === "/services"
+      ? searchParams.get("category") || ""
+      : pathname === "/"
+      ? SERVICE_CATEGORIES.ASSISTANCE
+      : "";
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -229,15 +231,25 @@ const CategoryTabsComponent = () => {
     dropdownElement.style.top = `${dropdownPos.top}px`;
   }, [dropdownPos, openDropdown]);
 
+  const tabsToRender =
+    variant === "inline"
+      ? CATEGORY_TABS.map((tab) => ({ ...tab, iconImage: undefined }))
+      : CATEGORY_TABS;
+  const shouldCompact = variant === "default" && isCompact;
+
   return (
-    <div className={`${styles.categoryTabsWrapper} ${isCompact ? styles.compact : ""}`}>
+    <div
+      className={`${styles.categoryTabsWrapper} ${shouldCompact ? styles.compact : ""} ${
+        variant === "inline" ? styles.inline : ""
+      }`}
+    >
       <div className={styles.categoryTabsInner}>
         <div
           className={`${styles.fadeMask} ${canScrollLeft ? styles.showLeftFade : ""} ${canScrollRight ? styles.showRightFade : ""}`}
         >
           <div className={styles.scrollWrapper}>
             <div ref={scrollRef} className={styles.scrollContainer}>
-              {CATEGORY_TABS.map((tab) => {
+              {tabsToRender.map((tab) => {
                 const hasChildren = !!(tab.children && tab.children.length > 0);
                 const parentActive = isChildActive(tab, activeCategory);
                 const isOpen = openDropdown === tab.code;
@@ -265,9 +277,9 @@ const CategoryTabsComponent = () => {
                             unoptimized
                           />
                         </span>
-                      ) : (
+                      ) : variant !== "inline" ? (
                         <span className={styles.tabIcon}>{tab.icon}</span>
-                      )}
+                      ) : null}
                       <span className={styles.tabLabel}>
                         {t(tab.labelKey)}
                         {hasChildren && (

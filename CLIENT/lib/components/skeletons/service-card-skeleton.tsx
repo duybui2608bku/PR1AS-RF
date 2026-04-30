@@ -1,51 +1,37 @@
 "use client";
 
 import { Card, Skeleton } from "antd";
-import { ImageHeight, BorderRadius } from "@/lib/constants/ui.constants";
 import { memo } from "react";
+import styles from "./service-card-skeleton.module.scss";
 
 interface ServiceCardSkeletonProps {
   size?: "small" | "medium" | "large";
 }
 
 enum SkeletonRows {
-  CONTENT = 3,
+  CONTENT = 2,
 }
 
-function ServiceCardSkeletonComponent({ size = "medium" }: ServiceCardSkeletonProps) {
-  const imageHeight = size === "large" ? ImageHeight.LARGE : size === "medium" ? ImageHeight.MEDIUM : ImageHeight.SMALL;
+function ServiceCardSkeletonComponent({
+  size = "medium",
+}: ServiceCardSkeletonProps) {
+  const sizeClass =
+    size === "large"
+      ? styles.sizeLarge
+      : size === "small"
+      ? styles.sizeSmall
+      : styles.sizeMedium;
 
   return (
-    <Card
-      style={{
-        borderRadius: `${BorderRadius.LARGE}px`,
-        border: "1px solid #E5E5E5",
-        overflow: "hidden",
-        background: "#FFFFFF",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-      styles={{
-        body: {
-          padding: 0,
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
-      <Skeleton.Image
-        style={{
-          width: "100%",
-          height: imageHeight,
-        }}
-        active
-      />
-      <div style={{ padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
+    <Card className={styles.card}>
+      <div className={`${styles.imageSlot} ${sizeClass}`}>
+        <Skeleton.Image active className={styles.skeletonImage} />
+      </div>
+      <div className={styles.content}>
         <Skeleton
           active
-          paragraph={{ rows: SkeletonRows.CONTENT }}
+          title={{ width: "70%" }}
+          paragraph={{ rows: SkeletonRows.CONTENT, width: ["100%", "60%"] }}
         />
       </div>
     </Card>

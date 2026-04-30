@@ -25,6 +25,26 @@ interface Service {
   loved: boolean;
 }
 
+interface ServiceSearchResult {
+  id?: string;
+  serviceId?: string;
+  service_id?: string;
+  title?: string;
+  name?: string;
+  category?: string;
+  categoryCode?: string;
+  category_code?: string;
+  location?: string;
+  price?: number;
+  priceUnit?: string;
+  price_unit?: string;
+  rating?: number;
+  reviewCount?: number;
+  review_count?: number;
+  image?: string;
+  users?: ServiceUser[];
+}
+
 enum DefaultPrice {
   MIN = 0,
 }
@@ -185,4 +205,45 @@ export function transformWorkersGroupedByServiceToServices(
   });
 
   return services;
+}
+
+function isWorkersGroupedByServiceArray(
+  data: unknown
+): data is WorkersGroupedByServiceResponse[] {
+  if (!Array.isArray(data)) return false;
+  if (data.length === 0) return true;
+  const first = data[0] as Partial<WorkersGroupedByServiceResponse>;
+  return Boolean(first?.service && Array.isArray(first?.workers));
+}
+
+export function transformSearchResultsToServices(
+  data: unknown,
+  locale: string = "vi"
+): Service[] {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  if (isWorkersGroupedByServiceArray(data)) {
+    return transformWorkersGroupedByServiceToServices(data, locale);
+  }
+
+  return data.map((item, index) => {
+    const result = item as ServiceSearchResult;
+    return {
+      id: result.id || result.serviceId || result.service_id || `service-${index}`,
+      title: result.title || result.name || "Service",
+      category: result.category || "",
+      categoryCode: result.categoryCode || result.category_code || "",
+      location: result.location || DefaultLocation.VALUE,
+      price: result.price ?? DefaultPrice.MIN,
+      priceUnit: result.priceUnit || result.price_unit || PriceUnitMapping.HOURLY,
+      rating: result.rating ?? DefaultRating.VALUE,
+      reviewCount: result.reviewCount ?? result.review_count ?? DefaultReviewCount.VALUE,
+      image: result.image || getRandomImage(result.categoryCode || result.category_code || "PERSONAL_ASSISTANT"),
+      users: Array.isArray(result.users) ? result.users : [],
+      featured: false,
+      loved: false,
+    };
+  });
 }
