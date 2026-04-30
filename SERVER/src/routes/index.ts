@@ -11,6 +11,7 @@ import bookingRoutes from "./booking";
 import reviewRoutes from "./review";
 import escrowRoutes from "./escrow";
 import notificationRoutes from "./notification";
+import pricingRoutes from "./pricing";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/bookings", bookingRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/escrows", escrowRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/pricing", pricingRoutes);
 
 export default router;

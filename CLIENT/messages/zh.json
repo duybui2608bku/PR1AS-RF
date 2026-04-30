@@ -195,6 +195,8 @@
     "menu": {
       "dashboard": "仪表板",
       "users": "用户",
+      "transactions": "交易",
+      "pricing": "套餐",
       "settings": "设置"
     },
     "header": {
@@ -1073,7 +1075,8 @@
       "success": "预订成功",
       "invalidDuration": "所选计价单位的时长无效",
       "minAdvance": "必须提前至少 {hours} 小时预订",
-      "maxAdvance": "不能提前超过 {days} 天预订"
+      "maxAdvance": "不能提前超过 {days} 天预订",
+      "noPlatformCharge": "本平台预订不代收费用；无需钱包余额即可预订。"
     },
     "list": {
       "title": "我的预订",

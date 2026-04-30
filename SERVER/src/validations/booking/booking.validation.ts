@@ -5,7 +5,6 @@ import {
   BookingPaymentStatus,
   CancellationReason,
   BOOKING_LIMITS,
-  BOOKING_FEE,
   DisputeReason,
   DisputeResolution,
 } from "../../constants/booking";
@@ -76,31 +75,28 @@ const scheduleSchema = z
     };
   });
 
+/**
+ * Bookings no longer charge clients via the platform: monetary fields are always zero.
+ * Unit and quantity are kept for schedule/display consistency.
+ */
 const pricingSchema = z
   .object({
     unit: z.nativeEnum(PricingUnit),
-    unit_price: z.number().positive().min(0.01),
+    unit_price: z.number().min(0),
     quantity: z.number().int().positive().min(1),
     currency: z
       .string()
       .default("VND")
       .transform((val) => val.toUpperCase().trim()),
   })
-  .transform((data) => {
-    const subtotal = data.unit_price * data.quantity;
-    const platformFee =
-      Math.round(((subtotal * BOOKING_FEE.PLATFORM_FEE_PERCENT) / 100) * 100) /
-      100;
-    const totalAmount = subtotal + platformFee;
-    const workerPayout = subtotal - platformFee;
-    return {
-      ...data,
-      subtotal: Math.round(subtotal * 100) / 100,
-      platform_fee: platformFee,
-      total_amount: Math.round(totalAmount * 100) / 100,
-      worker_payout: Math.round(workerPayout * 100) / 100,
-    };
-  });
+  .transform((data) => ({
+    ...data,
+    unit_price: 0,
+    subtotal: 0,
+    platform_fee: 0,
+    total_amount: 0,
+    worker_payout: 0,
+  }));
 
 /**
  * Schema for creating a booking.

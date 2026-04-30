@@ -39,13 +39,13 @@ export interface CreateEscrowInput {
   platform_fee: number;
   worker_payout: number;
   currency: string;
-  hold_transaction_id: Types.ObjectId;
+  hold_transaction_id: Types.ObjectId | null;
 }
 
 export interface ReleaseEscrowInput {
   escrow_id: Types.ObjectId;
   release_reason: EscrowReleaseReason;
-  release_transaction_id: Types.ObjectId;
+  release_transaction_id: Types.ObjectId | null;
 }
 
 export interface RefundEscrowInput {
@@ -53,7 +53,7 @@ export interface RefundEscrowInput {
   refund_reason: EscrowRefundReason;
   refund_amount: number;
   penalty_amount: number;
-  refund_transaction_id: Types.ObjectId;
+  refund_transaction_id: Types.ObjectId | null;
 }
 
 export interface EscrowSummary {

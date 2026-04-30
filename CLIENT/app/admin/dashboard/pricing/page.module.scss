@@ -1,0 +1,46 @@
+.container {
+  width: 100%;
+}
+
+.headerRow {
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.loadingWrap {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.featureRow {
+  width: 100%;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.featureTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.limitRow {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footerNote {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}

@@ -3,14 +3,12 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { escrowRepository } from "../../repositories/escrow/escrow.repository";
-import { escrowService } from "../escrow/escrow.service";
 import {
   CreateBookingInput,
   BookingQuery,
   IBookingDocument,
 } from "../../types/booking/booking.types";
 import {
-  BookingStatus,
   BookingPaymentStatus,
 } from "../../constants/booking";
 import { AppError } from "../../utils/AppError";
@@ -81,12 +79,15 @@ export class BookingCrudService extends BookingBaseService {
       };
       const booking = await bookingRepository.create(bookingData, session);
 
-      const holdTransactionId = await walletService.holdBalanceForBooking(
-        clientId,
-        input.pricing.total_amount,
-        booking._id.toString(),
-        `Hold balance for booking ${booking._id.toString()}`
-      );
+      let holdTransactionId: string | null = null;
+      if (input.pricing.total_amount > 0) {
+        holdTransactionId = await walletService.holdBalanceForBooking(
+          clientId,
+          input.pricing.total_amount,
+          booking._id.toString(),
+          `Hold balance for booking ${booking._id.toString()}`
+        );
+      }
 
       const escrowData: CreateEscrowInput = {
         booking_id: booking._id,
@@ -96,7 +97,9 @@ export class BookingCrudService extends BookingBaseService {
         platform_fee: input.pricing.platform_fee,
         worker_payout: input.pricing.worker_payout,
         currency: input.pricing.currency,
-        hold_transaction_id: new Types.ObjectId(holdTransactionId),
+        hold_transaction_id: holdTransactionId
+          ? new Types.ObjectId(holdTransactionId)
+          : null,
       };
       const escrow = await escrowRepository.create(escrowData, session);
 
@@ -104,7 +107,7 @@ export class BookingCrudService extends BookingBaseService {
         booking._id.toString(),
         {
           escrow_id: escrow._id,
-          transaction_id: holdTransactionId,
+          transaction_id: holdTransactionId ?? undefined,
           payment_status: BookingPaymentStatus.PAID,
         },
         session

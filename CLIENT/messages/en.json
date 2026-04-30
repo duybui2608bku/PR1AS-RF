@@ -281,6 +281,16 @@
         "message": "Are you sure you want to change the status of user {email} from {currentStatus} to {newStatus}?",
         "success": "User status updated successfully"
       }
+    },
+    "pricing": {
+      "title": "Pricing Feature Management",
+      "active": "Package active",
+      "maxRecipients": "Max recipients",
+      "jobLimit": "Job limit",
+      "boostLimit": "Boost per month",
+      "adsHint": "Enabled means this package still shows ads",
+      "autoSaveHint": "Changes are saved automatically",
+      "updateSuccess": "Pricing package updated successfully"
     }
   },
   "dashboard": {
@@ -289,6 +299,8 @@
     "menu": {
       "dashboard": "Dashboard",
       "users": "Users",
+      "transactions": "Transactions",
+      "pricing": "Pricing",
       "settings": "Settings"
     },
     "header": {
@@ -1175,7 +1187,8 @@
       "success": "Booking created successfully",
       "invalidDuration": "Invalid duration for selected unit",
       "minAdvance": "Must book at least {hours} hours in advance",
-      "maxAdvance": "Cannot book more than {days} days in advance"
+      "maxAdvance": "Cannot book more than {days} days in advance",
+      "noPlatformCharge": "No payment is collected through the platform for this booking."
     },
     "list": {
       "title": "My Bookings",
@@ -1392,7 +1405,11 @@
       "boostProfileGold": "1x per month",
       "boostProfileDiamond": "3x per month",
       "ads": "Advertisements",
-      "adsDiamond": "Ad-free"
+      "adsDiamond": "Ad-free",
+      "upToPeople": "Up to {{count}} people",
+      "upToJobs": "Up to {{count}} jobs",
+      "boostPerMonth": "{{count}}x per month",
+      "unlimited": "Unlimited"
     },
     "faq": {
       "title": "Have questions?",

@@ -281,6 +281,16 @@
         "message": "Bạn có chắc chắn muốn thay đổi trạng thái của người dùng {email} từ {currentStatus} sang {newStatus}?",
         "success": "Cập nhật trạng thái người dùng thành công"
       }
+    },
+    "pricing": {
+      "title": "Quản lý tính năng gói giá",
+      "active": "Gói đang hoạt động",
+      "maxRecipients": "Số người nhận tối đa",
+      "jobLimit": "Giới hạn job",
+      "boostLimit": "Số lần boost mỗi tháng",
+      "adsHint": "Bật nghĩa là gói vẫn hiển thị quảng cáo",
+      "autoSaveHint": "Thay đổi được lưu tự động",
+      "updateSuccess": "Cập nhật gói giá thành công"
     }
   },
   "dashboard": {
@@ -289,6 +299,7 @@
     "menu": {
       "dashboard": "Bảng điều khiển",
       "users": "Người dùng",
+      "pricing": "Gói giá",
       "settings": "Cài đặt",
       "transactions": "Giao dịch"
     },
@@ -1186,7 +1197,8 @@
       "success": "Đặt lịch thành công",
       "invalidDuration": "Thời lượng không hợp lệ cho đơn vị đã chọn",
       "minAdvance": "Phải đặt trước ít nhất {hours} giờ",
-      "maxAdvance": "Không thể đặt quá {days} ngày"
+      "maxAdvance": "Không thể đặt quá {days} ngày",
+      "noPlatformCharge": "Hệ thống không thu tiền qua nền tảng khi đặt lịch; bạn không cần số dư ví để đặt."
     },
     "list": {
       "title": "Đặt lịch của tôi",
@@ -1403,7 +1415,11 @@
       "boostProfileGold": "1 lần/tháng",
       "boostProfileDiamond": "3 lần/tháng",
       "ads": "Quảng cáo",
-      "adsDiamond": "Tắt quảng cáo"
+      "adsDiamond": "Tắt quảng cáo",
+      "upToPeople": "Tối đa {{count}} người",
+      "upToJobs": "Tối đa {{count}} job",
+      "boostPerMonth": "{{count}} lần/tháng",
+      "unlimited": "Không giới hạn"
     },
     "faq": {
       "title": "Có câu hỏi?",

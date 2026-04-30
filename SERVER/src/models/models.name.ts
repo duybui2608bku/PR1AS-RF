@@ -17,3 +17,4 @@ export const modelsName = {
   NOTIFICATION_DELIVERY_LOG: "notification_delivery_logs",
   LOCATION: "locations",
 };
+
