@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Form,
@@ -36,9 +36,12 @@ function VerifyEmailContent() {
   const resendMutation = useResendVerification();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
-  const [status, setStatus] = useState<VerifyStatus>("loading");
+  const token = searchParams?.get("token") ?? "";
+  const [status, setStatus] = useState<VerifyStatus>(
+    token ? "loading" : "no-token"
+  );
   const [resendForm] = Form.useForm();
-  const [hasVerified, setHasVerified] = useState(false);
+  const hasVerifiedRef = useRef(false);
 
   const doVerify = useCallback(
     async (token: string) => {
@@ -58,16 +61,12 @@ function VerifyEmailContent() {
   );
 
   useEffect(() => {
-    if (hasVerified) return;
-
-    const token = searchParams?.get("token");
-    if (token) {
-      setHasVerified(true);
-      doVerify(token);
-    } else {
-      setStatus("no-token");
+    if (!token || hasVerifiedRef.current) {
+      return;
     }
-  }, [searchParams, doVerify, hasVerified]);
+    hasVerifiedRef.current = true;
+    queueMicrotask(() => doVerify(token));
+  }, [token, doVerify]);
 
   useEffect(() => {
     const email = searchParams?.get("email");

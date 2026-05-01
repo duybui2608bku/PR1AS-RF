@@ -5,12 +5,12 @@ import type { Locale } from "@/i18n/config";
 
 const DEFAULT_LOCALE: Locale = "en";
 
-let messagesCache: Record<Locale, Record<string, any>> = {} as Record<
-  Locale,
-  Record<string, any>
->;
+type MessageNode = string | { [key: string]: MessageNode };
+type MessageMap = Record<string, MessageNode>;
 
-async function loadMessages(locale: Locale): Promise<Record<string, any>> {
+const messagesCache = {} as Record<Locale, MessageMap>;
+
+async function loadMessages(locale: Locale): Promise<MessageMap> {
   if (messagesCache[locale]) {
     return messagesCache[locale];
   }
@@ -19,7 +19,7 @@ async function loadMessages(locale: Locale): Promise<Record<string, any>> {
     const messages = await import(`@/messages/${locale}.json`);
     messagesCache[locale] = messages.default;
     return messages.default;
-  } catch (error) {
+  } catch (_error) {
     if (locale !== DEFAULT_LOCALE) {
       return loadMessages(DEFAULT_LOCALE);
     }
@@ -35,7 +35,7 @@ export async function getTranslation(
   const messages = await loadMessages(currentLocale);
 
   const keys = key.split(".");
-  let value: any = messages;
+  let value: MessageNode = messages;
 
   for (const k of keys) {
     if (value && typeof value === "object" && k in value) {
@@ -58,7 +58,7 @@ export function getTranslationSync(key: string, locale?: Locale): string {
   }
 
   const keys = key.split(".");
-  let value: any = messages;
+  let value: MessageNode = messages;
 
   for (const k of keys) {
     if (value && typeof value === "object" && k in value) {

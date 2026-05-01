@@ -79,7 +79,10 @@ export default function WorkerDetailPage() {
     }
   );
 
-  const workerServices = workerData?.services || [];
+  const workerServices = useMemo(
+    () => workerData?.services || [],
+    [workerData?.services]
+  );
   const isLoadingServices = isLoading;
 
   const selectedWorkerService = useMemo(() => {
@@ -417,7 +420,7 @@ export default function WorkerDetailPage() {
                                 title={t("worker.detail.quote")}
                               >
                                 <Paragraph className={styles.quoteText}>
-                                  "{worker_profile.quote}"
+                                  &quot;{worker_profile.quote}&quot;
                                 </Paragraph>
                               </Card>
                             </Col>

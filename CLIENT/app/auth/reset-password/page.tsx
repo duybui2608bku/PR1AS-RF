@@ -32,7 +32,7 @@ function ResetPasswordForm() {
   const [form] = Form.useForm();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
-  const [token, setToken] = useState<string>("");
+  const token = searchParams?.get("token") ?? "";
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
@@ -42,18 +42,16 @@ function ResetPasswordForm() {
   }, [isAuthenticated, router]);
 
   useEffect(() => {
-    const tokenParam = searchParams?.get("token");
-    if (tokenParam) {
-      setToken(tokenParam);
-      form.setFieldsValue({ token: tokenParam });
+    if (token) {
+      form.setFieldsValue({ token });
     }
-  }, [searchParams, form]);
+  }, [token, form]);
 
   const handleResetPassword = async (
     values: ResetPasswordRequest & { confirmPassword?: string }
   ) => {
     try {
-      const { confirmPassword, ...resetData } = values;
+      const { confirmPassword: _confirmPassword, ...resetData } = values;
       const response = await resetPasswordMutation.mutateAsync(resetData);
 
       if (response.success) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Card,
   Typography,
@@ -81,7 +81,10 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
       }
     );
 
-  const allServices = allServicesResponse?.services || [];
+  const allServices = useMemo(
+    () => allServicesResponse?.services || [],
+    [allServicesResponse?.services]
+  );
 
   const {
     data: servicesResponse,
@@ -97,7 +100,10 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     }
   );
 
-  const services = servicesResponse?.services || [];
+  const services = useMemo(
+    () => servicesResponse?.services || [],
+    [servicesResponse?.services]
+  );
 
   const { data: existingWorkerServicesResponse } = useApiQueryData<{
     services: Array<{
@@ -117,7 +123,10 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
     refetchOnMount: true,
   });
 
-  const existingWorkerServices = existingWorkerServicesResponse?.services || [];
+  const existingWorkerServices = useMemo(
+    () => existingWorkerServicesResponse?.services || [],
+    [existingWorkerServicesResponse?.services]
+  );
 
   useEffect(() => {
     if (selectedCategory) {
@@ -154,10 +163,12 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
         }
       });
 
-      if (newSelectedServices.size > 0) {
-        setSelectedServices(newSelectedServices);
-      }
-      setHasLoadedExistingServices(true);
+      queueMicrotask(() => {
+        if (newSelectedServices.size > 0) {
+          setSelectedServices(newSelectedServices);
+        }
+        setHasLoadedExistingServices(true);
+      });
     }
   }, [existingWorkerServices, allServices, hasLoadedExistingServices]);
 

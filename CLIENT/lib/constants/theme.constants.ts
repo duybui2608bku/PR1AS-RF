@@ -7,26 +7,26 @@ export enum ThemeStorageKey {
   THEME = "theme-storage",
 }
 
-export enum ThemeColor {
-  PRIMARY = "#711111",
-  DARK_BG_PRIMARY = "#000000",
-  DARK_BG_SECONDARY = "#141414",
-  LIGHT_BG_PRIMARY = "#ffffff",
-  LIGHT_BG_SECONDARY = "#f5f5f5",
-  DARK_TEXT_PRIMARY = "#ffffff",
-  DARK_TEXT_SECONDARY = "#b3b3b3",
-  LIGHT_TEXT_PRIMARY = "#0f172a",
-  LIGHT_TEXT_SECONDARY = "#475569",
-  TEXT_ON_PRIMARY = "#ffffff",
-}
+export const ThemeColor = {
+  PRIMARY: "#711111",
+  DARK_BG_PRIMARY: "#000000",
+  DARK_BG_SECONDARY: "#141414",
+  LIGHT_BG_PRIMARY: "#ffffff",
+  LIGHT_BG_SECONDARY: "#f5f5f5",
+  DARK_TEXT_PRIMARY: "#ffffff",
+  DARK_TEXT_SECONDARY: "#b3b3b3",
+  LIGHT_TEXT_PRIMARY: "#0f172a",
+  LIGHT_TEXT_SECONDARY: "#475569",
+  TEXT_ON_PRIMARY: "#ffffff",
+} as const;
 
-export enum ThemeOpacity {
-  DARK_TEXT_PRIMARY = 0.85,
-  DARK_BORDER = 0.1,
-  LIGHT_BORDER = 0.06,
-  DARK_FILL = 0.06,
-  LIGHT_FILL = 0.04,
-}
+export const ThemeOpacity = {
+  DARK_TEXT_PRIMARY: 0.85,
+  DARK_BORDER: 0.1,
+  LIGHT_BORDER: 0.06,
+  DARK_FILL: 0.06,
+  LIGHT_FILL: 0.04,
+} as const;
 
 export enum ThemeTransition {
   DURATION = 200,

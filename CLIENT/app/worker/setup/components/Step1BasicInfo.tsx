@@ -114,10 +114,18 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   }>(["worker-profile"], "/auth/me", {
     enabled: !initialData && typeof window !== "undefined",
   });
+  void isLoading;
+
+  const mergeStepData = (data: Partial<WorkerProfileUpdateInput>) => {
+    setStepData((current) => ({
+      ...current,
+      ...data,
+    }));
+  };
 
   useEffect(() => {
-    if (profileData?.user?.worker_profile) {
-      const profile = profileData.user.worker_profile;
+    const profile = profileData?.user?.worker_profile || initialData;
+    if (profile) {
       form.setFieldsValue({
         date_of_birth: profile.date_of_birth
           ? dayjs(profile.date_of_birth)
@@ -132,62 +140,68 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         quote: profile.quote,
         introduction: profile.introduction,
       });
-      setHobbies(profile.hobbies || []);
-      setStepData({
-        ...stepData,
-        hobbies: profile.hobbies || [],
-      });
-      setFileList(
+      const nextHobbies = profile.hobbies || [];
+      const nextFiles =
         profile.gallery_urls?.map((url, index) => ({
           uid: `-${index}`,
           name: `image-${index}.jpg`,
-          status: "done",
+          status: "done" as const,
           url,
-        })) || []
-      );
-      if (profile.coords?.latitude && profile.coords?.longitude) {
-        setLocation({
-          lat: profile.coords.latitude,
-          lng: profile.coords.longitude,
-        });
-        setStepData({
-          ...stepData,
-          coords: {
-            latitude: profile.coords.latitude,
-            longitude: profile.coords.longitude,
-          },
-        });
-      }
-    } else if (initialData) {
-      form.setFieldsValue({
-        date_of_birth: initialData.date_of_birth
-          ? dayjs(initialData.date_of_birth)
-          : undefined,
-        gender: initialData.gender,
-        height_cm: initialData.height_cm,
-        weight_kg: initialData.weight_kg,
-        experience: initialData.experience,
-        title: initialData.title,
-        star_sign: initialData.star_sign,
-        lifestyle: initialData.lifestyle,
-        quote: initialData.quote,
-        introduction: initialData.introduction,
+        })) || [];
+      const nextLocation =
+        profile.coords?.latitude && profile.coords?.longitude
+          ? {
+              lat: profile.coords.latitude,
+              lng: profile.coords.longitude,
+            }
+          : null;
+
+      queueMicrotask(() => {
+        setHobbies(nextHobbies);
+        setFileList(nextFiles);
+        if (nextLocation) {
+          setLocation(nextLocation);
+        }
+        setStepData((current) => ({
+          ...current,
+          date_of_birth: profile.date_of_birth,
+          gender: profile.gender,
+          height_cm: profile.height_cm,
+          weight_kg: profile.weight_kg,
+          experience: profile.experience,
+          title: profile.title,
+          star_sign: profile.star_sign,
+          lifestyle: profile.lifestyle,
+          quote: profile.quote,
+          introduction: profile.introduction,
+          hobbies: nextHobbies,
+          gallery_urls: profile.gallery_urls || [],
+          ...(nextLocation && {
+            coords: {
+              latitude: nextLocation.lat,
+              longitude: nextLocation.lng,
+            },
+          }),
+        }));
       });
-      setHobbies(initialData.hobbies || []);
-      setStepData({
-        ...stepData,
-        hobbies: initialData.hobbies || [],
-      });
-      setFileList(
-        initialData.gallery_urls?.map((url, index) => ({
-          uid: `-${index}`,
-          name: `image-${index}.jpg`,
-          status: "done",
-          url,
-        })) || []
-      );
     }
   }, [profileData, initialData, form]);
+
+  const updateHobbies = (nextHobbies: string[]) => {
+    setHobbies(nextHobbies);
+    mergeStepData({
+      hobbies: nextHobbies,
+    });
+  };
+
+  const updateGalleryUrls = (files: UploadFile[]) => {
+    mergeStepData({
+      gallery_urls: files
+        .filter((file) => file.status === "done" && file.url)
+        .map((file) => file.url || "")
+        .filter(Boolean),
+    });
+  };
 
   const getLocation = () => {
     if (!navigator.geolocation) {
@@ -202,8 +216,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
           lng: position.coords.longitude,
         };
         setLocation(newLocation);
-        setStepData({
-          ...stepData,
+        mergeStepData({
           coords: {
             latitude: newLocation.lat,
             longitude: newLocation.lng,
@@ -222,22 +235,14 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   const handleAddHobby = () => {
     if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) {
       const newHobbies = [...hobbies, hobbyInput.trim()];
-      setHobbies(newHobbies);
-      setStepData({
-        ...stepData,
-        hobbies: newHobbies,
-      });
+      updateHobbies(newHobbies);
       setHobbyInput("");
     }
   };
 
   const handleRemoveHobby = (hobby: string) => {
     const newHobbies = hobbies.filter((h) => h !== hobby);
-    setHobbies(newHobbies);
-    setStepData({
-      ...stepData,
-      hobbies: newHobbies,
-    });
+    updateHobbies(newHobbies);
   };
 
   const handleUploadChange: UploadProps["onChange"] = async (info) => {
@@ -285,13 +290,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     const MAX_GALLERY_IMAGES = 10;
     newFileList = newFileList.slice(-MAX_GALLERY_IMAGES);
     setFileList(newFileList);
-    setStepData({
-      ...stepData,
-      gallery_urls: newFileList
-        .filter((file) => file.status === "done" && file.url)
-        .map((file) => file.url || "")
-        .filter(Boolean),
-    });
+    updateGalleryUrls(newFileList);
   };
 
   const beforeUpload = (file: File) => {
@@ -325,8 +324,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         return;
       });
       const values = form.getFieldsValue(["date_of_birth", "gender"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         date_of_birth: values.date_of_birth
           ? values.date_of_birth.format("YYYY-MM-DD")
           : undefined,
@@ -334,41 +332,35 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       });
     } else if (currentStepType === "height-weight") {
       const values = form.getFieldsValue(["height_cm", "weight_kg"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         height_cm: values.height_cm,
         weight_kg: values.weight_kg,
       });
     } else if (currentStepType === "experience-title") {
       const values = form.getFieldsValue(["experience", "title"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         experience: values.experience,
         title: values.title,
       });
     } else if (currentStepType === "star-sign") {
       const values = form.getFieldsValue(["star_sign"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         star_sign: values.star_sign,
       });
     } else if (currentStepType === "lifestyle") {
       const values = form.getFieldsValue(["lifestyle"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         lifestyle: values.lifestyle,
       });
     } else if (currentStepType === "hobbies") {
     } else if (currentStepType === "introduction") {
       const values = form.getFieldsValue(["introduction"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         introduction: values.introduction,
       });
     } else if (currentStepType === "quote") {
       const values = form.getFieldsValue(["quote"]);
-      setStepData({
-        ...stepData,
+      mergeStepData({
         quote: values.quote,
       });
     } else if (currentStepType === "gallery") {

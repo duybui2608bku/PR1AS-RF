@@ -42,17 +42,17 @@ export enum WorkerActionType {
   CANCEL = "cancel",
 }
 
-export enum BookingTableColumnWidth {
-  SERVICE_CODE = 150,
-  WORKER = 150,
-  CLIENT = 150,
-  SCHEDULE = 200,
-  AMOUNT = 150,
-  STATUS = 120,
-  PAYMENT_STATUS = 200,
-  CREATED_AT = 180,
-  ACTIONS = 200,
-}
+export const BookingTableColumnWidth = {
+  SERVICE_CODE: 150,
+  WORKER: 150,
+  CLIENT: 150,
+  SCHEDULE: 200,
+  AMOUNT: 150,
+  STATUS: 120,
+  PAYMENT_STATUS: 200,
+  CREATED_AT: 180,
+  ACTIONS: 200,
+} as const;
 
 export enum BookingTableColumnKey {
   SERVICE_CODE = "service_code",

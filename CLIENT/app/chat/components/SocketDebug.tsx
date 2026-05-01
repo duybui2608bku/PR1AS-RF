@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, Button, Typography, Space, Tag, Divider } from "antd";
 import { ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { chatSocket } from "@/lib/socket";
@@ -9,27 +9,23 @@ import styles from "./SocketDebug.module.scss";
 
 const { Text } = Typography;
 
+const getSocketStatus = () => ({
+  isConnected: chatSocket.isConnected(),
+  socketId: chatSocket.getSocketId(),
+  tokenExists:
+    typeof window !== "undefined" && Boolean(localStorage.getItem("token")),
+});
+
 export const SocketDebug = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [socketId, setSocketId] = useState<string | null>(null);
-  const [tokenExists, setTokenExists] = useState(false);
+  const [socketStatus, setSocketStatus] = useState(getSocketStatus);
   const [lastEvent, setLastEvent] = useState<string>("");
   const [events, setEvents] = useState<string[]>([]);
 
-  const checkSocketStatus = () => {
-    const connected = chatSocket.isConnected();
-    setIsConnected(connected);
-    
-    const token = localStorage.getItem("token");
-    setTokenExists(!!token);
-    
-    // Get socket ID using the new method
-    const id = chatSocket.getSocketId();
-    setSocketId(id);
-  };
+  const checkSocketStatus = useCallback(() => {
+    setSocketStatus(getSocketStatus());
+  }, []);
 
   useEffect(() => {
-    checkSocketStatus();
     const interval = setInterval(checkSocketStatus, 2000);
     
     // Listen to socket events
@@ -63,7 +59,7 @@ export const SocketDebug = () => {
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [checkSocketStatus]);
 
   const handleReconnect = () => {
     reconnectSocket();
@@ -85,7 +81,7 @@ export const SocketDebug = () => {
       <Space orientation="vertical" className={styles.spaceFull} size="small">
         <div>
           <Text strong>Connection Status: </Text>
-          {isConnected ? (
+          {socketStatus.isConnected ? (
             <Tag color="green" icon={<CheckCircleOutlined />}>
               Connected
             </Tag>
@@ -98,12 +94,12 @@ export const SocketDebug = () => {
 
         <div>
           <Text strong>Socket ID: </Text>
-          <Text code>{socketId || "N/A"}</Text>
+          <Text code>{socketStatus.socketId || "N/A"}</Text>
         </div>
 
         <div>
           <Text strong>Token: </Text>
-          {tokenExists ? (
+          {socketStatus.tokenExists ? (
             <Tag color="green">Exists</Tag>
           ) : (
             <Tag color="red">Missing</Tag>

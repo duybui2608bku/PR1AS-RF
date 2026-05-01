@@ -2,15 +2,16 @@
 
 import React, { useState } from "react";
 import { Typography, message, Spin, Card } from "antd";
-import { UserOutlined, ShoppingOutlined } from "@ant-design/icons";
 import { Step1BasicInfo } from "./components/Step1BasicInfo";
 import { Step2Services } from "./components/Step2Services";
 import { StepLayout } from "./components/StepLayout";
 import { useApiMutation } from "@/lib/hooks/use-api";
 import type {
+  WorkerProfile,
   WorkerProfileUpdateInput,
   WorkerServiceInput,
 } from "@/lib/types/worker";
+import { Gender } from "@/lib/types/worker";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
@@ -19,6 +20,7 @@ import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 import styles from "@/app/worker/setup/page.module.scss";
 
 const { Paragraph } = Typography;
+const REDIRECT_DELAY_MS = 1500;
 
 export type StepStatus = "wait" | "process" | "finish" | "error";
 
@@ -35,10 +37,16 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
   const [step1Data, setStep1Data] = useState<WorkerProfileUpdateInput | null>(
     null
   );
-  const [stepStatus, setStepStatus] = useState<StepStatus[]>([
-    "process",
-    "wait",
-  ]);
+  const [, setStepStatus] = useState<StepStatus[]>(["process", "wait"]);
+
+  const step1ProfileData: WorkerProfile | null = step1Data
+    ? {
+        ...step1Data,
+        gender: step1Data.gender ?? Gender.MALE,
+        hobbies: step1Data.hobbies || [],
+        gallery_urls: step1Data.gallery_urls || [],
+      }
+    : null;
 
   const profileMutation = useApiMutation("/auth/profile", "PATCH", {
     onSuccess: () => {
@@ -46,15 +54,13 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
       setStepStatus(["finish", "process"]);
       setCurrentStep(1);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       message.error(
         error?.response?.data?.error?.message ||
           t("worker.setup.error.saveProfile")
       );
     },
   });
-
-  const REDIRECT_DELAY_MS = 1500;
 
   const servicesMutation = useApiMutation("/worker/services", "POST", {
     onSuccess: () => {
@@ -69,7 +75,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
         router.push("/");
       }, REDIRECT_DELAY_MS);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       message.error(
         error?.response?.data?.error?.message ||
           t("worker.setup.error.saveServices")
@@ -99,33 +105,13 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
     setStepStatus(["process", "wait"]);
   };
 
-  const steps = [
-    {
-      title: t("worker.setup.step1.title"),
-      icon: <UserOutlined />,
-    },
-    {
-      title: t("worker.setup.step2.title"),
-      icon: <ShoppingOutlined />,
-    },
-  ];
-
   if (currentStep === 0) {
     return (
       <StepLayout stepTitle={t("worker.setup.step1.title")}>
         <Step1BasicInfo
           onNext={handleStep1Next}
           isPending={profileMutation.isPending}
-          initialData={
-            step1Data
-              ? {
-                  ...step1Data,
-                  gender: step1Data.gender as any,
-                  hobbies: step1Data.hobbies || [],
-                  gallery_urls: step1Data.gallery_urls || [],
-                }
-              : null
-          }
+          initialData={step1ProfileData}
         />
         {profileMutation.isPending && (
           <div className={styles.overlay}>

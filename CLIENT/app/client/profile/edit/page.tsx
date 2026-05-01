@@ -39,9 +39,7 @@ function EditProfileContent() {
   const { user, setUser } = useAuthStore();
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(
-    user?.avatar || null
-  );
+  const [avatarOverride, setAvatarOverride] = useState<string | null>();
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["user-profile"],
@@ -49,17 +47,21 @@ function EditProfileContent() {
     retry: false,
   });
 
+  const avatarUrl = avatarOverride ?? profile?.avatar ?? user?.avatar ?? null;
+
   const updateProfileMutation = useStandardizedMutation(
     (data: UpdateBasicProfileInput) =>
       userProfileApi.updateBasicProfile(data),
     {
       onSuccess: (updatedUser) => {
         if (user) {
+          const currentPhone =
+            typeof user.phone === "string" ? user.phone : undefined;
           setUser({
             ...user,
             avatar: updatedUser.avatar || user.avatar,
             name: updatedUser.full_name || user.name,
-            phone: updatedUser.phone || (user as any).phone,
+            phone: updatedUser.phone || currentPhone,
           });
         }
 
@@ -76,7 +78,6 @@ function EditProfileContent() {
         full_name: profile.full_name || "",
         phone: profile.phone || "",
       });
-      setAvatarUrl(profile.avatar || null);
     }
   }, [profile, form]);
 
@@ -115,13 +116,13 @@ function EditProfileContent() {
       }
 
       await updateProfileMutation.mutateAsync(updateData);
-    } catch (error) {
+    } catch (_error) {
       message.error(t("profile.edit.error"));
     }
   };
 
   const handleAvatarChange = (url: string | null) => {
-    setAvatarUrl(url);
+    setAvatarOverride(url);
   };
 
   return (

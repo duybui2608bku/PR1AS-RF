@@ -27,15 +27,15 @@ export enum BorderRadius {
   CIRCLE = 50,
 }
 
-export enum Spacing {
-  XS = 4,
-  SM = 8,
-  MD = 12,
-  LG = 16,
-  XL = 24,
-  XXL = 32,
-  XXXL = 48,
-}
+export const Spacing = {
+  XS: 4,
+  SM: 8,
+  MD: 12,
+  LG: 16,
+  XL: 24,
+  XXL: 32,
+  XXXL: 48,
+} as const;
 
 export enum FontSize {
   XS = 12,
@@ -87,13 +87,13 @@ export enum ColSpan {
   HALF = 12,
 }
 
-export enum GridColSpan {
-  XS = 24,
-  SM = 12,
-  MD = 12,
-  LG = 8,
-  XL = 6,
-}
+export const GridColSpan = {
+  XS: 24,
+  SM: 12,
+  MD: 12,
+  LG: 8,
+  XL: 6,
+} as const;
 
 export enum ContentMaxWidth {
   DEFAULT = 1200,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Spin, Result, Button } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
@@ -10,28 +10,42 @@ import { AuthGuard } from "@/lib/components/auth-guard";
 import { AppRoute } from "@/lib/constants/routes";
 import styles from "@/app/wallet/deposit/callback/page.module.scss";
 
+type DepositCallbackError = {
+  message?: string;
+  response?: {
+    status?: number;
+    data?: {
+      error?: { message?: string };
+      message?: string;
+    };
+  };
+};
+
 function CallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
+  const params = useMemo(() => {
+    const entries: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      entries[key] = value;
+    });
+    return entries;
+  }, [searchParams]);
+  const transactionKey = params.vnp_TxnRef || "";
+  const processedKey = transactionKey ? `processed_${transactionKey}` : "";
+  const hasProcessedTransaction =
+    typeof window !== "undefined" &&
+    Boolean(processedKey && sessionStorage.getItem(processedKey));
+  const [status, setStatus] = useState<"loading" | "success" | "error">(() =>
+    hasProcessedTransaction ? "success" : "loading"
   );
   const [errorMessage, setErrorMessage] = useState<string>("");
   const hasCalledRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const params: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-
-    const transactionKey = params.vnp_TxnRef || "";
-
-    const processedKey = `processed_${transactionKey}`;
-    if (transactionKey && sessionStorage.getItem(processedKey)) {
-      setStatus("success");
+    if (hasProcessedTransaction) {
       return;
     }
 
@@ -69,8 +83,9 @@ function CallbackContent() {
         }
 
         setStatus("success");
-      } catch (error: any) {
-        if (error?.response?.status === 404) {
+      } catch (error: unknown) {
+        const callbackError = error as DepositCallbackError;
+        if (callbackError.response?.status === 404) {
           if (params.vnp_ResponseCode === "00") {
             if (transactionKey) {
               sessionStorage.setItem(processedKey, "true");
@@ -82,9 +97,9 @@ function CallbackContent() {
 
         setStatus("error");
         const message =
-          error?.response?.data?.error?.message ||
-          error?.response?.data?.message ||
-          error?.message ||
+          callbackError.response?.data?.error?.message ||
+          callbackError.response?.data?.message ||
+          callbackError.message ||
           t("wallet.deposit.callback.error", {
             defaultValue: "Payment verification failed",
           });
@@ -99,7 +114,7 @@ function CallbackContent() {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [searchParams, t]);
+  }, [hasProcessedTransaction, params, processedKey, t, transactionKey]);
 
   const handleBackToDeposit = () => {
     router.push(AppRoute.CLIENT_WALLET_DEPOSIT);

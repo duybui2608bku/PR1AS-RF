@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ReactNode, Fragment } from "react";
+import { useEffect, useSyncExternalStore, ReactNode, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { PageSkeleton } from "./skeletons";
@@ -12,6 +12,9 @@ interface AuthGuardProps {
 }
 
 const DEFAULT_REDIRECT = "/auth/login";
+const subscribeHydration = () => () => {};
+const getHydratedSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export function AuthGuard({
   children,
@@ -20,11 +23,11 @@ export function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  const isHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getHydratedSnapshot,
+    getServerSnapshot
+  );
 
   useEffect(() => {
     if (isHydrated && requireAuth && !isAuthenticated) {

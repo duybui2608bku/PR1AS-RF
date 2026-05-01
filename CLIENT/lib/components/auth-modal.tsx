@@ -37,12 +37,6 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
     }
   }, [isAuthenticated, user, open, onClose]);
 
-  useEffect(() => {
-    if (open) {
-      setActiveTab(defaultTab);
-    }
-  }, [open, defaultTab]);
-
   const handleTabChange = (key: string) => {
     setActiveTab(key);
   };
@@ -73,6 +67,11 @@ export function AuthModal({ open, onClose, defaultTab = "login" }: AuthModalProp
     <Modal
       open={open}
       onCancel={handleClose}
+      afterOpenChange={(isOpen) => {
+        if (isOpen) {
+          setActiveTab(defaultTab);
+        }
+      }}
       footer={null}
       width={activeTab === "register" ? 640 : 480}
       centered
