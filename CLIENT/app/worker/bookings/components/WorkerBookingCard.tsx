@@ -13,19 +13,13 @@ import { getWorkerBookingActionNodes } from "@/app/worker/bookings/components/Wo
 import { Spacing } from "@/lib/constants/ui.constants";
 import type { TFunction } from "i18next";
 import styles from "@/app/worker/bookings/components/WorkerBookingCard.module.scss";
-import {
-  getBookingStatusTagColor,
-  getPaymentStatusTagColor,
-} from "@/lib/constants/booking";
+import { getBookingStatusTagColor } from "@/lib/constants/booking";
 
 const { Text } = Typography;
 
 enum ColSpan {
   FULL = 24,
-  HALF = 12,
 }
-
-type FormatCurrencyFunction = (amount: number) => string;
 
 interface WorkerBookingCardProps {
   booking: Booking;
@@ -35,7 +29,6 @@ interface WorkerBookingCardProps {
     workerResponse?: string
   ) => void;
   onOpenComplaintChat?: (bookingId: string) => void;
-  formatCurrency: FormatCurrencyFunction;
   serviceMap: Map<string, Service>;
   locale: string;
   t: TFunction;
@@ -45,7 +38,6 @@ export function WorkerBookingCard({
   booking,
   onAction,
   onOpenComplaintChat,
-  formatCurrency,
   serviceMap,
   locale,
   t,
@@ -78,12 +70,6 @@ export function WorkerBookingCard({
               </Tag>
             </Space>
             <Space>
-              <Text>{t("booking.table.paymentStatus")}:</Text>
-              <Tag color={getPaymentStatusTagColor(booking.payment_status)}>
-                {t(`booking.paymentStatus.${booking.payment_status}`)}
-              </Tag>
-            </Space>
-            <Space>
               <Text>{t("booking.table.createdAt")}:</Text>
               <Text type="secondary" className={styles.secondaryText}>
                 {formatDateTime(booking.created_at)}
@@ -109,17 +95,6 @@ export function WorkerBookingCard({
           <Text type="secondary" className={styles.secondaryText}>
             {t("booking.table.duration")}: {booking.schedule.duration_hours}{" "}
             {t("booking.pricing.hourly")}
-          </Text>
-        </Col>
-        <Col xs={ColSpan.FULL} sm={ColSpan.HALF}>
-          <Text strong className={styles.primaryAmount}>
-            {formatCurrency(booking.pricing.total_amount)}
-          </Text>
-        </Col>
-        <Col xs={ColSpan.FULL} sm={ColSpan.HALF}>
-          <Text type="secondary" className={styles.payoutText}>
-            {t("booking.worker.payout")}:{" "}
-            {formatCurrency(booking.pricing.worker_payout)}
           </Text>
         </Col>
       </Row>

@@ -943,6 +943,8 @@
     "noComplaintGroups": "불만 그룹이 없습니다",
     "deleteMessage": "메시지 삭제",
     "deleteMessageConfirm": "이 메시지를 삭제하시겠습니까?",
+    "bookingConfirmationRequired": "메시지를 보내려면 예약이 확인되어야 합니다.",
+    "bookingConfirmationRequiredAction": "예약을 생성하고 워커의 확인을 기다린 후 채팅을 이용해 주세요.",
     "errors": {
       "noConversation": "대화가 선택되지 않았습니다",
       "sendFailed": "메시지 전송 실패",

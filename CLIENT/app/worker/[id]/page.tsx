@@ -10,6 +10,7 @@ import {
   Space,
   Button,
   Card,
+  Tooltip,
   message,
 } from "antd";
 import {
@@ -21,6 +22,7 @@ import {
   ArrowsAltOutlined,
   DashboardOutlined,
   StarOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -93,6 +95,8 @@ export default function WorkerDetailPage() {
   const isViewingOwnProfile = useMemo(() => {
     return currentUser?.id === workerData?.user?.id;
   }, [currentUser?.id, workerData?.user?.id]);
+  const isStandardPlan = currentUser?.pricing_plan_code === "standard";
+  const chatBlockedMessage = t("chat.bookingConfirmationRequired");
 
   const { serviceMap, isLoading: isLoadingAllServices } = useServicesMap();
 
@@ -125,10 +129,14 @@ export default function WorkerDetailPage() {
   );
 
   const handleMessageClick = useCallback((): void => {
+    if (isStandardPlan) {
+      return;
+    }
+
     if (workerData?.user?.id) {
       setMessageModalOpen(true);
     }
-  }, [workerData?.user?.id]);
+  }, [isStandardPlan, workerData?.user?.id]);
 
   const handleCloseMessageModal = useCallback((): void => {
     setMessageModalOpen(false);
@@ -440,15 +448,23 @@ export default function WorkerDetailPage() {
                   >
                     {t("worker.detail.hireNow")}
                   </Button>
-                  <Button
-                    size="large"
-                    block
-                    icon={<MessageOutlined />}
-                    className={styles.messageButton}
-                    onClick={handleMessageClick}
-                  >
-                    {t("worker.detail.message")}
-                  </Button>
+                  <Tooltip title={isStandardPlan ? chatBlockedMessage : undefined}>
+                    <span>
+                      <Button
+                        size="large"
+                        block
+                        icon={<MessageOutlined />}
+                        className={styles.messageButton}
+                        onClick={handleMessageClick}
+                        disabled={isStandardPlan}
+                      >
+                        {t("worker.detail.message")}
+                        {isStandardPlan ? (
+                          <InfoCircleOutlined style={{ marginLeft: 8 }} />
+                        ) : null}
+                      </Button>
+                    </span>
+                  </Tooltip>
                 </>
               ) : null}
             </Col>
@@ -461,6 +477,7 @@ export default function WorkerDetailPage() {
     selectedImageIndex,
     showFullIntroduction,
     isViewingOwnProfile,
+    isStandardPlan,
     selectedDate,
     selectedServices,
     workerServices,

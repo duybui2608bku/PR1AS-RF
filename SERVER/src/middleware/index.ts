@@ -6,6 +6,7 @@ export {
   clientOnly,
 } from "./auth";
 export type { AuthRequest } from "./auth";
+export { requireMinPlan, requirePlanFeature } from "./plan";
 export { pagination } from "./pagination";
 export type { PaginationRequest, PaginationOptions } from "./pagination";
 export {

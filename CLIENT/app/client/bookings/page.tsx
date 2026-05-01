@@ -18,7 +18,7 @@ import { reviewApi } from "@/lib/api/review.api";
 import { chatApi } from "@/lib/api/chat.api";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import type { BookingQuery, Booking, DisputeReason } from "@/lib/types/booking";
-import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
+import { BookingStatus } from "@/lib/types/booking";
 import { ReviewType } from "@/lib/types/review";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -60,9 +60,6 @@ function BookingsContent() {
   const [statusFilter, setStatusFilter] = useState<BookingStatus | undefined>(
     undefined
   );
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<
-    BookingPaymentStatus | undefined
-  >(undefined);
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
@@ -111,10 +108,9 @@ function BookingsContent() {
     limit,
     role: "client",
     status: statusFilter,
-    payment_status: paymentStatusFilter,
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
     end_date: dateRange?.[1]?.format(DATE_FORMAT_ISO),
-  }), [page, limit, statusFilter, paymentStatusFilter, dateRange]);
+  }), [page, limit, statusFilter, dateRange]);
 
   const { data: bookingsData, isLoading, error: bookingsError } = useQuery({
     queryKey: [BOOKING_QUERY_KEYS.CLIENT_BOOKINGS, query],
@@ -177,13 +173,6 @@ function BookingsContent() {
     resetPage();
   }, [resetPage]);
 
-  const handlePaymentStatusFilterChange = useCallback((
-    value: BookingPaymentStatus | typeof FILTER_VALUE_ALL
-  ): void => {
-    setPaymentStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
-    resetPage();
-  }, [resetPage]);
-
   const handleDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
@@ -193,7 +182,6 @@ function BookingsContent() {
 
   const handleResetFilters = useCallback((): void => {
     setStatusFilter(undefined);
-    setPaymentStatusFilter(undefined);
     setDateRange(null);
     resetPage();
   }, [resetPage]);
@@ -391,11 +379,9 @@ function BookingsContent() {
       <Card>
         <BookingFilters
           statusFilter={statusFilter}
-          paymentStatusFilter={paymentStatusFilter}
           dateRange={dateRange}
           isLoading={isLoading}
           onStatusChange={handleStatusFilterChange}
-          onPaymentStatusChange={handlePaymentStatusFilterChange}
           onDateRangeChange={handleDateRangeChange}
           onReset={handleResetFilters}
           onRefresh={handleRefreshBookings}

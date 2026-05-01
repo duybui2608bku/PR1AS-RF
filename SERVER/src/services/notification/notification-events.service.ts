@@ -21,21 +21,87 @@ const toId = (value: unknown): string => {
   return String(value);
 };
 
-const bookingLink = (bookingId: string): string =>
-  `/client/bookings/${bookingId}`;
+const getBookingDashboardLink = (
+  recipientId: string,
+  booking: IBookingDocument
+): string => {
+  const clientId = toId(booking.client_id);
+  const workerId = toId(booking.worker_id);
+
+  if (recipientId === workerId) {
+    return "/worker/bookings";
+  }
+
+  if (recipientId === clientId) {
+    return "/client/bookings";
+  }
+
+  return "/admin/dashboard";
+};
+
+const getBookingStatusNotificationContent = (
+  status: BookingStatus
+): { title: string; body: string } => {
+  switch (status) {
+    case BookingStatus.CONFIRMED:
+      return {
+        title: "Booking confirmed",
+        body: "The booking has been confirmed by the worker.",
+      };
+    case BookingStatus.REJECTED:
+      return {
+        title: "Booking rejected",
+        body: "The booking request was rejected.",
+      };
+    case BookingStatus.IN_PROGRESS:
+      return {
+        title: "Booking in progress",
+        body: "The booking has started and is now in progress.",
+      };
+    case BookingStatus.COMPLETED:
+      return {
+        title: "Booking completed",
+        body: "The booking has been completed successfully.",
+      };
+    case BookingStatus.CANCELLED:
+      return {
+        title: "Booking cancelled",
+        body: "The booking has been cancelled.",
+      };
+    case BookingStatus.DISPUTED:
+      return {
+        title: "Booking disputed",
+        body: "A dispute has been opened for this booking.",
+      };
+    case BookingStatus.EXPIRED:
+      return {
+        title: "Booking expired",
+        body: "The booking has expired.",
+      };
+    case BookingStatus.PENDING:
+    default:
+      return {
+        title: "Booking status updated",
+        body: `Your booking status is now ${status}.`,
+      };
+  }
+};
 
 export class NotificationEventService {
   async bookingCreated(booking: IBookingDocument): Promise<void> {
     const bookingId = toId(booking._id);
+    const workerId = toId(booking.worker_id);
+    const clientId = toId(booking.client_id);
+
     await notificationService.notify({
-      recipient_ids: [toId(booking.worker_id)],
-      actor_id: toId(booking.client_id),
+      recipient_ids: [workerId],
+      actor_id: clientId,
       type: NotificationType.BOOKING_CREATED,
       category: NotificationCategory.BOOKING,
       title: "New booking request",
       body: "You have received a new booking request.",
       data: { booking_id: bookingId },
-      link: bookingLink(bookingId),
+      link: getBookingDashboardLink(workerId, booking),
       priority: NotificationPriority.HIGH,
       dedupe_key: `booking-created:${bookingId}`,
     });
@@ -47,15 +113,24 @@ export class NotificationEventService {
     actorId: string
   ): Promise<void> {
     const bookingId = toId(booking._id);
+    const clientId = toId(booking.client_id);
+    const workerId = toId(booking.worker_id);
+    const recipients = [clientId, workerId].filter((id) => id !== actorId);
+    const { title, body } = getBookingStatusNotificationContent(status);
+
+    if (recipients.length === 0) {
+      return;
+    }
+
     await notificationService.notify({
-      recipient_ids: [toId(booking.client_id)],
+      recipient_ids: recipients,
       actor_id: actorId,
       type: NotificationType.BOOKING_STATUS_UPDATED,
       category: NotificationCategory.BOOKING,
-      title: "Booking status updated",
-      body: `Your booking status is now ${status}.`,
+      title,
+      body,
       data: { booking_id: bookingId, status },
-      link: bookingLink(bookingId),
+      link: "/notifications",
       priority: NotificationPriority.HIGH,
       dedupe_key: `booking-status:${bookingId}:${status}`,
     });
@@ -84,7 +159,7 @@ export class NotificationEventService {
       title: "Booking cancelled",
       body: `A booking was cancelled by ${cancelledBy}.`,
       data: { booking_id: bookingId, cancelled_by: cancelledBy },
-      link: bookingLink(bookingId),
+      link: "/notifications",
       priority: NotificationPriority.HIGH,
       dedupe_key: `booking-cancelled:${bookingId}`,
     });
@@ -107,7 +182,7 @@ export class NotificationEventService {
       title: "Booking updated",
       body: "A booking has been updated.",
       data: { booking_id: bookingId },
-      link: bookingLink(bookingId),
+      link: "/notifications",
       priority: NotificationPriority.NORMAL,
       dedupe_key: `booking-updated:${bookingId}:${Date.now()}`,
     });
@@ -133,7 +208,7 @@ export class NotificationEventService {
       title: "Booking dispute opened",
       body: "A dispute has been opened for a booking.",
       data: { booking_id: bookingId },
-      link: bookingLink(bookingId),
+      link: "/notifications",
       priority: NotificationPriority.URGENT,
       dedupe_key: `dispute-created:${bookingId}`,
     });
@@ -153,7 +228,7 @@ export class NotificationEventService {
       title: "Booking dispute resolved",
       body: `A booking dispute was resolved with result: ${resolution}.`,
       data: { booking_id: bookingId, resolution },
-      link: bookingLink(bookingId),
+      link: "/notifications",
       priority: NotificationPriority.HIGH,
       dedupe_key: `dispute-resolved:${bookingId}:${resolution}`,
     });

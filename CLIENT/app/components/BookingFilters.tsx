@@ -5,7 +5,7 @@ import { Select, Row, Col, Space, Button, DatePicker, Typography } from "antd";
 import { UndoOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import type { Dayjs } from "dayjs";
-import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
+import { BookingStatus } from "@/lib/types/booking";
 import { DATE_FORMAT_ISO } from "@/app/constants/constants";
 import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "./BookingFilters.module.scss";
@@ -24,23 +24,14 @@ const STATUS_OPTIONS = [
   BookingStatus.DISPUTED,
 ] as const;
 
-const PAYMENT_STATUS_OPTIONS = [
-  BookingPaymentStatus.PENDING,
-  BookingPaymentStatus.PAID,
-  BookingPaymentStatus.PARTIALLY_REFUNDED,
-  BookingPaymentStatus.REFUNDED,
-] as const;
-
 const UNDO_ICON = <UndoOutlined />;
 const RELOAD_ICON = <ReloadOutlined />;
 
 interface BookingFiltersProps {
   statusFilter: BookingStatus | undefined;
-  paymentStatusFilter: BookingPaymentStatus | undefined;
   dateRange: [Dayjs | null, Dayjs | null] | null;
   isLoading: boolean;
   onStatusChange: (value: BookingStatus | "all") => void;
-  onPaymentStatusChange: (value: BookingPaymentStatus | "all") => void;
   onDateRangeChange: (dates: [Dayjs | null, Dayjs | null] | null) => void;
   onReset: () => void;
   onRefresh: () => void;
@@ -50,11 +41,9 @@ interface BookingFiltersProps {
 
 export const BookingFilters = memo(function BookingFilters({
   statusFilter,
-  paymentStatusFilter,
   dateRange,
   isLoading,
   onStatusChange,
-  onPaymentStatusChange,
   onDateRangeChange,
   onReset,
   onRefresh,
@@ -77,24 +66,6 @@ export const BookingFilters = memo(function BookingFilters({
             {STATUS_OPTIONS.map((status) => (
               <Option key={status} value={status}>
                 {t(`booking.status.${status}`)}
-              </Option>
-            ))}
-          </Select>
-        </Space>
-      </Col>
-      <Col xs={24} sm={12} md={5}>
-        <Space orientation="vertical" size="small" className={styles.filterSpace}>
-          <Text>{t("booking.list.filters.paymentStatus")}:</Text>
-          <Select
-            className={styles.filterControl}
-            value={paymentStatusFilter || "all"}
-            onChange={onPaymentStatusChange}
-            allowClear
-          >
-            <Option value="all">{t("booking.list.filters.all")}</Option>
-            {PAYMENT_STATUS_OPTIONS.map((status) => (
-              <Option key={status} value={status}>
-                {t(`booking.paymentStatus.${status}`)}
               </Option>
             ))}
           </Select>

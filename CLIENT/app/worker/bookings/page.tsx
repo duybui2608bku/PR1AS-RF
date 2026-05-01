@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { bookingApi } from "@/lib/api/booking.api";
 import { chatApi } from "@/lib/api/chat.api";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
-import { BookingStatus, BookingPaymentStatus } from "@/lib/types/booking";
+import { BookingStatus } from "@/lib/types/booking";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import {
@@ -61,9 +61,6 @@ function WorkerBookingsContent() {
   const [statusFilter, setStatusFilter] = useState<BookingStatus | undefined>(
     undefined
   );
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<
-    BookingPaymentStatus | undefined
-  >(undefined);
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
@@ -104,7 +101,6 @@ function WorkerBookingsContent() {
     limit,
     role: "worker",
     status: statusFilter,
-    payment_status: paymentStatusFilter,
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
     end_date: dateRange?.[1]?.format(DATE_FORMAT_ISO),
   };
@@ -172,13 +168,6 @@ function WorkerBookingsContent() {
     resetPage();
   }, [resetPage]);
 
-  const handlePaymentStatusFilterChange = useCallback((
-    value: BookingPaymentStatus | typeof FILTER_VALUE_ALL
-  ): void => {
-    setPaymentStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
-    resetPage();
-  }, [resetPage]);
-
   const handleDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
@@ -188,7 +177,6 @@ function WorkerBookingsContent() {
 
   const handleResetFilters = useCallback((): void => {
     setStatusFilter(undefined);
-    setPaymentStatusFilter(undefined);
     setDateRange(null);
     resetPage();
   }, [resetPage]);
@@ -290,11 +278,9 @@ function WorkerBookingsContent() {
           <Card>
             <BookingFilters
               statusFilter={statusFilter}
-              paymentStatusFilter={paymentStatusFilter}
               dateRange={dateRange}
               isLoading={isLoading}
               onStatusChange={handleStatusFilterChange}
-              onPaymentStatusChange={handlePaymentStatusFilterChange}
               onDateRangeChange={handleDateRangeChange}
               onReset={handleResetFilters}
               onRefresh={handleRefreshBookings}
@@ -318,7 +304,6 @@ function WorkerBookingsContent() {
                           booking={record}
                           onAction={handleAction}
                           onOpenComplaintChat={handleOpenComplaintChat}
-                          formatCurrency={formatCurrency}
                           serviceMap={serviceMap}
                           locale={locale}
                           t={t}

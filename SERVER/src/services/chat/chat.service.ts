@@ -26,6 +26,7 @@ import {
 } from "../../utils/chat.helper";
 import { CHAT_MESSAGES } from "../../constants/messages";
 import { chatRepository } from "../../repositories/chat/chat.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { SOCKET_EVENTS } from "../../constants/socket";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
@@ -50,6 +51,20 @@ export class ChatService {
         CHAT_MESSAGES.CANNOT_SEND_TO_SELF,
         HTTP_STATUS.BAD_REQUEST,
         ErrorCode.VALIDATION_ERROR
+      );
+    }
+
+    const hasConfirmedBooking =
+      await bookingRepository.hasConfirmedBookingBetweenUsers(
+        sender_id,
+        input.receiver_id
+      );
+
+    if (!hasConfirmedBooking) {
+      throw new AppError(
+        CHAT_MESSAGES.BOOKING_CONFIRMATION_REQUIRED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
       );
     }
 

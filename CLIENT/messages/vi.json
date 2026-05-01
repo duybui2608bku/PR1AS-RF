@@ -1056,6 +1056,8 @@
     "noComplaintGroups": "Chưa có nhóm khiếu nại nào",
     "deleteMessage": "Xóa tin nhắn",
     "deleteMessageConfirm": "Bạn có chắc muốn xóa tin nhắn này?",
+    "bookingConfirmationRequired": "Bạn cần booking được xác nhận trước khi nhắn tin",
+    "bookingConfirmationRequiredAction": "Vui lòng đặt lịch và chờ worker xác nhận để mở chat.",
     "time": {
       "justNow": "Vừa xong",
       "minutesAgo": "{{count}} phút trước",

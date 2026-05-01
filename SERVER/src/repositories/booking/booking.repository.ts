@@ -18,6 +18,27 @@ const BOOKING_POPULATE: PopulateOptions[] = [
 ];
 
 export class BookingRepository {
+  async hasConfirmedBookingBetweenUsers(
+    userAId: string,
+    userBId: string
+  ): Promise<boolean> {
+    const booking = await Booking.findOne({
+      $or: [
+        {
+          client_id: new Types.ObjectId(userAId),
+          worker_id: new Types.ObjectId(userBId),
+        },
+        {
+          client_id: new Types.ObjectId(userBId),
+          worker_id: new Types.ObjectId(userAId),
+        },
+      ],
+      confirmed_at: { $ne: null },
+    }).select("_id");
+
+    return !!booking;
+  }
+
   private buildFilter(query: BookingQuery): Record<string, unknown> {
     const filter: Record<string, unknown> = {};
 

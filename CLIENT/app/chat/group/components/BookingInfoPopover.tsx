@@ -19,13 +19,6 @@ import styles from "../../chat.module.scss";
 
 const { Text } = Typography;
 
-const formatVnd = (amount: number): string =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount);
-
 interface BookingParticipant {
   id: string;
   email?: string;
@@ -113,17 +106,6 @@ const BookingInfoContent = memo(function BookingInfoContent({
         >
           <Descriptions.Item label="Mã dịch vụ">
             {bookingData.service_code}
-          </Descriptions.Item>
-          <Descriptions.Item label="Giá">
-            <Space orientation="vertical" size={2}>
-              <Text>{formatVnd(bookingData.pricing.unit_price)}</Text>
-              <Text type="secondary">
-                {bookingData.pricing.quantity} × {bookingData.pricing.unit}
-              </Text>
-              <Text strong>
-                {formatVnd(bookingData.pricing.total_amount)}
-              </Text>
-            </Space>
           </Descriptions.Item>
         </Descriptions>
 

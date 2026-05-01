@@ -14,10 +14,8 @@ import {
   BookingTableColumnWidth,
   BookingTableColumnKey,
   getBookingStatusTagColor,
-  getPaymentStatusTagColor,
   getPricingUnitLabel,
 } from "@/lib/constants/booking";
-import { BookingPaymentStatus } from "@/lib/types/booking";
 import styles from "@/app/worker/bookings/constants/booking.constants.module.scss";
 
 const { Text } = Typography;
@@ -175,23 +173,6 @@ export const createWorkerBookingColumns = ({
       ),
     },
     {
-      title: t("booking.table.totalAmount"),
-      dataIndex: BookingTableColumnKey.AMOUNT,
-      key: BookingTableColumnKey.AMOUNT,
-      width: BookingTableColumnWidth.AMOUNT,
-      render: (_: unknown, record: Booking) => (
-        <Space orientation="vertical" size="small">
-          <Text strong className={styles.amountPrimary}>
-            {formatCurrency(record.pricing.total_amount)}
-          </Text>
-          <Text type="secondary" className={styles.cellSecondary}>
-            {t("booking.worker.payout")}:{" "}
-            {formatCurrency(record.pricing.worker_payout)}
-          </Text>
-        </Space>
-      ),
-    },
-    {
       title: t("booking.table.status"),
       dataIndex: BookingTableColumnKey.STATUS,
       key: BookingTableColumnKey.STATUS,
@@ -227,17 +208,6 @@ export const createWorkerBookingColumns = ({
 
         return statusTag;
       },
-    },
-    {
-      title: t("booking.table.paymentStatus"),
-      dataIndex: BookingTableColumnKey.PAYMENT_STATUS,
-      key: BookingTableColumnKey.PAYMENT_STATUS,
-      width: BookingTableColumnWidth.PAYMENT_STATUS,
-      render: (paymentStatus: BookingPaymentStatus) => (
-        <Tag color={getPaymentStatusTagColor(paymentStatus)}>
-          {t(`booking.paymentStatus.${paymentStatus}`)}
-        </Tag>
-      ),
     },
     {
       title: t("booking.table.actions"),

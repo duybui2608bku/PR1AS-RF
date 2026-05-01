@@ -47,6 +47,8 @@ export const AUTH_MESSAGES = {
 export const AUTHZ_MESSAGES = {
   FORBIDDEN: "You do not have permission to perform this action",
   INSUFFICIENT_PERMISSIONS: "Insufficient permissions",
+  PLAN_REQUIRED: "Your current plan does not allow this action",
+  PLAN_FEATURE_NOT_AVAILABLE: "This feature is not available in your plan",
 } as const;
 
 export const COMMON_MESSAGES = {
@@ -96,6 +98,8 @@ export const PAGINATION_MESSAGES = {
 export const CHAT_MESSAGES = {
   RECEIVER_NOT_FOUND: "Receiver not found",
   CANNOT_SEND_TO_SELF: "Cannot send message to yourself",
+  BOOKING_CONFIRMATION_REQUIRED:
+    "Messaging is available only after booking is confirmed",
   REPLY_MESSAGE_NOT_FOUND: "Reply message not found",
   MESSAGE_SENT_SUCCESS: "Message sent successfully",
   MESSAGE_NOT_FOUND: "Message not found",

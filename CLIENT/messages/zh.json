@@ -943,6 +943,8 @@
     "noComplaintGroups": "暂无投诉群组",
     "deleteMessage": "删除消息",
     "deleteMessageConfirm": "确定要删除此消息吗？",
+    "bookingConfirmationRequired": "您需要在预约被确认后才能发送消息。",
+    "bookingConfirmationRequiredAction": "请先创建预约并等待工作者确认后再使用聊天。",
     "errors": {
       "noConversation": "未选择对话",
       "sendFailed": "发送消息失败",

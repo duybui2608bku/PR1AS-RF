@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Dropdown, MenuProps } from "antd";
-import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined } from "@ant-design/icons";
+import { Avatar, Dropdown, MenuProps, Tooltip } from "antd";
+import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
@@ -26,8 +26,11 @@ export const UserMenu = () => {
         return {
             isAdmin: userRoles.includes(UserRole.ADMIN),
             isWorkerActive: lastActiveRole === UserRole.WORKER,
+            isStandardPlan: user?.pricing_plan_code === "standard",
         };
-    }, [user]);
+    }, [user, user?.pricing_plan_code]);
+
+    const chatBlockedMessage = t("chat.bookingConfirmationRequired");
 
     const handleLogout = useCallback(async () => {
         try {
@@ -95,8 +98,15 @@ export const UserMenu = () => {
         {
             key: "messages",
             icon: <MessageOutlined />,
-            label: t("dashboard.header.messages"),
+            label: userData.isStandardPlan ? (
+                <Tooltip title={chatBlockedMessage}>
+                    <span>
+                        {t("dashboard.header.messages")} <InfoCircleOutlined />
+                    </span>
+                </Tooltip>
+            ) : t("dashboard.header.messages"),
             onClick: handleNavigateToChat,
+            disabled: userData.isStandardPlan,
         },
         {
             key: "notifications",
@@ -132,7 +142,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleLogout, currentPlanLabel]);
+    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleLogout, currentPlanLabel, userData.isStandardPlan, chatBlockedMessage]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {

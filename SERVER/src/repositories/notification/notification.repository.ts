@@ -58,13 +58,15 @@ export class NotificationRepository {
     };
 
     if (data.dedupe_key) {
+      const insertData = { ...notificationData };
+      delete insertData.updated_at;
       return Notification.findOneAndUpdate(
         {
           recipient_id: notificationData.recipient_id,
           dedupe_key: data.dedupe_key,
         },
         {
-          $setOnInsert: notificationData,
+          $setOnInsert: insertData,
           $set: { updated_at: now },
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }

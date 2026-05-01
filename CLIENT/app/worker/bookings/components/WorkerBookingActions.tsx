@@ -5,7 +5,6 @@ import type { TFunction } from "i18next";
 import { expireDate } from "@/app/func/func";
 import {
   BookingStatus,
-  BookingPaymentStatus,
   type Booking,
 } from "@/lib/types/booking";
 import { WorkerActionType } from "@/app/worker/bookings/constants/booking.constants";
@@ -39,9 +38,7 @@ export function getWorkerBookingActionNodes({
   }
 
   const canConfirm = record.status === BookingStatus.PENDING;
-  const canStart =
-    record.status === BookingStatus.CONFIRMED &&
-    record.payment_status === BookingPaymentStatus.PAID;
+  const canStart = record.status === BookingStatus.CONFIRMED;
   const canComplete = record.status === BookingStatus.IN_PROGRESS;
   const canOpenComplaintChat = record.status === BookingStatus.DISPUTED;
 

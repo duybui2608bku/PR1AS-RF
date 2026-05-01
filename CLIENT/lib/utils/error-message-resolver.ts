@@ -16,6 +16,9 @@ interface ErrorResolution {
   description?: string;
 }
 
+const BOOKING_CONFIRMATION_REQUIRED_MESSAGE =
+  "Messaging is available only after booking is confirmed";
+
 function resolveErrorByCode(errorCode: string, error: ApiError): ErrorResolution | null {
   const errorData = error.response?.data?.error;
   const details = errorData?.details;
@@ -149,6 +152,17 @@ export function resolveErrorMessage(error: ApiError): ErrorResolution {
 
   const { data, status } = error.response;
   const errorCode = data?.error?.code;
+  const serverErrorMessage = data?.error?.message || data?.message;
+
+  if (
+    status === HttpStatus.FORBIDDEN &&
+    serverErrorMessage === BOOKING_CONFIRMATION_REQUIRED_MESSAGE
+  ) {
+    return {
+      message: getTranslationSync("chat.bookingConfirmationRequired"),
+      action: getTranslationSync("chat.bookingConfirmationRequiredAction"),
+    };
+  }
 
   if (errorCode) {
     const resolved = resolveErrorByCode(errorCode, error);

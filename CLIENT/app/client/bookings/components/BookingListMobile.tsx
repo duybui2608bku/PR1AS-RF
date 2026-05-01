@@ -4,14 +4,12 @@ import { memo } from "react";
 import type { ReactNode } from "react";
 import { Card, List, Typography, Tag, Space, Button } from "antd";
 import type { Booking } from "@/lib/types/booking";
-import { BookingStatus, PricingUnit } from "@/lib/types/booking";
+import { BookingStatus } from "@/lib/types/booking";
 import type { Service } from "@/lib/types/worker";
 import { getServiceName } from "@/lib/utils/worker.utils";
 import { formatDateTime } from "@/app/func/func";
 import {
   getBookingStatusTagColor,
-  getPaymentStatusTagColor,
-  getPricingUnitLabel,
 } from "@/lib/constants/booking";
 import {
   canCancelBooking,
@@ -156,16 +154,6 @@ const BookingItem = memo(function BookingItem({
             </Text>
           </Space>
           <Space wrap>
-            <Text strong className={styles.priceText}>
-              {formatCurrency(record.pricing.total_amount)}
-            </Text>
-            <Text type="secondary" className={styles.metaText}>
-              {record.pricing.quantity}{" "}
-              {getPricingUnitLabel(record.pricing.unit as PricingUnit, t)} ×{" "}
-              {formatCurrency(record.pricing.unit_price)}
-            </Text>
-          </Space>
-          <Space wrap>
             <Space size={4}>
               <Tag color={getBookingStatusTagColor(record.status)}>
                 {t(`booking.status.${record.status}`)}
@@ -179,9 +167,6 @@ const BookingItem = memo(function BookingItem({
                 />
               ) : null}
             </Space>
-            <Tag color={getPaymentStatusTagColor(record.payment_status)}>
-              {t(`booking.paymentStatus.${record.payment_status}`)}
-            </Tag>
           </Space>
           <Text type="secondary" className={styles.metaText}>
             {t("booking.table.createdAt")}: {formatDateTime(record.created_at)}
