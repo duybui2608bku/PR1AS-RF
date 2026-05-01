@@ -18,6 +18,12 @@ router.get(
 );
 
 router.get(
+  "/:id/schedule",
+  validateObjectId("id"),
+  asyncHandler(workerController.getWorkerSchedule.bind(workerController))
+);
+
+router.get(
   "/:id",
   validateObjectId("id"),
   asyncHandler(workerController.getWorkerById.bind(workerController))

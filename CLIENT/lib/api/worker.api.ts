@@ -68,6 +68,13 @@ export interface WorkerDetailResponse {
   reviews?: WorkerReviewItem[];
 }
 
+export interface WorkerScheduleItem {
+  booking_id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+}
+
 export const workerProfileApi = {
   getProfile: async (): Promise<WorkerProfile> => {
     const response = await api.get<
@@ -87,6 +94,24 @@ export const workerProfileApi = {
     const response = await api.get<ApiResponse<WorkerDetailResponse>>(
       buildEndpoint(ApiEndpoint.WORKERS_BY_ID, { id: workerId })
     );
+    return extractData(response);
+  },
+
+  getWorkerSchedule: async (
+    workerId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<WorkerScheduleItem[]> => {
+    const response = await api.get<ApiResponse<WorkerScheduleItem[]>>(
+      buildEndpoint(ApiEndpoint.WORKERS_BY_ID_SCHEDULE, { id: workerId }),
+      {
+        params: {
+          start_date: startDate,
+          end_date: endDate,
+        },
+      }
+    );
+
     return extractData(response);
   },
 

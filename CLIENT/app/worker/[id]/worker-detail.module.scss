@@ -509,6 +509,10 @@
   grid-auto-rows: minmax(40px, auto);
 }
 
+.calendarTooltipWrap {
+  display: block;
+}
+
 .calendarDay {
   aspect-ratio: 1;
   display: flex;
@@ -522,6 +526,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
 
   &:hover:not(:disabled) {
     background-color: #f3f4f6;
@@ -595,6 +600,13 @@
   }
 }
 
+.calendarDayBusy {
+  border-color: #ff4d4f;
+  background-color: #fff1f0;
+  color: #cf1322;
+  font-weight: 600;
+}
+
 .calendarDayDisabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -635,6 +647,23 @@
 
 .bookingCardMargin {
   margin-bottom: 16px;
+}
+
+.workerScheduleList {
+  width: 100%;
+}
+
+.workerScheduleListItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.workerScheduleListItem:last-child {
+  border-bottom: none;
 }
 
 .serviceCardInteractive {

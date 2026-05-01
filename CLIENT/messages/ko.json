@@ -1147,7 +1147,8 @@
           "today": "오늘"
         },
         "dayBookingUnit": "건",
-        "noBookings": "예약 없음"
+        "noBookings": "예약 없음",
+        "busyDayTooltip": "이 날짜는 이미 예약되어 있습니다"
       },
       "payout": "수익",
       "actions": {

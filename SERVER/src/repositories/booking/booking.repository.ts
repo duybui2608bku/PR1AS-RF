@@ -244,6 +244,47 @@ export class BookingRepository {
       end_time: booking.schedule.end_time,
     }));
   }
+
+  async findScheduleByWorkerId(
+    workerId: string,
+    startTime: Date,
+    endTime: Date
+  ): Promise<
+    Array<{
+      _id: Types.ObjectId;
+      schedule: {
+        start_time: Date;
+        end_time: Date;
+      };
+      status: BookingStatus;
+    }>
+  > {
+    const bookings = await Booking.find({
+      worker_id: new Types.ObjectId(workerId),
+      status: {
+        $in: [
+          BookingStatus.PENDING,
+          BookingStatus.CONFIRMED,
+          BookingStatus.IN_PROGRESS,
+          BookingStatus.DISPUTED,
+        ],
+      },
+      "schedule.start_time": { $lt: endTime },
+      "schedule.end_time": { $gt: startTime },
+    })
+      .select("_id schedule.start_time schedule.end_time status")
+      .sort({ "schedule.start_time": 1 })
+      .lean();
+
+    return bookings.map((booking) => ({
+      _id: booking._id,
+      schedule: {
+        start_time: booking.schedule.start_time,
+        end_time: booking.schedule.end_time,
+      },
+      status: booking.status as BookingStatus,
+    }));
+  }
 }
 
 export const bookingRepository = new BookingRepository();

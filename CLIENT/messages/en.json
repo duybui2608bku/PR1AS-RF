@@ -99,6 +99,32 @@
       "inApp": "In-app notifications",
       "email": "Email",
       "push": "Push notifications"
+    },
+    "events": {
+      "booking": {
+        "created": {
+          "title": "New booking request",
+          "body": "You have received a new booking request."
+        },
+        "statusUpdated": {
+          "title": "Booking updated: {{status}}",
+          "body": "The booking status has changed to {{status}}."
+        },
+        "cancelled": {
+          "title": "Booking cancelled",
+          "body": "A booking related to you has been cancelled."
+        }
+      },
+      "dispute": {
+        "created": {
+          "title": "New booking dispute",
+          "body": "A new dispute has been opened for a booking."
+        },
+        "resolved": {
+          "title": "Booking dispute resolved",
+          "body": "The booking dispute has been resolved."
+        }
+      }
     }
   },
   "auth": {
@@ -1259,7 +1285,8 @@
           "today": "Today"
         },
         "dayBookingUnit": "booking(s)",
-        "noBookings": "No bookings"
+        "noBookings": "No bookings",
+        "busyDayTooltip": "This day is already booked"
       },
       "payout": "Payout",
       "actions": {

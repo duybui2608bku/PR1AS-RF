@@ -37,6 +37,24 @@ export class WorkerController {
     );
   }
 
+  async getWorkerSchedule(req: Request, res: Response): Promise<void> {
+    const { id } = req.params;
+
+    const startDate = req.query.start_date
+      ? new Date(String(req.query.start_date))
+      : new Date(new Date().setDate(1));
+    const endDate = req.query.end_date
+      ? new Date(String(req.query.end_date))
+      : new Date(new Date(startDate).setMonth(startDate.getMonth() + 1));
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST);
+    }
+
+    const schedule = await workerService.getWorkerSchedule(id, startDate, endDate);
+    R.success(res, schedule, undefined, req);
+  }
+
   async getLocationSuggestions(req: Request, res: Response): Promise<void> {
     const query = validateWithSchema(
       locationSuggestionsQuerySchema,

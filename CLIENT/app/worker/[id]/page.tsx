@@ -28,7 +28,11 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useApiQueryData } from "@/lib/hooks/use-api";
-import { type WorkerDetailResponse } from "@/lib/api/worker.api";
+import {
+  type WorkerDetailResponse,
+  type WorkerScheduleItem,
+  workerProfileApi,
+} from "@/lib/api/worker.api";
 import { QueryState } from "@/lib/components/query-state";
 import { ImageGallerySkeleton } from "@/lib/components/skeletons";
 import {
@@ -49,7 +53,8 @@ import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useServicesMap } from "@/lib/hooks/use-services-map";
 import { chatApi } from "@/lib/api/chat.api";
 import { ChatErrorCode } from "@/lib/constants/error-codes";
-import type { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import styles from "./worker-detail.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -63,6 +68,7 @@ export default function WorkerDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullIntroduction, setShowFullIntroduction] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState<Dayjs>(dayjs().startOf("month"));
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
@@ -87,6 +93,16 @@ export default function WorkerDetailPage() {
   );
   const isLoadingServices = isLoading;
 
+  const monthStart = calendarMonth.startOf("month").format("YYYY-MM-DD");
+  const monthEnd = calendarMonth.endOf("month").format("YYYY-MM-DD");
+
+  const { data: workerSchedule = [], isLoading: isLoadingSchedule } = useQuery({
+    queryKey: ["worker-schedule", workerId, monthStart, monthEnd],
+    queryFn: () => workerProfileApi.getWorkerSchedule(workerId, monthStart, monthEnd),
+    enabled: !!workerId,
+    retry: false,
+  });
+
   const selectedWorkerService = useMemo(() => {
     if (selectedServices.length === 0) return null;
     return workerServices.find((ws) => ws.service_id === selectedServices[0]);
@@ -97,6 +113,34 @@ export default function WorkerDetailPage() {
   }, [currentUser?.id, workerData?.user?.id]);
   const isStandardPlan = currentUser?.pricing_plan_code === "standard";
   const chatBlockedMessage = t("chat.bookingConfirmationRequired");
+
+  const busyDateMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of workerSchedule) {
+      let cursor = dayjs(item.start_time).startOf("day");
+      const end = dayjs(item.end_time);
+      while (cursor.isBefore(end)) {
+        const key = cursor.format("YYYY-MM-DD");
+        map[key] = (map[key] ?? 0) + 1;
+        cursor = cursor.add(1, "day");
+      }
+    }
+    return map;
+  }, [workerSchedule]);
+
+  const selectedDayBookings = useMemo(() => {
+    if (!selectedDate) {
+      return [];
+    }
+    const dayStart = selectedDate.startOf("day");
+    const dayEnd = dayStart.add(1, "day");
+
+    return workerSchedule.filter((item) => {
+      const start = dayjs(item.start_time);
+      const end = dayjs(item.end_time);
+      return start.isBefore(dayEnd) && end.isAfter(dayStart);
+    });
+  }, [selectedDate, workerSchedule]);
 
   const { serviceMap, isLoading: isLoadingAllServices } = useServicesMap();
 
@@ -426,7 +470,42 @@ export default function WorkerDetailPage() {
               <WorkerCalendar
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
+                busyDateMap={busyDateMap}
+                monthValue={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                disableBusyDates={!isViewingOwnProfile}
               />
+              {selectedDate ? (
+                <Card className={styles.bookingCardMargin}>
+                  <Space
+                    direction="vertical"
+                    size={12}
+                    className={styles.workerScheduleList}
+                  >
+                    <Text strong>
+                      {t("booking.table.schedule")}: {selectedDate.format("DD/MM/YYYY")}
+                    </Text>
+                    {isLoadingSchedule ? (
+                      <Text type="secondary">{t("common.loading")}</Text>
+                    ) : selectedDayBookings.length === 0 ? (
+                      <Text type="secondary">-</Text>
+                    ) : (
+                      selectedDayBookings.map((item: WorkerScheduleItem) => (
+                        <div
+                          key={item.booking_id}
+                          className={styles.workerScheduleListItem}
+                        >
+                          <Text strong>
+                            {dayjs(item.start_time).format("HH:mm")} -{" "}
+                            {dayjs(item.end_time).format("HH:mm")}
+                          </Text>
+                          <Tag>{t(`booking.status.${item.status}`)}</Tag>
+                        </div>
+                      ))
+                    )}
+                  </Space>
+                </Card>
+              ) : null}
               <WorkerServices
                 services={workerServices}
                 selectedServices={selectedServices}
@@ -479,7 +558,11 @@ export default function WorkerDetailPage() {
     isViewingOwnProfile,
     isStandardPlan,
     selectedDate,
+    calendarMonth,
     selectedServices,
+    busyDateMap,
+    selectedDayBookings,
+    isLoadingSchedule,
     workerServices,
     serviceMap,
     isLoadingServices,

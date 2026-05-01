@@ -19,6 +19,7 @@ export enum ApiEndpoint {
   SERVICES_BY_ID = "/services/:id",
   SERVICES_BY_CODE = "/services/code/:code",
   WORKERS_BY_ID = "/workers/:id",
+  WORKERS_BY_ID_SCHEDULE = "/workers/:id/schedule",
   WORKERS_GROUPED_BY_SERVICE = "/workers/grouped-by-service",
   WORKERS_LOCATION_SUGGESTIONS = "/workers/location-suggestions",
   WORKER_SERVICES = "/worker/services",

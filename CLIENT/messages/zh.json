@@ -1147,7 +1147,8 @@
           "today": "今天"
         },
         "dayBookingUnit": "单",
-        "noBookings": "无预订"
+        "noBookings": "无预订",
+        "busyDayTooltip": "该日期已有安排"
       },
       "payout": "收入",
       "actions": {

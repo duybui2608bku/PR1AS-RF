@@ -13,6 +13,7 @@ import {
   Alert,
   Select,
 } from "antd";
+import { useQuery } from "@tanstack/react-query";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useI18n } from "@/lib/hooks/use-i18n";
@@ -26,6 +27,7 @@ import {
 import { BOOKING_CONSTANTS, BOOKING_TIME_SLOTS } from "@/lib/constants/booking";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { workerProfileApi } from "@/lib/api/worker.api";
 import styles from "@/app/worker/components/BookingModal.module.scss";
 
 const { Text } = Typography;
@@ -70,6 +72,46 @@ export function BookingModal({
     PricingUnit.HOURLY,
   );
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
+
+  const bookingWindow = useMemo(() => {
+    const today = dayjs().startOf("day");
+    const minDate = today.add(BOOKING_CONSTANTS.MIN_ADVANCE_HOURS, "hour");
+    const maxDate = today.add(BOOKING_CONSTANTS.MAX_ADVANCE_DAYS, "day");
+
+    return { minDate, maxDate };
+  }, []);
+
+  const { data: unavailableSchedule = [] } = useQuery({
+    queryKey: [
+      "worker-booking-window-schedule",
+      workerId,
+      bookingWindow.minDate.format("YYYY-MM-DD"),
+      bookingWindow.maxDate.format("YYYY-MM-DD"),
+    ],
+    queryFn: () =>
+      workerProfileApi.getWorkerSchedule(
+        workerId,
+        bookingWindow.minDate.format("YYYY-MM-DD"),
+        bookingWindow.maxDate.format("YYYY-MM-DD"),
+      ),
+    enabled: open && !!workerId,
+    retry: false,
+  });
+
+  const unavailableDateSet = useMemo(() => {
+    const dateSet = new Set<string>();
+
+    for (const item of unavailableSchedule) {
+      let cursor = dayjs(item.start_time).startOf("day");
+      const end = dayjs(item.end_time);
+      while (cursor.isBefore(end)) {
+        dateSet.add(cursor.format("YYYY-MM-DD"));
+        cursor = cursor.add(1, "day");
+      }
+    }
+
+    return dateSet;
+  }, [unavailableSchedule]);
 
   useEffect(() => {
     if (!open || pricing.length === 0) {
@@ -382,18 +424,11 @@ export function BookingModal({
               ]}
               disabledDate={(current) => {
                 if (!current) return false;
-                const today = dayjs().startOf("day");
-                const minDate = today.add(
-                  BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-                  "hour",
-                );
-                const maxDate = today.add(
-                  BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-                  "day",
-                );
+                const currentKey = current.format("YYYY-MM-DD");
                 return (
-                  current.isBefore(minDate, "day") ||
-                  current.isAfter(maxDate, "day")
+                  current.isBefore(bookingWindow.minDate, "day") ||
+                  current.isAfter(bookingWindow.maxDate, "day") ||
+                  unavailableDateSet.has(currentKey)
                 );
               }}
               onChange={(dates) => {
@@ -424,18 +459,11 @@ export function BookingModal({
                 placeholder={t("booking.create.selectDate")}
                 disabledDate={(current) => {
                   if (!current) return false;
-                  const today = dayjs().startOf("day");
-                  const minDate = today.add(
-                    BOOKING_CONSTANTS.MIN_ADVANCE_HOURS,
-                    "hour",
-                  );
-                  const maxDate = today.add(
-                    BOOKING_CONSTANTS.MAX_ADVANCE_DAYS,
-                    "day",
-                  );
+                  const currentKey = current.format("YYYY-MM-DD");
                   return (
-                    current.isBefore(minDate, "day") ||
-                    current.isAfter(maxDate, "day")
+                    current.isBefore(bookingWindow.minDate, "day") ||
+                    current.isAfter(bookingWindow.maxDate, "day") ||
+                    unavailableDateSet.has(currentKey)
                   );
                 }}
                 onChange={(date) => {

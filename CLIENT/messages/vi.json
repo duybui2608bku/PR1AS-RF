@@ -99,6 +99,32 @@
       "inApp": "Thông báo trong ứng dụng",
       "email": "Email",
       "push": "Thông báo đẩy"
+    },
+    "events": {
+      "booking": {
+        "created": {
+          "title": "Yêu cầu đặt lịch mới",
+          "body": "Bạn vừa nhận được một yêu cầu đặt lịch mới."
+        },
+        "statusUpdated": {
+          "title": "Booking cập nhật: {{status}}",
+          "body": "Trạng thái booking đã đổi sang {{status}}."
+        },
+        "cancelled": {
+          "title": "Booking đã bị hủy",
+          "body": "Một booking liên quan tới bạn vừa bị hủy."
+        }
+      },
+      "dispute": {
+        "created": {
+          "title": "Có khiếu nại booking mới",
+          "body": "Một khiếu nại mới đã được tạo cho booking."
+        },
+        "resolved": {
+          "title": "Khiếu nại booking đã được xử lý",
+          "body": "Khiếu nại booking đã có kết quả xử lý."
+        }
+      }
     }
   },
   "auth": {
@@ -1269,7 +1295,8 @@
           "today": "Hôm nay"
         },
         "dayBookingUnit": "booking",
-        "noBookings": "Không có booking"
+        "noBookings": "Không có booking",
+        "busyDayTooltip": "Ngày này đã có lịch"
       },
       "payout": "Thu nhập",
       "actions": {

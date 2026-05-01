@@ -1,30 +1,42 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
+import { Tooltip } from "antd";
 import styles from "../[id]/worker-detail.module.scss";
 import {
   DAYS_OF_WEEK,
-  DAY_NAMES_SHORT,
-  MONTH_NAMES,
   DayOfWeek,
 } from "@/lib/constants/calendar.constants";
+import { useI18n } from "@/lib/hooks/use-i18n";
 
 interface WorkerCalendarProps {
   selectedDate: Dayjs | null;
   onDateSelect: (date: Dayjs) => void;
+  busyDateMap?: Record<string, number>;
+  monthValue?: Dayjs;
+  onMonthChange?: (month: Dayjs) => void;
+  disableBusyDates?: boolean;
 }
 
 export function WorkerCalendar({
   selectedDate,
   onDateSelect,
+  busyDateMap = {},
+  monthValue,
+  onMonthChange,
+  disableBusyDates = false,
 }: WorkerCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(dayjs());
+  const { locale, t } = useI18n();
+  const [internalMonth, setInternalMonth] = useState(dayjs().startOf("month"));
+  const currentMonth = monthValue ?? internalMonth;
 
-  const isDateDisabled = useCallback((date: Dayjs): boolean => {
-    return date.isBefore(dayjs().startOf("day"));
-  }, []);
+  useEffect(() => {
+    if (monthValue) {
+      setInternalMonth(monthValue.startOf("month"));
+    }
+  }, [monthValue]);
 
   const isDateSelected = useCallback((date: Dayjs): boolean => {
     if (!selectedDate) return false;
@@ -36,18 +48,24 @@ export function WorkerCalendar({
   }, []);
 
   const handleDateClick = useCallback((date: Dayjs): void => {
-    if (!date.isBefore(dayjs().startOf("day"))) {
-      onDateSelect(date);
-    }
+    onDateSelect(date);
   }, [onDateSelect]);
 
   const handlePreviousMonth = useCallback((): void => {
-    setCurrentMonth((prev) => prev.subtract(1, "month"));
-  }, []);
+    const nextMonth = currentMonth.subtract(1, "month").startOf("month");
+    setInternalMonth(nextMonth);
+    if (onMonthChange) {
+      onMonthChange(nextMonth);
+    }
+  }, [currentMonth, onMonthChange]);
 
   const handleNextMonth = useCallback((): void => {
-    setCurrentMonth((prev) => prev.add(1, "month"));
-  }, []);
+    const nextMonth = currentMonth.add(1, "month").startOf("month");
+    setInternalMonth(nextMonth);
+    if (onMonthChange) {
+      onMonthChange(nextMonth);
+    }
+  }, [currentMonth, onMonthChange]);
 
   const calendarDays = useMemo(() => {
     const startOfMonth = currentMonth.startOf("month");
@@ -65,6 +83,24 @@ export function WorkerCalendar({
   const firstDayOfWeek = currentMonth.startOf("month").day();
 
   const gridCells = calendarDays;
+
+  const weekdayNames = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+    const sunday = new Date(Date.UTC(2026, 0, 4));
+    return DAYS_OF_WEEK.map((_, index) => {
+      const current = new Date(sunday);
+      current.setUTCDate(sunday.getUTCDate() + index);
+      return formatter.format(current);
+    });
+  }, [locale]);
+
+  const monthTitle = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(locale, {
+      month: "long",
+      year: "numeric",
+    });
+    return formatter.format(currentMonth.toDate());
+  }, [currentMonth, locale]);
 
   const getColumnClassName = (columnStart: number): string => {
     switch (columnStart) {
@@ -111,7 +147,7 @@ export function WorkerCalendar({
           </svg>
         </button>
         <div className={styles.calendarTitle}>
-          {MONTH_NAMES[currentMonth.month()]} {currentMonth.year()}
+          {monthTitle}
         </div>
         <button
           type="button"
@@ -138,35 +174,50 @@ export function WorkerCalendar({
       </div>
 
       <div className={styles.calendarWeekdays}>
-        {DAYS_OF_WEEK.map((dayIndex) => (
-          <div key={dayIndex} className={styles.calendarWeekday}>
-            {DAY_NAMES_SHORT[dayIndex]}
+        {weekdayNames.map((dayName, index) => (
+          <div key={`weekday-${index}`} className={styles.calendarWeekday}>
+            {dayName}
           </div>
         ))}
       </div>
 
       <div className={styles.calendarGrid}>
         {gridCells.map((date) => {
-          const isDisabled = isDateDisabled(date);
           const isSelected = isDateSelected(date);
           const isToday = isDateToday(date);
+          const hasBooking = (busyDateMap[date.format("YYYY-MM-DD")] ?? 0) > 0;
+          const isDisabled = disableBusyDates && hasBooking;
           const dayOfWeek = date.day();
           const columnStart = dayOfWeek === 0 ? 1 : dayOfWeek + 1;
 
           return (
-            <button
+            <Tooltip
               key={date.format("YYYY-MM-DD")}
-              type="button"
-              onClick={() => handleDateClick(date)}
-              disabled={isDisabled}
-              className={`${styles.calendarDay} ${
-                isSelected ? styles.calendarDaySelected : ""
-              } ${isToday ? styles.calendarDayToday : ""} ${
-                isDisabled ? styles.calendarDayDisabled : ""
-              } ${getColumnClassName(columnStart)}`}
+              title={
+                isDisabled
+                  ? t("booking.worker.schedule.busyDayTooltip")
+                  : undefined
+              }
             >
-              {date.date()}
-            </button>
+              <span
+                className={`${styles.calendarTooltipWrap} ${getColumnClassName(
+                  columnStart
+                )}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleDateClick(date)}
+                  disabled={isDisabled}
+                  className={`${styles.calendarDay} ${
+                    isSelected ? styles.calendarDaySelected : ""
+                  } ${isToday ? styles.calendarDayToday : ""} ${
+                    hasBooking ? styles.calendarDayBusy : ""
+                  } ${isDisabled ? styles.calendarDayDisabled : ""}`}
+                >
+                  {date.date()}
+                </button>
+              </span>
+            </Tooltip>
           );
         })}
       </div>

@@ -27,6 +27,13 @@ export interface WorkerReviewItem {
   created_at: Date;
 }
 
+export interface WorkerScheduleItem {
+  booking_id: string;
+  start_time: Date;
+  end_time: Date;
+  status: string;
+}
+
 export interface WorkerDetailResponse {
   user: {
     id: string;
@@ -275,6 +282,34 @@ export class WorkerService {
     );
 
     return groupsWithAvailability.filter((group) => group.workers.length > 0);
+  }
+
+  async getWorkerSchedule(
+    workerId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<WorkerScheduleItem[]> {
+    const user = await userRepository.findById(workerId);
+
+    if (!user) {
+      throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
+    }
+    if (!user.worker_profile) {
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+    }
+
+    const schedules = await bookingRepository.findScheduleByWorkerId(
+      workerId,
+      startDate,
+      endDate
+    );
+
+    return schedules.map((item) => ({
+      booking_id: item._id.toString(),
+      start_time: item.schedule.start_time,
+      end_time: item.schedule.end_time,
+      status: item.status,
+    }));
   }
 }
 
