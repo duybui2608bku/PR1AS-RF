@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Dropdown, MenuProps } from "antd";
-import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined } from "@ant-design/icons";
+import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
@@ -59,6 +59,10 @@ export const UserMenu = () => {
         router.push(AppRoute.NOTIFICATIONS);
     }, [router]);
 
+    const handleNavigateToPricing = useCallback(() => {
+        router.push(AppRoute.PRICING);
+    }, [router]);
+
     const handleNavigateToWallet = useCallback(() => {
         if (userData.isWorkerActive) {
             router.push(AppRoute.WORKER_WALLET);
@@ -74,6 +78,12 @@ export const UserMenu = () => {
             router.push(AppRoute.CLIENT_BOOKINGS);
         }
     }, [router, userData.isWorkerActive]);
+
+    const currentPlanLabel = useMemo(() => {
+        const planCode = user?.pricing_plan_code || "standard";
+        const formattedPlan = planCode.charAt(0).toUpperCase() + planCode.slice(1);
+        return `Current plan: ${formattedPlan}`;
+    }, [user?.pricing_plan_code]);
 
     const userMenuItems: MenuProps["items"] = useMemo(() => [
         {
@@ -101,6 +111,12 @@ export const UserMenu = () => {
             onClick: handleNavigateToWallet,
         },
         {
+            key: "pricing-plan",
+            icon: <CrownOutlined />,
+            label: currentPlanLabel,
+            onClick: handleNavigateToPricing,
+        },
+        {
             key: "client-bookings",
             icon: <BookOutlined />,
             label: t("dashboard.header.clientBookings"),
@@ -116,7 +132,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToBookings, handleLogout]);
+    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleLogout, currentPlanLabel]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {

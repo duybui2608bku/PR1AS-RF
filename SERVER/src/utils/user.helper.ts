@@ -18,6 +18,9 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     client_profile: user.client_profile,
     created_at: user.created_at,
     coords: user.coords,
+    pricing_plan_code: user.pricing_plan_code,
+    pricing_started_at: user.pricing_started_at,
+    pricing_expires_at: user.pricing_expires_at,
   };
 };
 

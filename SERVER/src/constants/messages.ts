@@ -232,4 +232,12 @@ export const PRICING_MESSAGES = {
   PRICING_PACKAGE_DELETED: "Pricing package deleted successfully",
   PRICING_PACKAGE_NOT_FOUND: "Pricing package not found",
   PRICING_PACKAGE_EXISTS: "Pricing package already exists",
+  PRICING_USER_NOT_FOUND: "User not found",
+  PRICING_ME_FETCHED: "Current pricing fetched successfully",
+  PRICING_UPGRADED: "Pricing upgraded successfully",
+  PRICING_INSUFFICIENT_BALANCE: "Insufficient wallet balance for upgrade",
+  PRICING_INVALID_TARGET_PLAN: "Invalid target plan",
+  PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER:
+    "Current plan is already equal or higher than target plan",
+  PRICING_PACKAGE_NOT_AVAILABLE: "Target pricing package is not available",
 } as const;

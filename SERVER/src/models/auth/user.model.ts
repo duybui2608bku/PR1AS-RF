@@ -7,6 +7,7 @@ import {
   UserRole,
   UserStatus,
 } from "../../types";
+import { PricingPlanCode } from "../../constants/pricing";
 import { modelsName } from "../models.name";
 
 const userSchema = new Schema<IUserDocument>(
@@ -142,6 +143,21 @@ const userSchema = new Schema<IUserDocument>(
         default: null,
       },
     },
+    pricing_plan_code: {
+      type: String,
+      enum: Object.values(PricingPlanCode),
+      default: PricingPlanCode.STANDARD,
+      index: true,
+    },
+    pricing_started_at: {
+      type: Date,
+      default: null,
+    },
+    pricing_expires_at: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: false,
@@ -160,5 +176,6 @@ const userSchema = new Schema<IUserDocument>(
 userSchema.index({ email: 1 });
 userSchema.index({ password_reset_token: 1 });
 userSchema.index({ email_verification_token: 1 });
+userSchema.index({ pricing_plan_code: 1, pricing_expires_at: 1 });
 
 export const User = mongoose.model<IUserDocument>(modelsName.USER, userSchema);

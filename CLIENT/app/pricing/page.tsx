@@ -11,8 +11,11 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { pricingApi, PricingPackage, PricingPlanCode } from "@/lib/api/pricing.api";
+import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { authApi } from "@/lib/api/auth.api";
 import styles from "./page.module.scss";
 
 const { Title, Text, Paragraph } = Typography;
@@ -33,15 +36,52 @@ const PricingIcon = ({ value }: { value: string | false }) => {
 
 export default function PricingPage() {
   const { t } = useTranslation();
+  const { setUser } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const {
     data: packages,
     isLoading,
     isError,
+    refetch: refetchPackages,
   } = useQuery({
     queryKey: ["public-pricing-packages"],
     queryFn: () => pricingApi.getPublicPackages(),
   });
+
+  const {
+    data: myPricing,
+    refetch: refetchMyPricing,
+  } = useQuery({
+    queryKey: ["my-pricing"],
+    queryFn: () => pricingApi.getMyPricing(),
+    staleTime: 1000 * 60,
+    retry: false,
+  });
+
+  const upgradeMutation = useStandardizedMutation(
+    (variables: { targetPlanCode: PricingPlanCode }) =>
+      pricingApi.upgradePricing({
+        target_plan_code: variables.targetPlanCode,
+        duration_months: 1,
+        idempotency_key: `${variables.targetPlanCode}-${Date.now()}`,
+      }),
+    {
+      onSuccess: async (data) => {
+        const latestUser = await authApi.getMe();
+        setUser(latestUser);
+
+        queryClient.setQueryData(["user-profile"], latestUser);
+        queryClient.setQueryData(["my-pricing"], data);
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["auth", "me"] }),
+          refetchMyPricing(),
+          refetchPackages(),
+        ]);
+      },
+    }
+  );
 
   const packageByCode = useMemo(() => {
     const map = new Map<PricingPlanCode, PricingPackage>();
@@ -286,9 +326,17 @@ export default function PricingPage() {
                   type={plan.ctaType}
                   size="large"
                   block
+                  onClick={() =>
+                    upgradeMutation.mutate({ targetPlanCode: plan.key as PricingPlanCode })
+                  }
+                  loading={
+                    upgradeMutation.isPending &&
+                    upgradeMutation.variables?.targetPlanCode === plan.key
+                  }
+                  disabled={myPricing?.plan_code === plan.key}
                   className={`${styles.ctaBtn} ${plan.highlighted ? styles.ctaBtnGold : ""}`}
                 >
-                  {plan.cta}
+                  {myPricing?.plan_code === plan.key ? "Current plan" : plan.cta}
                 </Button>
               </div>
             </div>

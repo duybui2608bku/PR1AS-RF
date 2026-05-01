@@ -1,4 +1,5 @@
 import { Document } from "mongoose";
+import { PricingPlanCode } from "../../constants/pricing";
 
 export enum UserRole {
   CLIENT = "client",
@@ -69,6 +70,9 @@ export interface IUser {
     latitude: number | null;
     longitude: number | null;
   };
+  pricing_plan_code: PricingPlanCode;
+  pricing_started_at: Date | null;
+  pricing_expires_at: Date | null;
 }
 
 export interface IUserDocument extends IUser, Document {}
@@ -90,6 +94,9 @@ export interface IUserPublic {
     longitude: number | null;
   };
   created_at: Date;
+  pricing_plan_code: PricingPlanCode;
+  pricing_started_at: Date | null;
+  pricing_expires_at: Date | null;
 }
 
 export interface RegisterInput {

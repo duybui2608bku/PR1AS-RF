@@ -16,5 +16,6 @@ export const modelsName = {
   PUSH_SUBSCRIPTION: "push_subscriptions",
   NOTIFICATION_DELIVERY_LOG: "notification_delivery_logs",
   LOCATION: "locations",
+  PRICING_PACKAGE: "pricing_packages",
+  USER_SUBSCRIPTION_HISTORY: "user_subscription_histories",
 };
-

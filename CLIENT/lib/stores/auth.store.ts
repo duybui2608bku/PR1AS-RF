@@ -13,6 +13,9 @@ export interface User {
   role?: string;
   roles?: string[];
   last_active_role?: "client" | "worker" | "admin";
+  pricing_plan_code?: "standard" | "gold" | "diamond";
+  pricing_started_at?: string | null;
+  pricing_expires_at?: string | null;
   worker_profile?: {
     date_of_birth?: string;
     gender?: string;

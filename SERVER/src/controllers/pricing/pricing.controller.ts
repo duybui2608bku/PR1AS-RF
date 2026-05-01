@@ -5,10 +5,30 @@ import { R, validateWithSchema } from "../../utils";
 import {
   createPricingPackageSchema,
   pricingPackageIdParamSchema,
+  upgradePricingSchema,
   updatePricingPackageSchema,
 } from "../../validations/pricing";
+import { AuthRequest } from "../../middleware/auth";
+import { extractUserIdFromRequest } from "../../utils";
 
 export class PricingController {
+  async getMyPricing(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const pricing = await pricingService.getMyPricing(userId);
+    R.success(res, pricing, PRICING_MESSAGES.PRICING_ME_FETCHED, req);
+  }
+
+  async upgradePricing(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const payload = validateWithSchema(
+      upgradePricingSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const pricing = await pricingService.upgradePricing(userId, payload);
+    R.success(res, pricing, PRICING_MESSAGES.PRICING_UPGRADED, req);
+  }
+
   async getPublicPackages(req: Request, res: Response): Promise<void> {
     const packages = await pricingService.getPublicPackages();
     R.success(res, packages, PRICING_MESSAGES.PRICING_PACKAGES_FETCHED, req);

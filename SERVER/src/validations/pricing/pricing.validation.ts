@@ -44,3 +44,9 @@ export const updatePricingPackageSchema = z
 export const pricingPackageIdParamSchema = z.object({
   id: objectIdSchema,
 });
+
+export const upgradePricingSchema = z.object({
+  target_plan_code: z.nativeEnum(PricingPlanCode),
+  duration_months: z.number().int().min(1).max(24).default(1),
+  idempotency_key: z.string().trim().min(8).max(128).optional(),
+});

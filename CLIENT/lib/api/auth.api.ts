@@ -2,7 +2,7 @@
 
 import { api, extractData } from "../axios/index";
 import type { ApiResponse } from "../axios";
-import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
+import { ApiEndpoint } from "../constants/api-endpoints";
 import { normalizeEmail } from "../utils/auth-input.utils";
 
 export interface RegisterInput {
@@ -43,6 +43,9 @@ export interface UserProfile {
   last_active_role?: string;
   verify_email?: boolean;
   worker_profile?: unknown;
+  pricing_plan_code?: "standard" | "gold" | "diamond";
+  pricing_started_at?: string | null;
+  pricing_expires_at?: string | null;
 }
 
 export interface SwitchRoleInput {

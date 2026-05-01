@@ -14,6 +14,18 @@ export interface PricingPlanFeatures {
   ads_enabled: boolean;
 }
 
+export const PRICING_PLAN_RANK: Record<PricingPlanCode, number> = {
+  [PricingPlanCode.STANDARD]: 0,
+  [PricingPlanCode.GOLD]: 1,
+  [PricingPlanCode.DIAMOND]: 2,
+};
+
+export const PRICING_PLAN_MONTHLY_PRICE: Record<PricingPlanCode, number> = {
+  [PricingPlanCode.STANDARD]: 0,
+  [PricingPlanCode.GOLD]: 199000,
+  [PricingPlanCode.DIAMOND]: 399000,
+};
+
 export const DEFAULT_PRICING_PLAN_FEATURES: Record<
   PricingPlanCode,
   PricingPlanFeatures

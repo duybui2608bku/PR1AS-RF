@@ -2,12 +2,26 @@ import { Router } from "express";
 import { pricingController } from "../../controllers/pricing";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { adminOnly, authenticate } from "../../middleware/auth";
+import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
 router.get(
   "/packages",
   asyncHandler(pricingController.getPublicPackages.bind(pricingController))
+);
+
+router.get(
+  "/me",
+  authenticate,
+  asyncHandler(pricingController.getMyPricing.bind(pricingController))
+);
+
+router.post(
+  "/upgrade",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler(pricingController.upgradePricing.bind(pricingController))
 );
 
 router.get(

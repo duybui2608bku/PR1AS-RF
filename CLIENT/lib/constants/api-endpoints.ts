@@ -44,6 +44,8 @@ export enum ApiEndpoint {
   ADMIN_WALLET_TOP_USERS = "/admin/wallet/top-users",
   ADMIN_WALLET_CHART = "/admin/wallet/chart",
   PRICING_PACKAGES = "/pricing/packages",
+  PRICING_ME = "/pricing/me",
+  PRICING_UPGRADE = "/pricing/upgrade",
   ADMIN_PRICING_PACKAGES = "/pricing/packages/admin",
   ADMIN_PRICING_PACKAGE_BY_ID = "/pricing/packages/admin/:id",
   BOOKINGS = "/bookings",

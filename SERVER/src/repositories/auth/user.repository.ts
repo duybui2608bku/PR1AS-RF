@@ -4,6 +4,7 @@ import {
   UserRole,
   UserStatus,
 } from "../../types/auth/user.types";
+import { PricingPlanCode } from "../../constants/pricing";
 import { GetUsersQuery } from "../../types/user/user.dto";
 
 export interface CreateUserInput {
@@ -66,6 +67,9 @@ export class UserRepository {
       verify_email: false,
       created_at: new Date(),
       last_login: null,
+      pricing_plan_code: PricingPlanCode.STANDARD,
+      pricing_started_at: null,
+      pricing_expires_at: null,
     });
 
     return user.save();
@@ -136,6 +140,25 @@ export class UserRepository {
 
   async findByIdWithPassword(id: string): Promise<IUserDocument | null> {
     return User.findById(id);
+  }
+
+  async updatePricingInfo(
+    id: string,
+    pricing: {
+      pricing_plan_code: PricingPlanCode;
+      pricing_started_at: Date | null;
+      pricing_expires_at: Date | null;
+    }
+  ): Promise<IUserDocument | null> {
+    return User.findByIdAndUpdate(
+      id,
+      {
+        pricing_plan_code: pricing.pricing_plan_code,
+        pricing_started_at: pricing.pricing_started_at,
+        pricing_expires_at: pricing.pricing_expires_at,
+      },
+      { new: true }
+    );
   }
 
   async emailExists(email: string): Promise<boolean> {

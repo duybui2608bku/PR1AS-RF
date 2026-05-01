@@ -53,7 +53,28 @@ function ProfileContent() {
     }
 
     router.push(`/auth/verify-email?email=${encodeURIComponent(profile.email)}`);
-  }, [router, profile?.email]);
+  }, [router, profile]);
+
+  const formattedPlanLabel = (() => {
+    if (!profile?.pricing_plan_code) {
+      return t("profile.info.notSet");
+    }
+    return profile.pricing_plan_code.charAt(0).toUpperCase() + profile.pricing_plan_code.slice(1);
+  })();
+
+  const formattedPricingStartDate = (() => {
+    if (!profile?.pricing_started_at) {
+      return t("profile.info.notSet");
+    }
+    return new Date(profile.pricing_started_at).toLocaleString();
+  })();
+
+  const formattedPricingExpiryDate = (() => {
+    if (!profile?.pricing_expires_at) {
+      return t("profile.info.notSet");
+    }
+    return new Date(profile.pricing_expires_at).toLocaleString();
+  })();
 
   return (
     <div className={styles.container}>
@@ -171,6 +192,30 @@ function ProfileContent() {
                   <Descriptions.Item label={t("profile.info.lastActiveRole")}>
                     {profile?.last_active_role ? (
                       <Tag color="purple">{profile.last_active_role}</Tag>
+                    ) : (
+                      <Text type="secondary">{t("profile.info.notSet")}</Text>
+                    )}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Current Plan">
+                    {profile?.pricing_plan_code ? (
+                      <Tag color="gold">{formattedPlanLabel}</Tag>
+                    ) : (
+                      <Text type="secondary">{t("profile.info.notSet")}</Text>
+                    )}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Plan Start">
+                    {profile?.pricing_started_at ? (
+                      <Text>{formattedPricingStartDate}</Text>
+                    ) : (
+                      <Text type="secondary">{t("profile.info.notSet")}</Text>
+                    )}
+                  </Descriptions.Item>
+
+                  <Descriptions.Item label="Plan Expiry">
+                    {profile?.pricing_expires_at ? (
+                      <Text>{formattedPricingExpiryDate}</Text>
                     ) : (
                       <Text type="secondary">{t("profile.info.notSet")}</Text>
                     )}

@@ -24,6 +24,14 @@ export interface PricingPackage {
   updated_at: string;
 }
 
+export interface PricingMeResponse {
+  plan_code: PricingPlanCode;
+  started_at: string | null;
+  expires_at: string | null;
+  is_expired: boolean;
+  package: PricingPackage;
+}
+
 export interface CreatePricingPackageRequest {
   package_code: PricingPlanCode;
   display_name: string;
@@ -37,6 +45,12 @@ export interface UpdatePricingPackageRequest {
   features?: Partial<PricingPlanFeatures>;
 }
 
+export interface UpgradePricingRequest {
+  target_plan_code: PricingPlanCode;
+  duration_months: number;
+  idempotency_key?: string;
+}
+
 export const pricingApi = {
   getPublicPackages: async (): Promise<PricingPackage[]> => {
     const response = await api.get<ApiResponse<PricingPackage[]>>(
@@ -48,6 +62,23 @@ export const pricingApi = {
   getAdminPackages: async (): Promise<PricingPackage[]> => {
     const response = await api.get<ApiResponse<PricingPackage[]>>(
       ApiEndpoint.ADMIN_PRICING_PACKAGES
+    );
+    return extractData(response);
+  },
+
+  getMyPricing: async (): Promise<PricingMeResponse> => {
+    const response = await api.get<ApiResponse<PricingMeResponse>>(
+      ApiEndpoint.PRICING_ME
+    );
+    return extractData(response);
+  },
+
+  upgradePricing: async (
+    payload: UpgradePricingRequest
+  ): Promise<PricingMeResponse> => {
+    const response = await api.post<ApiResponse<PricingMeResponse>>(
+      ApiEndpoint.PRICING_UPGRADE,
+      payload
     );
     return extractData(response);
   },

@@ -28,6 +28,7 @@ import {
   createEmailVerificationExpiry,
 } from "../../utils/date";
 import { toPublicUser } from "../../utils/user.helper";
+import { pricingService } from "../pricing";
 
 export class AuthService {
   private hashOpaqueToken(token: string): string {
@@ -161,6 +162,7 @@ export class AuthService {
   }
 
   async getMe(userId: string): Promise<IUserPublic> {
+    await pricingService.ensureUserPlanActive(userId);
     const user = await userRepository.findById(userId);
     if (!user) {
       throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
