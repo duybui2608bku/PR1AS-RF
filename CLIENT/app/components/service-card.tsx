@@ -15,6 +15,14 @@ import { ServiceListing } from "@/lib/types/service-listing";
 
 const { Text, Title } = Typography;
 
+const USER_OUTLINED_ICON = <UserOutlined />;
+
+const priceFormatter = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
+  maximumFractionDigits: 0,
+});
+
 interface ServiceCardProps {
   service: ServiceListing;
   size?: "small" | "medium" | "large";
@@ -29,17 +37,9 @@ const ServiceCardComponent = ({
   const { t } = useTranslation();
   const [isLiked, setIsLiked] = useState(false);
 
-  const formatPrice = useCallback((price: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      maximumFractionDigits: 0,
-    }).format(price);
-  }, []);
-
   const formattedPrice = useMemo(
-    () => formatPrice(service.price),
-    [service.price, formatPrice]
+    () => priceFormatter.format(service.price),
+    [service.price]
   );
 
   const titleLevel = useMemo(() => (size === "large" ? 4 : 5), [size]);
@@ -68,12 +68,12 @@ const ServiceCardComponent = ({
           sizes="(max-width: 768px) 80vw, (max-width: 1200px) 33vw, 25vw"
         />
 
-        {service.loved && (
+        {service.loved ? (
           <div className={styles.badge}>
             <span aria-hidden>★</span>
             {t("serviceCard.loved")}
           </div>
-        )}
+        ) : null}
 
         <span className={styles.eyebrow}>{service.category}</span>
 
@@ -131,7 +131,7 @@ const ServiceCardComponent = ({
                   <Avatar
                     size={28}
                     src={service.users[0].avatar}
-                    icon={<UserOutlined />}
+                    icon={USER_OUTLINED_ICON}
                   />
                   <Text className={styles.userNameText}>
                     {service.users[0].name}
@@ -147,7 +147,7 @@ const ServiceCardComponent = ({
                     <Avatar
                       key={user.id}
                       src={user.avatar}
-                      icon={<UserOutlined />}
+                      icon={USER_OUTLINED_ICON}
                     />
                   ))}
                 </Avatar.Group>

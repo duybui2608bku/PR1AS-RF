@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, memo } from "react";
+import { useRef, useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { LeftOutlined, RightOutlined, DownOutlined } from "@ant-design/icons";
@@ -90,6 +90,63 @@ enum ScrollConfig {
   AMOUNT = 300,
   THRESHOLD = 10,
 }
+
+interface TabDropdownProps {
+  openDropdown: string;
+  dropdownRef: React.RefObject<HTMLDivElement | null>;
+  activeCategory: string;
+  handleMouseLeave: () => void;
+  dropdownTimeoutRef: React.RefObject<ReturnType<typeof setTimeout> | null>;
+  handleChildClick: (code: string) => void;
+  onClose: () => void;
+  t: (key: string) => string;
+}
+
+const TabDropdown = memo(({
+  openDropdown,
+  dropdownRef,
+  activeCategory,
+  handleMouseLeave,
+  dropdownTimeoutRef,
+  handleChildClick,
+  onClose,
+  t,
+}: TabDropdownProps) => {
+  const tab = CATEGORY_TABS.find((tb) => tb.code === openDropdown);
+  if (!tab?.children) return null;
+
+  const handleDropdownMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+  };
+
+  return (
+    <>
+      <div className={styles.dropdownOverlay} onClick={onClose} />
+      <div
+        ref={dropdownRef}
+        className={styles.dropdownFixed}
+        onMouseEnter={handleDropdownMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {tab.children.map((child) => (
+          <button
+            key={child.code}
+            className={`${styles.dropdownItem} ${activeCategory === child.code ? styles.dropdownItemActive : ""}`}
+            onClick={() => handleChildClick(child.code)}
+            type="button"
+          >
+            <span className={styles.dropdownItemIcon}>{child.icon}</span>
+            <span className={styles.dropdownItemLabel}>{t(child.labelKey)}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+});
+TabDropdown.displayName = "TabDropdown";
 
 const CategoryTabsComponent = ({ variant = "default" }: CategoryTabsProps) => {
   const { t } = useTranslation();
@@ -231,10 +288,18 @@ const CategoryTabsComponent = ({ variant = "default" }: CategoryTabsProps) => {
     dropdownElement.style.top = `${dropdownPos.top}px`;
   }, [dropdownPos, openDropdown]);
 
-  const tabsToRender =
-    variant === "inline"
-      ? CATEGORY_TABS.map((tab) => ({ ...tab, iconImage: undefined }))
-      : CATEGORY_TABS;
+  const handleCloseDropdown = useCallback(() => setOpenDropdown(null), []);
+
+  const handleScrollLeft = useCallback(() => handleScroll("left"), [handleScroll]);
+  const handleScrollRight = useCallback(() => handleScroll("right"), [handleScroll]);
+
+  const tabsToRender = useMemo(
+    () =>
+      variant === "inline"
+        ? CATEGORY_TABS.map((tab) => ({ ...tab, iconImage: undefined }))
+        : CATEGORY_TABS,
+    [variant]
+  );
   const shouldCompact = variant === "default" && isCompact;
 
   return (
@@ -282,11 +347,11 @@ const CategoryTabsComponent = ({ variant = "default" }: CategoryTabsProps) => {
                       ) : null}
                       <span className={styles.tabLabel}>
                         {t(tab.labelKey)}
-                        {hasChildren && (
+                        {hasChildren ? (
                           <DownOutlined
                             className={`${styles.dropdownArrow} ${isOpen ? styles.dropdownArrowOpen : ""}`}
                           />
-                        )}
+                        ) : null}
                       </span>
                     </button>
                   </div>
@@ -296,65 +361,40 @@ const CategoryTabsComponent = ({ variant = "default" }: CategoryTabsProps) => {
           </div>
         </div>
 
-        {/* Dropdown rendered outside scroll container with position:fixed */}
-        {openDropdown && (() => {
-          const tab = CATEGORY_TABS.find((t) => t.code === openDropdown);
-          if (!tab?.children) return null;
-          return (
-            <>
-              {/* Overlay for mobile tap-to-close */}
-              <div
-                className={styles.dropdownOverlay}
-                onClick={() => setOpenDropdown(null)}
-              />
-              <div
-                ref={dropdownRef}
-                className={styles.dropdownFixed}
-                onMouseEnter={() => {
-                  if (dropdownTimeoutRef.current) {
-                    clearTimeout(dropdownTimeoutRef.current);
-                    dropdownTimeoutRef.current = null;
-                  }
-                }}
-                onMouseLeave={handleMouseLeave}
-              >
-                {tab.children.map((child) => (
-                  <button
-                    key={child.code}
-                    className={`${styles.dropdownItem} ${activeCategory === child.code ? styles.dropdownItemActive : ""}`}
-                    onClick={() => handleChildClick(child.code)}
-                    type="button"
-                  >
-                    <span className={styles.dropdownItemIcon}>{child.icon}</span>
-                    <span className={styles.dropdownItemLabel}>{t(child.labelKey)}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          );
-        })()}
+        {openDropdown ? (
+          <TabDropdown
+            openDropdown={openDropdown}
+            dropdownRef={dropdownRef}
+            activeCategory={activeCategory}
+            handleMouseLeave={handleMouseLeave}
+            dropdownTimeoutRef={dropdownTimeoutRef}
+            handleChildClick={handleChildClick}
+            onClose={handleCloseDropdown}
+            t={t}
+          />
+        ) : null}
 
-        {canScrollLeft && (
+        {canScrollLeft ? (
           <button
             className={`${styles.scrollBtn} ${styles.scrollBtnLeft}`}
-            onClick={() => handleScroll("left")}
+            onClick={handleScrollLeft}
             type="button"
             aria-label="Scroll left"
           >
             <LeftOutlined className={styles.scrollIcon} />
           </button>
-        )}
+        ) : null}
 
-        {canScrollRight && (
+        {canScrollRight ? (
           <button
             className={`${styles.scrollBtn} ${styles.scrollBtnRight}`}
-            onClick={() => handleScroll("right")}
+            onClick={handleScrollRight}
             type="button"
             aria-label="Scroll right"
           >
             <RightOutlined className={styles.scrollIcon} />
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

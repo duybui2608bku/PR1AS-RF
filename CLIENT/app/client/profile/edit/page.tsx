@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Form,
@@ -26,6 +26,7 @@ import {
   userProfileApi,
   type UpdateBasicProfileInput,
 } from "@/lib/api/user.api";
+import type { UserProfile } from "@/lib/api/auth.api";
 import { AvatarUpload } from "@/app/components/avatar-upload";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { AppRoute } from "@/lib/constants/routes";
@@ -49,26 +50,28 @@ function EditProfileContent() {
 
   const avatarUrl = avatarOverride ?? profile?.avatar ?? user?.avatar ?? null;
 
+  const handleUpdateProfileSuccess = useCallback((updatedUser: UserProfile) => {
+    if (user) {
+      const currentPhone =
+        typeof user.phone === "string" ? user.phone : undefined;
+      setUser({
+        ...user,
+        avatar: updatedUser.avatar || user.avatar,
+        name: updatedUser.full_name || user.name,
+        phone: updatedUser.phone || currentPhone,
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    message.success(t("profile.edit.success"));
+    router.push(AppRoute.CLIENT_PROFILE);
+  }, [user, setUser, queryClient, t, router]);
+
   const updateProfileMutation = useStandardizedMutation(
     (data: UpdateBasicProfileInput) =>
       userProfileApi.updateBasicProfile(data),
     {
-      onSuccess: (updatedUser) => {
-        if (user) {
-          const currentPhone =
-            typeof user.phone === "string" ? user.phone : undefined;
-          setUser({
-            ...user,
-            avatar: updatedUser.avatar || user.avatar,
-            name: updatedUser.full_name || user.name,
-            phone: updatedUser.phone || currentPhone,
-          });
-        }
-
-        queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-        message.success(t("profile.edit.success"));
-        router.push(AppRoute.CLIENT_PROFILE);
-      },
+      onSuccess: handleUpdateProfileSuccess,
     }
   );
 
@@ -81,7 +84,7 @@ function EditProfileContent() {
     }
   }, [profile, form]);
 
-  const handleSubmit = async (values: {
+  const handleSubmit = useCallback(async (values: {
     full_name?: string;
     phone?: string;
     password?: string;
@@ -119,11 +122,15 @@ function EditProfileContent() {
     } catch (_error) {
       message.error(t("profile.edit.error"));
     }
-  };
+  }, [avatarUrl, t, updateProfileMutation]);
 
-  const handleAvatarChange = (url: string | null) => {
+  const handleAvatarChange = useCallback((url: string | null) => {
     setAvatarOverride(url);
-  };
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    router.push(AppRoute.CLIENT_PROFILE);
+  }, [router]);
 
   return (
     <Layout className={styles.layout}>
@@ -253,9 +260,7 @@ function EditProfileContent() {
                       >
                         {t("profile.edit.update")}
                       </Button>
-                      <Button
-                        onClick={() => router.push(AppRoute.CLIENT_PROFILE)}
-                      >
+                      <Button onClick={handleCancel}>
                         {t("profile.edit.cancel")}
                       </Button>
                     </Space>

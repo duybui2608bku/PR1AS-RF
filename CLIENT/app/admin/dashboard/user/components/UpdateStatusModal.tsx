@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Modal, Space, Typography } from "antd";
 import type { TFunction } from "i18next";
 import type { User } from "@/lib/api/user.api";
@@ -14,7 +15,7 @@ interface UpdateStatusModalProps {
   t: TFunction;
 }
 
-export function UpdateStatusModal({
+export const UpdateStatusModal = memo(function UpdateStatusModal({
   open,
   selectedUser,
   newStatus,
@@ -34,7 +35,7 @@ export function UpdateStatusModal({
       cancelText={t("common.cancel")}
       centered
     >
-      {selectedUser && newStatus && (
+      {selectedUser && newStatus ? (
         <Space orientation="vertical" size="middle" className={styles.modalSpace}>
           <Typography.Text>
             {t("admin.user.updateStatus.message", {
@@ -44,7 +45,7 @@ export function UpdateStatusModal({
             })}
           </Typography.Text>
         </Space>
-      )}
+      ) : null}
     </Modal>
   );
-}
+});

@@ -1,6 +1,6 @@
  "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { Breakpoint } from "@/lib/constants/ui.constants";
 import { GroupChatView } from "./components/GroupChatView";
@@ -22,18 +22,20 @@ function GroupChatContent() {
     };
 
     handleResize();
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  const handleBackToGroupList = useCallback(() => setShowGroupList(true), []);
 
   return (
     <div className={styles.chatContainer}>
       <GroupChatView
         isMobile={isMobile}
         showGroupList={showGroupList}
-        onBackToGroupList={() => setShowGroupList(true)}
+        onBackToGroupList={handleBackToGroupList}
         onGroupListVisibilityChange={setShowGroupList}
       />
     </div>

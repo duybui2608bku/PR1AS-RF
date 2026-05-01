@@ -95,7 +95,7 @@ export function WorkerReviews({ reviews = [] }: WorkerReviewsProps) {
             <Paragraph className={styles.reviewComment}>
               {review.comment}
             </Paragraph>
-            {review.worker_reply && (
+            {review.worker_reply ? (
               <div className={styles.workerReply}>
                 <Text strong type="secondary" className={styles.reviewReplyLabel}>
                   {t("worker.detail.reviews.workerReply") || "Phản hồi từ worker:"}
@@ -104,10 +104,10 @@ export function WorkerReviews({ reviews = [] }: WorkerReviewsProps) {
                   {review.worker_reply}
                 </Paragraph>
               </div>
-            )}
-            {index < reviews.length - 1 && (
+            ) : null}
+            {index < reviews.length - 1 ? (
               <Divider className={styles.reviewDivider} />
-            )}
+            ) : null}
           </div>
         ))}
       </div>

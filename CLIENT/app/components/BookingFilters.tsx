@@ -14,6 +14,26 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
+const STATUS_OPTIONS = [
+  BookingStatus.PENDING,
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.COMPLETED,
+  BookingStatus.CANCELLED,
+  BookingStatus.REJECTED,
+  BookingStatus.DISPUTED,
+] as const;
+
+const PAYMENT_STATUS_OPTIONS = [
+  BookingPaymentStatus.PENDING,
+  BookingPaymentStatus.PAID,
+  BookingPaymentStatus.PARTIALLY_REFUNDED,
+  BookingPaymentStatus.REFUNDED,
+] as const;
+
+const UNDO_ICON = <UndoOutlined />;
+const RELOAD_ICON = <ReloadOutlined />;
+
 interface BookingFiltersProps {
   statusFilter: BookingStatus | undefined;
   paymentStatusFilter: BookingPaymentStatus | undefined;
@@ -42,23 +62,6 @@ export const BookingFilters = memo(function BookingFilters({
 }: BookingFiltersProps) {
   const { t } = useTranslation();
 
-  const statusOptions = [
-    BookingStatus.PENDING,
-    BookingStatus.CONFIRMED,
-    BookingStatus.IN_PROGRESS,
-    BookingStatus.COMPLETED,
-    BookingStatus.CANCELLED,
-    BookingStatus.REJECTED,
-    BookingStatus.DISPUTED,
-  ];
-
-  const paymentStatusOptions = [
-    BookingPaymentStatus.PENDING,
-    BookingPaymentStatus.PAID,
-    BookingPaymentStatus.PARTIALLY_REFUNDED,
-    BookingPaymentStatus.REFUNDED,
-  ];
-
   return (
     <Row gutter={[Spacing.LG, Spacing.LG]} className={className}>
       <Col xs={24} sm={12} md={5}>
@@ -71,7 +74,7 @@ export const BookingFilters = memo(function BookingFilters({
             allowClear
           >
             <Option value="all">{t("booking.list.filters.all")}</Option>
-            {statusOptions.map((status) => (
+            {STATUS_OPTIONS.map((status) => (
               <Option key={status} value={status}>
                 {t(`booking.status.${status}`)}
               </Option>
@@ -89,7 +92,7 @@ export const BookingFilters = memo(function BookingFilters({
             allowClear
           >
             <Option value="all">{t("booking.list.filters.all")}</Option>
-            {paymentStatusOptions.map((status) => (
+            {PAYMENT_STATUS_OPTIONS.map((status) => (
               <Option key={status} value={status}>
                 {t(`booking.paymentStatus.${status}`)}
               </Option>
@@ -112,7 +115,7 @@ export const BookingFilters = memo(function BookingFilters({
         <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text className={styles.actionSpacer}> </Text>
           <Button
-            icon={<UndoOutlined />}
+            icon={UNDO_ICON}
             onClick={onReset}
             block
           >
@@ -124,7 +127,7 @@ export const BookingFilters = memo(function BookingFilters({
         <Space orientation="vertical" size="small" className={styles.filterSpace}>
           <Text className={styles.actionSpacer}> </Text>
           <Button
-            icon={<ReloadOutlined />}
+            icon={RELOAD_ICON}
             onClick={onRefresh}
             loading={isLoading}
             block

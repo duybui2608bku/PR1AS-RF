@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import {
@@ -50,6 +50,144 @@ interface GroupChatViewProps {
   onBackToGroupList: () => void;
   onGroupListVisibilityChange: (visible: boolean) => void;
 }
+
+interface AttachActionsProps {
+  onAttachClick: (type: "image" | "file" | "video" | "list") => void;
+}
+
+const AttachActions = memo(function AttachActions({ onAttachClick }: AttachActionsProps) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.attachMenu}>
+      <Button
+        type="text"
+        icon={<PictureOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("image")}
+      >
+        {t("chat.attachImage")}
+      </Button>
+      <Button
+        type="text"
+        icon={<FileOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("file")}
+      >
+        {t("chat.attachFile")}
+      </Button>
+      <Button
+        type="text"
+        icon={<VideoCameraOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("video")}
+      >
+        {t("chat.attachVideo")}
+      </Button>
+      <Button
+        type="text"
+        icon={<UnorderedListOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("list")}
+      >
+        {t("chat.attachList")}
+      </Button>
+    </div>
+  );
+});
+
+interface GroupMessageItemProps {
+  msg: GroupMessage;
+  isOwn: boolean;
+  replyToMessage: GroupMessage | null;
+  currentUserId?: string;
+  onReply: (msg: GroupMessage) => void;
+  t: (key: string) => string;
+}
+
+const GroupMessageItem = memo(function GroupMessageItem({
+  msg,
+  isOwn,
+  replyToMessage,
+  currentUserId,
+  onReply,
+  t,
+}: GroupMessageItemProps) {
+  const handleReply = useCallback(() => onReply(msg), [onReply, msg]);
+
+  return (
+    <div
+      className={`${styles.messageItem} ${
+        isOwn ? styles.ownMessage : styles.otherMessage
+      }`}
+    >
+      <div className={styles.messageAvatarWrapper}>
+        <Avatar
+          size={32}
+          icon={<UserOutlined />}
+        />
+      </div>
+      <div className={styles.messageContent}>
+        {replyToMessage ? (
+          <div className={styles.replyToPreview}>
+            <div className={styles.replyToLine} />
+            <div className={styles.replyToContent}>
+              <Text
+                strong
+                className={styles.replyToAuthor}
+              >
+                {replyToMessage.sender_id === currentUserId
+                  ? t("chat.you")
+                  : t("chat.unknownUser")}
+              </Text>
+              <Text
+                ellipsis
+                className={styles.replyToMessage}
+                title={replyToMessage.content}
+              >
+                {replyToMessage.type === "image"
+                  ? t("chat.sentImage")
+                  : replyToMessage.content}
+              </Text>
+            </div>
+          </div>
+        ) : null}
+        {msg.type === "image" ||
+        (msg.type === "text" && isImageUrl(msg.content)) ? (
+          <div className={styles.messageImage}>
+            <Image
+              src={msg.content}
+              alt="Sent image"
+              className={styles.imagePreview}
+              preview={{
+                src: msg.content,
+              }}
+            />
+          </div>
+        ) : (
+          <Text>{msg.content}</Text>
+        )}
+        <div className={styles.messageMeta}>
+          <Text
+            type="secondary"
+            className={styles.messageTime}
+          >
+            {formatTime(msg.created_at, t as Parameters<typeof formatTime>[1])}
+          </Text>
+        </div>
+      </div>
+      <div className={styles.messageActions}>
+        <Button
+          type="text"
+          size="small"
+          icon={<CommentOutlined />}
+          onClick={handleReply}
+          className={styles.replyButton}
+          title={t("chat.reply")}
+        />
+      </div>
+    </div>
+  );
+});
 
 export function GroupChatView({
   isMobile,
@@ -102,20 +240,21 @@ export function GroupChatView({
     enabled: !!selectedGroupId,
   });
 
-  const selectedGroup = groupsData?.conversations.find(
-    (g) => g._id === selectedGroupId
+  const selectedGroup = useMemo(
+    () => groupsData?.conversations.find((g) => g._id === selectedGroupId),
+    [groupsData?.conversations, selectedGroupId]
   );
 
   const sendGroupMessageMutation = useStandardizedMutation(
     (payload: { content: string; type: "text" | "image" }) => {
-      const selectedGroup = groupsData?.conversations.find(
+      const group = groupsData?.conversations.find(
         (g) => g._id === selectedGroupId
       );
-      if (!selectedGroupId || !selectedGroup?.booking_id) {
+      if (!selectedGroupId || !group?.booking_id) {
         throw new Error(ChatErrorCode.CONVERSATION_NOT_FOUND);
       }
       return chatApi.sendGroupMessage({
-        booking_id: selectedGroup.booking_id,
+        booking_id: group.booking_id,
         content: payload.content,
         type: payload.type,
         reply_to_id: replyingToRef.current?._id ?? null,
@@ -150,19 +289,19 @@ export function GroupChatView({
     }
   );
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (!messageContent.trim()) return;
     sendGroupMessageMutation.mutate({ content: messageContent.trim(), type: "text" });
-  };
+  }, [messageContent, sendGroupMessageMutation]);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
-  };
+  }, [handleSendMessage]);
 
-  const handleSelectGroup = (conversationGroupId: string) => {
+  const handleSelectGroup = useCallback((conversationGroupId: string) => {
     setSelectedGroupId(conversationGroupId);
     setReplyingTo(null);
     replyingToRef.current = null;
@@ -170,7 +309,7 @@ export function GroupChatView({
     if (isMobile) {
       onGroupListVisibilityChange(false);
     }
-  };
+  }, [isMobile, markGroupReadMutation, onGroupListVisibilityChange]);
 
   useEffect(() => {
     if (!initialGroupId || initialGroupSelectedRef.current) {
@@ -199,26 +338,22 @@ export function GroupChatView({
     onGroupListVisibilityChange,
   ]);
 
-  const handleBackToGroupList = () => {
-    onBackToGroupList();
-  };
-
-  const handleReplyMessage = (msg: GroupMessage) => {
+  const handleReplyMessage = useCallback((msg: GroupMessage) => {
     setReplyingTo(msg);
     replyingToRef.current = msg;
-  };
+  }, []);
 
-  const handleCancelReply = () => {
+  const handleCancelReply = useCallback(() => {
     setReplyingTo(null);
     replyingToRef.current = null;
-  };
+  }, []);
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const selectedGroup = groupsData?.conversations.find(
+    const group = groupsData?.conversations.find(
       (g) => g._id === selectedGroupId
     );
-    if (!file || !selectedGroupId || !selectedGroup?.booking_id) return;
+    if (!file || !selectedGroupId || !group?.booking_id) return;
     if (!file.type.startsWith("image/")) {
       message.error(t("chat.errors.invalidImageFile"));
       return;
@@ -234,19 +369,23 @@ export function GroupChatView({
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  };
+  }, [groupsData?.conversations, selectedGroupId, sendGroupMessageMutation, t]);
 
-  const handleAttachClick = (type: "image" | "file" | "video" | "list") => {
+  const handleAttachClick = useCallback((type: "image" | "file" | "video" | "list") => {
     if (type === "image") fileInputRef.current?.click();
     else message.info(t("chat.comingSoon"));
-  };
+  }, [t]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const handleTextAreaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageContent(e.target.value);
+  }, []);
+
+  const handleOverlayClick = useCallback(() => {
+    onGroupListVisibilityChange(false);
+  }, [onGroupListVisibilityChange]);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesData?.messages]);
 
   useEffect(() => {
@@ -261,54 +400,22 @@ export function GroupChatView({
     }
   }, [messagesError, handleError]);
 
-  const messages = messagesData?.messages ?? [];
-  const groups = groupsData?.conversations ?? [];
+  const messages = useMemo(() => messagesData?.messages ?? [], [messagesData?.messages]);
+  const groups = useMemo(() => groupsData?.conversations ?? [], [groupsData?.conversations]);
 
-  const getReplyMessage = (
+  const getReplyMessage = useCallback((
     replyToId: string | null | undefined
   ): GroupMessage | null => {
     if (!replyToId) return null;
     return messages.find((m) => m._id === replyToId) ?? null;
-  };
+  }, [messages]);
 
   const showChatPanel = !!selectedGroupId;
   const isListHidden = isMobile && !showGroupList;
 
-  const renderAttachActions = () => (
-    <div className={styles.attachMenu}>
-      <Button
-        type="text"
-        icon={<PictureOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("image")}
-      >
-        {t("chat.attachImage")}
-      </Button>
-      <Button
-        type="text"
-        icon={<FileOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("file")}
-      >
-        {t("chat.attachFile")}
-      </Button>
-      <Button
-        type="text"
-        icon={<VideoCameraOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("video")}
-      >
-        {t("chat.attachVideo")}
-      </Button>
-      <Button
-        type="text"
-        icon={<UnorderedListOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("list")}
-      >
-        {t("chat.attachList")}
-      </Button>
-    </div>
+  const attachContent = useMemo(
+    () => <AttachActions onAttachClick={handleAttachClick} />,
+    [handleAttachClick]
   );
 
   return (
@@ -323,12 +430,12 @@ export function GroupChatView({
           onSelectGroup={handleSelectGroup}
         />
       </div>
-      {isMobile && showGroupList && showChatPanel && (
+      {isMobile && showGroupList && showChatPanel ? (
         <div
           className={styles.overlay}
-          onClick={() => onGroupListVisibilityChange(false)}
+          onClick={handleOverlayClick}
         />
-      )}
+      ) : null}
       <div
         className={`${styles.chatView} ${
           isMobile && showGroupList ? styles.hidden : ""
@@ -337,18 +444,18 @@ export function GroupChatView({
         {selectedGroupId ? (
           <Fragment>
             <div className={styles.chatHeader}>
-              {isMobile && (
+              {isMobile ? (
                 <Button
                   type="text"
                   icon={<ArrowLeftOutlined />}
-                  onClick={handleBackToGroupList}
+                  onClick={onBackToGroupList}
                   className={styles.backButton}
                 />
-              )}
+              ) : null}
               <Text strong className={styles.chatHeaderTitle}>
                 {selectedGroup?.name ?? t("chat.unknownUser")}
               </Text>
-              {selectedGroup?.booking_id && (
+              {selectedGroup?.booking_id ? (
                 <BookingInfoPopover
                   bookingId={selectedGroup.booking_id}
                   isMobile={isMobile}
@@ -359,7 +466,7 @@ export function GroupChatView({
                     className={styles.bookingInfoButton}
                   />
                 </BookingInfoPopover>
-              )}
+              ) : null}
             </div>
             <div
               className={styles.messagesContainer}
@@ -380,78 +487,15 @@ export function GroupChatView({
                     const isOwn = msg.sender_id === user?.id;
                     const replyToMessage = getReplyMessage(msg.reply_to_id);
                     return (
-                      <div
+                      <GroupMessageItem
                         key={msg._id}
-                        className={`${styles.messageItem} ${
-                          isOwn ? styles.ownMessage : styles.otherMessage
-                        }`}
-                      >
-                        <div className={styles.messageAvatarWrapper}>
-                          <Avatar
-                            size={32}
-                            icon={<UserOutlined />}
-                          />
-                        </div>
-                        <div className={styles.messageContent}>
-                          {replyToMessage && (
-                            <div className={styles.replyToPreview}>
-                              <div className={styles.replyToLine} />
-                              <div className={styles.replyToContent}>
-                                <Text
-                                  strong
-                                  className={styles.replyToAuthor}
-                                >
-                                  {replyToMessage.sender_id === user?.id
-                                    ? t("chat.you")
-                                    : t("chat.unknownUser")}
-                                </Text>
-                                <Text
-                                  ellipsis
-                                  className={styles.replyToMessage}
-                                  title={replyToMessage.content}
-                                >
-                                  {replyToMessage.type === "image"
-                                    ? t("chat.sentImage")
-                                    : replyToMessage.content}
-                                </Text>
-                              </div>
-                            </div>
-                          )}
-                          {msg.type === "image" ||
-                          (msg.type === "text" && isImageUrl(msg.content)) ? (
-                            <div className={styles.messageImage}>
-                              <Image
-                                src={msg.content}
-                                alt="Sent image"
-                                className={styles.imagePreview}
-                                preview={{
-                                  src: msg.content,
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <Text>{msg.content}</Text>
-                          )}
-                          <div className={styles.messageMeta}>
-                            <Text
-                              type="secondary"
-                              className={styles.messageTime}
-                            >
-                              {formatTime(msg.created_at, t)}
-                            </Text>
-                          </div>
-                        </div>
-                        <div className={styles.messageActions}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<CommentOutlined />}
-                            onClick={() => handleReplyMessage(msg)}
-                            className={styles.replyButton}
-                            title={t("chat.reply")}
-                          />
-                        </div>
-                      </div>
+                        msg={msg}
+                        isOwn={isOwn}
+                        replyToMessage={replyToMessage}
+                        currentUserId={user?.id}
+                        onReply={handleReplyMessage}
+                        t={t}
+                      />
                     );
                   })}
                   <div ref={messagesEndRef} />
@@ -466,7 +510,7 @@ export function GroupChatView({
                 className={styles.hiddenInput}
                 onChange={handleImageSelect}
               />
-              {replyingTo && (
+              {replyingTo ? (
                 <div className={styles.replyPreview}>
                   <div className={styles.replyPreviewContent}>
                     <CommentOutlined className={styles.replyIcon} />
@@ -495,10 +539,10 @@ export function GroupChatView({
                     className={styles.replyCancelButton}
                   />
                 </div>
-              )}
+              ) : null}
               <div className={styles.messageInputWrapper}>
                 <Popover
-                  content={renderAttachActions()}
+                  content={attachContent}
                   trigger="click"
                   placement="topLeft"
                 >
@@ -511,7 +555,7 @@ export function GroupChatView({
                 </Popover>
                 <TextArea
                   value={messageContent}
-                  onChange={(e) => setMessageContent(e.target.value)}
+                  onChange={handleTextAreaChange}
                   onKeyDown={handleKeyPress}
                   placeholder={t("chat.inputPlaceholder")}
                   autoSize={{ minRows: 1, maxRows: 4 }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Popover,
@@ -38,6 +38,120 @@ interface BookingInfoPopoverProps {
   children: React.ReactNode;
 }
 
+const getParticipantDisplay = (value: string | BookingParticipant): string => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value.full_name) {
+    return value.full_name;
+  }
+  if (value.email) {
+    return value.email;
+  }
+  return value.id;
+};
+
+interface BookingInfoContentProps {
+  bookingLoading: boolean;
+  bookingError: boolean;
+  bookingData: Booking | undefined;
+  t: ReturnType<typeof useTranslation>["t"];
+}
+
+const BookingInfoContent = memo(function BookingInfoContent({
+  bookingLoading,
+  bookingError,
+  bookingData,
+  t,
+}: BookingInfoContentProps) {
+  if (bookingLoading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (bookingError || !bookingData) {
+    return <Empty description="Không thể tải thông tin đặt chỗ" />;
+  }
+
+  return (
+    <div className={styles.bookingInfoContent}>
+      <Space
+        orientation="vertical"
+        size="middle"
+        className={styles.bookingInfoSection}
+      >
+        <Text type="secondary">Thông tin đặt chỗ</Text>
+        <Divider className={styles.bookingInfoDivider} />
+        <Descriptions
+          size="small"
+          column={1}
+          colon
+          className={styles.bookingInfoDescriptions}
+        >
+          <Descriptions.Item label="Khách hàng">
+            {getParticipantDisplay(
+              bookingData.client_id as unknown as string | BookingParticipant,
+            )}
+          </Descriptions.Item>
+          <Descriptions.Item label="Người thực hiện">
+            {getParticipantDisplay(
+              bookingData.worker_id as unknown as string | BookingParticipant,
+            )}
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider className={styles.bookingInfoDivider} />
+
+        <Descriptions
+          size="small"
+          column={1}
+          colon
+          className={styles.bookingInfoDescriptions}
+        >
+          <Descriptions.Item label="Mã dịch vụ">
+            {bookingData.service_code}
+          </Descriptions.Item>
+          <Descriptions.Item label="Giá">
+            <Space orientation="vertical" size={2}>
+              <Text>{formatVnd(bookingData.pricing.unit_price)}</Text>
+              <Text type="secondary">
+                {bookingData.pricing.quantity} × {bookingData.pricing.unit}
+              </Text>
+              <Text strong>
+                {formatVnd(bookingData.pricing.total_amount)}
+              </Text>
+            </Space>
+          </Descriptions.Item>
+        </Descriptions>
+
+        <Divider className={styles.bookingInfoDivider} />
+
+        <Descriptions
+          size="small"
+          column={1}
+          colon
+          className={styles.bookingInfoDescriptions}
+        >
+          <Descriptions.Item label="Lịch làm việc">
+            <Space orientation="vertical" size={2}>
+              <Text>
+                {formatTime(bookingData.schedule.start_time, t)} đến{" "}
+                {formatTime(bookingData.schedule.end_time, t)}
+              </Text>
+              <Text type="secondary">
+                {bookingData.schedule.duration_hours} giờ
+              </Text>
+            </Space>
+          </Descriptions.Item>
+        </Descriptions>
+      </Space>
+    </div>
+  );
+});
+
 export function BookingInfoPopover({
   bookingId,
   isMobile,
@@ -56,119 +170,24 @@ export function BookingInfoPopover({
     enabled: !!bookingId && open,
   });
 
-  const handleOpenChange = (nextOpen: boolean) => {
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
     if (!bookingId) {
       setOpen(false);
       return;
     }
     setOpen(nextOpen);
-  };
-
-  const getParticipantDisplay = (value: string | BookingParticipant) => {
-    if (typeof value === "string") {
-      return value;
-    }
-    if (value.full_name) {
-      return value.full_name;
-    }
-    if (value.email) {
-      return value.email;
-    }
-    return value.id;
-  };
-
-  const renderContent = () => {
-    if (bookingLoading) {
-      return (
-        <div className={styles.loadingContainer}>
-          <Spin size="large" />
-        </div>
-      );
-    }
-
-    if (bookingError || !bookingData) {
-      return <Empty description="Không thể tải thông tin đặt chỗ" />;
-    }
-
-    return (
-      <div className={styles.bookingInfoContent}>
-        <Space
-          orientation="vertical"
-          size="middle"
-          className={styles.bookingInfoSection}
-        >
-          <Text type="secondary">Thông tin đặt chỗ</Text>
-          <Divider className={styles.bookingInfoDivider} />
-          <Descriptions
-            size="small"
-            column={1}
-            colon
-            className={styles.bookingInfoDescriptions}
-          >
-            <Descriptions.Item label="Khách hàng">
-              {getParticipantDisplay(
-                bookingData.client_id as unknown as string | BookingParticipant,
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Người thực hiện">
-              {getParticipantDisplay(
-                bookingData.worker_id as unknown as string | BookingParticipant,
-              )}
-            </Descriptions.Item>
-          </Descriptions>
-
-          <Divider className={styles.bookingInfoDivider} />
-
-          <Descriptions
-            size="small"
-            column={1}
-            colon
-            className={styles.bookingInfoDescriptions}
-          >
-            <Descriptions.Item label="Mã dịch vụ">
-              {bookingData.service_code}
-            </Descriptions.Item>
-            <Descriptions.Item label="Giá">
-              <Space orientation="vertical" size={2}>
-                <Text>{formatVnd(bookingData.pricing.unit_price)}</Text>
-                <Text type="secondary">
-                  {bookingData.pricing.quantity} × {bookingData.pricing.unit}
-                </Text>
-                <Text strong>
-                  {formatVnd(bookingData.pricing.total_amount)}
-                </Text>
-              </Space>
-            </Descriptions.Item>
-          </Descriptions>
-
-          <Divider className={styles.bookingInfoDivider} />
-
-          <Descriptions
-            size="small"
-            column={1}
-            colon
-            className={styles.bookingInfoDescriptions}
-          >
-            <Descriptions.Item label="Lịch làm việc">
-              <Space orientation="vertical" size={2}>
-                <Text>
-                  {formatTime(bookingData.schedule.start_time, t)} đến{" "}
-                  {formatTime(bookingData.schedule.end_time, t)}
-                </Text>
-                <Text type="secondary">
-                  {bookingData.schedule.duration_hours} giờ
-                </Text>
-              </Space>
-            </Descriptions.Item>
-          </Descriptions>
-        </Space>
-      </div>
-    );
-  };
+  }, [bookingId]);
 
   return (
     <Popover
-      content={renderContent()}
+      content={
+        <BookingInfoContent
+          bookingLoading={bookingLoading}
+          bookingError={bookingError}
+          bookingData={bookingData}
+          t={t}
+        />
+      }
       trigger="click"
       open={open}
       onOpenChange={handleOpenChange}

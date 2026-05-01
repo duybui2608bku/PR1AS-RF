@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -42,17 +43,17 @@ function ProfileContent() {
     retry: false,
   });
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     router.push(AppRoute.CLIENT_PROFILE_EDIT);
-  };
+  }, [router]);
 
-  const handleVerifyEmail = () => {
+  const handleVerifyEmail = useCallback(() => {
     if (!profile?.email) {
       return;
     }
 
     router.push(`/auth/verify-email?email=${encodeURIComponent(profile.email)}`);
-  };
+  }, [router, profile?.email]);
 
   return (
     <div className={styles.container}>
@@ -77,7 +78,7 @@ function ProfileContent() {
                   <Title level={4} className={styles.avatarTitle}>
                     {profile?.full_name || profile?.email || "User"}
                   </Title>
-                  {profile?.roles && profile.roles.length > 0 && (
+                  {profile?.roles && profile.roles.length > 0 ? (
                     <Space className={styles.rolesSpace} wrap>
                       {profile.roles.map((role) => (
                         <Tag key={role} color="blue">
@@ -85,7 +86,7 @@ function ProfileContent() {
                         </Tag>
                       ))}
                     </Space>
-                  )}
+                  ) : null}
                 </div>
               </Col>
 

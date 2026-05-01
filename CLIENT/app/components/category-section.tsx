@@ -38,6 +38,20 @@ interface CategorySectionProps {
   eyebrow?: string;
 }
 
+interface ServiceCardItemProps {
+  service: ServiceListing;
+  onServiceClick: (service: ServiceListing) => void;
+}
+
+const ServiceCardItem = memo(({ service, onServiceClick }: ServiceCardItemProps) => {
+  const handleClick = useCallback(() => {
+    onServiceClick(service);
+  }, [onServiceClick, service]);
+
+  return <ServiceCard service={service} size="medium" onClick={handleClick} />;
+});
+ServiceCardItem.displayName = "ServiceCardItem";
+
 const useSlidesToShow = () => {
   const { width } = useWindowSize();
   if (!width) return 4;
@@ -102,6 +116,10 @@ const CategorySectionComponent = ({
     [router]
   );
 
+  const handleViewAll = useCallback(() => {
+    router.push(`/services?category=${categoryCode}`);
+  }, [router, categoryCode]);
+
   if (!isLoading && services.length === 0) return null;
 
   return (
@@ -113,31 +131,29 @@ const CategorySectionComponent = ({
           align="bottom"
         >
           <Col className={styles.titleCol}>
-            {eyebrow && <span className={styles.eyebrow}>{eyebrow}</span>}
+            {eyebrow ? <span className={styles.eyebrow}>{eyebrow}</span> : null}
             <div className={styles.titleRow}>
               <Title level={2} className={styles.title}>
                 {title}
               </Title>
-              {showViewAll && categoryCode && (
+              {showViewAll && categoryCode ? (
                 <Button
                   type="link"
                   icon={<ArrowRightOutlined />}
                   iconPosition="end"
                   className={styles.viewAllButton}
-                  onClick={() =>
-                    router.push(`/services?category=${categoryCode}`)
-                  }
+                  onClick={handleViewAll}
                 >
                   {t("home.viewAll")}
                 </Button>
-              )}
+              ) : null}
             </div>
-            {subtitle && (
+            {subtitle ? (
               <Paragraph className={styles.subtitle}>{subtitle}</Paragraph>
-            )}
+            ) : null}
           </Col>
 
-          {showArrows && (
+          {showArrows ? (
             <Col flex="none">
               <div className={styles.scrollButtons}>
                 <Button
@@ -160,7 +176,7 @@ const CategorySectionComponent = ({
                 />
               </div>
             </Col>
-          )}
+          ) : null}
         </Row>
 
         <div className={styles.carouselViewport}>
@@ -183,10 +199,9 @@ const CategorySectionComponent = ({
                 </div>
               ) : (
                 <div key={service.id}>
-                  <ServiceCard
+                  <ServiceCardItem
                     service={service}
-                    size="medium"
-                    onClick={() => handleServiceClick(service)}
+                    onServiceClick={handleServiceClick}
                   />
                 </div>
               )

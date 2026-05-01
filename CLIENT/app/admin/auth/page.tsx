@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Form,
@@ -26,6 +26,12 @@ const { Title, Text } = Typography;
 
 const ADMIN_ROLE = "admin";
 
+const getUserRoles = (
+  u: { roles?: string[]; role?: string } | null | undefined,
+): string[] => {
+  return Array.isArray(u?.roles) ? u.roles : u?.role ? [u.role] : [];
+};
+
 export default function AdminAuthPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -34,12 +40,6 @@ export default function AdminAuthPage() {
   const [form] = Form.useForm();
   const { t } = useTranslation();
   const { handleError } = useErrorHandler();
-
-  const getUserRoles = (
-    u: { roles?: string[]; role?: string } | null | undefined,
-  ) => {
-    return Array.isArray(u?.roles) ? u.roles : u?.role ? [u.role] : [];
-  };
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -53,7 +53,7 @@ export default function AdminAuthPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  const handleLogin = async (values: LoginRequest) => {
+  const handleLogin = useCallback(async (values: LoginRequest) => {
     try {
       const response = await loginMutation.mutateAsync(values);
 
@@ -74,7 +74,7 @@ export default function AdminAuthPage() {
     } catch (error: unknown) {
       handleError(error);
     }
-  };
+  }, [loginMutation, logoutMutation, t, router, handleError]);
 
   return (
     <div className={styles.wrapper}>

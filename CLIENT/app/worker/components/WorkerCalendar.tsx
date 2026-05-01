@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import styles from "../[id]/worker-detail.module.scss";
@@ -22,32 +22,32 @@ export function WorkerCalendar({
 }: WorkerCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
-  const isDateDisabled = (date: Dayjs): boolean => {
+  const isDateDisabled = useCallback((date: Dayjs): boolean => {
     return date.isBefore(dayjs().startOf("day"));
-  };
+  }, []);
 
-  const isDateSelected = (date: Dayjs): boolean => {
+  const isDateSelected = useCallback((date: Dayjs): boolean => {
     if (!selectedDate) return false;
     return date.isSame(selectedDate, "day");
-  };
+  }, [selectedDate]);
 
-  const isDateToday = (date: Dayjs): boolean => {
+  const isDateToday = useCallback((date: Dayjs): boolean => {
     return date.isSame(dayjs(), "day");
-  };
+  }, []);
 
-  const handleDateClick = (date: Dayjs): void => {
-    if (!isDateDisabled(date)) {
+  const handleDateClick = useCallback((date: Dayjs): void => {
+    if (!date.isBefore(dayjs().startOf("day"))) {
       onDateSelect(date);
     }
-  };
+  }, [onDateSelect]);
 
-  const handlePreviousMonth = (): void => {
+  const handlePreviousMonth = useCallback((): void => {
     setCurrentMonth((prev) => prev.subtract(1, "month"));
-  };
+  }, []);
 
-  const handleNextMonth = (): void => {
+  const handleNextMonth = useCallback((): void => {
     setCurrentMonth((prev) => prev.add(1, "month"));
-  };
+  }, []);
 
   const calendarDays = useMemo(() => {
     const startOfMonth = currentMonth.startOf("month");
@@ -64,15 +64,7 @@ export function WorkerCalendar({
 
   const firstDayOfWeek = currentMonth.startOf("month").day();
 
-  const renderCalendarGrid = () => {
-    const grid: Dayjs[] = [];
-    calendarDays.forEach((day) => {
-      grid.push(day);
-    });
-    return grid;
-  };
-
-  const gridCells = renderCalendarGrid();
+  const gridCells = calendarDays;
 
   const getColumnClassName = (columnStart: number): string => {
     switch (columnStart) {

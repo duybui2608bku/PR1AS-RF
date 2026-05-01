@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import {
   Card,
   Row,
@@ -72,6 +73,21 @@ export function WalletHistoryTab({
   onPageChange,
   onRefresh,
 }: WalletHistoryTabProps) {
+  const handleTableChange = useCallback(
+    (pagination: { current?: number; pageSize?: number }) => {
+      onPageChange(
+        pagination.current || PAGINATION_DEFAULTS.PAGE,
+        pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
+      );
+    },
+    [onPageChange]
+  );
+
+  const showTotal = useCallback(
+    (value: number) => t("common.pagination.total", { total: value }),
+    [t]
+  );
+
   return (
     <Card>
       <Row gutter={[Spacing.MD, Spacing.MD]} className={styles.filtersRow}>
@@ -163,16 +179,10 @@ export function WalletHistoryTab({
             pageSize,
             total,
             showSizeChanger: true,
-            showTotal: (value) =>
-              t("common.pagination.total", { total: value }),
+            showTotal,
             pageSizeOptions: PAGE_SIZE_OPTIONS,
           }}
-          onChange={(pagination) => {
-            onPageChange(
-              pagination.current || PAGINATION_DEFAULTS.PAGE,
-              pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-            );
-          }}
+          onChange={handleTableChange}
           scroll={{ x: "max-content" }}
         />
       )}

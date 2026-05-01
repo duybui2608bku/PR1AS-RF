@@ -11,7 +11,7 @@ import {
   WalletOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const logoutMutation = useLogout();
   const { handleError } = useErrorHandler();
 
-  const menuItems: MenuProps["items"] = [
+  const menuItems: MenuProps["items"] = useMemo(() => [
     {
       key: "/admin/dashboard",
       icon: <DashboardOutlined />,
@@ -64,9 +64,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: <SettingOutlined />,
       label: t("dashboard.menu.settings"),
     },
-  ];
+  ], [t]);
 
-  const userMenuItems: MenuProps["items"] = [
+  const userMenuItems: MenuProps["items"] = useMemo(() => [
     {
       key: "profile",
       icon: <UserOutlined />,
@@ -86,9 +86,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       label: t("dashboard.header.logout"),
       danger: true,
     },
-  ];
+  ], [t]);
 
-  const handleMenuClick = async ({ key }: { key: string }) => {
+  const handleMenuClick = useCallback(async ({ key }: { key: string }) => {
     if (key === "logout") {
       try {
         await logoutMutation.mutateAsync();
@@ -103,7 +103,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     } else {
       router.push(key);
     }
-  };
+  }, [logoutMutation, handleError, router]);
+
+  const handleToggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => !prev);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") setCollapsed((prev) => !prev);
+  }, []);
 
   return (
     <Layout className={styles.layout}>
@@ -135,10 +143,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <Space>
             <div
               className={styles.trigger}
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={handleToggleCollapsed}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && setCollapsed(!collapsed)}
+              onKeyDown={handleKeyDown}
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             </div>
@@ -158,7 +166,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <Space className={styles.avatarSpace}>
                 <Avatar icon={<UserOutlined />} />
-                {user?.email && <Text strong>{user.email.split("@")[0]}</Text>}
+                {user?.email ? <Text strong>{user.email.split("@")[0]}</Text> : null}
               </Space>
             </Dropdown>
           </Space>

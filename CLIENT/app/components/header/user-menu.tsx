@@ -41,60 +41,70 @@ export const UserMenu = () => {
         router.push(AppRoute.ADMIN_DASHBOARD);
     }, [router]);
 
-    const getUserInitial = (): string => {
+    const getUserInitial = useCallback((): string => {
         const displayName = user?.name || user?.email || "";
         return displayName.charAt(0).toUpperCase();
-    };
+    }, [user]);
+
+    const handleNavigateToProfile = useCallback(() => {
+        const profileRoute = getProfileRoute(user);
+        router.push(profileRoute);
+    }, [user, router]);
+
+    const handleNavigateToChat = useCallback(() => {
+        router.push(AppRoute.CHAT);
+    }, [router]);
+
+    const handleNavigateToNotifications = useCallback(() => {
+        router.push(AppRoute.NOTIFICATIONS);
+    }, [router]);
+
+    const handleNavigateToWallet = useCallback(() => {
+        if (userData.isWorkerActive) {
+            router.push(AppRoute.WORKER_WALLET);
+        } else {
+            router.push(AppRoute.CLIENT_WALLET);
+        }
+    }, [router, userData.isWorkerActive]);
+
+    const handleNavigateToBookings = useCallback(() => {
+        if (userData.isWorkerActive) {
+            router.push(AppRoute.WORKER_BOOKINGS);
+        } else {
+            router.push(AppRoute.CLIENT_BOOKINGS);
+        }
+    }, [router, userData.isWorkerActive]);
 
     const userMenuItems: MenuProps["items"] = useMemo(() => [
         {
             key: "profile",
             icon: <UserOutlined />,
             label: t("dashboard.header.profile"),
-            onClick: () => {
-                const profileRoute = getProfileRoute(user);
-                router.push(profileRoute);
-            },
+            onClick: handleNavigateToProfile,
         },
         {
             key: "messages",
             icon: <MessageOutlined />,
             label: t("dashboard.header.messages"),
-            onClick: () => {
-                router.push(AppRoute.CHAT);
-            },
+            onClick: handleNavigateToChat,
         },
         {
             key: "notifications",
             icon: <BellOutlined />,
             label: t("notifications.title"),
-            onClick: () => {
-                router.push(AppRoute.NOTIFICATIONS);
-            },
+            onClick: handleNavigateToNotifications,
         },
         {
             key: "wallet",
             icon: <WalletOutlined />,
             label: t("dashboard.header.wallet"),
-            onClick: () => {
-                if (userData.isWorkerActive) {
-                    router.push(AppRoute.WORKER_WALLET);
-                } else {
-                    router.push(AppRoute.CLIENT_WALLET);
-                }
-            },
+            onClick: handleNavigateToWallet,
         },
         {
             key: "client-bookings",
             icon: <BookOutlined />,
             label: t("dashboard.header.clientBookings"),
-            onClick: () => {
-                if (userData.isWorkerActive) {
-                    router.push(AppRoute.WORKER_BOOKINGS);
-                } else {
-                    router.push(AppRoute.CLIENT_BOOKINGS);
-                }
-            },
+            onClick: handleNavigateToBookings,
         },
         {
             type: "divider",
@@ -106,7 +116,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t, user, router, userData.isWorkerActive, handleLogout]);
+    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToBookings, handleLogout]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {

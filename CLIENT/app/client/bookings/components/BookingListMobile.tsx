@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { ReactNode } from "react";
 import { Card, List, Typography, Tag, Space, Button } from "antd";
 import type { Booking } from "@/lib/types/booking";
@@ -44,11 +45,152 @@ interface BookingListMobileProps {
   onOpenComplaintChat?: (bookingId: string) => void;
 }
 
+interface BookingItemProps {
+  record: Booking;
+  serviceMap: Map<string, Service>;
+  formatCurrency: FormatCurrencyFunction;
+  locale: string;
+  t: TFunction;
+  onCancelBooking?: (bookingId: string) => void;
+  onReviewBooking?: (bookingId: string) => void;
+  onComplainBooking?: (bookingId: string) => void;
+  onOpenComplaintChat?: (bookingId: string) => void;
+}
+
 const getWorkerName = (worker: unknown): string => {
   return typeof worker === "object" && worker && "full_name" in worker
     ? (worker as { full_name: string }).full_name
     : "-";
 };
+
+const BookingItem = memo(function BookingItem({
+  record,
+  serviceMap,
+  formatCurrency,
+  locale,
+  t,
+  onCancelBooking,
+  onReviewBooking,
+  onComplainBooking,
+  onOpenComplaintChat,
+}: BookingItemProps) {
+  const bookingId = (record as { id?: string }).id || record._id;
+  const serviceName = getServiceName({
+    serviceCode: record.service_code,
+    serviceMap,
+    locale,
+  });
+
+  const actions: ReactNode[] = [];
+  if (canReviewBooking(record.status)) {
+    if (onReviewBooking) {
+      actions.push(
+        <Button
+          key="review"
+          type="primary"
+          size="small"
+          onClick={() => onReviewBooking(bookingId)}
+        >
+          {t("booking.client.actions.review")}
+        </Button>
+      );
+    }
+  }
+  if (canComplainBooking(record.status) && onComplainBooking) {
+    actions.push(
+      <Button
+        key="complain"
+        danger
+        size="small"
+        onClick={() => onComplainBooking(bookingId)}
+      >
+        {t("booking.client.actions.complain")}
+      </Button>
+    );
+  }
+  if (canOpenComplaintChat(record.status) && onOpenComplaintChat) {
+    actions.push(
+      <Button
+        key="complaint-chat"
+        type="primary"
+        size="small"
+        onClick={() => onOpenComplaintChat(bookingId)}
+      >
+        {t("booking.client.actions.openComplaintChat")}
+      </Button>
+    );
+  }
+  if (canCancelBooking(record.status) && onCancelBooking) {
+    actions.push(
+      <Button
+        key="cancel"
+        danger
+        size="small"
+        onClick={() => onCancelBooking(bookingId)}
+      >
+        {t("booking.worker.actions.cancel")}
+      </Button>
+    );
+  }
+
+  return (
+    <List.Item>
+      <Card
+        size="small"
+        className={styles.card}
+        actions={actions.length > 0 ? actions : undefined}
+      >
+        <Space orientation="vertical" size="small" className={styles.spaceFull}>
+          <Text strong>{serviceName}</Text>
+          <Text type="secondary">
+            {t("booking.table.workerName")}: {getWorkerName(record.worker_id)}
+          </Text>
+          <Space orientation="vertical" size={0}>
+            <Text>
+              {t("booking.table.startTime")}:{" "}
+              {formatDateTime(record.schedule.start_time)}
+            </Text>
+            <Text type="secondary">
+              {t("booking.table.duration")}: {record.schedule.duration_hours}{" "}
+              {t("booking.pricing.hourly")}
+            </Text>
+          </Space>
+          <Space wrap>
+            <Text strong className={styles.priceText}>
+              {formatCurrency(record.pricing.total_amount)}
+            </Text>
+            <Text type="secondary" className={styles.metaText}>
+              {record.pricing.quantity}{" "}
+              {getPricingUnitLabel(record.pricing.unit as PricingUnit, t)} ×{" "}
+              {formatCurrency(record.pricing.unit_price)}
+            </Text>
+          </Space>
+          <Space wrap>
+            <Space size={4}>
+              <Tag color={getBookingStatusTagColor(record.status)}>
+                {t(`booking.status.${record.status}`)}
+              </Tag>
+              {record.status === BookingStatus.CANCELLED &&
+              record.cancellation ? (
+                <CancellationInfoTooltip
+                  cancellation={record.cancellation}
+                  t={t}
+                  formatCurrency={formatCurrency}
+                />
+              ) : null}
+            </Space>
+            <Tag color={getPaymentStatusTagColor(record.payment_status)}>
+              {t(`booking.paymentStatus.${record.payment_status}`)}
+            </Tag>
+          </Space>
+          <Text type="secondary" className={styles.metaText}>
+            {t("booking.table.createdAt")}: {formatDateTime(record.created_at)}
+          </Text>
+        </Space>
+      </Card>
+    </List.Item>
+  );
+});
 
 export function BookingListMobile({
   data,
@@ -80,124 +222,19 @@ export function BookingListMobile({
         pageSizeOptions: PAGE_SIZE_OPTIONS,
         onChange: (page, size) => onPageChange(page, size ?? pageSize),
       }}
-      renderItem={(record) => {
-        const bookingId = (record as { id?: string }).id || record._id;
-        const serviceName = getServiceName({
-          serviceCode: record.service_code,
-          serviceMap,
-          locale,
-        });
-
-        const actions: ReactNode[] = [];
-        if (canReviewBooking(record.status)) {
-          if (onReviewBooking) {
-            actions.push(
-              <Button
-                key="review"
-                type="primary"
-                size="small"
-                onClick={() => onReviewBooking(bookingId)}
-              >
-                {t("booking.client.actions.review")}
-              </Button>
-            );
-          }
-        }
-        if (canComplainBooking(record.status) && onComplainBooking) {
-          actions.push(
-            <Button
-              key="complain"
-              danger
-              size="small"
-              onClick={() => onComplainBooking(bookingId)}
-            >
-              {t("booking.client.actions.complain")}
-            </Button>
-          );
-        }
-        if (canOpenComplaintChat(record.status) && onOpenComplaintChat) {
-          actions.push(
-            <Button
-              key="complaint-chat"
-              type="primary"
-              size="small"
-              onClick={() => onOpenComplaintChat(bookingId)}
-            >
-              {t("booking.client.actions.openComplaintChat")}
-            </Button>
-          );
-        }
-        if (canCancelBooking(record.status) && onCancelBooking) {
-          actions.push(
-            <Button
-              key="cancel"
-              danger
-              size="small"
-              onClick={() => onCancelBooking(bookingId)}
-            >
-              {t("booking.worker.actions.cancel")}
-            </Button>
-          );
-        }
-
-        return (
-          <List.Item>
-            <Card
-              size="small"
-              className={styles.card}
-              actions={actions.length > 0 ? actions : undefined}
-            >
-              <Space orientation="vertical" size="small" className={styles.spaceFull}>
-                <Text strong>{serviceName}</Text>
-                <Text type="secondary">
-                  {t("booking.table.workerName")}: {getWorkerName(record.worker_id)}
-                </Text>
-                <Space orientation="vertical" size={0}>
-                  <Text>
-                    {t("booking.table.startTime")}:{" "}
-                    {formatDateTime(record.schedule.start_time)}
-                  </Text>
-                  <Text type="secondary">
-                    {t("booking.table.duration")}: {record.schedule.duration_hours}{" "}
-                    {t("booking.pricing.hourly")}
-                  </Text>
-                </Space>
-                <Space wrap>
-                  <Text strong className={styles.priceText}>
-                    {formatCurrency(record.pricing.total_amount)}
-                  </Text>
-                  <Text type="secondary" className={styles.metaText}>
-                    {record.pricing.quantity}{" "}
-                    {getPricingUnitLabel(record.pricing.unit as PricingUnit, t)} ×{" "}
-                    {formatCurrency(record.pricing.unit_price)}
-                  </Text>
-                </Space>
-                <Space wrap>
-                  <Space size={4}>
-                    <Tag color={getBookingStatusTagColor(record.status)}>
-                      {t(`booking.status.${record.status}`)}
-                    </Tag>
-                    {record.status === BookingStatus.CANCELLED &&
-                      record.cancellation && (
-                        <CancellationInfoTooltip
-                          cancellation={record.cancellation}
-                          t={t}
-                          formatCurrency={formatCurrency}
-                        />
-                      )}
-                  </Space>
-                  <Tag color={getPaymentStatusTagColor(record.payment_status)}>
-                    {t(`booking.paymentStatus.${record.payment_status}`)}
-                  </Tag>
-                </Space>
-                <Text type="secondary" className={styles.metaText}>
-                  {t("booking.table.createdAt")}: {formatDateTime(record.created_at)}
-                </Text>
-              </Space>
-            </Card>
-          </List.Item>
-        );
-      }}
+      renderItem={(record) => (
+        <BookingItem
+          record={record}
+          serviceMap={serviceMap}
+          formatCurrency={formatCurrency}
+          locale={locale}
+          t={t}
+          onCancelBooking={onCancelBooking}
+          onReviewBooking={onReviewBooking}
+          onComplainBooking={onComplainBooking}
+          onOpenComplaintChat={onOpenComplaintChat}
+        />
+      )}
     />
   );
 }

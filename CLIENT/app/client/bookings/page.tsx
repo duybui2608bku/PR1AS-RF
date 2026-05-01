@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Card,
   Table,
@@ -80,22 +80,22 @@ function BookingsContent() {
 
   const { serviceMap } = useServicesMap();
 
-  const resetCancelModalState = (): void => {
+  const resetCancelModalState = useCallback((): void => {
     setCancelModalOpen(false);
     setSelectedBookingId(null);
-  };
+  }, []);
 
-  const resetReviewModalState = (): void => {
+  const resetReviewModalState = useCallback((): void => {
     setReviewModalOpen(false);
     setSelectedBookingForReview(null);
-  };
+  }, []);
 
-  const resetComplaintModalState = (): void => {
+  const resetComplaintModalState = useCallback((): void => {
     setComplaintModalOpen(false);
     setSelectedBookingIdForComplaint(null);
-  };
+  }, []);
 
-  const invalidateClientBookingQueries = () => {
+  const invalidateClientBookingQueries = useCallback(() => {
     return Promise.all([
       queryClient.invalidateQueries({
         queryKey: [BOOKING_QUERY_KEYS.CLIENT_BOOKINGS],
@@ -104,9 +104,9 @@ function BookingsContent() {
         queryKey: [BOOKING_QUERY_KEYS.ALL_SERVICES],
       }),
     ]);
-  };
+  }, [queryClient]);
 
-  const query: BookingQuery = {
+  const query: BookingQuery = useMemo(() => ({
     page,
     limit,
     role: "client",
@@ -114,13 +114,19 @@ function BookingsContent() {
     payment_status: paymentStatusFilter,
     start_date: dateRange?.[0]?.format(DATE_FORMAT_ISO),
     end_date: dateRange?.[1]?.format(DATE_FORMAT_ISO),
-  };
+  }), [page, limit, statusFilter, paymentStatusFilter, dateRange]);
 
   const { data: bookingsData, isLoading, error: bookingsError } = useQuery({
     queryKey: [BOOKING_QUERY_KEYS.CLIENT_BOOKINGS, query],
     queryFn: () => bookingApi.getMyBookings(query),
     retry: false,
   });
+
+  const handleCancelSuccess = useCallback(() => {
+    message.success(t("booking.worker.actions.cancelSuccess"));
+    void invalidateClientBookingQueries();
+    resetCancelModalState();
+  }, [t, invalidateClientBookingQueries, resetCancelModalState]);
 
   const cancelBookingMutation = useStandardizedMutation(
     (params: {
@@ -134,13 +140,15 @@ function BookingsContent() {
         params.notes
       ),
     {
-      onSuccess: () => {
-        message.success(t("booking.worker.actions.cancelSuccess"));
-        void invalidateClientBookingQueries();
-        resetCancelModalState();
-      },
+      onSuccess: handleCancelSuccess,
     }
   );
+
+  const handleReviewSuccess = useCallback(() => {
+    message.success(t("booking.review.success"));
+    void invalidateClientBookingQueries();
+    resetReviewModalState();
+  }, [t, invalidateClientBookingQueries, resetReviewModalState]);
 
   const createReviewMutation = useStandardizedMutation(
     (data: {
@@ -158,52 +166,48 @@ function BookingsContent() {
       comment: string;
     }) => reviewApi.createReview(data),
     {
-      onSuccess: () => {
-        message.success(t("booking.review.success"));
-        void invalidateClientBookingQueries();
-        resetReviewModalState();
-      },
+      onSuccess: handleReviewSuccess,
     }
   );
 
-  const handleStatusFilterChange = (
+  const handleStatusFilterChange = useCallback((
     value: BookingStatus | typeof FILTER_VALUE_ALL
   ): void => {
     setStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handlePaymentStatusFilterChange = (
+  const handlePaymentStatusFilterChange = useCallback((
     value: BookingPaymentStatus | typeof FILTER_VALUE_ALL
   ): void => {
     setPaymentStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleDateRangeChange = (
+  const handleDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDateRange(dates);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleResetFilters = (): void => {
+  const handleResetFilters = useCallback((): void => {
     setStatusFilter(undefined);
     setPaymentStatusFilter(undefined);
     setDateRange(null);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleOpenCancelModal = (bookingId: string): void => {
+  const handleOpenCancelModal = useCallback((bookingId: string): void => {
     setSelectedBookingId(bookingId);
     setCancelModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseCancelModal = (): void => {
+  const handleCloseCancelModal = useCallback((): void => {
     resetCancelModalState();
-  };
+  }, [resetCancelModalState]);
 
-  const handleSubmitCancelBooking = async (values: {
+  const handleSubmitCancelBooking = useCallback(async (values: {
     reason: CancellationReason;
     notes?: string;
   }): Promise<void> => {
@@ -215,18 +219,18 @@ function BookingsContent() {
       reason: values.reason,
       notes: values.notes || "",
     });
-  };
+  }, [selectedBookingId, cancelBookingMutation]);
 
-  const handleRefreshBookings = async (): Promise<void> => {
+  const handleRefreshBookings = useCallback(async (): Promise<void> => {
     await message.loading(
       t("booking.worker.actions.refreshing"),
       BookingPageConfig.REFRESH_MESSAGE_DURATION_SECONDS
     );
     await invalidateClientBookingQueries();
     message.success(t("booking.worker.actions.refreshSuccess"));
-  };
+  }, [t, invalidateClientBookingQueries]);
 
-  const handleOpenReviewModal = (bookingId: string): void => {
+  const handleOpenReviewModal = useCallback((bookingId: string): void => {
     const booking = bookingsData?.data.find(
       (b) => (b as { id?: string }).id === bookingId || b._id === bookingId
     );
@@ -234,13 +238,13 @@ function BookingsContent() {
       setSelectedBookingForReview(booking);
       setReviewModalOpen(true);
     }
-  };
+  }, [bookingsData]);
 
-  const handleCloseReviewModal = (): void => {
+  const handleCloseReviewModal = useCallback((): void => {
     resetReviewModalState();
-  };
+  }, [resetReviewModalState]);
 
-  const handleSubmitReview = async (values: {
+  const handleSubmitReview = useCallback(async (values: {
     rating: number;
     rating_details: {
       professionalism: number;
@@ -274,28 +278,43 @@ function BookingsContent() {
       rating_details: values.rating_details,
       comment: values.comment,
     });
-  };
+  }, [selectedBookingForReview, user, createReviewMutation]);
+
+  const handleComplaintChatSuccess = useCallback((data: { conversation: { _id: string } }) => {
+    router.push(`/chat/group?group=${data.conversation._id}`);
+  }, [router]);
+
+  const handleComplaintChatError = useCallback(() => {
+    message.error(t("booking.client.actions.complainError"));
+  }, [t]);
 
   const openComplaintChatMutation = useStandardizedMutation(
     (bookingId: string) => chatApi.createComplaintConversation(bookingId),
     {
-      onSuccess: (data) => {
-        router.push(`/chat/group?group=${data.conversation._id}`);
-      },
-      onError: () => {
-        message.error(t("booking.client.actions.complainError"));
-      },
+      onSuccess: handleComplaintChatSuccess,
+      onError: handleComplaintChatError,
     }
   );
 
-  const handleComplainBooking = (bookingId: string): void => {
+  const handleComplainBooking = useCallback((bookingId: string): void => {
     setSelectedBookingIdForComplaint(bookingId);
     setComplaintModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenComplaintChat = (bookingId: string): void => {
+  const handleOpenComplaintChat = useCallback((bookingId: string): void => {
     openComplaintChatMutation.mutate(bookingId);
-  };
+  }, [openComplaintChatMutation]);
+
+  const handleCreateComplaintSuccess = useCallback((data: { conversation: { _id: string } }) => {
+    message.success(t("booking.complaint.success"));
+    void invalidateClientBookingQueries();
+    resetComplaintModalState();
+    router.push(`/chat/group?group=${data.conversation._id}`);
+  }, [t, invalidateClientBookingQueries, resetComplaintModalState, router]);
+
+  const handleCreateComplaintError = useCallback(() => {
+    message.error(t("booking.complaint.error"));
+  }, [t]);
 
   const createComplaintMutation = useStandardizedMutation(
     async (values: {
@@ -313,19 +332,12 @@ function BookingsContent() {
       return chatApi.createComplaintConversation(values.bookingId);
     },
     {
-      onSuccess: (data) => {
-        message.success(t("booking.complaint.success"));
-        void invalidateClientBookingQueries();
-        resetComplaintModalState();
-        router.push(`/chat/group?group=${data.conversation._id}`);
-      },
-      onError: () => {
-        message.error(t("booking.complaint.error"));
-      },
+      onSuccess: handleCreateComplaintSuccess,
+      onError: handleCreateComplaintError,
     }
   );
 
-  const handleSubmitComplaint = async (values: {
+  const handleSubmitComplaint = useCallback(async (values: {
     reason: DisputeReason;
     description: string;
     evidenceUrls: string[];
@@ -338,9 +350,9 @@ function BookingsContent() {
       bookingId: selectedBookingIdForComplaint,
       ...values,
     });
-  };
+  }, [selectedBookingIdForComplaint, createComplaintMutation]);
 
-  const columns = createBookingColumns({
+  const columns = useMemo(() => createBookingColumns({
     t,
     formatCurrency,
     serviceMap,
@@ -349,7 +361,19 @@ function BookingsContent() {
     onReviewBooking: handleOpenReviewModal,
     onComplainBooking: handleComplainBooking,
     onOpenComplaintChat: handleOpenComplaintChat,
-  });
+  }), [t, formatCurrency, serviceMap, locale, handleOpenCancelModal, handleOpenReviewModal, handleComplainBooking, handleOpenComplaintChat]);
+
+  const handleTablePaginationChange = useCallback((pagination: { current?: number; pageSize?: number }) => {
+    handleTableChange(
+      pagination.current || PAGINATION_DEFAULTS.PAGE,
+      pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
+    );
+  }, [handleTableChange]);
+
+  const rowKey = useCallback((record: Booking) => (record as { id?: string }).id || record._id, []);
+
+  const showTotal = useCallback((totalCount: number) =>
+    t("common.pagination.total", { total: totalCount }), [t]);
 
   useEffect(() => {
     if (bookingsError) {
@@ -383,22 +407,16 @@ function BookingsContent() {
             columns={columns}
             dataSource={bookingsData?.data || []}
             loading={isLoading}
-            rowKey={(record) => (record as { id?: string }).id || record._id}
+            rowKey={rowKey}
             pagination={{
               current: page,
               pageSize: limit,
               total: bookingsData?.pagination?.total || 0,
               showSizeChanger: true,
-              showTotal: (totalCount) =>
-                t("common.pagination.total", { total: totalCount }),
+              showTotal,
               pageSizeOptions: PAGE_SIZE_OPTIONS,
             }}
-            onChange={(pagination) => {
-              handleTableChange(
-                pagination.current || PAGINATION_DEFAULTS.PAGE,
-                pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-              );
-            }}
+            onChange={handleTablePaginationChange}
             scroll={{ x: "max-content" }}
           />
         ) : (

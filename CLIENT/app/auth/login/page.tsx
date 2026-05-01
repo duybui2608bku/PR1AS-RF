@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Form, Input, Button, Card, Typography, message, Divider } from "antd";
 import { UserOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
@@ -44,7 +44,7 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  const handleLogin = async (values: LoginRequest) => {
+  const handleLogin = useCallback(async (values: LoginRequest) => {
     try {
       setPendingVerificationEmail(null);
       const response = await loginMutation.mutateAsync(values);
@@ -81,9 +81,9 @@ export default function LoginPage() {
 
       handleError(error, t("auth.user.loginError"));
     }
-  };
+  }, [loginMutation, t, router, handleError]);
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = useCallback(async () => {
     if (!pendingVerificationEmail) {
       return;
     }
@@ -96,7 +96,13 @@ export default function LoginPage() {
     } catch (error: unknown) {
       handleError(error);
     }
-  };
+  }, [pendingVerificationEmail, resendVerificationMutation, t, handleError]);
+
+  const handleValuesChange = useCallback(() => {
+    if (pendingVerificationEmail) {
+      setPendingVerificationEmail(null);
+    }
+  }, [pendingVerificationEmail]);
 
   return (
     <div className={styles.centerBlock}>
@@ -111,11 +117,7 @@ export default function LoginPage() {
           form={form}
           name="user-login"
           onFinish={handleLogin}
-          onValuesChange={() => {
-            if (pendingVerificationEmail) {
-              setPendingVerificationEmail(null);
-            }
-          }}
+          onValuesChange={handleValuesChange}
           autoComplete="off"
           layout="vertical"
           size="large"

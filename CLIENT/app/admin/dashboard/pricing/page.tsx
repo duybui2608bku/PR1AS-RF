@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, memo } from "react";
 import {
   Button,
   Card,
@@ -26,6 +26,92 @@ const { Title, Text } = Typography;
 
 const renderNullableNumber = (value: number | null): number | null =>
   value === null ? null : value;
+
+interface FeatureRowProps {
+  item: PricingPackage;
+  featureKey:
+    | "messaging_enabled"
+    | "create_job_enabled"
+    | "boost_profile_enabled"
+    | "ads_enabled";
+  label: string;
+  limitLabel?: string;
+  limitKey?:
+    | "messaging_max_recipients"
+    | "create_job_limit"
+    | "boost_profile_monthly_limit";
+  minValue?: number;
+  isSaving: boolean;
+  features: PricingPackage["features"];
+  onToggle: (
+    item: PricingPackage,
+    key:
+      | "messaging_enabled"
+      | "create_job_enabled"
+      | "boost_profile_enabled"
+      | "ads_enabled"
+      | "is_active",
+    checked: boolean
+  ) => Promise<void>;
+  onNumberChange: (
+    item: PricingPackage,
+    key:
+      | "messaging_max_recipients"
+      | "create_job_limit"
+      | "boost_profile_monthly_limit",
+    value: number | null
+  ) => Promise<void>;
+}
+
+const FeatureRow = memo(function FeatureRow({
+  item,
+  featureKey,
+  label,
+  limitLabel,
+  limitKey,
+  minValue = 1,
+  isSaving,
+  features,
+  onToggle,
+  onNumberChange,
+}: FeatureRowProps) {
+  const enabled = features[featureKey];
+  const limitValue = limitKey ? features[limitKey] : null;
+
+  const handleToggle = useCallback((checked: boolean) => {
+    void onToggle(item, featureKey, checked);
+  }, [item, featureKey, onToggle]);
+
+  const handleNumberChange = useCallback((value: number | null) => {
+    if (limitKey) {
+      void onNumberChange(item, limitKey, value);
+    }
+  }, [item, limitKey, onNumberChange]);
+
+  return (
+    <div className={styles.featureRow}>
+      <div className={styles.featureTop}>
+        <Text strong>{label}</Text>
+        <Switch
+          checked={enabled}
+          onChange={handleToggle}
+          disabled={isSaving}
+        />
+      </div>
+      {limitKey && limitLabel ? (
+        <div className={styles.limitRow}>
+          <Text type="secondary">{limitLabel}</Text>
+          <InputNumber
+            min={minValue}
+            disabled={!enabled || isSaving}
+            value={renderNullableNumber(limitValue)}
+            onChange={handleNumberChange}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+});
 
 export default function AdminPricingPage() {
   const { t } = useI18n();
@@ -74,6 +160,7 @@ export default function AdminPricingPage() {
       handleError(error);
     }
   }, [error, handleError]);
+
   useEffect(() => {
     if (!packages) return;
 
@@ -98,7 +185,7 @@ export default function AdminPricingPage() {
     });
   }, [packages]);
 
-  const runPackageUpdate = async (
+  const runPackageUpdate = useCallback(async (
     item: PricingPackage,
     payload: Partial<PricingPackage>
   ): Promise<void> => {
@@ -108,9 +195,9 @@ export default function AdminPricingPage() {
     } finally {
       setSavingIds((prev) => ({ ...prev, [item.id]: false }));
     }
-  };
+  }, [updateMutation]);
 
-  const onToggle = (
+  const onToggle = useCallback((
     item: PricingPackage,
     key:
       | "messaging_enabled"
@@ -139,9 +226,9 @@ export default function AdminPricingPage() {
     setLocalFeatures((prev) => ({ ...prev, [item.id]: features }));
 
     return runPackageUpdate(item, { features });
-  };
+  }, [localFeatures, runPackageUpdate]);
 
-  const onNumberChange = (
+  const onNumberChange = useCallback((
     item: PricingPackage,
     key:
       | "messaging_max_recipients"
@@ -154,58 +241,11 @@ export default function AdminPricingPage() {
     setLocalFeatures((prev) => ({ ...prev, [item.id]: features }));
 
     return runPackageUpdate(item, { features });
-  };
+  }, [localFeatures, runPackageUpdate]);
 
-  const renderFeatureRow = (
-    item: PricingPackage,
-    key:
-      | "messaging_enabled"
-      | "create_job_enabled"
-      | "boost_profile_enabled"
-      | "ads_enabled",
-    label: string,
-    limitLabel?: string,
-    limitKey?:
-      | "messaging_max_recipients"
-      | "create_job_limit"
-      | "boost_profile_monthly_limit",
-    minValue = 1
-  ) => {
-    const isSavingThisPackage = Boolean(savingIds[item.id]);
-    const features = localFeatures[item.id] ?? item.features;
-    const enabled = features[key];
-    const limitValue = limitKey ? features[limitKey] : null;
+  const handleRefetch = useCallback(() => refetch(), [refetch]);
 
-    return (
-      <div className={styles.featureRow}>
-        <div className={styles.featureTop}>
-          <Text strong>{label}</Text>
-          <Switch
-            checked={enabled}
-            onChange={(checked) => {
-              void onToggle(item, key, checked);
-            }}
-            disabled={isSavingThisPackage}
-          />
-        </div>
-        {limitKey && limitLabel ? (
-          <div className={styles.limitRow}>
-            <Text type="secondary">{limitLabel}</Text>
-            <InputNumber
-              min={minValue}
-              disabled={!enabled || isSavingThisPackage}
-              value={renderNullableNumber(limitValue)}
-              onChange={(value) => {
-                void onNumberChange(item, limitKey, value);
-              }}
-            />
-          </div>
-        ) : null}
-      </div>
-    );
-  };
-
-  const hasPackages = (packages?.length || 0) > 0;
+  const hasPackages = useMemo(() => (packages?.length || 0) > 0, [packages]);
 
   return (
     <Space direction="vertical" size="large" className={styles.container}>
@@ -215,7 +255,7 @@ export default function AdminPricingPage() {
         </div>
         <Button
           icon={<ReloadOutlined />}
-          onClick={() => refetch()}
+          onClick={handleRefetch}
           loading={isLoading}
         >
           {t("common.refresh")}
@@ -240,6 +280,7 @@ export default function AdminPricingPage() {
         packages?.map((item) => {
           const isSavingThisPackage = Boolean(savingIds[item.id]);
           const isActive = localIsActive[item.id] ?? item.is_active;
+          const features = localFeatures[item.id] ?? item.features;
           return (
             <Card
               key={item.id}
@@ -259,42 +300,58 @@ export default function AdminPricingPage() {
             >
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} xl={6}>
-                  {renderFeatureRow(
-                    item,
-                    "messaging_enabled",
-                    t("pricing.features.messaging"),
-                    t("admin.pricing.maxRecipients"),
-                    "messaging_max_recipients"
-                  )}
+                  <FeatureRow
+                    item={item}
+                    featureKey="messaging_enabled"
+                    label={t("pricing.features.messaging")}
+                    limitLabel={t("admin.pricing.maxRecipients")}
+                    limitKey="messaging_max_recipients"
+                    isSaving={isSavingThisPackage}
+                    features={features}
+                    onToggle={onToggle}
+                    onNumberChange={onNumberChange}
+                  />
                 </Col>
 
                 <Col xs={24} sm={12} xl={6}>
-                  {renderFeatureRow(
-                    item,
-                    "create_job_enabled",
-                    t("pricing.features.createJob"),
-                    t("admin.pricing.jobLimit"),
-                    "create_job_limit"
-                  )}
+                  <FeatureRow
+                    item={item}
+                    featureKey="create_job_enabled"
+                    label={t("pricing.features.createJob")}
+                    limitLabel={t("admin.pricing.jobLimit")}
+                    limitKey="create_job_limit"
+                    isSaving={isSavingThisPackage}
+                    features={features}
+                    onToggle={onToggle}
+                    onNumberChange={onNumberChange}
+                  />
                 </Col>
 
                 <Col xs={24} sm={12} xl={6}>
-                  {renderFeatureRow(
-                    item,
-                    "boost_profile_enabled",
-                    t("pricing.features.boostProfile"),
-                    t("admin.pricing.boostLimit"),
-                    "boost_profile_monthly_limit",
-                    0
-                  )}
+                  <FeatureRow
+                    item={item}
+                    featureKey="boost_profile_enabled"
+                    label={t("pricing.features.boostProfile")}
+                    limitLabel={t("admin.pricing.boostLimit")}
+                    limitKey="boost_profile_monthly_limit"
+                    minValue={0}
+                    isSaving={isSavingThisPackage}
+                    features={features}
+                    onToggle={onToggle}
+                    onNumberChange={onNumberChange}
+                  />
                 </Col>
 
                 <Col xs={24} sm={12} xl={6}>
-                  {renderFeatureRow(
-                    item,
-                    "ads_enabled",
-                    t("pricing.features.ads")
-                  )}
+                  <FeatureRow
+                    item={item}
+                    featureKey="ads_enabled"
+                    label={t("pricing.features.ads")}
+                    isSaving={isSavingThisPackage}
+                    features={features}
+                    onToggle={onToggle}
+                    onNumberChange={onNumberChange}
+                  />
                   <Text type="secondary">{t("admin.pricing.adsHint")}</Text>
                 </Col>
               </Row>

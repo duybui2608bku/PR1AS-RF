@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Tabs,
   Typography,
@@ -49,6 +49,14 @@ import { EscrowHistoryTab } from "@/app/client/wallet/components/EscrowHistoryTa
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
+
+const escrowStatusOptions: EscrowStatus[] = [
+  EscrowStatus.HOLDING,
+  EscrowStatus.RELEASED,
+  EscrowStatus.REFUNDED,
+  EscrowStatus.PARTIALLY_RELEASED,
+  EscrowStatus.DISPUTED,
+];
 
 function WalletContent() {
   const { t } = useTranslation();
@@ -107,18 +115,14 @@ function WalletContent() {
     retry: false,
   });
 
-  const createTransactionHistoryQuery = (
+  const buildTransactionHistoryQuery = useCallback((
     type: TransactionType,
     page: number,
     limit: number,
     dateRange: [Dayjs | null, Dayjs | null] | null
   ): TransactionHistoryQuery => {
     if (!dateRange) {
-      return {
-        type,
-        page,
-        limit,
-      };
+      return { type, page, limit };
     }
     const startDate = dateRange[0];
     const endDate = dateRange[1];
@@ -131,18 +135,12 @@ function WalletContent() {
         end_date: endDate.format(DATE_FORMAT_ISO),
       };
     }
-    return {
-      type,
-      page,
-      limit,
-    };
-  };
+    return { type, page, limit };
+  }, []);
 
-  const depositQuery: TransactionHistoryQuery = createTransactionHistoryQuery(
-    TransactionType.DEPOSIT,
-    depositPage,
-    depositLimit,
-    depositDateRange
+  const depositQuery: TransactionHistoryQuery = useMemo(
+    () => buildTransactionHistoryQuery(TransactionType.DEPOSIT, depositPage, depositLimit, depositDateRange),
+    [buildTransactionHistoryQuery, depositPage, depositLimit, depositDateRange]
   );
 
   const {
@@ -156,11 +154,9 @@ function WalletContent() {
     retry: false,
   });
 
-  const withdrawQuery: TransactionHistoryQuery = createTransactionHistoryQuery(
-    TransactionType.WITHDRAW,
-    withdrawPage,
-    withdrawLimit,
-    withdrawDateRange
+  const withdrawQuery: TransactionHistoryQuery = useMemo(
+    () => buildTransactionHistoryQuery(TransactionType.WITHDRAW, withdrawPage, withdrawLimit, withdrawDateRange),
+    [buildTransactionHistoryQuery, withdrawPage, withdrawLimit, withdrawDateRange]
   );
 
   const {
@@ -174,34 +170,34 @@ function WalletContent() {
     retry: false,
   });
 
-  const handleTabChange = (key: string): void => {
+  const handleTabChange = useCallback((key: string): void => {
     setActiveTab(key as WalletTabKey);
-  };
+  }, []);
 
-  const handleDepositTableChange = (page: number, pageSize: number): void => {
+  const handleDepositTableChange = useCallback((page: number, pageSize: number): void => {
     setDepositPage(page);
     setDepositLimit(pageSize);
-  };
+  }, []);
 
-  const handleWithdrawTableChange = (page: number, pageSize: number): void => {
+  const handleWithdrawTableChange = useCallback((page: number, pageSize: number): void => {
     setWithdrawPage(page);
     setWithdrawLimit(pageSize);
-  };
+  }, []);
 
-  const handleEscrowTableChange = (page: number, pageSize: number): void => {
+  const handleEscrowTableChange = useCallback((page: number, pageSize: number): void => {
     setEscrowPage(page);
     setEscrowLimit(pageSize);
-  };
+  }, []);
 
-  const handleDepositDateRangeChange = (
+  const handleDepositDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDepositDateRange(dates);
     setDepositDatePreset(null);
     setDepositPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleDepositDatePresetChange = (
+  const handleDepositDatePresetChange = useCallback((
     preset: DateRangePreset | null
   ): void => {
     setDepositDatePreset(preset);
@@ -212,23 +208,23 @@ function WalletContent() {
       setDepositDateRange(null);
     }
     setDepositPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleDepositResetFilters = (): void => {
+  const handleDepositResetFilters = useCallback((): void => {
     setDepositDateRange(null);
     setDepositDatePreset(null);
     setDepositPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleWithdrawDateRangeChange = (
+  const handleWithdrawDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setWithdrawDateRange(dates);
     setWithdrawDatePreset(null);
     setWithdrawPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleWithdrawDatePresetChange = (
+  const handleWithdrawDatePresetChange = useCallback((
     preset: DateRangePreset | null
   ): void => {
     setWithdrawDatePreset(preset);
@@ -239,23 +235,23 @@ function WalletContent() {
       setWithdrawDateRange(null);
     }
     setWithdrawPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleWithdrawResetFilters = (): void => {
+  const handleWithdrawResetFilters = useCallback((): void => {
     setWithdrawDateRange(null);
     setWithdrawDatePreset(null);
     setWithdrawPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleEscrowDateRangeChange = (
+  const handleEscrowDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setEscrowDateRange(dates);
     setEscrowDatePreset(null);
     setEscrowPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleEscrowDatePresetChange = (
+  const handleEscrowDatePresetChange = useCallback((
     preset: DateRangePreset | null
   ): void => {
     setEscrowDatePreset(preset);
@@ -266,62 +262,51 @@ function WalletContent() {
       setEscrowDateRange(null);
     }
     setEscrowPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleEscrowStatusChange = (value: EscrowStatus | null): void => {
+  const handleEscrowStatusChange = useCallback((value: EscrowStatus | null): void => {
     setEscrowStatus(value);
     setEscrowPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleEscrowResetFilters = (): void => {
+  const handleEscrowResetFilters = useCallback((): void => {
     setEscrowDateRange(null);
     setEscrowDatePreset(null);
     setEscrowStatus(null);
     setEscrowPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const depositColumns = createWalletTransactionColumns(t, formatCurrency);
-  const withdrawColumns = createWalletTransactionColumns(t, formatCurrency);
-  const escrowColumns = createEscrowColumns(t, formatCurrency);
+  const depositColumns = useMemo(
+    () => createWalletTransactionColumns(t, formatCurrency),
+    [t, formatCurrency]
+  );
+  const withdrawColumns = useMemo(
+    () => createWalletTransactionColumns(t, formatCurrency),
+    [t, formatCurrency]
+  );
+  const escrowColumns = useMemo(
+    () => createEscrowColumns(t, formatCurrency),
+    [t, formatCurrency]
+  );
 
-  const escrowStatusOptions: EscrowStatus[] = [
-    EscrowStatus.HOLDING,
-    EscrowStatus.RELEASED,
-    EscrowStatus.REFUNDED,
-    EscrowStatus.PARTIALLY_RELEASED,
-    EscrowStatus.DISPUTED,
-  ];
-
-  const createEscrowQuery = (
-    page: number,
-    limit: number,
-    status: EscrowStatus | null,
-    dateRange: [Dayjs | null, Dayjs | null] | null
-  ): EscrowQuery => {
+  const escrowQuery: EscrowQuery = useMemo(() => {
     const query: EscrowQuery = {
-      page,
-      limit,
+      page: escrowPage,
+      limit: escrowLimit,
     };
-    if (status) {
-      query.status = status;
+    if (escrowStatus) {
+      query.status = escrowStatus;
     }
-    if (dateRange) {
-      const startDate = dateRange[0];
-      const endDate = dateRange[1];
+    if (escrowDateRange) {
+      const startDate = escrowDateRange[0];
+      const endDate = escrowDateRange[1];
       if (startDate && endDate) {
         query.start_date = startDate.format(DATE_FORMAT_ISO);
         query.end_date = endDate.format(DATE_FORMAT_ISO);
       }
     }
     return query;
-  };
-
-  const escrowQuery: EscrowQuery = createEscrowQuery(
-    escrowPage,
-    escrowLimit,
-    escrowStatus,
-    escrowDateRange
-  );
+  }, [escrowPage, escrowLimit, escrowStatus, escrowDateRange]);
 
   const {
     data: escrowHistory,
@@ -335,6 +320,14 @@ function WalletContent() {
   });
 
   const totalBalance = balanceData?.balance || 0;
+
+  const handleOpenDepositModal = useCallback(() => {
+    setDepositModalOpen(true);
+  }, []);
+
+  const handleCloseDepositModal = useCallback(() => {
+    setDepositModalOpen(false);
+  }, []);
 
   useEffect(() => {
     if (balanceError) {
@@ -371,7 +364,7 @@ function WalletContent() {
               type="primary"
               icon={<PlusOutlined />}
               size="large"
-              onClick={() => setDepositModalOpen(true)}
+              onClick={handleOpenDepositModal}
             >
               {t("wallet.deposit.title")}
             </Button>
@@ -493,7 +486,7 @@ function WalletContent() {
       </div>
       <DepositModal
         open={depositModalOpen}
-        onClose={() => setDepositModalOpen(false)}
+        onClose={handleCloseDepositModal}
       />
     </>
   );

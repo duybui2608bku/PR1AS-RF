@@ -43,36 +43,36 @@ export function CancellationInfoTooltip({
         </Text>{" "}
         {reasonLabel}
       </Text>
-      {cancellation.notes && (
+      {cancellation.notes ? (
         <Text className={styles.tooltipText}>
           <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.notes")}:
           </Text>{" "}
           {cancellation.notes}
         </Text>
-      )}
+      ) : null}
       <Text className={styles.tooltipText}>
         <Text strong className={styles.tooltipLabel}>
           {t("booking.cancellation.cancelledAt")}:
         </Text>{" "}
         {formatDateTime(cancellation.cancelled_at)}
       </Text>
-      {cancellation.refund_amount > 0 && (
+      {cancellation.refund_amount > 0 ? (
         <Text className={styles.tooltipText}>
           <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.refundAmount")}:
           </Text>{" "}
           {formatCurrency(cancellation.refund_amount)}
         </Text>
-      )}
-      {cancellation.penalty_amount > 0 && (
+      ) : null}
+      {cancellation.penalty_amount > 0 ? (
         <Text className={styles.tooltipText}>
           <Text strong className={styles.tooltipLabel}>
             {t("booking.cancellation.penaltyAmount")}:
           </Text>{" "}
           {formatCurrency(cancellation.penalty_amount)}
         </Text>
-      )}
+      ) : null}
     </Space>
   );
 

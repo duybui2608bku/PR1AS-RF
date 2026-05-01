@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Table,
   Card,
@@ -88,7 +88,7 @@ export default function AdminUserPage() {
     }
   }, [error, handleError]);
 
-  const handleFilterChange = (
+  const handleFilterChange = useCallback((
     key: keyof GetUsersQuery,
     value: string | number | undefined
   ): void => {
@@ -100,63 +100,82 @@ export default function AdminUserPage() {
       }
       return { ...updatedFilters, [key]: value };
     });
-  };
+  }, []);
 
-  const handleSearchTextChange = (value: string): void => {
+  const handleSearchTextChange = useCallback((value: string): void => {
     setSearchText(value);
-  };
+  }, []);
 
-  const handleSearch = (): void => {
+  const handleSearch = useCallback((): void => {
     setFilters((prev) => ({
       ...prev,
       search: searchText.trim() || undefined,
       page: PAGINATION_DEFAULTS.PAGE,
     }));
-  };
+  }, [searchText]);
 
-  const handleClearFilters = (): void => {
+  const handleClearFilters = useCallback((): void => {
     setSearchText("");
     setFilters({
       page: PAGINATION_DEFAULTS.PAGE,
       limit: PAGINATION_DEFAULTS.LIMIT,
     });
-  };
+  }, []);
 
-  const handleTableChange = (page: number, pageSize: number): void => {
+  const handleTableChange = useCallback((page: number, pageSize: number): void => {
     setFilters((prev) => ({
       ...prev,
       page,
       limit: pageSize,
     }));
-  };
+  }, []);
 
-  const handleStatusUpdateClick = (user: User): void => {
+  const handleStatusUpdateClick = useCallback((user: User): void => {
     setSelectedUser(user);
     setNewStatus(
       user.status === UserStatus.ACTIVE ? UserStatus.BANNED : UserStatus.ACTIVE
     );
     setStatusModalVisible(true);
-  };
+  }, []);
 
-  const handleStatusUpdateConfirm = (): void => {
+  const handleStatusUpdateConfirm = useCallback((): void => {
     if (selectedUser && newStatus) {
       updateStatusMutation.mutate({
         userId: selectedUser._id,
         status: newStatus,
       });
     }
-  };
+  }, [selectedUser, newStatus, updateStatusMutation]);
 
-  const handleStatusModalCancel = (): void => {
+  const handleStatusModalCancel = useCallback((): void => {
     setStatusModalVisible(false);
     setSelectedUser(null);
     setNewStatus(null);
-  };
+  }, []);
 
-  const columns = buildUserColumns({
+  const handleRoleChange = useCallback((value: string) => {
+    handleFilterChange("role", value || undefined);
+  }, [handleFilterChange]);
+
+  const handleStatusFilterChange = useCallback((value: string) => {
+    handleFilterChange("status", value || undefined);
+  }, [handleFilterChange]);
+
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleSearchTextChange(e.target.value);
+  }, [handleSearchTextChange]);
+
+  const handlePaginationChange = useCallback((pagination: { current?: number; pageSize?: number }) => {
+    handleTableChange(
+      pagination.current || PAGINATION_DEFAULTS.PAGE,
+      pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
+    );
+  }, [handleTableChange]);
+
+  const columns = useMemo(() => buildUserColumns({
     t,
     onUpdateStatus: handleStatusUpdateClick,
-  });
+  }), [t, handleStatusUpdateClick]);
 
   return (
     <Space orientation="vertical" size="large" className={styles.spaceFull}>
@@ -168,7 +187,7 @@ export default function AdminUserPage() {
               placeholder={t("admin.user.filters.search")}
               value={searchText}
               size="large"
-              onChange={(e) => handleSearchTextChange(e.target.value)}
+              onChange={handleSearchInputChange}
               className={styles.searchInput}
               allowClear
               onPressEnter={handleSearch}
@@ -177,9 +196,7 @@ export default function AdminUserPage() {
             <Select
               placeholder={t("admin.user.filters.role")}
               value={filters.role}
-              onChange={(value) =>
-                handleFilterChange("role", value || undefined)
-              }
+              onChange={handleRoleChange}
               className={styles.filterSelect}
               allowClear
               size="large"
@@ -195,9 +212,7 @@ export default function AdminUserPage() {
               placeholder={t("admin.user.filters.status")}
               value={filters.status}
               size="large"
-              onChange={(value) =>
-                handleFilterChange("status", value || undefined)
-              }
+              onChange={handleStatusFilterChange}
               className={styles.filterSelect}
               allowClear
             >
@@ -251,12 +266,7 @@ export default function AdminUserPage() {
             showTotal: (total) => t("common.pagination.total", { total }),
             pageSizeOptions: PAGE_SIZE_OPTIONS,
           }}
-          onChange={(pagination) => {
-            handleTableChange(
-              pagination.current || PAGINATION_DEFAULTS.PAGE,
-              pagination.pageSize || PAGINATION_DEFAULTS.LIMIT
-            );
-          }}
+          onChange={handlePaginationChange}
           scroll={{ x: "max-content" }}
         />
       </Card>

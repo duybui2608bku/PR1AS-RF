@@ -27,45 +27,59 @@ export const SocketDebug = () => {
 
   useEffect(() => {
     const interval = setInterval(checkSocketStatus, 2000);
-    
-    // Listen to socket events
-    chatSocket.onConnected((data) => {
-      setLastEvent(`Connected: ${JSON.stringify(data)}`);
-      setEvents((prev) => [`Connected: ${JSON.stringify(data)}`, ...prev.slice(0, 9)]);
+
+    const handleConnected = (data: unknown) => {
+      const msg = `Connected: ${JSON.stringify(data)}`;
+      setLastEvent(msg);
+      setEvents((prev) => [msg, ...prev.slice(0, 9)]);
       checkSocketStatus();
-    });
-    
-    chatSocket.onError((error) => {
-      setLastEvent(`Error: ${error.message}`);
-      setEvents((prev) => [`Error: ${error.message}`, ...prev.slice(0, 9)]);
+    };
+
+    const handleError = (error: { message: string }) => {
+      const msg = `Error: ${error.message}`;
+      setLastEvent(msg);
+      setEvents((prev) => [msg, ...prev.slice(0, 9)]);
       checkSocketStatus();
-    });
-    
-    chatSocket.onNewMessage((data) => {
-      setLastEvent(`New Message: ${data.message._id}`);
-      setEvents((prev) => [`New Message: ${data.message._id}`, ...prev.slice(0, 9)]);
-    });
-    
-    chatSocket.onUserTyping((data) => {
-      setLastEvent(`User Typing: ${data.user_id}`);
-      setEvents((prev) => [`User Typing: ${data.user_id}`, ...prev.slice(0, 9)]);
-    });
-    
-    chatSocket.onConversationJoined((data) => {
-      setLastEvent(`Joined: ${data.conversation_id}`);
-      setEvents((prev) => [`Joined: ${data.conversation_id}`, ...prev.slice(0, 9)]);
-    });
+    };
+
+    const handleNewMessage = (data: { message: { _id: string } }) => {
+      const msg = `New Message: ${data.message._id}`;
+      setLastEvent(msg);
+      setEvents((prev) => [msg, ...prev.slice(0, 9)]);
+    };
+
+    const handleUserTyping = (data: { user_id: string }) => {
+      const msg = `User Typing: ${data.user_id}`;
+      setLastEvent(msg);
+      setEvents((prev) => [msg, ...prev.slice(0, 9)]);
+    };
+
+    const handleConversationJoined = (data: { conversation_id: string }) => {
+      const msg = `Joined: ${data.conversation_id}`;
+      setLastEvent(msg);
+      setEvents((prev) => [msg, ...prev.slice(0, 9)]);
+    };
+
+    chatSocket.onConnected(handleConnected);
+    chatSocket.onError(handleError);
+    chatSocket.onNewMessage(handleNewMessage);
+    chatSocket.onUserTyping(handleUserTyping);
+    chatSocket.onConversationJoined(handleConversationJoined);
 
     return () => {
       clearInterval(interval);
+      chatSocket.offConnected?.(handleConnected);
+      chatSocket.offError?.(handleError);
+      chatSocket.offNewMessage?.(handleNewMessage);
+      chatSocket.offUserTyping?.(handleUserTyping);
+      chatSocket.offConversationJoined?.(handleConversationJoined);
     };
   }, [checkSocketStatus]);
 
-  const handleReconnect = () => {
+  const handleReconnect = useCallback(() => {
     reconnectSocket();
     setTimeout(checkSocketStatus, 1000);
-  };
-
+  }, [checkSocketStatus]);
 
   return (
     <Card
@@ -139,4 +153,3 @@ export const SocketDebug = () => {
     </Card>
   );
 };
-

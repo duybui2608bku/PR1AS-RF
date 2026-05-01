@@ -189,6 +189,8 @@ const HeaderComponent = () => {
       </Space>
     ), [isAuthenticated, user, handleOpenLogin, handleOpenRegister, t]);
 
+  const handleCloseAuthModal = useCallback(() => setAuthModalOpen(false), []);
+
   return (
     <AntHeader
       className={`${styles.header} ${isScrolled ? styles.scrolled : ""}`}
@@ -201,19 +203,19 @@ const HeaderComponent = () => {
         </Col>
         <Col flex="none" className={styles.actionsCol}>
           <Space className={styles.actionsRow} size="middle">
-            {!isMobile && (
+            {!isMobile ? (
               <>
                 {!userData.isAdmin && workerButton}
                 {authSectionDesktop}
               </>
-            )}
-            {isMobile && (
+            ) : null}
+            {isMobile ? (
               <Popover
                 content={
-                    <MobileMenu 
-                        isAdmin={userData.isAdmin} 
-                        workerButton={workerButton} 
-                        authSectionMobile={authSectionMobile} 
+                    <MobileMenu
+                        isAdmin={userData.isAdmin}
+                        workerButton={workerButton}
+                        authSectionMobile={authSectionMobile}
                     />
                 }
                 trigger="click"
@@ -221,14 +223,14 @@ const HeaderComponent = () => {
               >
                 <Button type="text" icon={<MenuOutlined />} />
               </Popover>
-            )}
+            ) : null}
           </Space>
         </Col>
       </Row>
 
       <AuthModal
         open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={handleCloseAuthModal}
         defaultTab={authModalTab}
       />
     </AntHeader>

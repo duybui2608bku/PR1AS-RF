@@ -1,10 +1,11 @@
 "use client";
 
+import { useCallback } from "react";
 import { Row, Col, Space, Empty, Pagination } from "antd";
 import type { WalletTransaction } from "@/lib/api/wallet.api";
 import { TransactionCard } from "./TransactionCard";
 import { Spacing, GridColSpan } from "@/lib/constants/ui.constants";
-import { PAGINATION_DEFAULTS, PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
+import { PAGE_SIZE_OPTIONS } from "@/app/constants/constants";
 import type { TFunction } from "i18next";
 import styles from "@/app/client/wallet/components/TransactionCardGrid.module.scss";
 
@@ -30,7 +31,12 @@ export function TransactionCardGrid({
   total,
   onPageChange,
   isLoading = false,
-}: TransactionCardGridProps): React.ReactElement {
+}: TransactionCardGridProps) {
+  const showTotal = useCallback(
+    (totalCount: number) => t("common.pagination.total", { total: totalCount }),
+    [t]
+  );
+
   if (transactions.length === 0 && !isLoading) {
     return <Empty />;
   }
@@ -60,11 +66,9 @@ export function TransactionCardGrid({
         pageSize={pageSize}
         total={total}
         showSizeChanger={true}
-        showTotal={(total) => t("common.pagination.total", { total })}
+        showTotal={showTotal}
         pageSizeOptions={PAGE_SIZE_OPTIONS}
-        onChange={(newPage, newPageSize) => {
-          onPageChange(newPage, newPageSize);
-        }}
+        onChange={onPageChange}
         className={styles.pagination}
       />
     </Space>

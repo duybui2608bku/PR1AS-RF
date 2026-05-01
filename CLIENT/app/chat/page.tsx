@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Fragment } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useSearchParams } from "next/navigation";
@@ -72,7 +72,6 @@ function ChatContent() {
     enabled: !!selectedConversationId,
   });
 
-  // Query to find conversation for a target user when no existing conversation is found
   const needsTargetLookup =
     !!targetUserId &&
     !!user?.id &&
@@ -92,6 +91,12 @@ function ChatContent() {
       }),
     enabled: needsTargetLookup,
   });
+
+  const getOtherParticipant = useCallback((conversation: Conversation): string => {
+    if (!user?.id || !conversation?.participant_ids) return "";
+    const otherId = conversation.participant_ids.find((id) => id !== user.id);
+    return otherId || "";
+  }, [user?.id]);
 
   const sendMessageMutation = useStandardizedMutation(
     (content: string) => {
@@ -165,13 +170,12 @@ function ChatContent() {
     }
   );
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (!messageContent.trim()) return;
     sendMessageMutation.mutate(messageContent.trim());
-  };
+  }, [messageContent, sendMessageMutation]);
 
-
-  const handleConversationSelect = (conversationId: string) => {
+  const handleConversationSelect = useCallback((conversationId: string) => {
     hasManualConversationSelectionRef.current = true;
     setSelectedConversationId(conversationId);
     setReplyingTo(null);
@@ -181,13 +185,13 @@ function ChatContent() {
     if (isMobile) {
       setShowConversationList(false);
     }
-  };
+  }, [isMobile, markAsReadMutation]);
 
-  const handleBackToConversations = () => {
+  const handleBackToConversations = useCallback(() => {
     setShowConversationList(true);
-  };
+  }, []);
 
-  const handleDeleteMessage = (messageId: string) => {
+  const handleDeleteMessage = useCallback((messageId: string) => {
     Modal.confirm({
       title: t("chat.deleteMessage"),
       content: t("chat.deleteMessageConfirm"),
@@ -197,17 +201,17 @@ function ChatContent() {
         deleteMessageMutation.mutate(messageId);
       },
     });
-  };
+  }, [t, deleteMessageMutation]);
 
-  const handleReplyMessage = (msg: Message) => {
+  const handleReplyMessage = useCallback((msg: Message) => {
     setReplyingTo(msg);
     replyingToRef.current = msg;
-  };
+  }, []);
 
-  const handleCancelReply = () => {
+  const handleCancelReply = useCallback(() => {
     setReplyingTo(null);
     replyingToRef.current = null;
-  };
+  }, []);
 
   const sendImageMutation = useStandardizedMutation(
     (payload: { receiverId: string; imageUrl: string }) => {
@@ -238,7 +242,7 @@ function ChatContent() {
     }
   );
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const showPanel = selectedConversationId || (targetUserId && user?.id);
     if (!file || !showPanel) return;
@@ -269,18 +273,15 @@ function ChatContent() {
     } finally {
       setUploadingImage(false);
     }
-  };
+  }, [selectedConversationId, targetUserId, user?.id, conversationsData?.conversations, getOtherParticipant, sendImageMutation, t]);
 
-
-  const getOtherParticipant = (conversation: Conversation): string => {
-    if (!user?.id || !conversation?.participant_ids) return "";
-    const otherId = conversation.participant_ids.find((id) => id !== user.id);
-    return otherId || "";
-  };
-
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
+
+  const handleOverlayClick = useCallback(() => {
+    setShowConversationList(false);
+  }, []);
 
   useEffect(() => {
     if (selectedConversationId) {
@@ -293,7 +294,7 @@ function ChatContent() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messagesData?.messages]);
+  }, [messagesData?.messages, scrollToBottom]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -417,20 +418,22 @@ function ChatContent() {
     [selectedConversationId, sendTyping]
   );
 
-  const selectedConversation = conversationsData?.conversations.find(
-    (c) => c.id === selectedConversationId
+  const selectedConversation = useMemo(
+    () => conversationsData?.conversations.find((c) => c.id === selectedConversationId),
+    [conversationsData?.conversations, selectedConversationId]
   );
 
   const showChatPanel =
     !!selectedConversationId || !!(targetUserId && user?.id);
-  const messages = messagesData?.messages || [];
+  const messages = useMemo(() => messagesData?.messages || [], [messagesData?.messages]);
 
-  const getReplyMessage = (
-    replyToId: string | null | undefined
-  ): Message | null => {
-    if (!replyToId) return null;
-    return messages.find((m) => m._id === replyToId) || null;
-  };
+  const getReplyMessage = useCallback(
+    (replyToId: string | null | undefined): Message | null => {
+      if (!replyToId) return null;
+      return messages.find((m) => m._id === replyToId) || null;
+    },
+    [messages]
+  );
 
   return (
         <div className={styles.chatContainer}>
@@ -448,12 +451,12 @@ function ChatContent() {
               getOtherParticipant={getOtherParticipant}
             />
           </div>
-          {isMobile && showConversationList && showChatPanel && (
+          {isMobile && showConversationList && showChatPanel ? (
             <div
               className={styles.overlay}
-              onClick={() => setShowConversationList(false)}
+              onClick={handleOverlayClick}
             />
-          )}
+          ) : null}
 
           <div
             className={`${styles.chatView} ${
@@ -463,14 +466,14 @@ function ChatContent() {
             {selectedConversationId ? (
               <>
                 <div className={styles.chatHeader}>
-                  {isMobile && (
+                  {isMobile ? (
                     <Button
                       type="text"
                       icon={<ArrowLeftOutlined />}
                       onClick={handleBackToConversations}
                       className={styles.backButton}
                     />
-                  )}
+                  ) : null}
                   <Text strong className={styles.chatHeaderTitle}>
                     {selectedConversation?.other_user?.full_name ||
                       getOtherParticipant(
@@ -518,11 +521,11 @@ function ChatContent() {
                           />
                         );
                       })}
-                      {typingUsers.size > 0 && (
+                      {typingUsers.size > 0 ? (
                         <div className={styles.typingIndicator}>
                           <Text type="secondary">{t("chat.typing")}</Text>
                         </div>
-                      )}
+                      ) : null}
                       <div ref={messagesEndRef} />
                     </Fragment>
                   )}

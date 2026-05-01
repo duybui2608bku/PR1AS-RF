@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Fragment, useMemo } from "react";
+import React, { useState, useEffect, Fragment, useMemo, useCallback } from "react";
 import {
   Card,
   Tabs,
@@ -106,31 +106,31 @@ function WorkerWalletContent() {
     retry: false,
   });
 
-  const handleTabChange = (key: string): void => {
+  const handleTabChange = useCallback((key: string): void => {
     setActiveTab(key as WorkerWalletTabKey);
-  };
+  }, []);
 
-  const handleTableChange = (newPage: number, newPageSize: number): void => {
+  const handleTableChange = useCallback((newPage: number, newPageSize: number): void => {
     setPage(newPage);
     setLimit(newPageSize);
-  };
+  }, []);
 
-  const handleStatusFilterChange = (
+  const handleStatusFilterChange = useCallback((
     value: EscrowStatus | FilterValueAll.ALL
   ): void => {
     setStatusFilter(value === FilterValueAll.ALL ? undefined : value);
     setPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleDateRangeChange = (
+  const handleDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDateRange(dates);
     setDatePreset(null);
     setPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleDatePresetChange = (preset: DateRangePreset | null): void => {
+  const handleDatePresetChange = useCallback((preset: DateRangePreset | null): void => {
     setDatePreset(preset);
     if (preset) {
       const [startDate, endDate] = getDateRangeFromPreset(preset);
@@ -139,18 +139,18 @@ function WorkerWalletContent() {
       setDateRange(null);
     }
     setPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleResetFilters = (): void => {
+  const handleResetFilters = useCallback((): void => {
     setStatusFilter(undefined);
     setDateRange(null);
     setDatePreset(null);
     setPage(PAGINATION_DEFAULTS.PAGE);
-  };
+  }, []);
 
-  const handleRefresh = async (): Promise<void> => {
+  const handleRefresh = useCallback(async (): Promise<void> => {
     await refetchEscrows();
-  };
+  }, [refetchEscrows]);
 
   const escrowColumns = useMemo(
     () => buildEscrowColumns(t, formatCurrency),
@@ -343,7 +343,7 @@ function WorkerWalletContent() {
                     "Failed to load data"
                   }
                 >
-                  {escrowData && (
+                  {escrowData ? (
                     <Fragment>
                       {isMobile ? (
                         <EscrowCardGrid
@@ -381,7 +381,7 @@ function WorkerWalletContent() {
                         />
                       )}
                     </Fragment>
-                  )}
+                  ) : null}
                 </QueryState>
               </Card>
             </Tabs.TabPane>

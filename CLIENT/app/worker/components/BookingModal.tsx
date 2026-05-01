@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Modal,
   Form,
@@ -301,7 +301,7 @@ export function BookingModal({
     }
   };
 
-  const disabledTime = (): { disabledHours: () => number[] } => {
+  const disabledTime = useCallback((): { disabledHours: () => number[] } => {
     return {
       disabledHours: () => {
         const hours: number[] = [];
@@ -314,14 +314,14 @@ export function BookingModal({
         return hours;
       },
     };
-  };
+  }, []);
 
-  const handleClose = (): void => {
+  const handleClose = useCallback((): void => {
     setSelectedDate(null);
     setSelectedDateRange(null);
     form.resetFields();
     onClose();
-  };
+  }, [form, onClose]);
 
   return (
     <Modal
@@ -467,7 +467,7 @@ export function BookingModal({
           </>
         )}
 
-        {selectedPricingUnit !== PricingUnit.DAILY && (
+        {selectedPricingUnit !== PricingUnit.DAILY ? (
           <Form.Item
             label={
               selectedPricingUnit === PricingUnit.MONTHLY
@@ -495,7 +495,7 @@ export function BookingModal({
               </button>
             </Space>
           </Form.Item>
-        )}
+        ) : null}
 
         <Alert type="info" showIcon message={t("booking.create.noPlatformCharge")} />
 

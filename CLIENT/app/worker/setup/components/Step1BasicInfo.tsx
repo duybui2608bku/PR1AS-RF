@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Form,
   Input,
@@ -116,12 +116,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   });
   void isLoading;
 
-  const mergeStepData = (data: Partial<WorkerProfileUpdateInput>) => {
+  const mergeStepData = useCallback((data: Partial<WorkerProfileUpdateInput>) => {
     setStepData((current) => ({
       ...current,
       ...data,
     }));
-  };
+  }, []);
 
   useEffect(() => {
     const profile = profileData?.user?.worker_profile || initialData;
@@ -187,23 +187,23 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     }
   }, [profileData, initialData, form]);
 
-  const updateHobbies = (nextHobbies: string[]) => {
+  const updateHobbies = useCallback((nextHobbies: string[]) => {
     setHobbies(nextHobbies);
     mergeStepData({
       hobbies: nextHobbies,
     });
-  };
+  }, [mergeStepData]);
 
-  const updateGalleryUrls = (files: UploadFile[]) => {
+  const updateGalleryUrls = useCallback((files: UploadFile[]) => {
     mergeStepData({
       gallery_urls: files
         .filter((file) => file.status === "done" && file.url)
         .map((file) => file.url || "")
         .filter(Boolean),
     });
-  };
+  }, [mergeStepData]);
 
-  const getLocation = () => {
+  const getLocation = useCallback(() => {
     if (!navigator.geolocation) {
       message.error(t("worker.setup.step1.location.notSupported"));
       return;
@@ -230,20 +230,20 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         );
       }
     );
-  };
+  }, [t, mergeStepData]);
 
-  const handleAddHobby = () => {
+  const handleAddHobby = useCallback(() => {
     if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) {
       const newHobbies = [...hobbies, hobbyInput.trim()];
       updateHobbies(newHobbies);
       setHobbyInput("");
     }
-  };
+  }, [hobbyInput, hobbies, updateHobbies]);
 
-  const handleRemoveHobby = (hobby: string) => {
+  const handleRemoveHobby = useCallback((hobby: string) => {
     const newHobbies = hobbies.filter((h) => h !== hobby);
     updateHobbies(newHobbies);
-  };
+  }, [hobbies, updateHobbies]);
 
   const handleUploadChange: UploadProps["onChange"] = async (info) => {
     let newFileList = [...info.fileList];
@@ -310,7 +310,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     return false;
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const currentStepType = SUB_STEPS[currentSubStep];
 
     if (currentStepType === "location") {
@@ -367,19 +367,20 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     }
 
     if (currentSubStep < SUB_STEPS.length - 1) {
-      setCurrentSubStep(currentSubStep + 1);
+      setCurrentSubStep((prev) => prev + 1);
     } else {
       handleSubmit();
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSubStep, location, form, mergeStepData, t]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (currentSubStep > 0) {
-      setCurrentSubStep(currentSubStep - 1);
+      setCurrentSubStep((prev) => prev - 1);
     }
-  };
+  }, [currentSubStep]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     try {
       const formData: WorkerProfileUpdateInput = {
         ...stepData,
@@ -393,7 +394,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     } catch (error) {
       handleError(error);
     }
-  };
+  }, [stepData, onNext, handleError]);
 
   const renderSubStep = () => {
     const currentStepType = SUB_STEPS[currentSubStep];

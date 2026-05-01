@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, Row, Col, Radio, Typography } from "antd";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrency } from "@/lib/hooks/use-currency";
@@ -65,13 +66,13 @@ export function WorkerServices({
     );
   }
 
-  const unitLabels = {
+  const unitLabels = useMemo(() => ({
     HOURLY: t("worker.setup.step2.selected.hour"),
     DAILY: t("worker.setup.step2.selected.day"),
     MONTHLY: t("worker.setup.step2.selected.month"),
-  };
+  }), [t]);
 
-  const activeServices = services.filter((ws) => ws.is_active);
+  const activeServices = useMemo(() => services.filter((ws) => ws.is_active), [services]);
 
   return (
     <Card

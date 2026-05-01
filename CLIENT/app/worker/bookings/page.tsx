@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect, useCallback, useMemo } from "react";
 import {
   Card,
   Table,
@@ -80,15 +80,15 @@ function WorkerBookingsContent() {
 
   const { serviceMap } = useServicesMap();
 
-  const resetActionModalState = (): void => {
+  const resetActionModalState = useCallback((): void => {
     setActionModalOpen(false);
     setCurrentBookingId("");
     setCurrentAction(null);
     setWorkerResponse("");
     setCancelReason(undefined);
-  };
+  }, []);
 
-  const invalidateWorkerBookingQueries = () => {
+  const invalidateWorkerBookingQueries = useCallback(() => {
     return Promise.all([
       queryClient.invalidateQueries({
         queryKey: [BOOKING_QUERY_KEYS.WORKER_BOOKINGS],
@@ -97,7 +97,7 @@ function WorkerBookingsContent() {
         queryKey: [BOOKING_QUERY_KEYS.ALL_SERVICES],
       }),
     ]);
-  };
+  }, [queryClient]);
 
   const query: BookingQuery = {
     page,
@@ -165,44 +165,44 @@ function WorkerBookingsContent() {
     }
   );
 
-  const handleStatusFilterChange = (
+  const handleStatusFilterChange = useCallback((
     value: BookingStatus | typeof FILTER_VALUE_ALL
   ): void => {
     setStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handlePaymentStatusFilterChange = (
+  const handlePaymentStatusFilterChange = useCallback((
     value: BookingPaymentStatus | typeof FILTER_VALUE_ALL
   ): void => {
     setPaymentStatusFilter(value === FILTER_VALUE_ALL ? undefined : value);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleDateRangeChange = (
+  const handleDateRangeChange = useCallback((
     dates: [Dayjs | null, Dayjs | null] | null
   ): void => {
     setDateRange(dates);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleResetFilters = (): void => {
+  const handleResetFilters = useCallback((): void => {
     setStatusFilter(undefined);
     setPaymentStatusFilter(undefined);
     setDateRange(null);
     resetPage();
-  };
+  }, [resetPage]);
 
-  const handleRefreshBookings = async (): Promise<void> => {
+  const handleRefreshBookings = useCallback(async (): Promise<void> => {
     await invalidateWorkerBookingQueries();
     await message.loading(
       t("booking.worker.actions.refreshing"),
       BookingPageConfig.REFRESH_MESSAGE_DURATION_SECONDS
     );
     message.success(t("booking.worker.actions.refreshSuccess"));
-  };
+  }, [invalidateWorkerBookingQueries, t]);
 
-  const handleAction = (
+  const handleAction = useCallback((
     bookingId: string,
     action: WorkerActionType,
     response?: string
@@ -237,13 +237,13 @@ function WorkerBookingsContent() {
       status,
       workerResponse: response,
     });
-  };
+  }, [updateStatusMutation]);
 
-  const handleOpenComplaintChat = (bookingId: string): void => {
+  const handleOpenComplaintChat = useCallback((bookingId: string): void => {
     openComplaintChatMutation.mutate(bookingId);
-  };
+  }, [openComplaintChatMutation]);
 
-  const handleModalConfirm = (): void => {
+  const handleModalConfirm = useCallback((): void => {
     if (!currentAction || !currentBookingId) return;
 
     if (currentAction === WorkerActionType.CANCEL) {
@@ -260,16 +260,16 @@ function WorkerBookingsContent() {
         workerResponse,
       });
     }
-  };
+  }, [currentAction, currentBookingId, cancelReason, workerResponse, cancelBookingMutation, updateStatusMutation]);
 
-  const columns = createWorkerBookingColumns({
+  const columns = useMemo(() => createWorkerBookingColumns({
     t,
     formatCurrency,
-    onAction: handleAction, 
+    onAction: handleAction,
     onOpenComplaintChat: handleOpenComplaintChat,
     serviceMap,
     locale,
-  });
+  }), [t, formatCurrency, handleAction, handleOpenComplaintChat, serviceMap, locale]);
 
   useEffect(() => {
     if (bookingsError) {

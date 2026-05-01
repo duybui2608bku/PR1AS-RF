@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox, Modal, Space, Typography } from "antd";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { CheckboxChangeEvent } from "antd/es/checkbox";
 
 const { Paragraph, Text, Title } = Typography;

@@ -11,16 +11,24 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "./footer.module.scss";
 
 const { Footer: AntFooter } = Layout;
 const { Title, Text } = Typography;
 
+const CURRENT_YEAR = new Date().getFullYear();
+
+const FACEBOOK_ICON = <FacebookOutlined className={styles.socialIcon} />;
+const TWITTER_ICON = <TwitterOutlined className={styles.socialIcon} />;
+const INSTAGRAM_ICON = <InstagramOutlined className={styles.socialIcon} />;
+const LINKEDIN_ICON = <LinkedinOutlined className={styles.socialIcon} />;
+const MAIL_ICON = <MailOutlined />;
+const PHONE_ICON = <PhoneOutlined />;
+
 const FooterComponent = () => {
   const { t } = useTranslation();
-  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <AntFooter className={styles.footer}>
@@ -35,16 +43,16 @@ const FooterComponent = () => {
             </Text>
             <Space size="middle" className={styles.socialSpace}>
               <a href="#" className={styles.socialLink} aria-label="Facebook">
-                <FacebookOutlined className={styles.socialIcon} />
+                {FACEBOOK_ICON}
               </a>
               <a href="#" className={styles.socialLink} aria-label="Twitter">
-                <TwitterOutlined className={styles.socialIcon} />
+                {TWITTER_ICON}
               </a>
               <a href="#" className={styles.socialLink} aria-label="Instagram">
-                <InstagramOutlined className={styles.socialIcon} />
+                {INSTAGRAM_ICON}
               </a>
               <a href="#" className={styles.socialLink} aria-label="LinkedIn">
-                <LinkedinOutlined className={styles.socialIcon} />
+                {LINKEDIN_ICON}
               </a>
             </Space>
           </Col>
@@ -95,11 +103,11 @@ const FooterComponent = () => {
             </Title>
             <Space orientation="vertical" size="middle">
               <Space>
-                <MailOutlined />
+                {MAIL_ICON}
                 <Text type="secondary">info@example.com</Text>
               </Space>
               <Space>
-                <PhoneOutlined />
+                {PHONE_ICON}
                 <Text type="secondary">+84 123 456 789</Text>
               </Space>
             </Space>
@@ -111,7 +119,7 @@ const FooterComponent = () => {
         <Row justify="space-between" align="middle">
           <Col>
             <Text type="secondary">
-              © {currentYear} {t("home.footer.copyright")}.{" "}
+              © {CURRENT_YEAR} {t("home.footer.copyright")}.{" "}
               {t("home.footer.rights")}
             </Text>
           </Col>

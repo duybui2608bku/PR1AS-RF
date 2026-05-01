@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useRef } from "react";
+import React, { memo, useCallback, useRef } from "react";
 import { Input, Button, Typography, Popover } from "antd";
 import {
   SendOutlined,
@@ -34,6 +34,50 @@ interface ChatInputProps {
   onCancelReply: () => void;
 }
 
+interface AttachActionsProps {
+  onAttachClick: (type: "image" | "file" | "video" | "list") => void;
+}
+
+const AttachActions = memo(function AttachActions({ onAttachClick }: AttachActionsProps) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.attachMenu}>
+      <Button
+        type="text"
+        icon={<PictureOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("image")}
+      >
+        {t("chat.attachImage")}
+      </Button>
+      <Button
+        type="text"
+        icon={<FileOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("file")}
+      >
+        {t("chat.attachFile")}
+      </Button>
+      <Button
+        type="text"
+        icon={<VideoCameraOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("video")}
+      >
+        {t("chat.attachVideo")}
+      </Button>
+      <Button
+        type="text"
+        icon={<UnorderedListOutlined />}
+        className={styles.attachMenuItem}
+        onClick={() => onAttachClick("list")}
+      >
+        {t("chat.attachList")}
+      </Button>
+    </div>
+  );
+});
+
 export const ChatInput = memo(function ChatInput({
   messageContent,
   onMessageChange,
@@ -50,57 +94,29 @@ export const ChatInput = memo(function ChatInput({
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSend();
     }
-  };
+  }, [onSend]);
 
-  const handleAttachClick = (type: "image" | "file" | "video" | "list") => {
+  const handleAttachClick = useCallback((type: "image" | "file" | "video" | "list") => {
     if (type === "image") {
       fileInputRef.current?.click();
     } else {
       antMessage.info(t("chat.comingSoon"));
     }
-  };
+  }, [t]);
 
-  const renderAttachActions = () => (
-    <div className={styles.attachMenu}>
-      <Button
-        type="text"
-        icon={<PictureOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("image")}
-      >
-        {t("chat.attachImage")}
-      </Button>
-      <Button
-        type="text"
-        icon={<FileOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("file")}
-      >
-        {t("chat.attachFile")}
-      </Button>
-      <Button
-        type="text"
-        icon={<VideoCameraOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("video")}
-      >
-        {t("chat.attachVideo")}
-      </Button>
-      <Button
-        type="text"
-        icon={<UnorderedListOutlined />}
-        className={styles.attachMenuItem}
-        onClick={() => handleAttachClick("list")}
-      >
-        {t("chat.attachList")}
-      </Button>
-    </div>
-  );
+  const handleTextAreaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onMessageChange(e.target.value);
+    onTyping(true);
+  }, [onMessageChange, onTyping]);
+
+  const handleBlur = useCallback(() => onTyping(false), [onTyping]);
+
+  const attachContent = <AttachActions onAttachClick={handleAttachClick} />;
 
   return (
     <div className={styles.messageInputContainer}>
@@ -111,7 +127,7 @@ export const ChatInput = memo(function ChatInput({
         className={styles.hiddenInput}
         onChange={onImageSelect}
       />
-      {replyingTo && (
+      {replyingTo ? (
         <div className={styles.replyPreview}>
           <div className={styles.replyPreviewContent}>
             <CommentOutlined className={styles.replyIcon} />
@@ -140,10 +156,10 @@ export const ChatInput = memo(function ChatInput({
             className={styles.replyCancelButton}
           />
         </div>
-      )}
+      ) : null}
       <div className={styles.messageInputWrapper}>
         <Popover
-          content={renderAttachActions()}
+          content={attachContent}
           trigger="click"
           placement="topLeft"
         >
@@ -156,12 +172,9 @@ export const ChatInput = memo(function ChatInput({
         </Popover>
         <TextArea
           value={messageContent}
-          onChange={(e) => {
-            onMessageChange(e.target.value);
-            onTyping(true);
-          }}
+          onChange={handleTextAreaChange}
           onKeyDown={handleKeyPress}
-          onBlur={() => onTyping(false)}
+          onBlur={handleBlur}
           placeholder={t("chat.inputPlaceholder")}
           autoSize={{ minRows: 1, maxRows: 4 }}
           className={styles.messageInput}

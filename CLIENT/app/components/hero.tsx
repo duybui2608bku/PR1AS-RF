@@ -14,7 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import type { Dayjs } from "dayjs";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { SERVICE_CATEGORIES } from "@/app/constants/constants";
 import {
   workerServicesApi,
@@ -34,6 +34,25 @@ interface LocationAutoCompleteOption {
   label: React.ReactNode;
   coords: string;
 }
+
+interface ChipButtonProps {
+  item: HeroCategoryChip;
+  isActive: boolean;
+  onClick: (key: string) => void;
+  t: (key: string, options?: Record<string, string>) => string;
+}
+
+const ChipButton = memo(({ item, isActive, onClick, t }: ChipButtonProps) => (
+  <button
+    type="button"
+    onClick={() => onClick(item.key)}
+    className={`${styles.chip} ${isActive ? styles.chipActive : ""}`}
+  >
+    <span className={styles.chipIcon}>{item.icon}</span>
+    <span>{t(item.labelKey, { defaultValue: item.defaultLabel })}</span>
+  </button>
+));
+ChipButton.displayName = "ChipButton";
 
 const HERO_CATEGORIES: HeroCategoryChip[] = [
   {
@@ -191,6 +210,40 @@ const HeroComponent = () => {
     ]
   );
 
+  const handleQueryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value),
+    []
+  );
+
+  const handleLocationChange = useCallback((value: string) => {
+    setLocationInput(value);
+  }, []);
+
+  const handleLocationSearch = useCallback((value: string) => {
+    setLocationInput(value);
+    setSelectedLocationCoords("");
+  }, []);
+
+  const handleLocationSelect = useCallback(
+    (value: string, option: unknown) => {
+      setLocationInput(value);
+      setSelectedLocationCoords((option as LocationAutoCompleteOption).coords);
+    },
+    []
+  );
+
+  const handleScheduleChange = useCallback((value: Dayjs | null) => {
+    setScheduleValue(value);
+  }, []);
+
+  const notFoundContent = useMemo(
+    () =>
+      locationInput.trim().length < 2
+        ? null
+        : t("common.noData", { defaultValue: "Không có dữ liệu" }),
+    [locationInput, t]
+  );
+
   const handleCategoryClick = useCallback(
     (categoryCode: string) => {
       setActiveCategory(categoryCode);
@@ -236,7 +289,7 @@ const HeroComponent = () => {
                   defaultValue: "Dịch vụ hỗ trợ",
                 })}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={handleQueryChange}
                 className={styles.searchControl}
               />
             </div>
@@ -248,26 +301,14 @@ const HeroComponent = () => {
               <AutoComplete
                 value={locationInput}
                 options={locationOptions}
-                onChange={(value) => setLocationInput(value)}
-                onSearch={(value) => {
-                  setLocationInput(value);
-                  setSelectedLocationCoords("");
-                }}
-                onSelect={(value, option) => {
-                  setLocationInput(value);
-                  setSelectedLocationCoords(
-                    (option as LocationAutoCompleteOption).coords
-                  );
-                }}
+                onChange={handleLocationChange}
+                onSearch={handleLocationSearch}
+                onSelect={handleLocationSelect}
                 placeholder={t("home.hero.searchLocationPlaceholder", {
                   defaultValue: "Quận 1, TP.HCM",
                 })}
                 className={styles.searchControl}
-                notFoundContent={
-                  locationInput.trim().length < 2
-                    ? null
-                    : t("common.noData", { defaultValue: "Không có dữ liệu" })
-                }
+                notFoundContent={notFoundContent}
               />
             </div>
             <div className={styles.searchDivider} />
@@ -279,7 +320,7 @@ const HeroComponent = () => {
                 showTime
                 allowClear
                 value={scheduleValue}
-                onChange={(value) => setScheduleValue(value)}
+                onChange={handleScheduleChange}
                 placeholder={t("home.hero.searchSchedulePlaceholder", {
                   defaultValue: "Chọn ngày và giờ",
                 })}
@@ -303,21 +344,13 @@ const HeroComponent = () => {
       <div className={styles.chipsWrap}>
         <div className={styles.chipsScroller}>
           {HERO_CATEGORIES.map((item) => (
-            <button
+            <ChipButton
               key={item.key}
-              type="button"
-              onClick={() => handleCategoryClick(item.key)}
-              className={`${styles.chip} ${
-                activeCategory === item.key ? styles.chipActive : ""
-              }`}
-            >
-              <span className={styles.chipIcon}>{item.icon}</span>
-              <span>
-                {t(item.labelKey, {
-                  defaultValue: item.defaultLabel,
-                })}
-              </span>
-            </button>
+              item={item}
+              isActive={activeCategory === item.key}
+              onClick={handleCategoryClick}
+              t={t}
+            />
           ))}
         </div>
       </div>

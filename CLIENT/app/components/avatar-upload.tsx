@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Avatar, Upload, Spin, Typography } from "antd";
 import { CameraOutlined, UserOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
@@ -36,7 +36,7 @@ export function AvatarUpload({
     setPreviewUrl(value || null);
   }, [value]);
 
-  const handleFileChange = async (file: File) => {
+  const handleFileChange = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
       handleError(new Error(t("upload.avatar.invalidFormat")));
       return false;
@@ -65,7 +65,7 @@ export function AvatarUpload({
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleError, handleSuccess, onChange, t]);
 
   const uploadProps: UploadProps = {
     beforeUpload: (file) => {
@@ -77,11 +77,19 @@ export function AvatarUpload({
     disabled: disabled || loading,
   };
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (!disabled && !loading) {
       fileInputRef.current?.click();
     }
-  };
+  }, [disabled, loading]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileChange(file);
+    }
+    e.target.value = "";
+  }, [handleFileChange]);
 
   const isDisabledState = disabled || loading;
 
@@ -99,11 +107,11 @@ export function AvatarUpload({
             className={!previewUrl ? styles.placeholderAvatar : undefined}
           />
         </Spin>
-        {!disabled && !loading && (
+        {!disabled && !loading ? (
           <div className={styles.badge}>
             <CameraOutlined className={styles.badgeIcon} />
           </div>
-        )}
+        ) : null}
       </div>
 
       <Upload {...uploadProps}>
@@ -112,21 +120,15 @@ export function AvatarUpload({
           type="file"
           accept="image/*"
           className={styles.hiddenInput}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              handleFileChange(file);
-            }
-            e.target.value = "";
-          }}
+          onChange={handleInputChange}
         />
       </Upload>
 
-      {!disabled && (
+      {!disabled ? (
         <Text className={styles.hint}>
           {t("upload.avatar.changeHint")}
         </Text>
-      )}
+      ) : null}
     </div>
   );
 }

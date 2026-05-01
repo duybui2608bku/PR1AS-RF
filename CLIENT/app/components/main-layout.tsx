@@ -23,7 +23,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     <Layout className={styles.layout}>
       <Header />
       <Content className={styles.content}>{children}</Content>
-      {!isChatPage && <Footer />}
+      {!isChatPage ? <Footer /> : null}
       <SafetyNoticeModal />
     </Layout>
   );

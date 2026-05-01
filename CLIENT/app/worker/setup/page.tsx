@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Typography, message, Spin, Card } from "antd";
 import { Step1BasicInfo } from "./components/Step1BasicInfo";
 import { Step2Services } from "./components/Step2Services";
@@ -39,14 +39,14 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
   );
   const [, setStepStatus] = useState<StepStatus[]>(["process", "wait"]);
 
-  const step1ProfileData: WorkerProfile | null = step1Data
+  const step1ProfileData: WorkerProfile | null = useMemo(() => step1Data
     ? {
         ...step1Data,
         gender: step1Data.gender ?? Gender.MALE,
         hobbies: step1Data.hobbies || [],
         gallery_urls: step1Data.gallery_urls || [],
       }
-    : null;
+    : null, [step1Data]);
 
   const profileMutation = useApiMutation("/auth/profile", "PATCH", {
     onSuccess: () => {
@@ -83,27 +83,27 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
     },
   });
 
-  const handleStep1Next = async (data: WorkerProfileUpdateInput) => {
+  const handleStep1Next = useCallback(async (data: WorkerProfileUpdateInput) => {
     try {
       await profileMutation.mutateAsync({ worker_profile: data });
       setStep1Data(data);
     } catch (error) {
       handleError(error);
     }
-  };
+  }, [profileMutation, handleError]);
 
-  const handleStep2Next = async (data: WorkerServiceInput) => {
+  const handleStep2Next = useCallback(async (data: WorkerServiceInput) => {
     try {
       await servicesMutation.mutateAsync(data);
     } catch (error) {
       handleError(error);
     }
-  };
+  }, [servicesMutation, handleError]);
 
-  const handleStep2Back = () => {
+  const handleStep2Back = useCallback(() => {
     setCurrentStep(0);
     setStepStatus(["process", "wait"]);
-  };
+  }, []);
 
   if (currentStep === 0) {
     return (
@@ -113,7 +113,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
           isPending={profileMutation.isPending}
           initialData={step1ProfileData}
         />
-        {profileMutation.isPending && (
+        {profileMutation.isPending ? (
           <div className={styles.overlay}>
             <Card>
               <Spin size="large" />
@@ -122,7 +122,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
               </Paragraph>
             </Card>
           </div>
-        )}
+        ) : null}
       </StepLayout>
     );
   }
@@ -135,7 +135,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
           onBack={handleStep2Back}
           isPending={servicesMutation.isPending}
         />
-        {servicesMutation.isPending && (
+        {servicesMutation.isPending ? (
           <div className={styles.overlay}>
             <Card>
               <Spin size="large" />
@@ -144,7 +144,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
               </Paragraph>
             </Card>
           </div>
-        )}
+        ) : null}
       </StepLayout>
     );
   }
