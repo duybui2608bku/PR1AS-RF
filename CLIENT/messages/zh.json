@@ -20,6 +20,7 @@
     "previous": "上一步",
     "close": "关闭",
     "step": "步骤",
+    "today": "今天",
     "pagination": {
       "total": "共 {total} 项"
     },
@@ -1130,6 +1131,23 @@
     "worker": {
       "list": {
         "title": "我的预订管理"
+      },
+      "schedule": {
+        "title": "月度日程",
+        "description": "查看所选月份中有预订的日期。",
+        "summary": {
+          "totalDays": "总天数",
+          "busyDays": "有预订的天数",
+          "availableDays": "空闲天数",
+          "totalBookings": "预订总数"
+        },
+        "legend": {
+          "available": "空闲日期",
+          "booked": "有预订",
+          "today": "今天"
+        },
+        "dayBookingUnit": "单",
+        "noBookings": "无预订"
       },
       "payout": "收入",
       "actions": {

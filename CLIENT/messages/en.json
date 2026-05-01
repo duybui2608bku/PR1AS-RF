@@ -22,6 +22,7 @@
     "step": "Step",
     "clear": "Clear",
     "refresh": "Refresh",
+    "today": "Today",
     "pagination": {
       "total": "Total {total} items"
     },
@@ -1242,6 +1243,23 @@
     "worker": {
       "list": {
         "title": "My Bookings Management"
+      },
+      "schedule": {
+        "title": "Monthly Schedule",
+        "description": "Track booked days for the selected month.",
+        "summary": {
+          "totalDays": "Total days",
+          "busyDays": "Booked days",
+          "availableDays": "Available days",
+          "totalBookings": "Total bookings"
+        },
+        "legend": {
+          "available": "Available day",
+          "booked": "Has booking",
+          "today": "Today"
+        },
+        "dayBookingUnit": "booking(s)",
+        "noBookings": "No bookings"
       },
       "payout": "Payout",
       "actions": {

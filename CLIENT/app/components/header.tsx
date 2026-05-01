@@ -119,7 +119,7 @@ const HeaderComponent = () => {
       if (userData.hasWorkerProfile) {
         try {
           await switchRoleMutation.mutateAsync(UserRole.WORKER);
-          router.push(AppRoute.HOME);
+          router.push(AppRoute.WORKER_BOOKINGS_SCHEDULE);
         } catch (error) {
           handleError(error);
         }

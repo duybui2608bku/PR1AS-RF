@@ -6,6 +6,7 @@ import {
   Table,
   Space,
   Typography,
+  Button,
   message,
   Pagination,
   Empty,
@@ -17,6 +18,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { bookingApi } from "@/lib/api/booking.api";
 import { chatApi } from "@/lib/api/chat.api";
 import type { BookingQuery, Booking } from "@/lib/types/booking";
@@ -42,6 +44,7 @@ import { useMobile } from "@/lib/hooks/use-mobile";
 import { usePagination } from "@/lib/hooks/use-pagination";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { useServicesMap } from "@/lib/hooks/use-services-map";
+import { AppRoute } from "@/lib/constants/routes";
 import {
   BOOKING_QUERY_KEYS,
   BookingPageConfig,
@@ -273,6 +276,9 @@ function WorkerBookingsContent() {
               <CalendarOutlined className={styles.titleIcon} />
               {t("booking.worker.list.title")}
             </Title>
+            <Link href={AppRoute.WORKER_BOOKINGS_SCHEDULE}>
+              <Button>{t("booking.table.schedule")}</Button>
+            </Link>
           </Space>
 
           <Card>

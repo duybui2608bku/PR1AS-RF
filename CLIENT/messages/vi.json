@@ -22,6 +22,7 @@
     "step": "Bước",
     "clear": "Xóa bộ lọc",
     "refresh": "Làm mới",
+    "today": "Hôm nay",
     "pagination": {
       "total": "Tổng {total} mục"
     },
@@ -1252,6 +1253,23 @@
     "worker": {
       "list": {
         "title": "Quản lý đặt lịch của tôi"
+      },
+      "schedule": {
+        "title": "Lịch trình theo tháng",
+        "description": "Theo dõi các ngày có booking trong tháng đã chọn.",
+        "summary": {
+          "totalDays": "Tổng số ngày",
+          "busyDays": "Ngày có booking",
+          "availableDays": "Ngày trống",
+          "totalBookings": "Tổng booking"
+        },
+        "legend": {
+          "available": "Ngày trống",
+          "booked": "Có booking",
+          "today": "Hôm nay"
+        },
+        "dayBookingUnit": "booking",
+        "noBookings": "Không có booking"
       },
       "payout": "Thu nhập",
       "actions": {

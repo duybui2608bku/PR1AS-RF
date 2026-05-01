@@ -6,12 +6,30 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { workerServicesApi } from "@/lib/api/worker.api";
 import { transformWorkersGroupedByServiceToServices } from "@/lib/utils/service-transform.utils";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { SERVICE_CATEGORIES } from "./constants/constants";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { AppRoute } from "@/lib/constants/routes";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.scss";
 
 export default function Home() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    if (!user || user.last_active_role !== "worker") {
+      return;
+    }
+
+    if (!user.worker_profile) {
+      router.replace(AppRoute.WORKER_SETUP);
+      return;
+    }
+
+    router.replace(AppRoute.WORKER_BOOKINGS_SCHEDULE);
+  }, [router, user]);
 
   const { data: workersGroupedByService, isLoading } = useQuery({
     queryKey: ["workers-grouped-by-service"],
@@ -105,6 +123,10 @@ export default function Home() {
       ),
     [companionshipServices]
   );
+
+  if (user?.last_active_role === "worker") {
+    return null;
+  }
 
   return (
     <div className={styles.page}>

@@ -20,6 +20,7 @@
     "previous": "이전",
     "close": "닫기",
     "step": "단계",
+    "today": "오늘",
     "pagination": {
       "total": "총 {total}개 항목"
     },
@@ -1130,6 +1131,23 @@
     "worker": {
       "list": {
         "title": "내 예약 관리"
+      },
+      "schedule": {
+        "title": "월간 일정",
+        "description": "선택한 달의 예약된 날짜를 확인하세요.",
+        "summary": {
+          "totalDays": "총 일수",
+          "busyDays": "예약된 날짜",
+          "availableDays": "빈 날짜",
+          "totalBookings": "총 예약"
+        },
+        "legend": {
+          "available": "빈 날짜",
+          "booked": "예약 있음",
+          "today": "오늘"
+        },
+        "dayBookingUnit": "건",
+        "noBookings": "예약 없음"
       },
       "payout": "수익",
       "actions": {

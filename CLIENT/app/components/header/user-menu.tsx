@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Dropdown, MenuProps, Tooltip } from "antd";
-import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { UserOutlined, MessageOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined, InfoCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
@@ -82,6 +82,10 @@ export const UserMenu = () => {
         }
     }, [router, userData.isWorkerActive]);
 
+    const handleNavigateToWorkerSchedule = useCallback(() => {
+        router.push(AppRoute.WORKER_BOOKINGS_SCHEDULE);
+    }, [router]);
+
     const currentPlanLabel = useMemo(() => {
         const planCode = user?.pricing_plan_code || "standard";
         const formattedPlan = planCode.charAt(0).toUpperCase() + planCode.slice(1);
@@ -132,6 +136,16 @@ export const UserMenu = () => {
             label: t("dashboard.header.clientBookings"),
             onClick: handleNavigateToBookings,
         },
+        ...(userData.isWorkerActive
+            ? [
+                  {
+                      key: "worker-schedule",
+                      icon: <CalendarOutlined />,
+                      label: t("booking.table.schedule"),
+                      onClick: handleNavigateToWorkerSchedule,
+                  },
+              ]
+            : []),
         {
             type: "divider",
         },
@@ -142,7 +156,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleLogout, currentPlanLabel, userData.isStandardPlan, chatBlockedMessage]);
+    ], [t, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleNavigateToWorkerSchedule, handleLogout, currentPlanLabel, userData.isStandardPlan, userData.isWorkerActive, chatBlockedMessage]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {

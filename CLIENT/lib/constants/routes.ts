@@ -11,6 +11,7 @@ export enum AppRoute {
   CLIENT_BOOKINGS = "/client/bookings",
   WORKER_SETUP = "/worker/setup",
   WORKER_BOOKINGS = "/worker/bookings",
+  WORKER_BOOKINGS_SCHEDULE = "/worker/bookings/schedule",
   CHAT = "/chat",
   NOTIFICATIONS = "/notifications",
   ADMIN_DASHBOARD = "/admin/dashboard",
