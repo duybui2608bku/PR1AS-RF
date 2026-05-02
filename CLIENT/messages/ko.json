@@ -225,6 +225,12 @@
     "myServices": "내 서비스",
     "explore": "탐색",
     "feedNavAria": "탐색과 게시물 전환",
+    "workerNavAria": "워커: 게시물, 일정, 메시지",
+    "workerNav": {
+      "posts": "게시물",
+      "schedule": "일정",
+      "messages": "메시지"
+    },
     "posts": "게시물",
     "currency": "통화",
     "language": "언어",
@@ -232,6 +238,10 @@
   },
   "feed": {
     "title": "게시물",
+    "workerHub": {
+      "title": "게시물",
+      "searchPlaceholder": "게시물, 일 검색…"
+    },
     "loadError": "게시물을 불러올 수 없습니다.",
     "rateLimit": "게시가 너무 빠릅니다. 잠시 후 다시 시도하세요.",
     "tabs": {
@@ -262,6 +272,7 @@
     },
     "post": {
       "anonymousAuthor": "사용자",
+      "viewWorkerProfileAria": "워커 프로필 보기: {{name}}",
       "deleteConfirm": "삭제할까요?",
       "editTitle": "수정",
       "toggleComments": "댓글",

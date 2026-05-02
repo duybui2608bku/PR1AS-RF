@@ -4,7 +4,7 @@ import { UserRole } from "@/lib/constants/routes";
 
 const CLIENT_ROUTE_PREFIX = "/client";
 const HOME_ROUTE = "/";
-const WORKER_SCHEDULE_ROUTE = "/worker/bookings/schedule";
+const WORKER_FEED_ROUTE = "/worker/feed";
 const WORKER_SETUP_ROUTE = "/worker/setup";
 
 export function middleware(request: NextRequest) {
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL(WORKER_SETUP_ROUTE, request.url));
         }
 
-        return NextResponse.redirect(new URL(WORKER_SCHEDULE_ROUTE, request.url));
+        return NextResponse.redirect(new URL(WORKER_FEED_ROUTE, request.url));
       }
     } catch {
       return NextResponse.next();

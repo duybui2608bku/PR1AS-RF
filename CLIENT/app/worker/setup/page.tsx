@@ -16,6 +16,8 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import type { User } from "@/lib/stores/auth.store";
+import { authApi } from "@/lib/api/auth.api";
 import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 import styles from "@/app/worker/setup/page.module.scss";
 
@@ -32,7 +34,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
   const router = useRouter();
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<WorkerProfileUpdateInput | null>(
     null
@@ -48,22 +50,37 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
       }
     : null, [step1Data]);
 
-  const profileMutation = useApiMutation("/auth/profile", "PATCH", {
-    onSuccess: () => {
-      message.success(t("worker.setup.success.profileSaved"));
-      setStepStatus(["finish", "process"]);
-      setCurrentStep(1);
-    },
-    onError: (error) => {
-      message.error(
-        error?.response?.data?.error?.message ||
-          t("worker.setup.error.saveProfile")
-      );
-    },
-  });
+  const profileMutation = useApiMutation<{ user: User }>(
+    "/auth/profile",
+    "PATCH",
+    {
+      onSuccess: (data) => {
+        const updatedUser = data?.data?.user;
+        if (updatedUser) {
+          setUser(updatedUser);
+        }
+        message.success(t("worker.setup.success.profileSaved"));
+        setStepStatus(["finish", "process"]);
+        setCurrentStep(1);
+      },
+      onError: (error) => {
+        message.error(
+          error?.response?.data?.error?.message ||
+            t("worker.setup.error.saveProfile")
+        );
+      },
+    }
+  );
 
   const servicesMutation = useApiMutation("/worker/services", "POST", {
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        const latestUser = await authApi.getMe();
+        setUser(latestUser as unknown as User);
+      } catch {
+        // Non-blocking: store sẽ được làm mới ở AuthGuard lần render kế tiếp
+      }
+
       message.success(t("worker.setup.success.setupComplete"));
       setStepStatus(["finish", "finish"]);
       if (isEditMode && user?.id) {

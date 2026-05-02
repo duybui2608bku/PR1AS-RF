@@ -7,21 +7,29 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "@/lib/stores/auth.store"
 import { usePostsFeed } from "@/lib/hooks/use-posts-feed"
 import { useErrorHandler } from "@/lib/hooks/use-error-handler"
-import { AppRoute } from "@/lib/constants/routes"
-import { buildFeedClearHashtagHref } from "../utils/feed-href"
-import { Composer } from "./composer"
-import { FeedTabs } from "./feed-tabs"
-import { PostList } from "./post-list"
-import { MeSidebar } from "./me-sidebar"
-import { TrendingSidebar } from "./trending-sidebar"
+import { AppRoute, UserRole } from "@/lib/constants/routes"
+import { buildFeedClearHashtagHref } from "@/app/feed/utils/feed-href"
+import { FeedTabs } from "@/app/feed/components/feed-tabs"
+import { PostList } from "@/app/feed/components/post-list"
+import { TrendingSidebar } from "@/app/feed/components/trending-sidebar"
 import styles from "../page.module.scss"
 
-export const FeedPageContent = () => {
+export const WorkerFeedContent = () => {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const user = useAuthStore((s) => s.user)
   const { handleError } = useErrorHandler()
+
+  const lastActiveRole = (
+    user as unknown as { last_active_role?: string } | null
+  )?.last_active_role
+
+  useEffect(() => {
+    if (user && lastActiveRole !== UserRole.WORKER) {
+      router.replace(AppRoute.HOME)
+    }
+  }, [user, lastActiveRole, router])
 
   const tab = searchParams.get("tab") === "mine" ? "mine" : "all"
   const hashtag = searchParams.get("hashtag")?.trim() || undefined
@@ -43,51 +51,54 @@ export const FeedPageContent = () => {
   }, [feedQuery.isError, feedQuery.error, handleError])
 
   const handleClearHashtag = () => {
-    router.push(buildFeedClearHashtagHref(AppRoute.FEED, searchParams))
+    router.push(
+      buildFeedClearHashtagHref(AppRoute.WORKER_FEED, searchParams)
+    )
+  }
+
+  if (user && lastActiveRole !== UserRole.WORKER) {
+    return null
   }
 
   return (
     <div className={styles.page}>
       <Typography.Title level={1} className={styles.srOnly}>
-        {t("feed.title")}
+        {t("feed.workerHub.title")}
       </Typography.Title>
 
       <div className={styles.feedTabsBand}>
         <div className={styles.feedTabsBandGrid}>
           <span className={styles.feedTabsBandSpacer} aria-hidden />
           <div className={styles.feedTabsBandMain}>
-            <FeedTabs basePath={AppRoute.FEED} />
+            <FeedTabs basePath={AppRoute.WORKER_FEED} />
           </div>
           <span className={styles.feedTabsBandSpacer} aria-hidden />
         </div>
       </div>
 
       <div className={styles.grid}>
-        <aside className={`${styles.sidebar} ${styles.sidebarLeft}`}>
-          <MeSidebar />
-        </aside>
+        <aside
+          className={`${styles.sidebar} ${styles.sidebarLeft} ${styles.sidebarLeftEmpty}`}
+          aria-hidden
+        />
 
         <main className={styles.main}>
           <div className={styles.mainStack}>
             {hashtag ? (
               <div className={styles.hashtagBanner}>
-                <span className={styles.hashtagLabel}>
-                  #{hashtag}
-                </span>
+                <span className={styles.hashtagLabel}>#{hashtag}</span>
                 <Button type="link" onClick={handleClearHashtag}>
                   {t("feed.hashtag.clear")}
                 </Button>
               </div>
             ) : null}
 
-            <Composer />
-
             {feedQuery.isError ? (
               <Alert type="error" message={t("feed.loadError")} showIcon />
             ) : (
               <PostList
                 currentUserId={user?.id}
-                hashtagBasePath={AppRoute.FEED}
+                hashtagBasePath={AppRoute.WORKER_FEED}
                 data={feedQuery.data}
                 fetchNextPage={feedQuery.fetchNextPage}
                 hasNextPage={Boolean(feedQuery.hasNextPage)}
@@ -100,7 +111,7 @@ export const FeedPageContent = () => {
         </main>
 
         <aside className={`${styles.sidebar} ${styles.sidebarRight}`}>
-          <TrendingSidebar />
+          <TrendingSidebar basePath={AppRoute.WORKER_FEED} />
         </aside>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react"
 import type { InfiniteData } from "@tanstack/react-query"
 import { Spin } from "antd"
 import type { FeedPage } from "@/lib/types/post"
+import { AppRoute } from "@/lib/constants/routes"
 import { PostCard } from "./post-card"
 import { FeedSkeleton } from "./feed-skeleton"
 import { FeedEmpty } from "./feed-empty"
@@ -11,6 +12,7 @@ import styles from "./post-list.module.scss"
 
 interface PostListProps {
   currentUserId?: string
+  hashtagBasePath?: string
   data: InfiniteData<FeedPage> | undefined
   fetchNextPage: () => void
   hasNextPage: boolean
@@ -21,6 +23,7 @@ interface PostListProps {
 
 export const PostList = ({
   currentUserId,
+  hashtagBasePath = AppRoute.FEED,
   data,
   fetchNextPage,
   hasNextPage,
@@ -63,12 +66,13 @@ export const PostList = ({
   }
 
   return (
-    <div>
+    <div className={styles.list}>
       {posts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
           currentUserId={currentUserId}
+          hashtagBasePath={hashtagBasePath}
         />
       ))}
       <div ref={loadMoreRef} style={{ height: 1 }} aria-hidden />

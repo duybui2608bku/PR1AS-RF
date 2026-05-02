@@ -10,9 +10,11 @@ import {
   Popover,
   Row,
   Col,
+  Tooltip,
 } from "antd";
 import {
   MenuOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -68,18 +70,16 @@ const HeaderComponent = () => {
       isWorkerActive: lastActiveRole === UserRole.WORKER,
       hasWorkerProfile: workerProfile && workerProfile !== null,
       isAdmin: userRoles.includes(UserRole.ADMIN),
+      isStandardPlan: user?.pricing_plan_code === "standard",
     };
   }, [user]);
 
   const workerButtonLabel = useMemo(() => {
     if (userData.isWorkerActive) {
       return t("header.hireService");
-    } else if (userData.hasWorkerProfile) {
-      return t("header.myServices");
-    } else {
-      return t("header.becomeWorker");
     }
-  }, [userData.isWorkerActive, userData.hasWorkerProfile, t]);
+    return t("header.becomeWorker");
+  }, [userData.isWorkerActive, t]);
 
   const handleOpenLogin = useCallback(() => {
     setAuthModalTab("login");
@@ -120,7 +120,7 @@ const HeaderComponent = () => {
       if (userData.hasWorkerProfile) {
         try {
           await switchRoleMutation.mutateAsync(UserRole.WORKER);
-          router.push(AppRoute.WORKER_BOOKINGS_SCHEDULE);
+          router.push(AppRoute.WORKER_FEED);
         } catch (error) {
           handleError(error);
         }
@@ -130,7 +130,7 @@ const HeaderComponent = () => {
     }
   }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError, handleOpenLogin]);
 
-  const showFeedLink =
+  const showClientNav =
     !userData.isAdmin &&
     (!isAuthenticated || userData.lastActiveRole !== UserRole.WORKER)
 
@@ -138,7 +138,41 @@ const HeaderComponent = () => {
     pathname === AppRoute.FEED || pathname.startsWith(`${AppRoute.FEED}/`)
   const exploreNavActive = pathname === AppRoute.HOME
 
-  const feedNav = showFeedLink ? (
+  const workerPostsNavActive =
+    pathname === AppRoute.WORKER_FEED ||
+    pathname.startsWith(`${AppRoute.WORKER_FEED}/`)
+  const workerScheduleNavActive =
+    pathname === AppRoute.WORKER_BOOKINGS_SCHEDULE ||
+    pathname.startsWith(`${AppRoute.WORKER_BOOKINGS_SCHEDULE}/`)
+  const workerMessagesNavActive =
+    pathname === AppRoute.CHAT || pathname.startsWith(`${AppRoute.CHAT}/`)
+  const chatBlockedMessage = t("chat.bookingConfirmationRequired")
+
+  const renderMessagesNavItem = (isActive: boolean) =>
+    userData.isStandardPlan ? (
+      <Tooltip title={chatBlockedMessage}>
+        <span
+          className={`${styles.feedNavLink} ${
+            isActive ? styles.feedNavLinkActive : ""
+          }`}
+          aria-disabled="true"
+        >
+          {t("header.workerNav.messages")} <InfoCircleOutlined />
+        </span>
+      </Tooltip>
+    ) : (
+      <Link
+        href={AppRoute.CHAT}
+        className={`${styles.feedNavLink} ${
+          isActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.workerNav.messages")}
+      </Link>
+    )
+
+  const clientNav = showClientNav ? (
     <nav
       className={styles.feedNavText}
       aria-label={t("header.feedNavAria")}
@@ -161,8 +195,43 @@ const HeaderComponent = () => {
       >
         {t("header.posts")}
       </Link>
+      {renderMessagesNavItem(workerMessagesNavActive)}
     </nav>
   ) : null
+
+  const workerNav =
+    isAuthenticated && userData.isWorkerActive && !userData.isAdmin ? (
+      <nav
+        className={styles.feedNavText}
+        aria-label={t("header.workerNavAria")}
+      >
+        <Link
+          href={AppRoute.WORKER_FEED}
+          className={`${styles.feedNavLink} ${
+            workerPostsNavActive ? styles.feedNavLinkActive : ""
+          }`}
+          prefetch
+        >
+          {t("header.workerNav.posts")}
+        </Link>
+        <Link
+          href={AppRoute.WORKER_BOOKINGS_SCHEDULE}
+          className={`${styles.feedNavLink} ${
+            workerScheduleNavActive ? styles.feedNavLinkActive : ""
+          }`}
+          prefetch
+        >
+          {t("header.workerNav.schedule")}
+        </Link>
+        {renderMessagesNavItem(workerMessagesNavActive)}
+      </nav>
+    ) : null
+
+  const feedNav = userData.isAdmin
+    ? null
+    : userData.isWorkerActive
+      ? workerNav
+      : clientNav
 
   const isBecomeWorkerCta =
     !userData.isWorkerActive && !userData.hasWorkerProfile

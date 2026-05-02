@@ -355,6 +355,12 @@
     "myServices": "My Services",
     "explore": "Explore",
     "feedNavAria": "Switch between Explore and Posts",
+    "workerNavAria": "Worker navigation: Posts, Schedule, Messages",
+    "workerNav": {
+      "posts": "Posts",
+      "schedule": "Schedule",
+      "messages": "Messages"
+    },
     "posts": "Posts",
     "currency": "Currency",
     "language": "Language",
@@ -362,6 +368,10 @@
   },
   "feed": {
     "title": "Posts",
+    "workerHub": {
+      "title": "Posts",
+      "searchPlaceholder": "Search posts, jobs…"
+    },
     "loadError": "Could not load posts. Please try again.",
     "rateLimit": "You are posting too quickly. Please wait a few minutes.",
     "tabs": {
@@ -394,6 +404,7 @@
     },
     "post": {
       "anonymousAuthor": "User",
+      "viewWorkerProfileAria": "View worker profile: {{name}}",
       "deleteConfirm": "Delete this post?",
       "editTitle": "Edit post",
       "toggleComments": "Comments",

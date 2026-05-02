@@ -136,4 +136,11 @@ export const config = {
       process.env.VNPAY_RETURN_URL ||
       `${process.env.FRONTEND_URL || "http://localhost:3000"}/wallet/deposit/callback`,
   },
+  media: {
+    /** Comma-separated hostnames allowed for post media URLs (empty = dev default: any https) */
+    allowedHosts: (process.env.MEDIA_ALLOWED_HOSTS || "")
+      .split(",")
+      .map((h) => h.trim())
+      .filter(Boolean),
+  },
 };

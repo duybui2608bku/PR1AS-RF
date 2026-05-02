@@ -4,10 +4,18 @@ import { Card, List, Skeleton, Typography } from "antd"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslation } from "react-i18next"
+import { AppRoute } from "@/lib/constants/routes"
 import { useTrendingHashtags } from "@/lib/hooks/use-trending-hashtags"
 import styles from "./trending-sidebar.module.scss"
 
-export const TrendingSidebar = () => {
+interface TrendingSidebarProps {
+  /** Đường dẫn feed khi chọn hashtag (client `/feed`, worker `/worker/feed`) */
+  basePath?: string
+}
+
+export const TrendingSidebar = ({
+  basePath = AppRoute.FEED,
+}: TrendingSidebarProps) => {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -22,7 +30,7 @@ export const TrendingSidebar = () => {
     const next = new URLSearchParams(searchParams.toString())
     next.set("hashtag", slug)
     const qs = next.toString()
-    router.push(qs ? `/feed?${qs}` : "/feed")
+    router.push(qs ? `${basePath}?${qs}` : basePath)
   }
 
   return (
@@ -42,7 +50,7 @@ export const TrendingSidebar = () => {
           renderItem={(item) => (
             <List.Item className={styles.listItem}>
               <Link
-                href={`/feed?hashtag=${encodeURIComponent(item.slug)}`}
+                href={`${basePath}?hashtag=${encodeURIComponent(item.slug)}`}
                 className={styles.link}
                 onClick={(e) => {
                   e.preventDefault()

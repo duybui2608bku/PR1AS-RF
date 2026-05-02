@@ -10,9 +10,11 @@ import "dayjs/locale/vi"
 import "dayjs/locale/en"
 import "dayjs/locale/ko"
 import "dayjs/locale/zh-cn"
+import Link from "next/link"
 import { useTranslation } from "react-i18next"
 import type { Post } from "@/lib/types/post"
 import { useDeletePost } from "@/lib/hooks/use-delete-post"
+import { getAuthorWorkerHref } from "@/app/feed/utils/author-link"
 import { PostCardBody } from "./post-card-body"
 import { PostCardMedia } from "./post-card-media"
 import { PostCardActions } from "./post-card-actions"
@@ -50,9 +52,14 @@ const dayjsLocaleFromI18n = (lang: string | undefined) => {
 interface PostCardProps {
   post: Post
   currentUserId?: string
+  hashtagBasePath?: string
 }
 
-export const PostCard = ({ post, currentUserId }: PostCardProps) => {
+export const PostCard = ({
+  post,
+  currentUserId,
+  hashtagBasePath,
+}: PostCardProps) => {
   const { t, i18n } = useTranslation()
 
   useEffect(() => {
@@ -65,6 +72,7 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
   const isAuthor = currentUserId === post.author.id
   const authorName =
     post.author.full_name?.trim() || t("feed.post.anonymousAuthor")
+  const workerHref = getAuthorWorkerHref(post.author)
 
   const handleDelete = async () => {
     try {
@@ -77,12 +85,53 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
   return (
     <Card className={styles.card}>
       <div className={styles.header}>
-        <Avatar size={40} src={post.author.avatar ?? undefined} icon={<UserOutlined />} />
-        <div className={styles.headerMeta}>
-          <Typography.Text strong>{authorName}</Typography.Text>
-          <Typography.Text type="secondary" className={styles.time}>
-            {dayjs(post.created_at).fromNow()}
-          </Typography.Text>
+        <div className={styles.headerLead}>
+          {workerHref ? (
+            <>
+              <Link
+                href={workerHref}
+                prefetch={false}
+                className={styles.authorLink}
+                aria-label={t("feed.post.viewWorkerProfileAria", {
+                  name: authorName,
+                })}
+              >
+                <Avatar
+                  className={styles.avatarCell}
+                  size={40}
+                  src={post.author.avatar ?? undefined}
+                  icon={<UserOutlined />}
+                />
+                <span className={styles.nameCell}>
+                  <Typography.Text strong>{authorName}</Typography.Text>
+                </span>
+              </Link>
+              <Typography.Text
+                type="secondary"
+                className={`${styles.time} ${styles.timeCell}`}
+              >
+                {dayjs(post.created_at).fromNow()}
+              </Typography.Text>
+            </>
+          ) : (
+            <>
+              <Avatar
+                className={styles.avatarCell}
+                size={40}
+                src={post.author.avatar ?? undefined}
+                icon={<UserOutlined />}
+              />
+              <span className={styles.nameCell}>
+                <Typography.Text strong>{authorName}</Typography.Text>
+              </span>
+              <Typography.Text
+                type="secondary"
+                className={`${styles.time} ${styles.timeCell}`}
+              >
+                {dayjs(post.created_at).fromNow()}
+              </Typography.Text>
+            </>
+          )}
         </div>
         {isAuthor ? (
           <PostCardActions
@@ -92,7 +141,11 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
         ) : null}
       </div>
 
-      <PostCardBody body={post.body} hashtags={post.hashtags} />
+      <PostCardBody
+        body={post.body}
+        hashtags={post.hashtags}
+        basePath={hashtagBasePath}
+      />
       <PostCardMedia media={post.media} />
 
       <Space className={styles.footer} wrap>

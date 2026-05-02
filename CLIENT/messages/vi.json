@@ -356,6 +356,12 @@
     "myServices": "Dịch vụ của tôi",
     "explore": "Khám phá",
     "feedNavAria": "Chuyển giữa Khám phá và Bài đăng",
+    "workerNavAria": "Điều hướng worker: Bài đăng, Lịch, Tin nhắn",
+    "workerNav": {
+      "posts": "Bài đăng",
+      "schedule": "Lịch",
+      "messages": "Tin nhắn"
+    },
     "posts": "Bài đăng",
     "currency": "Tiền tệ",
     "language": "Ngôn ngữ",
@@ -363,6 +369,10 @@
   },
   "feed": {
     "title": "Bài đăng",
+    "workerHub": {
+      "title": "Bài đăng",
+      "searchPlaceholder": "Tìm kiếm bài đăng, công việc…"
+    },
     "loadError": "Không tải được bài đăng. Vui lòng thử lại.",
     "rateLimit": "Bạn đăng bài quá nhanh. Vui lòng thử lại sau ít phút.",
     "tabs": {
@@ -395,6 +405,7 @@
     },
     "post": {
       "anonymousAuthor": "Người dùng",
+      "viewWorkerProfileAria": "Xem hồ sơ worker: {{name}}",
       "deleteConfirm": "Xóa bài đăng này?",
       "editTitle": "Sửa bài đăng",
       "toggleComments": "Bình luận",

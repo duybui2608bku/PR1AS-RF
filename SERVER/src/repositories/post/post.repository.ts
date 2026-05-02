@@ -8,7 +8,7 @@ import {
 import { PostVisibility } from "../../constants/post";
 import { CursorValue, buildCursorFilter } from "../../utils/cursorPagination";
 
-const AUTHOR_PUBLIC_FIELDS = "full_name avatar";
+const AUTHOR_PUBLIC_FIELDS = "full_name avatar worker_profile";
 
 export class PostRepository {
   async create(

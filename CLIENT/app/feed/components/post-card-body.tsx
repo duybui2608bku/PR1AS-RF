@@ -3,12 +3,15 @@
 import Link from "next/link"
 import { Fragment } from "react"
 import type { PostHashtag } from "@/lib/types/post"
+import { AppRoute } from "@/lib/constants/routes"
 
 const HASHTAG_REGEX = /(#[^\s#]+)/gu
 
 interface PostCardBodyProps {
   body: string
   hashtags: PostHashtag[]
+  /** Đường dẫn feed gốc cho query hashtag (client `/feed`, worker `/worker/feed`) */
+  basePath?: string
 }
 
 const buildSlugLookup = (hashtags: PostHashtag[]) => {
@@ -20,7 +23,11 @@ const buildSlugLookup = (hashtags: PostHashtag[]) => {
   return map
 }
 
-export const PostCardBody = ({ body, hashtags }: PostCardBodyProps) => {
+export const PostCardBody = ({
+  body,
+  hashtags,
+  basePath = AppRoute.FEED,
+}: PostCardBodyProps) => {
   const lookup = buildSlugLookup(hashtags)
   const parts = body.split(HASHTAG_REGEX)
 
@@ -34,7 +41,7 @@ export const PostCardBody = ({ body, hashtags }: PostCardBodyProps) => {
           return (
             <Link
               key={`h-${i}`}
-              href={`/feed?hashtag=${encodeURIComponent(slug)}`}
+              href={`${basePath}?hashtag=${encodeURIComponent(slug)}`}
               style={{ fontWeight: 600, color: "var(--color-primary)" }}
             >
               {part}

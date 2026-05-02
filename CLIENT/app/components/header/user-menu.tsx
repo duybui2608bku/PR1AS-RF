@@ -34,7 +34,6 @@ export const UserMenu = () => {
         return {
             isAdmin: userRoles.includes(UserRole.ADMIN),
             isWorkerActive: lastActiveRole === UserRole.WORKER,
-            isStandardPlan: user?.pricing_plan_code === "standard",
         };
     }, [user, user?.pricing_plan_code]);
 
@@ -70,10 +69,6 @@ export const UserMenu = () => {
         const profileRoute = getProfileRoute(user);
         router.push(profileRoute);
     }, [user, router]);
-
-    const handleNavigateToChat = useCallback(() => {
-        router.push(AppRoute.CHAT);
-    }, [router]);
 
     const handleNavigateToNotifications = useCallback(() => {
         router.push(AppRoute.NOTIFICATIONS);

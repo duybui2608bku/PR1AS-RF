@@ -59,6 +59,7 @@ export interface AuthorPublic {
   id: string;
   full_name: string | null;
   avatar: string | null;
+  has_worker_profile: boolean;
 }
 
 export interface PostMediaPublic {

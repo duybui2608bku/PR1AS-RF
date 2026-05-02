@@ -12,6 +12,9 @@ import reviewRoutes from "./review";
 import escrowRoutes from "./escrow";
 import notificationRoutes from "./notification";
 import pricingRoutes from "./pricing";
+import { postRoutes } from "./post";
+import { hashtagRoutes } from "./hashtag";
+import { commentRoutes } from "./comment";
 
 const router = Router();
 
@@ -28,5 +31,8 @@ router.use("/reviews", reviewRoutes);
 router.use("/escrows", escrowRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/pricing", pricingRoutes);
+router.use("/posts", postRoutes);
+router.use("/comments", commentRoutes);
+router.use("/hashtags", hashtagRoutes);
 
 export default router;
