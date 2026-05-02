@@ -443,6 +443,12 @@
     "title": "개인 정보",
     "editLabel": "편집",
     "editProfile": "프로필 편집",
+    "plan": {
+      "title": "구독 플랜",
+      "description": "현재 요금제 및 유효 기간",
+      "start": "플랜 시작",
+      "expiry": "플랜 만료"
+    },
     "info": {
       "title": "계정 세부 정보",
       "fullName": "성명",
@@ -682,7 +688,8 @@
         "years": "세",
         "height": "키",
         "weight": "몸무게",
-        "zodiac": "별자리"
+        "zodiac": "별자리",
+        "na": "없음"
       },
       "lifestyle": "라이프스타일",
       "quote": "명언",
@@ -1028,6 +1035,7 @@
     "filters": {
       "dateRange": "날짜 범위",
       "datePreset": "빠른 선택",
+      "selectDatePreset": "빠른 날짜 선택",
       "today": "오늘",
       "yesterday": "어제",
       "last7Days": "지난 7일",

@@ -23,7 +23,7 @@ export function WalletOverviewTab({
 }: WalletOverviewTabProps) {
   return (
     <Row gutter={[24, 24]}>
-      <Col xs={24} sm={12} md={6}>
+      <Col xs={24} sm={12} md={8}>
         <Card hoverable className={styles.card}>
           <Space orientation="vertical" size="small" className={styles.space}>
             <Text type="secondary">
@@ -36,45 +36,6 @@ export function WalletOverviewTab({
                 {formatCurrency(balance)}
               </Title>
             )}
-          </Space>
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={6}>
-        <Card hoverable className={styles.card}>
-          <Space orientation="vertical" size="small" className={styles.space}>
-            <Text type="secondary">
-              {t("wallet.cards.reconciliationBalance")}
-            </Text>
-            <Title level={3} className={styles.balanceTitle}>
-              {formatCurrency(0)}
-            </Title>
-          </Space>
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={6}>
-        <Card hoverable className={styles.card}>
-          <Space orientation="vertical" size="small" className={styles.space}>
-            <Text type="secondary">
-              {t("wallet.cards.totalDeposited")}
-            </Text>
-            <Title level={3} className={styles.balanceTitle}>
-              {formatCurrency(0)}
-            </Title>
-          </Space>
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={6}>
-        <Card hoverable className={styles.card}>
-          <Space orientation="vertical" size="small" className={styles.space}>
-            <Text type="secondary">
-              {t("wallet.cards.totalWithdrawn")}
-            </Text>
-            <Title level={3} className={styles.balanceTitle}>
-              {formatCurrency(0)}
-            </Title>
           </Space>
         </Card>
       </Col>

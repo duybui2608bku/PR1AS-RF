@@ -443,6 +443,12 @@
     "title": "个人信息",
     "editLabel": "编辑",
     "editProfile": "编辑资料",
+    "plan": {
+      "title": "订阅计划",
+      "description": "您当前的套餐及有效期",
+      "start": "计划开始",
+      "expiry": "计划到期"
+    },
     "info": {
       "title": "账户详情",
       "fullName": "全名",
@@ -682,7 +688,8 @@
         "years": "岁",
         "height": "身高",
         "weight": "体重",
-        "zodiac": "星座"
+        "zodiac": "星座",
+        "na": "暂无"
       },
       "lifestyle": "生活方式",
       "quote": "名言",
@@ -1028,6 +1035,7 @@
     "filters": {
       "dateRange": "日期范围",
       "datePreset": "快速选择",
+      "selectDatePreset": "选择快捷日期",
       "today": "今天",
       "yesterday": "昨天",
       "last7Days": "最近7天",

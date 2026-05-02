@@ -578,6 +578,12 @@
     "title": "Personal Information",
     "editLabel": "Edit",
     "editProfile": "Edit Profile",
+    "plan": {
+      "title": "Subscription Plan",
+      "description": "Your current pricing plan and validity period",
+      "start": "Plan Start",
+      "expiry": "Plan Expiry"
+    },
     "info": {
       "title": "Account Details",
       "fullName": "Full Name",
@@ -824,7 +830,8 @@
         "years": "years",
         "height": "Height",
         "weight": "Weight",
-        "zodiac": "Zodiac"
+        "zodiac": "Zodiac",
+        "na": "N/A"
       },
       "lifestyle": "Lifestyle",
       "quote": "Quote",
@@ -1170,6 +1177,7 @@
     "filters": {
       "dateRange": "Date Range",
       "datePreset": "Quick selection",
+      "selectDatePreset": "Select date preset",
       "today": "Today",
       "yesterday": "Yesterday",
       "last7Days": "Last 7 days",

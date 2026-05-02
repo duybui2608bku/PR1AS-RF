@@ -579,6 +579,12 @@
     "title": "Thông tin cá nhân",
     "editLabel": "Chỉnh sửa",
     "editProfile": "Chỉnh sửa thông tin",
+    "plan": {
+      "title": "Gói thành viên",
+      "description": "Gói hiện tại và thời hạn hiệu lực của bạn",
+      "start": "Bắt đầu gói",
+      "expiry": "Hết hạn gói"
+    },
     "info": {
       "title": "Chi tiết tài khoản",
       "fullName": "Họ và tên",
@@ -825,7 +831,8 @@
         "years": "tuổi",
         "height": "Chiều cao",
         "weight": "Cân nặng",
-        "zodiac": "Cung hoàng đạo"
+        "zodiac": "Cung hoàng đạo",
+        "na": "Chưa có"
       },
       "lifestyle": "Lifestyle",
       "quote": "Quote",
@@ -1177,6 +1184,7 @@
     "filters": {
       "dateRange": "Khoảng thời gian",
       "datePreset": "Chọn nhanh",
+      "selectDatePreset": "Chọn mốc thời gian",
       "today": "Hôm nay",
       "yesterday": "Hôm qua",
       "last7Days": "7 ngày qua",
