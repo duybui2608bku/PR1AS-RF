@@ -4,12 +4,17 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  align-items: center;
+  min-height: 0;
+  line-height: normal;
 }
 
 .header:global(.ant-layout-header) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Ant Design sets line-height === header height (~64px); breaks nested pill UI */
+  line-height: normal !important;
   padding: 0 24px;
   background: var(--background);
   border-bottom: 1px solid var(--border-secondary);
@@ -35,10 +40,76 @@
 
 .logoCol {
   min-width: 120px;
+  align-self: center;
+  line-height: normal;
+}
+
+.feedNavCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-width: 0;
+  line-height: normal;
+}
+
+.feedNavText {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 24px;
+  line-height: normal;
+}
+
+.feedNavLink {
+  padding: 4px 0;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+  text-decoration: none;
+  background: none;
+  border: none;
+  transition: color 160ms ease;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.feedNavLinkActive {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.feedNavMobileWrap {
+  width: 100%;
+
+  .feedNavText {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .feedNavLink {
+    width: 100%;
+    padding: 8px 0;
+  }
 }
 
 .actionsCol {
   min-width: max-content;
+  align-self: center;
+  line-height: normal;
 }
 
 .actionsRow {
@@ -86,6 +157,26 @@
   &:active {
     background: color-mix(in oklab, var(--color-primary) 80%, black) !important;
     border-color: color-mix(in oklab, var(--color-primary) 80%, black) !important;
+  }
+}
+
+.workerButtonOutline {
+  height: 36px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  background: var(--background) !important;
+  color: var(--text-primary, #222) !important;
+  border: 1px solid var(--border-secondary) !important;
+  box-shadow: none !important;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
+    background: var(--background) !important;
   }
 }
 

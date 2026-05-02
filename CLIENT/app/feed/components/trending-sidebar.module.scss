@@ -1,0 +1,34 @@
+@use "../../../styles/tokens" as *;
+
+.card {
+  border-radius: $radius-lg !important;
+  box-shadow: $shadow-md !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+.listItem {
+  padding-inline: 0 !important;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  color: inherit;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.display {
+  font-weight: 600;
+  font-size: $font-size-sm;
+}
+
+.count {
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+}

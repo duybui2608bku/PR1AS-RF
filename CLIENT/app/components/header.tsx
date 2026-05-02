@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Layout,
@@ -36,6 +36,7 @@ const AUTH_MODAL_TABS = ["login", "register"] as const;
 const HeaderComponent = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const { isAuthenticated, user } = useAuthStore();
   const switchRoleMutation = useSwitchRole();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -129,16 +130,63 @@ const HeaderComponent = () => {
     }
   }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError, handleOpenLogin]);
 
-  const workerButton = useMemo(() => (
-    <Button
-      type="primary"
-      onClick={handleSwitchRole}
-      loading={switchRoleMutation.isPending}
-      className={styles.workerButton}
+  const showFeedLink =
+    !userData.isAdmin &&
+    (!isAuthenticated || userData.lastActiveRole !== UserRole.WORKER)
+
+  const postsNavActive =
+    pathname === AppRoute.FEED || pathname.startsWith(`${AppRoute.FEED}/`)
+  const exploreNavActive = pathname === AppRoute.HOME
+
+  const feedNav = showFeedLink ? (
+    <nav
+      className={styles.feedNavText}
+      aria-label={t("header.feedNavAria")}
     >
-      {workerButtonLabel}
-    </Button>
-  ), [handleSwitchRole, switchRoleMutation.isPending, workerButtonLabel]);
+      <Link
+        href={AppRoute.HOME}
+        className={`${styles.feedNavLink} ${
+          exploreNavActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.explore")}
+      </Link>
+      <Link
+        href={AppRoute.FEED}
+        className={`${styles.feedNavLink} ${
+          postsNavActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.posts")}
+      </Link>
+    </nav>
+  ) : null
+
+  const isBecomeWorkerCta =
+    !userData.isWorkerActive && !userData.hasWorkerProfile
+
+  const workerButton = useMemo(
+    () => (
+      <Button
+        type={isBecomeWorkerCta ? "default" : "primary"}
+        onClick={handleSwitchRole}
+        loading={switchRoleMutation.isPending}
+        className={
+          isBecomeWorkerCta ? styles.workerButtonOutline : styles.workerButton
+        }
+      >
+        {workerButtonLabel}
+      </Button>
+    ),
+    [
+      handleSwitchRole,
+      isBecomeWorkerCta,
+      switchRoleMutation.isPending,
+      workerButtonLabel,
+    ]
+  );
 
 
   const authSectionDesktop = useMemo(
@@ -201,6 +249,11 @@ const HeaderComponent = () => {
             {t("home.logo")}
           </Link>
         </Col>
+        {!isMobile && feedNav ? (
+          <Col flex="auto" className={styles.feedNavCol}>
+            {feedNav}
+          </Col>
+        ) : null}
         <Col flex="none" className={styles.actionsCol}>
           <Space className={styles.actionsRow} size="middle">
             {!isMobile ? (
@@ -216,6 +269,7 @@ const HeaderComponent = () => {
                         isAdmin={userData.isAdmin}
                         workerButton={workerButton}
                         authSectionMobile={authSectionMobile}
+                        feedNav={feedNav}
                     />
                 }
                 trigger="click"

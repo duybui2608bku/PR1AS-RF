@@ -4,6 +4,7 @@ import { api, extractData } from "../axios/index";
 import type { ApiResponse } from "../axios";
 import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
 import type { UserProfile, UpdateBasicProfileInput } from "./auth.api";
+import type { MyPostStats } from "../types/post";
 
 export interface User {
   _id: string;
@@ -77,6 +78,13 @@ export const userProfileApi = {
       data
     );
     return extractData(response).user;
+  },
+
+  getMyPostStats: async (): Promise<MyPostStats> => {
+    const response = await api.get<ApiResponse<MyPostStats>>(
+      ApiEndpoint.USERS_ME_POST_STATS
+    );
+    return extractData(response);
   },
 };
 

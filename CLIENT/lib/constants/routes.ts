@@ -1,5 +1,6 @@
 export enum AppRoute {
   HOME = "/",
+  FEED = "/feed",
   AUTH_LOGIN = "/auth/login",
   AUTH_REGISTER = "/auth/register",
   CLIENT_PROFILE = "/client/profile",

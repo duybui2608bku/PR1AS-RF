@@ -71,6 +71,12 @@ export enum ApiEndpoint {
   NOTIFICATIONS_PUSH_PUBLIC_KEY = "/notifications/push-public-key",
   NOTIFICATIONS_PUSH_SUBSCRIPTIONS = "/notifications/push-subscriptions",
   NOTIFICATIONS_PUSH_SUBSCRIPTIONS_BY_ID = "/notifications/push-subscriptions/:id",
+  POSTS = "/posts",
+  POSTS_BY_ID = "/posts/:id",
+  POSTS_COMMENTS = "/posts/:postId/comments",
+  COMMENTS_BY_ID = "/comments/:id",
+  HASHTAGS_TRENDING = "/hashtags/trending",
+  USERS_ME_POST_STATS = "/users/me/post-stats",
 }
 
 export const buildEndpoint = (

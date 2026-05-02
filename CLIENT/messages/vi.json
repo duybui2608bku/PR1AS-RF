@@ -354,9 +354,81 @@
     "becomeWorker": "Trở thành worker",
     "hireService": "Thuê dịch vụ",
     "myServices": "Dịch vụ của tôi",
+    "explore": "Khám phá",
+    "feedNavAria": "Chuyển giữa Khám phá và Bài đăng",
+    "posts": "Bài đăng",
     "currency": "Tiền tệ",
     "language": "Ngôn ngữ",
     "theme": "Giao diện"
+  },
+  "feed": {
+    "title": "Bài đăng",
+    "loadError": "Không tải được bài đăng. Vui lòng thử lại.",
+    "rateLimit": "Bạn đăng bài quá nhanh. Vui lòng thử lại sau ít phút.",
+    "tabs": {
+      "all": "Tất cả",
+      "mine": "Của tôi",
+      "groupAria": "Phạm vi hiển thị bài đăng"
+    },
+    "hashtag": {
+      "clear": "Xóa lọc hashtag"
+    },
+    "composer": {
+      "placeholder": "Bạn đang tìm gì?",
+      "hashtagHint": "Gõ #hashtag trong nội dung để gắn chủ đề.",
+      "photoVideo": "Ảnh/Video",
+      "appointment": "Lịch hẹn",
+      "location": "Vị trí",
+      "comingSoon": "Sắp ra mắt",
+      "submit": "Đăng bài",
+      "bodyRequired": "Nội dung không được để trống.",
+      "validationError": "Nội dung hoặc media không hợp lệ.",
+      "charRemaining": "{{count}} ký tự còn lại",
+      "addImage": "Ảnh",
+      "addImagesAria": "Chọn ảnh (có thể chọn nhiều ảnh)",
+      "addVideo": "Thêm video (URL)",
+      "videoUrlPlaceholder": "https://... (chỉ https)",
+      "mediaCount": "Media: {{current}}/{{max}}",
+      "imageN": "Ảnh {{n}}",
+      "videoN": "Video {{n}}",
+      "removeMedia": "Gỡ media"
+    },
+    "post": {
+      "anonymousAuthor": "Người dùng",
+      "deleteConfirm": "Xóa bài đăng này?",
+      "editTitle": "Sửa bài đăng",
+      "toggleComments": "Bình luận",
+      "showComments": "Xem bình luận",
+      "hideComments": "Ẩn bình luận",
+      "actions": "Thao tác bài đăng",
+      "videoLabel": "Video",
+      "gridPhotoAlt": "Ảnh {{n}}",
+      "gridMorePhotos": "+{{count}}"
+    },
+    "comments": {
+      "placeholder": "Viết bình luận…",
+      "replyPlaceholder": "Trả lời…",
+      "submit": "Gửi",
+      "reply": "Trả lời",
+      "validation": "Nội dung bình luận không hợp lệ.",
+      "anonymous": "Ẩn danh",
+      "loadError": "Không tải được bình luận.",
+      "replying": "Đang trả lời trong thread",
+      "deleteConfirm": "Xóa bình luận này?",
+      "editTitle": "Sửa bình luận",
+      "actionsMenu": "Thao tác bình luận"
+    },
+    "sidebar": {
+      "myPosts": "Bài đăng của tôi",
+      "clientSubtitle": "Khách hàng hạng Vàng",
+      "trendingTitle": "Chủ đề hot",
+      "trendingError": "Không tải được chủ đề.",
+      "trendingEmpty": "Chưa có hashtag trending.",
+      "postCount": "{{count}} bài"
+    },
+    "empty": {
+      "description": "Chưa có bài đăng nào. Hãy là người đầu tiên!"
+    }
   },
   "upload": {
     "avatar": {

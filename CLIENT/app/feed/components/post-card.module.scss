@@ -1,0 +1,31 @@
+@use "../../../styles/tokens" as *;
+
+.card {
+  border-radius: $radius-lg !important;
+  margin-bottom: $space-4;
+  box-shadow: $shadow-md !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.headerMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.time {
+  font-size: $font-size-xs !important;
+}
+
+.footer {
+  margin-top: $space-4;
+}

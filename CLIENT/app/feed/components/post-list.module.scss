@@ -1,0 +1,7 @@
+@use "../../../styles/tokens" as *;
+
+.moreLoading {
+  display: flex;
+  justify-content: center;
+  padding: $space-6;
+}

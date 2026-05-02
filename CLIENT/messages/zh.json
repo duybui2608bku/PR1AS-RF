@@ -223,9 +223,77 @@
     "becomeWorker": "成为工作者",
     "hireService": "雇佣服务",
     "myServices": "我的服务",
+    "explore": "探索",
+    "feedNavAria": "在探索与帖子之间切换",
+    "posts": "帖子",
     "currency": "货币",
     "language": "语言",
     "theme": "主题"
+  },
+  "feed": {
+    "title": "帖子",
+    "loadError": "无法加载帖子。",
+    "rateLimit": "发布太快，请稍后再试。",
+    "tabs": {
+      "all": "全部",
+      "mine": "我的",
+      "groupAria": "动态范围"
+    },
+    "hashtag": { "clear": "清除标签筛选" },
+    "composer": {
+      "placeholder": "你在找什么？",
+      "hashtagHint": "在正文中输入 #话题 以标记主题。",
+      "photoVideo": "图片/视频",
+      "appointment": "预约",
+      "location": "位置",
+      "comingSoon": "即将推出",
+      "submit": "发布",
+      "bodyRequired": "内容不能为空。",
+      "validationError": "内容或媒体无效。",
+      "charRemaining": "剩余 {{count}} 字",
+      "addImage": "图片",
+      "addImagesAria": "选择图片（可多选）",
+      "addVideo": "视频链接",
+      "videoUrlPlaceholder": "https://...",
+      "mediaCount": "媒体：{{current}}/{{max}}",
+      "imageN": "图片 {{n}}",
+      "videoN": "视频 {{n}}",
+      "removeMedia": "移除"
+    },
+    "post": {
+      "anonymousAuthor": "用户",
+      "deleteConfirm": "删除此帖？",
+      "editTitle": "编辑帖子",
+      "toggleComments": "评论",
+      "showComments": "显示评论",
+      "hideComments": "隐藏评论",
+      "actions": "操作",
+      "videoLabel": "视频",
+      "gridPhotoAlt": "图片 {{n}}",
+      "gridMorePhotos": "+{{count}}"
+    },
+    "comments": {
+      "placeholder": "写评论…",
+      "replyPlaceholder": "回复…",
+      "submit": "发送",
+      "reply": "回复",
+      "validation": "评论无效。",
+      "anonymous": "匿名",
+      "loadError": "无法加载评论。",
+      "replying": "正在回复",
+      "deleteConfirm": "删除评论？",
+      "editTitle": "编辑评论",
+      "actionsMenu": "评论操作"
+    },
+    "sidebar": {
+      "myPosts": "我的帖子",
+      "clientSubtitle": "黄金客户",
+      "trendingTitle": "热门话题",
+      "trendingError": "加载失败",
+      "trendingEmpty": "暂无数据",
+      "postCount": "{{count}} 篇"
+    },
+    "empty": { "description": "暂无帖子。" }
   },
   "upload": {
     "avatar": {
