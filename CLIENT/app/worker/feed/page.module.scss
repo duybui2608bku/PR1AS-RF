@@ -1,0 +1,154 @@
+@use "../../../styles/tokens" as *;
+
+// Giống client feed: cột trái trống | luồng chính | chủ đề hot bên phải
+$worker-feed-grid-cols: minmax(220px, 260px) minmax(0, 640px) minmax(220px, 280px);
+
+.page {
+  width: 100%;
+  max-width: $container-max;
+  margin: 0 auto;
+  padding: $space-6 $container-pad-mobile;
+  min-height: 60vh;
+
+  @media (min-width: $bp-tablet) {
+    padding-left: $container-pad-tablet;
+    padding-right: $container-pad-tablet;
+  }
+
+  @media (min-width: $bp-desktop) {
+    padding-left: $container-pad-desktop;
+    padding-right: $container-pad-desktop;
+  }
+}
+
+.feedTabsBand {
+  margin-bottom: $space-6;
+
+  @media (min-width: $bp-desktop) {
+    margin-bottom: $space-8;
+  }
+}
+
+.feedTabsBandGrid {
+  display: block;
+
+  @media (min-width: $bp-desktop) {
+    display: grid;
+    grid-template-columns: $worker-feed-grid-cols;
+    gap: $space-8;
+    align-items: start;
+  }
+}
+
+.feedTabsBandSpacer {
+  display: none;
+
+  @media (min-width: $bp-desktop) {
+    display: block;
+  }
+}
+
+.feedTabsBandMain {
+  min-width: 0;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  align-items: stretch;
+
+  @media (min-width: $bp-desktop) {
+    display: grid;
+    grid-template-columns: $worker-feed-grid-cols;
+    gap: $space-8;
+    align-items: start;
+  }
+}
+
+.sidebar {
+  display: block;
+
+  @media (min-width: $bp-desktop) {
+    position: sticky;
+    top: calc(64px + #{$space-4});
+  }
+}
+
+.sidebarLeft {
+  order: 2;
+
+  @media (min-width: $bp-desktop) {
+    order: unset;
+  }
+}
+
+.sidebarLeftEmpty {
+  min-height: 0;
+
+  @media (max-width: #{$bp-desktop - 1px}) {
+    display: none;
+  }
+}
+
+.main {
+  order: 1;
+  min-width: 0;
+
+  @media (max-width: #{$bp-desktop - 1px}) {
+    width: 100%;
+  }
+
+  @media (min-width: $bp-desktop) {
+    order: unset;
+  }
+}
+
+.mainStack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-8;
+
+  @media (min-width: $bp-desktop) {
+    gap: $space-10;
+  }
+}
+
+.sidebarRight {
+  order: 3;
+
+  @media (min-width: $bp-desktop) {
+    order: unset;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hashtagBanner {
+  margin-bottom: 0;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  background: var(--surface-elevated, rgba(113, 17, 17, 0.06));
+  border: 1px solid var(--border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  flex-wrap: wrap;
+}
+
+.hashtagLabel {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: var(--color-primary);
+}

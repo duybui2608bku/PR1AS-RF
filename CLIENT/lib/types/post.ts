@@ -8,6 +8,7 @@ export interface PostAuthor {
   id: string
   full_name: string | null
   avatar: string | null
+  has_worker_profile: boolean
 }
 
 export interface PostMedia {
@@ -46,6 +47,7 @@ export interface CommentAuthor {
   id: string
   full_name: string | null
   avatar: string | null
+  has_worker_profile: boolean
 }
 
 /** Comment / reply phẳng (PATCH response, hoặc reply dưới thread) */

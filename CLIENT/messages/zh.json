@@ -225,6 +225,12 @@
     "myServices": "我的服务",
     "explore": "探索",
     "feedNavAria": "在探索与帖子之间切换",
+    "workerNavAria": "工作者导航：帖子、日程、消息",
+    "workerNav": {
+      "posts": "帖子",
+      "schedule": "日程",
+      "messages": "消息"
+    },
     "posts": "帖子",
     "currency": "货币",
     "language": "语言",
@@ -232,6 +238,10 @@
   },
   "feed": {
     "title": "帖子",
+    "workerHub": {
+      "title": "帖子",
+      "searchPlaceholder": "搜索帖子、工作…"
+    },
     "loadError": "无法加载帖子。",
     "rateLimit": "发布太快，请稍后再试。",
     "tabs": {
@@ -262,6 +272,7 @@
     },
     "post": {
       "anonymousAuthor": "用户",
+      "viewWorkerProfileAria": "查看达人资料：{{name}}",
       "deleteConfirm": "删除此帖？",
       "editTitle": "编辑帖子",
       "toggleComments": "评论",

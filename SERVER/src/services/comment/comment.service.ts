@@ -20,7 +20,12 @@ import {
 } from "../../utils/cursorPagination";
 
 type LeanCommentWithAuthor = ICommentDocument & {
-  author_id: Pick<IUserDocument, "_id" | "full_name" | "avatar"> | null;
+  author_id:
+    | Pick<
+        IUserDocument,
+        "_id" | "full_name" | "avatar" | "worker_profile"
+      >
+    | null;
 };
 
 /** Raw ObjectId vs populated author ref from `findActiveById` / list queries. */
@@ -45,12 +50,14 @@ const toAuthorPublic = (comment: LeanCommentWithAuthor) => {
       id: populated._id.toString(),
       full_name: populated.full_name ?? null,
       avatar: populated.avatar ?? null,
+      has_worker_profile: !!populated.worker_profile,
     };
   }
   return {
     id: (comment.author_id as unknown as Types.ObjectId).toString(),
     full_name: null,
     avatar: null,
+    has_worker_profile: false,
   };
 };
 

@@ -4,26 +4,32 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
+import { AppRoute } from "@/lib/constants/routes"
+import {
+  buildFeedTabAllHref,
+  buildFeedTabMineHref,
+} from "../utils/feed-href"
 import styles from "./feed-tabs.module.scss"
 
-export const FeedTabs = () => {
+interface FeedTabsProps {
+  basePath?: string
+}
+
+export const FeedTabs = ({ basePath = AppRoute.FEED }: FeedTabsProps) => {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
 
   const tab = searchParams.get("tab") === "mine" ? "mine" : "all"
 
-  const hrefAll = useMemo(() => {
-    const next = new URLSearchParams(searchParams.toString())
-    next.delete("tab")
-    const qs = next.toString()
-    return qs ? `/feed?${qs}` : "/feed"
-  }, [searchParams])
+  const hrefAll = useMemo(
+    () => buildFeedTabAllHref(basePath, searchParams),
+    [basePath, searchParams]
+  )
 
-  const hrefMine = useMemo(() => {
-    const next = new URLSearchParams(searchParams.toString())
-    next.set("tab", "mine")
-    return `/feed?${next.toString()}`
-  }, [searchParams])
+  const hrefMine = useMemo(
+    () => buildFeedTabMineHref(basePath, searchParams),
+    [basePath, searchParams]
+  )
 
   return (
     <nav className={styles.wrap} aria-label={t("feed.tabs.groupAria")}>

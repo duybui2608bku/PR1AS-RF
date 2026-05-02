@@ -30,7 +30,12 @@ import {
 import { logger } from "../../utils/logger";
 
 type LeanPostWithAuthor = IPostDocument & {
-  author_id: Pick<IUserDocument, "_id" | "full_name" | "avatar"> | null;
+  author_id:
+    | Pick<
+        IUserDocument,
+        "_id" | "full_name" | "avatar" | "worker_profile"
+      >
+    | null;
 };
 
 const toAuthorPublic = (
@@ -43,12 +48,14 @@ const toAuthorPublic = (
       id: populated._id.toString(),
       full_name: populated.full_name ?? null,
       avatar: populated.avatar ?? null,
+      has_worker_profile: !!populated.worker_profile,
     };
   }
   return {
     id: fallbackId.toString(),
     full_name: null,
     avatar: null,
+    has_worker_profile: false,
   };
 };
 

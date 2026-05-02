@@ -6,7 +6,7 @@ import {
 } from "../../types/comment/comment.types";
 import { CursorValue, buildCursorFilter } from "../../utils/cursorPagination";
 
-const AUTHOR_PUBLIC_FIELDS = "full_name avatar";
+const AUTHOR_PUBLIC_FIELDS = "full_name avatar worker_profile";
 
 export class CommentRepository {
   async create(input: {

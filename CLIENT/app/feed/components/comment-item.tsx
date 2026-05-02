@@ -11,12 +11,14 @@ import {
   EllipsisOutlined,
 } from "@ant-design/icons"
 import dayjs from "dayjs"
+import Link from "next/link"
 import { useTranslation } from "react-i18next"
 import type { CommentFlat } from "@/lib/types/post"
 import { updateCommentBodySchema } from "@/lib/types/post"
 import { useUpdateComment } from "@/lib/hooks/use-update-comment"
 import { useDeleteComment } from "@/lib/hooks/use-delete-comment"
 import { useErrorHandler } from "@/lib/hooks/use-error-handler"
+import { getAuthorWorkerHref } from "@/app/feed/utils/author-link"
 import styles from "./comment-item.module.scss"
 
 interface CommentItemProps {
@@ -48,6 +50,7 @@ export const CommentItem = ({
   const displayName =
     comment.author.full_name?.trim() ||
     t("feed.comments.anonymous")
+  const workerHref = getAuthorWorkerHref(comment.author)
 
   const openDeleteConfirm = () => {
     Modal.confirm({
@@ -111,14 +114,36 @@ export const CommentItem = ({
       className={`${styles.row} ${isNested ? styles.nested : ""}`}
       style={{ marginLeft: isNested ? 28 : 0 }}
     >
-      <Avatar
-        size={isNested ? "small" : "default"}
-        src={comment.author.avatar ?? undefined}
-        icon={<UserOutlined />}
-      />
       <div className={styles.body}>
         <div className={styles.meta}>
-          <Typography.Text strong>{displayName}</Typography.Text>
+          {workerHref ? (
+            <Link
+              href={workerHref}
+              prefetch={false}
+              className={styles.authorLink}
+              aria-label={t("feed.post.viewWorkerProfileAria", {
+                name: displayName,
+              })}
+            >
+              <Avatar
+                size={isNested ? "small" : "default"}
+                src={comment.author.avatar ?? undefined}
+                icon={<UserOutlined />}
+              />
+              <span className={styles.authorName}>
+                <Typography.Text strong>{displayName}</Typography.Text>
+              </span>
+            </Link>
+          ) : (
+            <div className={styles.authorPlain}>
+              <Avatar
+                size={isNested ? "small" : "default"}
+                src={comment.author.avatar ?? undefined}
+                icon={<UserOutlined />}
+              />
+              <Typography.Text strong>{displayName}</Typography.Text>
+            </div>
+          )}
           <Typography.Text type="secondary" className={styles.time}>
             {dayjs(comment.created_at).format("DD/MM/YYYY HH:mm")}
           </Typography.Text>

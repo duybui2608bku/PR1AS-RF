@@ -18,4 +18,9 @@ export const modelsName = {
   LOCATION: "locations",
   PRICING_PACKAGE: "pricing_packages",
   USER_SUBSCRIPTION_HISTORY: "user_subscription_histories",
+  POST: "posts",
+  POST_MEDIA: "post_media",
+  HASHTAG: "hashtags",
+  POST_HASHTAG: "post_hashtags",
+  COMMENT: "comments",
 };

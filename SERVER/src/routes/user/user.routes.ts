@@ -1,11 +1,19 @@
 import { Router } from "express";
 import { userController } from "../../controllers/user/user.controller";
-import { authenticate, adminOnly } from "../../middleware/auth";
+import { authenticate, adminOnly, AuthRequest } from "../../middleware/auth";
 import { pagination } from "../../middleware/pagination";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
+
+router.get(
+  "/me/post-stats",
+  authenticate,
+  asyncHandler<AuthRequest>(
+    userController.getMyPostStats.bind(userController)
+  )
+);
 
 router.use(authenticate);
 router.use(adminOnly);
