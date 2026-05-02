@@ -2,22 +2,14 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Avatar, Dropdown, MenuProps, Tooltip } from "antd";
-import { UserOutlined, LogoutOutlined, SettingOutlined, InfoCircleOutlined, CalendarOutlined } from "@ant-design/icons";
-import type { StaticImageData } from "next/image";
+import { Avatar, Dropdown, MenuProps } from "antd";
+import { UserOutlined, WalletOutlined, BookOutlined, LogoutOutlined, SettingOutlined, BellOutlined, CrownOutlined, CalendarOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { useLogout } from "@/lib/hooks/use-auth";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
 import { AppRoute, UserRole } from "@/lib/constants/routes";
 import { getProfileRoute } from "@/lib/utils/profile-navigation";
-import userIcon from "@/assets/icon/user.svg";
-import messageIcon from "@/assets/icon/mess.png";
-import notificationIcon from "@/assets/icon/noti.png";
-import walletIcon from "@/assets/icon/wallets.png";
-import bookingsIcon from "@/assets/icon/bookings.png";
-import crownIcon from "@/assets/icon/crown.png";
 import styles from "../header.module.scss";
 
 export const UserMenu = () => {
@@ -35,18 +27,7 @@ export const UserMenu = () => {
             isAdmin: userRoles.includes(UserRole.ADMIN),
             isWorkerActive: lastActiveRole === UserRole.WORKER,
         };
-    }, [user, user?.pricing_plan_code]);
-
-    const chatBlockedMessage = t("chat.bookingConfirmationRequired");
-    const profileLabel = t("dashboard.header.profile");
-    const messagesLabel = t("dashboard.header.messages");
-    const notificationsLabel = t("notifications.title");
-    const walletLabel = t("dashboard.header.wallet");
-    const bookingsLabel = t("dashboard.header.clientBookings");
-
-    const renderMenuIcon = useCallback((src: string | StaticImageData, alt: string) => (
-        <Image src={src} alt={alt} width={30} height={30} className={styles.menuItemIconImage} />
-    ), []);
+    }, [user]);
 
     const handleLogout = useCallback(async () => {
         try {
@@ -107,45 +88,32 @@ export const UserMenu = () => {
     const userMenuItems: MenuProps["items"] = useMemo(() => [
         {
             key: "profile",
-            icon: renderMenuIcon(userIcon, profileLabel),
-            label: profileLabel,
+            icon: <UserOutlined />,
+            label: t("dashboard.header.profile"),
             onClick: handleNavigateToProfile,
         },
         {
-            key: "messages",
-            icon: renderMenuIcon(messageIcon, messagesLabel),
-            label: userData.isStandardPlan ? (
-                <Tooltip title={chatBlockedMessage}>
-                    <span>
-                        {messagesLabel} <InfoCircleOutlined />
-                    </span>
-                </Tooltip>
-            ) : messagesLabel,
-            onClick: handleNavigateToChat,
-            disabled: userData.isStandardPlan,
-        },
-        {
             key: "notifications",
-            icon: renderMenuIcon(notificationIcon, notificationsLabel),
-            label: notificationsLabel,
+            icon: <BellOutlined />,
+            label: t("notifications.title"),
             onClick: handleNavigateToNotifications,
         },
         {
             key: "wallet",
-            icon: renderMenuIcon(walletIcon, walletLabel),
-            label: walletLabel,
+            icon: <WalletOutlined />,
+            label: t("dashboard.header.wallet"),
             onClick: handleNavigateToWallet,
         },
         {
             key: "pricing-plan",
-            icon: renderMenuIcon(crownIcon, currentPlanLabel),
+            icon: <CrownOutlined />,
             label: currentPlanLabel,
             onClick: handleNavigateToPricing,
         },
         {
             key: "client-bookings",
-            icon: renderMenuIcon(bookingsIcon, bookingsLabel),
-            label: bookingsLabel,
+            icon: <BookOutlined />,
+            label: t("dashboard.header.clientBookings"),
             onClick: handleNavigateToBookings,
         },
         ...(userData.isWorkerActive
@@ -168,7 +136,7 @@ export const UserMenu = () => {
             onClick: handleLogout,
             danger: true,
         },
-    ], [renderMenuIcon, profileLabel, messagesLabel, notificationsLabel, walletLabel, bookingsLabel, handleNavigateToProfile, handleNavigateToChat, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleNavigateToWorkerSchedule, handleLogout, currentPlanLabel, userData.isStandardPlan, userData.isWorkerActive, chatBlockedMessage]);
+    ], [t, handleNavigateToProfile, handleNavigateToNotifications, handleNavigateToWallet, handleNavigateToPricing, handleNavigateToBookings, handleNavigateToWorkerSchedule, handleLogout, currentPlanLabel, userData.isWorkerActive]);
 
     const adminMenuItems: MenuProps["items"] = useMemo(() => [
         {
