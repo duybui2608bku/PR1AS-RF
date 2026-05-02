@@ -1,0 +1,29 @@
+@use "../../../styles/tokens" as *;
+
+.stacked {
+  margin-top: $space-3;
+
+  &.stackedCompact {
+    margin-top: $space-2;
+  }
+}
+
+.inline {
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.inlineField {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.inlineActions {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: $space-2;
+  margin-left: auto;
+}

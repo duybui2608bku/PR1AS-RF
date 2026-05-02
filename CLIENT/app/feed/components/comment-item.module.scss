@@ -1,0 +1,74 @@
+@use "../../../styles/tokens" as *;
+
+.row {
+  display: flex;
+  gap: $space-3;
+  align-items: flex-start;
+}
+
+.nested {
+  padding-top: $space-2;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: $space-2;
+  flex-wrap: wrap;
+}
+
+.authorLink {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: $space-3;
+  max-width: 100%;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover .authorName,
+  &:focus-visible .authorName {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &:focus-visible .authorName {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: $radius-sm;
+  }
+}
+
+.authorPlain {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: $space-3;
+}
+
+.authorName {
+  min-width: 0;
+}
+
+.time {
+  font-size: $font-size-xs !important;
+}
+
+.text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1;
+}

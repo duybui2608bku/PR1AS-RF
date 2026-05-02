@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Layout,
@@ -10,9 +10,11 @@ import {
   Popover,
   Row,
   Col,
+  Tooltip,
 } from "antd";
 import {
   MenuOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -36,6 +38,7 @@ const AUTH_MODAL_TABS = ["login", "register"] as const;
 const HeaderComponent = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const { isAuthenticated, user } = useAuthStore();
   const switchRoleMutation = useSwitchRole();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -67,18 +70,16 @@ const HeaderComponent = () => {
       isWorkerActive: lastActiveRole === UserRole.WORKER,
       hasWorkerProfile: workerProfile && workerProfile !== null,
       isAdmin: userRoles.includes(UserRole.ADMIN),
+      isStandardPlan: user?.pricing_plan_code === "standard",
     };
   }, [user]);
 
   const workerButtonLabel = useMemo(() => {
     if (userData.isWorkerActive) {
       return t("header.hireService");
-    } else if (userData.hasWorkerProfile) {
-      return t("header.myServices");
-    } else {
-      return t("header.becomeWorker");
     }
-  }, [userData.isWorkerActive, userData.hasWorkerProfile, t]);
+    return t("header.becomeWorker");
+  }, [userData.isWorkerActive, t]);
 
   const handleOpenLogin = useCallback(() => {
     setAuthModalTab("login");
@@ -119,7 +120,7 @@ const HeaderComponent = () => {
       if (userData.hasWorkerProfile) {
         try {
           await switchRoleMutation.mutateAsync(UserRole.WORKER);
-          router.push(AppRoute.WORKER_BOOKINGS_SCHEDULE);
+          router.push(AppRoute.WORKER_FEED);
         } catch (error) {
           handleError(error);
         }
@@ -129,16 +130,132 @@ const HeaderComponent = () => {
     }
   }, [isAuthenticated, user, userData, switchRoleMutation, router, handleError, handleOpenLogin]);
 
-  const workerButton = useMemo(() => (
-    <Button
-      type="primary"
-      onClick={handleSwitchRole}
-      loading={switchRoleMutation.isPending}
-      className={styles.workerButton}
+  const showClientNav =
+    !userData.isAdmin &&
+    (!isAuthenticated || userData.lastActiveRole !== UserRole.WORKER)
+
+  const postsNavActive =
+    pathname === AppRoute.FEED || pathname.startsWith(`${AppRoute.FEED}/`)
+  const exploreNavActive = pathname === AppRoute.HOME
+
+  const workerPostsNavActive =
+    pathname === AppRoute.WORKER_FEED ||
+    pathname.startsWith(`${AppRoute.WORKER_FEED}/`)
+  const workerScheduleNavActive =
+    pathname === AppRoute.WORKER_BOOKINGS_SCHEDULE ||
+    pathname.startsWith(`${AppRoute.WORKER_BOOKINGS_SCHEDULE}/`)
+  const workerMessagesNavActive =
+    pathname === AppRoute.CHAT || pathname.startsWith(`${AppRoute.CHAT}/`)
+  const chatBlockedMessage = t("chat.bookingConfirmationRequired")
+
+  const renderMessagesNavItem = (isActive: boolean) =>
+    userData.isStandardPlan ? (
+      <Tooltip title={chatBlockedMessage}>
+        <span
+          className={`${styles.feedNavLink} ${
+            isActive ? styles.feedNavLinkActive : ""
+          }`}
+          aria-disabled="true"
+        >
+          {t("header.workerNav.messages")} <InfoCircleOutlined />
+        </span>
+      </Tooltip>
+    ) : (
+      <Link
+        href={AppRoute.CHAT}
+        className={`${styles.feedNavLink} ${
+          isActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.workerNav.messages")}
+      </Link>
+    )
+
+  const clientNav = showClientNav ? (
+    <nav
+      className={styles.feedNavText}
+      aria-label={t("header.feedNavAria")}
     >
-      {workerButtonLabel}
-    </Button>
-  ), [handleSwitchRole, switchRoleMutation.isPending, workerButtonLabel]);
+      <Link
+        href={AppRoute.HOME}
+        className={`${styles.feedNavLink} ${
+          exploreNavActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.explore")}
+      </Link>
+      <Link
+        href={AppRoute.FEED}
+        className={`${styles.feedNavLink} ${
+          postsNavActive ? styles.feedNavLinkActive : ""
+        }`}
+        prefetch
+      >
+        {t("header.posts")}
+      </Link>
+      {renderMessagesNavItem(workerMessagesNavActive)}
+    </nav>
+  ) : null
+
+  const workerNav =
+    isAuthenticated && userData.isWorkerActive && !userData.isAdmin ? (
+      <nav
+        className={styles.feedNavText}
+        aria-label={t("header.workerNavAria")}
+      >
+        <Link
+          href={AppRoute.WORKER_FEED}
+          className={`${styles.feedNavLink} ${
+            workerPostsNavActive ? styles.feedNavLinkActive : ""
+          }`}
+          prefetch
+        >
+          {t("header.workerNav.posts")}
+        </Link>
+        <Link
+          href={AppRoute.WORKER_BOOKINGS_SCHEDULE}
+          className={`${styles.feedNavLink} ${
+            workerScheduleNavActive ? styles.feedNavLinkActive : ""
+          }`}
+          prefetch
+        >
+          {t("header.workerNav.schedule")}
+        </Link>
+        {renderMessagesNavItem(workerMessagesNavActive)}
+      </nav>
+    ) : null
+
+  const feedNav = userData.isAdmin
+    ? null
+    : userData.isWorkerActive
+      ? workerNav
+      : clientNav
+
+  const isBecomeWorkerCta =
+    !userData.isWorkerActive && !userData.hasWorkerProfile
+
+  const workerButton = useMemo(
+    () => (
+      <Button
+        type={isBecomeWorkerCta ? "default" : "primary"}
+        onClick={handleSwitchRole}
+        loading={switchRoleMutation.isPending}
+        className={
+          isBecomeWorkerCta ? styles.workerButtonOutline : styles.workerButton
+        }
+      >
+        {workerButtonLabel}
+      </Button>
+    ),
+    [
+      handleSwitchRole,
+      isBecomeWorkerCta,
+      switchRoleMutation.isPending,
+      workerButtonLabel,
+    ]
+  );
 
 
   const authSectionDesktop = useMemo(
@@ -201,6 +318,11 @@ const HeaderComponent = () => {
             {t("home.logo")}
           </Link>
         </Col>
+        {!isMobile && feedNav ? (
+          <Col flex="auto" className={styles.feedNavCol}>
+            {feedNav}
+          </Col>
+        ) : null}
         <Col flex="none" className={styles.actionsCol}>
           <Space className={styles.actionsRow} size="middle">
             {!isMobile ? (
@@ -216,6 +338,7 @@ const HeaderComponent = () => {
                         isAdmin={userData.isAdmin}
                         workerButton={workerButton}
                         authSectionMobile={authSectionMobile}
+                        feedNav={feedNav}
                     />
                 }
                 trigger="click"

@@ -260,9 +260,6 @@ const HeroComponent = () => {
     <section className={styles.hero}>
       <div className={styles.container}>
         <div className={styles.copy}>
-          <span className={styles.eyebrow}>
-            {t("home.hero.eyebrow", { defaultValue: "Marketplace dịch vụ" })}
-          </span>
           <h1 className={styles.headline}>
             {t("home.hero.headline", {
               defaultValue: "Tìm người đồng hành cho mọi khoảnh khắc",

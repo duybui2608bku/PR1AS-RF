@@ -1,0 +1,72 @@
+@use "../../../styles/tokens" as *;
+
+.card {
+  border-radius: $radius-lg !important;
+  margin-bottom: $space-4;
+  box-shadow: $shadow-md !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.headerLead {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: $space-3;
+  row-gap: 2px;
+  flex: 1;
+  min-width: 0;
+  align-items: start;
+}
+
+.authorLink {
+  display: contents;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover .nameCell,
+  &:focus-visible .nameCell {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &:focus-visible .nameCell {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: $radius-sm;
+  }
+}
+
+.avatarCell {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.nameCell {
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+}
+
+.timeCell {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+.time {
+  font-size: $font-size-xs !important;
+}
+
+.footer {
+  margin-top: $space-4;
+}

@@ -1,6 +1,7 @@
 import { UploadErrorCode } from "../constants/error-codes";
 
 enum UploadConfig {
+  /** Host returned URLs must be listed on API `MEDIA_ALLOWED_HOSTS` — see docs/features/11-client-posts-media-host-preflight.md */
   API_URL = "https://cfig.ibytecdn.org/upload",
   DEFAULT_SERVER = "server_1",
 }

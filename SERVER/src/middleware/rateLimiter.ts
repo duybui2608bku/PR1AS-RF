@@ -48,6 +48,29 @@ export const refreshTokenLimiter = rateLimit({
   },
 });
 
+export const postCreateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOWS.POST_CREATE_MINUTES * TIME_IN_MS.MINUTE,
+  max: 30,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    return (
+      (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown"
+    );
+  },
+  handler: (
+    _req: Request,
+    _res: Response
+  ) => {
+    throw new AppError(
+      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+      HTTP_STATUS.TOO_MANY_REQUESTS,
+      ErrorCode.RATE_LIMIT_EXCEEDED
+    );
+  },
+});
+
 export const emailActionLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
   max: 3,

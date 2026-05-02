@@ -1,0 +1,30 @@
+@use "../../../styles/tokens" as *;
+
+.root {
+  margin-top: $space-4;
+  padding-top: $space-4;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.thread {
+  margin-bottom: $space-4;
+}
+
+.replyBox {
+  margin-top: $space-2;
+  margin-bottom: 0;
+  padding: $space-2 $space-2 $space-2 $space-3;
+  border-radius: $radius-sm;
+  background: color-mix(in srgb, var(--border-secondary) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-secondary) 55%, transparent);
+}
+
+.replyBoxNested {
+  margin-left: 28px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: $space-3;
+}

@@ -1,0 +1,144 @@
+@use "../../../styles/tokens" as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: $space-4;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  background: var(--border-secondary);
+  position: relative;
+}
+
+.videoStack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.video {
+  width: 100%;
+  max-height: 420px;
+  display: block;
+  background: #000;
+}
+
+.grid {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+}
+
+.grid1 {
+  grid-template-columns: 1fr;
+}
+
+.grid1 .cell {
+  aspect-ratio: 16 / 10;
+  max-height: 480px;
+}
+
+.grid2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  aspect-ratio: 2 / 1;
+  max-height: min(420px, 92vw);
+}
+
+.grid3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 16 / 10;
+  max-height: min(440px, 92vw);
+}
+
+.grid3 .cell:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.grid3 .cell:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.grid3 .cell:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.grid4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 1 / 1;
+  max-height: min(520px, min(92vw, 92dvh));
+}
+
+.cell {
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0a;
+  cursor: zoom-in;
+  min-height: 0;
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--color-primary, #711111);
+  outline-offset: 2px;
+}
+
+.gridImage {
+  display: block;
+}
+
+.gridImageRoot {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+
+  :global(.ant-image) {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  :global(.ant-image-img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.moreBadge {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 52%);
+  color: #fff;
+  font-size: clamp(1.35rem, 5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.previewAnchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+
+.trailingImageRoot {
+  width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+}

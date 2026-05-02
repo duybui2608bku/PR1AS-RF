@@ -9,17 +9,25 @@ interface MobileMenuProps {
   isAdmin: boolean;
   workerButton: React.ReactNode;
   authSectionMobile: React.ReactNode;
+  feedNav?: React.ReactNode;
 }
 
 export const MobileMenu = ({
   isAdmin,
   workerButton,
   authSectionMobile,
+  feedNav,
 }: MobileMenuProps) => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.popoverContent}>
+      {feedNav ? (
+        <>
+          <div className={styles.feedNavMobileWrap}>{feedNav}</div>
+          <Divider className={styles.dividerSpacing} />
+        </>
+      ) : null}
       {!isAdmin && (
         <div className={styles.workerButtonBlock}>{workerButton}</div>
       )}

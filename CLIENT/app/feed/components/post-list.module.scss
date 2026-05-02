@@ -1,0 +1,13 @@
+@use "../../../styles/tokens" as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.moreLoading {
+  display: flex;
+  justify-content: center;
+  padding: $space-6;
+}

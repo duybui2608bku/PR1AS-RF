@@ -228,6 +228,40 @@ export const WORKER_MESSAGES = {
   LOCATION_SUGGESTIONS_FETCHED: "Location suggestions fetched successfully",
 } as const;
 
+export const POST_MESSAGES = {
+  INVALID_MEDIA_URL: "Media URL must be a valid URL",
+  INVALID_MEDIA_HOST: "Media URL host is not allowed",
+  INVALID_BODY_LENGTH: "Post body length is invalid",
+  TOO_MANY_MEDIA: "Too many media items on this post",
+  AT_LEAST_ONE_FIELD_REQUIRED:
+    "Provide at least one field to update (body, media, or visibility)",
+  POST_CREATED: "Post created successfully",
+  POST_FETCHED: "Post fetched successfully",
+  POSTS_FETCHED: "Posts fetched successfully",
+  POST_UPDATED: "Post updated successfully",
+  POST_DELETED: "Post deleted successfully",
+  POST_NOT_FOUND: "Post not found",
+  UNAUTHORIZED_ACCESS: "You do not have permission to modify this post",
+  MY_POST_STATS_FETCHED: "Your post statistics fetched successfully",
+} as const;
+
+export const COMMENT_MESSAGES = {
+  INVALID_BODY_LENGTH: "Comment body length is invalid",
+  COMMENTS_FETCHED: "Comments fetched successfully",
+  COMMENT_CREATED: "Comment created successfully",
+  COMMENT_UPDATED: "Comment updated successfully",
+  COMMENT_DELETED: "Comment deleted successfully",
+  POST_NOT_FOUND: "Post not found",
+  COMMENT_NOT_FOUND: "Comment not found",
+  NESTED_REPLY_NOT_ALLOWED: "Nested replies are not allowed",
+  PARENT_POST_MISMATCH: "Parent comment does not belong to this post",
+  UNAUTHORIZED_ACCESS: "You do not have permission to modify this comment",
+} as const;
+
+export const HASHTAG_MESSAGES = {
+  TRENDING_FETCHED: "Trending hashtags fetched successfully",
+} as const;
+
 export const PRICING_MESSAGES = {
   PRICING_PACKAGES_FETCHED: "Pricing packages fetched successfully",
   PRICING_PACKAGE_FETCHED: "Pricing package fetched successfully",

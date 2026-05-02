@@ -1,0 +1,47 @@
+@use "../../../styles/tokens" as *;
+
+.card {
+  border-radius: $radius-lg !important;
+  box-shadow: $shadow-md !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  align-items: center;
+  max-width: 100%;
+}
+
+.name {
+  margin: 0 !important;
+  font-size: $font-size-md !important;
+}
+
+.subtitle {
+  font-size: $font-size-sm !important;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding-top: $space-4;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.statValue {
+  font-size: $font-size-xl !important;
+  color: var(--color-primary);
+}

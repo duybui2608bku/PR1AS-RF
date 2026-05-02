@@ -1,18 +1,13 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
   Typography,
-  Space,
-  Row,
-  Col,
   Button,
   Avatar,
-  Tag,
-  Divider,
-  Descriptions,
+  Skeleton,
 } from "antd";
 import {
   UserOutlined,
@@ -20,15 +15,19 @@ import {
   PhoneOutlined,
   EditOutlined,
   SafetyOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
+  CheckCircleFilled,
+  IdcardOutlined,
+  CrownOutlined,
+  SolutionOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  ContactsOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { userProfileApi } from "@/lib/api/user.api";
 import { AuthGuard } from "@/lib/components/auth-guard";
 import { AppRoute } from "@/lib/constants/routes";
-import { Spacing } from "@/lib/constants/ui.constants";
 import styles from "./profile.module.scss";
 
 const { Title, Text } = Typography;
@@ -51,198 +50,321 @@ function ProfileContent() {
     if (!profile?.email) {
       return;
     }
-
     router.push(`/auth/verify-email?email=${encodeURIComponent(profile.email)}`);
   }, [router, profile]);
 
-  const formattedPlanLabel = (() => {
+  const planLabel = useMemo(() => {
     if (!profile?.pricing_plan_code) {
-      return t("profile.info.notSet");
+      return null;
     }
-    return profile.pricing_plan_code.charAt(0).toUpperCase() + profile.pricing_plan_code.slice(1);
-  })();
+    return (
+      profile.pricing_plan_code.charAt(0).toUpperCase() +
+      profile.pricing_plan_code.slice(1)
+    );
+  }, [profile?.pricing_plan_code]);
 
-  const formattedPricingStartDate = (() => {
-    if (!profile?.pricing_started_at) {
-      return t("profile.info.notSet");
+  const formatDate = useCallback((value?: string | null) => {
+    if (!value) {
+      return null;
     }
-    return new Date(profile.pricing_started_at).toLocaleString();
-  })();
+    return new Date(value).toLocaleString();
+  }, []);
 
-  const formattedPricingExpiryDate = (() => {
-    if (!profile?.pricing_expires_at) {
-      return t("profile.info.notSet");
-    }
-    return new Date(profile.pricing_expires_at).toLocaleString();
-  })();
+  const planStart = formatDate(profile?.pricing_started_at);
+  const planExpiry = formatDate(profile?.pricing_expires_at);
+
+  const isActive = profile?.status === "active";
+  const displayName = profile?.full_name || profile?.email || "User";
+  const notSet = t("profile.info.notSet");
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <Card className={styles.loadingCard}>
+          <Skeleton avatar={{ size: 120 }} active paragraph={{ rows: 6 }} />
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-          <Row justify="space-between" align="middle" className={styles.headerRow}>
-            <Col>
-              <Title level={2} className={styles.pageTitle}>
-                {t("profile.title")}
-              </Title>
-            </Col>
-          </Row>
+      <div className={styles.headerRow}>
+        <div>
+          <Title level={2} className={styles.pageTitle}>
+            {t("profile.title")}
+          </Title>
+          <Text className={styles.pageSubtitle}>{t("profile.info.title")}</Text>
+        </div>
+      </div>
 
-          <Card loading={isLoading}>
-            <Row gutter={[Spacing.XXL, Spacing.XXL]}>
-              <Col xs={24} sm={24} md={8} lg={7} xl={6}>
-                <div className={styles.avatarBlock}>
-                  <Avatar
-                    size={160}
-                    src={profile?.avatar || undefined}
-                    icon={!profile?.avatar ? <UserOutlined /> : undefined}
-                    className={`${styles.avatar} ${!profile?.avatar ? styles.avatarPlaceholder : ""}`}
-                  />
-                  <Title level={4} className={styles.avatarTitle}>
-                    {profile?.full_name || profile?.email || "User"}
-                  </Title>
-                  {profile?.roles && profile.roles.length > 0 ? (
-                    <Space className={styles.rolesSpace} wrap>
-                      {profile.roles.map((role) => (
-                        <Tag key={role} color="blue">
-                          {role}
-                        </Tag>
-                      ))}
-                    </Space>
-                  ) : null}
-                </div>
-              </Col>
+      <Card className={styles.heroCard} variant="borderless" >
+        <div className={styles.heroBackdrop} />
+        <div className={styles.heroBody}>
+          <div className={styles.heroLeft}>
+            <div className={styles.avatarWrapper}>
+              <Avatar
+                size={120}
+                src={profile?.avatar || undefined}
+                icon={!profile?.avatar ? <UserOutlined /> : undefined}
+                className={`${styles.avatar} ${
+                  !profile?.avatar ? styles.avatarPlaceholder : ""
+                }`}
+              />
+              <span
+                className={`${styles.statusDot} ${
+                  isActive ? styles.statusActive : ""
+                }`}
+                aria-hidden
+              />
+            </div>
 
-              <Col xs={24} sm={24} md={16} lg={17} xl={18}>
-                <Descriptions
-                  title={t("profile.info.title")}
-                  bordered
-                  column={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 2 }}
-                  size="middle"
-                >
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <UserOutlined />
-                        <Text>{t("profile.info.fullName")}</Text>
-                      </Space>
-                    }
+            <div className={styles.heroIdentity}>
+              <div className={styles.nameRow}>
+                <Title level={3} className={styles.userName}>
+                  {displayName}
+                </Title>
+                {profile?.verify_email ? (
+                  <span
+                    className={styles.verifiedBadge}
+                    title={t("profile.info.verified")}
                   >
-                    {profile?.full_name || (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
+                    <CheckCircleFilled />
+                  </span>
+                ) : null}
+              </div>
 
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <MailOutlined />
-                        <Text>{t("profile.info.email")}</Text>
-                      </Space>
-                    }
-                  >
-                    <Space wrap>
-                      {profile?.email}
-                      {profile?.verify_email ? (
-                        <Tag icon={<CheckCircleOutlined />} color="success">
-                          {t("profile.info.verified")}
-                        </Tag>
-                      ) : (
-                        <>
-                          <Tag icon={<CloseCircleOutlined />} color="warning">
-                            {t("profile.info.unverified")}
-                          </Tag>
-                          <Button
-                            type="link"
-                            icon={<SafetyOutlined />}
-                            onClick={handleVerifyEmail}
-                            aria-label={t("auth.user.verifyEmail.title")}
-                            title={t("auth.user.verifyEmail.title")}
-                          />
-                        </>
-                      )}
-                    </Space>
-                  </Descriptions.Item>
+              {profile?.email ? (
+                <Text className={styles.userEmail}>{profile.email}</Text>
+              ) : null}
 
-                  <Descriptions.Item
-                    label={
-                      <Space>
-                        <PhoneOutlined />
-                        <Text>{t("profile.info.phone")}</Text>
-                      </Space>
-                    }
-                  >
-                    {profile?.phone || (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
-
-                  <Descriptions.Item label={t("profile.info.status")}>
-                    {profile?.status ? (
-                      <Tag
-                        color={
-                          profile.status === "active" ? "success" : "default"
-                        }
+              {profile?.roles && profile.roles.length > 0 ? (
+                <div className={styles.rolesRow}>
+                  {profile.roles.map((role) => {
+                    const isActiveRole = role === profile.last_active_role;
+                    return (
+                      <span
+                        key={role}
+                        className={`${styles.roleTag} ${
+                          isActiveRole ? styles.activeRoleTag : ""
+                        }`}
                       >
-                        {profile.status}
-                      </Tag>
-                    ) : (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
+                        {role}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          </div>
 
-                  <Descriptions.Item label={t("profile.info.lastActiveRole")}>
-                    {profile?.last_active_role ? (
-                      <Tag color="purple">{profile.last_active_role}</Tag>
-                    ) : (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
+          <div className={styles.heroActions}>
+            <Button
+              type="primary"
+              size="large"
+              icon={<EditOutlined />}
+              onClick={handleEdit}
+              className={styles.editButton}
+            >
+              {t("profile.editProfile")}
+            </Button>
+          </div>
+        </div>
+      </Card>
 
-                  <Descriptions.Item label="Current Plan">
-                    {profile?.pricing_plan_code ? (
-                      <Tag color="gold">{formattedPlanLabel}</Tag>
-                    ) : (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
+      <div className={styles.infoGrid}>
+        <section className={styles.infoCard}>
+          <header className={styles.infoCardHeader}>
+            <span className={styles.infoCardIcon}>
+              <ContactsOutlined />
+            </span>
+            <div>
+              <Title level={5} className={styles.infoCardTitle}>
+                {t("profile.info.title")}
+              </Title>
+              <Text className={styles.infoCardSubtitle}>
+                {t("profile.info.fullName")} · {t("profile.info.email")} ·{" "}
+                {t("profile.info.phone")}
+              </Text>
+            </div>
+          </header>
 
-                  <Descriptions.Item label="Plan Start">
-                    {profile?.pricing_started_at ? (
-                      <Text>{formattedPricingStartDate}</Text>
-                    ) : (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
+          <div className={styles.infoList}>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <UserOutlined />
+                {t("profile.info.fullName")}
+              </span>
+              <span
+                className={`${styles.infoValue} ${
+                  !profile?.full_name ? styles.infoValueMuted : ""
+                }`}
+              >
+                {profile?.full_name || notSet}
+              </span>
+            </div>
 
-                  <Descriptions.Item label="Plan Expiry">
-                    {profile?.pricing_expires_at ? (
-                      <Text>{formattedPricingExpiryDate}</Text>
-                    ) : (
-                      <Text type="secondary">{t("profile.info.notSet")}</Text>
-                    )}
-                  </Descriptions.Item>
-
-                  <Descriptions.Item label={t("profile.info.userId")}>
-                    <Text code className={styles.userIdText}>
-                      {profile?.id}
-                    </Text>
-                  </Descriptions.Item>
-                </Descriptions>
-
-                <Divider />
-
-                <Space>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <MailOutlined />
+                {t("profile.info.email")}
+              </span>
+              <span className={styles.infoValue}>
+                {profile?.email}
+                {profile?.email && !profile?.verify_email ? (
                   <Button
-                    type="primary"
-                    icon={<EditOutlined />}
-                    onClick={handleEdit}
-                    size="large"
+                    type="link"
+                    size="small"
+                    icon={<SafetyOutlined />}
+                    onClick={handleVerifyEmail}
+                    className={styles.verifyButton}
                   >
-                    {t("profile.editProfile")}
+                    {t("profile.info.unverified")}
                   </Button>
-                </Space>
-              </Col>
-            </Row>
-          </Card>
+                ) : null}
+              </span>
+            </div>
+
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <PhoneOutlined />
+                {t("profile.info.phone")}
+              </span>
+              <span
+                className={`${styles.infoValue} ${
+                  !profile?.phone ? styles.infoValueMuted : ""
+                }`}
+              >
+                {profile?.phone || notSet}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.infoCard}>
+          <header className={styles.infoCardHeader}>
+            <span className={styles.infoCardIcon}>
+              <SolutionOutlined />
+            </span>
+            <div>
+              <Title level={5} className={styles.infoCardTitle}>
+                {t("profile.info.status")}
+              </Title>
+              <Text className={styles.infoCardSubtitle}>
+                {t("profile.info.lastActiveRole")} · {t("profile.info.userId")}
+              </Text>
+            </div>
+          </header>
+
+          <div className={styles.infoList}>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <SafetyOutlined />
+                {t("profile.info.status")}
+              </span>
+              <span className={styles.infoValue}>
+                {profile?.status ? (
+                  <span
+                    className={`${styles.statusBadge} ${
+                      isActive ? styles.statusActive : styles.statusInactive
+                    }`}
+                  >
+                    <span className={styles.statusBadgeDot} aria-hidden />
+                    {profile.status}
+                  </span>
+                ) : (
+                  <span className={styles.infoValueMuted}>{notSet}</span>
+                )}
+              </span>
+            </div>
+
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <UserOutlined />
+                {t("profile.info.lastActiveRole")}
+              </span>
+              <span
+                className={`${styles.infoValue} ${
+                  !profile?.last_active_role ? styles.infoValueMuted : ""
+                }`}
+              >
+                {profile?.last_active_role
+                  ? profile.last_active_role.charAt(0).toUpperCase() +
+                    profile.last_active_role.slice(1)
+                  : notSet}
+              </span>
+            </div>
+
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>
+                <IdcardOutlined />
+                {t("profile.info.userId")}
+              </span>
+              <span className={styles.infoValue}>
+                <Text code className={styles.userIdText}>
+                  {profile?.id}
+                </Text>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.planCard}>
+          <header className={styles.planHeader}>
+            <div className={styles.planTitleBlock}>
+              <span className={styles.infoCardIcon}>
+                <CrownOutlined />
+              </span>
+              <div>
+                <Title level={5} className={styles.infoCardTitle}>
+                  {t("profile.plan.title")}
+                </Title>
+                <Text className={styles.infoCardSubtitle}>
+                  {t("profile.plan.description")}
+                </Text>
+              </div>
+            </div>
+            <span
+              className={`${styles.planBadge} ${
+                !planLabel ? styles.planBadgeMuted : ""
+              }`}
+            >
+              <CrownOutlined />
+              {planLabel || notSet}
+            </span>
+          </header>
+
+          <div className={styles.planMetrics}>
+            <div className={styles.planMetric}>
+              <span className={styles.planMetricLabel}>
+                <CalendarOutlined />
+                {t("profile.plan.start")}
+              </span>
+              <span
+                className={`${styles.planMetricValue} ${
+                  !planStart ? styles.planMetricValueMuted : ""
+                }`}
+              >
+                {planStart || notSet}
+              </span>
+            </div>
+
+            <div className={styles.planMetric}>
+              <span className={styles.planMetricLabel}>
+                <ClockCircleOutlined />
+                {t("profile.plan.expiry")}
+              </span>
+              <span
+                className={`${styles.planMetricValue} ${
+                  !planExpiry ? styles.planMetricValueMuted : ""
+                }`}
+              >
+                {planExpiry || notSet}
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

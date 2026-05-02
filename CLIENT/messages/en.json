@@ -353,9 +353,92 @@
     "becomeWorker": "Become a worker",
     "hireService": "Hire a service",
     "myServices": "My Services",
+    "explore": "Explore",
+    "feedNavAria": "Switch between Explore and Posts",
+    "workerNavAria": "Worker navigation: Posts, Schedule, Messages",
+    "workerNav": {
+      "posts": "Posts",
+      "schedule": "Schedule",
+      "messages": "Messages"
+    },
+    "posts": "Posts",
     "currency": "Currency",
     "language": "Language",
     "theme": "Theme"
+  },
+  "feed": {
+    "title": "Posts",
+    "workerHub": {
+      "title": "Posts",
+      "searchPlaceholder": "Search posts, jobs…"
+    },
+    "loadError": "Could not load posts. Please try again.",
+    "rateLimit": "You are posting too quickly. Please wait a few minutes.",
+    "tabs": {
+      "all": "All",
+      "mine": "Mine",
+      "groupAria": "Feed scope"
+    },
+    "hashtag": {
+      "clear": "Clear hashtag filter"
+    },
+    "composer": {
+      "placeholder": "What are you looking for?",
+      "hashtagHint": "Type #hashtags in your post to tag topics.",
+      "photoVideo": "Photo / video",
+      "appointment": "Schedule",
+      "location": "Location",
+      "comingSoon": "Coming soon",
+      "submit": "Post",
+      "bodyRequired": "Content cannot be empty.",
+      "validationError": "Invalid content or media.",
+      "charRemaining": "{{count}} characters left",
+      "addImage": "Image",
+      "addImagesAria": "Choose images (multiple selection allowed)",
+      "addVideo": "Add video (URL)",
+      "videoUrlPlaceholder": "https://... (https only)",
+      "mediaCount": "Media: {{current}}/{{max}}",
+      "imageN": "Image {{n}}",
+      "videoN": "Video {{n}}",
+      "removeMedia": "Remove media"
+    },
+    "post": {
+      "anonymousAuthor": "User",
+      "viewWorkerProfileAria": "View worker profile: {{name}}",
+      "deleteConfirm": "Delete this post?",
+      "editTitle": "Edit post",
+      "toggleComments": "Comments",
+      "showComments": "Show comments",
+      "hideComments": "Hide comments",
+      "actions": "Post actions",
+      "videoLabel": "Video",
+      "gridPhotoAlt": "Photo {{n}}",
+      "gridMorePhotos": "+{{count}}"
+    },
+    "comments": {
+      "placeholder": "Write a comment…",
+      "replyPlaceholder": "Reply…",
+      "submit": "Send",
+      "reply": "Reply",
+      "validation": "Invalid comment.",
+      "anonymous": "Anonymous",
+      "loadError": "Could not load comments.",
+      "replying": "Replying in thread",
+      "deleteConfirm": "Delete this comment?",
+      "editTitle": "Edit comment",
+      "actionsMenu": "Comment actions"
+    },
+    "sidebar": {
+      "myPosts": "My posts",
+      "clientSubtitle": "Gold tier client",
+      "trendingTitle": "Trending topics",
+      "trendingError": "Could not load trending topics.",
+      "trendingEmpty": "No trending hashtags yet.",
+      "postCount": "{{count}} posts"
+    },
+    "empty": {
+      "description": "No posts yet. Be the first!"
+    }
   },
   "upload": {
     "avatar": {
@@ -506,6 +589,12 @@
     "title": "Personal Information",
     "editLabel": "Edit",
     "editProfile": "Edit Profile",
+    "plan": {
+      "title": "Subscription Plan",
+      "description": "Your current pricing plan and validity period",
+      "start": "Plan Start",
+      "expiry": "Plan Expiry"
+    },
     "info": {
       "title": "Account Details",
       "fullName": "Full Name",
@@ -752,7 +841,8 @@
         "years": "years",
         "height": "Height",
         "weight": "Weight",
-        "zodiac": "Zodiac"
+        "zodiac": "Zodiac",
+        "na": "N/A"
       },
       "lifestyle": "Lifestyle",
       "quote": "Quote",
@@ -1098,6 +1188,7 @@
     "filters": {
       "dateRange": "Date Range",
       "datePreset": "Quick selection",
+      "selectDatePreset": "Select date preset",
       "today": "Today",
       "yesterday": "Yesterday",
       "last7Days": "Last 7 days",

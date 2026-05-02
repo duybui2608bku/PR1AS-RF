@@ -223,9 +223,88 @@
     "becomeWorker": "워커 되기",
     "hireService": "서비스 고용",
     "myServices": "내 서비스",
+    "explore": "탐색",
+    "feedNavAria": "탐색과 게시물 전환",
+    "workerNavAria": "워커: 게시물, 일정, 메시지",
+    "workerNav": {
+      "posts": "게시물",
+      "schedule": "일정",
+      "messages": "메시지"
+    },
+    "posts": "게시물",
     "currency": "통화",
     "language": "언어",
     "theme": "테마"
+  },
+  "feed": {
+    "title": "게시물",
+    "workerHub": {
+      "title": "게시물",
+      "searchPlaceholder": "게시물, 일 검색…"
+    },
+    "loadError": "게시물을 불러올 수 없습니다.",
+    "rateLimit": "게시가 너무 빠릅니다. 잠시 후 다시 시도하세요.",
+    "tabs": {
+      "all": "전체",
+      "mine": "내 글",
+      "groupAria": "게시물 범위"
+    },
+    "hashtag": { "clear": "필터 지우기" },
+    "composer": {
+      "placeholder": "무엇을 찾고 있나요?",
+      "hashtagHint": "본문에 #해시태그를 입력해 주제를 표시하세요.",
+      "photoVideo": "사진/동영상",
+      "appointment": "일정",
+      "location": "위치",
+      "comingSoon": "곧 제공",
+      "submit": "게시",
+      "bodyRequired": "내용을 입력하세요.",
+      "validationError": "유효하지 않은 내용입니다.",
+      "charRemaining": "{{count}}자 남음",
+      "addImage": "이미지",
+      "addImagesAria": "이미지 선택(여러 장 선택 가능)",
+      "addVideo": "동영상 URL",
+      "videoUrlPlaceholder": "https://...",
+      "mediaCount": "미디어: {{current}}/{{max}}",
+      "imageN": "이미지 {{n}}",
+      "videoN": "동영상 {{n}}",
+      "removeMedia": "삭제"
+    },
+    "post": {
+      "anonymousAuthor": "사용자",
+      "viewWorkerProfileAria": "워커 프로필 보기: {{name}}",
+      "deleteConfirm": "삭제할까요?",
+      "editTitle": "수정",
+      "toggleComments": "댓글",
+      "showComments": "댓글 보기",
+      "hideComments": "댓글 숨기기",
+      "videoLabel": "동영상",
+      "gridPhotoAlt": "사진 {{n}}",
+      "gridMorePhotos": "+{{count}}",
+      "actions": "메뉴"
+    },
+    "comments": {
+      "placeholder": "댓글 작성…",
+      "replyPlaceholder": "답글…",
+      "submit": "보내기",
+      "reply": "답글",
+      "validation": "유효하지 않은 댓글입니다.",
+      "anonymous": "익명",
+      "loadError": "댓글을 불러올 수 없습니다.",
+      "replying": "스레드에 답글 작성 중",
+      "deleteConfirm": "댓글을 삭제할까요?",
+      "editTitle": "댓글 수정",
+      "actionsMenu": "댓글 메뉴"
+    },
+    "sidebar": {
+      "myPosts": "내 게시물",
+      "clientSubtitle": "골드 등급 고객",
+      "trendingTitle": "인기 주제",
+      "trendingError": "불러오기 실패",
+      "trendingEmpty": "데이터 없음",
+      "postCount": "{{count}}개"
+    },
+    "empty": { "description": "아직 게시물이 없습니다." }
   },
   "upload": {
     "avatar": {
@@ -375,6 +454,12 @@
     "title": "개인 정보",
     "editLabel": "편집",
     "editProfile": "프로필 편집",
+    "plan": {
+      "title": "구독 플랜",
+      "description": "현재 요금제 및 유효 기간",
+      "start": "플랜 시작",
+      "expiry": "플랜 만료"
+    },
     "info": {
       "title": "계정 세부 정보",
       "fullName": "성명",
@@ -614,7 +699,8 @@
         "years": "세",
         "height": "키",
         "weight": "몸무게",
-        "zodiac": "별자리"
+        "zodiac": "별자리",
+        "na": "없음"
       },
       "lifestyle": "라이프스타일",
       "quote": "명언",
@@ -960,6 +1046,7 @@
     "filters": {
       "dateRange": "날짜 범위",
       "datePreset": "빠른 선택",
+      "selectDatePreset": "빠른 날짜 선택",
       "today": "오늘",
       "yesterday": "어제",
       "last7Days": "지난 7일",

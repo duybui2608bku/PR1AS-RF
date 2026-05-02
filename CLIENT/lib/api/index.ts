@@ -9,4 +9,7 @@ export * from "./review.api";
 export * from "./escrow.api";
 export * from "./notification.api";
 export * from "./pricing.api";
+export * from "./posts.api";
+export * from "./comments.api";
+export * from "./hashtags.api";
 

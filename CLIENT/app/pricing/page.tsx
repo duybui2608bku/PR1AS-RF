@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { pricingApi, PricingPackage, PricingPlanCode } from "@/lib/api/pricing.api";
 import { useStandardizedMutation } from "@/lib/hooks/use-standardized-mutation";
-import { useAuthStore } from "@/lib/stores/auth.store";
+import { useAuthStore, type User } from "@/lib/stores/auth.store";
 import { authApi } from "@/lib/api/auth.api";
 import styles from "./page.module.scss";
 
@@ -69,7 +69,7 @@ export default function PricingPage() {
     {
       onSuccess: async (data) => {
         const latestUser = await authApi.getMe();
-        setUser(latestUser);
+        setUser(latestUser as User);
 
         queryClient.setQueryData(["user-profile"], latestUser);
         queryClient.setQueryData(["my-pricing"], data);
