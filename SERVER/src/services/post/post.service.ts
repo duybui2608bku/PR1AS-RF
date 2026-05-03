@@ -38,6 +38,15 @@ type LeanPostWithAuthor = IPostDocument & {
     | null;
 };
 
+/** Works when `author_id` is a raw ObjectId or populated User (findActiveById). */
+const postAuthorIdString = (post: Pick<IPostDocument, "author_id">): string => {
+  const ref = post.author_id as unknown;
+  if (ref && typeof ref === "object" && "_id" in ref && ref._id != null) {
+    return (ref._id as Types.ObjectId).toString();
+  }
+  return (post.author_id as unknown as Types.ObjectId).toString();
+};
+
 const toAuthorPublic = (
   post: LeanPostWithAuthor,
   fallbackId: Types.ObjectId
@@ -225,7 +234,7 @@ export class PostService {
         ErrorCode.POST_NOT_FOUND
       );
     }
-    if (existing.author_id.toString() !== userId) {
+    if (postAuthorIdString(existing) !== userId) {
       throw new AppError(
         POST_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
@@ -288,7 +297,7 @@ export class PostService {
         ErrorCode.POST_NOT_FOUND
       );
     }
-    if (existing.author_id.toString() !== userId) {
+    if (postAuthorIdString(existing) !== userId) {
       throw new AppError(
         POST_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
