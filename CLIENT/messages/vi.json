@@ -508,6 +508,7 @@
       }
     },
     "viewAll": "Xem tất cả",
+    "emptyListing": "Không tìm thấy kết quả",
     "logo": "PR1AS",
     "nav": {
       "home": "Trang chủ",
@@ -672,9 +673,10 @@
         },
         "workAreas": {
           "label": "Khu vực / vị trí làm việc",
-          "placeholder": "Gõ để tìm và chọn một hoặc nhiều khu vực",
+          "placeholder": "Gõ để tìm và chọn một hoặc nhiều phường, xã",
           "required": "Vui lòng chọn ít nhất một khu vực làm việc",
-          "phase1Hint": "Danh sách đang dùng dữ liệu mẫu. Lựa chọn sẽ được lưu trên máy chủ ở bản cập nhật sau."
+          "metaMissing": "Không tìm thấy dữ liệu địa giới cho lựa chọn này. Hãy tìm lại và chọn từ danh sách.",
+          "phase1Hint": "Chọn phường/xã theo dữ liệu hành chính Việt Nam (cập nhật 2025). Tối đa 20 khu vực."
         },
         "dateOfBirth": {
           "label": "Ngày sinh"

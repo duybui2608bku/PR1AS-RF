@@ -16,14 +16,14 @@ import type {
   ServicePricing,
   PricingUnit,
 } from "@/lib/types/worker";
-import {
-  ServiceCategory as ServiceCategoryEnum,
-  PricingUnit as PricingUnitEnum,
-} from "@/lib/types/worker";
+import { ServiceCategory as ServiceCategoryEnum } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
 import { ServicePricingInline } from "./ServicePricingInline";
-import { validateNormalizedPricing } from "./service-pricing.utils";
+import {
+  normalizeWorkerPricingSlots,
+  validateNormalizedPricing,
+} from "./service-pricing.utils";
 import {
   filterAssistanceServicesForWorkerSetup,
   isServiceIncludedInWorkerSetupStep,
@@ -32,10 +32,6 @@ import {
 import styles from "./Step2Services.module.scss";
 
 const { Title } = Typography;
-
-const DEFAULT_FIRST_PRICING_ROW: ServicePricing[] = [
-  { unit: PricingUnitEnum.HOURLY, duration: 1, price: 0 },
-];
 
 export interface Step2ServicesHandle {
   validateAndGetWorkerServices: () => WorkerServiceInput | null;
@@ -72,7 +68,9 @@ function buildWorkerServicePayload(
     return null;
   }
 
-  const servicesWithoutPricing = included.filter((s) => s.pricing.length === 0);
+  const servicesWithoutPricing = included.filter(
+    (s) => normalizeWorkerPricingSlots(s.pricing).length === 0
+  );
 
   if (servicesWithoutPricing.length > 0) {
     Modal.warning({
@@ -84,15 +82,8 @@ function buildWorkerServicePayload(
   }
 
   for (const s of included) {
-    const err = validateNormalizedPricing(s.pricing);
-    if (err === "duplicate") {
-      Modal.warning({
-        title: t("common.warning"),
-        content: `${s.name.vi}: ${t("worker.setup.step2.validation.duplicatePricingUnit")}`,
-        centered: true,
-      });
-      return null;
-    }
+    const norm = normalizeWorkerPricingSlots(s.pricing);
+    const err = validateNormalizedPricing(norm);
     if (err === "invalidPrice" || err === "empty") {
       Modal.warning({
         title: t("common.warning"),
@@ -106,7 +97,7 @@ function buildWorkerServicePayload(
   return {
     services: included.map((service) => ({
       service_id: service.id,
-      pricing: service.pricing,
+      pricing: normalizeWorkerPricingSlots(service.pricing),
     })),
   };
 }
@@ -267,7 +258,7 @@ export const Step2Services = forwardRef<Step2ServicesHandle, Step2ServicesProps>
       } else {
         newSelectedServices.set(serviceId, {
           ...service,
-          pricing: [...DEFAULT_FIRST_PRICING_ROW],
+          pricing: [],
           is_active: true,
         });
       }
@@ -281,10 +272,6 @@ export const Step2Services = forwardRef<Step2ServicesHandle, Step2ServicesProps>
           const next = new Map(prev);
           const existing = next.get(serviceId);
           if (!existing) {
-            return next;
-          }
-          if (pricing.length === 0) {
-            next.delete(serviceId);
             return next;
           }
           next.set(serviceId, { ...existing, pricing });

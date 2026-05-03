@@ -140,7 +140,7 @@ const CategorySectionComponent = ({
                 <Button
                   type="link"
                   icon={<ArrowRightOutlined />}
-                  iconPosition="end"
+                  iconPlacement="end"
                   className={styles.viewAllButton}
                   onClick={handleViewAll}
                 >

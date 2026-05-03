@@ -373,6 +373,7 @@
       }
     },
     "viewAll": "查看全部",
+    "emptyListing": "未找到结果",
     "logo": "PR1AS",
     "nav": {
       "home": "首页",
@@ -533,9 +534,10 @@
         },
         "workAreas": {
           "label": "工作区域 / 地点",
-          "placeholder": "输入关键词搜索并选择一个或多个区域",
+          "placeholder": "搜索并选择一个或多个乡级坊/社",
           "required": "请至少选择一个工作区域",
-          "phase1Hint": "当前为示例数据。您的选择将在后续版本中保存到服务器。"
+          "metaMissing": "该选项缺少行政区数据。请重新搜索并从列表中选择。",
+          "phase1Hint": "使用越南 2025 年行政区划数据。最多 20 个区域。"
         },
         "dateOfBirth": {
           "label": "出生日期"

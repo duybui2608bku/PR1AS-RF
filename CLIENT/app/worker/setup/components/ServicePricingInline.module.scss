@@ -5,38 +5,31 @@ $setup-on-surface-variant: #57413f;
 .block {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.row {
+.hint {
+  margin-bottom: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+.slotList {
   display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.fields {
-  flex: 1;
-  min-width: 0;
+.slotRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: start;
 }
 
 @media (max-width: 480px) {
-  .row {
-    flex-wrap: wrap;
-  }
-
-  .fields {
+  .slotRow {
     grid-template-columns: 1fr;
-    flex: 1 1 100%;
-  }
-
-  .removeBtn {
-    margin-top: 0 !important;
-    margin-left: auto;
   }
 }
 
@@ -55,13 +48,19 @@ $setup-on-surface-variant: #57413f;
   padding-inline: 4px;
 }
 
-.control {
-  width: 100%;
-}
-
-.control :global(.ant-select-selector) {
-  border-radius: 8px !important;
-  border-color: $setup-outline !important;
+.unitReadout {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 11px;
+  border: 1px solid $setup-outline;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #1c1b1b;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .priceField {
@@ -93,29 +92,4 @@ $setup-on-surface-variant: #57413f;
   color: $setup-on-surface-variant;
   pointer-events: none;
   z-index: 1;
-}
-
-.removeBtn {
-  flex-shrink: 0;
-  margin-top: 28px;
-  color: $setup-on-surface-variant !important;
-}
-
-.removeBtn:hover {
-  color: #ba1a1a !important;
-}
-
-.addBtn {
-  align-self: flex-start;
-  padding: 0 !important;
-  height: auto !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: $setup-primary !important;
-}
-
-.addBtn:hover {
-  color: #6d1515 !important;
 }

@@ -100,7 +100,7 @@ export const Composer = () => {
               autoSize={{ minRows: 1, maxRows: 12 }}
               maxLength={FEED_CONSTANTS.BODY_MAX_CHARS}
               aria-label={t("feed.composer.placeholder")}
-              bordered={false}
+              variant="borderless"
             />
           </div>
         </div>

@@ -15,3 +15,17 @@
     padding: t.$space-10 0 t.$space-16;
   }
 }
+
+.servicesEmpty {
+  max-width: t.$container-max;
+  margin: 0 auto;
+  padding: t.$space-10 t.$container-pad-desktop t.$space-12;
+
+  @media (max-width: t.$bp-tablet) {
+    padding-inline: t.$container-pad-tablet;
+  }
+
+  @media (max-width: t.$bp-mobile) {
+    padding-inline: t.$container-pad-mobile;
+  }
+}

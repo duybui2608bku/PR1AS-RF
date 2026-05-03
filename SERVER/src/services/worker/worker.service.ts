@@ -114,6 +114,116 @@ const hasTimeOverlap = (
   endB: Date
 ): boolean => startA < endB && endA > startB;
 
+type GroupedWorkerRow = {
+  id: string;
+  pricing: Array<{
+    unit: string;
+    duration: number;
+    price: number;
+    currency: string;
+  }>;
+};
+
+async function isWorkerAvailableAtSchedule(
+  worker: GroupedWorkerRow,
+  scheduleAt: Date,
+  availabilityCache: Map<string, boolean>
+): Promise<boolean> {
+  const durations = Array.from(new Set(worker.pricing.map((item) => item.duration)))
+    .filter((duration) => duration > 0)
+    .sort((a, b) => a - b);
+
+  if (!durations.length) {
+    return false;
+  }
+
+  const cacheKey = `${worker.id}:${scheduleAt.toISOString()}:${durations.join(",")}`;
+  const cachedAvailability = availabilityCache.get(cacheKey);
+  if (typeof cachedAvailability === "boolean") {
+    return cachedAvailability;
+  }
+
+  const maxDurationMinutes = durations[durations.length - 1];
+  const maxEndTime = new Date(
+    scheduleAt.getTime() + maxDurationMinutes * 60 * 1000
+  );
+
+  const conflicts = await bookingRepository.findConflictsForWorkerInWindow(
+    worker.id,
+    scheduleAt,
+    maxEndTime
+  );
+
+  const isAvailable = durations.some((durationMinutes) => {
+    const candidateEnd = new Date(
+      scheduleAt.getTime() + durationMinutes * 60 * 1000
+    );
+    return !conflicts.some((conflict) =>
+      hasTimeOverlap(
+        scheduleAt,
+        candidateEnd,
+        conflict.start_time,
+        conflict.end_time
+      )
+    );
+  });
+
+  availabilityCache.set(cacheKey, isAvailable);
+  return isAvailable;
+}
+
+async function isWorkerAvailableInScheduleRange(
+  worker: GroupedWorkerRow,
+  rangeStart: Date,
+  rangeEnd: Date,
+  availabilityCache: Map<string, boolean>
+): Promise<boolean> {
+  const durations = Array.from(new Set(worker.pricing.map((item) => item.duration)))
+    .filter((duration) => duration > 0)
+    .sort((a, b) => a - b);
+
+  if (!durations.length) {
+    return false;
+  }
+
+  for (const durationMinutes of durations) {
+    const candidateEnd = new Date(
+      rangeStart.getTime() + durationMinutes * 60 * 1000
+    );
+    if (candidateEnd > rangeEnd) {
+      continue;
+    }
+
+    const cacheKey = `${worker.id}:range:${rangeStart.toISOString()}:${rangeEnd.toISOString()}:${durationMinutes}`;
+    const cached = availabilityCache.get(cacheKey);
+    if (typeof cached === "boolean") {
+      return cached;
+    }
+
+    const conflicts = await bookingRepository.findConflictsForWorkerInWindow(
+      worker.id,
+      rangeStart,
+      candidateEnd
+    );
+
+    const isAvailable = !conflicts.some((conflict) =>
+      hasTimeOverlap(
+        rangeStart,
+        candidateEnd,
+        conflict.start_time,
+        conflict.end_time
+      )
+    );
+
+    availabilityCache.set(cacheKey, isAvailable);
+    if (isAvailable) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export class WorkerService {
   async getWorkerById(workerId: string): Promise<WorkerDetailResponse> {
     const user = await userRepository.findById(workerId);
@@ -205,83 +315,76 @@ export class WorkerService {
   async getWorkersGroupedByService(
     query: WorkerGroupedByServiceQuery
   ): Promise<WorkersGroupedByServiceItem[]> {
+    const hasWorkAreaFilter = query.work_areas.length > 0;
     const groupedWorkers =
       await workerServiceRepository.findWorkersGroupedByService({
-        q: query.q,
-        category: query.category,
-        location: parseLocation(query.location),
+        qs: query.qs.length ? query.qs : undefined,
+        categories: query.categories.length ? query.categories : undefined,
+        work_areas: hasWorkAreaFilter ? query.work_areas : undefined,
+        location: hasWorkAreaFilter ? undefined : parseLocation(query.location),
       });
 
-    if (!query.schedule) {
+    const hasRange =
+      query.schedule_from != null && query.schedule_to != null;
+    const hasLegacySchedules = query.schedules.length > 0;
+
+    if (!hasRange && !hasLegacySchedules) {
       return groupedWorkers;
     }
-    const scheduleAt = query.schedule;
 
     const availabilityCache = new Map<string, boolean>();
 
-    const groupsWithAvailability = await Promise.all(
-      groupedWorkers.map(async (group) => {
-        const availableWorkers = await Promise.all(
-          group.workers.map(async (worker) => {
-            const durations = Array.from(
-              new Set(worker.pricing.map((item) => item.duration))
+    const filterWith = async (
+      testWorker: (worker: GroupedWorkerRow) => Promise<boolean>
+    ) => {
+      const groupsWithAvailability = await Promise.all(
+        groupedWorkers.map(async (group) => {
+          const availableWorkers = await Promise.all(
+            group.workers.map(async (worker) =>
+              (await testWorker(worker)) ? worker : null
             )
-              .filter((duration) => duration > 0)
-              .sort((a, b) => a - b);
+          );
 
-            if (!durations.length) {
-              return null;
-            }
+          const filteredWorkers = availableWorkers.filter(
+            (worker): worker is NonNullable<typeof worker> => worker !== null
+          );
 
-            const cacheKey = `${worker.id}:${scheduleAt.toISOString()}:${durations.join(",")}`;
-            const cachedAvailability = availabilityCache.get(cacheKey);
-            if (typeof cachedAvailability !== "undefined") {
-              return cachedAvailability ? worker : null;
-            }
+          return {
+            service: group.service,
+            workers: filteredWorkers,
+          };
+        })
+      );
 
-            const maxDurationMinutes = durations[durations.length - 1];
-            const maxEndTime = new Date(
-              scheduleAt.getTime() + maxDurationMinutes * 60 * 1000
-            );
+      return groupsWithAvailability.filter((group) => group.workers.length > 0);
+    };
 
-            const conflicts =
-              await bookingRepository.findConflictsForWorkerInWindow(
-                worker.id,
-                scheduleAt,
-                maxEndTime
-              );
+    if (hasRange) {
+      const rangeStart = query.schedule_from as Date;
+      const rangeEnd = query.schedule_to as Date;
+      return filterWith((worker) =>
+        isWorkerAvailableInScheduleRange(
+          worker,
+          rangeStart,
+          rangeEnd,
+          availabilityCache
+        )
+      );
+    }
 
-            const isAvailable = durations.some((durationMinutes) => {
-              const candidateEnd = new Date(
-                scheduleAt.getTime() + durationMinutes * 60 * 1000
-              );
-              return !conflicts.some((conflict) =>
-                hasTimeOverlap(
-                  scheduleAt,
-                  candidateEnd,
-                  conflict.start_time,
-                  conflict.end_time
-                )
-              );
-            });
-
-            availabilityCache.set(cacheKey, isAvailable);
-            return isAvailable ? worker : null;
-          })
+    return filterWith(async (worker) => {
+      for (const scheduleAt of query.schedules) {
+        const ok = await isWorkerAvailableAtSchedule(
+          worker,
+          scheduleAt,
+          availabilityCache
         );
-
-        const filteredWorkers = availableWorkers.filter(
-          (worker): worker is NonNullable<typeof worker> => worker !== null
-        );
-
-        return {
-          service: group.service,
-          workers: filteredWorkers,
-        };
-      })
-    );
-
-    return groupsWithAvailability.filter((group) => group.workers.length > 0);
+        if (ok) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   async getWorkerSchedule(

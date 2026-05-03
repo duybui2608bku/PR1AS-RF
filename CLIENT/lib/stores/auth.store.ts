@@ -27,6 +27,11 @@ export interface User {
     quote?: string;
     introduction?: string;
     gallery_urls: string[];
+    work_locations?: Array<{
+      province_code: number;
+      ward_code: number;
+      label_snapshot?: string;
+    }>;
   } | null;
   [key: string]: unknown;
 }

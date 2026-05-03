@@ -20,12 +20,16 @@ interface UpdateWorkerServiceOptions {
 }
 
 export interface GroupedWorkersFilter {
-  q?: string;
-  category?: string;
+  /** OR semantics across keywords */
+  qs?: string[];
+  /** OR semantics across categories (leaf service code or parent category). */
+  categories?: string[];
   location?: {
     latitude: number;
     longitude: number;
   };
+  /** OR semantics: worker matches if any work_locations element matches any area */
+  work_areas?: Array<{ province_code: number; ward_code?: number }>;
 }
 
 const LOCATION_RADIUS_KM = 30;
@@ -81,6 +85,25 @@ class WorkerServiceRepository {
       worker_id: workerObjectId,
       service_id: { $in: serviceIds },
     }).sort({ created_at: -1, service_code: 1 });
+  }
+
+  /**
+   * Removes worker_service rows for this worker whose service_id is not in `keepServiceIds`.
+   * Call after upsert so the POST body represents the full desired service set (sync, not merge).
+   */
+  async deleteManyForWorkerNotInServiceIds(
+    workerId: string,
+    keepServiceIds: mongoose.Types.ObjectId[]
+  ): Promise<number> {
+    if (!keepServiceIds.length) {
+      return 0;
+    }
+    const workerObjectId = new mongoose.Types.ObjectId(workerId);
+    const result = await WorkerService.deleteMany({
+      worker_id: workerObjectId,
+      service_id: { $nin: keepServiceIds },
+    });
+    return result.deletedCount ?? 0;
   }
 
   async findOneForWorker(
@@ -170,15 +193,8 @@ class WorkerServiceRepository {
       }>;
     }>
   > {
-    const q = filters?.q?.trim();
-    const category = filters?.category?.trim();
-    const normalizedCategory = category?.toUpperCase();
-
-    const isParentCategory =
-      normalizedCategory &&
-      Object.values(ServiceCategory).includes(
-        normalizedCategory as ServiceCategory
-      );
+    const qs =
+      filters?.qs?.map((s) => s.trim()).filter(Boolean) ?? [];
 
     const stages: PipelineStage[] = [
       {
@@ -207,36 +223,51 @@ class WorkerServiceRepository {
       },
     ];
 
-    if (normalizedCategory) {
-      if (isParentCategory) {
-        stages.push({
-          $match: {
+    const categories =
+      filters?.categories?.map((c) => c.trim().toUpperCase()).filter(Boolean) ??
+      [];
+
+    if (categories.length > 0) {
+      const categoryBranches: Record<string, unknown>[] = [];
+      for (const normalizedCategory of categories) {
+        const isParentCategory = Object.values(ServiceCategory).includes(
+          normalizedCategory as ServiceCategory
+        );
+        if (isParentCategory) {
+          categoryBranches.push({
             "service.category": normalizedCategory,
-          },
-        });
-      } else {
-        stages.push({
-          $match: {
+          });
+        } else {
+          categoryBranches.push({
             $or: [
               { "service.code": normalizedCategory },
               { service_code: normalizedCategory },
             ],
-          },
-        });
+          });
+        }
       }
-    }
-
-    if (q) {
-      const qRegex = new RegExp(escapeRegExp(q), "i");
       stages.push({
         $match: {
-          $or: [
-            { "service.code": qRegex },
-            { "service.name.vi": qRegex },
-            { "service.name.en": qRegex },
-            { "service.name.zh": qRegex },
-            { "service.name.ko": qRegex },
-          ],
+          $or: categoryBranches,
+        },
+      });
+    }
+
+    if (qs.length > 0) {
+      const keywordBranches: Record<string, unknown>[] = [];
+      for (const qItem of qs) {
+        const qRegex = new RegExp(escapeRegExp(qItem), "i");
+        keywordBranches.push(
+          { "service.code": qRegex },
+          { "service.name.vi": qRegex },
+          { "service.name.en": qRegex },
+          { "service.name.zh": qRegex },
+          { "service.name.ko": qRegex }
+        );
+      }
+      stages.push({
+        $match: {
+          $or: keywordBranches,
         },
       });
     }
@@ -264,7 +295,26 @@ class WorkerServiceRepository {
       }
     );
 
-    if (filters?.location) {
+    const workAreas = filters?.work_areas ?? [];
+
+    if (workAreas.length > 0) {
+      const locationBranches = workAreas.map((wa) => {
+        const pm: { province_code: number; ward_code?: number } = {
+          province_code: wa.province_code,
+        };
+        if (wa.ward_code !== undefined && wa.ward_code !== null) {
+          pm.ward_code = wa.ward_code;
+        }
+        return pm;
+      });
+      stages.push({
+        $match: {
+          "worker.worker_profile.work_locations": {
+            $elemMatch: { $or: locationBranches },
+          },
+        },
+      });
+    } else if (filters?.location) {
       const { latitude, longitude } = filters.location;
       const latDelta = LOCATION_RADIUS_KM / KM_PER_LAT_DEGREE;
       const cosLat = Math.cos((latitude * Math.PI) / 180);

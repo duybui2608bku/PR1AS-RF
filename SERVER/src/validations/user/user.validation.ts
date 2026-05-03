@@ -8,6 +8,14 @@ import {
 import { USER_MESSAGES, AUTH_MESSAGES } from "../../constants/messages";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 
+const WORK_LOCATIONS_MAX = 20;
+
+const workLocationItemSchema = z.object({
+  province_code: z.number().int(),
+  ward_code: z.number().int(),
+  label_snapshot: z.string().trim().max(200).optional(),
+});
+
 export const updateUserStatusSchema = z.object({
   status: z.nativeEnum(UserStatus, {
     errorMap: () => ({
@@ -71,6 +79,11 @@ export const updateWorkerProfileSchema = z.object({
       })
       .optional()
       .nullable(),
+    work_locations: z
+      .array(workLocationItemSchema)
+      .min(1)
+      .max(WORK_LOCATIONS_MAX)
+      .optional(),
   }),
 });
 

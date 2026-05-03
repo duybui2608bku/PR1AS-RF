@@ -11,7 +11,8 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.{ts,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,json}\"",
-    "test": "jest"
+    "test": "jest",
+    "seed:services-stitch": "npx ts-node --transpile-only -r dotenv/config src/scripts/seed-services-stitch.ts"
   },
   "keywords": [],
   "author": "",

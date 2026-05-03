@@ -507,6 +507,7 @@
       }
     },
     "viewAll": "View all",
+    "emptyListing": "No results found",
     "logo": "PR1AS",
     "nav": {
       "home": "Home",
@@ -671,9 +672,10 @@
         },
         "workAreas": {
           "label": "Work areas / locations",
-          "placeholder": "Type to search and select one or more areas",
+          "placeholder": "Search and select one or more wards (commune-level)",
           "required": "Please select at least one work area",
-          "phase1Hint": "Options use sample data for now. Your choices will be saved on the server in a future update."
+          "metaMissing": "Missing location data for this selection. Search again and pick from the list.",
+          "phase1Hint": "Wards use Vietnam administrative data (2025 update). Up to 20 areas."
         },
         "dateOfBirth": {
           "label": "Date of Birth"

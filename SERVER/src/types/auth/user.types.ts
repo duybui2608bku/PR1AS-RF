@@ -26,6 +26,12 @@ export enum Experience {
   MORE_THAN_10 = "MORE_THAN_10",
 }
 
+export interface WorkerWorkLocation {
+  province_code: number;
+  ward_code: number;
+  label_snapshot?: string;
+}
+
 export interface WorkerProfile {
   date_of_birth?: Date;
   gender: gender;
@@ -39,6 +45,7 @@ export interface WorkerProfile {
   gallery_urls: string[];
   experience?: Experience;
   title?: string;
+  work_locations?: WorkerWorkLocation[];
 }
 
 export interface ClientProfile {

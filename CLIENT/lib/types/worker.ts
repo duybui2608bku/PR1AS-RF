@@ -12,6 +12,12 @@ export enum Experience {
   MORE_THAN_10 = "MORE_THAN_10",
 }
 
+export interface WorkLocationRef {
+  province_code: number;
+  ward_code: number;
+  label_snapshot?: string;
+}
+
 export interface WorkerProfile {
   date_of_birth?: string;
   gender: Gender;
@@ -25,6 +31,7 @@ export interface WorkerProfile {
   gallery_urls: string[];
   experience?: Experience;
   title?: string;
+  work_locations?: WorkLocationRef[];
   coords?: {
     latitude: number | null;
     longitude: number | null;
@@ -44,6 +51,7 @@ export interface WorkerProfileUpdateInput {
   gallery_urls?: string[];
   experience?: Experience;
   title?: string;
+  work_locations?: WorkLocationRef[];
   coords?: {
     latitude: number | null;
     longitude: number | null;

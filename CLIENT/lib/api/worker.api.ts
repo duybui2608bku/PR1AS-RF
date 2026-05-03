@@ -186,11 +186,75 @@ export interface WorkersGroupedByServiceResponse {
   }>;
 }
 
+/** Query params for GET grouped-by-service (repeated keys → OR within field). */
 export interface WorkerServiceSearchParams {
-  q?: string;
-  category?: string;
+  q?: string[];
+  category?: string[];
+  /** Each entry: `province_code` or `province_code:ward_code` */
+  work_area?: string[];
+  /** Legacy: discrete slots (OR). Ignored by server when schedule_from + schedule_to are set. */
+  schedule?: string[];
+  schedule_from?: string;
+  schedule_to?: string;
+  /** @deprecated Prefer work_area */
   location?: string;
-  schedule?: string;
+  /** Legacy single; server merges into work_area when work_area absent */
+  province_code?: number;
+  ward_code?: number;
+}
+
+/** Builds URLSearchParams for grouped worker search (GET). */
+export function workerServiceSearchParamsToUrlSearchParams(
+  params?: WorkerServiceSearchParams
+): URLSearchParams | undefined {
+  if (!params) return undefined;
+  const sp = new URLSearchParams();
+
+  for (const q of params.q ?? []) {
+    const t = q.trim();
+    if (t) sp.append("q", t);
+  }
+  for (const c of params.category ?? []) {
+    const t = c.trim();
+    if (t) sp.append("category", t);
+  }
+  for (const wa of params.work_area ?? []) {
+    const t = wa.trim();
+    if (t) sp.append("work_area", t);
+  }
+  for (const s of params.schedule ?? []) {
+    const t = s.trim();
+    if (t) sp.append("schedule", t);
+  }
+  if (params.schedule_from?.trim()) {
+    sp.set("schedule_from", params.schedule_from.trim());
+  }
+  if (params.schedule_to?.trim()) {
+    sp.set("schedule_to", params.schedule_to.trim());
+  }
+  if (params.location?.trim()) {
+    sp.set("location", params.location.trim());
+  }
+  if (params.province_code != null && !Number.isNaN(params.province_code)) {
+    sp.set("province_code", String(params.province_code));
+  }
+  if (params.ward_code != null && !Number.isNaN(params.ward_code)) {
+    sp.set("ward_code", String(params.ward_code));
+  }
+
+  return sp.toString() ? sp : undefined;
+}
+
+export function workerServiceSearchParamsToQueryString(
+  params?: WorkerServiceSearchParams
+): string {
+  return workerServiceSearchParamsToUrlSearchParams(params)?.toString() ?? "";
+}
+
+function buildGroupedSearchParams(
+  params?: WorkerServiceSearchParams
+): URLSearchParams | undefined {
+  return workerServiceSearchParamsToUrlSearchParams(params);
 }
 
 export type LocationSuggestionLanguage = "vi" | "en";
@@ -232,18 +296,24 @@ export const workerServicesApi = {
   ): Promise<
     WorkersGroupedByServiceResponse[]
   > => {
+    const searchParams = buildGroupedSearchParams(params);
     const response = await api.get<
       ApiResponse<WorkersGroupedByServiceResponse[]>
-    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, { params });
+    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, {
+      params: searchParams,
+    });
     return extractData(response);
   },
 
   searchServices: async (
     params: WorkerServiceSearchParams
   ): Promise<WorkersGroupedByServiceResponse[] | unknown[]> => {
+    const searchParams = buildGroupedSearchParams(params);
     const response = await api.get<
       ApiResponse<WorkersGroupedByServiceResponse[] | unknown[]>
-    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, { params });
+    >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, {
+      params: searchParams,
+    });
     return extractData(response);
   },
 

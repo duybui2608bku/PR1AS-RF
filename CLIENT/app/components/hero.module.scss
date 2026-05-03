@@ -30,7 +30,7 @@
   flex-direction: column;
   gap: t.$space-5;
   min-width: 0;
-  max-width: 880px;
+  max-width: min(1024px, 100%);
 }
 
 .eyebrow {
@@ -64,21 +64,89 @@
 
 .searchForm {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0;
   margin-top: t.$space-5;
-  max-width: 980px;
+  max-width: 1080px;
   background: var(--background);
   border: 1px solid var(--border-secondary);
   border-radius: 999px;
-  padding: 8px;
+  padding: 10px 10px 10px 12px;
   box-shadow: 0 8px 30px rgba(10, 10, 10, 0.06);
 }
 
 .searchField {
   flex: 1;
   min-width: 0;
-  padding: 4px 18px;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.locationField {
+  flex: 1.85;
+  min-width: min(100%, 300px);
+}
+
+.heroAreaComplete {
+  width: 100%;
+  min-width: 0;
+  border-radius: t.$radius-md;
+  background: rgba(31, 27, 26, 0.04);
+  padding: 4px 10px;
+}
+
+.heroKeywordShell {
+  width: 100%;
+  min-width: 0;
+  border-radius: t.$radius-md;
+  background: rgba(31, 27, 26, 0.04);
+  padding: 4px 10px;
+}
+
+.heroScheduleRange {
+  width: 100%;
+  min-width: 0;
+  border-radius: t.$radius-md;
+  background: rgba(31, 27, 26, 0.04);
+  padding: 4px 10px;
+  height: auto !important;
+  min-height: 30px;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(31, 27, 26, 0.18);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  :global(.ant-tag) {
+    flex-shrink: 0;
+    margin-inline-end: 0 !important;
+    white-space: nowrap;
+    max-width: none;
+  }
 }
 
 .fieldLabel {
@@ -137,12 +205,16 @@
 
 .searchDivider {
   width: 1px;
-  height: 44px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 52px;
   background: var(--border-secondary);
 }
 
 .searchSubmit {
-  height: 56px !important;
+  align-self: flex-start;
+  margin-top: calc(#{t.$font-size-xs * 1.2} + 2px);
+  height: 52px !important;
   border-radius: t.$radius-pill !important;
   padding: 0 28px !important;
   font-weight: 600 !important;

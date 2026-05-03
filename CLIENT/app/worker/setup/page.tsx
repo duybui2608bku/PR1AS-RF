@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import {
   Typography,
@@ -43,6 +44,7 @@ interface WorkerSetupFlowProps {
 }
 
 export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
@@ -72,6 +74,7 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
 
   const servicesMutation = useApiMutation("/worker/services", "POST", {
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["worker-services"] });
       try {
         const latestUser = await authApi.getMe();
         setUser(latestUser as unknown as User);

@@ -30,12 +30,16 @@ import type {
   WorkerProfile,
   WorkerProfileUpdateInput,
   Gender,
+  WorkLocationRef,
 } from "@/lib/types/worker";
 import { STAR_SIGNS, Experience } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { uploadImage } from "@/lib/utils/upload";
-import { searchWorkLocationsMock } from "@/lib/mock/work-locations.mock";
-import type { WorkLocationOption } from "@/lib/mock/work-locations.mock";
+import {
+  searchWorkLocations,
+  type WorkLocationOption,
+} from "@/lib/vn-provinces/work-locations-api";
+import { WORK_LOCATIONS_MAX } from "@/lib/constants/vn-provinces";
 import styles from "./Step1BasicInfo.module.scss";
 
 const { TextArea } = Input;
@@ -63,6 +67,12 @@ export const Step1BasicInfo = forwardRef<
   );
   const [locationSearchLoading, setLocationSearchLoading] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locationMetaRef = useRef<
+    Map<
+      string,
+      { province_code: number; ward_code: number; label: string }
+    >
+  >(new Map());
   const persistedCoordsRef = useRef<{
     latitude: number;
     longitude: number;
@@ -75,22 +85,44 @@ export const Step1BasicInfo = forwardRef<
   });
   void isLoading;
 
-  const mergeLocationOptions = useCallback((incoming: WorkLocationOption[]) => {
-    setLocationOptions((prev) => {
-      const map = new Map(prev.map((o) => [o.value, o.label]));
-      incoming.forEach((o) => map.set(o.value, o.label));
-      return Array.from(map.entries()).map(([value, label]) => ({
-        value,
-        label,
-      }));
-    });
-  }, []);
+  const mergeLocationOptions = useCallback(
+    (incoming: WorkLocationOption[]) => {
+      incoming.forEach((o) => {
+        locationMetaRef.current.set(o.value, {
+          province_code: o.province_code,
+          ward_code: o.ward_code,
+          label: o.label,
+        });
+      });
+      setLocationOptions((prev) => {
+        const selectedRaw =
+          (form.getFieldValue("work_locations") as string[] | undefined) ?? [];
+        const selected = selectedRaw.map(String);
+        const selectedSet = new Set(selected);
+        const incomingByValue = new Map(
+          incoming.map((o) => [o.value, o] as const)
+        );
+        const next: WorkLocationOption[] = [...incoming];
+        for (const code of selected) {
+          if (!incomingByValue.has(code)) {
+            const keep = prev.find((o) => o.value === code);
+            if (keep) next.push(keep);
+          }
+        }
+        if (incoming.length === 0 && selected.length > 0) {
+          return prev.filter((o) => selectedSet.has(o.value));
+        }
+        return next;
+      });
+    },
+    [form]
+  );
 
   const runLocationSearch = useCallback(
     async (raw: string) => {
       setLocationSearchLoading(true);
       try {
-        const res = await searchWorkLocationsMock(raw);
+        const res = await searchWorkLocations(raw);
         mergeLocationOptions(res);
       } finally {
         setLocationSearchLoading(false);
@@ -127,6 +159,10 @@ export const Step1BasicInfo = forwardRef<
     const profile = profileData?.user?.worker_profile || initialData;
     if (!profile) return;
 
+    const wl = profile.work_locations;
+    const workLocationCodes =
+      wl?.map((w) => String(w.ward_code)) ?? [];
+
     form.setFieldsValue({
       date_of_birth: profile.date_of_birth
         ? dayjs(profile.date_of_birth)
@@ -140,7 +176,7 @@ export const Step1BasicInfo = forwardRef<
       lifestyle: profile.lifestyle,
       quote: profile.quote,
       introduction: profile.introduction,
-      work_locations: [],
+      work_locations: workLocationCodes,
     });
 
     const nextHobbies = profile.hobbies || [];
@@ -165,8 +201,26 @@ export const Step1BasicInfo = forwardRef<
     queueMicrotask(() => {
       setHobbies(nextHobbies);
       setFileList(nextFiles);
+      if (wl?.length) {
+        const restored: WorkLocationOption[] = wl.map((w) => ({
+          value: String(w.ward_code),
+          label:
+            w.label_snapshot ??
+            `${w.province_code} — ${w.ward_code}`,
+          province_code: w.province_code,
+          ward_code: w.ward_code,
+        }));
+        restored.forEach((o) => {
+          locationMetaRef.current.set(o.value, {
+            province_code: o.province_code,
+            ward_code: o.ward_code,
+            label: o.label,
+          });
+        });
+        mergeLocationOptions(restored);
+      }
     });
-  }, [profileData, initialData, form]);
+  }, [profileData, initialData, form, mergeLocationOptions]);
 
   const handleAddHobby = useCallback(() => {
     if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) {
@@ -262,6 +316,23 @@ export const Step1BasicInfo = forwardRef<
         .map((file) => file.url || "")
         .filter(Boolean);
 
+      const selectedWards = (v.work_locations as string[] | undefined) ?? [];
+      for (const code of selectedWards) {
+        if (!locationMetaRef.current.has(String(code))) {
+          message.error(t("worker.setup.step1.workAreas.metaMissing"));
+          return null;
+        }
+      }
+
+      const work_locations: WorkLocationRef[] = selectedWards.map((code) => {
+        const meta = locationMetaRef.current.get(String(code))!;
+        return {
+          province_code: meta.province_code,
+          ward_code: meta.ward_code,
+          label_snapshot: meta.label,
+        };
+      });
+
       const payload: WorkerProfileUpdateInput = {
         date_of_birth: v.date_of_birth
           ? dayjs(v.date_of_birth).format("YYYY-MM-DD")
@@ -277,6 +348,7 @@ export const Step1BasicInfo = forwardRef<
         introduction: v.introduction,
         hobbies,
         gallery_urls,
+        work_locations,
       };
 
       if (persistedCoordsRef.current) {
@@ -288,7 +360,7 @@ export const Step1BasicInfo = forwardRef<
 
       return payload;
     },
-  }));
+  }), [form, fileList, hobbies, t]);
 
   return (
     <div className={`${styles.container} ${styles.setupSkin}`}>
@@ -337,16 +409,17 @@ export const Step1BasicInfo = forwardRef<
               mode="multiple"
               showSearch
               allowClear
+              maxCount={WORK_LOCATIONS_MAX}
               className={styles.inputFull}
               size="middle"
               placeholder={t("worker.setup.step1.workAreas.placeholder")}
               filterOption={false}
               onSearch={handleLocationSearch}
               notFoundContent={
-                locationSearchLoading ? <Spin size="small" /> : null
+                locationSearchLoading ? <Spin size="small" /> : undefined
               }
               options={locationOptions}
-              onDropdownVisibleChange={(open) => {
+              onOpenChange={(open) => {
                 if (open && locationOptions.length === 0) {
                   void runLocationSearch("");
                 }
@@ -555,7 +628,7 @@ export const Step1BasicInfo = forwardRef<
                   </Tag>
                 ))}
                 <Input
-                  bordered={false}
+                  variant="borderless"
                   value={hobbyInput}
                   onChange={(e) => setHobbyInput(e.target.value)}
                   onPressEnter={handleAddHobby}

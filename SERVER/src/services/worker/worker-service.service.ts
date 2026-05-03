@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import {
   AUTHZ_MESSAGES,
   COMMON_MESSAGES,
@@ -136,11 +137,21 @@ class WorkerServiceService {
       }
     );
 
-    return workerServiceRepository.upsertManyForWorker(
+    const upserted = await workerServiceRepository.upsertManyForWorker(
       workerId,
       upsertPayloads,
       now
     );
+
+    const keepServiceObjectIds = upsertPayloads.map(
+      (p) => new mongoose.Types.ObjectId(p.serviceId)
+    );
+    await workerServiceRepository.deleteManyForWorkerNotInServiceIds(
+      workerId,
+      keepServiceObjectIds
+    );
+
+    return upserted;
   }
 
   async updateWorkerService(

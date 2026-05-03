@@ -8,6 +8,10 @@ import { Button, Empty, Spin, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { workerServicesApi } from "@/lib/api/worker.api";
 import { transformSearchResultsToServices } from "@/lib/utils/service-transform.utils";
+import {
+  hasWorkerSearchFilters,
+  workerSearchParamsFromUrl,
+} from "@/lib/utils/services-url-params";
 import { ServiceCard } from "@/app/components/service-card";
 import { ServiceCardSkeleton } from "@/lib/components/skeletons";
 import { buildWorkerProfileRoute } from "@/lib/constants/routes";
@@ -27,36 +31,37 @@ function ServicesContent() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { handleError } = useErrorHandler();
-  const query = searchParams.get("q") || "";
-  const location = searchParams.get("location") || "";
-  const schedule = searchParams.get("schedule") || "";
-  const categoryCode = searchParams.get("category") || "";
-  const hasSearchFilters = Boolean(query || location || schedule || categoryCode);
+
+  const apiParams = useMemo(
+    () => workerSearchParamsFromUrl(searchParams),
+    [searchParams]
+  );
+
+  const categoryCodes = useMemo(
+    () =>
+      searchParams
+        .getAll("category")
+        .map((c) => c.trim())
+        .filter(Boolean),
+    [searchParams]
+  );
+
+  const hasFilters = useMemo(
+    () => hasWorkerSearchFilters(apiParams),
+    [apiParams]
+  );
 
   const {
     data: serviceResults,
     isLoading,
     error: workersGroupedByServiceError,
   } = useQuery({
-    queryKey: [
-      "workers-grouped-by-service",
-      {
-        q: query,
-        location,
-        schedule,
-        category: categoryCode,
-      },
-    ],
+    queryKey: ["workers-grouped-by-service", "services", apiParams],
     queryFn: () => {
-      if (!hasSearchFilters) {
+      if (!hasFilters) {
         return workerServicesApi.getWorkersGroupedByService();
       }
-      return workerServicesApi.searchServices({
-        q: query || undefined,
-        location: location || undefined,
-        schedule: schedule || undefined,
-        category: categoryCode || undefined,
-      });
+      return workerServicesApi.searchServices(apiParams);
     },
   });
 
@@ -73,21 +78,32 @@ function ServicesContent() {
   }, [serviceResults, i18n.language]);
 
   const filteredServices = useMemo(() => {
-    if (!categoryCode) return allServices;
+    if (categoryCodes.length === 0) return allServices;
+    if (categoryCodes.length === 1) {
+      const categoryCode = categoryCodes[0];
+      const isParentCategory = PARENT_CATEGORIES.includes(categoryCode);
 
-    const isParentCategory = PARENT_CATEGORIES.includes(categoryCode);
+      if (isParentCategory) {
+        return allServices.filter((s) => s.category === categoryCode);
+      }
 
-    if (isParentCategory) {
-      return allServices.filter((s) => s.category === categoryCode);
+      return allServices.filter((s) => s.categoryCode === categoryCode);
     }
-
-    return allServices.filter((s) => s.categoryCode === categoryCode);
-  }, [allServices, categoryCode]);
+    return allServices;
+  }, [allServices, categoryCodes]);
 
   const categoryTitle = useMemo(() => {
-    const translationKey = CATEGORY_TRANSLATION_MAP[categoryCode];
-    return translationKey ? t(translationKey) : categoryCode;
-  }, [categoryCode, t]);
+    if (categoryCodes.length === 0) {
+      return t("home.viewAll");
+    }
+    if (categoryCodes.length === 1) {
+      const translationKey = CATEGORY_TRANSLATION_MAP[categoryCodes[0]];
+      return translationKey ? t(translationKey) : categoryCodes[0];
+    }
+    return t("home.searchResultsTitle", {
+      defaultValue: "Kết quả tìm kiếm",
+    });
+  }, [categoryCodes, t]);
 
   const handleServiceClick = useCallback(
     (service: ServiceListing) => {
@@ -126,11 +142,13 @@ function ServicesContent() {
 
       {isLoading ? (
         <div className={styles.loadingGrid}>
-          {Array.from({ length: ServicesPageConfig.SKELETON_COUNT }).map((_, index) => (
-            <div key={index} className={styles.cardWrapper}>
-              <ServiceCardSkeleton size="medium" />
-            </div>
-          ))}
+          {Array.from({ length: ServicesPageConfig.SKELETON_COUNT }).map(
+            (_, index) => (
+              <div key={index} className={styles.cardWrapper}>
+                <ServiceCardSkeleton size="medium" />
+              </div>
+            )
+          )}
         </div>
       ) : filteredServices.length === 0 ? (
         <div className={styles.emptyState}>

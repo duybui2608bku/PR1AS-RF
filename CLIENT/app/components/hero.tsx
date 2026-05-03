@@ -1,6 +1,14 @@
 "use client";
 
-import { AutoComplete, Button, DatePicker, Input, message } from "antd";
+import {
+  AutoComplete,
+  Button,
+  DatePicker,
+  Input,
+  message,
+  Spin,
+  Tag,
+} from "antd";
 import {
   EnvironmentOutlined,
   MonitorOutlined,
@@ -11,16 +19,36 @@ import {
   HeartOutlined,
   StarOutlined,
 } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import type { Dayjs } from "dayjs";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { SERVICE_CATEGORIES } from "@/app/constants/constants";
 import {
-  workerServicesApi,
-  type LocationSuggestionLanguage,
-} from "@/lib/api/worker.api";
+  hydrateWorkAreaDisplayLabels,
+  searchHeroWorkArea,
+  type HeroWorkAreaOption,
+} from "@/lib/vn-provinces/work-locations-api";
+import type {
+  HomeListingFilters,
+  HomeWorkArea,
+} from "@/lib/utils/home-listing-filters";
 import styles from "./hero.module.scss";
+
+const MAX_QUERY_TAGS = 12;
+const MAX_WORK_AREAS = 10;
+
+const { RangePicker } = DatePicker;
+
+function workAreaKey(w: HomeWorkArea): string {
+  return `${w.province_code}:${w.ward_code ?? ""}`;
+}
 
 interface HeroCategoryChip {
   key: string;
@@ -29,10 +57,13 @@ interface HeroCategoryChip {
   icon: React.ReactNode;
 }
 
-interface LocationAutoCompleteOption {
-  value: string;
-  label: React.ReactNode;
-  coords: string;
+interface HeroProps {
+  listingFilters: HomeListingFilters;
+  onListingFiltersChange: (
+    updater:
+      | Partial<HomeListingFilters>
+      | ((prev: HomeListingFilters) => HomeListingFilters)
+  ) => void;
 }
 
 interface ChipButtonProps {
@@ -99,161 +130,271 @@ const HERO_CATEGORIES: HeroCategoryChip[] = [
   },
 ];
 
-const HeroComponent = () => {
-  const { t, i18n } = useTranslation();
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [locationInput, setLocationInput] = useState("");
-  const [selectedLocationCoords, setSelectedLocationCoords] = useState("");
-  const [locationOptions, setLocationOptions] = useState<
-    LocationAutoCompleteOption[]
-  >([]);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
-  const [locationFetchFailed, setLocationFetchFailed] = useState(false);
-  const [scheduleValue, setScheduleValue] = useState<Dayjs | null>(null);
-  const [activeCategory, setActiveCategory] = useState("ALL");
+const HeroComponent = ({
+  listingFilters,
+  onListingFiltersChange,
+}: HeroProps) => {
+  const { t } = useTranslation();
+  const [areaInput, setAreaInput] = useState("");
+  const [areaOptions, setAreaOptions] = useState<HeroWorkAreaOption[]>([]);
+  const [areaLoading, setAreaLoading] = useState(false);
+  const areaSelectedLabelRef = useRef<string | null>(null);
+  const [queryDraft, setQueryDraft] = useState("");
+  const [resolvedWorkAreaLabels, setResolvedWorkAreaLabels] = useState<
+    Record<string, string>
+  >({});
+
+  const workAreasSig = useMemo(
+    () => listingFilters.workAreas.map(workAreaKey).join("\u001f"),
+    [listingFilters.workAreas]
+  );
 
   useEffect(() => {
-    const keyword = locationInput.trim();
+    const areas = listingFilters.workAreas;
+    const activeKeys = new Set(areas.map(workAreaKey));
+
+    setResolvedWorkAreaLabels((prev) => {
+      const next: Record<string, string> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        if (activeKeys.has(k)) next[k] = v;
+      }
+      return next;
+    });
+
+    const needsResolve = areas.filter((w) => !w.label?.trim());
+    if (!needsResolve.length) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const hydrated = await hydrateWorkAreaDisplayLabels(needsResolve);
+        if (cancelled) return;
+        setResolvedWorkAreaLabels((prev) => {
+          const next = { ...prev };
+          needsResolve.forEach((w, i) => {
+            const lab = hydrated[i]?.label?.trim();
+            if (lab) next[workAreaKey(w)] = lab;
+          });
+          return next;
+        });
+      } catch {
+        /* keep code fallback */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `workAreasSig` mirrors listingFilters.workAreas entries
+  }, [workAreasSig]);
+
+  const workAreaTagLabel = useCallback(
+    (w: HomeWorkArea) =>
+      w.label?.trim() ||
+      resolvedWorkAreaLabels[workAreaKey(w)] ||
+      (w.ward_code !== undefined
+        ? `${w.province_code}:${w.ward_code}`
+        : `${w.province_code}`),
+    [resolvedWorkAreaLabels]
+  );
+
+  useEffect(() => {
+    const keyword = areaInput.trim();
     if (keyword.length < 2) {
-      setLocationOptions([]);
+      setAreaOptions([]);
       return;
     }
 
-    let isCancelled = false;
+    let cancelled = false;
     const timeoutId = window.setTimeout(async () => {
       try {
-        setIsLocationLoading(true);
-        const language: LocationSuggestionLanguage =
-          i18n.language === "en" ? "en" : "vi";
-        const results = await workerServicesApi.getLocationSuggestions(
-          keyword,
-          language,
-          10
-        );
-        if (isCancelled) return;
-        setLocationFetchFailed(false);
-        setLocationOptions(
-          results.map((item) => ({
-            value: item.name,
-            label: item.name,
-            coords: `${item.lat},${item.lng}`,
-          }))
-        );
+        setAreaLoading(true);
+        const results = await searchHeroWorkArea(keyword);
+        if (cancelled) return;
+        setAreaOptions(results);
       } catch {
-        if (isCancelled) return;
-        setLocationFetchFailed(true);
-        setLocationOptions([]);
+        if (!cancelled) setAreaOptions([]);
       } finally {
-        if (!isCancelled) {
-          setIsLocationLoading(false);
-        }
+        if (!cancelled) setAreaLoading(false);
       }
     }, 350);
 
     return () => {
-      isCancelled = true;
+      cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [i18n.language, locationInput]);
+  }, [areaInput]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      const trimmedQuery = query.trim();
-      const trimmedLocationInput = locationInput.trim();
-
-      if (trimmedLocationInput && !selectedLocationCoords) {
-        if (locationFetchFailed) {
-          message.info(
-            t("home.hero.locationFallback", {
-              defaultValue:
-                "Hiện chưa tải được gợi ý địa điểm, hệ thống sẽ tìm kiếm không kèm vị trí.",
-            })
-          );
-        } else {
-          message.warning(
-            t("home.hero.locationRequireSelect", {
-              defaultValue: "Vui lòng chọn một địa điểm từ danh sách gợi ý.",
-            })
-          );
-          return;
-        }
+      const trimmedArea = areaInput.trim();
+      if (trimmedArea.length >= 2) {
+        message.warning(
+          t("home.hero.selectWorkAreaFromList", {
+            defaultValue:
+              "Vui lòng chọn tỉnh/thành hoặc phường/xã từ danh sách gợi ý.",
+          })
+        );
+        return;
       }
 
-      const params = new URLSearchParams();
-      if (trimmedQuery) {
-        params.set("q", trimmedQuery);
-      }
-      if (selectedLocationCoords) {
-        params.set("location", selectedLocationCoords);
-      }
-      if (scheduleValue) {
-        params.set("schedule", scheduleValue.toISOString());
-      }
-      if (activeCategory !== "ALL") {
-        params.set("category", activeCategory);
-      }
-
-      const queryString = params.toString();
-      router.push(queryString ? `/services?${queryString}` : "/services");
+      requestAnimationFrame(() => {
+        document.getElementById("services")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     },
-    [
-      activeCategory,
-      locationFetchFailed,
-      locationInput,
-      query,
-      router,
-      scheduleValue,
-      selectedLocationCoords,
-      t,
-    ]
+    [areaInput, t]
   );
 
-  const handleQueryChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value),
-    []
-  );
-
-  const handleLocationChange = useCallback((value: string) => {
-    setLocationInput(value);
+  const handleAreaChange = useCallback((value: string) => {
+    setAreaInput(value);
+    if (areaSelectedLabelRef.current !== value) {
+      areaSelectedLabelRef.current = null;
+    }
   }, []);
 
-  const handleLocationSearch = useCallback((value: string) => {
-    setLocationInput(value);
-    setSelectedLocationCoords("");
-  }, []);
-
-  const handleLocationSelect = useCallback(
+  const handleAreaSelect = useCallback(
     (value: string, option: unknown) => {
-      setLocationInput(value);
-      setSelectedLocationCoords((option as LocationAutoCompleteOption).coords);
+      const o = option as HeroWorkAreaOption;
+      areaSelectedLabelRef.current = value;
+      setAreaInput("");
+      const entry: HomeWorkArea =
+        o.kind === "ward" && o.ward_code !== undefined
+          ? {
+              province_code: o.province_code,
+              ward_code: o.ward_code,
+              label: o.label,
+            }
+          : { province_code: o.province_code, label: o.label };
+
+      onListingFiltersChange((prev) => {
+        const k = workAreaKey(entry);
+        if (prev.workAreas.some((w) => workAreaKey(w) === k)) {
+          return prev;
+        }
+        if (prev.workAreas.length >= MAX_WORK_AREAS) {
+          message.warning(
+            t("home.hero.workAreasLimit", {
+              defaultValue: `Tối đa ${MAX_WORK_AREAS} khu vực.`,
+            })
+          );
+          return prev;
+        }
+        return { ...prev, workAreas: [...prev.workAreas, entry] };
+      });
     },
-    []
+    [onListingFiltersChange, t]
   );
 
-  const handleScheduleChange = useCallback((value: Dayjs | null) => {
-    setScheduleValue(value);
-  }, []);
+  const removeWorkArea = useCallback(
+    (key: string) => {
+      onListingFiltersChange((prev) => ({
+        ...prev,
+        workAreas: prev.workAreas.filter((w) => workAreaKey(w) !== key),
+      }));
+    },
+    [onListingFiltersChange]
+  );
 
-  const notFoundContent = useMemo(
+  const commitKeywordDraft = useCallback(
+    (raw: string) => {
+      const segments = raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!segments.length) {
+        setQueryDraft("");
+        return;
+      }
+      onListingFiltersChange((prev) => {
+        const next = [...prev.queries];
+        let warned = false;
+        for (const seg of segments) {
+          if (next.includes(seg)) continue;
+          if (next.length >= MAX_QUERY_TAGS) {
+            if (!warned) {
+              warned = true;
+              message.warning(
+                t("home.hero.queriesLimit", {
+                  defaultValue: `Tối đa ${MAX_QUERY_TAGS} từ khóa.`,
+                })
+              );
+            }
+            break;
+          }
+          next.push(seg);
+        }
+        return { ...prev, queries: next };
+      });
+      setQueryDraft("");
+    },
+    [onListingFiltersChange, t]
+  );
+
+  const handleKeywordKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitKeywordDraft(queryDraft);
+        return;
+      }
+      if (e.key === ",") {
+        e.preventDefault();
+        commitKeywordDraft(queryDraft);
+      }
+    },
+    [commitKeywordDraft, queryDraft]
+  );
+
+  const handleKeywordBlur = useCallback(() => {
+    if (queryDraft.trim()) {
+      commitKeywordDraft(queryDraft);
+    }
+  }, [commitKeywordDraft, queryDraft]);
+
+  const removeQuery = useCallback(
+    (token: string) => {
+      onListingFiltersChange((prev) => ({
+        ...prev,
+        queries: prev.queries.filter((x) => x !== token),
+      }));
+    },
+    [onListingFiltersChange]
+  );
+
+  const areaNotFound = useMemo(
     () =>
-      locationInput.trim().length < 2
+      areaInput.trim().length < 2
         ? null
         : t("common.noData", { defaultValue: "Không có dữ liệu" }),
-    [locationInput, t]
+    [areaInput, t]
   );
 
   const handleCategoryClick = useCallback(
     (categoryCode: string) => {
-      setActiveCategory(categoryCode);
       if (categoryCode === "ALL") {
-        router.push("/services");
+        onListingFiltersChange({ categories: [] });
         return;
       }
-      router.push(`/services?category=${categoryCode}`);
+      onListingFiltersChange((prev) => {
+        const set = new Set(prev.categories);
+        if (set.has(categoryCode)) set.delete(categoryCode);
+        else set.add(categoryCode);
+        return { ...prev, categories: Array.from(set) };
+      });
     },
-    [router]
+    [onListingFiltersChange]
+  );
+
+  const chipIsActive = useCallback(
+    (key: string) => {
+      if (key === "ALL") return listingFilters.categories.length === 0;
+      return listingFilters.categories.includes(key);
+    },
+    [listingFilters.categories]
   );
 
   return (
@@ -280,56 +421,118 @@ const HeroComponent = () => {
                 })}
               </label>
               <Input
-                size="large"
-                bordered={false}
+                value={queryDraft}
+                onChange={(e) => setQueryDraft(e.target.value)}
+                onKeyDown={handleKeywordKeyDown}
+                onBlur={handleKeywordBlur}
                 placeholder={t("home.hero.searchPlaceholder", {
-                  defaultValue: "Dịch vụ hỗ trợ",
+                  defaultValue: "Thêm từ khóa (Enter hoặc dấu phẩy)",
                 })}
-                value={query}
-                onChange={handleQueryChange}
-                className={styles.searchControl}
+                className={`${styles.searchControl} ${styles.heroKeywordShell}`}
               />
+              {listingFilters.queries.length > 0 ? (
+                <div className={styles.tagRow}>
+                  {listingFilters.queries.map((qToken) => (
+                    <Tag
+                      key={qToken}
+                      closable
+                      onClose={() => removeQuery(qToken)}
+                    >
+                      {qToken}
+                    </Tag>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className={styles.searchDivider} />
-            <div className={styles.searchField}>
+            <div className={`${styles.searchField} ${styles.locationField}`}>
               <label className={styles.fieldLabel}>
-                {t("home.hero.searchLocationLabel", { defaultValue: "Địa điểm" })}
+                {t("home.hero.searchLocationLabel", {
+                  defaultValue: "Khu vực làm việc",
+                })}
               </label>
               <AutoComplete
-                value={locationInput}
-                options={locationOptions}
-                onChange={handleLocationChange}
-                onSearch={handleLocationSearch}
-                onSelect={handleLocationSelect}
-                placeholder={t("home.hero.searchLocationPlaceholder", {
-                  defaultValue: "Quận 1, TP.HCM",
+                value={areaInput}
+                options={areaOptions}
+                filterOption={false}
+                onChange={handleAreaChange}
+                onSelect={handleAreaSelect}
+                placeholder={t("home.hero.workAreaPlaceholder", {
+                  defaultValue: "Tìm tỉnh/thành hoặc phường/xã",
                 })}
-                className={styles.searchControl}
-                notFoundContent={notFoundContent}
+                className={`${styles.searchControl} ${styles.heroAreaComplete}`}
+                notFoundContent={
+                  areaLoading ? <Spin size="small" /> : areaNotFound
+                }
               />
+              {listingFilters.workAreas.length > 0 ? (
+                <div className={styles.tagRow}>
+                  {listingFilters.workAreas.map((w) => (
+                    <Tag
+                      key={workAreaKey(w)}
+                      closable
+                      onClose={() => removeWorkArea(workAreaKey(w))}
+                    >
+                      {workAreaTagLabel(w)}
+                    </Tag>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className={styles.searchDivider} />
             <div className={styles.searchField}>
               <label className={styles.fieldLabel}>
                 {t("home.hero.searchTimeLabel", { defaultValue: "Thời gian" })}
               </label>
-              <DatePicker
+              <RangePicker
                 showTime
                 allowClear
-                value={scheduleValue}
-                onChange={handleScheduleChange}
-                placeholder={t("home.hero.searchSchedulePlaceholder", {
-                  defaultValue: "Chọn ngày và giờ",
-                })}
-                className={styles.searchControl}
                 format="DD/MM/YYYY HH:mm"
+                className={`${styles.searchControl} ${styles.heroScheduleRange}`}
+                placeholder={[
+                  t("home.hero.scheduleFromPlaceholder", {
+                    defaultValue: "Từ ngày/giờ",
+                  }),
+                  t("home.hero.scheduleToPlaceholder", {
+                    defaultValue: "Đến ngày/giờ",
+                  }),
+                ]}
+                value={
+                  listingFilters.scheduleRange
+                    ? [
+                        dayjs(listingFilters.scheduleRange.from),
+                        dayjs(listingFilters.scheduleRange.to),
+                      ]
+                    : null
+                }
+                onChange={(vals) => {
+                  if (!vals?.[0] || !vals[1]) {
+                    onListingFiltersChange({ scheduleRange: null });
+                    return;
+                  }
+                  if (vals[1].isBefore(vals[0])) {
+                    message.warning(
+                      t("home.hero.scheduleRangeOrder", {
+                        defaultValue:
+                          "Thời điểm kết thúc phải sau thời điểm bắt đầu.",
+                      })
+                    );
+                    return;
+                  }
+                  onListingFiltersChange({
+                    scheduleRange: {
+                      from: vals[0].toISOString(),
+                      to: vals[1].toISOString(),
+                    },
+                  });
+                }}
               />
             </div>
             <Button
               type="primary"
               size="large"
               htmlType="submit"
-              loading={isLocationLoading}
+              loading={areaLoading}
               icon={<SearchOutlined />}
               className={styles.searchSubmit}
             >
@@ -344,7 +547,7 @@ const HeroComponent = () => {
             <ChipButton
               key={item.key}
               item={item}
-              isActive={activeCategory === item.key}
+              isActive={chipIsActive(item.key)}
               onClick={handleCategoryClick}
               t={t}
             />
