@@ -6,11 +6,6 @@ import { validateObjectId } from "../../middleware";
 const router = Router();
 
 router.get(
-  "/location-suggestions",
-  asyncHandler(workerController.getLocationSuggestions.bind(workerController))
-);
-
-router.get(
   "/grouped-by-service",
   asyncHandler(
     workerController.getWorkersGroupedByService.bind(workerController)

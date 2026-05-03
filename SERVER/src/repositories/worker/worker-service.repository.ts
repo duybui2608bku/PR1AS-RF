@@ -24,16 +24,9 @@ export interface GroupedWorkersFilter {
   qs?: string[];
   /** OR semantics across categories (leaf service code or parent category). */
   categories?: string[];
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
   /** OR semantics: worker matches if any work_locations element matches any area */
   work_areas?: Array<{ province_code: number; ward_code?: number }>;
 }
-
-const LOCATION_RADIUS_KM = 30;
-const KM_PER_LAT_DEGREE = 111.32;
 
 const escapeRegExp = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -311,26 +304,6 @@ class WorkerServiceRepository {
         $match: {
           "worker.worker_profile.work_locations": {
             $elemMatch: { $or: locationBranches },
-          },
-        },
-      });
-    } else if (filters?.location) {
-      const { latitude, longitude } = filters.location;
-      const latDelta = LOCATION_RADIUS_KM / KM_PER_LAT_DEGREE;
-      const cosLat = Math.cos((latitude * Math.PI) / 180);
-      const lngDelta =
-        LOCATION_RADIUS_KM /
-        (KM_PER_LAT_DEGREE * Math.max(Math.abs(cosLat), 0.01));
-
-      stages.push({
-        $match: {
-          "worker.coords.latitude": {
-            $gte: latitude - latDelta,
-            $lte: latitude + latDelta,
-          },
-          "worker.coords.longitude": {
-            $gte: longitude - lngDelta,
-            $lte: longitude + lngDelta,
           },
         },
       });

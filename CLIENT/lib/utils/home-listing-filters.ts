@@ -54,7 +54,7 @@ export function homeListingFiltersFromUrl(
   const queries = [...(p.q ?? [])];
   const categories = [...(p.category ?? [])];
 
-  let workAreas: HomeWorkArea[] = [];
+  const workAreas: HomeWorkArea[] = [];
   if (p.work_area?.length) {
     const seen = new Set<string>();
     for (const wa of p.work_area) {
@@ -68,15 +68,6 @@ export function homeListingFiltersFromUrl(
       seen.add(key);
       workAreas.push(parsed);
     }
-  } else if (
-    p.province_code != null &&
-    !Number.isNaN(p.province_code)
-  ) {
-    const entry: HomeWorkArea = { province_code: p.province_code };
-    if (p.ward_code != null && !Number.isNaN(p.ward_code)) {
-      entry.ward_code = p.ward_code;
-    }
-    workAreas = [entry];
   }
 
   let scheduleRange: { from: string; to: string } | null = null;

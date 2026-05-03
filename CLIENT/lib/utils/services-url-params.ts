@@ -23,11 +23,6 @@ export function workerSearchParamsFromUrl(
     .filter(Boolean);
   const schedule_from = sp.get("schedule_from")?.trim();
   const schedule_to = sp.get("schedule_to")?.trim();
-  const location = sp.get("location")?.trim();
-  const provinceRaw = sp.get("province_code");
-  const wardRaw = sp.get("ward_code");
-  const province_code = provinceRaw ? Number(provinceRaw) : undefined;
-  const ward_code = wardRaw ? Number(wardRaw) : undefined;
 
   const params: WorkerServiceSearchParams = {};
   if (q.length) params.q = q;
@@ -36,13 +31,6 @@ export function workerSearchParamsFromUrl(
   if (schedule.length) params.schedule = schedule;
   if (schedule_from) params.schedule_from = schedule_from;
   if (schedule_to) params.schedule_to = schedule_to;
-  if (location) params.location = location;
-  if (province_code !== undefined && !Number.isNaN(province_code)) {
-    params.province_code = province_code;
-  }
-  if (ward_code !== undefined && !Number.isNaN(ward_code)) {
-    params.ward_code = ward_code;
-  }
   return params;
 }
 
@@ -55,9 +43,6 @@ export function hasWorkerSearchFilters(
       params.work_area?.length ||
       params.schedule?.length ||
       (Boolean(params.schedule_from?.trim()) &&
-        Boolean(params.schedule_to?.trim())) ||
-      params.location ||
-      params.province_code != null ||
-      params.ward_code != null
+        Boolean(params.schedule_to?.trim()))
   );
 }

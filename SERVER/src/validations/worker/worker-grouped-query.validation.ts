@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-const locationRegex = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
 const emptyToUndefined = (value: unknown): unknown =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 
@@ -79,39 +78,15 @@ function preprocessGroupedQuery(raw: unknown): Record<string, unknown> {
     .filter(Boolean);
   const scheduleRaw = toStringArray(q.schedule);
 
-  let workAreaStrs = toStringArray(q.work_area)
+  const workAreaStrs = toStringArray(q.work_area)
     .map((s) => s.trim())
     .filter(Boolean);
-
-  if (workAreaStrs.length === 0) {
-    const provinceRaw = q.province_code;
-    let p: number | undefined;
-    if (typeof provinceRaw === "number" && Number.isInteger(provinceRaw)) {
-      p = provinceRaw;
-    } else if (typeof provinceRaw === "string" && provinceRaw.trim() !== "") {
-      const n = Number(provinceRaw.trim());
-      if (Number.isFinite(n) && Number.isInteger(n)) p = n;
-    }
-
-    if (p !== undefined) {
-      let w: number | undefined;
-      const wardRaw = q.ward_code;
-      if (typeof wardRaw === "number" && Number.isInteger(wardRaw)) {
-        w = wardRaw;
-      } else if (typeof wardRaw === "string" && wardRaw.trim() !== "") {
-        const n = Number(wardRaw.trim());
-        if (Number.isFinite(n) && Number.isInteger(n)) w = n;
-      }
-      workAreaStrs = w !== undefined ? [`${p}:${w}`] : [`${p}`];
-    }
-  }
 
   return {
     __qs: qs,
     __categories: categories,
     __scheduleStrs: scheduleRaw,
     __workAreaStrs: workAreaStrs,
-    location: q.location,
     schedule_from: firstQueryScalar(q.schedule_from),
     schedule_to: firstQueryScalar(q.schedule_to),
   };
@@ -137,22 +112,6 @@ const normalizedGroupedQuerySchema = z
           }
         });
       }),
-    location: z.preprocess(
-      emptyToUndefined,
-      z
-        .string()
-        .trim()
-        .regex(locationRegex, {
-          message: "location must be in 'lat,lng' format",
-        })
-        .refine((value) => {
-          const [latText, lngText] = value.split(",");
-          const lat = Number(latText);
-          const lng = Number(lngText);
-          return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-        }, "location latitude must be [-90, 90] and longitude must be [-180, 180]")
-        .optional()
-    ),
     schedule_from: z.preprocess(
       emptyToUndefined,
       scheduleStringSchema.optional()
@@ -197,7 +156,6 @@ const normalizedGroupedQuerySchema = z
       schedules: data.__scheduleStrs,
       schedule_from: data.schedule_from,
       schedule_to: data.schedule_to,
-      location: data.location,
     };
   });
 

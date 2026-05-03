@@ -9,8 +9,6 @@ import {
 } from "../../constants/messages";
 import { validateWithSchema } from "../../utils/validator";
 import { workerGroupedByServiceQuerySchema } from "../../validations/worker/worker-grouped-query.validation";
-import { locationSuggestionsQuerySchema } from "../../validations/worker/location-suggestion.validation";
-import { locationService } from "../../services/location/location.service";
 
 export class WorkerController {
   async getWorkerById(req: Request, res: Response): Promise<void> {
@@ -53,25 +51,6 @@ export class WorkerController {
 
     const schedule = await workerService.getWorkerSchedule(id, startDate, endDate);
     R.success(res, schedule, undefined, req);
-  }
-
-  async getLocationSuggestions(req: Request, res: Response): Promise<void> {
-    const query = validateWithSchema(
-      locationSuggestionsQuerySchema,
-      req.query,
-      COMMON_MESSAGES.BAD_REQUEST
-    );
-    const suggestions = await locationService.getLocationSuggestions(
-      query.q,
-      query.limit,
-      req.get("accept-language")
-    );
-    R.success(
-      res,
-      suggestions,
-      WORKER_MESSAGES.LOCATION_SUGGESTIONS_FETCHED,
-      req
-    );
   }
 }
 

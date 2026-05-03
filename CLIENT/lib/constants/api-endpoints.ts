@@ -21,7 +21,6 @@ export enum ApiEndpoint {
   WORKERS_BY_ID = "/workers/:id",
   WORKERS_BY_ID_SCHEDULE = "/workers/:id/schedule",
   WORKERS_GROUPED_BY_SERVICE = "/workers/grouped-by-service",
-  WORKERS_LOCATION_SUGGESTIONS = "/workers/location-suggestions",
   WORKER_SERVICES = "/worker/services",
   WORKER_SERVICES_BY_ID = "/worker/services/:serviceId",
   CHAT_MESSAGES = "/chat/messages",

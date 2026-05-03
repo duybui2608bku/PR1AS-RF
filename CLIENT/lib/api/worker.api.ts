@@ -8,7 +8,6 @@ import type {
   Service,
   WorkerServiceInput,
 } from "../types/worker";
-import type { LocationSuggestion } from "../types/location";
 import { Gender } from "../types/worker";
 import { ApiEndpoint, buildEndpoint } from "../constants/api-endpoints";
 
@@ -232,15 +231,6 @@ export function workerServiceSearchParamsToUrlSearchParams(
   if (params.schedule_to?.trim()) {
     sp.set("schedule_to", params.schedule_to.trim());
   }
-  if (params.location?.trim()) {
-    sp.set("location", params.location.trim());
-  }
-  if (params.province_code != null && !Number.isNaN(params.province_code)) {
-    sp.set("province_code", String(params.province_code));
-  }
-  if (params.ward_code != null && !Number.isNaN(params.ward_code)) {
-    sp.set("ward_code", String(params.ward_code));
-  }
 
   return sp.toString() ? sp : undefined;
 }
@@ -256,8 +246,6 @@ function buildGroupedSearchParams(
 ): URLSearchParams | undefined {
   return workerServiceSearchParamsToUrlSearchParams(params);
 }
-
-export type LocationSuggestionLanguage = "vi" | "en";
 
 export const workerServicesApi = {
   getServices: async (): Promise<
@@ -314,23 +302,6 @@ export const workerServicesApi = {
     >(ApiEndpoint.WORKERS_GROUPED_BY_SERVICE, {
       params: searchParams,
     });
-    return extractData(response);
-  },
-
-  getLocationSuggestions: async (
-    q: string,
-    language: LocationSuggestionLanguage,
-    limit?: number
-  ): Promise<LocationSuggestion[]> => {
-    const response = await api.get<ApiResponse<LocationSuggestion[]>>(
-      ApiEndpoint.WORKERS_LOCATION_SUGGESTIONS,
-      {
-        params: { q, limit },
-        headers: {
-          "accept-language": language,
-        },
-      }
-    );
     return extractData(response);
   },
 

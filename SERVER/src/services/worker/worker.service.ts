@@ -94,19 +94,6 @@ export interface WorkersGroupedByServiceItem {
   }>;
 }
 
-const parseLocation = (
-  location?: string
-): { latitude: number; longitude: number } | undefined => {
-  if (!location) {
-    return undefined;
-  }
-  const [latText, lngText] = location.split(",");
-  return {
-    latitude: Number(latText),
-    longitude: Number(lngText),
-  };
-};
-
 const hasTimeOverlap = (
   startA: Date,
   endA: Date,
@@ -315,13 +302,11 @@ export class WorkerService {
   async getWorkersGroupedByService(
     query: WorkerGroupedByServiceQuery
   ): Promise<WorkersGroupedByServiceItem[]> {
-    const hasWorkAreaFilter = query.work_areas.length > 0;
     const groupedWorkers =
       await workerServiceRepository.findWorkersGroupedByService({
         qs: query.qs.length ? query.qs : undefined,
         categories: query.categories.length ? query.categories : undefined,
-        work_areas: hasWorkAreaFilter ? query.work_areas : undefined,
-        location: hasWorkAreaFilter ? undefined : parseLocation(query.location),
+        work_areas: query.work_areas.length ? query.work_areas : undefined,
       });
 
     const hasRange =
