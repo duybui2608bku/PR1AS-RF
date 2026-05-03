@@ -512,6 +512,15 @@
     "setup": {
       "title": "工作者资料设置",
       "subtitle": "完善您的资料信息并配置服务",
+      "monolith": {
+        "pageTitle": "工作者注册",
+        "pageSubtitle": "完善您的专业档案，开始与客户建立联系。",
+        "sectionPersonal": "个人信息",
+        "sectionGallery": "档案照片",
+        "sectionServices": "服务与价格",
+        "footerComplete": "完成注册",
+        "footerBack": "返回"
+      },
       "step1": {
         "title": "基本信息",
         "description": "填写个人信息",
@@ -521,6 +530,12 @@
           "success": "成功获取位置",
           "error": "无法获取位置",
           "notSupported": "您的浏览器不支持定位服务"
+        },
+        "workAreas": {
+          "label": "工作区域 / 地点",
+          "placeholder": "输入关键词搜索并选择一个或多个区域",
+          "required": "请至少选择一个工作区域",
+          "phase1Hint": "当前为示例数据。您的选择将在后续版本中保存到服务器。"
         },
         "dateOfBirth": {
           "label": "出生日期"
@@ -626,9 +641,9 @@
           "unit": {
             "label": "单位",
             "required": "请选择单位！",
-            "hour": "每小时",
-            "day": "每天",
-            "month": "每月"
+            "hour": "小时",
+            "day": "天",
+            "month": "月"
           },
           "duration": {
             "label": "时长",
@@ -638,18 +653,19 @@
           },
           "price": {
             "label": "价格",
-            "placeholder": "价格",
+            "placeholder": "0",
             "required": "请输入价格！",
             "min": "价格必须大于0！"
           },
-          "add": "添加价格等级",
+          "add": "+ 添加价格等级",
           "save": "保存",
           "cancel": "取消"
         },
         "validation": {
           "noServices": "请至少选择一个服务",
           "noPricing": "请为服务设置价格",
-          "minPricing": "请为服务添加至少一个价格等级"
+          "minPricing": "请为服务添加至少一个价格等级",
+          "duplicatePricingUnit": "每种计价单位（小时/天/月）只能设置一次。"
         },
         "back": "返回",
         "complete": "完成"

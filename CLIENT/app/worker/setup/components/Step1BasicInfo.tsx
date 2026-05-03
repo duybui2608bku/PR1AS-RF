@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+} from "react";
 import {
   Form,
   Input,
@@ -9,20 +16,12 @@ import {
   InputNumber,
   Upload,
   Button,
-  Space,
   Typography,
   Tag,
   message,
-  Card,
-  Row,
-  Col,
+  Spin,
 } from "antd";
-import {
-  PlusOutlined,
-  EnvironmentOutlined,
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, UserOutlined, PictureOutlined } from "@ant-design/icons";
 import type { UploadFile, UploadProps } from "antd";
 import ImgCrop from "antd-img-crop";
 import dayjs from "dayjs";
@@ -35,79 +34,39 @@ import type {
 import { STAR_SIGNS, Experience } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { uploadImage } from "@/lib/utils/upload";
-import { useErrorHandler } from "@/lib/hooks/use-error-handler";
+import { searchWorkLocationsMock } from "@/lib/mock/work-locations.mock";
+import type { WorkLocationOption } from "@/lib/mock/work-locations.mock";
 import styles from "./Step1BasicInfo.module.scss";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 
-interface Step1BasicInfoProps {
-  onNext: (data: WorkerProfileUpdateInput) => void;
-  initialData?: WorkerProfile | null;
-  isPending?: boolean;
+export interface WorkerProfileStepHandle {
+  validateAndGetProfile: () => Promise<WorkerProfileUpdateInput | null>;
 }
 
-type SubStep =
-  | "location"
-  | "birthday-gender"
-  | "height-weight"
-  | "experience-title"
-  | "star-sign"
-  | "lifestyle"
-  | "hobbies"
-  | "introduction"
-  | "quote"
-  | "gallery";
+interface Step1BasicInfoProps {
+  initialData?: WorkerProfile | null;
+}
 
-const SUB_STEPS: SubStep[] = [
-  "location",
-  "birthday-gender",
-  "height-weight",
-  "experience-title",
-  "star-sign",
-  "lifestyle",
-  "hobbies",
-  "introduction",
-  "quote",
-  "gallery",
-];
-
-export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
-  onNext,
-  initialData,
-  isPending = false,
-}) => {
+export const Step1BasicInfo = forwardRef<
+  WorkerProfileStepHandle,
+  Step1BasicInfoProps
+>(function Step1BasicInfo({ initialData }, ref) {
   const { t } = useI18n();
-  const { handleError } = useErrorHandler();
   const [form] = Form.useForm();
-  const [currentSubStep, setCurrentSubStep] = useState<number>(0);
-
-  const [stepData, setStepData] = useState<Partial<WorkerProfileUpdateInput>>({
-    coords: { latitude: null, longitude: null },
-    date_of_birth: undefined,
-    gender: undefined,
-    height_cm: undefined,
-    weight_kg: undefined,
-    experience: undefined,
-    title: undefined,
-    star_sign: undefined,
-    lifestyle: undefined,
-    hobbies: [],
-    introduction: undefined,
-    quote: undefined,
-    gallery_urls: [],
-  });
-
   const [hobbies, setHobbies] = useState<string[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [location, setLocation] = useState<{
-    lat: number | null;
-    lng: number | null;
-  }>({
-    lat: null,
-    lng: null,
-  });
+  const [locationOptions, setLocationOptions] = useState<WorkLocationOption[]>(
+    []
+  );
+  const [locationSearchLoading, setLocationSearchLoading] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistedCoordsRef = useRef<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const { data: profileData, isLoading } = useApiQueryData<{
     user: { worker_profile: WorkerProfile | null };
@@ -116,134 +75,113 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   });
   void isLoading;
 
-  const mergeStepData = useCallback((data: Partial<WorkerProfileUpdateInput>) => {
-    setStepData((current) => ({
-      ...current,
-      ...data,
-    }));
+  const mergeLocationOptions = useCallback((incoming: WorkLocationOption[]) => {
+    setLocationOptions((prev) => {
+      const map = new Map(prev.map((o) => [o.value, o.label]));
+      incoming.forEach((o) => map.set(o.value, o.label));
+      return Array.from(map.entries()).map(([value, label]) => ({
+        value,
+        label,
+      }));
+    });
+  }, []);
+
+  const runLocationSearch = useCallback(
+    async (raw: string) => {
+      setLocationSearchLoading(true);
+      try {
+        const res = await searchWorkLocationsMock(raw);
+        mergeLocationOptions(res);
+      } finally {
+        setLocationSearchLoading(false);
+      }
+    },
+    [mergeLocationOptions]
+  );
+
+  const handleLocationSearch = useCallback(
+    (q: string) => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+      searchTimerRef.current = setTimeout(() => {
+        void runLocationSearch(q);
+      }, 320);
+    },
+    [runLocationSearch]
+  );
+
+  useEffect(() => {
+    void runLocationSearch("");
+  }, [runLocationSearch]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     const profile = profileData?.user?.worker_profile || initialData;
-    if (profile) {
-      form.setFieldsValue({
-        date_of_birth: profile.date_of_birth
-          ? dayjs(profile.date_of_birth)
-          : undefined,
-        gender: profile.gender,
-        height_cm: profile.height_cm,
-        weight_kg: profile.weight_kg,
-        experience: profile.experience,
-        title: profile.title,
-        star_sign: profile.star_sign,
-        lifestyle: profile.lifestyle,
-        quote: profile.quote,
-        introduction: profile.introduction,
-      });
-      const nextHobbies = profile.hobbies || [];
-      const nextFiles =
-        profile.gallery_urls?.map((url, index) => ({
-          uid: `-${index}`,
-          name: `image-${index}.jpg`,
-          status: "done" as const,
-          url,
-        })) || [];
-      const nextLocation =
-        profile.coords?.latitude && profile.coords?.longitude
-          ? {
-              lat: profile.coords.latitude,
-              lng: profile.coords.longitude,
-            }
-          : null;
+    if (!profile) return;
 
-      queueMicrotask(() => {
-        setHobbies(nextHobbies);
-        setFileList(nextFiles);
-        if (nextLocation) {
-          setLocation(nextLocation);
-        }
-        setStepData((current) => ({
-          ...current,
-          date_of_birth: profile.date_of_birth,
-          gender: profile.gender,
-          height_cm: profile.height_cm,
-          weight_kg: profile.weight_kg,
-          experience: profile.experience,
-          title: profile.title,
-          star_sign: profile.star_sign,
-          lifestyle: profile.lifestyle,
-          quote: profile.quote,
-          introduction: profile.introduction,
-          hobbies: nextHobbies,
-          gallery_urls: profile.gallery_urls || [],
-          ...(nextLocation && {
-            coords: {
-              latitude: nextLocation.lat,
-              longitude: nextLocation.lng,
-            },
-          }),
-        }));
-      });
+    form.setFieldsValue({
+      date_of_birth: profile.date_of_birth
+        ? dayjs(profile.date_of_birth)
+        : undefined,
+      gender: profile.gender,
+      height_cm: profile.height_cm,
+      weight_kg: profile.weight_kg,
+      experience: profile.experience,
+      title: profile.title,
+      star_sign: profile.star_sign,
+      lifestyle: profile.lifestyle,
+      quote: profile.quote,
+      introduction: profile.introduction,
+      work_locations: [],
+    });
+
+    const nextHobbies = profile.hobbies || [];
+    const nextFiles =
+      profile.gallery_urls?.map((url, index) => ({
+        uid: `-${index}`,
+        name: `image-${index}.jpg`,
+        status: "done" as const,
+        url,
+      })) || [];
+
+    if (
+      profile.coords?.latitude != null &&
+      profile.coords?.longitude != null
+    ) {
+      persistedCoordsRef.current = {
+        latitude: profile.coords.latitude,
+        longitude: profile.coords.longitude,
+      };
     }
+
+    queueMicrotask(() => {
+      setHobbies(nextHobbies);
+      setFileList(nextFiles);
+    });
   }, [profileData, initialData, form]);
-
-  const updateHobbies = useCallback((nextHobbies: string[]) => {
-    setHobbies(nextHobbies);
-    mergeStepData({
-      hobbies: nextHobbies,
-    });
-  }, [mergeStepData]);
-
-  const updateGalleryUrls = useCallback((files: UploadFile[]) => {
-    mergeStepData({
-      gallery_urls: files
-        .filter((file) => file.status === "done" && file.url)
-        .map((file) => file.url || "")
-        .filter(Boolean),
-    });
-  }, [mergeStepData]);
-
-  const getLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      message.error(t("worker.setup.step1.location.notSupported"));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        setLocation(newLocation);
-        mergeStepData({
-          coords: {
-            latitude: newLocation.lat,
-            longitude: newLocation.lng,
-          },
-        });
-        message.success(t("worker.setup.step1.location.success"));
-      },
-      (error) => {
-        message.error(
-          `${t("worker.setup.step1.location.error")}: ${error.message}`
-        );
-      }
-    );
-  }, [t, mergeStepData]);
 
   const handleAddHobby = useCallback(() => {
     if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) {
-      const newHobbies = [...hobbies, hobbyInput.trim()];
-      updateHobbies(newHobbies);
+      setHobbies((h) => [...h, hobbyInput.trim()]);
       setHobbyInput("");
     }
-  }, [hobbyInput, hobbies, updateHobbies]);
+  }, [hobbyInput, hobbies]);
 
   const handleRemoveHobby = useCallback((hobby: string) => {
-    const newHobbies = hobbies.filter((h) => h !== hobby);
-    updateHobbies(newHobbies);
-  }, [hobbies, updateHobbies]);
+    setHobbies((h) => h.filter((x) => x !== hobby));
+  }, []);
+
+  const updateGalleryUrls = useCallback((files: UploadFile[]) => {
+    setFileList(files);
+  }, []);
 
   const handleUploadChange: UploadProps["onChange"] = async (info) => {
     let newFileList = [...info.fileList];
@@ -310,155 +248,136 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     return false;
   };
 
-  const handleNext = useCallback(() => {
-    const currentStepType = SUB_STEPS[currentSubStep];
-
-    if (currentStepType === "location") {
-      if (!location.lat || !location.lng) {
-        message.warning(t("worker.setup.step1.location.required"));
-        return;
+  useImperativeHandle(ref, () => ({
+    validateAndGetProfile: async () => {
+      try {
+        await form.validateFields();
+      } catch {
+        return null;
       }
-    } else if (currentStepType === "birthday-gender") {
-      form.validateFields(["date_of_birth", "gender"]).catch(() => {
-        message.warning(t("worker.setup.step1.validation.fillAll"));
-        return;
-      });
-      const values = form.getFieldsValue(["date_of_birth", "gender"]);
-      mergeStepData({
-        date_of_birth: values.date_of_birth
-          ? values.date_of_birth.format("YYYY-MM-DD")
+
+      const v = form.getFieldsValue();
+      const gallery_urls = fileList
+        .filter((file) => file.status === "done" && file.url)
+        .map((file) => file.url || "")
+        .filter(Boolean);
+
+      const payload: WorkerProfileUpdateInput = {
+        date_of_birth: v.date_of_birth
+          ? dayjs(v.date_of_birth).format("YYYY-MM-DD")
           : undefined,
-        gender: values.gender as Gender,
-      });
-    } else if (currentStepType === "height-weight") {
-      const values = form.getFieldsValue(["height_cm", "weight_kg"]);
-      mergeStepData({
-        height_cm: values.height_cm,
-        weight_kg: values.weight_kg,
-      });
-    } else if (currentStepType === "experience-title") {
-      const values = form.getFieldsValue(["experience", "title"]);
-      mergeStepData({
-        experience: values.experience,
-        title: values.title,
-      });
-    } else if (currentStepType === "star-sign") {
-      const values = form.getFieldsValue(["star_sign"]);
-      mergeStepData({
-        star_sign: values.star_sign,
-      });
-    } else if (currentStepType === "lifestyle") {
-      const values = form.getFieldsValue(["lifestyle"]);
-      mergeStepData({
-        lifestyle: values.lifestyle,
-      });
-    } else if (currentStepType === "hobbies") {
-    } else if (currentStepType === "introduction") {
-      const values = form.getFieldsValue(["introduction"]);
-      mergeStepData({
-        introduction: values.introduction,
-      });
-    } else if (currentStepType === "quote") {
-      const values = form.getFieldsValue(["quote"]);
-      mergeStepData({
-        quote: values.quote,
-      });
-    } else if (currentStepType === "gallery") {
-    }
-
-    if (currentSubStep < SUB_STEPS.length - 1) {
-      setCurrentSubStep((prev) => prev + 1);
-    } else {
-      handleSubmit();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSubStep, location, form, mergeStepData, t]);
-
-  const handleBack = useCallback(() => {
-    if (currentSubStep > 0) {
-      setCurrentSubStep((prev) => prev - 1);
-    }
-  }, [currentSubStep]);
-
-  const handleSubmit = useCallback(async () => {
-    try {
-      const formData: WorkerProfileUpdateInput = {
-        ...stepData,
-        date_of_birth: stepData.date_of_birth as string | undefined,
-        gender: stepData.gender as Gender,
-        hobbies: stepData.hobbies as string[],
-        gallery_urls: stepData.gallery_urls as string[],
+        gender: v.gender as Gender,
+        height_cm: v.height_cm,
+        weight_kg: v.weight_kg,
+        experience: v.experience,
+        title: v.title,
+        star_sign: v.star_sign,
+        lifestyle: v.lifestyle,
+        quote: v.quote,
+        introduction: v.introduction,
+        hobbies,
+        gallery_urls,
       };
 
-      onNext(formData);
-    } catch (error) {
-      handleError(error);
-    }
-  }, [stepData, onNext, handleError]);
+      if (persistedCoordsRef.current) {
+        payload.coords = {
+          latitude: persistedCoordsRef.current.latitude,
+          longitude: persistedCoordsRef.current.longitude,
+        };
+      }
 
-  const renderSubStep = () => {
-    const currentStepType = SUB_STEPS[currentSubStep];
-    switch (currentStepType) {
-      case "location":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.location.label")}
-            </Title>
-            <Space orientation="vertical" className={styles.spaceFull} size="large">
-              <Button
-                icon={<EnvironmentOutlined />}
-                onClick={getLocation}
-                type="primary"
-                size="large"
-                block
-              >
-                {t("worker.setup.step1.location.getLocation")}
-              </Button>
-              {location.lat && location.lng && (
-                <div className={styles.locationBox}>
-                  <Text type="secondary" className={styles.locationLabel}>
-                    {t("worker.setup.step1.location.success")}
-                  </Text>
-                  <Text>
-                    {t("worker.setup.step1.location.latitude")}:{" "}
-                    {location.lat.toFixed(6)},{" "}
-                    {t("worker.setup.step1.location.longitude")}:{" "}
-                    {location.lng.toFixed(6)}
-                  </Text>
-                </div>
-              )}
-            </Space>
-          </Card>
-        );
+      return payload;
+    },
+  }));
 
-      case "birthday-gender":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.dateOfBirth.label")} &{" "}
-              {t("worker.setup.step1.gender.label")}
+  return (
+    <div className={`${styles.container} ${styles.setupSkin}`}>
+      <Form
+        form={form}
+        layout="vertical"
+        colon={false}
+        className={styles.form}
+        initialValues={{ gender: "MALE", work_locations: [] }}
+      >
+        <section className={styles.stitchSection}>
+          <div className={styles.sectionHeader}>
+            <UserOutlined className={styles.sectionIcon} aria-hidden />
+            <Title level={5} className={styles.sectionTitle}>
+              {t("worker.setup.monolith.sectionPersonal")}
             </Title>
-            <Form
-              form={form}
-              layout="vertical"
-              initialValues={{
-                gender: stepData.gender || "MALE",
+          </div>
+
+          <div className={styles.sectionBody}>
+          <Form.Item
+            className={styles.stitchField}
+            name="work_locations"
+            label={
+              <span className={styles.labelUpper}>
+                {t("worker.setup.step1.workAreas.label")}
+              </span>
+            }
+            extra={
+              <Text type="secondary" className={styles.fieldHint}>
+                {t("worker.setup.step1.workAreas.phase1Hint")}
+              </Text>
+            }
+            rules={[
+              {
+                required: true,
+                message: t("worker.setup.step1.workAreas.required"),
+              },
+              {
+                type: "array",
+                min: 1,
+                message: t("worker.setup.step1.workAreas.required"),
+              },
+            ]}
+          >
+            <Select
+              mode="multiple"
+              showSearch
+              allowClear
+              className={styles.inputFull}
+              size="middle"
+              placeholder={t("worker.setup.step1.workAreas.placeholder")}
+              filterOption={false}
+              onSearch={handleLocationSearch}
+              notFoundContent={
+                locationSearchLoading ? <Spin size="small" /> : null
+              }
+              options={locationOptions}
+              onDropdownVisibleChange={(open) => {
+                if (open && locationOptions.length === 0) {
+                  void runLocationSearch("");
+                }
               }}
-            >
+            />
+          </Form.Item>
+
+          <div className={styles.fieldGrid3}>
               <Form.Item
-                label={t("worker.setup.step1.dateOfBirth.label")}
+                className={styles.stitchField}
                 name="date_of_birth"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.dateOfBirth.label")}
+                  </span>
+                }
               >
                 <DatePicker
                   className={styles.inputFull}
                   format="DD/MM/YYYY"
-                  size="large"
+                  size="middle"
                 />
               </Form.Item>
               <Form.Item
-                label={t("worker.setup.step1.gender.label")}
+                className={styles.stitchField}
                 name="gender"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.gender.label")}
+                  </span>
+                }
                 rules={[
                   {
                     required: true,
@@ -466,7 +385,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   },
                 ]}
               >
-                <Select size="large">
+                <Select size="middle" className={styles.inputFull}>
                   <Select.Option value="MALE">
                     {t("worker.setup.step1.gender.male")}
                   </Select.Option>
@@ -478,62 +397,56 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   </Select.Option>
                 </Select>
               </Form.Item>
-            </Form>
-          </Card>
-        );
-
-      case "height-weight":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.heightWeight.label")}
-            </Title>
-            <Form form={form} layout="vertical">
               <Form.Item
-                label={t("worker.setup.step1.heightWeight.height")}
+                className={styles.stitchField}
                 name="height_cm"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.heightWeight.height")}
+                  </span>
+                }
               >
                 <InputNumber
                   className={styles.inputFull}
                   placeholder={t("worker.setup.step1.heightWeight.height")}
                   min={0}
                   max={300}
-                  addonAfter="cm"
-                  size="large"
+                  size="middle"
+                  controls={false}
                 />
               </Form.Item>
               <Form.Item
-                label={t("worker.setup.step1.heightWeight.weight")}
+                className={styles.stitchField}
                 name="weight_kg"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.heightWeight.weight")}
+                  </span>
+                }
               >
                 <InputNumber
                   className={styles.inputFull}
                   placeholder={t("worker.setup.step1.heightWeight.weight")}
                   min={0}
                   max={500}
-                  addonAfter="kg"
-                  size="large"
+                  size="middle"
+                  controls={false}
                 />
               </Form.Item>
-            </Form>
-          </Card>
-        );
-
-      case "experience-title":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.experienceTitle.label")}
-            </Title>
-            <Form form={form} layout="vertical">
               <Form.Item
-                label={t("worker.setup.step1.experience.label")}
+                className={styles.stitchField}
                 name="experience"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.experience.label")}
+                  </span>
+                }
               >
                 <Select
                   placeholder={t("worker.setup.step1.experience.placeholder")}
-                  size="large"
+                  size="middle"
                   allowClear
+                  className={styles.inputFull}
                 >
                   <Select.Option value={Experience.LESS_THAN_1}>
                     {t("worker.setup.step1.experience.lessThan1")}
@@ -553,36 +466,19 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 </Select>
               </Form.Item>
               <Form.Item
-                label={t("worker.setup.step1.professionalTitle.label")}
-                name="title"
-              >
-                <Input
-                  placeholder={t(
-                    "worker.setup.step1.professionalTitle.placeholder"
-                  )}
-                  size="large"
-                  maxLength={100}
-                  showCount
-                />
-              </Form.Item>
-            </Form>
-          </Card>
-        );
-
-      case "star-sign":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.starSign.label")}
-            </Title>
-            <Form form={form} layout="vertical">
-              <Form.Item
-                label={t("worker.setup.step1.starSign.label")}
+                className={styles.stitchField}
                 name="star_sign"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.starSign.label")}
+                  </span>
+                }
               >
                 <Select
                   placeholder={t("worker.setup.step1.starSign.placeholder")}
-                  size="large"
+                  size="middle"
+                  allowClear
+                  className={styles.inputFull}
                 >
                   {STAR_SIGNS.map((sign) => (
                     <Select.Option key={sign.value} value={sign.value}>
@@ -591,199 +487,155 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   ))}
                 </Select>
               </Form.Item>
-            </Form>
-          </Card>
-        );
+          </div>
 
-      case "lifestyle":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.lifestyle.label")}
-            </Title>
-            <Form form={form} layout="vertical">
+          <div className={styles.fieldGrid2}>
               <Form.Item
-                label={t("worker.setup.step1.lifestyle.label")}
-                name="lifestyle"
+                className={styles.stitchField}
+                name="title"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.professionalTitle.label")}
+                  </span>
+                }
               >
-                <TextArea
-                  rows={4}
-                  placeholder={t("worker.setup.step1.lifestyle.placeholder")}
+                <Input
+                  placeholder={t(
+                    "worker.setup.step1.professionalTitle.placeholder"
+                  )}
+                  size="middle"
+                  maxLength={100}
                 />
               </Form.Item>
-            </Form>
-          </Card>
-        );
-
-      case "hobbies":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.hobbies.label")}
-            </Title>
-            <Space orientation="vertical" className={styles.spaceFull} size="large">
-              <Space.Compact className={styles.spaceFull}>
+              <Form.Item
+                className={styles.stitchField}
+                name="lifestyle"
+                label={
+                  <span className={styles.labelUpper}>
+                    {t("worker.setup.step1.lifestyle.label")}
+                  </span>
+                }
+              >
                 <Input
+                  placeholder={t("worker.setup.step1.lifestyle.placeholder")}
+                  size="middle"
+                />
+              </Form.Item>
+          </div>
+
+          <Form.Item
+            className={styles.stitchField}
+            name="quote"
+            label={
+              <span className={styles.labelUpper}>
+                {t("worker.setup.step1.quote.label")}
+              </span>
+            }
+          >
+            <Input
+              placeholder={t("worker.setup.step1.quote.placeholder")}
+              size="middle"
+            />
+          </Form.Item>
+
+          <div className={styles.hobbiesBlock}>
+            <Text className={styles.labelUpper}>
+              {t("worker.setup.step1.hobbies.label")}
+            </Text>
+            <div className={styles.hobbiesShell}>
+              <div className={styles.hobbiesInner}>
+                {hobbies.map((hobby) => (
+                  <Tag
+                    key={hobby}
+                    closable
+                    onClose={() => handleRemoveHobby(hobby)}
+                    className={styles.tagItem}
+                  >
+                    {hobby}
+                  </Tag>
+                ))}
+                <Input
+                  bordered={false}
                   value={hobbyInput}
                   onChange={(e) => setHobbyInput(e.target.value)}
                   onPressEnter={handleAddHobby}
                   placeholder={t("worker.setup.step1.hobbies.placeholder")}
-                  className={styles.hobbyInput}
-                  size="large"
+                  className={styles.hobbyInputInline}
                 />
                 <Button
+                  type="default"
                   icon={<PlusOutlined />}
                   onClick={handleAddHobby}
-                  size="large"
-                >
-                  {t("worker.setup.step1.hobbies.add")}
-                </Button>
-              </Space.Compact>
-              {hobbies.length > 0 && (
-                <div className={styles.hobbiesTags}>
-                  {hobbies.map((hobby) => (
-                    <Tag
-                      key={hobby}
-                      closable
-                      onClose={() => handleRemoveHobby(hobby)}
-                      className={styles.tagItem}
-                    >
-                      {hobby}
-                    </Tag>
-                  ))}
-                </div>
-              )}
-            </Space>
-          </Card>
-        );
-
-      case "introduction":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.introduction.label")}
-            </Title>
-            <Form form={form} layout="vertical">
-              <Form.Item
-                label={t("worker.setup.step1.introduction.label")}
-                name="introduction"
-              >
-                <TextArea
-                  rows={6}
-                  placeholder={t("worker.setup.step1.introduction.placeholder")}
+                  className={styles.hobbyAddBtn}
+                  aria-label={t("worker.setup.step1.hobbies.add")}
                 />
-              </Form.Item>
-            </Form>
-          </Card>
-        );
+              </div>
+            </div>
+          </div>
 
-      case "quote":
-        return (
-          <Card className={styles.card}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.quote.label")}
-            </Title>
-            <Form form={form} layout="vertical">
-              <Form.Item
-                label={t("worker.setup.step1.quote.label")}
-                name="quote"
-              >
-                <TextArea
-                  rows={3}
-                  placeholder={t("worker.setup.step1.quote.placeholder")}
-                />
-              </Form.Item>
-            </Form>
-          </Card>
-        );
+          <Form.Item
+            className={styles.stitchField}
+            name="introduction"
+            label={
+              <span className={styles.labelUpper}>
+                {t("worker.setup.step1.introduction.label")}
+              </span>
+            }
+          >
+            <TextArea
+              rows={5}
+              placeholder={t("worker.setup.step1.introduction.placeholder")}
+              className={styles.introTextarea}
+            />
+          </Form.Item>
+          </div>
+        </section>
 
-      case "gallery":
-        return (
-          <Card className={styles.cardGallery}>
-            <Title level={3} className={styles.cardTitle}>
-              {t("worker.setup.step1.gallery.label")}
-            </Title>
-            <Form form={form} layout="vertical">
-              <Form.Item label={t("worker.setup.step1.gallery.label")}>
-                <ImgCrop
-                  aspect={5 / 4}
-                  quality={0.9}
-                  fillColor="transparent"
-                  zoom
-                  rotate
-                >
-                  <Upload
-                    listType="picture-card"
-                    fileList={fileList}
-                    onChange={handleUploadChange}
-                    beforeUpload={beforeUpload}
-                    maxCount={10}
-                    accept="image/*"
-                  >
-                    {fileList.length < 10 && (
-                      <div>
-                        <PlusOutlined />
-                        <div className={styles.uploadAddText}>
-                          {t("worker.setup.step1.gallery.upload")}
-                        </div>
-                      </div>
-                    )}
-                  </Upload>
-                </ImgCrop>
-                <Text type="secondary" className={styles.uploadHint}>
-                  {t("worker.setup.step1.gallery.maxImages")}
-                </Text>
-              </Form.Item>
-            </Form>
-          </Card>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className={styles.container}>
-      <Row justify="center">
-        <Col span={24}>
-          <div className={styles.progressBlock}>
-            <Text type="secondary">
-              {t("common.step")} {currentSubStep + 1} / {SUB_STEPS.length}
+        <section className={styles.stitchSection}>
+          <div className={styles.sectionHeaderRow}>
+            <div className={styles.sectionHeader}>
+              <PictureOutlined className={styles.sectionIcon} aria-hidden />
+              <Title level={5} className={styles.sectionTitle}>
+                {t("worker.setup.monolith.sectionGallery")}
+              </Title>
+            </div>
+            <Text type="secondary" className={styles.galleryHint}>
+              {t("worker.setup.step1.gallery.maxImages")}
             </Text>
           </div>
-        </Col>
-      </Row>
-      {renderSubStep()}
-      <Row justify="space-between" align="middle" className={styles.navRow}>
-        <Col>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={handleBack}
-            disabled={currentSubStep === 0}
-            size="large"
-          >
-            {t("common.back")}
-          </Button>
-        </Col>
-        <Col>
-          <Button
-            type="primary"
-            onClick={handleNext}
-            loading={isPending}
-            icon={
-              currentSubStep === SUB_STEPS.length - 1 ? undefined : (
-                <ArrowRightOutlined />
-              )
-            }
-            size="large"
-          >
-            {currentSubStep === SUB_STEPS.length - 1
-              ? t("worker.setup.step1.complete")
-              : t("common.next")}
-          </Button>
-        </Col>
-      </Row>
+          <div className={styles.sectionBody}>
+          <Form.Item label={null}>
+            <div className={styles.galleryUploadWrap}>
+              <ImgCrop
+                aspect={5 / 4}
+                quality={0.9}
+                fillColor="transparent"
+                zoom
+                rotate
+              >
+                <Upload
+                  listType="picture-card"
+                  fileList={fileList}
+                  onChange={handleUploadChange}
+                  beforeUpload={beforeUpload}
+                  maxCount={10}
+                  accept="image/*"
+                >
+                  {fileList.length < 10 && (
+                    <div>
+                      <PlusOutlined />
+                      <div className={styles.uploadAddText}>
+                        {t("worker.setup.step1.gallery.upload")}
+                      </div>
+                    </div>
+                  )}
+                </Upload>
+              </ImgCrop>
+            </div>
+          </Form.Item>
+          </div>
+        </section>
+      </Form>
     </div>
   );
-};
+});

@@ -647,6 +647,15 @@
     "setup": {
       "title": "Worker Profile Setup",
       "subtitle": "Complete your profile information and configure services",
+      "monolith": {
+        "pageTitle": "Worker registration",
+        "pageSubtitle": "Complete your professional profile to start connecting with clients.",
+        "sectionPersonal": "Personal information",
+        "sectionGallery": "Profile photos",
+        "sectionServices": "Services and Pricing",
+        "footerComplete": "Complete registration",
+        "footerBack": "Back"
+      },
       "step1": {
         "title": "Basic Information",
         "description": "Fill in personal information",
@@ -659,6 +668,12 @@
           "required": "Please get your location before continuing",
           "latitude": "Latitude",
           "longitude": "Longitude"
+        },
+        "workAreas": {
+          "label": "Work areas / locations",
+          "placeholder": "Type to search and select one or more areas",
+          "required": "Please select at least one work area",
+          "phase1Hint": "Options use sample data for now. Your choices will be saved on the server in a future update."
         },
         "dateOfBirth": {
           "label": "Date of Birth"
@@ -768,9 +783,9 @@
           "unit": {
             "label": "Unit",
             "required": "Please select unit!",
-            "hour": "Per hour",
-            "day": "Per day",
-            "month": "Per month"
+            "hour": "Hour",
+            "day": "Day",
+            "month": "Month"
           },
           "duration": {
             "label": "Duration",
@@ -780,18 +795,19 @@
           },
           "price": {
             "label": "Price",
-            "placeholder": "Price",
+            "placeholder": "0",
             "required": "Please enter price!",
             "min": "Price must be greater than 0!"
           },
-          "add": "Add pricing tier",
+          "add": "+ ADD PRICING TIER",
           "save": "Save",
           "cancel": "Cancel"
         },
         "validation": {
           "noServices": "Please select at least one service",
           "noPricing": "Please set pricing for services",
-          "minPricing": "Please add at least one pricing tier for the service"
+          "minPricing": "Please add at least one pricing tier for the service",
+          "duplicatePricingUnit": "Each pricing unit (hour/day/month) can only be set once."
         },
         "back": "Back",
         "complete": "Complete"

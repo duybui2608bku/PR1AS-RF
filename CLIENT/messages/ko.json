@@ -512,6 +512,15 @@
     "setup": {
       "title": "워커 프로필 설정",
       "subtitle": "프로필 정보를 완성하고 서비스를 구성하세요",
+      "monolith": {
+        "pageTitle": "워커 등록",
+        "pageSubtitle": "고객과 연결을 시작할 수 있도록 전문 프로필을 완성하세요.",
+        "sectionPersonal": "개인 정보",
+        "sectionGallery": "프로필 사진",
+        "sectionServices": "서비스 및 가격",
+        "footerComplete": "등록 완료",
+        "footerBack": "뒤로"
+      },
       "step1": {
         "title": "기본 정보",
         "description": "개인 정보 입력",
@@ -521,6 +530,12 @@
           "success": "위치를 성공적으로 가져왔습니다",
           "error": "위치를 가져올 수 없습니다",
           "notSupported": "브라우저가 위치 서비스를 지원하지 않습니다"
+        },
+        "workAreas": {
+          "label": "근무 지역 / 위치",
+          "placeholder": "검색어를 입력해 하나 이상의 지역을 선택하세요",
+          "required": "최소 한 개의 근무 지역을 선택해 주세요",
+          "phase1Hint": "목록은 현재 샘플 데이터입니다. 선택 사항은 이후 업데이트에서 서버에 저장됩니다."
         },
         "dateOfBirth": {
           "label": "생년월일"
@@ -626,9 +641,9 @@
           "unit": {
             "label": "단위",
             "required": "단위를 선택해 주세요!",
-            "hour": "시간당",
-            "day": "일당",
-            "month": "월당"
+            "hour": "시간",
+            "day": "일",
+            "month": "월"
           },
           "duration": {
             "label": "기간",
@@ -638,18 +653,19 @@
           },
           "price": {
             "label": "가격",
-            "placeholder": "가격",
+            "placeholder": "0",
             "required": "가격을 입력해 주세요!",
             "min": "가격은 0보다 커야 합니다!"
           },
-          "add": "가격 등급 추가",
+          "add": "+ 가격 등급 추가",
           "save": "저장",
           "cancel": "취소"
         },
         "validation": {
           "noServices": "최소 하나의 서비스를 선택해 주세요",
           "noPricing": "서비스에 대한 가격을 설정해 주세요",
-          "minPricing": "서비스에 대해 최소 하나의 가격 등급을 추가해 주세요"
+          "minPricing": "서비스에 대해 최소 하나의 가격 등급을 추가해 주세요",
+          "duplicatePricingUnit": "시간/일/월 단위는 각각 한 번만 설정할 수 있습니다."
         },
         "back": "뒤로",
         "complete": "완료"

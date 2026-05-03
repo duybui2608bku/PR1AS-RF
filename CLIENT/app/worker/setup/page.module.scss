@@ -1,3 +1,130 @@
+$setup-surface: #fcf9f8;
+$setup-primary: #801b1b;
+$setup-outline: #debfbc;
+$setup-surface-variant: #e5e2e1;
+$setup-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+.monolith {
+  min-height: calc(100vh - 120px);
+  background: $setup-surface;
+  padding: 32px 16px 64px;
+}
+
+.inner {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.pageTitle {
+  color: $setup-primary !important;
+  font-weight: 600 !important;
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem) !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px !important;
+}
+
+.pageSubtitle {
+  max-width: 32rem;
+  margin: 0 auto !important;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.stitchSection {
+  background: #fff;
+  border: 1px solid $setup-outline;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.servicesSectionLead {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $setup-surface-variant;
+}
+
+.servicesSectionLead .sectionHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.sectionIcon {
+  font-size: 20px;
+  color: $setup-primary;
+}
+
+.sectionTitle {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+  color: #1c1b1b !important;
+}
+
+.sectionIntro {
+  margin-bottom: 0 !important;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #57413f;
+}
+
+.footerRow {
+  margin-top: 4px;
+  padding-top: 32px;
+}
+
+.backButton {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #57413f !important;
+  padding-inline: 16px;
+}
+
+.backButton:hover {
+  color: #1c1b1b !important;
+}
+
+.completeButton {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  min-width: 180px;
+  height: 40px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(128, 27, 27, 0.25);
+  background: $setup-primary !important;
+  border-color: $setup-primary !important;
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -9,6 +136,8 @@
 }
 
 .loadingText {
-  margin-top: 16px;
+  margin-top: 12px;
   text-align: center;
+  margin-bottom: 0 !important;
+  font-size: 14px !important;
 }

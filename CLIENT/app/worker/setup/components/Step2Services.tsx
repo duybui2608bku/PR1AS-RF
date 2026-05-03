@@ -1,31 +1,17 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  Card,
-  Typography,
-  Button,
-  Space,
-  Checkbox,
-  Form,
-  Divider,
-  Tag,
-  Empty,
-  Spin,
-  Alert,
-  Modal,
-  Row,
-  Col,
-} from "antd";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-} from "@ant-design/icons";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+} from "react";
+import { Typography, Button, Checkbox, Empty, Spin, Modal, Row, Col } from "antd";
 import { useApiQueryData } from "@/lib/hooks/use-api";
 import type {
   Service,
-  ServiceCategory,
   WorkerServiceInput,
   ServicePricing,
   PricingUnit,
@@ -36,16 +22,32 @@ import {
 } from "@/lib/types/worker";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useCurrencyStore } from "@/lib/stores/currency.store";
-import { Spacing } from "@/lib/constants/ui.constants";
-import { PricingModal } from "./PricingModal";
+import { ServicePricingInline } from "./ServicePricingInline";
+import { validateNormalizedPricing } from "./service-pricing.utils";
+import {
+  filterAssistanceServicesForWorkerSetup,
+  isServiceIncludedInWorkerSetupStep,
+  splitCompanionshipServices,
+} from "./worker-setup-services.utils";
 import styles from "./Step2Services.module.scss";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title } = Typography;
+
+const DEFAULT_FIRST_PRICING_ROW: ServicePricing[] = [
+  { unit: PricingUnitEnum.HOURLY, duration: 1, price: 0 },
+];
+
+export interface Step2ServicesHandle {
+  validateAndGetWorkerServices: () => WorkerServiceInput | null;
+}
 
 interface Step2ServicesProps {
-  onNext: (data: WorkerServiceInput) => void;
-  onBack: () => void;
+  onNext?: (data: WorkerServiceInput) => void;
+  onBack?: () => void;
   isPending?: boolean;
+  hideActions?: boolean;
+  /** @deprecated All callers use monolith embedded UI; kept for API compatibility */
+  embedded?: boolean;
 }
 
 interface SelectedService extends Service {
@@ -53,27 +55,112 @@ interface SelectedService extends Service {
   is_active: boolean;
 }
 
-export const Step2Services: React.FC<Step2ServicesProps> = ({
-  onNext,
-  onBack,
-  isPending = false,
-}) => {
-  const { t } = useI18n();
-  const { currency, formatCurrency } = useCurrencyStore();
-  const [selectedCategory, setSelectedCategory] =
-    useState<ServiceCategory | null>(null);
-  const [selectedServices, setSelectedServices] = useState<
-    Map<string, SelectedService>
-  >(new Map());
-  const [pricingModalVisible, setPricingModalVisible] = useState(false);
-  const [currentServiceForPricing, setCurrentServiceForPricing] =
-    useState<Service | null>(null);
-  const [pricingForm] = Form.useForm();
+function buildWorkerServicePayload(
+  selectedServices: Map<string, SelectedService>,
+  t: (key: string) => string
+): WorkerServiceInput | null {
+  const included = Array.from(selectedServices.values()).filter((s) =>
+    isServiceIncludedInWorkerSetupStep(s)
+  );
 
-  const { data: allServicesResponse } =
-    useApiQueryData<{ services: Service[]; count: number }>(
-      ["services", "all"],
-      "/services",
+  if (included.length === 0) {
+    Modal.warning({
+      title: t("common.warning"),
+      content: t("worker.setup.step2.validation.noServices"),
+      centered: true,
+    });
+    return null;
+  }
+
+  const servicesWithoutPricing = included.filter((s) => s.pricing.length === 0);
+
+  if (servicesWithoutPricing.length > 0) {
+    Modal.warning({
+      title: t("common.warning"),
+      content: `${t("worker.setup.step2.validation.noPricing")}: ${servicesWithoutPricing.map((s) => s.name.vi).join(", ")}`,
+      centered: true,
+    });
+    return null;
+  }
+
+  for (const s of included) {
+    const err = validateNormalizedPricing(s.pricing);
+    if (err === "duplicate") {
+      Modal.warning({
+        title: t("common.warning"),
+        content: `${s.name.vi}: ${t("worker.setup.step2.validation.duplicatePricingUnit")}`,
+        centered: true,
+      });
+      return null;
+    }
+    if (err === "invalidPrice" || err === "empty") {
+      Modal.warning({
+        title: t("common.warning"),
+        content: `${s.name.vi}: ${t("worker.setup.step2.validation.noPricing")}`,
+        centered: true,
+      });
+      return null;
+    }
+  }
+
+  return {
+    services: included.map((service) => ({
+      service_id: service.id,
+      pricing: service.pricing,
+    })),
+  };
+}
+
+export const Step2Services = forwardRef<Step2ServicesHandle, Step2ServicesProps>(
+  function Step2Services(
+    {
+      onNext,
+      onBack,
+      isPending = false,
+      hideActions = false,
+      embedded: _embedded = true,
+    },
+    ref
+  ) {
+    const { t } = useI18n();
+    const { currency } = useCurrencyStore();
+    const [selectedServices, setSelectedServices] = useState<
+      Map<string, SelectedService>
+    >(new Map());
+
+    const { data: allServicesResponse } =
+      useApiQueryData<{ services: Service[]; count: number }>(
+        ["services", "all"],
+        "/services",
+        {
+          enabled: true,
+          staleTime: 0,
+          refetchOnMount: true,
+        }
+      );
+
+    const allServices = useMemo(
+      () => allServicesResponse?.services || [],
+      [allServicesResponse?.services]
+    );
+
+    const { data: assistanceServicesResponse, isLoading: isLoadingAssistance } =
+      useApiQueryData<{ services: Service[]; count: number }>(
+        ["services", "ASSISTANCE"],
+        `/services?category=${ServiceCategoryEnum.ASSISTANCE}`,
+        {
+          enabled: true,
+          staleTime: 0,
+          refetchOnMount: true,
+        }
+      );
+
+    const {
+      data: companionshipServicesResponse,
+      isLoading: isLoadingCompanionship,
+    } = useApiQueryData<{ services: Service[]; count: number }>(
+      ["services", "COMPANIONSHIP"],
+      `/services?category=${ServiceCategoryEnum.COMPANIONSHIP}`,
       {
         enabled: true,
         staleTime: 0,
@@ -81,455 +168,281 @@ export const Step2Services: React.FC<Step2ServicesProps> = ({
       }
     );
 
-  const allServices = useMemo(
-    () => allServicesResponse?.services || [],
-    [allServicesResponse?.services]
-  );
-
-  const {
-    data: servicesResponse,
-    isLoading: isLoadingServices,
-    refetch: refetchServices,
-  } = useApiQueryData<{ services: Service[]; count: number }>(
-    ["services", selectedCategory || "all"],
-    selectedCategory ? `/services?category=${selectedCategory}` : "/services",
-    {
-      enabled: !!selectedCategory,
-      staleTime: 0,
-      refetchOnMount: true,
-    }
-  );
-
-  const services = useMemo(
-    () => servicesResponse?.services || [],
-    [servicesResponse?.services]
-  );
-
-  const { data: existingWorkerServicesResponse } = useApiQueryData<{
-    services: Array<{
-      service_id: string;
-      service_code: string;
-      pricing: Array<{
-        unit: string;
-        duration?: number;
-        price: number;
-        currency: string;
-      }>;
-      is_active: boolean;
-    }>;
-  }>(["worker-services"], "/worker/services", {
-    enabled: true,
-    staleTime: 0,
-    refetchOnMount: true,
-  });
-
-  const existingWorkerServices = useMemo(
-    () => existingWorkerServicesResponse?.services || [],
-    [existingWorkerServicesResponse?.services]
-  );
-
-  useEffect(() => {
-    if (selectedCategory) {
-      refetchServices();
-    }
-  }, [selectedCategory, refetchServices]);
-
-  const [hasLoadedExistingServices, setHasLoadedExistingServices] =
-    useState(false);
-
-  useEffect(() => {
-    if (
-      !hasLoadedExistingServices &&
-      existingWorkerServices &&
-      Array.isArray(existingWorkerServices) &&
-      existingWorkerServices.length > 0 &&
-      allServices.length > 0
-    ) {
-      const serviceMap = new Map(allServices.map((s) => [s.id, s]));
-      const newSelectedServices = new Map<string, SelectedService>();
-
-      existingWorkerServices.forEach((workerService) => {
-        const service = serviceMap.get(workerService.service_id);
-        if (service) {
-          newSelectedServices.set(service.id, {
-            ...service,
-            pricing: workerService.pricing.map((p) => ({
-              unit: p.unit as PricingUnit,
-              duration: p.duration ?? 1,
-              price: p.price,
-            })),
-            is_active: workerService.is_active,
-          });
-        }
-      });
-
-      queueMicrotask(() => {
-        if (newSelectedServices.size > 0) {
-          setSelectedServices(newSelectedServices);
-        }
-        setHasLoadedExistingServices(true);
-      });
-    }
-  }, [existingWorkerServices, allServices, hasLoadedExistingServices]);
-
-  const handleCategorySelect = (category: ServiceCategory) => {
-    setSelectedCategory(category);
-  };
-
-  const handleServiceToggle = (service: Service) => {
-    const serviceId = service.id;
-    const newSelectedServices = new Map(selectedServices);
-
-    if (newSelectedServices.has(serviceId)) {
-      newSelectedServices.delete(serviceId);
-    } else {
-      newSelectedServices.set(serviceId, {
-        ...service,
-        pricing: [],
-        is_active: true,
-      });
-    }
-
-    setSelectedServices(newSelectedServices);
-  };
-
-  const handleOpenPricingModal = (service: Service) => {
-    setCurrentServiceForPricing(service);
-    const existingService = selectedServices.get(service.id);
-    if (existingService && existingService.pricing.length > 0) {
-      const pricingValues = existingService.pricing.map((p) => ({
-        unit: p.unit,
-        price: p.price,
-      }));
-      pricingForm.setFieldsValue({ pricing: pricingValues });
-    } else {
-      pricingForm.resetFields();
-    }
-    setPricingModalVisible(true);
-  };
-
-  const handleSavePricing = () => {
-    pricingForm.validateFields().then((values) => {
-      if (!currentServiceForPricing) return;
-
-      const pricingRows = (values.pricing || []) as Array<{
-        unit?: PricingUnit;
-        price?: number | string;
-      }>;
-
-      const pricing: ServicePricing[] = pricingRows
-        .filter((p) => p && p.unit && p.price)
-        .map((p) => ({
-          unit: p.unit as PricingUnit,
-          duration: 1,
-          price: Number(p.price),
-        }));
-
-      if (pricing.length === 0) {
-        Modal.error({
-          title: t("common.error"),
-          content: t("worker.setup.step2.validation.minPricing"),
-          centered: true,
-        });
-        return;
-      }
-
-      const hasDuplicateUnits = new Set(pricing.map((item) => item.unit)).size !== pricing.length;
-      if (hasDuplicateUnits) {
-        Modal.error({
-          title: t("common.error"),
-          content: "Mỗi đơn vị giá (giờ/ngày/tháng) chỉ được thiết lập một lần.",
-          centered: true,
-        });
-        return;
-      }
-
-      const newSelectedServices = new Map(selectedServices);
-      const existingService = newSelectedServices.get(
-        currentServiceForPricing.id
-      );
-      if (existingService) {
-        newSelectedServices.set(currentServiceForPricing.id, {
-          ...existingService,
-          pricing,
-        });
-      }
-      setSelectedServices(newSelectedServices);
-      setPricingModalVisible(false);
-      pricingForm.resetFields();
-    });
-  };
-
-  const handleClosePricingModal = () => {
-    setPricingModalVisible(false);
-    pricingForm.resetFields();
-  };
-
-  const handleRemoveService = (serviceId: string) => {
-    const newSelectedServices = new Map(selectedServices);
-    newSelectedServices.delete(serviceId);
-    setSelectedServices(newSelectedServices);
-  };
-
-  const handleSubmit = () => {
-    if (selectedServices.size === 0) {
-      Modal.warning({
-        title: t("common.warning"),
-        content: t("worker.setup.step2.validation.noServices"),
-        centered: true,
-      });
-      return;
-    }
-
-    const servicesWithoutPricing = Array.from(selectedServices.values()).filter(
-      (s) => s.pricing.length === 0
+    const assistanceServicesForSetup = useMemo(
+      () =>
+        filterAssistanceServicesForWorkerSetup(
+          assistanceServicesResponse?.services || []
+        ),
+      [assistanceServicesResponse?.services]
     );
 
-    if (servicesWithoutPricing.length > 0) {
-      Modal.warning({
-        title: t("common.warning"),
-        content: `${t(
-          "worker.setup.step2.validation.noPricing"
-        )}: ${servicesWithoutPricing.map((s) => s.name.vi).join(", ")}`,
-        centered: true,
-      });
-      return;
-    }
+    const companionshipServicesList = useMemo(
+      () => companionshipServicesResponse?.services || [],
+      [companionshipServicesResponse?.services]
+    );
 
-    const workerServices: WorkerServiceInput = {
-      services: Array.from(selectedServices.values()).map((service) => ({
-        service_id: service.id,
-        pricing: service.pricing,
-      })),
+    const { companionshipBase, companionshipLevels } = useMemo(() => {
+      const { base, levels } = splitCompanionshipServices(
+        companionshipServicesList
+      );
+      return { companionshipBase: base, companionshipLevels: levels };
+    }, [companionshipServicesList]);
+
+    const { data: existingWorkerServicesResponse } = useApiQueryData<{
+      services: Array<{
+        service_id: string;
+        service_code: string;
+        pricing: Array<{
+          unit: string;
+          duration?: number;
+          price: number;
+          currency: string;
+        }>;
+        is_active: boolean;
+      }>;
+    }>(["worker-services"], "/worker/services", {
+      enabled: true,
+      staleTime: 0,
+      refetchOnMount: true,
+    });
+
+    const existingWorkerServices = useMemo(
+      () => existingWorkerServicesResponse?.services || [],
+      [existingWorkerServicesResponse?.services]
+    );
+
+    const [hasLoadedExistingServices, setHasLoadedExistingServices] =
+      useState(false);
+
+    useEffect(() => {
+      if (
+        !hasLoadedExistingServices &&
+        existingWorkerServices &&
+        Array.isArray(existingWorkerServices) &&
+        existingWorkerServices.length > 0 &&
+        allServices.length > 0
+      ) {
+        const serviceMap = new Map(allServices.map((s) => [s.id, s]));
+        const newSelectedServices = new Map<string, SelectedService>();
+
+        existingWorkerServices.forEach((workerService) => {
+          const service = serviceMap.get(workerService.service_id);
+          if (service && isServiceIncludedInWorkerSetupStep(service)) {
+            newSelectedServices.set(service.id, {
+              ...service,
+              pricing: workerService.pricing.map((p) => ({
+                unit: p.unit as PricingUnit,
+                duration: p.duration ?? 1,
+                price: p.price,
+              })),
+              is_active: workerService.is_active,
+            });
+          }
+        });
+
+        queueMicrotask(() => {
+          if (newSelectedServices.size > 0) {
+            setSelectedServices(newSelectedServices);
+          }
+          setHasLoadedExistingServices(true);
+        });
+      }
+    }, [existingWorkerServices, allServices, hasLoadedExistingServices]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        validateAndGetWorkerServices: () =>
+          buildWorkerServicePayload(selectedServices, t),
+      }),
+      [selectedServices, t]
+    );
+
+    const handleServiceToggle = (service: Service) => {
+      const serviceId = service.id;
+      const newSelectedServices = new Map(selectedServices);
+
+      if (newSelectedServices.has(serviceId)) {
+        newSelectedServices.delete(serviceId);
+      } else {
+        newSelectedServices.set(serviceId, {
+          ...service,
+          pricing: [...DEFAULT_FIRST_PRICING_ROW],
+          is_active: true,
+        });
+      }
+
+      setSelectedServices(newSelectedServices);
     };
 
-    onNext(workerServices);
-  };
+    const updateServicePricing = useCallback(
+      (serviceId: string, pricing: ServicePricing[]) => {
+        setSelectedServices((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(serviceId);
+          if (!existing) {
+            return next;
+          }
+          if (pricing.length === 0) {
+            next.delete(serviceId);
+            return next;
+          }
+          next.set(serviceId, { ...existing, pricing });
+          return next;
+        });
+      },
+      []
+    );
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.subtitleBlock}>
-        <Paragraph type="secondary" className={styles.subtitleText}>
-          {t("worker.setup.step2.subtitle")}
-        </Paragraph>
-      </div>
+    const handleSubmit = () => {
+      const payload = buildWorkerServicePayload(selectedServices, t);
+      if (payload) {
+        onNext?.(payload);
+      }
+    };
 
-      <div className={styles.categorySection}>
-        <Text strong className={styles.categoryLabel}>
-          {t("worker.setup.step2.category.label")}
-        </Text>
-        <Row gutter={[Spacing.LG, Spacing.LG]}>
-          <Col xs={24} sm={12}>
-            <Card
-              hoverable
-              onClick={() => handleCategorySelect(ServiceCategoryEnum.ASSISTANCE)}
-              className={`${styles.categoryCard} ${
-                selectedCategory === ServiceCategoryEnum.ASSISTANCE ? styles.selected : ""
-              }`}
-            >
-              <div className={styles.categoryCardInner}>
-                <Title level={4} className={styles.categoryCardTitle}>
-                  {t("worker.setup.step2.category.assistance")}
-                </Title>
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Card
-              hoverable
-              onClick={() =>
-                handleCategorySelect(ServiceCategoryEnum.COMPANIONSHIP)
-              }
-              className={`${styles.categoryCard} ${
-                selectedCategory === ServiceCategoryEnum.COMPANIONSHIP ? styles.selected : ""
-              }`}
-            >
-              <div className={styles.categoryCardInner}>
-                <Title level={4} className={styles.categoryCardTitle}>
-                  {t("worker.setup.step2.category.companionship")}
-                </Title>
-              </div>
-            </Card>
-          </Col>
-        </Row>
-      </div>
+    const renderServiceShell = (service: Service) => {
+      const isSelected = selectedServices.has(service.id);
+      const selectedService = selectedServices.get(service.id);
+      const isCompact = !isSelected;
+      const checkboxId = `worker-setup-svc-${service.id}`;
 
-      {selectedCategory && (
-        <div className={styles.servicesSection}>
-          <Text strong className={styles.servicesLabel}>
-            {t("worker.setup.step2.services.label")}
-          </Text>
-          {isLoadingServices ? (
-            <div className={styles.spinWrapper}>
-              <Spin size="large" />
+      return (
+        <div
+          className={`${styles.stitchServiceShell} ${
+            isCompact
+              ? styles.stitchServiceCompact
+              : styles.stitchServiceExpanded
+          }`}
+        >
+          {isCompact ? (
+            <div className={styles.stitchServiceCompactInner}>
+              <Checkbox
+                id={checkboxId}
+                checked={isSelected}
+                onChange={() => handleServiceToggle(service)}
+              />
+              <label
+                htmlFor={checkboxId}
+                className={styles.stitchServiceNameCompact}
+              >
+                {service.name.vi}
+              </label>
             </div>
-          ) : services && services.length > 0 ? (
-            <Row gutter={[Spacing.LG, Spacing.LG]} className={styles.servicesGrid}>
-              {services.map((service) => {
-                const isSelected = selectedServices.has(service.id);
-                const selectedService = selectedServices.get(service.id);
-                const hasPricing =
-                  selectedService && selectedService.pricing.length > 0;
-
-                return (
-                  <Col xs={24} sm={12} lg={8} key={service.id}>
-                    <Card
-                      hoverable
-                      className={`${styles.serviceCard} ${isSelected ? styles.selected : ""}`}
-                      onClick={() => handleServiceToggle(service)}
-                    >
-                      <Row className={styles.serviceCardHeader} justify="space-between" align="top">
-                        <Col>
-                          <Checkbox
-                            checked={isSelected}
-                            onChange={() => handleServiceToggle(service)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </Col>
-                        <Col>
-                          {hasPricing && (
-                            <Tag color="green" icon={<CheckCircleOutlined />}>
-                              {t("worker.setup.step2.services.pricingSet")}
-                            </Tag>
-                          )}
-                        </Col>
-                      </Row>
-                      <Title level={5} className={styles.serviceCardTitle}>
-                        {service.name.vi}
-                      </Title>
-                      <Paragraph type="secondary" className={styles.serviceCardDesc}>
-                        {service.description.vi}
-                      </Paragraph>
-                      {service.rules && (
-                        <Space className={styles.serviceCardRules} size={4} wrap>
-                          {service.rules.physical_touch && (
-                            <Tag color="orange">Physical Touch</Tag>
-                          )}
-                          {service.rules.intellectual_conversation_required && (
-                            <Tag color="blue">Intellectual Conversation</Tag>
-                          )}
-                          <Tag>{service.rules.dress_code}</Tag>
-                        </Space>
-                      )}
-                      {isSelected && (
-                        <Button
-                          type="primary"
-                          size="small"
-                          icon={<PlusOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenPricingModal(service);
-                          }}
-                          className={styles.pricingButton}
-                        >
-                          {hasPricing
-                            ? t("worker.setup.step2.services.updatePricing")
-                            : t("worker.setup.step2.services.setPricing")}
-                        </Button>
-                      )}
-                    </Card>
-                  </Col>
-                );
-              })}
-            </Row>
           ) : (
-            <Empty description={t("worker.setup.step2.services.noServices")} />
+            <>
+              <div className={styles.stitchServiceExpandedTop}>
+                <div className={styles.stitchServiceExpandedLead}>
+                  <Checkbox
+                    id={checkboxId}
+                    checked={isSelected}
+                    onChange={() => handleServiceToggle(service)}
+                  />
+                  <label
+                    htmlFor={checkboxId}
+                    className={styles.stitchServiceNameExpanded}
+                  >
+                    {service.name.vi}
+                  </label>
+                </div>
+              </div>
+              <ServicePricingInline
+                pricing={selectedService?.pricing ?? []}
+                currency={currency}
+                onChange={(next) => updateServicePricing(service.id, next)}
+              />
+            </>
           )}
         </div>
-      )}
+      );
+    };
 
-      {selectedServices.size > 0 && (
-        <div className={styles.selectedSection}>
-          <Divider />
-          <Title level={4} className={styles.selectedTitle}>
-            {t("worker.setup.step2.selected.title")} ({selectedServices.size})
-          </Title>
-          <Space orientation="vertical" size={Spacing.LG} className={styles.selectedList}>
-            {Array.from(selectedServices.values()).map((service) => (
-              <Card key={service.id} size="small">
-                <Row justify="space-between" align="top">
-                  <Col flex={1}>
-                    <Title level={5} className={styles.serviceCardTitle}>
-                      {service.name.vi}
-                    </Title>
-                    {service.pricing.length > 0 ? (
-                      <Space size={4} wrap>
-                        {service.pricing.map((p, index) => (
-                          <Tag key={index} color="green">
-                            {formatCurrency(p.price)} /{" "}
-                            {p.unit === PricingUnitEnum.HOURLY
-                              ? t("worker.setup.step2.selected.hour")
-                              : p.unit === PricingUnitEnum.DAILY
-                              ? t("worker.setup.step2.selected.day")
-                              : t("worker.setup.step2.selected.month")}
-                          </Tag>
-                        ))}
-                      </Space>
-                    ) : (
-                      <Alert
-                        message={t("worker.setup.step2.services.noPricing")}
-                        type="warning"
-                        showIcon
-                        className={styles.alertMargin}
-                      />
-                    )}
-                  </Col>
-                  <Col>
-                    <Space>
-                      <Button
-                        type="link"
-                        size="small"
-                        onClick={() => handleOpenPricingModal(service)}
-                      >
-                        {service.pricing.length > 0
-                          ? t("worker.setup.step2.services.editPricing")
-                          : t("worker.setup.step2.services.setPricing")}
-                      </Button>
-                      <Button
-                        type="link"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleRemoveService(service.id)}
-                      >
-                        {t("worker.setup.step2.services.remove")}
-                      </Button>
-                    </Space>
-                  </Col>
-                </Row>
-              </Card>
-            ))}
-          </Space>
+    const hasCompanionshipRows =
+      !!companionshipBase || companionshipLevels.length > 0;
+
+    return (
+      <div
+        className={`${styles.container} ${styles.embedded} ${styles.setupSkin}`}
+      >
+        <div className={styles.embeddedCategoriesStack}>
+          <div className={styles.monolithCategoryBlock}>
+            <div className={styles.categoryGroupHeader}>
+              <span className={styles.categoryAccentBar} aria-hidden />
+              <Title level={5} className={styles.categoryGroupTitle}>
+                {t("worker.setup.step2.category.assistance")}
+              </Title>
+            </div>
+            {isLoadingAssistance ? (
+              <div className={styles.spinWrapper}>
+                <Spin size="large" />
+              </div>
+            ) : assistanceServicesForSetup.length > 0 ? (
+              <div className={styles.assistanceStack}>
+                {assistanceServicesForSetup.map((service) => (
+                  <div key={service.id} className={styles.assistanceRow}>
+                    {renderServiceShell(service)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty
+                description={t("worker.setup.step2.services.noServices")}
+              />
+            )}
+          </div>
+
+          <div className={styles.monolithCategoryBlock}>
+            <div className={styles.categoryGroupHeader}>
+              <span className={styles.categoryAccentBar} aria-hidden />
+              <Title level={5} className={styles.categoryGroupTitle}>
+                {t("worker.setup.step2.category.companionship")}
+              </Title>
+            </div>
+            {isLoadingCompanionship ? (
+              <div className={styles.spinWrapper}>
+                <Spin size="large" />
+              </div>
+            ) : hasCompanionshipRows ? (
+              <div className={styles.companionGrid}>
+                {companionshipBase ? (
+                  <div className={styles.companionGridCell}>
+                    {renderServiceShell(companionshipBase)}
+                  </div>
+                ) : null}
+                {companionshipLevels.map((service) => (
+                  <div key={service.id} className={styles.companionGridCell}>
+                    {renderServiceShell(service)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty
+                description={t("worker.setup.step2.services.noServices")}
+              />
+            )}
+          </div>
         </div>
-      )}
 
-      <Row justify="space-between" align="middle" className={styles.navRow}>
-        <Col>
-          <Button onClick={onBack} size="large">
-            {t("worker.setup.step2.back")}
-          </Button>
-        </Col>
-        <Col>
-          <Button
-            type="primary"
-            onClick={handleSubmit}
-            loading={isPending}
-            size="large"
-          >
-            {t("worker.setup.step2.complete")}
-          </Button>
-        </Col>
-      </Row>
-
-      <PricingModal
-        open={pricingModalVisible}
-        currentServiceName={currentServiceForPricing?.name.vi || ""}
-        form={pricingForm}
-        currency={currency}
-        onSave={handleSavePricing}
-        onCancel={handleClosePricingModal}
-        t={t}
-      />
-    </div>
-  );
-};
+        {!hideActions ? (
+          <Row justify="space-between" align="middle" className={styles.navRow}>
+            <Col>
+              <Button onClick={onBack} size="large">
+                {t("worker.setup.step2.back")}
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                onClick={handleSubmit}
+                loading={isPending}
+                size="large"
+              >
+                {t("worker.setup.step2.complete")}
+              </Button>
+            </Col>
+          </Row>
+        ) : null}
+      </div>
+    );
+  }
+);

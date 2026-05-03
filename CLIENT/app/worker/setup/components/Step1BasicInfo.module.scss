@@ -1,80 +1,478 @@
+$setup-primary: #801b1b;
+$setup-outline: #debfbc;
+$setup-surface-low: #f6f3f2;
+$setup-surface-variant: #e5e2e1;
+$setup-on-surface-variant: #57413f;
+$setup-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+$setup-control-h: 36px;
+
+.setupSkin {
+  width: 100%;
+
+  :global(.ant-form-item) {
+    margin-bottom: 0;
+  }
+
+  :global(.ant-form-item-label > label) {
+    height: auto;
+  }
+
+  .stitchField:global(.ant-form-item) {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  .stitchField:global(.ant-form-item.ant-form-item-vertical) {
+    margin-bottom: 0;
+  }
+
+  .stitchField :global(.ant-form-item-label) {
+    padding: 0 !important;
+    margin: 0 0 8px !important;
+    line-height: 1.2 !important;
+  }
+
+  .stitchField :global(.ant-form-item-label > label) {
+    width: 100%;
+  }
+
+  .stitchField :global(.ant-form-item-control-input) {
+    min-height: auto;
+  }
+
+  .stitchField :global(.ant-form-item-control-input-content) {
+    display: block;
+  }
+
+  .stitchField :global(.ant-form-item-extra) {
+    margin-top: 6px;
+    padding-top: 0;
+  }
+
+  :global(.ant-input),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-select),
+  :global(.ant-picker),
+  :global(.ant-input-number) {
+    border-radius: 8px !important;
+    border-color: $setup-outline !important;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #fff !important;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+
+  /*
+   * One outer height for all single-line controls (border-box).
+   * AD6 Select uses --select-height only to derive padding; setting it == outer h
+   * plus default padding made the control taller than Input/DatePicker.
+   */
+  :global(.ant-input:not(textarea)) {
+    height: $setup-control-h !important;
+    padding-block: 0 !important;
+    padding-inline: 12px !important;
+    line-height: 1.375 !important;
+    box-sizing: border-box !important;
+  }
+
+  :global(.ant-input-affix-wrapper) {
+    min-height: $setup-control-h !important;
+    height: $setup-control-h !important;
+    padding-block: 0 !important;
+    padding-inline: 12px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  :global(.ant-select.ant-select-single) {
+    height: $setup-control-h !important;
+    min-height: $setup-control-h !important;
+    max-height: $setup-control-h !important;
+    box-sizing: border-box !important;
+    padding-block: 0 !important;
+    align-items: center !important;
+    line-height: 1.375 !important;
+  }
+
+  :global(.ant-select.ant-select-multiple) {
+    min-height: $setup-control-h !important;
+    box-sizing: border-box !important;
+    padding-block: 4px !important;
+    align-items: center !important;
+  }
+
+  :global(.ant-select.ant-select-single .ant-select-content-value),
+  :global(.ant-select.ant-select-single .ant-select-placeholder) {
+    line-height: 1.375 !important;
+  }
+
+  :global(.ant-picker) {
+    height: $setup-control-h !important;
+    min-height: $setup-control-h !important;
+    max-height: $setup-control-h !important;
+    padding-block: 0 !important;
+    padding-inline: 12px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1.375 !important;
+  }
+
+  :global(.ant-input-number) {
+    width: 100% !important;
+    height: $setup-control-h !important;
+    max-height: $setup-control-h !important;
+    box-sizing: border-box !important;
+  }
+
+  :global(.ant-input-number .ant-input-number-input-wrap) {
+    height: 100% !important;
+  }
+
+  :global(.ant-input-number-input) {
+    height: 100% !important;
+    padding-block: 0 !important;
+    padding-inline: 12px !important;
+    line-height: 1.375 !important;
+    box-sizing: border-box !important;
+  }
+
+  :global(.ant-input-number-handler-wrap) {
+    display: none !important;
+  }
+
+  :global(.ant-input-number-group .ant-input-number) {
+    border-radius: 8px 0 0 8px !important;
+  }
+
+  :global(.ant-input-number-group-addon) {
+    border-color: $setup-outline !important;
+    background: $setup-surface-low !important;
+    color: $setup-on-surface-variant !important;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  :global(.ant-input-number-group-addon:last-child) {
+    border-radius: 0 8px 8px 0 !important;
+  }
+
+  :global(.ant-input:hover),
+  :global(.ant-input-affix-wrapper:hover),
+  :global(.ant-select:hover),
+  :global(.ant-picker:hover),
+  :global(.ant-input-number:hover) {
+    border-color: #c4a8a5 !important;
+  }
+
+  :global(.ant-input:focus),
+  :global(.ant-input-affix-wrapper-focused),
+  :global(.ant-select-focused),
+  :global(.ant-picker-focused),
+  :global(.ant-input-number-focused) {
+    border-color: $setup-primary !important;
+    box-shadow: 0 0 0 2px rgba(128, 27, 27, 0.15) !important;
+  }
+
+  :global(.ant-select-multiple .ant-select-selection-item) {
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid $setup-outline;
+    line-height: 22px !important;
+    margin-block: 2px;
+  }
+
+  :global(.ant-input-textarea) {
+    border-radius: 8px;
+  }
+
+  :global(.ant-input-textarea textarea) {
+    border-radius: 8px;
+    border-color: $setup-outline;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #fff;
+  }
+
+  :global(.ant-input-textarea textarea:hover) {
+    border-color: #c4a8a5;
+  }
+
+  :global(.ant-input-textarea textarea:focus) {
+    border-color: $setup-primary;
+    box-shadow: 0 0 0 2px rgba(128, 27, 27, 0.15);
+  }
+
+  :global(.ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: $setup-primary !important;
+    border-color: $setup-primary !important;
+  }
+
+  :global(.ant-checkbox:hover .ant-checkbox-inner),
+  :global(.ant-checkbox-wrapper:hover .ant-checkbox-inner) {
+    border-color: #c4a8a5 !important;
+  }
+}
+
+.fieldGrid3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fieldGrid3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .fieldGrid3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.fieldGrid2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fieldGrid2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.introTextarea {
+  resize: vertical;
+}
+
+.stitchSection {
+  background: #fff;
+  border: 1px solid $setup-outline;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
 .container {
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.progressBlock {
-  margin-bottom: 48px;
-  text-align: center;
-}
-
-.card {
-  width: 100%;
-  margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.cardGallery {
-  width: 100%;
-  margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.cardTitle {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.spaceFull {
   width: 100%;
 }
 
-.locationBox {
-  text-align: center;
-  padding: 16px;
-  background: var(--ant-color-fill-tertiary);
-  border-radius: 8px;
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
 }
 
-.locationLabel {
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid $setup-surface-variant;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid $setup-surface-variant;
+}
+
+.sectionHeaderRow .sectionHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.sectionIcon {
+  font-size: 20px;
+  color: $setup-primary;
+}
+
+.sectionTitle {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+  color: #1c1b1b !important;
+}
+
+.labelUpper {
   display: block;
-  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $setup-on-surface-variant;
+  line-height: 1.2;
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: $setup-on-surface-variant;
+}
+
+.galleryHint {
+  font-size: 13px;
+  font-style: italic;
 }
 
 .inputFull {
   width: 100%;
 }
 
-.hobbiesTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.hobbiesBlock {
+  margin-bottom: 8px;
 }
 
-.hobbyInput {
+.hobbiesBlock > .labelUpper {
+  margin-bottom: 8px;
+}
+
+.hobbiesShell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid $setup-outline;
+  border-radius: 8px;
+  background: $setup-surface-low;
+}
+
+.hobbiesInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   flex: 1;
+  min-width: 0;
+}
+
+.hobbyInputInline {
+  flex: 1;
+  min-width: 140px;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding-inline: 4px !important;
+}
+
+.hobbyInputInline:focus,
+.hobbyInputInline:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.hobbyAddBtn {
+  flex-shrink: 0;
 }
 
 .tagItem {
-  margin-bottom: 8px;
-  font-size: 14px;
-  padding: 4px 12px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff !important;
+  border: 1px solid $setup-outline !important;
 }
 
-.uploadHint {
-  display: block;
-  margin-top: 8px;
+.galleryUploadWrap {
+  width: 100%;
+}
+
+.galleryUploadWrap :global(.ant-upload-list.ant-upload-list-picture-card) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 576px) {
+  .galleryUploadWrap :global(.ant-upload-list.ant-upload-list-picture-card) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .galleryUploadWrap :global(.ant-upload-list.ant-upload-list-picture-card) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .galleryUploadWrap :global(.ant-upload-list.ant-upload-list-picture-card) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.galleryUploadWrap :global(.ant-upload-list-picture-card-container) {
+  width: 100% !important;
+  height: auto !important;
+  margin-inline: 0 !important;
+  margin-block: 0 !important;
+}
+
+.galleryUploadWrap :global(.ant-upload-list-picture-card .ant-upload-list-item) {
+  width: 100% !important;
+  height: 148px !important;
+  margin: 0 !important;
+  border-radius: 8px;
+  border: 1px solid $setup-outline;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.galleryUploadWrap :global(.ant-upload-list-picture-card .ant-upload-list-item-thumbnail img) {
+  object-fit: cover;
+}
+
+.galleryUploadWrap :global(.ant-upload-select.ant-upload) {
+  width: 100% !important;
+  height: 148px !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  border: 2px dashed $setup-outline !important;
+  background: $setup-surface-low !important;
+}
+
+.galleryUploadWrap :global(.ant-upload-select.ant-upload:hover) {
+  border-color: $setup-primary !important;
+  color: $setup-primary;
 }
 
 .uploadAddText {
   margin-top: 8px;
-}
-
-.navRow {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid var(--ant-color-border-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }

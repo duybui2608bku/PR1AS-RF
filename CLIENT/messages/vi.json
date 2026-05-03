@@ -648,6 +648,15 @@
     "setup": {
       "title": "Thiết lập Profile Worker",
       "subtitle": "Hoàn thiện thông tin profile và cấu hình dịch vụ của bạn",
+      "monolith": {
+        "pageTitle": "Đăng ký Worker",
+        "pageSubtitle": "Hoàn thiện hồ sơ chuyên nghiệp của bạn để bắt đầu kết nối với khách hàng.",
+        "sectionPersonal": "Thông tin cá nhân",
+        "sectionGallery": "Hình ảnh hồ sơ",
+        "sectionServices": "Dịch vụ và Giá cả",
+        "footerComplete": "Hoàn tất đăng ký",
+        "footerBack": "Quay lại"
+      },
       "step1": {
         "title": "Thông tin cơ bản",
         "description": "Điền thông tin cá nhân",
@@ -660,6 +669,12 @@
           "required": "Vui lòng lấy vị trí trước khi tiếp tục",
           "latitude": "Vĩ độ",
           "longitude": "Kinh độ"
+        },
+        "workAreas": {
+          "label": "Khu vực / vị trí làm việc",
+          "placeholder": "Gõ để tìm và chọn một hoặc nhiều khu vực",
+          "required": "Vui lòng chọn ít nhất một khu vực làm việc",
+          "phase1Hint": "Danh sách đang dùng dữ liệu mẫu. Lựa chọn sẽ được lưu trên máy chủ ở bản cập nhật sau."
         },
         "dateOfBirth": {
           "label": "Ngày sinh"
@@ -769,9 +784,9 @@
           "unit": {
             "label": "Đơn vị",
             "required": "Vui lòng chọn đơn vị!",
-            "hour": "Theo giờ",
-            "day": "Theo ngày",
-            "month": "Theo tháng"
+            "hour": "Giờ",
+            "day": "Ngày",
+            "month": "Tháng"
           },
           "duration": {
             "label": "Thời gian",
@@ -781,18 +796,19 @@
           },
           "price": {
             "label": "Giá",
-            "placeholder": "Giá",
+            "placeholder": "0",
             "required": "Vui lòng nhập giá!",
             "min": "Giá phải lớn hơn 0!"
           },
-          "add": "Thêm mức giá",
+          "add": "+ THÊM MỨC GIÁ",
           "save": "Lưu",
           "cancel": "Hủy"
         },
         "validation": {
           "noServices": "Vui lòng chọn ít nhất một dịch vụ",
           "noPricing": "Vui lòng thiết lập giá cho các dịch vụ",
-          "minPricing": "Vui lòng thêm ít nhất một mức giá cho dịch vụ"
+          "minPricing": "Vui lòng thêm ít nhất một mức giá cho dịch vụ",
+          "duplicatePricingUnit": "Mỗi đơn vị giá (giờ/ngày/tháng) chỉ được thiết lập một lần."
         },
         "back": "Quay lại",
         "complete": "Hoàn thành"

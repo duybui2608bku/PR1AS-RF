@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Typography, message, Spin, Card } from "antd";
-import { Step1BasicInfo } from "./components/Step1BasicInfo";
-import { Step2Services } from "./components/Step2Services";
-import { StepLayout } from "./components/StepLayout";
+import React, { useRef, useCallback } from "react";
+import { Inter } from "next/font/google";
+import {
+  Typography,
+  message,
+  Spin,
+  Card,
+  Row,
+  Col,
+  Button,
+} from "antd";
+import { PayCircleOutlined } from "@ant-design/icons";
+import {
+  Step1BasicInfo,
+  type WorkerProfileStepHandle,
+} from "./components/Step1BasicInfo";
+import {
+  Step2Services,
+  type Step2ServicesHandle,
+} from "./components/Step2Services";
 import { useApiMutation } from "@/lib/hooks/use-api";
-import type {
-  WorkerProfile,
-  WorkerProfileUpdateInput,
-  WorkerServiceInput,
-} from "@/lib/types/worker";
-import { Gender } from "@/lib/types/worker";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/hooks/use-i18n";
 import { useErrorHandler } from "@/lib/hooks/use-error-handler";
@@ -21,10 +30,13 @@ import { authApi } from "@/lib/api/auth.api";
 import { buildWorkerProfileRoute } from "@/lib/constants/routes";
 import styles from "@/app/worker/setup/page.module.scss";
 
-const { Paragraph } = Typography;
-const REDIRECT_DELAY_MS = 1500;
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+});
 
-export type StepStatus = "wait" | "process" | "finish" | "error";
+const { Title, Paragraph } = Typography;
+const REDIRECT_DELAY_MS = 1500;
 
 interface WorkerSetupFlowProps {
   isEditMode?: boolean;
@@ -35,20 +47,8 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
   const { t } = useI18n();
   const { handleError } = useErrorHandler();
   const { user, setUser } = useAuthStore();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [step1Data, setStep1Data] = useState<WorkerProfileUpdateInput | null>(
-    null
-  );
-  const [, setStepStatus] = useState<StepStatus[]>(["process", "wait"]);
-
-  const step1ProfileData: WorkerProfile | null = useMemo(() => step1Data
-    ? {
-        ...step1Data,
-        gender: step1Data.gender ?? Gender.MALE,
-        hobbies: step1Data.hobbies || [],
-        gallery_urls: step1Data.gallery_urls || [],
-      }
-    : null, [step1Data]);
+  const profileRef = useRef<WorkerProfileStepHandle>(null);
+  const servicesRef = useRef<Step2ServicesHandle>(null);
 
   const profileMutation = useApiMutation<{ user: User }>(
     "/auth/profile",
@@ -60,8 +60,6 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
           setUser(updatedUser);
         }
         message.success(t("worker.setup.success.profileSaved"));
-        setStepStatus(["finish", "process"]);
-        setCurrentStep(1);
       },
       onError: (error) => {
         message.error(
@@ -78,11 +76,10 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
         const latestUser = await authApi.getMe();
         setUser(latestUser as unknown as User);
       } catch {
-        // Non-blocking: store sẽ được làm mới ở AuthGuard lần render kế tiếp
+        // Non-blocking
       }
 
       message.success(t("worker.setup.success.setupComplete"));
-      setStepStatus(["finish", "finish"]);
       if (isEditMode && user?.id) {
         router.push(buildWorkerProfileRoute(user.id));
         return;
@@ -100,73 +97,101 @@ export function WorkerSetupFlow({ isEditMode = false }: WorkerSetupFlowProps) {
     },
   });
 
-  const handleStep1Next = useCallback(async (data: WorkerProfileUpdateInput) => {
+  const handleComplete = useCallback(async () => {
+    const profilePayload = await profileRef.current?.validateAndGetProfile();
+    if (!profilePayload) {
+      return;
+    }
+    const servicesPayload =
+      servicesRef.current?.validateAndGetWorkerServices();
+    if (!servicesPayload) {
+      return;
+    }
     try {
-      await profileMutation.mutateAsync({ worker_profile: data });
-      setStep1Data(data);
+      await profileMutation.mutateAsync({ worker_profile: profilePayload });
+      await servicesMutation.mutateAsync(servicesPayload);
     } catch (error) {
       handleError(error);
     }
-  }, [profileMutation, handleError]);
+  }, [profileMutation, servicesMutation, handleError]);
 
-  const handleStep2Next = useCallback(async (data: WorkerServiceInput) => {
-    try {
-      await servicesMutation.mutateAsync(data);
-    } catch (error) {
-      handleError(error);
-    }
-  }, [servicesMutation, handleError]);
+  const isBusy = profileMutation.isPending || servicesMutation.isPending;
+  const loadingMessage = profileMutation.isPending
+    ? t("worker.setup.loading.savingProfile")
+    : t("worker.setup.loading.savingServices");
 
-  const handleStep2Back = useCallback(() => {
-    setCurrentStep(0);
-    setStepStatus(["process", "wait"]);
-  }, []);
+  return (
+    <div className={`${styles.monolith} ${inter.className}`}>
+      <div className={styles.inner}>
+        <header className={styles.hero}>
+          <Title level={3} className={styles.pageTitle}>
+            {t("worker.setup.monolith.pageTitle")}
+          </Title>
+          <Paragraph type="secondary" className={styles.pageSubtitle}>
+            {t("worker.setup.monolith.pageSubtitle")}
+          </Paragraph>
+        </header>
 
-  if (currentStep === 0) {
-    return (
-      <StepLayout stepTitle={t("worker.setup.step1.title")}>
-        <Step1BasicInfo
-          onNext={handleStep1Next}
-          isPending={profileMutation.isPending}
-          initialData={step1ProfileData}
-        />
-        {profileMutation.isPending ? (
-          <div className={styles.overlay}>
-            <Card>
-              <Spin size="large" />
-              <Paragraph className={styles.loadingText}>
-                {t("worker.setup.loading.savingProfile")}
-              </Paragraph>
-            </Card>
+        <Step1BasicInfo ref={profileRef} />
+
+        <section className={styles.stitchSection}>
+          <div className={styles.servicesSectionLead}>
+            <div className={styles.sectionHeader}>
+              <PayCircleOutlined className={styles.sectionIcon} aria-hidden />
+              <Title level={5} className={styles.sectionTitle}>
+                {t("worker.setup.monolith.sectionServices")}
+              </Title>
+            </div>
+            <Paragraph type="secondary" className={styles.sectionIntro}>
+              {t("worker.setup.step2.subtitle")}
+            </Paragraph>
           </div>
-        ) : null}
-      </StepLayout>
-    );
-  }
+          <Step2Services
+            ref={servicesRef}
+            hideActions
+            embedded
+          />
+        </section>
 
-  if (currentStep === 1) {
-    return (
-      <StepLayout stepTitle={t("worker.setup.step2.title")}>
-        <Step2Services 
-          onNext={handleStep2Next} 
-          onBack={handleStep2Back}
-          isPending={servicesMutation.isPending}
-        />
-        {servicesMutation.isPending ? (
-          <div className={styles.overlay}>
-            <Card>
-              <Spin size="large" />
-              <Paragraph className={styles.loadingText}>
-                {t("worker.setup.loading.savingServices")}
-              </Paragraph>
-            </Card>
-          </div>
-        ) : null}
-      </StepLayout>
-    );
-  }
+        <Row
+          justify="space-between"
+          align="middle"
+          className={styles.footerRow}
+        >
+          <Col>
+            <Button
+              type="text"
+              size="middle"
+              className={styles.backButton}
+              onClick={() => router.back()}
+            >
+              {t("worker.setup.monolith.footerBack")}
+            </Button>
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              size="middle"
+              className={styles.completeButton}
+              loading={isBusy}
+              onClick={() => void handleComplete()}
+            >
+              {t("worker.setup.monolith.footerComplete")}
+            </Button>
+          </Col>
+        </Row>
+      </div>
 
-  return null;
+      {isBusy ? (
+        <div className={styles.overlay}>
+          <Card>
+            <Spin size="large" />
+            <Paragraph className={styles.loadingText}>{loadingMessage}</Paragraph>
+          </Card>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function WorkerSetupPage() {

@@ -1,0 +1,121 @@
+$setup-primary: #801b1b;
+$setup-outline: #debfbc;
+$setup-on-surface-variant: #57413f;
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.fields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .fields {
+    grid-template-columns: 1fr;
+    flex: 1 1 100%;
+  }
+
+  .removeBtn {
+    margin-top: 0 !important;
+    margin-left: auto;
+  }
+}
+
+.fieldStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $setup-on-surface-variant;
+  padding-inline: 4px;
+}
+
+.control {
+  width: 100%;
+}
+
+.control :global(.ant-select-selector) {
+  border-radius: 8px !important;
+  border-color: $setup-outline !important;
+}
+
+.priceField {
+  position: relative;
+  width: 100%;
+}
+
+.priceField :global(.ant-input-number) {
+  width: 100% !important;
+  border-radius: 8px !important;
+  border-color: $setup-outline !important;
+}
+
+.priceInput {
+  width: 100% !important;
+}
+
+.priceField :global(.ant-input-number-input) {
+  padding-right: 44px !important;
+}
+
+.currencySuffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: $setup-on-surface-variant;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.removeBtn {
+  flex-shrink: 0;
+  margin-top: 28px;
+  color: $setup-on-surface-variant !important;
+}
+
+.removeBtn:hover {
+  color: #ba1a1a !important;
+}
+
+.addBtn {
+  align-self: flex-start;
+  padding: 0 !important;
+  height: auto !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: $setup-primary !important;
+}
+
+.addBtn:hover {
+  color: #6d1515 !important;
+}
