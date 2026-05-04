@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useResetPassword } from "@/lib/hooks/use-auth"
+import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -21,6 +22,8 @@ export default function ResetPasswordPage() {
   const [tokenInput, setTokenInput] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
 
@@ -49,8 +52,8 @@ export default function ResetPasswordPage() {
 
       setIsSuccess(true)
       window.setTimeout(() => router.push("/login"), 1800)
-    } catch {
-      setErrorMessage("Không thể đặt lại mật khẩu. Vui lòng thử lại.")
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, "Không thể đặt lại mật khẩu. Vui lòng thử lại."))
     }
   }
 
@@ -82,25 +85,51 @@ export default function ResetPasswordPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu mới</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                minLength={8}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  minLength={8}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  onClick={() => setShowPassword((previous) => !previous)}
+                  aria-label={showPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                minLength={8}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  minLength={8}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  onClick={() => setShowConfirmPassword((previous) => !previous)}
+                  aria-label={showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"}
+                >
+                  {showConfirmPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={resetPasswordMutation.isPending}>

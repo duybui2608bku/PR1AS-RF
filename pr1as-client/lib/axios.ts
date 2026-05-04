@@ -1,9 +1,18 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { toApiError } from "@/lib/utils/error-handler"
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api"
+const baseURL = process.env.NEXT_PUBLIC_API_URL
+
+if (!baseURL) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_API_URL is required in production builds.")
+  }
+  console.warn("[axios] NEXT_PUBLIC_API_URL is not set, falling back to http://localhost:3001/api")
+}
 
 export const api: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: baseURL ?? "http://localhost:3001/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -12,23 +21,21 @@ export const api: AxiosInstance = axios.create({
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("auth_token")
-    if (token) {
-      config.headers.set("Authorization", `Bearer ${token}`)
-    }
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`)
   }
   return config
 })
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string }>) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
-      window.localStorage.removeItem("auth_token")
+      useAuthStore.getState().clearAuth()
     }
-    return Promise.reject(error)
+
+    const apiError = toApiError(error)
+    return Promise.reject(apiError ?? error)
   },
 )
-
-export type ApiError = AxiosError<{ message?: string; errors?: Record<string, string[]> }>

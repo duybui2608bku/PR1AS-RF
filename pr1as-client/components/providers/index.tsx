@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/providers/theme-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { Toaster } from "@/components/ui/sonner"

@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Loader2, ShieldCheck } from "lucide-react"
+import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -11,28 +11,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { useLogin, useResendVerification } from "@/lib/hooks/use-auth"
+import { useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
+import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { isAuthenticated, user } = useAuthStore()
+  const { token, isAuthenticated, user, clearAuth } = useAuthStore()
   const loginMutation = useLogin()
   const resendVerificationMutation = useResendVerification()
+  const meQuery = useMe()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (!token || !isAuthenticated) {
       return
     }
 
-    router.push(user.role === "admin" ? "/dashboard" : "/")
-  }, [isAuthenticated, router, user])
+    if (meQuery.isError) {
+      clearAuth()
+      return
+    }
+
+    if (!meQuery.isSuccess || !meQuery.data?.success) {
+      return
+    }
+
+    const authenticatedUser = meQuery.data.data?.user ?? user
+    if (!authenticatedUser) {
+      return
+    }
+
+    router.replace(authenticatedUser.role === "admin" ? "/dashboard" : "/")
+  }, [token, isAuthenticated, meQuery.isError, meQuery.isSuccess, meQuery.data, clearAuth, router, user])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -57,7 +74,7 @@ export default function LoginPage() {
         return
       }
 
-      toast.error("Không thể đăng nhập. Vui lòng thử lại.")
+      toast.error(getErrorMessage(error, "Không thể đăng nhập. Vui lòng thử lại."))
     }
   }
 
@@ -69,8 +86,8 @@ export default function LoginPage() {
     try {
       await resendVerificationMutation.mutateAsync({ email: pendingVerificationEmail })
       toast.success("Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.")
-    } catch {
-      toast.error("Gửi lại email xác minh thất bại. Vui lòng thử lại.")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Gửi lại email xác minh thất bại. Vui lòng thử lại."))
     }
   }
 
@@ -78,8 +95,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <ShieldCheck className="mx-auto mb-2 size-10 text-primary" />
-        <CardTitle>Đăng nhập</CardTitle>
-        <CardDescription>Nhập tài khoản để tiếp tục.</CardDescription>
+        <CardTitle>ĐĂNG NHẬP</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -97,16 +113,29 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mật khẩu</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-              minLength={8}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+                minLength={8}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                onClick={() => setShowPassword((previous) => !previous)}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+              </Button>
+            </div>
           </div>
           <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
             {loginMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}

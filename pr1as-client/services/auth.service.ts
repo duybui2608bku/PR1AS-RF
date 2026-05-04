@@ -3,6 +3,8 @@ import type { AuthUser } from "@/lib/store/auth-store"
 
 export type LoginPayload = { email: string; password: string }
 export type LoginResult = { user: AuthUser; token: string }
+export type SwitchRolePayload = { last_active_role: string }
+export type SwitchRoleResult = { user: AuthUser }
 
 export const authService = {
   me: async () => {
@@ -15,5 +17,9 @@ export const authService = {
   },
   logout: async () => {
     await api.post("/auth/logout")
+  },
+  switchRole: async (payload: SwitchRolePayload) => {
+    const { data } = await api.patch<SwitchRoleResult>("/auth/switch-role", payload)
+    return data
   },
 }

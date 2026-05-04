@@ -1,18 +1,19 @@
 "use client"
 
-import { FormEvent, useMemo, useState } from "react"
+import {  FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, Loader2, ShieldPlus, X } from "lucide-react"
+import { Check, Eye, EyeOff, Loader2, X } from "lucide-react"
+import { toast } from "sonner"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent,  CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useRegister } from "@/lib/hooks/use-auth"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
+import { getErrorMessage } from "@/lib/utils/error-handler"
 
 const passwordRules = [
   { label: "Ít nhất 8 ký tự", test: (value: string) => value.length >= 8 },
@@ -31,21 +32,21 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const passwordMeetsAllRules = useMemo(() => passwordRules.every((rule) => rule.test(password)), [password])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setErrorMessage(null)
 
     if (!passwordMeetsAllRules) {
-      setErrorMessage("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
+      toast.error("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
       return
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage("Mật khẩu xác nhận không khớp.")
+      toast.error("Mật khẩu xác nhận không khớp.")
       return
     }
 
@@ -58,22 +59,21 @@ export default function RegisterPage() {
       })
 
       if (!response.success) {
-        setErrorMessage(response.message ?? "Đăng ký thất bại.")
+        toast.error(response.message ?? "Đăng ký thất bại.")
         return
       }
 
+      toast.success("Đăng ký thành công. Vui lòng xác minh email.")
       router.push(`/verify-email?email=${encodeURIComponent(normalizeEmail(email))}`)
-    } catch {
-      setErrorMessage("Không thể đăng ký tài khoản. Vui lòng thử lại.")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Không thể đăng ký tài khoản. Vui lòng thử lại."))
     }
   }
 
   return (
     <Card>
       <CardHeader className="text-center">
-        <ShieldPlus className="mx-auto mb-2 size-10 text-primary" />
-        <CardTitle>Đăng ký tài khoản</CardTitle>
-        <CardDescription>Tạo tài khoản mới để bắt đầu.</CardDescription>
+        <CardTitle>ĐĂNG KÍ TÀI KHOẢN</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -91,54 +91,76 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mật khẩu</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+                required
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                onClick={() => setShowPassword((previous) => !previous)}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Xác nhận mật khẩu</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              minLength={8}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={8}
+                required
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                onClick={() => setShowConfirmPassword((previous) => !previous)}
+                aria-label={showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"}
+              >
+                {showConfirmPassword ? <EyeOff /> : <Eye />}
+              </Button>
+            </div>
           </div>
-
           <div className="rounded-md border p-3 text-sm">
-            <p className="mb-2 font-medium">Yêu cầu mật khẩu:</p>
-            <ul className="space-y-1 text-muted-foreground">
-              {passwordRules.map((rule) => {
-                const isMet = rule.test(password)
-                return (
-                  <li key={rule.label} className="flex items-center gap-2">
-                    {isMet ? <Check className="size-4 text-emerald-600" /> : <X className="size-4 text-muted-foreground" />}
-                    <span>{rule.label}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+          <p className="mb-2 font-medium">Yêu cầu mật khẩu:</p>
 
+  <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+    {passwordRules.map((rule) => {
+      const isMet = rule.test(password)
+      return (
+        <li key={rule.label} className="flex items-center gap-2">
+          {isMet ? (
+            <Check className="size-4 text-emerald-600" />
+          ) : (
+            <X className="size-4 text-muted-foreground" />
+          )}
+          <span>{rule.label}</span>
+        </li>
+      )
+    })}
+  </ul>
+</div>
           <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
             {registerMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
             Đăng ký
           </Button>
         </form>
-
-        {errorMessage ? (
-          <Alert variant="destructive">
-            <AlertTitle>Lỗi</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Separator />
 

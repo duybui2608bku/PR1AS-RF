@@ -35,6 +35,14 @@ interface AuthResponse {
   token: string
 }
 
+interface SwitchRoleRequest {
+  last_active_role: "client" | "worker"
+}
+
+interface SwitchRoleResponse {
+  user: AuthUser
+}
+
 export interface ResetPasswordRequest {
   token: string
   password: string
@@ -113,6 +121,26 @@ export function useLogout() {
   })
 }
 
+export function useSwitchRole() {
+  const { user, token, setAuth } = useAuthStore()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: SwitchRoleRequest) => {
+      const response = await api.patch<ApiResponse<SwitchRoleResponse>>("/auth/switch-role", payload)
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (!data.success || !data.data?.user || !user || !token) {
+        return
+      }
+
+      setAuth({ user: data.data.user, token })
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
+    },
+  })
+}
+
 export function useVerifyEmail() {
   return useMutation({
     mutationFn: async (payload: VerifyEmailRequest) => {
@@ -138,6 +166,32 @@ export function useResetPassword() {
     mutationFn: async (payload: ResetPasswordRequest) => {
       const response = await api.post<ApiResponse<{ message: string }>>("/auth/reset-password", payload)
       return response.data
+    },
+  })
+}
+
+export interface UpdateBasicProfileRequest {
+  full_name?: string | null
+  phone?: string | null
+  avatar?: string | null
+  old_password?: string
+  password?: string
+}
+
+export function useUpdateBasicProfile() {
+  const { user, token, setAuth } = useAuthStore()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: UpdateBasicProfileRequest) => {
+      const response = await api.patch<ApiResponse<{ user: AuthUser }>>("/auth/update-profile", payload)
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (!data.success || !data.data?.user || !token) return
+
+      setAuth({ user: { ...user, ...data.data.user }, token })
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
 }

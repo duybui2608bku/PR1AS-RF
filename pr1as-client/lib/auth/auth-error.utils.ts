@@ -1,17 +1,5 @@
-import type { ApiError } from "@/lib/axios"
+import { ApiError } from "@/lib/utils/error-handler"
 
-const hasErrorResponse = (error: unknown): error is ApiError => {
-  if (!error || typeof error !== "object") {
-    return false
-  }
-
-  return "response" in error
-}
-
-export const isEmailNotVerifiedError = (error: unknown): error is ApiError => {
-  if (!hasErrorResponse(error)) {
-    return false
-  }
-
-  return error.response?.data?.error?.code === "EMAIL_NOT_VERIFIED"
+export const isEmailNotVerifiedError = (error: unknown): boolean => {
+  return error instanceof ApiError && error.code === "EMAIL_NOT_VERIFIED"
 }
