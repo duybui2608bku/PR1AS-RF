@@ -1,6 +1,5 @@
 const getCorsOrigin = () => {
   const envOrigin = process.env.CORS_ORIGIN;
-
   if (envOrigin) {
     return envOrigin.includes(",")
       ? envOrigin.split(",").map((o) => o.trim())
@@ -10,7 +9,6 @@ const getCorsOrigin = () => {
   if (process.env.NODE_ENV !== "production") {
     return (
       origin: string | undefined,
-
       callback: (err: Error | null, allow?: boolean) => void
     ) => {
       if (
@@ -24,7 +22,6 @@ const getCorsOrigin = () => {
       }
     };
   }
-
   return "http://localhost:3000";
 };
 

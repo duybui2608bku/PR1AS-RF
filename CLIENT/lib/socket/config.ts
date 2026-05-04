@@ -1,12 +1,12 @@
 "use client";
 
 import { io, Socket } from "socket.io-client";
-import { SocketEvent } from "../constants/socket-events";
+// import { SocketEvent } from "../constants/socket-events";
 
 const SOCKET_BASE_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-  "http://localhost:3052/api";
+  "http://api.pr1as.one/api";
 
 let socketInstance: Socket | null = null;
 
@@ -38,7 +38,7 @@ export const getSocket = (): Socket | null => {
 
   if (typeof window !== "undefined") {
     window.addEventListener("auth:token-refreshed", ((
-      event: CustomEvent<{ token: string }>
+      event: CustomEvent<{ token: string }>,
     ) => {
       const { token } = event.detail;
       if (socketInstance) {

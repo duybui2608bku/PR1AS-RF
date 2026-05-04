@@ -1,5 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { showErrorNotification, getErrorType, ErrorType, HttpStatus } from "../utils/error-handler";
+import {
+  showErrorNotification,
+  getErrorType,
+  ErrorType,
+  HttpStatus,
+} from "../utils/error-handler";
 
 export interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   skipErrorNotification?: boolean;
@@ -21,7 +26,8 @@ export interface ApiResponse<T = unknown> {
 
 export type ApiError = AxiosError<ApiResponse>;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3052/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://api.pr1as.one/api";
 const REQUEST_TIMEOUT = 30000;
 const NETWORK_ERROR_THROTTLE_MS = 5000;
 const CSRF_TOKEN_ENDPOINT = `${API_BASE_URL}/auth/csrf-token`;
@@ -43,7 +49,9 @@ const getCsrfToken = (): string | null => {
   if (typeof window === "undefined") return null;
 
   const cookies = document.cookie.split("; ");
-  const csrfCookie = cookies.find((row) => row.startsWith(`${CSRF_TOKEN_COOKIE_NAME}=`));
+  const csrfCookie = cookies.find((row) =>
+    row.startsWith(`${CSRF_TOKEN_COOKIE_NAME}=`),
+  );
 
   if (csrfCookie) {
     const value = csrfCookie.slice(CSRF_TOKEN_COOKIE_NAME.length + 1);
@@ -95,32 +103,34 @@ const refreshAccessToken = async (): Promise<boolean> => {
       headers[CSRF_TOKEN_HEADER] = csrfToken;
     }
 
-    const response = await axios.post<ApiResponse<{ token: string; refreshToken: string }>>(
+    const response = await axios.post<
+      ApiResponse<{ token: string; refreshToken: string }>
+    >(
       `${API_BASE_URL}/auth/refresh-token`,
       { refreshToken },
       {
         headers,
         withCredentials: true,
-      }
+      },
     );
 
     if (response.data.success && response.data.data) {
       const { token, refreshToken: newRefreshToken } = response.data.data;
-      
+
       localStorage.setItem("token", token);
       localStorage.setItem("refreshToken", newRefreshToken);
-      
+
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("auth:token-refreshed", {
             detail: { token, refreshToken: newRefreshToken },
-          })
+          }),
         );
       }
-      
+
       return true;
     }
-    
+
     return false;
   } catch (error) {
     if (typeof window !== "undefined") {
@@ -135,7 +145,8 @@ const HTTP_METHODS_NEEDING_CSRF = ["POST", "PATCH", "PUT", "DELETE"];
 
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -156,7 +167,7 @@ axiosInstance.interceptors.request.use(
   },
   (error: AxiosError) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 axiosInstance.interceptors.response.use(
@@ -168,17 +179,22 @@ axiosInstance.interceptors.response.use(
 
     const isAuthLoginRoute = originalRequest.url?.includes("/auth/login");
 
-    if (error.response?.status === HttpStatus.UNAUTHORIZED && !originalRequest._retry && !isAuthLoginRoute) {
+    if (
+      error.response?.status === HttpStatus.UNAUTHORIZED &&
+      !originalRequest._retry &&
+      !isAuthLoginRoute
+    ) {
       originalRequest._retry = true;
 
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        const newToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const newToken =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (newToken && originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
-        
+
         return axiosInstance(originalRequest);
       } else {
         if (typeof window !== "undefined") {
@@ -194,7 +210,7 @@ axiosInstance.interceptors.response.use(
 
     if (error.response && typeof window !== "undefined") {
       const errorType = getErrorType(error.response.status);
-      
+
       if (
         (errorType !== ErrorType.UNAUTHORIZED || isAuthLoginRoute) &&
         !originalRequest.skipErrorNotification
@@ -206,8 +222,11 @@ axiosInstance.interceptors.response.use(
         const errorKey = `network-error-${originalRequest.url}`;
         const lastErrorTime = sessionStorage.getItem(errorKey);
         const now = Date.now();
-        
-        if (!lastErrorTime || now - parseInt(lastErrorTime) > NETWORK_ERROR_THROTTLE_MS) {
+
+        if (
+          !lastErrorTime ||
+          now - parseInt(lastErrorTime) > NETWORK_ERROR_THROTTLE_MS
+        ) {
           sessionStorage.setItem(errorKey, now.toString());
           showErrorNotification(error);
         }
@@ -215,14 +234,17 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
   if (response.data.success && response.data.data) {
     return response.data.data;
   }
-  const errorMessage = response.data.error?.message || response.data.message || "Invalid response format";
+  const errorMessage =
+    response.data.error?.message ||
+    response.data.message ||
+    "Invalid response format";
   const error = new Error(errorMessage) as ApiError;
   error.response = {
     data: response.data,
@@ -235,4 +257,3 @@ export const extractData = <T>(response: { data: ApiResponse<T> }): T => {
 };
 
 export default axiosInstance;
-
