@@ -27,7 +27,7 @@ export interface ApiResponse<T = unknown> {
 export type ApiError = AxiosError<ApiResponse>;
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://api.pr1as.one/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://api.pr1as.one/api";
 const REQUEST_TIMEOUT = 30000;
 const NETWORK_ERROR_THROTTLE_MS = 5000;
 const CSRF_TOKEN_ENDPOINT = `${API_BASE_URL}/auth/csrf-token`;

@@ -6,7 +6,7 @@ import { io, Socket } from "socket.io-client";
 const SOCKET_BASE_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
-  "http://api.pr1as.one/api";
+  "https://api.pr1as.one/api";
 
 let socketInstance: Socket | null = null;
 
