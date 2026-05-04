@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 import { config } from "./config";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { sanitizeInput } from "./middleware/xss";
-// import { csrfToken } from "./middleware/csrf";
+import { csrfToken } from "./middleware/csrf";
 import { R } from "./utils/response";
 import routes from "./routes";
 
@@ -52,7 +52,7 @@ export const createApp = (): express.Application => {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
   app.use(sanitizeInput);
-  // app.use(csrfToken);
+  app.use(csrfToken);
   app.use(compression());
 
   const morganFormat =
