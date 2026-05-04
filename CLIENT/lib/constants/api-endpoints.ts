@@ -1,5 +1,4 @@
 export enum ApiEndpoint {
-  AUTH_CSRF_TOKEN = "/auth/csrf-token",
   AUTH_REGISTER = "/auth/register",
   AUTH_LOGIN = "/auth/login",
   AUTH_REFRESH_TOKEN = "/auth/refresh-token",

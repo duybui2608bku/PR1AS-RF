@@ -77,18 +77,7 @@ export interface VerifyEmailInput {
   token: string;
 }
 
-export interface CsrfTokenResponse {
-  csrfToken: string;
-}
-
 export const authApi = {
-  getCsrfToken: async (): Promise<CsrfTokenResponse> => {
-    const response = await api.get<ApiResponse<CsrfTokenResponse>>(
-      ApiEndpoint.AUTH_CSRF_TOKEN
-    );
-    return extractData(response);
-  },
-
   register: async (data: RegisterInput): Promise<RegisterResponse> => {
     const payload: RegisterInput = {
       ...data,

@@ -30,7 +30,6 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://api.pr1as.one/api";
 const REQUEST_TIMEOUT = 30000;
 const NETWORK_ERROR_THROTTLE_MS = 5000;
-const CSRF_TOKEN_ENDPOINT = `${API_BASE_URL}/auth/csrf-token`;
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -41,50 +40,6 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-const CSRF_TOKEN_COOKIE_NAME = "XSRF-TOKEN";
-const CSRF_TOKEN_HEADER = "X-CSRF-Token";
-let csrfBootstrapPromise: Promise<void> | null = null;
-
-const getCsrfToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-
-  const cookies = document.cookie.split("; ");
-  const csrfCookie = cookies.find((row) =>
-    row.startsWith(`${CSRF_TOKEN_COOKIE_NAME}=`),
-  );
-
-  if (csrfCookie) {
-    const value = csrfCookie.slice(CSRF_TOKEN_COOKIE_NAME.length + 1);
-    return decodeURIComponent(value);
-  }
-
-  return null;
-};
-
-const ensureCsrfToken = async (): Promise<void> => {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (getCsrfToken()) {
-    return;
-  }
-
-  if (!csrfBootstrapPromise) {
-    csrfBootstrapPromise = axios
-      .get<ApiResponse<{ csrfToken: string }>>(CSRF_TOKEN_ENDPOINT, {
-        withCredentials: true,
-        timeout: REQUEST_TIMEOUT,
-      })
-      .then(() => undefined)
-      .finally(() => {
-        csrfBootstrapPromise = null;
-      });
-  }
-
-  await csrfBootstrapPromise;
-};
-
 const refreshAccessToken = async (): Promise<boolean> => {
   if (typeof window === "undefined") return false;
 
@@ -94,22 +49,15 @@ const refreshAccessToken = async (): Promise<boolean> => {
   }
 
   try {
-    await ensureCsrfToken();
-    const csrfToken = getCsrfToken();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (csrfToken) {
-      headers[CSRF_TOKEN_HEADER] = csrfToken;
-    }
-
     const response = await axios.post<
       ApiResponse<{ token: string; refreshToken: string }>
     >(
       `${API_BASE_URL}/auth/refresh-token`,
       { refreshToken },
       {
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         withCredentials: true,
       },
     );
@@ -132,7 +80,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
     }
 
     return false;
-  } catch (error) {
+  } catch {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
@@ -141,26 +89,13 @@ const refreshAccessToken = async (): Promise<boolean> => {
   }
 };
 
-const HTTP_METHODS_NEEDING_CSRF = ["POST", "PATCH", "PUT", "DELETE"];
-
 axiosInstance.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    const method = config.method?.toUpperCase();
-    const needsCsrfToken = method && HTTP_METHODS_NEEDING_CSRF.includes(method);
-
-    if (needsCsrfToken && config.headers) {
-      await ensureCsrfToken();
-      const csrfToken = getCsrfToken();
-      if (csrfToken) {
-        config.headers[CSRF_TOKEN_HEADER] = csrfToken;
-      }
     }
 
     return config;

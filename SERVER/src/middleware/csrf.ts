@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import crypto from "crypto";
 import { AppError } from "../utils/AppError";
 import { ErrorCode } from "../types/common/error.types";
@@ -153,4 +153,6 @@ export const validateOrigin = (
   next();
 };
 
-export const csrfProtection = [validateOrigin, validateCsrf];
+/** CSRF protection disabled — kept as empty spread for routes. */
+export const csrfProtection: RequestHandler[] = [];
+

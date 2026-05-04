@@ -18,7 +18,6 @@ import {
   COMMON_MESSAGES,
   USER_MESSAGES,
 } from "../../constants/messages";
-import { CSRF_CONSTANTS } from "../../constants/csrf";
 import { AuthRequest } from "../../middleware/auth";
 import { AppError, R, validateWithSchema } from "../../utils";
 import { userService } from "../../services/user/user.service";
@@ -26,12 +25,6 @@ import { WorkerProfile } from "../../types";
 import { toPublicUser } from "../../utils/user.helper";
 
 export class AuthController {
-  async getCsrfToken(req: Request, res: Response): Promise<void> {
-    const token =
-      req.cookies?.[CSRF_CONSTANTS.COOKIE_NAME] ||
-      req.headers[CSRF_CONSTANTS.HEADER_NAME_LOWER];
-    R.success(res, { csrfToken: token }, undefined, req);
-  }
   async register(req: Request, res: Response): Promise<void> {
     const data = validateWithSchema(
       registerSchema,
