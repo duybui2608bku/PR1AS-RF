@@ -58,8 +58,7 @@ export class NotificationRepository {
     };
 
     if (data.dedupe_key) {
-      const insertData = { ...notificationData };
-      delete insertData.updated_at;
+      const { updated_at: _updatedAt, ...insertData } = notificationData;
       return Notification.findOneAndUpdate(
         {
           recipient_id: notificationData.recipient_id,
