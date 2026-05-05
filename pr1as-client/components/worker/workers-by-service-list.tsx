@@ -1,10 +1,12 @@
+import Image from "next/image"
 import Link from "next/link"
 import { AlertCircle, ArrowRight } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
-type Pricing = { unit: string; duration?: number; price: number; currency: string }
+type Worker = WorkerGroupedByService["workers"][number]
+type Pricing = Worker["pricing"][number]
 
 const formatPricing = (pricing: Pricing[]) => {
   if (!pricing.length) return { label: "Chưa có bảng giá", prefix: "" }
@@ -29,25 +31,27 @@ const formatPricing = (pricing: Pricing[]) => {
   }
 }
 
-const WorkerCard = ({ worker }: { worker: any }) => {
+const WorkerCard = ({ worker }: { worker: Worker }) => {
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
   const { label, prefix } = formatPricing(worker.pricing)
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md flex-none w-[44vw] sm:w-auto snap-start">
+    <div className="cursor-pointer group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md flex-none w-[44vw] sm:w-auto snap-start">
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
         {imageSrc ? (
-          <img
+          <Image
             src={imageSrc}
             alt={worker.full_name ?? "Worker"}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 44vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
             Chưa có ảnh
           </div>
         )}
-        {worker.worker_profile?.title && (
+        {worker.worker_profile?.title ? (
           <div className="absolute bottom-2 left-2 right-2">
             <Badge
               variant="secondary"
@@ -56,7 +60,7 @@ const WorkerCard = ({ worker }: { worker: any }) => {
               {worker.worker_profile.title}
             </Badge>
           </div>
-        )}
+        ) : null}
       </div>
       <div className="px-2.5 pt-2 pb-0">
         <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">
@@ -65,11 +69,11 @@ const WorkerCard = ({ worker }: { worker: any }) => {
       </div>
 
       <div className="p-2.5 space-y-1.5">
-        {worker.worker_profile?.introduction && (
+        {worker.worker_profile?.introduction ? (
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
             {worker.worker_profile.introduction.trim()}
           </p>
-        )}
+        ) : null}
 
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <p className="text-xs font-semibold text-foreground">
@@ -127,7 +131,7 @@ export const WorkersByServiceList = ({
                 <h3 className="text-xl font-bold tracking-tight">
                   {workerService.getFallbackName(group.service.name)}
                 </h3>
-                <p className="text-muted-foreground text-xs mt-0.5">{group.service.code}</p>
+                {/* <p className="text-muted-foreground text-xs mt-0.5">{group.service.code}</p> */}
               </div>
               <div className="ml-auto flex items-center gap-2 shrink-0">
                 <Badge variant="outline">{group.workers.length} worker</Badge>

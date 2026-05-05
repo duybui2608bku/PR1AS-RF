@@ -28,20 +28,12 @@ const getCorsOrigin = () => {
 const nodeEnv = process.env.NODE_ENV || "development";
 const jwtSecret = process.env.JWT_SECRET || "jwt_secret";
 const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || "jwt_refresh_secret";
-const vnpayTmnCode = process.env.VNPAY_TMN_CODE || "";
-const vnpaySecureSecret = process.env.VNPAY_SECURE_SECRET || "";
 
 if (
   nodeEnv === "production" &&
   (jwtSecret === "jwt_secret" || jwtRefreshSecret === "jwt_refresh_secret")
 ) {
   throw new Error("JWT secrets are not configured for production environment");
-}
-
-if (nodeEnv === "production" && (!vnpayTmnCode || !vnpaySecureSecret)) {
-  throw new Error(
-    "VNPay credentials (VNPAY_TMN_CODE, VNPAY_SECURE_SECRET) are not configured for production environment"
-  );
 }
 
 export const config = {
@@ -123,18 +115,14 @@ export const config = {
       preload: process.env.HSTS_PRELOAD === "true" || false,
     },
   },
-  vnpay: {
-    tmnCode: vnpayTmnCode,
-    secureSecret: vnpaySecureSecret,
-    vnpayHost: process.env.VNPAY_HOST || "https://sandbox.vnpayment.vn",
-    testMode: process.env.VNPAY_TEST_MODE === "true" || true,
-    hashAlgorithm: process.env.VNPAY_HASH_ALGORITHM || "SHA512",
-    returnUrl:
-      process.env.VNPAY_RETURN_URL ||
-      `${process.env.FRONTEND_URL || "http://localhost:3000"}/wallet/deposit/callback`,
+  sepay: {
+    bankAccountNumber: process.env.SEPAY_BANK_ACCOUNT_NUMBER || "SEPBD36270",
+    bankName: process.env.SEPAY_BANK_NAME || "OCB",
+    webhookApiKey: process.env.SEPAY_WEBHOOK_API_KEY || "",
+    paymentCodePrefix: process.env.SEPAY_PAYMENT_CODE_PREFIX || "PRAS",
+    qrBaseUrl: process.env.SEPAY_QR_BASE_URL || "https://qr.sepay.vn/img",
   },
   media: {
-    /** Comma-separated hostnames allowed for post media URLs (empty = dev default: any https) */
     allowedHosts: (process.env.MEDIA_ALLOWED_HOSTS || "")
       .split(",")
       .map((h) => h.trim())

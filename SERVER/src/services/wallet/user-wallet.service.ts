@@ -9,28 +9,31 @@ import {
   WalletBalanceResponse,
   TransactionHistoryQuery,
   TransactionHistoryResponse,
+  SePayWebhookRequest,
+  SePayWebhookResponse,
 } from "../../types/wallet";
 import {
   TransactionType,
   TransactionStatus,
   WALLET_LIMITS,
-  VNPayResponseCode,
   TRANSACTION_DESCRIPTIONS,
   PaymentGateway,
+  SePayTransferType,
 } from "../../constants/wallet";
 import { AppError } from "../../utils/AppError";
 import { WALLET_MESSAGES } from "../../constants/messages";
-import { vnpayService } from "../vnpay";
 import { notificationEventService } from "../notification";
 import { NotificationType } from "../../constants/notification";
 import { logger } from "../../utils/logger";
+import { config } from "../../config";
+import crypto from "crypto";
+import { SEPAY_CONSTANTS } from "../../constants/wallet";
 import mongoose from "mongoose";
 
 export class UserWalletService {
   async createDepositTransaction(
     userId: string,
-    request: CreateDepositRequest,
-    ipAddress: string
+    request: CreateDepositRequest
   ): Promise<CreateDepositResponse> {
     const { amount } = request;
 
@@ -48,94 +51,138 @@ export class UserWalletService {
       throw AppError.notFound(WALLET_MESSAGES.WALLET_NOT_FOUND);
     }
 
-    const transactionId = new mongoose.Types.ObjectId().toString();
+    const paymentCode = await this.generateSePayPaymentCode();
+    const paymentContent = paymentCode;
+    const qrUrl = this.buildSePayQrUrl(amount, paymentContent);
 
     const transaction = await walletRepository.create({
       user_id: userId,
       type: TransactionType.DEPOSIT,
       amount,
       status: TransactionStatus.PENDING,
-      gateway: PaymentGateway.VNPAY,
-      gateway_transaction_id: transactionId,
-      description: `${TRANSACTION_DESCRIPTIONS.DEPOSIT_PREFIX} ${amount}`,
+      gateway: PaymentGateway.SEPAY,
+      payment_code: paymentCode,
+      payment_content: paymentContent,
+      qr_url: qrUrl,
+      bank_account_number: config.sepay.bankAccountNumber,
+      bank_name: config.sepay.bankName,
+      description: `${TRANSACTION_DESCRIPTIONS.DEPOSIT_PREFIX} ${amount} - ${paymentCode}`,
     });
 
-    const paymentUrl = vnpayService.buildDepositPaymentUrl(
+    logger.info("Created SePay deposit transaction", {
+      transaction_id: transaction._id.toString(),
+      user_id: userId,
       amount,
-      userId,
-      transactionId,
-      ipAddress
-    );
+      payment_code: paymentCode,
+      bank_account_number: config.sepay.bankAccountNumber,
+      bank_name: config.sepay.bankName,
+      qr_url: qrUrl,
+    });
 
     return {
-      payment_url: paymentUrl,
+      payment_url: qrUrl,
+      qr_url: qrUrl,
       transaction_id: transaction._id.toString(),
+      payment_code: paymentCode,
+      payment_content: paymentContent,
+      bank_account_number: config.sepay.bankAccountNumber,
+      bank_name: config.sepay.bankName,
+      amount,
     };
   }
 
-  async verifyDepositPayment(
-    userId: string,
-    queryParams: Record<string, string>
-  ): Promise<void> {
-    const verifyResult = vnpayService.verifyPaymentReturn(queryParams);
+  async handleSePayWebhook(
+    webhook: SePayWebhookRequest,
+    authorizationHeader?: string
+  ): Promise<SePayWebhookResponse> {
+    this.assertSePayWebhookAuthorized(authorizationHeader);
 
-    if (!verifyResult.isSuccess) {
-      const transaction = await walletRepository.findByTxnRef(
-        verifyResult.transactionId
-      );
-
-      if (transaction) {
-        await walletRepository.updateStatus(
-          transaction._id.toString(),
-          TransactionStatus.FAILED,
-          queryParams
-        );
-        void notificationEventService
-          .walletEvent({
-            userId: String(transaction.user_id),
-            type: NotificationType.WALLET_DEPOSIT_FAILED,
-            title: "Deposit failed",
-            body: "Your wallet deposit could not be verified.",
-            data: { transaction_id: transaction._id.toString() },
-            dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
-          })
-          .catch((error) =>
-            logger.error("Wallet deposit failure notification failed:", error)
-          );
-      }
-
-      throw AppError.badRequest(WALLET_MESSAGES.PAYMENT_VERIFICATION_FAILED, []);
+    if (webhook.transferType !== SePayTransferType.IN) {
+      logger.info("Ignored non-incoming SePay webhook", {
+        sepay_transaction_id: webhook.id,
+        transfer_type: webhook.transferType,
+      });
+      return {
+        success: true,
+        status: "ignored_non_incoming",
+        message: "Transfer type is not incoming.",
+      };
     }
 
-    const transaction = await walletRepository.findByTxnRef(
-      verifyResult.transactionId
+    const paymentCode = this.resolveSePayPaymentCode(webhook);
+
+    if (!paymentCode) {
+      logger.warn("Ignored SePay webhook without a payment code", {
+        sepay_transaction_id: webhook.id,
+        content: webhook.content,
+        description: webhook.description,
+      });
+      return {
+        success: true,
+        status: "ignored_missing_payment_code",
+        message: "No payment code was found in code/content/description.",
+      };
+    }
+
+    const existingTransaction = await walletRepository.findBySePayTransactionId(
+      webhook.id
     );
+    if (existingTransaction?.status === TransactionStatus.SUCCESS) {
+      return {
+        success: true,
+        status: "already_processed",
+        payment_code: paymentCode,
+        transaction_id: existingTransaction._id.toString(),
+        message: "SePay transaction was already processed.",
+      };
+    }
+
+    const transaction =
+      existingTransaction ||
+      (await walletRepository.findByPaymentCode(paymentCode));
 
     if (!transaction) {
-      throw AppError.notFound(WALLET_MESSAGES.TRANSACTION_NOT_FOUND);
-    }
-
-    const transactionUserId = String(transaction.user_id);
-    if (transactionUserId !== userId) {
-      throw AppError.forbidden(WALLET_MESSAGES.TRANSACTION_FAILED);
+      logger.warn("Ignored SePay webhook because payment code was not found", {
+        sepay_transaction_id: webhook.id,
+        payment_code: paymentCode,
+        transfer_amount: webhook.transferAmount,
+      });
+      return {
+        success: true,
+        status: "ignored_transaction_not_found",
+        payment_code: paymentCode,
+        message: "Payment code was not found in pending wallet transactions.",
+      };
     }
 
     if (transaction.status === TransactionStatus.SUCCESS) {
-      return;
+      await walletRepository.applySePayWebhook(
+        transaction._id.toString(),
+        TransactionStatus.SUCCESS,
+        webhook
+      );
+      return {
+        success: true,
+        status: "already_processed",
+        payment_code: paymentCode,
+        transaction_id: transaction._id.toString(),
+        message: "Wallet transaction was already successful.",
+      };
     }
 
-    if (verifyResult.responseCode !== VNPayResponseCode.SUCCESS) {
-      await walletRepository.updateStatus(
+    if (transaction.amount !== webhook.transferAmount) {
+      await walletRepository.applySePayWebhook(
         transaction._id.toString(),
         TransactionStatus.FAILED,
-        queryParams
+        webhook
       );
+
       void notificationEventService
         .walletEvent({
-          userId,
+          userId: String(transaction.user_id),
           type: NotificationType.WALLET_DEPOSIT_FAILED,
           title: "Deposit failed",
-          body: "Your wallet deposit was not completed successfully.",
+          body: "Your wallet deposit amount does not match the transfer amount.",
           data: { transaction_id: transaction._id.toString() },
           dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
         })
@@ -143,20 +190,22 @@ export class UserWalletService {
           logger.error("Wallet deposit failure notification failed:", error)
         );
 
-      throw AppError.badRequest(WALLET_MESSAGES.TRANSACTION_FAILED, []);
+      return {
+        success: true,
+        status: "amount_mismatch",
+        payment_code: paymentCode,
+        transaction_id: transaction._id.toString(),
+        message: `Expected ${transaction.amount}, received ${webhook.transferAmount}.`,
+      };
     }
 
-    await walletRepository.updateStatus(
+    await walletRepository.applySePayWebhook(
       transaction._id.toString(),
       TransactionStatus.SUCCESS,
-      queryParams
+      webhook
     );
 
-    await walletRepository.updateGatewayTransactionId(
-      transaction._id.toString(),
-      verifyResult.gatewayTransactionId
-    );
-
+    const userId = String(transaction.user_id);
     const currentBalance = await walletRepository.calculateUserBalance(userId);
     await walletBalanceRepository.createOrUpdate(userId, currentBalance);
 
@@ -164,8 +213,8 @@ export class UserWalletService {
       .walletEvent({
         userId,
         type: NotificationType.WALLET_DEPOSIT_SUCCESS,
-        title: "Deposit successful",
-        body: `Your wallet deposit of ${transaction.amount} was successful.`,
+        title: "Nạp tiền thành công",
+        body: `Số dư ví của bạn đã được cập nhật.`,
         data: {
           transaction_id: transaction._id.toString(),
           amount: transaction.amount,
@@ -176,6 +225,82 @@ export class UserWalletService {
       .catch((error) =>
         logger.error("Wallet deposit success notification failed:", error)
       );
+
+    return {
+      success: true,
+      status: "processed",
+      payment_code: paymentCode,
+      transaction_id: transaction._id.toString(),
+      balance: currentBalance,
+    };
+  }
+
+  private async generateSePayPaymentCode(): Promise<string> {
+    const prefix =
+      config.sepay.paymentCodePrefix || SEPAY_CONSTANTS.PAYMENT_CODE_PREFIX;
+    const min = 10 ** (SEPAY_CONSTANTS.PAYMENT_CODE_SUFFIX_LENGTH - 1);
+    const max = 10 ** SEPAY_CONSTANTS.PAYMENT_CODE_SUFFIX_LENGTH;
+
+    for (
+      let attempt = 0;
+      attempt < SEPAY_CONSTANTS.PAYMENT_CODE_MAX_GENERATE_ATTEMPTS;
+      attempt += 1
+    ) {
+      const suffix = crypto.randomInt(min, max).toString();
+      const paymentCode = `${prefix}${suffix}`;
+      const existingTransaction =
+        await walletRepository.findByPaymentCode(paymentCode);
+
+      if (!existingTransaction) {
+        return paymentCode;
+      }
+    }
+
+    throw AppError.internal("Could not generate a unique SePay payment code.");
+  }
+
+  private resolveSePayPaymentCode(webhook: SePayWebhookRequest): string | null {
+    if (webhook.code) {
+      return webhook.code.trim();
+    }
+
+    const prefix =
+      config.sepay.paymentCodePrefix || SEPAY_CONSTANTS.PAYMENT_CODE_PREFIX;
+    const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const paymentCodePattern = new RegExp(`${escapedPrefix}\\d{3,10}`, "i");
+    const matchedCode =
+      webhook.content.match(paymentCodePattern)?.[0] ||
+      webhook.description.match(paymentCodePattern)?.[0];
+
+    return matchedCode?.toUpperCase() || null;
+  }
+
+  private buildSePayQrUrl(amount: number, paymentContent: string): string {
+    if (!config.sepay.bankAccountNumber || !config.sepay.bankName) {
+      throw AppError.internal(
+        "SePay bank account config is missing. Please set SEPAY_BANK_ACCOUNT_NUMBER and SEPAY_BANK_NAME."
+      );
+    }
+
+    const params = new URLSearchParams({
+      acc: config.sepay.bankAccountNumber,
+      bank: config.sepay.bankName,
+      amount: String(amount),
+      des: paymentContent,
+    });
+
+    return `${config.sepay.qrBaseUrl}?${params.toString()}`;
+  }
+
+  private assertSePayWebhookAuthorized(authorizationHeader?: string): void {
+    if (!config.sepay.webhookApiKey) {
+      return;
+    }
+
+    const expectedHeader = `Apikey ${config.sepay.webhookApiKey}`;
+    if (authorizationHeader?.trim() !== expectedHeader) {
+      throw AppError.unauthorized("Invalid SePay webhook API key");
+    }
   }
 
   async getWalletBalance(userId: string): Promise<WalletBalanceResponse> {
@@ -202,6 +327,23 @@ export class UserWalletService {
       query
     );
     return { transactions, total, page: query.page, limit: query.limit };
+  }
+
+  async getWalletTransactionById(userId: string, transactionId: string) {
+    if (!mongoose.Types.ObjectId.isValid(transactionId)) {
+      throw AppError.badRequest(WALLET_MESSAGES.TRANSACTION_NOT_FOUND, []);
+    }
+
+    const transaction = await walletRepository.findById(transactionId);
+    if (!transaction) {
+      throw AppError.notFound(WALLET_MESSAGES.TRANSACTION_NOT_FOUND);
+    }
+
+    if (String(transaction.user_id) !== userId) {
+      throw AppError.forbidden(WALLET_MESSAGES.TRANSACTION_FAILED);
+    }
+
+    return transaction;
   }
 
   async holdBalanceForBooking(

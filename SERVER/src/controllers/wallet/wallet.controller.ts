@@ -1,8 +1,9 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { walletService } from "../../services/wallet/wallet.service";
 import { WALLET_MESSAGES } from "../../constants/messages";
 import {
   createDepositSchema,
+  sePayWebhookSchema,
   transactionHistoryQuerySchema,
 } from "../../validations/wallet/wallet.validation";
 import {
@@ -15,42 +16,31 @@ import { PaginationRequest } from "../../middleware/pagination";
 import { AuthRequest } from "../../middleware/auth";
 
 export class WalletController {
-  private getClientIp(req: AuthRequest): string {
-    const forwarded = req.headers["x-forwarded-for"];
-
-    if (typeof forwarded === "string") {
-      return forwarded.split(",")[0].trim();
-    }
-
-    if (Array.isArray(forwarded) && forwarded[0]) {
-      return forwarded[0].trim();
-    }
-
-    return req.socket.remoteAddress || "127.0.0.1";
-  }
-
   async createDeposit(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const body = validateWithSchema(createDepositSchema, req.body);
-    const ipAddress = this.getClientIp(req);
 
-    const result = await walletService.createDepositTransaction(
-      userId,
-      body,
-      ipAddress
-    );
+    const result = await walletService.createDepositTransaction(userId, body);
 
     R.success(res, result, WALLET_MESSAGES.DEPOSIT_CREATED, req);
   }
 
-  async verifyDepositCallback(req: AuthRequest, res: Response): Promise<void> {
-    const userId = extractUserIdFromRequest(req);
-    await walletService.verifyDepositPayment(
-      userId,
-      req.query as Record<string, string>
+  async handleSePayWebhook(req: Request, res: Response): Promise<void> {
+    const body = validateWithSchema(sePayWebhookSchema, req.body);
+
+    const result = await walletService.handleSePayWebhook(
+      body,
+      req.get("authorization") || undefined
     );
 
-    R.success(res, null, WALLET_MESSAGES.PAYMENT_VERIFIED, req);
+    res.status(200).json(result);
+  }
+
+  async checkSePayWebhook(_req: Request, res: Response): Promise<void> {
+    res.status(200).json({
+      success: true,
+      message: "SePay webhook endpoint is ready. Use POST for webhook events.",
+    });
   }
 
   async getBalance(req: AuthRequest, res: Response): Promise<void> {
@@ -82,6 +72,18 @@ export class WalletController {
     );
 
     R.success(res, response, WALLET_MESSAGES.TRANSACTIONS_FETCHED, req);
+  }
+
+  async getTransactionDetail(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { transactionId } = req.params;
+
+    const transaction = await walletService.getWalletTransactionById(
+      userId,
+      transactionId
+    );
+
+    R.success(res, transaction, WALLET_MESSAGES.TRANSACTIONS_FETCHED, req);
   }
 }
 

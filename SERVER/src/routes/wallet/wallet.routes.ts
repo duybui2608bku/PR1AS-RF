@@ -7,17 +7,22 @@ import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
+router.post(
+  "/deposit/webhook",
+  asyncHandler(walletController.handleSePayWebhook.bind(walletController))
+);
+
+router.get(
+  "/deposit/webhook",
+  asyncHandler(walletController.checkSePayWebhook.bind(walletController))
+);
+
 router.use(authenticate);
 
 router.post(
   "/deposit",
   ...csrfProtection,
   asyncHandler(walletController.createDeposit.bind(walletController))
-);
-
-router.get(
-  "/deposit/callback",
-  asyncHandler(walletController.verifyDepositCallback.bind(walletController))
 );
 
 router.get(
@@ -29,6 +34,11 @@ router.get(
   "/transactions",
   pagination(),
   asyncHandler(walletController.getTransactionHistory.bind(walletController))
+);
+
+router.get(
+  "/transactions/:transactionId",
+  asyncHandler(walletController.getTransactionDetail.bind(walletController))
 );
 
 export default router;

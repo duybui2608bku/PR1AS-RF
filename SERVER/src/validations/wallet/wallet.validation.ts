@@ -5,6 +5,7 @@ import {
   TransactionStatus,
   WALLET_LIMITS,
   DateRangePreset,
+  SePayTransferType,
 } from "../../constants/wallet";
 
 import { WALLET_MESSAGES } from "../../constants/messages";
@@ -33,6 +34,21 @@ export const transactionHistoryQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
+export const sePayWebhookSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  gateway: z.string().min(1),
+  transactionDate: z.string().min(1),
+  accountNumber: z.string().min(1),
+  code: z.string().nullable().optional().default(null),
+  content: z.string().default(""),
+  transferType: z.nativeEnum(SePayTransferType),
+  transferAmount: z.coerce.number().int().nonnegative(),
+  accumulated: z.coerce.number().nonnegative(),
+  subAccount: z.string().nullable().optional().default(null),
+  referenceCode: z.string().min(1),
+  description: z.string().default(""),
+});
+
 export const dateRangeQuerySchema = z.object({
   date_range: z.nativeEnum(DateRangePreset),
 });
@@ -44,3 +60,5 @@ export type TransactionHistoryQuerySchemaType = z.infer<
 >;
 
 export type DateRangeQuerySchemaType = z.infer<typeof dateRangeQuerySchema>;
+
+export type SePayWebhookSchemaType = z.infer<typeof sePayWebhookSchema>;

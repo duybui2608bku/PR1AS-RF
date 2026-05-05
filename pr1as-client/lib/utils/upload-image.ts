@@ -43,83 +43,75 @@ export async function uploadImage(
   file: File,
   server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string> {
-  try {
-    const formData = new FormData();
-    formData.append(UploadFormField.Images, file);
-    formData.append(UploadFormField.Server, server);
+  const formData = new FormData();
+  formData.append(UploadFormField.Images, file);
+  formData.append(UploadFormField.Server, server);
 
-    const response = await fetch(UploadConfig.API_URL, {
-      method: "POST",
-      body: formData,
-    });
+  const response = await fetch(UploadConfig.API_URL, {
+    method: "POST",
+    body: formData,
+  });
 
-    if (!response.ok) {
-      throw new Error(UploadErrorCode.REQUEST_FAILED);
-    }
-
-    const data: UploadImageResponse | UploadImageError = await response.json();
-
-    if (!data.success) {
-      throw new Error(UploadErrorCode.RESPONSE_INVALID);
-    }
-
-    const uploadData = data as UploadImageResponse;
-
-    if (
-      !uploadData.results ||
-      uploadData.results.length === EMPTY_RESULTS_LENGTH ||
-      !uploadData.results[FIRST_RESULT_INDEX].success
-    ) {
-      throw new Error(UploadErrorCode.RESULT_INVALID);
-    }
-
-    return uploadData.results[FIRST_RESULT_INDEX].url;
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(UploadErrorCode.REQUEST_FAILED);
   }
+
+  const data: UploadImageResponse | UploadImageError = await response.json();
+
+  if (!data.success) {
+    throw new Error(UploadErrorCode.RESPONSE_INVALID);
+  }
+
+  const uploadData = data as UploadImageResponse;
+
+  if (
+    !uploadData.results ||
+    uploadData.results.length === EMPTY_RESULTS_LENGTH ||
+    !uploadData.results[FIRST_RESULT_INDEX].success
+  ) {
+    throw new Error(UploadErrorCode.RESULT_INVALID);
+  }
+
+  return uploadData.results[FIRST_RESULT_INDEX].url;
 }
 
 export async function uploadMultipleImages(
   files: File[],
   server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string[]> {
-  try {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append(UploadFormField.Images, file);
-    });
-    formData.append(UploadFormField.Server, server);
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append(UploadFormField.Images, file);
+  });
+  formData.append(UploadFormField.Server, server);
 
-    const response = await fetch(UploadConfig.API_URL, {
-      method: "POST",
-      body: formData,
-    });
+  const response = await fetch(UploadConfig.API_URL, {
+    method: "POST",
+    body: formData,
+  });
 
-    if (!response.ok) {
-      throw new Error(UploadErrorCode.REQUEST_FAILED);
-    }
-
-    const data: UploadImageResponse | UploadImageError = await response.json();
-
-    if (!data.success) {
-      throw new Error(UploadErrorCode.RESPONSE_INVALID);
-    }
-
-    const uploadData = data as UploadImageResponse;
-
-    if (
-      !uploadData.results ||
-      uploadData.results.length === EMPTY_RESULTS_LENGTH
-    ) {
-      throw new Error(UploadErrorCode.MULTIPLE_UPLOAD_EMPTY);
-    }
-
-    return uploadData.results
-      .filter((result) => result.success)
-      .map((result) => result.url);
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(UploadErrorCode.REQUEST_FAILED);
   }
+
+  const data: UploadImageResponse | UploadImageError = await response.json();
+
+  if (!data.success) {
+    throw new Error(UploadErrorCode.RESPONSE_INVALID);
+  }
+
+  const uploadData = data as UploadImageResponse;
+
+  if (
+    !uploadData.results ||
+    uploadData.results.length === EMPTY_RESULTS_LENGTH
+  ) {
+    throw new Error(UploadErrorCode.MULTIPLE_UPLOAD_EMPTY);
+  }
+
+  return uploadData.results
+    .filter((result) => result.success)
+    .map((result) => result.url);
 }
 
 export function isImageUrl(url: string): boolean {

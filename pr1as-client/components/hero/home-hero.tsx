@@ -13,7 +13,8 @@ const DotLottieReact = dynamic(
 )
 import {
   Briefcase,
-  Calendar,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   HeartHandshake,
   LayoutGrid,
@@ -29,6 +30,12 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 
@@ -57,7 +64,7 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
   const router = useRouter()
   const [serviceQuery, setServiceQuery] = React.useState("")
   const [location, setLocation] = React.useState("")
-  const [scheduledAt, setScheduledAt] = React.useState("")
+  const [scheduledAt, setScheduledAt] = React.useState<Date>()
   const [activeCode, setActiveCode] = React.useState<string>("ALL")
 
   const { data: services = [], isLoading } = useQuery({
@@ -72,13 +79,13 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
     const params = new URLSearchParams()
     if (serviceQuery.trim()) params.set("q", serviceQuery.trim())
     if (location.trim()) params.set("location", location.trim())
-    if (scheduledAt) params.set("at", scheduledAt)
+    if (scheduledAt) params.set("at", scheduledAt.toISOString().slice(0, 10))
     if (activeCode && activeCode !== "ALL") params.set("category", activeCode)
     router.push(`/services?${params.toString()}`)
   }
 
   return (
-    <section className="">
+    <section>
       <div className="container mx-auto px-4 py-16 lg:py-24">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-10 lg:gap-8">
           <div className="lg:col-span-7">
@@ -89,9 +96,14 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
               Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển chọn và xác minh.
             </p>
 
+            {/* Search Bar */}
             <form
               onSubmit={handleSearch}
-              className="mt-8 flex w-full max-w-3xl flex-col gap-2 rounded-full border border-border bg-background p-2 shadow-sm sm:flex-row sm:items-stretch"
+              className={cn(
+                "mt-8 w-full max-w-3xl bg-background",
+                "flex flex-col divide-y divide-border rounded-2xl border border-border shadow-sm",
+                "sm:flex-row sm:divide-x sm:divide-y-0 sm:items-stretch sm:rounded-full sm:p-2 sm:divide-none sm:gap-0",
+              )}
             >
               <SearchField
                 label="Bạn cần dịch vụ gì hôm nay?"
@@ -99,41 +111,47 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
                 value={serviceQuery}
                 onChange={setServiceQuery}
               />
-              <Divider />
+
+              {/* Desktop divider */}
+              <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
+
               <SearchField
                 label="Địa điểm"
                 placeholder="Quận 1, TP.HCM"
                 value={location}
                 onChange={setLocation}
-                icon={<MapPin className="size-4 text-muted-foreground" />}
+                icon={<MapPin className="size-4 shrink-0 text-muted-foreground" />}
               />
-              <Divider />
-              <SearchField
+
+              <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
+
+              <SearchDateField
                 label="Thời gian"
                 placeholder="Chọn ngày và giờ"
                 value={scheduledAt}
                 onChange={setScheduledAt}
-                type="datetime-local"
-                icon={<Calendar className="size-4 text-muted-foreground" />}
               />
-              <Button
-                type="submit"
-                size="lg"
-                className="rounded-full px-6 sm:self-stretch"
-              >
-                <Search className="size-4" />
-                <span>Tìm kiếm</span>
-              </Button>
+
+              <div className="p-2 sm:p-0 sm:flex sm:items-stretch">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full rounded-xl sm:w-auto sm:rounded-full sm:px-6"
+                >
+                  <Search className="size-4" />
+                  Tìm kiếm
+                </Button>
+              </div>
             </form>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="hidden lg:col-span-3 lg:block">
             <div className="relative aspect-square w-full overflow-hidden">
-            <DotLottieReact
-      src="https://lottie.host/4cf55e0b-976f-48f4-a708-af69870a581c/yOVxhyHxDY.lottie"
-      loop
-      autoplay
-    />
+              <DotLottieReact
+                src="https://lottie.host/4cf55e0b-976f-48f4-a708-af69870a581c/yOVxhyHxDY.lottie"
+                loop
+                autoplay
+              />
             </div>
           </div>
         </div>
@@ -144,11 +162,12 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
           activeCode={activeCode}
           onSelect={setActiveCode}
         />
-
       </div>
     </section>
   )
 }
+
+// ─── FilterPillsRow ───────────────────────────────────────────────────────────
 
 type FilterPillsRowProps = {
   isLoading: boolean
@@ -165,18 +184,24 @@ function FilterPillsRow({ isLoading, services, activeCode, onSelect }: FilterPil
   const updateArrows = React.useCallback(() => {
     const el = scrollRef.current
     if (!el) return
-    setCanLeft(el.scrollLeft > 0)
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+    setCanLeft(el.scrollLeft > 2)
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2)
   }, [])
 
   React.useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    updateArrows()
     el.addEventListener("scroll", updateArrows, { passive: true })
     const ro = new ResizeObserver(updateArrows)
     ro.observe(el)
-    return () => { el.removeEventListener("scroll", updateArrows); ro.disconnect() }
+    return () => {
+      el.removeEventListener("scroll", updateArrows)
+      ro.disconnect()
+    }
+  }, [updateArrows])
+
+  React.useEffect(() => {
+    updateArrows()
   }, [updateArrows, isLoading])
 
   const scroll = (dir: "left" | "right") => {
@@ -185,18 +210,18 @@ function FilterPillsRow({ isLoading, services, activeCode, onSelect }: FilterPil
 
   return (
     <div className="relative mt-8 flex items-center gap-2">
-      {/* Arrow Left */}
-      <button
+      {/* Arrow Left — hidden on mobile */}
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => scroll("left")}
         disabled={!canLeft}
-        className={cn(
-          "shrink-0 flex size-9 items-center justify-center rounded-full border border-border bg-background shadow-sm transition-opacity",
-          canLeft ? "opacity-100 hover:bg-accent" : "opacity-30 cursor-not-allowed"
-        )}
+        aria-label="Cuộn trái"
+        className="hidden sm:inline-flex shrink-0 rounded-full"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
+        <ChevronLeft className="size-4" />
+      </Button>
 
       {/* Scrollable pills */}
       <div ref={scrollRef} className="overflow-x-auto scrollbar-none flex-1">
@@ -209,7 +234,7 @@ function FilterPillsRow({ isLoading, services, activeCode, onSelect }: FilterPil
           />
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-10 w-32 shrink-0 animate-pulse rounded-full bg-muted" />
+                <Skeleton key={i} className="h-9 w-28 shrink-0 rounded-full" />
               ))
             : services.map((service) => (
                 <ServicePill
@@ -223,21 +248,23 @@ function FilterPillsRow({ isLoading, services, activeCode, onSelect }: FilterPil
         </div>
       </div>
 
-      {/* Arrow Right */}
-      <button
+      {/* Arrow Right — hidden on mobile */}
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => scroll("right")}
         disabled={!canRight}
-        className={cn(
-          "shrink-0 flex size-9 items-center justify-center rounded-full border border-border bg-background shadow-sm transition-opacity",
-          canRight ? "opacity-100 hover:bg-accent" : "opacity-30 cursor-not-allowed"
-        )}
+        aria-label="Cuộn phải"
+        className="hidden sm:inline-flex shrink-0 rounded-full"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
+        <ChevronRight className="size-4" />
+      </Button>
     </div>
   )
 }
+
+// ─── SearchField ──────────────────────────────────────────────────────────────
 
 type SearchFieldProps = {
   label: string
@@ -249,26 +276,70 @@ type SearchFieldProps = {
 }
 
 function SearchField({ label, placeholder, value, onChange, type = "text", icon }: SearchFieldProps) {
+  const id = React.useId()
+
   return (
-    <label className="flex flex-1 cursor-text flex-col justify-center rounded-full px-5 py-2 hover:bg-accent/50">
-      <span className="text-xs font-semibold text-foreground">{label}</span>
+    <div
+      className={cn(
+        "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5",
+        "hover:bg-accent/50 transition-colors cursor-text",
+        "sm:py-2 sm:rounded-full",
+      )}
+    >
+      <Label htmlFor={id} className="text-xs font-semibold text-foreground cursor-pointer">
+        {label}
+      </Label>
       <div className="flex items-center gap-2">
         {icon}
-        <input
+        <Input
+          id={id}
           type={type}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+          className="h-auto border-none p-0 shadow-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground bg-transparent"
         />
       </div>
-    </label>
+    </div>
   )
 }
 
-function Divider() {
-  return <span aria-hidden className="hidden w-px self-stretch bg-border sm:block" />
+type SearchDateFieldProps = {
+  label: string
+  placeholder: string
+  value?: Date
+  onChange: (value: Date | undefined) => void
+  icon?: React.ReactNode
 }
+
+function SearchDateField({ label, placeholder, value, onChange, icon }: SearchDateFieldProps) {
+  const id = React.useId()
+
+  return (
+    <div
+      className={cn(
+        "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5",
+        "hover:bg-accent/50 transition-colors",
+        "sm:py-2 sm:rounded-full",
+      )}
+    >
+      <Label htmlFor={id} className="text-xs font-semibold text-foreground cursor-pointer">
+        {label}
+      </Label>
+      <div className="flex items-center gap-2">
+        {icon}
+        <DatePicker
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          buttonClassName="h-auto border-none bg-transparent p-0 text-sm shadow-none hover:bg-transparent focus-visible:ring-0"
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── ServicePill ──────────────────────────────────────────────────────────────
 
 type ServicePillProps = {
   icon: LucideIcon
@@ -279,18 +350,18 @@ type ServicePillProps = {
 
 function ServicePill({ icon: Icon, label, isActive, onClick }: ServicePillProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Toggle
+      pressed={isActive}
+      onPressedChange={onClick}
+      variant="outline"
+      size="sm"
       className={cn(
-        "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-        isActive
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-border bg-background text-foreground hover:bg-accent",
+        "rounded-full px-4 h-9 gap-2 font-medium whitespace-nowrap shrink-0",
+        "data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:border-foreground",
       )}
     >
       <Icon className="size-4" />
-      <span>{label}</span>
-    </button>
+      {label}
+    </Toggle>
   )
 }

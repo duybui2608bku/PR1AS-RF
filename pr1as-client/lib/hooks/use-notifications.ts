@@ -10,7 +10,7 @@ export const NOTIFICATION_KEYS = {
 }
 
 export function useNotifications(params?: { page?: number; limit?: number }) {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: NOTIFICATION_KEYS.list(params),
     queryFn: () => notificationService.list(params),
@@ -20,7 +20,7 @@ export function useNotifications(params?: { page?: number; limit?: number }) {
 }
 
 export function useUnreadNotificationCount() {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
     queryKey: NOTIFICATION_KEYS.unreadCount(),
     queryFn: notificationService.getUnreadCount,

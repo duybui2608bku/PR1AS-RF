@@ -47,6 +47,7 @@ export class MessageRepository {
       type: messageObj.type,
       content: messageObj.content,
       is_read: messageObj.is_read,
+      is_deleted: messageObj.is_deleted,
       read_at: messageObj.read_at,
       reply_to_id: messageObj.reply_to_id?.toString() || null,
       created_at: messageObj.created_at,
@@ -60,7 +61,9 @@ export class MessageRepository {
   ): Promise<{ messages: IMessage[]; total: number }> {
     const { conversation_id, receiver_id, page = 1, limit = 50 } = query;
     const skip = (page - 1) * limit;
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      is_deleted: false,
+    };
 
     if (conversation_id) {
       const conversation = await conversationRepository.findConversationById(
@@ -104,6 +107,7 @@ export class MessageRepository {
           type: msg.type,
           content: msg.content,
           is_read: msg.is_read,
+          is_deleted: msg.is_deleted,
           read_at: msg.read_at,
           reply_to_id: msg.reply_to_id
             ? typeof msg.reply_to_id === "object" && "_id" in msg.reply_to_id
@@ -123,7 +127,7 @@ export class MessageRepository {
     user_id: string
   ): Promise<IMessage | null> {
     const message = await Message.findById(message_id).lean();
-    if (!message) return null;
+    if (!message || message.is_deleted) return null;
 
     if (
       message.sender_id.toString() !== user_id &&
@@ -140,6 +144,7 @@ export class MessageRepository {
       type: message.type,
       content: message.content,
       is_read: message.is_read,
+      is_deleted: message.is_deleted,
       read_at: message.read_at,
       reply_to_id: message.reply_to_id?.toString() || null,
       created_at: message.created_at,
@@ -155,6 +160,7 @@ export class MessageRepository {
     const filter: Record<string, unknown> = {
       receiver_id: new Types.ObjectId(user_id),
       is_read: false,
+      is_deleted: false,
     };
 
     if (message_ids && message_ids.length > 0) {

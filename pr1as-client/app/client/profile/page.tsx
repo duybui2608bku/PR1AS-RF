@@ -1,6 +1,7 @@
 "use client"
 
-import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react"
+import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
@@ -51,7 +52,8 @@ const toPlanColor = (planCode?: string): string => {
 
 export default function ClientProfilePage() {
   const router = useRouter()
-  const { isAuthenticated, user } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const user = useAuthStore((s) => s.user)
   const meQuery = useMe()
   const updateProfileMutation = useUpdateBasicProfile()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -60,7 +62,7 @@ export default function ClientProfilePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const profileData = meQuery.data?.data?.user ?? user
-  const userRoles = useMemo(() => profileData?.roles ?? [], [profileData?.roles])
+  const userRoles = profileData?.roles ?? []
   const displayName = profileData?.full_name ?? "Người dùng"
 
   useEffect(() => {
@@ -135,9 +137,11 @@ export default function ClientProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 {profileData?.avatar ? (
-                  <img
+                  <Image
                     src={profileData.avatar}
                     alt={displayName}
+                    width={96}
+                    height={96}
                     className="size-24 rounded-full border-4 border-background object-cover shadow-sm"
                   />
                 ) : (

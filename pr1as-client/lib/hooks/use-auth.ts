@@ -57,7 +57,7 @@ export interface ResendVerificationRequest {
 }
 
 export function useLogin() {
-  const { setAuth } = useAuthStore()
+  const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -92,7 +92,7 @@ export function useRegister() {
 }
 
 export function useMe() {
-  const { token } = useAuthStore()
+  const token = useAuthStore((s) => s.token)
 
   return useQuery({
     queryKey: queryKeys.auth.me,
@@ -107,7 +107,7 @@ export function useMe() {
 }
 
 export function useLogout() {
-  const { clearAuth } = useAuthStore()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -122,7 +122,9 @@ export function useLogout() {
 }
 
 export function useSwitchRole() {
-  const { user, token, setAuth } = useAuthStore()
+  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+  const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -179,7 +181,9 @@ export interface UpdateBasicProfileRequest {
 }
 
 export function useUpdateBasicProfile() {
-  const { user, token, setAuth } = useAuthStore()
+  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+  const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()
 
   return useMutation({

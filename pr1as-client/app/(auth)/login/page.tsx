@@ -19,7 +19,10 @@ import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { token, isAuthenticated, user, clearAuth } = useAuthStore()
+  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const user = useAuthStore((s) => s.user)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
   const loginMutation = useLogin()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
@@ -29,27 +32,22 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null)
 
+  const isSessionActive = Boolean(token && isAuthenticated)
+  const meSucceeded = meQuery.isSuccess && meQuery.data?.success === true
+  const authenticatedUser = meQuery.data?.data?.user ?? user
+  const redirectTarget = authenticatedUser?.role === "admin" ? "/dashboard" : "/"
+
   useEffect(() => {
-    if (!token || !isAuthenticated) {
-      return
-    }
-
-    if (meQuery.isError) {
+    if (isSessionActive && meQuery.isError) {
       clearAuth()
-      return
     }
+  }, [isSessionActive, meQuery.isError, clearAuth])
 
-    if (!meQuery.isSuccess || !meQuery.data?.success) {
-      return
+  useEffect(() => {
+    if (isSessionActive && meSucceeded && authenticatedUser) {
+      router.replace(redirectTarget)
     }
-
-    const authenticatedUser = meQuery.data.data?.user ?? user
-    if (!authenticatedUser) {
-      return
-    }
-
-    router.replace(authenticatedUser.role === "admin" ? "/dashboard" : "/")
-  }, [token, isAuthenticated, meQuery.isError, meQuery.isSuccess, meQuery.data, clearAuth, router, user])
+  }, [isSessionActive, meSucceeded, authenticatedUser, redirectTarget, router])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

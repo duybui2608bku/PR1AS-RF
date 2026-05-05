@@ -1,10 +1,15 @@
 import { ExtendedError, Socket } from "socket.io";
 import { verifyToken, JWTPayload } from "../utils/jwt";
 import { logger } from "../utils/logger";
-import { chatRepository } from "../repositories/chat/chat.repository";
+import { chatRepository, groupChatRepository } from "../repositories/chat";
 import { getSocketIO } from "./socket";
 import { AUTH_MESSAGES, CHAT_MESSAGES } from "../constants/messages";
-import { getConversationRoom } from "../utils/chat.helper";
+import { SOCKET_EVENTS } from "../constants/socket";
+import {
+  getConversationRoom,
+  getGroupConversationRoom,
+  getUserRoom,
+} from "../utils/chat.helper";
 
 const userSockets = new Map<string, Set<string>>();
 
@@ -73,12 +78,24 @@ const verifyConversationAccess = async (
   return !!conversation;
 };
 
+const verifyGroupConversationAccess = async (
+  conversationGroupId: string,
+  userId: string
+): Promise<boolean> => {
+  const conversation =
+    await groupChatRepository.getConversationGroupForUserById(
+      conversationGroupId,
+      userId
+    );
+  return !!conversation;
+};
+
 export const setupChatHandlers = (socket: Socket): void => {
   const user = socket.data.user as JWTPayload;
   const userId = user.sub;
 
   registerUserSocket(userId, socket.id);
-  socket.join(`user:${userId}`);
+  socket.join(getUserRoom(userId));
   socket.emit("connected", { user_id: userId });
 
   socket.on("join_conversation", async (data: { conversation_id: string }) => {
@@ -149,11 +166,19 @@ export const setupChatHandlers = (socket: Socket): void => {
 
         if (updatedCount > 0 && conversation_id) {
           const io = getSocketIO();
-          io.to(getConversationRoom(conversation_id)).emit("messages_read", {
+          const payload = {
             conversation_id,
             read_by: userId,
             read_at: new Date(),
-          });
+          };
+          io.to(getConversationRoom(conversation_id)).emit(
+            SOCKET_EVENTS.MESSAGE_READ,
+            payload
+          );
+          io.to(getConversationRoom(conversation_id)).emit(
+            "messages_read",
+            payload
+          );
         }
 
         socket.emit("read_confirmed", {
@@ -161,6 +186,148 @@ export const setupChatHandlers = (socket: Socket): void => {
         });
       } catch (error) {
         logger.error("Error marking messages as read:", error);
+        socket.emit("error", {
+          message: CHAT_MESSAGES.FAILED_MARK_READ,
+        });
+      }
+    }
+  );
+
+  socket.on(
+    "join_group_conversation",
+    async (data: { conversation_group_id: string }) => {
+      try {
+        const { conversation_group_id } = data;
+        const hasAccess = await verifyGroupConversationAccess(
+          conversation_group_id,
+          userId
+        );
+
+        if (!hasAccess) {
+          socket.emit("error", {
+            message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+          });
+          return;
+        }
+
+        socket.join(getGroupConversationRoom(conversation_group_id));
+        socket.emit("group_conversation_joined", { conversation_group_id });
+      } catch (error) {
+        logger.error(
+          `Error joining group conversation for user ${userId}:`,
+          error
+        );
+        socket.emit("error", {
+          message: CHAT_MESSAGES.FAILED_JOIN_CONVERSATION,
+        });
+      }
+    }
+  );
+
+  socket.on(
+    "leave_group_conversation",
+    (data: { conversation_group_id: string }) => {
+      const { conversation_group_id } = data;
+      socket.leave(getGroupConversationRoom(conversation_group_id));
+      logger.info(
+        `User ${userId} left group conversation ${conversation_group_id}`
+      );
+      socket.emit("group_conversation_left", { conversation_group_id });
+    }
+  );
+
+  socket.on(
+    "group_typing",
+    async (data: { conversation_group_id: string; is_typing: boolean }) => {
+      try {
+        const { conversation_group_id, is_typing } = data;
+        const hasAccess = await verifyGroupConversationAccess(
+          conversation_group_id,
+          userId
+        );
+
+        if (!hasAccess) {
+          return;
+        }
+
+        socket
+          .to(getGroupConversationRoom(conversation_group_id))
+          .emit("group_user_typing", {
+            conversation_group_id,
+            user_id: userId,
+            is_typing,
+          });
+      } catch (error) {
+        logger.error("Error handling group typing indicator:", error);
+      }
+    }
+  );
+
+  socket.on(
+    "mark_group_read",
+    async (data: {
+      message_ids?: string[];
+      conversation_group_id?: string;
+    }) => {
+      try {
+        const { message_ids } = data;
+        let { conversation_group_id } = data;
+
+        if (!conversation_group_id && message_ids && message_ids.length > 0) {
+          const message = await groupChatRepository.getMessageGroupByIdForUser(
+            message_ids[0],
+            userId
+          );
+          conversation_group_id = message?.conversation_group_id;
+        }
+
+        if (!conversation_group_id) {
+          socket.emit("error", {
+            message: CHAT_MESSAGES.FAILED_MARK_READ,
+          });
+          return;
+        }
+
+        const hasAccess = await verifyGroupConversationAccess(
+          conversation_group_id,
+          userId
+        );
+
+        if (!hasAccess) {
+          socket.emit("error", {
+            message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+          });
+          return;
+        }
+
+        const updatedCount = await groupChatRepository.markGroupMessagesAsRead(
+          userId,
+          conversation_group_id,
+          message_ids
+        );
+
+        if (updatedCount > 0) {
+          const io = getSocketIO();
+          const payload = {
+            conversation_group_id,
+            read_by: userId,
+            read_at: new Date(),
+          };
+          io.to(getGroupConversationRoom(conversation_group_id)).emit(
+            SOCKET_EVENTS.MESSAGE_READ,
+            payload
+          );
+          io.to(getGroupConversationRoom(conversation_group_id)).emit(
+            "group_messages_read",
+            payload
+          );
+        }
+
+        socket.emit("group_read_confirmed", {
+          updated_count: updatedCount,
+        });
+      } catch (error) {
+        logger.error("Error marking group messages as read:", error);
         socket.emit("error", {
           message: CHAT_MESSAGES.FAILED_MARK_READ,
         });

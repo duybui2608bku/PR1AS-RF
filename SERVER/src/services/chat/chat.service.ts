@@ -302,7 +302,12 @@ export class ChatService {
       );
     }
 
-    await Message.findByIdAndDelete(message_id);
+    await Message.findByIdAndUpdate(message_id, {
+      $set: {
+        is_deleted: true,
+        updated_at: new Date(),
+      },
+    });
 
     const io = getSocketIO();
 

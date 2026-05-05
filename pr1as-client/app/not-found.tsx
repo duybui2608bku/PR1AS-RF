@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
 export default function NotFound() {
   return (
@@ -11,12 +11,12 @@ export default function NotFound() {
         Sorry, we couldn&apos;t find the page you&apos;re looking for. It may have been moved or deleted.
       </p>
       <div className="mt-2 flex gap-2">
-        <Button asChild>
-          <Link href="/">Back to home</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/contact">Contact support</Link>
-        </Button>
+        <Link href="/" className={buttonVariants()}>
+          Back to home
+        </Link>
+        <Link href="/contact" className={buttonVariants({ variant: "outline" })}>
+          Contact support
+        </Link>
       </div>
     </div>
   )

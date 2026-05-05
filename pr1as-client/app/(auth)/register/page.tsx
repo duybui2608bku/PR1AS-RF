@@ -13,15 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useRegister } from "@/lib/hooks/use-auth"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
+import { isPasswordStrong, passwordRules } from "@/lib/auth/password.utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
-
-const passwordRules = [
-  { label: "Ít nhất 8 ký tự", test: (value: string) => value.length >= 8 },
-  { label: "Có chữ hoa", test: (value: string) => /[A-Z]/.test(value) },
-  { label: "Có chữ thường", test: (value: string) => /[a-z]/.test(value) },
-  { label: "Có số", test: (value: string) => /[0-9]/.test(value) },
-  { label: "Có ký tự đặc biệt", test: (value: string) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value) },
-]
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -35,7 +28,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const passwordMeetsAllRules = useMemo(() => passwordRules.every((rule) => rule.test(password)), [password])
+  const passwordMeetsAllRules = useMemo(() => isPasswordStrong(password), [password])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -28,15 +29,7 @@ export function NotificationBell() {
   const unreadCount = unreadData?.unread_count ?? 0
   const notifications = notifData?.data ?? []
 
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    window.addEventListener("mousedown", handleClickOutside)
-    return () => window.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  useClickOutside(dropdownRef, () => setOpen(false), open)
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -65,18 +58,18 @@ export function NotificationBell() {
         className="relative"
       >
         <Bell className="size-4" />
-        {unreadCount > 0 && (
+        {unreadCount > 0 ? (
           <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
-        )}
+        ) : null}
       </Button>
 
-      {open && (
+      {open ? (
         <div className="bg-background absolute right-0 z-50 mt-2 w-80 rounded-md border shadow-lg">
           <div className="flex items-center justify-between border-b px-4 py-3 cursor-pointer">
             <h3 className="text-sm font-semibold">Thông báo</h3>
-            {unreadCount > 0 && (
+            {unreadCount > 0 ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -91,7 +84,7 @@ export function NotificationBell() {
                 )}
                 Đọc tất cả
               </Button>
-            )}
+            ) : null}
           </div>
 
           <div className="max-h-96 overflow-y-auto">
@@ -115,7 +108,7 @@ export function NotificationBell() {
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -158,7 +151,7 @@ function NotificationItem({
           })}
         </p>
       </div>
-      {isMarking && <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />}
+      {isMarking ? <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" /> : null}
     </button>
   )
 }

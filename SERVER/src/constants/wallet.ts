@@ -14,7 +14,12 @@ export enum TransactionStatus {
 }
 
 export enum PaymentGateway {
-  VNPAY = "vnpay",
+  SEPAY = "sepay",
+}
+
+export enum SePayTransferType {
+  IN = "in",
+  OUT = "out",
 }
 
 export enum DateRangePreset {
@@ -35,16 +40,12 @@ export const WALLET_LIMITS = {
   MIN_BALANCE: 0,
 } as const;
 
-export const VNPAY_CONSTANTS = {
-  CURRENCY_CODE: "VND",
-  LOCALE: "vn",
-  ORDER_TYPE: "other",
-  ORDER_INFO_PREFIX: "NAP TIEN VAO TAI KHOAN",
+export const SEPAY_CONSTANTS = {
+  QR_BASE_URL: "https://qr.sepay.vn/img",
+  PAYMENT_CODE_PREFIX: "PRAS",
+  PAYMENT_CODE_SUFFIX_LENGTH: 10,
+  PAYMENT_CODE_MAX_GENERATE_ATTEMPTS: 10,
 } as const;
-
-export enum VNPayResponseCode {
-  SUCCESS = "00",
-}
 
 export const DATE_RANGE_OFFSETS = {
   YESTERDAY_DAYS: 1,

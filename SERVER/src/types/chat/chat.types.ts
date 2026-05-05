@@ -8,6 +8,7 @@ export interface IMessage {
   type: MessageType;
   content: string;
   is_read: boolean;
+  is_deleted: boolean;
   read_at: Date | null;
   reply_to_id: string | null;
   created_at: Date;

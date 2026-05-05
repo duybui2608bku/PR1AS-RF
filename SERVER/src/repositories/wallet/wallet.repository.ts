@@ -10,6 +10,7 @@ import {
   TransactionType,
   TransactionStatus,
   TOP_USERS_LIMIT,
+  SePayTransferType,
 } from "../../constants/wallet";
 import { modelsName } from "../../models/models.name";
 import mongoose from "mongoose";
@@ -22,7 +23,27 @@ export interface CreateTransactionInput {
   gateway?: string;
   gateway_transaction_id?: string;
   gateway_response?: Record<string, unknown>;
+  payment_code?: string;
+  payment_content?: string;
+  qr_url?: string;
+  bank_account_number?: string;
+  bank_name?: string;
   description?: string;
+}
+
+export interface SePayTransactionUpdateInput {
+  id: number;
+  gateway: string;
+  transactionDate: string;
+  accountNumber: string;
+  code: string | null;
+  content: string;
+  transferType: SePayTransferType;
+  transferAmount: number;
+  accumulated: number;
+  subAccount: string | null;
+  referenceCode: string;
+  description: string;
 }
 
 export interface FindTransactionsResult {
@@ -65,6 +86,22 @@ export class WalletRepository {
     });
   }
 
+  async findByPaymentCode(
+    paymentCode: string
+  ): Promise<IWalletTransactionDocument | null> {
+    return WalletTransaction.findOne({
+      payment_code: paymentCode,
+    });
+  }
+
+  async findBySePayTransactionId(
+    sepayTransactionId: number
+  ): Promise<IWalletTransactionDocument | null> {
+    return WalletTransaction.findOne({
+      sepay_transaction_id: sepayTransactionId,
+    });
+  }
+
   async updateStatus(
     transactionId: string,
     status: TransactionStatus,
@@ -92,6 +129,35 @@ export class WalletRepository {
       transactionId,
       {
         gateway_transaction_id: gatewayTransactionId,
+        updated_at: new Date(),
+      },
+      { new: true }
+    );
+  }
+
+  async applySePayWebhook(
+    transactionId: string,
+    status: TransactionStatus,
+    webhook: SePayTransactionUpdateInput
+  ): Promise<IWalletTransactionDocument | null> {
+    return WalletTransaction.findByIdAndUpdate(
+      transactionId,
+      {
+        status,
+        gateway_transaction_id: String(webhook.id),
+        gateway_response: webhook,
+        sepay_transaction_id: webhook.id,
+        sepay_gateway: webhook.gateway,
+        sepay_transaction_date: new Date(webhook.transactionDate),
+        sepay_account_number: webhook.accountNumber,
+        sepay_code: webhook.code,
+        sepay_content: webhook.content,
+        sepay_transfer_type: webhook.transferType,
+        sepay_transfer_amount: webhook.transferAmount,
+        sepay_accumulated: webhook.accumulated,
+        sepay_sub_account: webhook.subAccount,
+        sepay_reference_code: webhook.referenceCode,
+        sepay_description: webhook.description,
         updated_at: new Date(),
       },
       { new: true }
