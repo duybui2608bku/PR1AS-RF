@@ -14,6 +14,7 @@ export enum DressCode {
 export interface IServiceDocument extends Document {
   category: ServiceCategory;
   code: string;
+  icon: string;
   name: {
     en: string;
     vi: string;

@@ -21,6 +21,11 @@ const serviceSchema = new Schema<IServiceDocument>(
       uppercase: true,
       trim: true,
     },
+    icon: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     name: {
       en: { type: String, required: true },
       vi: { type: String, required: true },
