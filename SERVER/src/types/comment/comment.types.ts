@@ -1,4 +1,5 @@
 import { Document, Types } from "mongoose";
+import { ReactionSummaryPublic } from "../reaction/reaction.types";
 
 export interface IComment {
   post_id: Types.ObjectId;
