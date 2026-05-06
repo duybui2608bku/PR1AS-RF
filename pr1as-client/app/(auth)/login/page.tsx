@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,6 +19,7 @@ import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const token = useAuthStore((s) => s.token)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const user = useAuthStore((s) => s.user)
@@ -37,8 +38,10 @@ export default function LoginPage() {
   const isSessionActive = Boolean(token && isAuthenticated)
   const meSucceeded = meQuery.isSuccess && meQuery.data?.success === true
   const authenticatedUser = meQuery.data?.data?.user ?? user
+  const fromPath = searchParams.get("from")
+  const safeFrom = fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
   const redirectTarget =
-    authenticatedUser?.role === "admin" ? "/dashboard" : "/"
+    safeFrom ?? (authenticatedUser?.role === "admin" ? "/dashboard" : "/")
 
   useEffect(() => {
     if (isSessionActive && meQuery.isError) {

@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import {
   ArrowRight,
   Loader2,
@@ -10,7 +9,7 @@ import {
   RefreshCw,
   Wallet,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,6 @@ import {
   useDepositTransactions,
   useWalletBalance,
 } from "@/lib/hooks/use-wallet"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import {
   formatVnd,
@@ -31,18 +29,10 @@ import {
 const PAGE_SIZE = 10
 
 export function WalletPage() {
-  const router = useRouter()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [page, setPage] = useState(1)
 
   const balanceQuery = useWalletBalance()
   const depositsQuery = useDepositTransactions({ page, limit: PAGE_SIZE })
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/login")
-    }
-  }, [isAuthenticated, router])
 
   const transactions = useMemo(
     () => depositsQuery.data?.data ?? [],

@@ -5,6 +5,8 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
+  Home,
+  ImagePlus,
   Inbox,
   Loader2,
   MessageCircle,
@@ -25,6 +27,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
+import { uploadImage } from "@/lib/utils/upload-image"
 import {
   useDirectConversation,
   useDirectConversations,
@@ -288,7 +291,9 @@ export function ChatPage({
   const [typingByRoom, setTypingByRoom] = React.useState<
     Record<string, string>
   >({})
+  const [isUploadingImage, setIsUploadingImage] = React.useState(false)
   const messageScrollerRef = React.useRef<HTMLDivElement | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const typingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
@@ -740,6 +745,77 @@ export function ChatPage({
     typingTimerRef.current = setTimeout(() => emitTyping(false), 1200)
   }
 
+  const handleDraftKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing)
+      return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+  }
+
+  const sendImageMessage = async (imageUrl: string) => {
+    if (mode === "direct") {
+      if (!directReceiverId) {
+        toast.error("Nhập ID người nhận trước khi gửi.")
+        return
+      }
+
+      const result = await sendDirectMessageMutation.mutateAsync({
+        receiver_id: directReceiverId,
+        content: imageUrl,
+        type: "image",
+        reply_to_id: replyTarget?.id ?? null,
+      })
+
+      setSelectedDirectId(result.conversation._id)
+      setIsNewDirectOpen(false)
+      setReceiverId("")
+      setReplyTarget(null)
+      return
+    }
+
+    if (!selectedGroup?.booking_id) {
+      toast.error("Chọn nhóm trò chuyện trước khi gửi.")
+      return
+    }
+
+    const result = await sendGroupMessageMutation.mutateAsync({
+      booking_id: selectedGroup.booking_id,
+      content: imageUrl,
+      type: "image",
+      reply_to_id: replyTarget?.id ?? null,
+    })
+
+    setSelectedGroupId(result.conversation._id)
+    setReplyTarget(null)
+  }
+
+  const handleImageSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Chỉ hỗ trợ tệp ảnh.")
+      return
+    }
+
+    try {
+      setIsUploadingImage(true)
+      const imageUrl = await uploadImage(file)
+      await sendImageMessage(imageUrl)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể gửi ảnh."
+      toast.error(message)
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const content = draft.trim()
@@ -827,7 +903,16 @@ export function ChatPage({
   return (
     <div className="flex h-svh flex-col overflow-hidden bg-background p-0 md:p-4">
       <div className="flex shrink-0 flex-col gap-3 border-b px-4 py-3 md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/")}
+            aria-label="Về trang chủ"
+          >
+            <Home className="size-4" />
+          </Button>
           <h1 className="text-2xl font-bold tracking-tight">Tin nhắn</h1>
         </div>
         {/* <div className="flex flex-wrap items-center gap-2">
@@ -1050,7 +1135,11 @@ export function ChatPage({
                     Đang trả lời{" "}
                     {replyTarget.senderId === user?.id
                       ? "bạn"
-                      : shortenId(replyTarget.senderId)}
+                      : mode === "direct"
+                        ? selectedDirect?.other_user?.full_name ||
+                          selectedDirect?.other_user?.email ||
+                          "người gửi"
+                        : "thành viên"}
                   </p>
                   <p className="truncate text-sm">{replyTarget.content}</p>
                 </div>
@@ -1067,12 +1156,39 @@ export function ChatPage({
               </div>
             ) : null}
             <div className="flex items-end gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={
+                  isSending ||
+                  isUploadingImage ||
+                  (mode === "direct" && !directReceiverId) ||
+                  (mode === "group" && !selectedGroup)
+                }
+                aria-label="Gửi ảnh"
+              >
+                {isUploadingImage ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-4" />
+                )}
+              </Button>
               <textarea
                 value={draft}
                 onChange={handleDraftChange}
+                onKeyDown={handleDraftKeyDown}
                 placeholder={
                   activeConversationId || mode === "direct"
-                    ? "Nhập tin nhắn hoặc dán URL ảnh"
+                    ? "Nhập tin nhắn (Enter để gửi, Shift+Enter xuống dòng)"
                     : "Chọn cuộc trò chuyện"
                 }
                 rows={1}
@@ -1361,7 +1477,11 @@ function MessagePane({
                     Trả lời{" "}
                     {replyMessage.sender_id === currentUserId
                       ? "bạn"
-                      : shortenId(replyMessage.sender_id)}
+                      : mode === "direct"
+                        ? directPeer?.full_name ||
+                          directPeer?.email ||
+                          "người gửi"
+                        : "thành viên"}
                   </p>
                   <p className="line-clamp-2">
                     {getMessagePreview(replyMessage)}

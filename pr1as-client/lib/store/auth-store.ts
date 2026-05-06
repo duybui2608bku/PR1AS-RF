@@ -1,6 +1,8 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
+import { clearAuthCookie, setAuthCookie } from "@/lib/auth/auth-cookie"
+
 const LEGACY_AUTH_TOKEN_KEY = "auth_token"
 
 const removeLegacyAuthToken = () => {
@@ -50,10 +52,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       setAuth: ({ user, token }) => {
         removeLegacyAuthToken()
+        setAuthCookie(token)
         set({ user, token, isAuthenticated: true })
       },
       clearAuth: () => {
         removeLegacyAuthToken()
+        clearAuthCookie()
         set({ user: null, token: null, isAuthenticated: false })
       },
     }),
@@ -65,6 +69,11 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          setAuthCookie(state.token)
+        }
+      },
     }
   )
 )

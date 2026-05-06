@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { ArrowLeft, CheckCircle2, Copy, Loader2, QrCode, Wallet, XCircle } from "lucide-react"
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -12,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateDeposit, useWalletTransaction } from "@/lib/hooks/use-wallet"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type { DepositPayment } from "@/services/wallet.service"
 import { formatVnd } from "@/components/wallet/wallet-format"
@@ -30,8 +28,6 @@ const formatAmountInput = (value: string): string => {
 }
 
 export function WalletDepositPage() {
-  const router = useRouter()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const createDepositMutation = useCreateDeposit()
   const [amount, setAmount] = useState("100000")
   const [payment, setPayment] = useState<DepositPayment | null>(null)
@@ -40,12 +36,6 @@ export function WalletDepositPage() {
   const transactionStatus = transactionQuery.data?.status ?? "pending"
   const isPaymentSuccess = transactionStatus === "success"
   const isPaymentFailed = transactionStatus === "failed"
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/login")
-    }
-  }, [isAuthenticated, router])
 
   useEffect(() => {
     if (!payment || notifiedTransactionRef.current === payment.transaction_id) {

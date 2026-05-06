@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import {
   Bell,
   CalendarCheck2,
+  Crown,
+  FileText,
   Loader2,
   LogOut,
   Menu,
@@ -14,6 +16,7 @@ import {
   Sun,
   User,
   Wallet,
+  type LucideIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import * as React from "react"
@@ -22,17 +25,37 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
+import { getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { NotificationBell } from "@/components/layout/notification-bell"
 
 const USER_MENU_ITEMS = [
-  { href: "/chat", label: "Chat", icon: MessageCircle },
-  { href: "/profile", label: "Hồ sơ", icon: User },
-  { href: "/notifications", label: "Thông báo", icon: Bell },
-  { href: "/wallet", label: "Ví", icon: Wallet },
-  { href: "/booking", label: "Booking", icon: CalendarCheck2 },
-] as const
+  { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
+  { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
+  { routeKey: "profile", href: "/profile", label: "Hồ sơ", icon: User },
+  {
+    routeKey: "notifications",
+    href: "/notifications",
+    label: "Thông báo",
+    icon: Bell,
+  },
+  { routeKey: "wallet", href: "/wallet", label: "Ví", icon: Wallet },
+  {
+    routeKey: "booking",
+    href: "/booking",
+    label: "Booking",
+    icon: CalendarCheck2,
+  },
+] as const satisfies ReadonlyArray<{
+  routeKey: RoleRouteKey
+  href: string
+  label: string
+  icon: LucideIcon
+}>
+
+const formatPricingPlan = (planCode: string | null | undefined) =>
+  (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
 export function SiteHeader() {
   const router = useRouter()
@@ -46,11 +69,31 @@ export function SiteHeader() {
 
   const userRoles = user?.roles ?? []
   const lastActiveRole = user?.last_active_role
+  const fallbackRole =
+    user?.role && (userRoles.length === 0 || userRoles.includes(user.role))
+      ? user.role
+      : (userRoles[0] ?? user?.role)
+  const activeRole = lastActiveRole ?? fallbackRole
   const isWorkerActive = lastActiveRole === "worker"
   const hasWorkerRole = userRoles.includes("worker")
   const canSwitchRole = isAuthenticated && (isWorkerActive || hasWorkerRole)
 
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
+  const userMenuItems = React.useMemo(
+    () => [
+      ...USER_MENU_ITEMS.map((item) => ({
+        ...item,
+        href: getRoleRoute(item.routeKey, activeRole, item.href),
+      })),
+      {
+        routeKey: "pricing" as const,
+        href: "/pricing",
+        label: `Gói hiện tại: ${formatPricingPlan(user?.pricing_plan_code)}`,
+        icon: Crown,
+      },
+    ],
+    [activeRole, user?.pricing_plan_code]
+  )
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
 
@@ -143,7 +186,7 @@ export function SiteHeader() {
                   <div className="px-3 py-2 text-xs text-muted-foreground">
                     {user?.email ?? "Khách"}
                   </div>
-                  {USER_MENU_ITEMS.map((item) => (
+                  {userMenuItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -210,7 +253,7 @@ export function SiteHeader() {
                   {switchRoleLabel}
                 </Button>
                 <div className="border-t pt-2">
-                  {USER_MENU_ITEMS.map((item) => (
+                  {userMenuItems.map((item) => (
                     <button
                       key={item.href}
                       type="button"

@@ -90,4 +90,8 @@ export interface PostPublic {
 
 export interface PostStatsPublic {
   published_posts_count: number;
+  current_month_posts_count: number;
+  monthly_create_post_limit: number | null;
+  remaining_monthly_create_posts: number | null;
+  can_create_post: boolean;
 }

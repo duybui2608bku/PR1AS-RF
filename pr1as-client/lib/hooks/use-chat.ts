@@ -163,3 +163,20 @@ export function useMarkGroupMessagesRead() {
     },
   })
 }
+
+export function useCreateComplaintConversation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (booking_id: string) =>
+      chatService.createComplaintConversation(booking_id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chat.groupConversationsRoot,
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chat.groupConversation(data._id),
+      })
+    },
+  })
+}

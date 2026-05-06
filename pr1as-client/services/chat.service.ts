@@ -264,4 +264,17 @@ export const chatService = {
     )
     return response.data.data ?? { updated_count: 0 }
   },
+
+  createComplaintConversation: async (booking_id: string) => {
+    const response = await api.post<
+      ApiResponse<{ conversation: GroupChatConversation }>
+    >("/chat/group/complaint", { booking_id })
+    const conversation = response.data.data?.conversation
+    if (!conversation) {
+      throw new Error(
+        response.data.message ?? "Cannot open complaint conversation."
+      )
+    }
+    return conversation
+  },
 }

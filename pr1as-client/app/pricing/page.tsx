@@ -67,7 +67,7 @@ const FEATURE_ROWS: {
     }),
   },
   {
-    label: "Đăng job tuyển dụng",
+    label: "Đăng tin",
     get: (pkg) => ({
       enabled: pkg.features.create_job_enabled,
       text: pkg.features.create_job_enabled

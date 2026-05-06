@@ -1,8 +1,7 @@
 "use client"
 
-import { ChangeEvent, ReactNode, useEffect, useRef, useState } from "react"
+import { ChangeEvent, ReactNode, useRef, useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
   Building2,
@@ -51,8 +50,6 @@ const toPlanColor = (planCode?: string): string => {
 }
 
 export default function ClientProfilePage() {
-  const router = useRouter()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const user = useAuthStore((s) => s.user)
   const meQuery = useMe()
   const updateProfileMutation = useUpdateBasicProfile()
@@ -64,12 +61,6 @@ export default function ClientProfilePage() {
   const profileData = meQuery.data?.data?.user ?? user
   const userRoles = profileData?.roles ?? []
   const displayName = profileData?.full_name ?? "Người dùng"
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace("/login")
-    }
-  }, [isAuthenticated, router])
 
   const closeModal = () => setIsEditModalOpen(false)
 

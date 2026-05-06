@@ -107,6 +107,18 @@ export class PostRepository {
       deleted_at: null,
     });
   }
+
+  async countCreatedByAuthorBetween(
+    authorId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number> {
+    if (!Types.ObjectId.isValid(authorId)) return 0;
+    return Post.countDocuments({
+      author_id: new Types.ObjectId(authorId),
+      created_at: { $gte: startDate, $lt: endDate },
+    });
+  }
 }
 
 export const postRepository = new PostRepository();

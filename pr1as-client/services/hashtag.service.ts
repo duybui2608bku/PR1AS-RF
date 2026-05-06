@@ -6,15 +6,25 @@ export type GetTrendingParams = {
   limit?: number
 }
 
+type TrendingHashtagsResponse =
+  | TrendingHashtag[]
+  | {
+      items?: TrendingHashtag[]
+    }
+
 export const hashtagService = {
   getTrending: async (params: GetTrendingParams = {}) => {
     const query = new URLSearchParams()
     if (params.window) query.set("window", params.window)
     if (params.limit) query.set("limit", String(params.limit))
 
-    const { data } = await api.get<ApiResponse<TrendingHashtag[]>>(
+    const { data } = await api.get<ApiResponse<TrendingHashtagsResponse>>(
       `/hashtags/trending?${query.toString()}`,
     )
-    return data.data
+    if (Array.isArray(data.data)) {
+      return data.data
+    }
+
+    return data.data.items ?? []
   },
 }

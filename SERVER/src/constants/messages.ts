@@ -243,6 +243,10 @@ export const POST_MESSAGES = {
   POST_NOT_FOUND: "Post not found",
   UNAUTHORIZED_ACCESS: "You do not have permission to modify this post",
   MY_POST_STATS_FETCHED: "Your post statistics fetched successfully",
+  CREATE_JOB_FEATURE_DISABLED:
+    "Your current plan does not allow creating posts",
+  MONTHLY_CREATE_LIMIT_EXCEEDED:
+    "You have reached your monthly post creation limit for the current plan",
 } as const;
 
 export const COMMENT_MESSAGES = {

@@ -87,6 +87,52 @@ export type PostFeedParams = {
   hashtag?: string
 }
 
+export type CommentAuthor = {
+  id: string
+  full_name: string | null
+  avatar: string | null
+  has_worker_profile: boolean
+}
+
+export type CommentPublic = {
+  id: string
+  post_id: string
+  parent_comment_id: string | null
+  author: CommentAuthor
+  body: string
+  created_at: string
+  updated_at: string
+}
+
+export type CommentThreadItem = CommentPublic & {
+  parent_comment_id: null
+  replies: CommentPublic[]
+}
+
+export type CreatedComment = CommentPublic & {
+  replies: CommentPublic[]
+}
+
+export type CommentsPage = {
+  data: CommentThreadItem[]
+  next_cursor: string | null
+  has_more: boolean
+}
+
+export type CreateCommentPayload = {
+  body: string
+  parent_comment_id?: string | null
+}
+
+export type UpdateCommentPayload = {
+  body: string
+}
+
+export type CommentListParams = {
+  cursor?: string
+  limit?: number
+}
+
 // ─── Group Chat ───────────────────────────────────────────────────────────────
 export type MessageType = "text" | "image" | "file"
 
