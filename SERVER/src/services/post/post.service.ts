@@ -490,10 +490,15 @@ export class PostService {
     // trending counts, and visible comment threads. Each step is best-effort
     // and logged: a partial failure shouldn't fail the user-facing delete.
     try {
+      const postObjectId = existing._id as Types.ObjectId;
       await Promise.all([
         postMediaRepository.deleteByPostId(postId),
         hashtagService.clearPostHashtags(postId),
         commentRepository.softDeleteByPostId(postId),
+        reactionRepository.deleteByTarget(
+          ReactionTargetType.POST,
+          postObjectId
+        ),
       ]);
     } catch (error) {
       logger.error("Failed to cascade post soft-delete cleanup", error);
