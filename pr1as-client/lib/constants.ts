@@ -6,7 +6,6 @@ export const APP_ROUTES = {
 } as const
 
 export const STORAGE_KEYS = {
-  authToken: "auth_token",
   authStorage: "auth-storage",
   theme: "theme",
 } as const

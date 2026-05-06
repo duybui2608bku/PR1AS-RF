@@ -9,7 +9,6 @@ import {
   Loader2,
   MessageCircle,
   Plus,
-  RefreshCw,
   Reply,
   Search,
   Send,
@@ -17,6 +16,7 @@ import {
   Users,
   X,
 } from "lucide-react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
@@ -299,24 +299,38 @@ export function ChatPage({
   const { socket } = useChatSocket()
   const directConversationsQuery = useDirectConversations(CONVERSATION_PARAMS)
   const groupConversationsQuery = useGroupConversations(CONVERSATION_PARAMS)
-  const directConversations = directConversationsQuery.data?.conversations ?? []
-  const groupConversations = groupConversationsQuery.data?.conversations ?? []
+  const directConversations = React.useMemo(
+    () => directConversationsQuery.data?.conversations ?? [],
+    [directConversationsQuery.data?.conversations]
+  )
+  const groupConversations = React.useMemo(
+    () => groupConversationsQuery.data?.conversations ?? [],
+    [groupConversationsQuery.data?.conversations]
+  )
+  const activeDirectId =
+    selectedDirectId ??
+    (mode === "direct" && !isNewDirectOpen
+      ? (directConversations[0]?._id ?? null)
+      : null)
+  const activeGroupId =
+    selectedGroupId ??
+    (mode === "group" ? (groupConversations[0]?._id ?? null) : null)
 
   const selectedDirectFromList = isNewDirectOpen
     ? undefined
     : directConversations.find(
-        (conversation) => conversation._id === selectedDirectId
+        (conversation) => conversation._id === activeDirectId
       )
   const selectedGroupFromList = groupConversations.find(
-    (conversation) => conversation._id === selectedGroupId
+    (conversation) => conversation._id === activeGroupId
   )
   const directConversationQuery = useDirectConversation(
     selectedDirectFromList || isNewDirectOpen
       ? undefined
-      : (selectedDirectId ?? undefined)
+      : (activeDirectId ?? undefined)
   )
   const groupConversationQuery = useGroupConversation(
-    selectedGroupFromList ? undefined : (selectedGroupId ?? undefined)
+    selectedGroupFromList ? undefined : (activeGroupId ?? undefined)
   )
   const selectedDirect = isNewDirectOpen
     ? null
@@ -326,19 +340,25 @@ export function ChatPage({
 
   const directMessagesQuery = useDirectMessages(
     mode === "direct" && !isNewDirectOpen
-      ? (selectedDirectId ?? undefined)
+      ? (activeDirectId ?? undefined)
       : undefined,
     MESSAGE_PARAMS
   )
   const groupMessagesQuery = useGroupMessages(
-    mode === "group" ? (selectedGroupId ?? undefined) : undefined,
+    mode === "group" ? (activeGroupId ?? undefined) : undefined,
     MESSAGE_PARAMS
   )
-  const directMessages = directMessagesQuery.data?.messages ?? []
-  const groupMessages = groupMessagesQuery.data?.messages ?? []
+  const directMessages = React.useMemo(
+    () => directMessagesQuery.data?.messages ?? [],
+    [directMessagesQuery.data?.messages]
+  )
+  const groupMessages = React.useMemo(
+    () => groupMessagesQuery.data?.messages ?? [],
+    [groupMessagesQuery.data?.messages]
+  )
   const activeMessages = mode === "direct" ? directMessages : groupMessages
   const activeConversationId =
-    mode === "direct" && !isNewDirectOpen ? selectedDirectId : selectedGroupId
+    mode === "direct" && !isNewDirectOpen ? activeDirectId : activeGroupId
 
   const sendDirectMessageMutation = useSendDirectMessage()
   const sendGroupMessageMutation = useSendGroupMessage()
@@ -407,44 +427,27 @@ export function ChatPage({
   }, [isAuthenticated, router])
 
   React.useEffect(() => {
-    if (
-      mode !== "direct" ||
-      selectedDirectId ||
-      isNewDirectOpen ||
-      directConversations.length === 0
-    )
+    if (!socket || mode !== "direct" || !activeDirectId || isNewDirectOpen)
       return
-    setSelectedDirectId(directConversations[0]._id)
-  }, [directConversations, isNewDirectOpen, mode, selectedDirectId])
-
-  React.useEffect(() => {
-    if (mode !== "group" || selectedGroupId || groupConversations.length === 0)
-      return
-    setSelectedGroupId(groupConversations[0]._id)
-  }, [groupConversations, mode, selectedGroupId])
-
-  React.useEffect(() => {
-    if (!socket || mode !== "direct" || !selectedDirectId || isNewDirectOpen)
-      return
-    socket.emit("join_conversation", { conversation_id: selectedDirectId })
+    socket.emit("join_conversation", { conversation_id: activeDirectId })
 
     return () => {
-      socket.emit("leave_conversation", { conversation_id: selectedDirectId })
+      socket.emit("leave_conversation", { conversation_id: activeDirectId })
     }
-  }, [isNewDirectOpen, mode, selectedDirectId, socket])
+  }, [activeDirectId, isNewDirectOpen, mode, socket])
 
   React.useEffect(() => {
-    if (!socket || mode !== "group" || !selectedGroupId) return
+    if (!socket || mode !== "group" || !activeGroupId) return
     socket.emit("join_group_conversation", {
-      conversation_group_id: selectedGroupId,
+      conversation_group_id: activeGroupId,
     })
 
     return () => {
       socket.emit("leave_group_conversation", {
-        conversation_group_id: selectedGroupId,
+        conversation_group_id: activeGroupId,
       })
     }
-  }, [mode, selectedGroupId, socket])
+  }, [activeGroupId, mode, socket])
 
   const setTyping = React.useCallback(
     (roomKey: string, nextUserId: string, isTypingNow: boolean) => {
@@ -493,7 +496,7 @@ export function ChatPage({
         })
 
         if (
-          message.conversation_group_id === selectedGroupId &&
+          message.conversation_group_id === activeGroupId &&
           message.sender_id !== user?.id
         ) {
           socket.emit("mark_group_read", {
@@ -512,7 +515,7 @@ export function ChatPage({
       })
 
       if (
-        message.conversation_id === selectedDirectId &&
+        message.conversation_id === activeDirectId &&
         message.receiver_id === user?.id
       ) {
         socket.emit("mark_read", { conversation_id: message.conversation_id })
@@ -612,46 +615,31 @@ export function ChatPage({
       socket.off("group_user_typing", handleGroupTyping)
       socket.off("error", handleSocketError)
     }
-  }, [
-    queryClient,
-    selectedDirectId,
-    selectedGroupId,
-    setTyping,
-    socket,
-    user?.id,
-  ])
+  }, [activeDirectId, activeGroupId, queryClient, setTyping, socket, user?.id])
 
   React.useEffect(() => {
+    const typingClearTimers = typingClearTimersRef.current
+
     return () => {
       if (typingTimerRef.current) {
         clearTimeout(typingTimerRef.current)
       }
 
-      Object.values(typingClearTimersRef.current).forEach((timer) =>
-        clearTimeout(timer)
-      )
+      Object.values(typingClearTimers).forEach((timer) => clearTimeout(timer))
     }
   }, [])
-
-  React.useEffect(() => {
-    setDraft("")
-    setReplyTarget(null)
-    if (typingTimerRef.current) {
-      clearTimeout(typingTimerRef.current)
-    }
-  }, [mode, selectedDirectId, selectedGroupId])
 
   React.useEffect(() => {
     const scroller = messageScrollerRef.current
     if (!scroller) return
     scroller.scrollTo({ top: scroller.scrollHeight })
-  }, [activeMessages.length, mode, selectedDirectId, selectedGroupId])
+  }, [activeMessages.length, activeDirectId, activeGroupId, mode])
 
   React.useEffect(() => {
     if (
       mode !== "direct" ||
       isNewDirectOpen ||
-      !selectedDirectId ||
+      !activeDirectId ||
       directMessages.length === 0
     )
       return
@@ -663,24 +651,23 @@ export function ChatPage({
     if (unreadIds.length === 0) return
 
     if (socket?.connected) {
-      socket.emit("mark_read", { conversation_id: selectedDirectId })
+      socket.emit("mark_read", { conversation_id: activeDirectId })
       return
     }
 
-    markDirectReadMutation.mutate({ conversation_id: selectedDirectId })
+    markDirectReadMutation.mutate({ conversation_id: activeDirectId })
   }, [
+    activeDirectId,
     directMessages,
     isNewDirectOpen,
     markDirectReadMutation,
     mode,
-    selectedDirectId,
     socket,
     user?.id,
   ])
 
   React.useEffect(() => {
-    if (mode !== "group" || !selectedGroupId || groupMessages.length === 0)
-      return
+    if (mode !== "group" || !activeGroupId || groupMessages.length === 0) return
 
     const unreadIds = groupMessages
       .filter(
@@ -693,16 +680,16 @@ export function ChatPage({
     if (unreadIds.length === 0) return
 
     if (socket?.connected) {
-      socket.emit("mark_group_read", { conversation_group_id: selectedGroupId })
+      socket.emit("mark_group_read", { conversation_group_id: activeGroupId })
       return
     }
 
-    markGroupReadMutation.mutate({ conversation_group_id: selectedGroupId })
+    markGroupReadMutation.mutate({ conversation_group_id: activeGroupId })
   }, [
+    activeGroupId,
     groupMessages,
     markGroupReadMutation,
     mode,
-    selectedGroupId,
     socket,
     user?.id,
   ])
@@ -711,22 +698,31 @@ export function ChatPage({
     (isTypingNow: boolean) => {
       if (!socket) return
 
-      if (mode === "direct" && selectedDirectId && !isNewDirectOpen) {
+      if (mode === "direct" && activeDirectId && !isNewDirectOpen) {
         socket.emit("typing", {
-          conversation_id: selectedDirectId,
+          conversation_id: activeDirectId,
           is_typing: isTypingNow,
         })
       }
 
-      if (mode === "group" && selectedGroupId) {
+      if (mode === "group" && activeGroupId) {
         socket.emit("group_typing", {
-          conversation_group_id: selectedGroupId,
+          conversation_group_id: activeGroupId,
           is_typing: isTypingNow,
         })
       }
     },
-    [isNewDirectOpen, mode, selectedDirectId, selectedGroupId, socket]
+    [activeDirectId, activeGroupId, isNewDirectOpen, mode, socket]
   )
+
+  const resetComposer = React.useCallback(() => {
+    setDraft("")
+    setReplyTarget(null)
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current)
+    }
+    emitTyping(false)
+  }, [emitTyping])
 
   const handleDraftChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDraft(event.target.value)
@@ -742,13 +738,6 @@ export function ChatPage({
 
     emitTyping(true)
     typingTimerRef.current = setTimeout(() => emitTyping(false), 1200)
-  }
-
-  const handleRefresh = () => {
-    directConversationsQuery.refetch()
-    groupConversationsQuery.refetch()
-    directMessagesQuery.refetch()
-    groupMessagesQuery.refetch()
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -805,9 +794,9 @@ export function ChatPage({
   const handleDeleteDirectMessage = async (messageId: string) => {
     try {
       await deleteDirectMessageMutation.mutateAsync(messageId)
-      if (selectedDirectId) {
+      if (activeDirectId) {
         queryClient.setQueryData<DirectMessageListResult>(
-          queryKeys.chat.directMessages(selectedDirectId, MESSAGE_PARAMS),
+          queryKeys.chat.directMessages(activeDirectId, MESSAGE_PARAMS),
           (current) =>
             current
               ? {
@@ -880,6 +869,7 @@ export function ChatPage({
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => {
+                  resetComposer()
                   setMode("direct")
                   setMobileThreadOpen(false)
                 }}
@@ -896,6 +886,7 @@ export function ChatPage({
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => {
+                  resetComposer()
                   setMode("group")
                   setMobileThreadOpen(false)
                 }}
@@ -920,6 +911,7 @@ export function ChatPage({
                 size="sm"
                 className="mt-3 w-full justify-start"
                 onClick={() => {
+                  resetComposer()
                   setIsNewDirectOpen(true)
                   setSelectedDirectId(null)
                   setReceiverId("")
@@ -938,9 +930,10 @@ export function ChatPage({
                 type="direct"
                 loading={directConversationsQuery.isLoading}
                 conversations={filteredDirectConversations}
-                selectedId={selectedDirectId}
+                selectedId={activeDirectId}
                 currentUserId={user?.id}
                 onSelect={(id) => {
+                  resetComposer()
                   setIsNewDirectOpen(false)
                   setSelectedDirectId(id)
                   setMobileThreadOpen(true)
@@ -951,9 +944,10 @@ export function ChatPage({
                 type="group"
                 loading={groupConversationsQuery.isLoading}
                 conversations={filteredGroupConversations}
-                selectedId={selectedGroupId}
+                selectedId={activeGroupId}
                 currentUserId={user?.id}
                 onSelect={(id) => {
+                  resetComposer()
                   setSelectedGroupId(id)
                   setMobileThreadOpen(true)
                 }}
@@ -1233,9 +1227,11 @@ function ThreadAvatar({
 
   if (avatar) {
     return (
-      <img
+      <Image
         src={avatar}
         alt={title}
+        width={40}
+        height={40}
         className={cn("size-10 shrink-0 rounded-full object-cover", className)}
       />
     )
@@ -1462,8 +1458,10 @@ function MessageContent({
         rel="noreferrer"
         className="block overflow-hidden rounded-md"
       >
-        <img
+        <Image
           src={message.content}
+          width={640}
+          height={480}
           alt="Ảnh trong tin nhắn"
           className="max-h-80 max-w-full rounded-md object-contain"
         />

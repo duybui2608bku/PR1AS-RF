@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useState } from "react"
 import { Eye, EyeOff, Loader2, Phone, User, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,12 @@ type ProfileEditModalProps = {
   initialPhone?: string | null
   isSubmitting: boolean
   onClose: () => void
-  onSubmit: (payload: { full_name: string | null; phone: string | null; old_password?: string; password?: string }) => Promise<void>
+  onSubmit: (payload: {
+    full_name: string | null
+    phone: string | null
+    old_password?: string
+    password?: string
+  }) => Promise<void>
 }
 
 export function ProfileEditModal({
@@ -24,24 +29,33 @@ export function ProfileEditModal({
   onClose,
   onSubmit,
 }: ProfileEditModalProps) {
-  const [fullName, setFullName] = useState("")
-  const [phone, setPhone] = useState("")
+  if (!open) return null
+
+  return (
+    <ProfileEditModalContent
+      key={`${initialFullName ?? ""}:${initialPhone ?? ""}`}
+      initialFullName={initialFullName}
+      initialPhone={initialPhone}
+      isSubmitting={isSubmitting}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
+  )
+}
+
+function ProfileEditModalContent({
+  initialFullName,
+  initialPhone,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: Omit<ProfileEditModalProps, "open">) {
+  const [fullName, setFullName] = useState(initialFullName ?? "")
+  const [phone, setPhone] = useState(initialPhone ?? "")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    setFullName(initialFullName ?? "")
-    setPhone(initialPhone ?? "")
-    setOldPassword("")
-    setNewPassword("")
-    setShowOldPassword(false)
-    setShowNewPassword(false)
-  }, [open, initialFullName, initialPhone])
-
-  if (!open) return null
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -59,7 +73,9 @@ export function ProfileEditModal({
         <div className="flex items-center justify-between border-b p-5">
           <div>
             <h2 className="text-lg font-semibold">Cập nhật hồ sơ</h2>
-            <p className="text-sm text-muted-foreground">Chỉnh sửa thông tin cá nhân và mật khẩu (nếu cần)</p>
+            <p className="text-sm text-muted-foreground">
+              Chỉnh sửa thông tin cá nhân và mật khẩu (nếu cần)
+            </p>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />
@@ -69,7 +85,7 @@ export function ProfileEditModal({
           <div className="space-y-2">
             <Label htmlFor="full_name">Họ và tên</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <User className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="full_name"
                 value={fullName}
@@ -82,7 +98,7 @@ export function ProfileEditModal({
           <div className="space-y-2">
             <Label htmlFor="phone">Số điện thoại</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Phone className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="phone"
                 value={phone}
@@ -108,10 +124,14 @@ export function ProfileEditModal({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
                   onClick={() => setShowOldPassword((prev) => !prev)}
                 >
-                  {showOldPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showOldPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -131,10 +151,14 @@ export function ProfileEditModal({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
                   onClick={() => setShowNewPassword((prev) => !prev)}
                 >
-                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showNewPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -144,7 +168,9 @@ export function ProfileEditModal({
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Lưu thay đổi
             </Button>
           </div>

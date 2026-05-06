@@ -1,6 +1,14 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
+const LEGACY_AUTH_TOKEN_KEY = "auth_token"
+
+const removeLegacyAuthToken = () => {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY)
+  }
+}
+
 export type ClientProfile = {
   company_name?: string | null
   website?: string | null
@@ -41,22 +49,22 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: ({ user, token }) => {
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("auth_token", token)
-        }
+        removeLegacyAuthToken()
         set({ user, token, isAuthenticated: true })
       },
       clearAuth: () => {
-        if (typeof window !== "undefined") {
-          window.localStorage.removeItem("auth_token")
-        }
+        removeLegacyAuthToken()
         set({ user: null, token: null, isAuthenticated: false })
       },
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
-    },
-  ),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
 )

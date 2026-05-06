@@ -36,7 +36,7 @@ export function SiteFooter() {
 
         <div className="text-muted-foreground mt-8 flex flex-col items-center justify-between gap-2 border-t pt-6 text-xs md:flex-row">
           <p>
-            &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            &copy; {new Date().getFullYear()} {siteConfig.name}. Bản quyền thuộc về chúng tôi.
           </p>
           <p>
             <a href={`mailto:${siteConfig.contactEmail}`} className="hover:text-foreground">

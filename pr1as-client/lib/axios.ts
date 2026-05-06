@@ -1,6 +1,11 @@
-import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
+import axios, {
+  AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from "axios"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { toApiError } from "@/lib/utils/error-handler"
+import { getQueryClient } from "@/lib/query-client"
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL
 
@@ -8,7 +13,9 @@ if (!baseURL) {
   if (process.env.NODE_ENV === "production") {
     throw new Error("NEXT_PUBLIC_API_URL is required in production builds.")
   }
-  console.warn("[axios] NEXT_PUBLIC_API_URL is not set, falling back to http://localhost:3001/api")
+  console.warn(
+    "[axios] NEXT_PUBLIC_API_URL is not set, falling back to http://localhost:3001/api"
+  )
 }
 
 export const api: AxiosInstance = axios.create({
@@ -33,9 +40,10 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       useAuthStore.getState().clearAuth()
+      getQueryClient().clear()
     }
 
     const apiError = toApiError(error)
     return Promise.reject(apiError ?? error)
-  },
+  }
 )

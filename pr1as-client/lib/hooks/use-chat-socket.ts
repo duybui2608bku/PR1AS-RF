@@ -2,11 +2,7 @@
 
 import * as React from "react"
 
-import {
-  disconnectChatSocket,
-  getChatSocket,
-  type ChatSocket,
-} from "@/lib/chat-socket"
+import { disconnectChatSocket, getChatSocket } from "@/lib/chat-socket"
 import { useAuthStore } from "@/lib/store/auth-store"
 
 export type ChatSocketStatus =
@@ -18,22 +14,18 @@ export type ChatSocketStatus =
 
 export function useChatSocket() {
   const token = useAuthStore((s) => s.token)
-  const [socket, setSocket] = React.useState<ChatSocket | null>(null)
   const [status, setStatus] = React.useState<ChatSocketStatus>("idle")
   const [error, setError] = React.useState<string | null>(null)
+  const socket = React.useMemo(
+    () => (token ? getChatSocket(token) : null),
+    [token]
+  )
 
   React.useEffect(() => {
-    if (!token) {
+    if (!socket) {
       disconnectChatSocket()
-      setSocket(null)
-      setStatus("idle")
       return
     }
-
-    const nextSocket = getChatSocket(token)
-    setSocket(nextSocket)
-    setStatus(nextSocket.connected ? "connected" : "connecting")
-    setError(null)
 
     const handleConnect = () => {
       setStatus("connected")
@@ -49,21 +41,34 @@ export function useChatSocket() {
       setError(connectError.message)
     }
 
-    nextSocket.on("connect", handleConnect)
-    nextSocket.on("disconnect", handleDisconnect)
-    nextSocket.on("connect_error", handleConnectError)
+    socket.on("connect", handleConnect)
+    socket.on("disconnect", handleDisconnect)
+    socket.on("connect_error", handleConnectError)
 
-    if (!nextSocket.connected) {
-      nextSocket.connect()
+    if (!socket.connected) {
+      socket.connect()
     }
 
     return () => {
-      nextSocket.off("connect", handleConnect)
-      nextSocket.off("disconnect", handleDisconnect)
-      nextSocket.off("connect_error", handleConnectError)
+      socket.off("connect", handleConnect)
+      socket.off("disconnect", handleDisconnect)
+      socket.off("connect_error", handleConnectError)
       disconnectChatSocket()
     }
-  }, [token])
+  }, [socket])
 
-  return { socket, status, error, isConnected: status === "connected" }
+  const effectiveStatus: ChatSocketStatus = !token
+    ? "idle"
+    : socket?.connected
+      ? "connected"
+      : status === "idle"
+        ? "connecting"
+        : status
+
+  return {
+    socket,
+    status: effectiveStatus,
+    error: token ? error : null,
+    isConnected: effectiveStatus === "connected",
+  }
 }

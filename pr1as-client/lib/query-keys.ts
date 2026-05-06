@@ -31,4 +31,23 @@ export const queryKeys = {
       ["users", "list", params] as const,
     detail: (id: string) => ["users", "detail", id] as const,
   },
+  posts: {
+    all: ["posts"] as const,
+    feed: (params?: Record<string, unknown>) =>
+      ["posts", "feed", params] as const,
+    detail: (id: string) => ["posts", "detail", id] as const,
+  },
+  hashtags: {
+    all: ["hashtags"] as const,
+    trending: (params?: Record<string, unknown>) =>
+      ["hashtags", "trending", params] as const,
+  },
+  transactions: {
+    all: ["transactions"] as const,
+    adminAll: ["transactions", "admin"] as const,
+    adminList: (params?: Record<string, unknown>) =>
+      ["transactions", "admin", "list", params] as const,
+    adminStats: (params?: Record<string, unknown>) =>
+      ["transactions", "admin", "stats", params] as const,
+  },
 } as const

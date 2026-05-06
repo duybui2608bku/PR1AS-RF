@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import {
   Bell,
   CalendarCheck2,
@@ -21,11 +21,9 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
-import { mainNav } from "@/config/nav"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
-import { cn } from "@/lib/utils"
 import { NotificationBell } from "@/components/layout/notification-bell"
 
 const USER_MENU_ITEMS = [
@@ -37,7 +35,6 @@ const USER_MENU_ITEMS = [
 ] as const
 
 export function SiteHeader() {
-  const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
@@ -86,8 +83,9 @@ export function SiteHeader() {
     try {
       await logoutMutation.mutateAsync()
       setMenuOpen(false)
+      setOpen(false)
       toast.success("Đăng xuất thành công.")
-      router.push("/login")
+      router.replace("/login")
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Không thể đăng xuất."
@@ -105,70 +103,83 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSwitchRole}
-            disabled={switchRoleMutation.isPending}
-          >
-            {switchRoleMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : null}
-            <span>{switchRoleLabel}</span>
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSwitchRole}
+              disabled={switchRoleMutation.isPending}
+            >
+              {switchRoleMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              <span>{switchRoleLabel}</span>
+            </Button>
+          ) : null}
           <ThemeToggle />
           {isAuthenticated ? <NotificationBell /> : null}
-          <div ref={menuContainerRef} className="relative hidden md:block">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Mở menu người dùng"
-              onClick={() => setMenuOpen((value) => !value)}
-            >
-              {user?.avatar ? (
-                <Image
-                  src={user.avatar}
-                  alt={user.email ?? "User avatar"}
-                  width={32}
-                  height={32}
-                  className="size-8 rounded-full object-cover"
-                />
-              ) : (
-                <User className="size-4" />
-              )}
-            </Button>
-            {menuOpen ? (
-              <div className="absolute right-0 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
-                <div className="px-3 py-2 text-xs text-muted-foreground">
-                  {user?.email ?? "Khách"}
-                </div>
-                {USER_MENU_ITEMS.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-                    onClick={() => setMenuOpen(false)}
+          {isAuthenticated ? (
+            <div ref={menuContainerRef} className="relative hidden md:block">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Mở menu người dùng"
+                onClick={() => setMenuOpen((value) => !value)}
+              >
+                {user?.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.email ?? "User avatar"}
+                    width={32}
+                    height={32}
+                    className="size-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="size-4" />
+                )}
+              </Button>
+              {menuOpen ? (
+                <div className="absolute right-0 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {user?.email ?? "Khách"}
+                  </div>
+                  {USER_MENU_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <item.icon className="size-4" />
+                      {item.label}
+                    </Link>
+                  ))}
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent"
+                    onClick={handleLogout}
+                    disabled={logoutMutation.isPending}
                   >
-                    <item.icon className="size-4" />
-                    {item.label}
-                  </Link>
-                ))}
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent"
-                  onClick={handleLogout}
-                  disabled={logoutMutation.isPending}
-                >
-                  {logoutMutation.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <LogOut className="size-4" />
-                  )}
-                  Đăng xuất
-                </button>
-              </div>
-            ) : null}
-          </div>
+                    {logoutMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <LogOut className="size-4" />
+                    )}
+                    Đăng xuất
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="hidden items-center gap-2 md:flex">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Đăng nhập</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">Đăng ký</Link>
+              </Button>
+            </div>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -184,62 +195,75 @@ export function SiteHeader() {
       {open ? (
         <nav className="border-t md:hidden">
           <div className="container mx-auto flex flex-col gap-1 px-4 py-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="mb-2 justify-start"
-              onClick={handleSwitchRole}
-              disabled={switchRoleMutation.isPending}
-            >
-              {switchRoleMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              {switchRoleLabel}
-            </Button>
-            {mainNav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cn(
-                  "rounded-md px-2 py-2 text-sm transition-colors",
-                  pathname === item.href
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {item.title}
-              </Link>
-            ))}
-            <div className="border-t pt-2">
-              {USER_MENU_ITEMS.map((item) => (
-                <button
-                  key={item.href}
-                  type="button"
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
+            {isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mb-2 justify-start"
+                  onClick={handleSwitchRole}
+                  disabled={switchRoleMutation.isPending}
+                >
+                  {switchRoleMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  {switchRoleLabel}
+                </Button>
+                <div className="border-t pt-2">
+                  {USER_MENU_ITEMS.map((item) => (
+                    <button
+                      key={item.href}
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
+                      onClick={() => {
+                        setOpen(false)
+                        router.push(item.href)
+                      }}
+                    >
+                      <item.icon className="size-4" />
+                      {item.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-accent"
+                    onClick={handleLogout}
+                    disabled={logoutMutation.isPending}
+                  >
+                    {logoutMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <LogOut className="size-4" />
+                    )}
+                    Đăng xuất
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-2 py-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     setOpen(false)
-                    router.push(item.href)
+                    router.push("/login")
                   }}
                 >
-                  <item.icon className="size-4" />
-                  {item.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-accent"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-              >
-                {logoutMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <LogOut className="size-4" />
-                )}
-                Đăng xuất
-              </button>
-            </div>
+                  Đăng nhập
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    setOpen(false)
+                    router.push("/register")
+                  }}
+                >
+                  Đăng ký
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
       ) : null}

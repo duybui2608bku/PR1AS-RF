@@ -7,6 +7,7 @@ export type NavItem = {
 
 export const mainNav: NavItem[] = [
   { title: "Home", href: "/" },
+  { title: "Bảng tin", href: "/posts" },
   { title: "About", href: "/about" },
   { title: "Pricing", href: "/pricing" },
   { title: "Contact", href: "/contact" },
@@ -14,24 +15,24 @@ export const mainNav: NavItem[] = [
 
 export const footerNav: { title: string; items: NavItem[] }[] = [
   {
-    title: "Product",
+    title: "Sản phẩm",
     items: [
-      { title: "Features", href: "/features" },
-      { title: "Pricing", href: "/pricing" },
+      { title: "Tính năng", href: "/features" },
+      { title: "Bảng giá", href: "/pricing" },
     ],
   },
   {
-    title: "Company",
+    title: "Công ty",
     items: [
-      { title: "About", href: "/about" },
-      { title: "Contact", href: "/contact" },
+      { title: "Giới thiệu", href: "/about" },
+      { title: "Liên hệ", href: "/contact" },
     ],
   },
   {
-    title: "Legal",
+    title: "Pháp lý",
     items: [
-      { title: "Privacy", href: "/privacy" },
-      { title: "Terms", href: "/terms" },
+      { title: "Chính sách bảo mật", href: "/privacy" },
+      { title: "Điều khoản sử dụng", href: "/terms" },
     ],
   },
 ]

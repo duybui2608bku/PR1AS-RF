@@ -2,16 +2,31 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowRight, Loader2, Plus, ReceiptText, RefreshCw, Wallet } from "lucide-react"
+import {
+  ArrowRight,
+  Loader2,
+  Plus,
+  ReceiptText,
+  RefreshCw,
+  Wallet,
+} from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useDepositTransactions, useWalletBalance } from "@/lib/hooks/use-wallet"
+import {
+  useDepositTransactions,
+  useWalletBalance,
+} from "@/lib/hooks/use-wallet"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
-import { formatVnd, formatWalletDate, statusClassName, statusLabel } from "@/components/wallet/wallet-format"
+import {
+  formatVnd,
+  formatWalletDate,
+  statusClassName,
+  statusLabel,
+} from "@/components/wallet/wallet-format"
 
 const PAGE_SIZE = 10
 
@@ -29,7 +44,10 @@ export function WalletPage() {
     }
   }, [isAuthenticated, router])
 
-  const transactions = depositsQuery.data?.data ?? []
+  const transactions = useMemo(
+    () => depositsQuery.data?.data ?? [],
+    [depositsQuery.data?.data]
+  )
   const pagination = depositsQuery.data?.pagination
   const totalPages = pagination?.totalPages ?? 0
   const canGoBack = page > 1
@@ -42,7 +60,7 @@ export function WalletPage() {
         if (transaction.status !== "success") return sum
         return sum + transaction.amount
       }, 0),
-    [transactions],
+    [transactions]
   )
 
   const handleRefresh = () => {
@@ -63,10 +81,16 @@ export function WalletPage() {
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Ví của tôi</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Số dư và giao dịch nạp tiền</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Số dư và giao dịch nạp tiền
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleRefresh} disabled={balanceQuery.isFetching || depositsQuery.isFetching}>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={balanceQuery.isFetching || depositsQuery.isFetching}
+          >
             {balanceQuery.isFetching || depositsQuery.isFetching ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
@@ -91,10 +115,14 @@ export function WalletPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="text-4xl font-bold tracking-tight">{formatVnd(balanceQuery.data?.balance ?? 0)}</div>
+            <div className="text-4xl font-bold tracking-tight">
+              {formatVnd(balanceQuery.data?.balance ?? 0)}
+            </div>
             <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
               <span className="rounded-md border px-3 py-1">VND</span>
-              <span className="rounded-md border px-3 py-1">User ID: {balanceQuery.data?.user_id || "-"}</span>
+              <span className="rounded-md border px-3 py-1">
+                User ID: {balanceQuery.data?.user_id || "-"}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -107,8 +135,12 @@ export function WalletPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="text-2xl font-semibold">{formatVnd(totalDeposited)}</div>
-            <p className="mt-2 text-sm text-muted-foreground">{transactions.length} giao dịch</p>
+            <div className="text-2xl font-semibold">
+              {formatVnd(totalDeposited)}
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {transactions.length} giao dịch
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -130,7 +162,7 @@ export function WalletPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">
-                <thead className="border-b bg-muted/30 text-left text-xs uppercase text-muted-foreground">
+                <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                   <tr>
                     <th className="px-4 py-3 font-medium">Mã nạp</th>
                     <th className="px-4 py-3 font-medium">Số tiền</th>
@@ -142,19 +174,39 @@ export function WalletPage() {
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b last:border-b-0">
+                    <tr
+                      key={transaction.id}
+                      className="border-b last:border-b-0"
+                    >
                       <td className="max-w-[220px] px-4 py-3">
-                        <div className="truncate font-medium">{transaction.payment_code ?? transaction.id}</div>
-                        <div className="truncate text-xs text-muted-foreground">{transaction.sepay_reference_code ?? transaction.gateway_transaction_id ?? "-"}</div>
+                        <div className="truncate font-medium">
+                          {transaction.payment_code ?? transaction.id}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {transaction.sepay_reference_code ??
+                            transaction.gateway_transaction_id ??
+                            "-"}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 font-semibold">{formatVnd(transaction.amount)}</td>
+                      <td className="px-4 py-3 font-semibold">
+                        {formatVnd(transaction.amount)}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-medium", statusClassName[transaction.status])}>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
+                            statusClassName[transaction.status]
+                          )}
+                        >
                           {statusLabel[transaction.status]}
                         </span>
                       </td>
-                      <td className="px-4 py-3 uppercase text-muted-foreground">{transaction.gateway ?? "-"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{formatWalletDate(transaction.created_at)}</td>
+                      <td className="px-4 py-3 text-muted-foreground uppercase">
+                        {transaction.gateway ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {formatWalletDate(transaction.created_at)}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         {transaction.status === "pending" ? (
                           <Button asChild variant="ghost" size="sm">
@@ -175,13 +227,23 @@ export function WalletPage() {
 
       {transactions.length > 0 ? (
         <div className="mt-4 flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={!canGoBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
+            disabled={!canGoBack}
+          >
             Trước
           </Button>
           <span className="text-sm text-muted-foreground">
             {page}/{Math.max(totalPages, 1)}
           </span>
-          <Button variant="outline" size="sm" onClick={() => setPage((value) => value + 1)} disabled={!canGoNext}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((value) => value + 1)}
+            disabled={!canGoNext}
+          >
             Sau
           </Button>
         </div>
