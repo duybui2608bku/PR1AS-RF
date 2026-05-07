@@ -77,3 +77,25 @@ export function useDeletePost() {
     },
   })
 }
+
+export function useSetCommentsLock() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, locked }: { id: string; locked: boolean }) =>
+      postService.setCommentsLock(id, locked),
+    onSuccess: (post) => {
+      toast.success(
+        post.comments_locked
+          ? "Đã khóa bình luận của bài viết."
+          : "Đã mở khóa bình luận của bài viết.",
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
+    },
+    onError: (error) => {
+      toast.error(
+        getErrorMessage(error, "Không thể cập nhật trạng thái bình luận."),
+      )
+    },
+  })
+}

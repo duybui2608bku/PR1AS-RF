@@ -2,6 +2,7 @@ import { AxiosError } from "axios"
 import { cache } from "react"
 
 import { api } from "@/lib/axios"
+import type { WorkerDetail, WorkerScheduleItem } from "@/types"
 
 type ApiResponse<T> = {
   success: boolean
@@ -70,7 +71,28 @@ const getWorkersGroupedByService = cache(
   },
 )
 
+const getWorkerById = async (id: string): Promise<WorkerDetail> => {
+  const response = await api.get<ApiResponse<WorkerDetail>>(`/workers/${id}`)
+  if (!response.data.data) {
+    throw new Error("Không tìm thấy worker")
+  }
+  return response.data.data
+}
+
+const getWorkerSchedule = async (
+  id: string,
+  params: { start_date: string; end_date: string },
+): Promise<WorkerScheduleItem[]> => {
+  const response = await api.get<ApiResponse<WorkerScheduleItem[]>>(
+    `/workers/${id}/schedule`,
+    { params },
+  )
+  return response.data.data ?? []
+}
+
 export const workerService = {
   getWorkersGroupedByService,
+  getWorkerById,
+  getWorkerSchedule,
   getFallbackName,
 }

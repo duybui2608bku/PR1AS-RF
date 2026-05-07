@@ -15,6 +15,7 @@ import pricingRoutes from "./pricing";
 import { postRoutes } from "./post";
 import { hashtagRoutes } from "./hashtag";
 import { commentRoutes } from "./comment";
+import { reactionRoutes } from "./reaction";
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use("/pricing", pricingRoutes);
 router.use("/posts", postRoutes);
 router.use("/comments", commentRoutes);
 router.use("/hashtags", hashtagRoutes);
+router.use("/reactions", reactionRoutes);
 
 export default router;

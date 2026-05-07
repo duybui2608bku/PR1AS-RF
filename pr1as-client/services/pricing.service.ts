@@ -31,11 +31,43 @@ export type PricingPackage = {
   updated_at: string
 }
 
+export type PricingMeResponse = {
+  plan_code: PricingPlanCode
+  started_at: string | null
+  expires_at: string | null
+  is_expired: boolean
+  package: PricingPackage
+}
+
+export type UpgradePricingPayload = {
+  target_plan_code: Exclude<PricingPlanCode, "standard">
+  duration_months?: number
+  idempotency_key?: string
+}
+
 const getPublicPackages = cache(async () => {
   const response = await api.get<ApiResponse<PricingPackage[]>>("/pricing/packages")
   return response.data.data ?? []
 })
 
+const getMyPricing = async () => {
+  const response = await api.get<ApiResponse<PricingMeResponse>>("/pricing/me")
+  return response.data.data
+}
+
+const upgrade = async (payload: UpgradePricingPayload) => {
+  const response = await api.post<ApiResponse<PricingMeResponse>>(
+    "/pricing/upgrade",
+    {
+      duration_months: 1,
+      ...payload,
+    }
+  )
+  return response.data.data
+}
+
 export const pricingService = {
   getPublicPackages,
+  getMyPricing,
+  upgrade,
 }

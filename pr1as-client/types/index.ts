@@ -53,6 +53,25 @@ export type PostMediaPublic = {
   duration_seconds: number | null
 }
 
+export type ReactionType = "like" | "love" | "haha" | "wow" | "sad" | "angry"
+
+export const REACTION_TYPES: ReactionType[] = [
+  "like",
+  "love",
+  "haha",
+  "wow",
+  "sad",
+  "angry",
+]
+
+export type ReactionTargetType = "post" | "comment"
+
+export type ReactionSummaryPublic = {
+  total: number
+  counts: Partial<Record<ReactionType, number>>
+  my_reaction: ReactionType | null
+}
+
 export type PostPublic = {
   id: string
   author: PostAuthor
@@ -60,8 +79,22 @@ export type PostPublic = {
   media: PostMediaPublic[]
   hashtags: HashtagPublic[]
   visibility: PostVisibility
+  comments_count: number
+  comments_locked: boolean
+  reactions: ReactionSummaryPublic
   created_at: string
   updated_at: string
+}
+
+export type UpsertReactionPayload = {
+  target_type: ReactionTargetType
+  target_id: string
+  type: ReactionType
+}
+
+export type RemoveReactionPayload = {
+  target_type: ReactionTargetType
+  target_id: string
 }
 
 export type CreatePostPayload = {
@@ -131,6 +164,92 @@ export type UpdateCommentPayload = {
 export type CommentListParams = {
   cursor?: string
   limit?: number
+}
+
+// ─── Worker ───────────────────────────────────────────────────────────────────
+export type WorkerGender = "MALE" | "FEMALE" | "OTHER"
+
+export type WorkerExperience =
+  | "LESS_THAN_1"
+  | "ONE_TO_3"
+  | "THREE_TO_5"
+  | "FIVE_TO_10"
+  | "MORE_THAN_10"
+
+export type WorkerProfilePublic = {
+  date_of_birth?: string | null
+  gender?: WorkerGender
+  height_cm?: number | null
+  weight_kg?: number | null
+  star_sign?: string | null
+  lifestyle?: string | null
+  hobbies?: string[]
+  quote?: string | null
+  introduction?: string | null
+  gallery_urls?: string[]
+  experience?: WorkerExperience
+  title?: string | null
+  coords?: {
+    latitude: number | null
+    longitude: number | null
+  }
+}
+
+export type WorkerPricingUnit = "HOURLY" | "DAILY" | "MONTHLY"
+
+export type WorkerServicePricing = {
+  unit: WorkerPricingUnit
+  duration: number
+  price: number
+  currency: string
+}
+
+export type WorkerServiceItem = {
+  _id: string
+  service_id: string
+  service_code: string
+  pricing: WorkerServicePricing[]
+  is_active: boolean
+}
+
+export type WorkerReviewStats = {
+  total: number
+  average: number
+  distribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>
+}
+
+export type WorkerReviewItem = {
+  id: string
+  rating: number
+  comment: string
+  client: {
+    id: string
+    full_name: string | null
+    avatar: string | null
+  }
+  worker_reply: string | null
+  worker_replied_at: string | null
+  created_at: string
+}
+
+export type WorkerDetail = {
+  user: {
+    id: string
+    full_name: string | null
+    avatar: string | null
+    email: string
+  }
+  worker_profile: WorkerProfilePublic | null
+  services?: WorkerServiceItem[]
+  review_stats?: WorkerReviewStats
+  reviews?: WorkerReviewItem[]
+}
+
+export type WorkerScheduleItem = {
+  booking_id: string
+  start_time: string
+  end_time: string
+  status: string
 }
 
 // ─── Group Chat ───────────────────────────────────────────────────────────────

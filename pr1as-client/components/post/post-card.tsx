@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Globe,
   Lock,
+  LockOpen,
   MessageCircle,
   MoreHorizontal,
   Pencil,
@@ -33,13 +34,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useDeletePost } from "@/lib/hooks/use-posts"
+import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import type { PostPublic } from "@/types"
 import { EditPostDialog } from "./edit-post-dialog"
 import { PostComments } from "./post-comments"
+import { ReactionPicker } from "./reaction-picker"
 
 type Props = {
   post: PostPublic
@@ -293,6 +296,7 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
 export function PostCard({ post }: Props) {
   const { user, isAuthenticated } = useAuthStore()
   const deleteMutation = useDeletePost()
+  const lockMutation = useSetCommentsLock()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
@@ -310,6 +314,11 @@ export function PostCard({ post }: Props) {
     } catch {
       // Error toast is handled by the mutation.
     }
+  }
+
+  const handleToggleCommentsLock = () => {
+    if (lockMutation.isPending) return
+    lockMutation.mutate({ id: post.id, locked: !post.comments_locked })
   }
 
   return (
@@ -352,6 +361,26 @@ export function PostCard({ post }: Props) {
                   <Pencil className="size-3.5" />
                   Chỉnh sửa
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={lockMutation.isPending}
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleToggleCommentsLock()
+                  }}
+                >
+                  {post.comments_locked ? (
+                    <>
+                      <LockOpen className="size-3.5" />
+                      Mở khóa bình luận
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="size-3.5" />
+                      Khóa bình luận
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
                   disabled={deleteMutation.isPending}
@@ -412,18 +441,39 @@ export function PostCard({ post }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-3 flex border-t pt-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="flex-1 text-muted-foreground"
-          aria-expanded={commentsOpen}
-          onClick={() => setCommentsOpen((open) => !open)}
-        >
-          <MessageCircle className="size-4" />
-          Bình luận
-        </Button>
+      <div className="mt-3 flex flex-col gap-2 border-t pt-2">
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span aria-label="Số bình luận">
+            {post.comments_count > 0
+              ? `${post.comments_count} bình luận`
+              : "Chưa có bình luận"}
+          </span>
+          {post.comments_locked ? (
+            <span className="inline-flex items-center gap-1 text-amber-600">
+              <Lock className="size-3" />
+              Đã khóa bình luận
+            </span>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-1">
+          <ReactionPicker post={post} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="flex-1 text-muted-foreground"
+            aria-expanded={commentsOpen}
+            onClick={() => setCommentsOpen((open) => !open)}
+          >
+            <MessageCircle className="size-4" />
+            Bình luận
+            {post.comments_count > 0 ? (
+              <span className="ml-1 text-xs font-medium">
+                ({post.comments_count})
+              </span>
+            ) : null}
+          </Button>
+        </div>
       </div>
 
       <PostComments
@@ -431,6 +481,8 @@ export function PostCard({ post }: Props) {
         enabled={commentsOpen}
         currentUserId={user?.id}
         isAuthenticated={isAuthenticated}
+        commentsLocked={post.comments_locked}
+        canBypassLock={isOwner}
       />
 
       {editOpen ? (

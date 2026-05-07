@@ -4,9 +4,11 @@ import { postMediaRepository } from "../../repositories/post/post-media.reposito
 import { commentRepository } from "../../repositories/comment/comment.repository";
 import { hashtagRepository } from "../../repositories/hashtag/hashtag.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
+import { reactionRepository } from "../../repositories/reaction/reaction.repository";
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
 import { PricingPackage } from "../../models/pricing";
+import { ReactionTargetType, ReactionType } from "../../constants/reaction";
 import {
   CreatePostInput,
   IPostDocument,
@@ -15,6 +17,7 @@ import {
   PostMediaPublic,
   PostPublic,
   PostStatsPublic,
+  ReactionSummaryPublic,
   UpdatePostInput,
 } from "../../types/post/post.types";
 import { IUserDocument } from "../../types/auth/user.types";
@@ -99,10 +102,17 @@ const toHashtagPublic = (tag: IHashtagDocument) => ({
   display: tag.display,
 });
 
+const emptyReactionSummary = (): ReactionSummaryPublic => ({
+  total: 0,
+  counts: {} as Record<string, number>,
+  my_reaction: null,
+});
+
 const buildPostPublic = (
   post: LeanPostWithAuthor,
   media: IPostMediaDocument[],
-  hashtags: IHashtagDocument[]
+  hashtags: IHashtagDocument[],
+  reactions: ReactionSummaryPublic = emptyReactionSummary()
 ): PostPublic => {
   const populated = post.author_id;
   const authorId =
@@ -117,8 +127,28 @@ const buildPostPublic = (
     media: media.map(toMediaPublic),
     hashtags: hashtags.map(toHashtagPublic),
     visibility: post.visibility,
+    comments_count: post.comments_count ?? 0,
+    comments_locked: post.comments_locked ?? false,
+    reactions,
     created_at: post.created_at,
     updated_at: post.updated_at,
+  };
+};
+
+const summarizeReactions = (
+  counts: Record<ReactionType, number>,
+  myReaction: ReactionType | null
+): ReactionSummaryPublic => {
+  let total = 0;
+  const summary: Record<string, number> = {};
+  for (const [key, value] of Object.entries(counts)) {
+    summary[key] = value;
+    total += value;
+  }
+  return {
+    total,
+    counts: summary,
+    my_reaction: myReaction,
   };
 };
 
@@ -257,7 +287,7 @@ export class PostService {
     return buildPostPublic(finalPost, media, hashtags);
   }
 
-  async getPostById(postId: string): Promise<PostPublic> {
+  async getPostById(postId: string, viewerId?: string): Promise<PostPublic> {
     const post = await postRepository.findActiveByIdLean(postId);
     if (!post) {
       throw new AppError(
@@ -269,20 +299,35 @@ export class PostService {
 
     const postObjectId = post._id as Types.ObjectId;
 
-    const [media, hashtags] = await Promise.all([
+    const [media, hashtags, reactionCounts, myReactionMap] = await Promise.all([
       postMediaRepository.findByPostId(postObjectId),
       hashtagRepository.findByPostId(postObjectId),
+      reactionRepository.getCountsForTarget(
+        ReactionTargetType.POST,
+        postObjectId.toString()
+      ),
+      viewerId
+        ? reactionRepository.getMyReactionsForTargets(
+            viewerId,
+            ReactionTargetType.POST,
+            [postObjectId]
+          )
+        : Promise.resolve(new Map<string, ReactionType>()),
     ]);
+
+    const myReaction = myReactionMap.get(postObjectId.toString()) ?? null;
 
     return buildPostPublic(
       post as unknown as LeanPostWithAuthor,
       media,
-      hashtags
+      hashtags,
+      summarizeReactions(reactionCounts, myReaction)
     );
   }
 
   async listFeed(
-    query: PostFeedQuery
+    query: PostFeedQuery,
+    viewerId?: string
   ): Promise<CursorPaginatedResponse<PostPublic>> {
     const decodedCursor = query.cursor ? decodeCursor(query.cursor) : null;
 
@@ -309,16 +354,37 @@ export class PostService {
 
     const postIds = items.map((p) => p._id as Types.ObjectId);
 
-    const [mediaMap, hashtagMap] = await Promise.all([
-      postMediaRepository.findByPostIds(postIds),
-      hashtagRepository.findHashtagIdsByPostIds(postIds),
-    ]);
+    const [mediaMap, hashtagMap, reactionCountsMap, myReactionMap] =
+      await Promise.all([
+        postMediaRepository.findByPostIds(postIds),
+        hashtagRepository.findHashtagIdsByPostIds(postIds),
+        reactionRepository.getCountsForTargets(
+          ReactionTargetType.POST,
+          postIds
+        ),
+        viewerId
+          ? reactionRepository.getMyReactionsForTargets(
+              viewerId,
+              ReactionTargetType.POST,
+              postIds
+            )
+          : Promise.resolve(new Map<string, ReactionType>()),
+      ]);
 
     const enriched = items.map((post) => {
       const id = (post._id as Types.ObjectId).toString();
       const media = mediaMap.get(id) ?? [];
       const hashtags = hashtagMap.get(id) ?? [];
-      return buildPostPublic(post as unknown as LeanPostWithAuthor, media, hashtags);
+      const counts =
+        reactionCountsMap.get(id) ??
+        ({} as Record<ReactionType, number>);
+      const myReaction = myReactionMap.get(id) ?? null;
+      return buildPostPublic(
+        post as unknown as LeanPostWithAuthor,
+        media,
+        hashtags,
+        summarizeReactions(counts, myReaction)
+      );
     });
 
     return formatCursorResponse(enriched, query.limit, (item) => ({
@@ -382,16 +448,32 @@ export class PostService {
       }
     }
 
-    const [media, hashtags, fresh] = await Promise.all([
-      postMediaRepository.findByPostId(postObjectId),
-      hashtagRepository.findByPostId(postObjectId),
-      postRepository.findActiveByIdLean(postId),
-    ]);
+    const [media, hashtags, fresh, reactionCounts, myReactionMap] =
+      await Promise.all([
+        postMediaRepository.findByPostId(postObjectId),
+        hashtagRepository.findByPostId(postObjectId),
+        postRepository.findActiveByIdLean(postId),
+        reactionRepository.getCountsForTarget(
+          ReactionTargetType.POST,
+          postObjectId.toString()
+        ),
+        reactionRepository.getMyReactionsForTargets(
+          userId,
+          ReactionTargetType.POST,
+          [postObjectId]
+        ),
+      ]);
 
     const finalPost = (fresh ??
       updatedPost.toObject?.() ??
       updatedPost) as unknown as LeanPostWithAuthor;
-    return buildPostPublic(finalPost, media, hashtags);
+    const myReaction = myReactionMap.get(postObjectId.toString()) ?? null;
+    return buildPostPublic(
+      finalPost,
+      media,
+      hashtags,
+      summarizeReactions(reactionCounts, myReaction)
+    );
   }
 
   async softDeletePost(postId: string, userId: string): Promise<void> {
@@ -426,10 +508,44 @@ export class PostService {
         postMediaRepository.deleteByPostId(postId),
         hashtagService.clearPostHashtags(postId),
         commentRepository.softDeleteByPostId(postId),
+        reactionRepository.deleteByTarget(ReactionTargetType.POST, postId),
       ]);
     } catch (error) {
       logger.error("Failed to cascade post soft-delete cleanup", error);
     }
+  }
+
+  async setCommentsLocked(
+    postId: string,
+    userId: string,
+    locked: boolean
+  ): Promise<PostPublic> {
+    const existing = await postRepository.findActiveById(postId);
+    if (!existing) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+    if (postAuthorIdToString(existing.author_id) !== userId) {
+      throw new AppError(
+        POST_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.POST_UNAUTHORIZED_ACCESS
+      );
+    }
+
+    const updated = await postRepository.setCommentsLocked(postId, locked);
+    if (!updated) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+
+    return this.getPostById(postId, userId);
   }
 
   async countActivePostsByAuthor(userId: string): Promise<PostStatsPublic> {

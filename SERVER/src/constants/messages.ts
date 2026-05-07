@@ -260,6 +260,17 @@ export const COMMENT_MESSAGES = {
   NESTED_REPLY_NOT_ALLOWED: "Nested replies are not allowed",
   PARENT_POST_MISMATCH: "Parent comment does not belong to this post",
   UNAUTHORIZED_ACCESS: "You do not have permission to modify this comment",
+  COMMENTS_LOCKED: "Comments are locked on this post",
+  COMMENTS_LOCK_UPDATED: "Comment lock status updated successfully",
+} as const;
+
+export const REACTION_MESSAGES = {
+  REACTION_UPSERTED: "Reaction saved successfully",
+  REACTION_REMOVED: "Reaction removed successfully",
+  REACTION_SUMMARY_FETCHED: "Reaction summary fetched successfully",
+  TARGET_NOT_FOUND: "Reaction target not found",
+  INVALID_TARGET: "Invalid reaction target",
+  INVALID_TYPE: "Invalid reaction type",
 } as const;
 
 export const HASHTAG_MESSAGES = {

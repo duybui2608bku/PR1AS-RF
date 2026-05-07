@@ -5,6 +5,9 @@ export interface IPost {
   author_id: Types.ObjectId;
   body: string;
   visibility: PostVisibility;
+  comments_count: number;
+  reactions_count: number;
+  comments_locked: boolean;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
@@ -77,6 +80,12 @@ export interface HashtagPublic {
   display: string;
 }
 
+export interface ReactionSummaryPublic {
+  total: number;
+  counts: Record<string, number>;
+  my_reaction: string | null;
+}
+
 export interface PostPublic {
   id: string;
   author: AuthorPublic;
@@ -84,6 +93,9 @@ export interface PostPublic {
   media: PostMediaPublic[];
   hashtags: HashtagPublic[];
   visibility: PostVisibility;
+  comments_count: number;
+  comments_locked: boolean;
+  reactions: ReactionSummaryPublic;
   created_at: Date;
   updated_at: Date;
 }

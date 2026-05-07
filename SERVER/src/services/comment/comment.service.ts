@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import { commentRepository } from "../../repositories/comment/comment.repository";
 import { postRepository } from "../../repositories/post/post.repository";
+import { reactionRepository } from "../../repositories/reaction/reaction.repository";
 import {
   CommentFeedQuery,
   CommentPublic,
@@ -13,6 +14,8 @@ import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { COMMENT_MESSAGES } from "../../constants/messages";
+import { ReactionTargetType } from "../../constants/reaction";
+import { logger } from "../../utils/logger";
 import {
   CursorPaginatedResponse,
   decodeCursor,
@@ -96,6 +99,20 @@ export class CommentService {
       );
     }
 
+    // Lock check: post author bypasses (so they can still moderate / reply).
+    const postAuthorId = (post.author_id as { _id?: Types.ObjectId } | Types.ObjectId);
+    const postAuthorIdString =
+      postAuthorId instanceof Types.ObjectId
+        ? postAuthorId.toString()
+        : postAuthorId._id?.toString() ?? "";
+    if (post.comments_locked && postAuthorIdString !== userId) {
+      throw new AppError(
+        COMMENT_MESSAGES.COMMENTS_LOCKED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.COMMENTS_LOCKED
+      );
+    }
+
     let parentObjectId: Types.ObjectId | null = null;
     if (input.parent_comment_id) {
       const parent = await commentRepository.findActiveById(
@@ -134,6 +151,15 @@ export class CommentService {
       parent_comment_id: parentObjectId,
       body: input.body,
     });
+
+    try {
+      await postRepository.incrementCommentsCount(
+        post._id as Types.ObjectId,
+        1
+      );
+    } catch (error) {
+      logger.error("Failed to increment post comments_count", error);
+    }
 
     const populated = await commentRepository.findActiveById(
       (created._id as Types.ObjectId).toString()
@@ -253,6 +279,18 @@ export class CommentService {
         HTTP_STATUS.NOT_FOUND,
         ErrorCode.COMMENT_NOT_FOUND
       );
+    }
+
+    try {
+      await Promise.all([
+        postRepository.incrementCommentsCount(existing.post_id, -1),
+        reactionRepository.deleteByTarget(
+          ReactionTargetType.COMMENT,
+          existing._id as Types.ObjectId
+        ),
+      ]);
+    } catch (error) {
+      logger.error("Failed to cascade comment delete cleanup", error);
     }
   }
 }

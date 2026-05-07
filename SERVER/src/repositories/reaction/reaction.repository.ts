@@ -1,0 +1,187 @@
+import { Types } from "mongoose";
+import { Reaction } from "../../models/reaction/reaction.model";
+import {
+  IReactionDocument,
+} from "../../types/reaction/reaction.types";
+import {
+  REACTION_TYPES,
+  ReactionTargetType,
+  ReactionType,
+} from "../../constants/reaction";
+
+export class ReactionRepository {
+  async findByUserAndTarget(
+    userId: string,
+    targetType: ReactionTargetType,
+    targetId: string
+  ): Promise<IReactionDocument | null> {
+    if (!Types.ObjectId.isValid(targetId)) return null;
+    return Reaction.findOne({
+      user_id: new Types.ObjectId(userId),
+      target_type: targetType,
+      target_id: new Types.ObjectId(targetId),
+    });
+  }
+
+  async upsert(
+    userId: string,
+    targetType: ReactionTargetType,
+    targetId: string,
+    type: ReactionType
+  ): Promise<{ created: boolean; previousType: ReactionType | null }> {
+    const existing = await this.findByUserAndTarget(
+      userId,
+      targetType,
+      targetId
+    );
+    if (existing) {
+      const previousType = existing.type;
+      if (previousType === type) {
+        return { created: false, previousType };
+      }
+      existing.type = type;
+      existing.updated_at = new Date();
+      await existing.save();
+      return { created: false, previousType };
+    }
+
+    const reaction = new Reaction({
+      user_id: new Types.ObjectId(userId),
+      target_type: targetType,
+      target_id: new Types.ObjectId(targetId),
+      type,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    await reaction.save();
+    return { created: true, previousType: null };
+  }
+
+  async remove(
+    userId: string,
+    targetType: ReactionTargetType,
+    targetId: string
+  ): Promise<{ removed: boolean; previousType: ReactionType | null }> {
+    if (!Types.ObjectId.isValid(targetId)) {
+      return { removed: false, previousType: null };
+    }
+    const existing = await Reaction.findOneAndDelete({
+      user_id: new Types.ObjectId(userId),
+      target_type: targetType,
+      target_id: new Types.ObjectId(targetId),
+    });
+    if (!existing) return { removed: false, previousType: null };
+    return { removed: true, previousType: existing.type };
+  }
+
+  async getCountsForTarget(
+    targetType: ReactionTargetType,
+    targetId: string
+  ): Promise<Record<ReactionType, number>> {
+    const counts = REACTION_TYPES.reduce(
+      (acc, key) => {
+        acc[key] = 0;
+        return acc;
+      },
+      {} as Record<ReactionType, number>
+    );
+
+    if (!Types.ObjectId.isValid(targetId)) return counts;
+
+    const aggregated = await Reaction.aggregate<{
+      _id: ReactionType;
+      count: number;
+    }>([
+      {
+        $match: {
+          target_type: targetType,
+          target_id: new Types.ObjectId(targetId),
+        },
+      },
+      { $group: { _id: "$type", count: { $sum: 1 } } },
+    ]);
+
+    for (const row of aggregated) {
+      counts[row._id] = row.count;
+    }
+    return counts;
+  }
+
+  async getCountsForTargets(
+    targetType: ReactionTargetType,
+    targetIds: Types.ObjectId[]
+  ): Promise<Map<string, Record<ReactionType, number>>> {
+    const map = new Map<string, Record<ReactionType, number>>();
+    if (targetIds.length === 0) return map;
+
+    const aggregated = await Reaction.aggregate<{
+      _id: { target_id: Types.ObjectId; type: ReactionType };
+      count: number;
+    }>([
+      {
+        $match: {
+          target_type: targetType,
+          target_id: { $in: targetIds },
+        },
+      },
+      {
+        $group: {
+          _id: { target_id: "$target_id", type: "$type" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    for (const id of targetIds) {
+      const counts = REACTION_TYPES.reduce(
+        (acc, key) => {
+          acc[key] = 0;
+          return acc;
+        },
+        {} as Record<ReactionType, number>
+      );
+      map.set(id.toString(), counts);
+    }
+
+    for (const row of aggregated) {
+      const key = row._id.target_id.toString();
+      const bucket = map.get(key);
+      if (bucket) bucket[row._id.type] = row.count;
+    }
+    return map;
+  }
+
+  async getMyReactionsForTargets(
+    userId: string,
+    targetType: ReactionTargetType,
+    targetIds: Types.ObjectId[]
+  ): Promise<Map<string, ReactionType>> {
+    const map = new Map<string, ReactionType>();
+    if (targetIds.length === 0 || !userId) return map;
+
+    const reactions = await Reaction.find({
+      user_id: new Types.ObjectId(userId),
+      target_type: targetType,
+      target_id: { $in: targetIds },
+    }).lean<IReactionDocument[]>();
+
+    for (const reaction of reactions) {
+      map.set(reaction.target_id.toString(), reaction.type);
+    }
+    return map;
+  }
+
+  async deleteByTarget(
+    targetType: ReactionTargetType,
+    targetId: string | Types.ObjectId
+  ): Promise<void> {
+    const targetObjectId =
+      typeof targetId === "string" ? new Types.ObjectId(targetId) : targetId;
+    await Reaction.deleteMany({
+      target_type: targetType,
+      target_id: targetObjectId,
+    });
+  }
+}
+
+export const reactionRepository = new ReactionRepository();

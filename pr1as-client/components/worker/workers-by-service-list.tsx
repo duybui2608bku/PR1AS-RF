@@ -36,7 +36,10 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
   const { label, prefix } = formatPricing(worker.pricing)
 
   return (
-    <div className="cursor-pointer group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md flex-none w-[44vw] sm:w-auto snap-start">
+    <Link
+      href={`/worker/${worker.id}`}
+      className="cursor-pointer group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md flex-none w-[44vw] sm:w-auto snap-start block"
+    >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
         {imageSrc ? (
           <Image
@@ -82,7 +85,7 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
           </p>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
