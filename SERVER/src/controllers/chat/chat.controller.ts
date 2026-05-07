@@ -59,15 +59,6 @@ export class ChatController {
   async getConversation(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { conversation_id } = req.params;
-
-    if (!conversation_id) {
-      throw new AppError(
-        CHAT_MESSAGES.CONVERSATION_ID_REQUIRED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.VALIDATION_ERROR
-      );
-    }
-
     const result = await chatService.getConversation(userId, conversation_id);
 
     if (!result) {
@@ -105,15 +96,6 @@ export class ChatController {
   async deleteMessage(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { message_id } = req.params;
-
-    if (!message_id) {
-      throw new AppError(
-        CHAT_MESSAGES.MESSAGE_ID_REQUIRED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.VALIDATION_ERROR
-      );
-    }
-
     const result = await chatService.deleteMessage(userId, message_id);
     R.success(res, result, CHAT_MESSAGES.MESSAGE_DELETED_SUCCESS, req);
   }
@@ -154,28 +136,10 @@ export class ChatController {
   async getGroupConversation(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { conversation_group_id } = req.params;
-
-    if (!conversation_group_id) {
-      throw new AppError(
-        CHAT_MESSAGES.CONVERSATION_ID_REQUIRED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.VALIDATION_ERROR
-      );
-    }
-
     const result = await groupChatService.getGroupConversation(
       userId,
       conversation_group_id
     );
-
-    if (!result) {
-      throw new AppError(
-        CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.NOT_FOUND
-      );
-    }
-
     R.success(res, { conversation: result }, undefined, req);
   }
 

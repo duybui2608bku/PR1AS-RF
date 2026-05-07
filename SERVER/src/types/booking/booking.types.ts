@@ -1,7 +1,6 @@
 import { Document, Types } from "mongoose";
 import {
   BookingStatus,
-  BookingPaymentStatus,
   CancellationReason,
   CancelledBy,
   DisputeReason,
@@ -15,24 +14,9 @@ export interface BookingSchedule {
   duration_hours: number;
 }
 
-export interface BookingLocation {
-  address: string;
-  city: string;
-  district: string;
-  latitude: number;
-  longitude: number;
-  notes: string;
-}
-
 export interface BookingPricing {
   unit: PricingUnit;
-  unit_price: number;
   quantity: number;
-  subtotal: number;
-  platform_fee: number;
-  total_amount: number;
-  worker_payout: number;
-  currency: string;
 }
 
 export interface BookingCancellation {
@@ -40,8 +24,6 @@ export interface BookingCancellation {
   cancelled_by: CancelledBy;
   reason: CancellationReason;
   notes: string;
-  refund_amount: number;
-  penalty_amount: number;
 }
 
 export interface BookingDispute {
@@ -54,8 +36,6 @@ export interface BookingDispute {
   resolution_notes: string;
   resolved_by: string | null;
   resolved_at: Date | null;
-  refund_amount: number;
-  penalty_amount: number;
 }
 
 export interface IBooking {
@@ -68,12 +48,6 @@ export interface IBooking {
   pricing: BookingPricing;
 
   status: BookingStatus;
-  payment_status: BookingPaymentStatus;
-
-  escrow_id: Types.ObjectId | null;
-
-  transaction_id: string | null;
-  payout_transaction_id: string | null;
 
   client_notes: string;
   worker_response: string;
@@ -92,11 +66,6 @@ export interface IBooking {
 
 export interface IBookingDocument extends IBooking, Document {}
 
-/**
- * Input for creating a booking.
- * client_id is optional here because it's injected by the service layer
- * from the auth token rather than from request body.
- */
 export interface CreateBookingInput {
   client_id?: Types.ObjectId;
   worker_id: Types.ObjectId;
@@ -126,7 +95,6 @@ export interface BookingQuery {
   worker_id?: Types.ObjectId;
   role?: "client" | "worker";
   status?: BookingStatus;
-  payment_status?: BookingPaymentStatus;
   service_code?: string;
   start_date?: Date;
   end_date?: Date;
@@ -142,5 +110,4 @@ export interface BookingStats {
   in_progress: number;
   completed: number;
   cancelled: number;
-  total_revenue: number;
 }

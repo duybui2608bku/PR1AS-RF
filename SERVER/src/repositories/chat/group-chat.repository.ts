@@ -65,47 +65,52 @@ export class GroupChatRepository {
       return null;
     }
 
-    const conversation = new ConversationGroup({
-      booking_id: new Types.ObjectId(booking_id),
-      name: booking.service_code,
-      members: [booking.client_id, booking.worker_id],
-      last_message: null,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
+    try {
+      const conversation = new ConversationGroup({
+        booking_id: new Types.ObjectId(booking_id),
+        name: booking.service_code,
+        members: [booking.client_id, booking.worker_id],
+        last_message: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
 
-    const saved = await conversation.save();
-    return this.mapConversationGroup(saved.toObject());
+      const saved = await conversation.save();
+      return this.mapConversationGroup(saved.toObject());
+    } catch (err: any) {
+      // Handle duplicate key race condition (booking_id is unique)
+      if (err.code === 11000) {
+        const retry = await ConversationGroup.findOne({
+          booking_id: new Types.ObjectId(booking_id),
+        }).lean();
+        if (retry) return this.mapConversationGroup(retry);
+      }
+      throw err;
+    }
   }
 
   async findOrCreateComplaintConversationGroup(
     booking_id: string,
-    admin_id: string
+    admin_id: string,
+    bookingData: { clientId: string; workerId: string; serviceCode: string }
   ): Promise<IConversationGroup | null> {
-    const booking = await Booking.findById(booking_id)
-      .select("client_id worker_id service_code")
-      .lean();
-
-    if (!booking) {
-      return null;
-    }
-
     const existing = await ConversationGroup.findOne({
       booking_id: new Types.ObjectId(booking_id),
     }).lean();
 
+    const requiredMembers = [
+      new Types.ObjectId(bookingData.clientId),
+      new Types.ObjectId(bookingData.workerId),
+      new Types.ObjectId(admin_id),
+    ];
+
     if (existing) {
-      const requiredMembers = [
-        new Types.ObjectId(booking.client_id),
-        new Types.ObjectId(booking.worker_id),
-        new Types.ObjectId(admin_id),
-      ];
       const updated = await ConversationGroup.findByIdAndUpdate(
         existing._id,
         {
           $addToSet: { members: { $each: requiredMembers } },
           $set: {
-            name: `Complaint - ${booking.service_code}`,
+            name: `Complaint - ${bookingData.serviceCode}`,
             updated_at: new Date(),
           },
         },
@@ -117,12 +122,8 @@ export class GroupChatRepository {
 
     const conversation = new ConversationGroup({
       booking_id: new Types.ObjectId(booking_id),
-      name: `Complaint - ${booking.service_code}`,
-      members: [
-        booking.client_id,
-        booking.worker_id,
-        new Types.ObjectId(admin_id),
-      ],
+      name: `Complaint - ${bookingData.serviceCode}`,
+      members: requiredMembers,
       last_message: null,
       created_at: new Date(),
       updated_at: new Date(),
@@ -276,6 +277,23 @@ export class GroupChatRepository {
     };
   }
 
+  async getMessageGroupById(
+    message_id: string
+  ): Promise<IMessageGroup | null> {
+    const message = await MessageGroup.findById(message_id).lean();
+    if (!message) return null;
+    return this.mapMessageGroup(message);
+  }
+
+  async getMessageGroupsByIds(message_ids: string[]): Promise<IMessageGroup[]> {
+    if (message_ids.length === 0) return [];
+    const messages = await MessageGroup.find({
+      _id: { $in: message_ids.map((id) => new Types.ObjectId(id)) },
+      is_deleted: false,
+    }).lean();
+    return messages.map((m) => this.mapMessageGroup(m));
+  }
+
   async getMessageGroupByIdForUser(
     message_id: string,
     user_id: string
@@ -367,6 +385,36 @@ export class GroupChatRepository {
       is_deleted: false,
       "read_by.user_id": { $ne: new Types.ObjectId(user_id) },
     });
+  }
+
+  async getGroupUnreadCounts(
+    user_id: string,
+    conversationIds: string[]
+  ): Promise<Map<string, number>> {
+    if (conversationIds.length === 0) return new Map();
+
+    const results = await MessageGroup.aggregate<{
+      _id: Types.ObjectId;
+      count: number;
+    }>([
+      {
+        $match: {
+          conversation_group_id: {
+            $in: conversationIds.map((id) => new Types.ObjectId(id)),
+          },
+          is_deleted: false,
+          "read_by.user_id": { $ne: new Types.ObjectId(user_id) },
+        },
+      },
+      {
+        $group: {
+          _id: "$conversation_group_id",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return new Map(results.map((r) => [r._id.toString(), r.count]));
   }
 }
 

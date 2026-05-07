@@ -31,11 +31,6 @@ export const refreshTokenLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    return (
-      (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown"
-    );
-  },
   handler: (
     _req: Request, // eslint-disable-line @typescript-eslint/no-unused-vars
     _res: Response // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -58,6 +53,27 @@ export const postCreateLimiter = rateLimit({
     return (
       (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown"
     );
+  },
+  handler: (
+    _req: Request,
+    _res: Response
+  ) => {
+    throw new AppError(
+      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+      HTTP_STATUS.TOO_MANY_REQUESTS,
+      ErrorCode.RATE_LIMIT_EXCEEDED
+    );
+  },
+});
+
+export const bookingCreateLimiter = rateLimit({
+  windowMs: 60 * TIME_IN_MS.MINUTE,
+  max: 20,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    return (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown";
   },
   handler: (
     _req: Request,

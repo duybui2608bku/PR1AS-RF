@@ -181,8 +181,8 @@ export class UserWalletService {
         .walletEvent({
           userId: String(transaction.user_id),
           type: NotificationType.WALLET_DEPOSIT_FAILED,
-          title: "Deposit failed",
-          body: "Your wallet deposit amount does not match the transfer amount.",
+          title: "Nạp tiền thất bại",
+          body: "Số tiền chuyển không khớp với số tiền yêu cầu nạp.",
           data: { transaction_id: transaction._id.toString() },
           dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
         })
@@ -377,8 +377,8 @@ export class UserWalletService {
       .walletEvent({
         userId,
         type: NotificationType.WALLET_HOLD_CREATED,
-        title: "Balance held for booking",
-        body: `A wallet hold of ${amount} was created for your booking.`,
+        title: "Tạm giữ số dư",
+        body: `Số tiền ${amount} đã được tạm giữ cho booking của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
         dedupeKey: `wallet-hold:${bookingId}:${transaction._id.toString()}`,
       })
@@ -415,8 +415,8 @@ export class UserWalletService {
       .walletEvent({
         userId,
         type: NotificationType.WALLET_REFUND_CREATED,
-        title: "Refund received",
-        body: `A refund of ${amount} was added to your wallet.`,
+        title: "Hoàn tiền",
+        body: `Số tiền hoàn ${amount} đã được cộng vào ví của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
         dedupeKey: `wallet-refund:${bookingId}:${transaction._id.toString()}`,
       })
@@ -454,8 +454,8 @@ export class UserWalletService {
       .walletEvent({
         userId: workerId,
         type: NotificationType.WALLET_PAYOUT_CREATED,
-        title: "Payout received",
-        body: `A payout of ${amount} was added to your wallet.`,
+        title: "Thanh toán hoa hồng",
+        body: `Số tiền ${amount} đã được cộng vào ví của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
         dedupeKey: `wallet-payout:${bookingId}:${transaction._id.toString()}`,
       })

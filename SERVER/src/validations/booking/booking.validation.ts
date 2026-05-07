@@ -2,7 +2,6 @@ import { z } from "zod";
 import { Types } from "mongoose";
 import {
   BookingStatus,
-  BookingPaymentStatus,
   CancellationReason,
   BOOKING_LIMITS,
   DisputeReason,
@@ -18,18 +17,7 @@ const objectIdSchema = z
   })
   .transform((val) => new Types.ObjectId(val));
 
-const dateSchema = z
-  .union([z.string().datetime(), z.date(), z.string()])
-  .transform((val) => {
-    if (typeof val === "string") {
-      const date = new Date(val);
-      if (isNaN(date.getTime())) {
-        throw new Error("Invalid date format");
-      }
-      return date;
-    }
-    return val;
-  });
+const dateSchema = z.coerce.date();
 
 const scheduleSchema = z
   .object({
@@ -75,33 +63,11 @@ const scheduleSchema = z
     };
   });
 
-/**
- * Bookings no longer charge clients via the platform: monetary fields are always zero.
- * Unit and quantity are kept for schedule/display consistency.
- */
-const pricingSchema = z
-  .object({
-    unit: z.nativeEnum(PricingUnit),
-    unit_price: z.number().min(0),
-    quantity: z.number().int().positive().min(1),
-    currency: z
-      .string()
-      .default("VND")
-      .transform((val) => val.toUpperCase().trim()),
-  })
-  .transform((data) => ({
-    ...data,
-    unit_price: 0,
-    subtotal: 0,
-    platform_fee: 0,
-    total_amount: 0,
-    worker_payout: 0,
-  }));
+const pricingSchema = z.object({
+  unit: z.nativeEnum(PricingUnit),
+  quantity: z.number().int().positive().min(1),
+});
 
-/**
- * Schema for creating a booking.
- * Note: client_id is NOT included — always derived from auth token in the controller.
- */
 export const createBookingSchema = z.object({
   worker_id: objectIdSchema,
   worker_service_id: objectIdSchema,
@@ -121,10 +87,6 @@ export const updateBookingStatusSchema = z.object({
   worker_response: z.string().trim().max(1000).optional(),
 });
 
-/**
- * Schema for cancelling a booking.
- * Note: cancelled_by is NOT included — determined server-side from the user's role.
- */
 export const cancelBookingReasonSchema = z.object({
   reason: z.nativeEnum(CancellationReason),
   notes: z.string().trim().max(500).optional().default(""),
@@ -138,17 +100,12 @@ export const updateBookingSchema = z
     worker_response: z.string().trim().max(1000).optional(),
   })
   .refine(
-    (data) => {
-      return (
-        data.schedule !== undefined ||
-        data.pricing !== undefined ||
-        data.client_notes !== undefined ||
-        data.worker_response !== undefined
-      );
-    },
-    {
-      message: "At least one field must be provided for update",
-    }
+    (data) =>
+      data.schedule !== undefined ||
+      data.pricing !== undefined ||
+      data.client_notes !== undefined ||
+      data.worker_response !== undefined,
+    { message: "At least one field must be provided for update" }
   );
 
 export const getBookingsQuerySchema = z.object({
@@ -156,7 +113,6 @@ export const getBookingsQuerySchema = z.object({
   worker_id: objectIdSchema.optional(),
   role: z.enum(["client", "worker"]).optional(),
   status: z.nativeEnum(BookingStatus).optional(),
-  payment_status: z.nativeEnum(BookingPaymentStatus).optional(),
   service_code: z.string().optional(),
   start_date: dateSchema.optional(),
   end_date: dateSchema.optional(),
@@ -172,39 +128,21 @@ export const getBookingsQuerySchema = z.object({
     .pipe(z.number().int().positive().min(1).max(100)),
 });
 
-export type CreateBookingSchemaType = z.infer<typeof createBookingSchema>;
-export type UpdateBookingStatusSchemaType = z.infer<
-  typeof updateBookingStatusSchema
->;
-export type CancelBookingReasonSchemaType = z.infer<
-  typeof cancelBookingReasonSchema
->;
-export type UpdateBookingSchemaType = z.infer<typeof updateBookingSchema>;
-export type GetBookingsQuerySchemaType = z.infer<typeof getBookingsQuerySchema>;
-
-/**
- * Schema for opening a dispute on a booking.
- * Only the client can open a dispute when the booking is IN_PROGRESS.
- */
 export const createDisputeSchema = z.object({
   reason: z.nativeEnum(DisputeReason),
   description: z.string().trim().min(10).max(2000),
-  evidence_urls: z
-    .array(z.string().url())
-    .max(10)
-    .optional()
-    .default([]),
+  evidence_urls: z.array(z.string().url()).max(10).optional().default([]),
 });
 
-/**
- * Schema for admin resolving a dispute.
- * Admin decides how to distribute the escrow funds.
- */
 export const resolveDisputeSchema = z.object({
   resolution: z.nativeEnum(DisputeResolution),
   resolution_notes: z.string().trim().min(1).max(2000),
-  refund_amount: z.number().min(0).optional(),
 });
 
+export type CreateBookingSchemaType = z.infer<typeof createBookingSchema>;
+export type UpdateBookingStatusSchemaType = z.infer<typeof updateBookingStatusSchema>;
+export type CancelBookingReasonSchemaType = z.infer<typeof cancelBookingReasonSchema>;
+export type UpdateBookingSchemaType = z.infer<typeof updateBookingSchema>;
+export type GetBookingsQuerySchemaType = z.infer<typeof getBookingsQuerySchema>;
 export type CreateDisputeSchemaType = z.infer<typeof createDisputeSchema>;
 export type ResolveDisputeSchemaType = z.infer<typeof resolveDisputeSchema>;

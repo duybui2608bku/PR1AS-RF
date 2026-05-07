@@ -86,6 +86,15 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
               defaultValue: item.body,
             }),
           };
+        case "booking.updated":
+          return {
+            title: t("notifications.events.booking.updated.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.booking.updated.body", {
+              defaultValue: item.body,
+            }),
+          };
         case "dispute.created":
           return {
             title: t("notifications.events.dispute.created.title", {
@@ -101,6 +110,87 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
               defaultValue: item.title,
             }),
             description: t("notifications.events.dispute.resolved.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "wallet.deposit_success":
+          return {
+            title: t("notifications.events.wallet.depositSuccess.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.wallet.depositSuccess.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "wallet.deposit_failed":
+          return {
+            title: t("notifications.events.wallet.depositFailed.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.wallet.depositFailed.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "wallet.hold_created":
+          return {
+            title: t("notifications.events.wallet.holdCreated.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.wallet.holdCreated.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "wallet.refund_created":
+          return {
+            title: t("notifications.events.wallet.refundCreated.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.wallet.refundCreated.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "wallet.payout_created":
+          return {
+            title: t("notifications.events.wallet.payoutCreated.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.wallet.payoutCreated.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "chat.message":
+          return {
+            title: t("notifications.events.chat.message.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.chat.message.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "chat.group_message":
+          return {
+            title: t("notifications.events.chat.groupMessage.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.chat.groupMessage.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "review.created":
+          return {
+            title: t("notifications.events.review.created.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.review.created.body", {
+              defaultValue: item.body,
+            }),
+          };
+        case "review.updated":
+          return {
+            title: t("notifications.events.review.updated.title", {
+              defaultValue: item.title,
+            }),
+            description: t("notifications.events.review.updated.body", {
               defaultValue: item.body,
             }),
           };

@@ -24,12 +24,19 @@ export const updateLastActiveRoleSchema = z.object({
   }),
 });
 
+const isoDateString = z
+  .string()
+  .refine((val) => !Number.isNaN(new Date(val).getTime()), {
+    message: "Must be a valid date string",
+  })
+  .optional();
+
 export const getUsersQuerySchema = z.object({
   search: z.string().trim().optional(),
   role: z.string().optional(),
   status: z.nativeEnum(UserStatus).optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: isoDateString,
+  endDate: isoDateString,
 });
 
 export type UpdateUserStatusSchemaType = z.infer<typeof updateUserStatusSchema>;

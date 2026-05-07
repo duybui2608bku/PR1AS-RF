@@ -152,6 +152,35 @@ export class MessageRepository {
     } as IMessage;
   }
 
+  async softDeleteMessage(message_id: string): Promise<void> {
+    await Message.findByIdAndUpdate(message_id, {
+      $set: { is_deleted: true, updated_at: new Date() },
+    });
+  }
+
+  async getMessagesByIds(ids: string[]): Promise<IMessage[]> {
+    if (ids.length === 0) return [];
+    const messages = await Message.find({
+      _id: { $in: ids.map((id) => new Types.ObjectId(id)) },
+      is_deleted: false,
+    }).lean();
+
+    return messages.map((msg) => ({
+      _id: msg._id.toString(),
+      conversation_id: msg.conversation_id.toString(),
+      sender_id: msg.sender_id.toString(),
+      receiver_id: msg.receiver_id.toString(),
+      type: msg.type,
+      content: msg.content,
+      is_read: msg.is_read,
+      is_deleted: msg.is_deleted,
+      read_at: msg.read_at,
+      reply_to_id: msg.reply_to_id?.toString() || null,
+      created_at: msg.created_at,
+      updated_at: msg.updated_at,
+    })) as IMessage[];
+  }
+
   async markMessagesAsRead(
     user_id: string,
     message_ids?: string[],

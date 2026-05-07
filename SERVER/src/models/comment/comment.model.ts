@@ -56,7 +56,7 @@ const commentSchema = new Schema<ICommentDocument>(
   }
 );
 
-commentSchema.index({ post_id: 1, created_at: 1 });
+commentSchema.index({ post_id: 1, created_at: -1, _id: -1 });
 commentSchema.index({ post_id: 1, parent_comment_id: 1, created_at: 1 });
 commentSchema.index({ deleted_at: 1 });
 

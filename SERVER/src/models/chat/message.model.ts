@@ -48,6 +48,9 @@ const messageSchema = new Schema({
   updated_at: { type: Date, default: Date.now },
 });
 
+messageSchema.index({ conversation_id: 1, created_at: -1 });
+messageSchema.index({ receiver_id: 1, is_read: 1 });
+
 const Message = model(modelsName.MESSAGE, messageSchema);
 
 export default Message;

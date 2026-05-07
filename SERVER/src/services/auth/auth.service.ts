@@ -12,6 +12,7 @@ import {
   AuthResponse,
   RegisterResponse,
   IUserPublic,
+  IUserDocument,
   UserStatus,
 } from "../../types/auth/user.types";
 import crypto from "crypto";
@@ -54,7 +55,7 @@ export class AuthService {
       phone: input.phone,
     });
 
-    await this.sendVerificationEmail(user.email).catch((error) => {
+    await this.sendVerificationEmailToUser(user).catch((error) => {
       logger.error("Failed to send verification email during registration", {
         userId: user._id.toString(),
         email: user.email,
@@ -247,14 +248,11 @@ export class AuthService {
 
   async sendVerificationEmail(email: string): Promise<void> {
     const user = await userRepository.findByEmail(email);
-    if (!user) {
-      return;
-    }
+    if (!user || user.verify_email) return;
+    await this.sendVerificationEmailToUser(user);
+  }
 
-    if (user.verify_email) {
-      return;
-    }
-
+  private async sendVerificationEmailToUser(user: IUserDocument): Promise<void> {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationTokenHash = this.hashOpaqueToken(verificationToken);
     const verificationExpires = createEmailVerificationExpiry();
@@ -323,16 +321,14 @@ export class AuthService {
 
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
     const user = await userRepository.findByEmail(email);
-    if (user) {
-      if (!user.verify_email) {
-        await this.sendVerificationEmail(email).catch((error) => {
-          logger.error("Failed to resend verification email", {
-            userId: user._id.toString(),
-            email: user.email,
-            error: error instanceof Error ? error.message : String(error),
-          });
+    if (user && !user.verify_email) {
+      await this.sendVerificationEmailToUser(user).catch((error) => {
+        logger.error("Failed to resend verification email", {
+          userId: user._id.toString(),
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
         });
-      }
+      });
     }
 
     return {

@@ -9,19 +9,11 @@ export enum BookingStatus {
   EXPIRED = "expired",
 }
 
-export enum BookingPaymentStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  PARTIALLY_REFUNDED = "partially_refunded",
-  REFUNDED = "refunded",
-}
-
 export enum CancellationReason {
   CLIENT_REQUEST = "client_request",
   WORKER_UNAVAILABLE = "worker_unavailable",
   SCHEDULE_CONFLICT = "schedule_conflict",
   EMERGENCY = "emergency",
-  PAYMENT_FAILED = "payment_failed",
   POLICY_VIOLATION = "policy_violation",
   OTHER = "other",
 }
@@ -46,9 +38,7 @@ export enum DisputeReason {
 export enum DisputeResolution {
   FAVOR_CLIENT = "favor_client",
   FAVOR_WORKER = "favor_worker",
-  PARTIAL_REFUND = "partial_refund",
 }
-
 
 export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   [BookingStatus.PENDING]: [
@@ -80,7 +70,6 @@ export const BOOKING_LIMITS = {
   MIN_ADVANCE_HOURS: 2,
   MAX_ADVANCE_DAYS: 30,
   CANCELLATION_FREE_HOURS: 24,
-  CANCELLATION_PENALTY_PERCENT: 20,
   MAX_DURATION_HOURS: 24,
   MIN_DURATION_HOURS: 1,
   MAX_DURATION_DAYS: 30,

@@ -59,7 +59,7 @@ export class PushNotificationAdapter implements NotificationDeliveryAdapter {
       notification_id: notification._id.toString(),
     });
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       subscriptions.map(async (subscription) => {
         const pushSubscription: webPush.PushSubscription = {
           endpoint: subscription.endpoint,
@@ -77,11 +77,25 @@ export class PushNotificationAdapter implements NotificationDeliveryAdapter {
             await notificationRepository.deactivatePushSubscriptionByEndpoint(
               subscription.endpoint
             );
+            return; // expired subscription — not a real delivery failure
           }
           throw error;
         }
       })
     );
+
+    const hasSuccess = results.some((r) => r.status === "fulfilled");
+    if (!hasSuccess) {
+      const firstRejection = results.find(
+        (r): r is PromiseRejectedResult => r.status === "rejected"
+      );
+      return {
+        status: NotificationDeliveryStatus.FAILED,
+        error: String(
+          (firstRejection?.reason as Error)?.message ?? firstRejection?.reason
+        ),
+      };
+    }
 
     return { status: NotificationDeliveryStatus.SENT };
   }

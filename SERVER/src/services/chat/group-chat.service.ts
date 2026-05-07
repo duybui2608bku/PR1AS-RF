@@ -26,7 +26,7 @@ export class GroupChatService {
   private async ensureUserInConversation(
     user_id: string,
     conversation_group_id: string
-  ) {
+  ): Promise<IConversationGroup> {
     const conversation =
       await groupChatRepository.getConversationGroupForUserById(
         conversation_group_id,
@@ -48,6 +48,34 @@ export class GroupChatService {
     sender_id: string,
     input: CreateGroupMessageInput
   ): Promise<SendGroupMessageResponse> {
+    // Validate sender is a booking participant BEFORE creating the conversation
+    const booking = await bookingRepository.findById(input.booking_id);
+
+    if (!booking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
+
+    const clientId =
+      typeof booking.client_id === "object" && booking.client_id?._id
+        ? booking.client_id._id.toString()
+        : String(booking.client_id);
+    const workerId =
+      typeof booking.worker_id === "object" && booking.worker_id?._id
+        ? booking.worker_id._id.toString()
+        : String(booking.worker_id);
+
+    if (sender_id !== clientId && sender_id !== workerId) {
+      throw new AppError(
+        CHAT_MESSAGES.FAILED_JOIN_CONVERSATION,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
+      );
+    }
+
     const conversation =
       await groupChatRepository.findOrCreateConversationGroupByBooking(
         input.booking_id
@@ -58,14 +86,6 @@ export class GroupChatService {
         BOOKING_MESSAGES.BOOKING_NOT_FOUND,
         HTTP_STATUS.NOT_FOUND,
         ErrorCode.BOOKING_NOT_FOUND
-      );
-    }
-
-    if (!conversation.members.includes(sender_id)) {
-      throw new AppError(
-        CHAT_MESSAGES.FAILED_JOIN_CONVERSATION,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.FORBIDDEN
       );
     }
 
@@ -103,10 +123,7 @@ export class GroupChatService {
 
     io.to(getGroupConversationRoom(conversation._id)).emit(
       SOCKET_EVENTS.NEW_MESSAGE,
-      {
-        message,
-        conversation,
-      }
+      { message, conversation }
     );
 
     const groupRoom = getGroupConversationRoom(conversation._id);
@@ -138,10 +155,7 @@ export class GroupChatService {
         );
     }
 
-    return {
-      message,
-      conversation,
-    };
+    return { message, conversation };
   }
 
   async getGroupMessages(
@@ -188,18 +202,10 @@ export class GroupChatService {
 
     const result = await groupChatRepository.getGroupMessages(
       conversationGroupId,
-      {
-        ...query,
-        page,
-        limit,
-      }
+      { ...query, page, limit }
     );
 
-    return {
-      ...result,
-      page,
-      limit,
-    };
+    return { ...result, page, limit };
   }
 
   async getGroupConversations(
@@ -216,74 +222,53 @@ export class GroupChatService {
 
     const result = await groupChatRepository.getUserConversationGroups(
       user_id,
-      {
-        page,
-        limit,
-      }
+      { page, limit }
     );
 
-    const enrichedConversations = await Promise.all(
-      result.conversations.map(async (conv) => {
-        let lastMessage: IMessageGroup | undefined;
-        if (conv.last_message) {
-          const message = await groupChatRepository.getGroupMessages(conv._id, {
-            page: 1,
-            limit: 1,
-          });
-          lastMessage = message.messages[0];
-        }
+    // Batch fetch: 2 queries regardless of N conversations
+    const lastMessageIds = result.conversations
+      .filter((c) => c.last_message)
+      .map((c) => c.last_message!);
 
-        const unreadCount = await groupChatRepository.getGroupUnreadCount(
-          user_id,
-          conv._id
-        );
+    const conversationIds = result.conversations.map((c) => c._id);
 
-        return {
-          ...conv,
-          last_message_data: lastMessage,
-          unread_count: unreadCount,
-        };
-      })
-    );
+    const [lastMessages, unreadCountMap] = await Promise.all([
+      groupChatRepository.getMessageGroupsByIds(lastMessageIds),
+      groupChatRepository.getGroupUnreadCounts(user_id, conversationIds),
+    ]);
 
-    return {
-      conversations: enrichedConversations,
-      total: result.total,
-      page,
-      limit,
-    };
+    const messageMap = new Map(lastMessages.map((m) => [m._id, m]));
+
+    const enrichedConversations = result.conversations.map((conv) => ({
+      ...conv,
+      last_message_data: conv.last_message
+        ? messageMap.get(conv.last_message)
+        : undefined,
+      unread_count: unreadCountMap.get(conv._id) ?? 0,
+    }));
+
+    return { conversations: enrichedConversations, total: result.total, page, limit };
   }
 
   async getGroupConversation(
     user_id: string,
     conversation_group_id: string
-  ): Promise<GroupConversationWithLastMessage | null> {
+  ): Promise<GroupConversationWithLastMessage> {
     const conversation = await this.ensureUserInConversation(
       user_id,
       conversation_group_id
     );
 
-    let last_message: IMessageGroup | undefined;
-
-    if (conversation.last_message) {
-      const messages = await groupChatRepository.getGroupMessages(
-        conversation._id,
-        {
-          page: 1,
-          limit: 1,
-        }
-      );
-      last_message = messages.messages[0];
-    }
-
-    const unread_count = await groupChatRepository.getGroupUnreadCount(
-      user_id,
-      conversation._id
-    );
+    const [last_message, unread_count] = await Promise.all([
+      conversation.last_message
+        ? groupChatRepository.getMessageGroupById(conversation.last_message)
+        : Promise.resolve(undefined),
+      groupChatRepository.getGroupUnreadCount(user_id, conversation._id),
+    ]);
 
     return {
       ...conversation,
-      last_message_data: last_message,
+      last_message_data: last_message ?? undefined,
       unread_count,
     };
   }
@@ -303,17 +288,16 @@ export class GroupChatService {
     if (input.conversation_group_id) {
       await this.ensureUserInConversation(user_id, input.conversation_group_id);
     } else if (input.message_ids && input.message_ids.length > 0) {
-      const message = await groupChatRepository.getMessageGroupByIdForUser(
-        input.message_ids[0],
-        user_id
+      // Verify ALL provided messages belong to conversations the user is a member of
+      const messages = await groupChatRepository.getMessageGroupsByIds(
+        input.message_ids
       );
-      if (!message) {
-        throw new AppError(
-          CHAT_MESSAGES.MESSAGE_NOT_FOUND,
-          HTTP_STATUS.NOT_FOUND,
-          ErrorCode.NOT_FOUND
-        );
-      }
+      const conversationIds = [
+        ...new Set(messages.map((m) => m.conversation_group_id)),
+      ];
+      await Promise.all(
+        conversationIds.map((id) => this.ensureUserInConversation(user_id, id))
+      );
     }
 
     const updatedCount = await groupChatRepository.markGroupMessagesAsRead(
@@ -362,8 +346,14 @@ export class GroupChatService {
       );
     }
 
-    const clientId = booking.client_id._id.toString();
-    const workerId = booking.worker_id._id.toString();
+    const clientId =
+      typeof booking.client_id === "object" && booking.client_id?._id
+        ? booking.client_id._id.toString()
+        : String(booking.client_id);
+    const workerId =
+      typeof booking.worker_id === "object" && booking.worker_id?._id
+        ? booking.worker_id._id.toString()
+        : String(booking.worker_id);
 
     if (user_id !== clientId && user_id !== workerId) {
       throw new AppError(
@@ -391,10 +381,12 @@ export class GroupChatService {
       );
     }
 
+    // Pass pre-fetched booking data to avoid a second DB lookup inside the repository
     const conversation =
       await groupChatRepository.findOrCreateComplaintConversationGroup(
         booking_id,
-        admin._id.toString()
+        admin._id.toString(),
+        { clientId, workerId, serviceCode: booking.service_code }
       );
 
     if (!conversation) {

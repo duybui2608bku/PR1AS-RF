@@ -10,13 +10,12 @@ import type {
   ConversationWithLastMessage,
   MarkAsReadInput,
   IMessage,
+  IConversation,
 } from "../../types/chat/chat.types";
 
 import { userRepository } from "../../repositories/auth/user.repository";
 
 import { getSocketIO } from "../../config/socket";
-
-import Message from "../../models/chat/message.model";
 
 import {
   getOtherUserId,
@@ -84,7 +83,6 @@ export class ChatService {
     }
 
     const message = await chatRepository.createMessage(sender_id, input);
-
     const conversation = await chatRepository.findOrCreateConversation(
       sender_id,
       input.receiver_id
@@ -92,7 +90,7 @@ export class ChatService {
 
     const io = getSocketIO();
 
-    // Emit to user rooms (for notifications)
+    // Emit to user rooms so both parties update their conversation list
     io.to(getUserRoom(input.receiver_id)).emit(SOCKET_EVENTS.NEW_MESSAGE, {
       message,
       conversation,
@@ -102,14 +100,11 @@ export class ChatService {
       conversation,
     });
 
-    // Also emit to conversation room (for users currently viewing the conversation)
+    // Emit to conversation room for users actively viewing it
     if (message.conversation_id) {
       io.to(getConversationRoom(message.conversation_id)).emit(
         SOCKET_EVENTS.NEW_MESSAGE,
-        {
-          message,
-          conversation,
-        }
+        { message, conversation }
       );
     }
 
@@ -137,10 +132,7 @@ export class ChatService {
       }
     }
 
-    return {
-      message,
-      conversation,
-    };
+    return { message, conversation };
   }
 
   async getMessages(
@@ -159,11 +151,7 @@ export class ChatService {
       limit,
     });
 
-    return {
-      ...result,
-      page,
-      limit,
-    };
+    return { ...result, page, limit };
   }
 
   async getConversations(
@@ -182,31 +170,50 @@ export class ChatService {
       limit,
     });
 
-    const enrichedConversations = await Promise.all(
-      result.conversations.map(async (conv: ConversationWithLastMessage) => {
+    // Collect all IDs upfront for batch fetching — avoids N×3 queries
+    const otherUserIds = result.conversations.map((conv: IConversation) =>
+      getOtherUserId(
+        conv.sender_id.toString(),
+        conv.receiver_id.toString(),
+        user_id
+      )
+    );
+
+    const lastMessageIds = result.conversations
+      .filter((conv: IConversation) => conv.last_message)
+      .map((conv: IConversation) => conv.last_message!);
+
+    const conversationIds = result.conversations.map(
+      (conv: IConversation) => conv._id
+    );
+
+    // 3 queries regardless of how many conversations
+    const [otherUsers, lastMessages, unreadCountMap] = await Promise.all([
+      userRepository.findManyByIds(otherUserIds),
+      chatRepository.getMessagesByIds(lastMessageIds),
+      chatRepository.getConversationUnreadCounts(conversationIds, user_id),
+    ]);
+
+    const userMap = new Map(otherUsers.map((u) => [u._id.toString(), u]));
+    const messageMap = new Map(lastMessages.map((m) => [m._id.toString(), m]));
+
+    const enrichedConversations = result.conversations.map(
+      (conv: IConversation) => {
         const otherUserId = getOtherUserId(
           conv.sender_id.toString(),
           conv.receiver_id.toString(),
           user_id
         );
-
-        const [otherUser, lastMessage, unreadCount] = await Promise.all([
-          userRepository.findById(otherUserId),
-
-          conv.last_message
-            ? chatRepository.getMessageById(conv.last_message, user_id)
-            : null,
-
-          chatRepository.getUnreadCount(user_id, conv._id),
-        ]);
-
+        const otherUser = userMap.get(otherUserId) || null;
         return {
           ...conv,
-          last_message_data: lastMessage || undefined,
+          last_message_data: conv.last_message
+            ? messageMap.get(conv.last_message)
+            : undefined,
           other_user: formatOtherUser(otherUser),
-          unread_count: unreadCount,
+          unread_count: unreadCountMap.get(conv._id) ?? 0,
         };
-      })
+      }
     );
 
     return {
@@ -223,7 +230,6 @@ export class ChatService {
   ): Promise<ConversationWithLastMessage | null> {
     const result = await chatRepository.getConversationWithDetails(
       conversation_id,
-
       user_id
     );
 
@@ -302,15 +308,9 @@ export class ChatService {
       );
     }
 
-    await Message.findByIdAndUpdate(message_id, {
-      $set: {
-        is_deleted: true,
-        updated_at: new Date(),
-      },
-    });
+    await chatRepository.softDeleteMessage(message_id);
 
     const io = getSocketIO();
-
     io.to(getConversationRoom(message.conversation_id)).emit(
       SOCKET_EVENTS.MESSAGE_DELETED,
       {
@@ -318,6 +318,7 @@ export class ChatService {
         conversation_id: message.conversation_id,
       }
     );
+
     return { success: true };
   }
 }

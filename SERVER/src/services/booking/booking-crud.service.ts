@@ -1,26 +1,21 @@
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
-import { escrowRepository } from "../../repositories/escrow/escrow.repository";
 import {
   CreateBookingInput,
   BookingQuery,
   IBookingDocument,
 } from "../../types/booking/booking.types";
-import {
-  BookingPaymentStatus,
-} from "../../constants/booking";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { BOOKING_MESSAGES } from "../../constants/messages";
 import { PaginatedResponse } from "../../utils/pagination";
-import { walletService } from "../wallet/wallet.service";
-import { CreateEscrowInput } from "../../types/escrow/escrow.types";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
+import { UserRole } from "../../types/auth/user.types";
 
 export class BookingCrudService extends BookingBaseService {
   async createBooking(
@@ -37,7 +32,14 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    const worker = await userRepository.findById(workerId);
+    // All 4 run concurrently — validations throw on failure, first two capture data
+    const [worker, service] = await Promise.all([
+      userRepository.findById(workerId),
+      serviceRepository.findById(input.service_id.toString()),
+      this.validateWorkerService(input.worker_service_id.toString(), workerId),
+      this.validateScheduleConflict(workerId, input.schedule.start_time, input.schedule.end_time),
+    ]);
+
     if (!worker) {
       throw new AppError(
         BOOKING_MESSAGES.USER_NOT_FOUND,
@@ -46,14 +48,6 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    await this.validateWorkerService(
-      input.worker_service_id.toString(),
-      workerId
-    );
-
-    const service = await serviceRepository.findById(
-      input.service_id.toString()
-    );
     if (!service) {
       throw new AppError(
         BOOKING_MESSAGES.SERVICE_NOT_FOUND,
@@ -62,72 +56,17 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    await this.validateScheduleConflict(
-      workerId,
-      input.schedule.start_time,
-      input.schedule.end_time
-    );
+    // create() now returns a populated document — no second fetch needed
+    const createdBooking = await bookingRepository.create({
+      ...input,
+      client_id: new Types.ObjectId(clientId),
+    });
 
-    const session = await mongoose.startSession();
+    void notificationEventService
+      .bookingCreated(createdBooking)
+      .catch((error) => logger.error("Booking notification failed:", error));
 
-    try {
-      session.startTransaction();
-
-      const bookingData: CreateBookingInput = {
-        ...input,
-        client_id: new Types.ObjectId(clientId),
-      };
-      const booking = await bookingRepository.create(bookingData, session);
-
-      let holdTransactionId: string | null = null;
-      if (input.pricing.total_amount > 0) {
-        holdTransactionId = await walletService.holdBalanceForBooking(
-          clientId,
-          input.pricing.total_amount,
-          booking._id.toString(),
-          `Hold balance for booking ${booking._id.toString()}`
-        );
-      }
-
-      const escrowData: CreateEscrowInput = {
-        booking_id: booking._id,
-        client_id: new Types.ObjectId(clientId),
-        worker_id: input.worker_id,
-        amount: input.pricing.total_amount,
-        platform_fee: input.pricing.platform_fee,
-        worker_payout: input.pricing.worker_payout,
-        currency: input.pricing.currency,
-        hold_transaction_id: holdTransactionId
-          ? new Types.ObjectId(holdTransactionId)
-          : null,
-      };
-      const escrow = await escrowRepository.create(escrowData, session);
-
-      await bookingRepository.update(
-        booking._id.toString(),
-        {
-          escrow_id: escrow._id,
-          transaction_id: holdTransactionId ?? undefined,
-          payment_status: BookingPaymentStatus.PAID,
-        },
-        session
-      );
-
-      await session.commitTransaction();
-
-      const createdBooking = await this.getBookingOrThrow(
-        booking._id.toString()
-      );
-      void notificationEventService
-        .bookingCreated(createdBooking)
-        .catch((error) => logger.error("Booking notification failed:", error));
-      return createdBooking;
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-    }
+    return createdBooking;
   }
 
   async getBookingById(
@@ -174,10 +113,7 @@ export class BookingCrudService extends BookingBaseService {
     const isWorker = this.isBookingWorker(booking, userId);
 
     if (updateData.schedule || updateData.pricing || updateData.client_notes) {
-      this.ensureAuthorized(
-        isClient,
-        BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING
-      );
+      this.ensureAuthorized(isClient, BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING);
 
       if (updateData.schedule) {
         await this.validateScheduleConflict(
@@ -190,10 +126,7 @@ export class BookingCrudService extends BookingBaseService {
     }
 
     if (updateData.worker_response) {
-      this.ensureAuthorized(
-        isWorker,
-        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE
-      );
+      this.ensureAuthorized(isWorker, BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE);
     }
 
     const filteredUpdateData: Partial<IBookingDocument> = {};
@@ -214,10 +147,7 @@ export class BookingCrudService extends BookingBaseService {
       Object.assign(filteredUpdateData, updateData);
     }
 
-    const updatedBooking = await bookingRepository.update(
-      bookingId,
-      filteredUpdateData
-    );
+    const updatedBooking = await bookingRepository.update(bookingId, filteredUpdateData);
 
     if (!updatedBooking) {
       throw new AppError(
@@ -229,11 +159,32 @@ export class BookingCrudService extends BookingBaseService {
 
     void notificationEventService
       .bookingUpdated(updatedBooking, userId)
-      .catch((error) =>
-        logger.error("Booking updated notification failed:", error)
-      );
+      .catch((error) => logger.error("Booking updated notification failed:", error));
 
     return updatedBooking;
   }
 
+  async getMyBookings(
+    userId: string,
+    query: BookingQuery
+  ): Promise<PaginatedResponse<IBookingDocument>> {
+    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    const requestedRole = query.role || roleInfo.lastActiveRole;
+
+    if (requestedRole === UserRole.WORKER && roleInfo.roles.includes(UserRole.WORKER)) {
+      return bookingRepository.findByWorkerId({
+        ...query,
+        worker_id: new Types.ObjectId(userId),
+      });
+    }
+
+    if (requestedRole === UserRole.CLIENT && roleInfo.roles.includes(UserRole.CLIENT)) {
+      return bookingRepository.findByClientId({
+        ...query,
+        client_id: new Types.ObjectId(userId),
+      });
+    }
+
+    throw AppError.forbidden();
+  }
 }

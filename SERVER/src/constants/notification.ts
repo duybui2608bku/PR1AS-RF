@@ -51,16 +51,16 @@ export enum NotificationDeliveryStatus {
 }
 
 export const NOTIFICATION_MESSAGES = {
-  NOTIFICATION_NOT_FOUND: "Notification not found",
-  NOTIFICATIONS_FETCHED: "Notifications fetched successfully",
-  NOTIFICATION_CREATED: "Notification created successfully",
-  NOTIFICATION_MARKED_READ: "Notification marked as read",
-  NOTIFICATIONS_MARKED_READ: "Notifications marked as read",
-  UNREAD_COUNT_FETCHED: "Unread notification count fetched successfully",
-  PREFERENCES_FETCHED: "Notification preferences fetched successfully",
-  PREFERENCES_UPDATED: "Notification preferences updated successfully",
-  PUSH_SUBSCRIPTION_SAVED: "Push subscription saved successfully",
-  PUSH_SUBSCRIPTION_DELETED: "Push subscription deleted successfully",
+  NOTIFICATION_NOT_FOUND: "Không tìm thấy thông báo",
+  NOTIFICATIONS_FETCHED: "Lấy danh sách thông báo thành công",
+  NOTIFICATION_CREATED: "Tạo thông báo thành công",
+  NOTIFICATION_MARKED_READ: "Đã đánh dấu thông báo là đã đọc",
+  NOTIFICATIONS_MARKED_READ: "Đã đánh dấu tất cả thông báo là đã đọc",
+  UNREAD_COUNT_FETCHED: "Lấy số thông báo chưa đọc thành công",
+  PREFERENCES_FETCHED: "Lấy tùy chọn thông báo thành công",
+  PREFERENCES_UPDATED: "Cập nhật tùy chọn thông báo thành công",
+  PUSH_SUBSCRIPTION_SAVED: "Đăng ký nhận thông báo đẩy thành công",
+  PUSH_SUBSCRIPTION_DELETED: "Hủy đăng ký nhận thông báo đẩy thành công",
 } as const;
 
 export const NOTIFICATION_LIMITS = {

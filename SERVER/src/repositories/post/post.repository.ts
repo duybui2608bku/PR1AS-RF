@@ -116,6 +116,7 @@ export class PostRepository {
     if (!Types.ObjectId.isValid(authorId)) return 0;
     return Post.countDocuments({
       author_id: new Types.ObjectId(authorId),
+      deleted_at: null,
       created_at: { $gte: startDate, $lt: endDate },
     });
   }

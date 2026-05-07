@@ -22,20 +22,18 @@ export class PostController {
   }
 
   async getPostById(req: AuthRequest, res: Response): Promise<void> {
-    const userId = extractUserIdFromRequest(req);
     const { id } = req.params;
-    const post = await postService.getPostById(id, userId);
+    const post = await postService.getPostById(id);
     R.success(res, post, POST_MESSAGES.POST_FETCHED, req);
   }
 
   async listFeed(req: AuthRequest, res: Response): Promise<void> {
-    const userId = extractUserIdFromRequest(req);
     const query = validateWithSchema(
       getPostsQuerySchema,
       req.query,
       COMMON_MESSAGES.BAD_REQUEST
     );
-    const result = await postService.listFeed(query, userId);
+    const result = await postService.listFeed(query);
     R.success(res, result, POST_MESSAGES.POSTS_FETCHED, req);
   }
 

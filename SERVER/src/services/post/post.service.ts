@@ -6,7 +6,6 @@ import { hashtagRepository } from "../../repositories/hashtag/hashtag.repository
 import { userRepository } from "../../repositories/auth/user.repository";
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
-import { PostHashtag } from "../../models/hashtag/post-hashtag.model";
 import { PricingPackage } from "../../models/pricing";
 import {
   CreatePostInput,
@@ -226,13 +225,6 @@ export class PostService {
   ): Promise<PostPublic> {
     await this.assertUserCanCreatePost(userId);
 
-    const post = await postRepository.create({
-      body: input.body,
-      visibility: input.visibility ?? PostVisibility.PUBLIC,
-      author_id: new Types.ObjectId(userId),
-    });
-
-    const postId = post._id as Types.ObjectId;
     const mediaItems = input.media ?? [];
     if (mediaItems.length > POST_LIMITS.MAX_MEDIA_PER_POST) {
       throw new AppError(
@@ -242,6 +234,13 @@ export class PostService {
       );
     }
 
+    const post = await postRepository.create({
+      body: input.body,
+      visibility: input.visibility ?? PostVisibility.PUBLIC,
+      author_id: new Types.ObjectId(userId),
+    });
+
+    const postId = post._id as Types.ObjectId;
     const media = await postMediaRepository.bulkCreate(postId, mediaItems);
 
     let hashtags: IHashtagDocument[] = [];
@@ -255,13 +254,10 @@ export class PostService {
       postId.toString()
     );
     const finalPost = (persisted ?? post) as unknown as LeanPostWithAuthor;
-    return buildPostPublic(finalPost, media, hashtags, {
-      comments_count: 0,
-      reactions: emptyReactionSummary(),
-    });
+    return buildPostPublic(finalPost, media, hashtags);
   }
 
-  async getPostById(postId: string, viewerId?: string): Promise<PostPublic> {
+  async getPostById(postId: string): Promise<PostPublic> {
     const post = await postRepository.findActiveByIdLean(postId);
     if (!post) {
       throw new AppError(
@@ -272,57 +268,33 @@ export class PostService {
     }
 
     const postObjectId = post._id as Types.ObjectId;
-    const viewerObjectId =
-      viewerId && Types.ObjectId.isValid(viewerId)
-        ? new Types.ObjectId(viewerId)
-        : null;
 
-    const [media, hashtags, commentsCountMap, reactionsMap] = await Promise.all(
-      [
-        postMediaRepository.findByPostId(postObjectId),
-        hashtagRepository.findByPostId(postObjectId),
-        commentRepository.countActiveByPostIds([postObjectId]),
-        reactionRepository.buildSummaries(
-          ReactionTargetType.POST,
-          [postObjectId],
-          viewerObjectId
-        ),
-      ]
-    );
+    const [media, hashtags] = await Promise.all([
+      postMediaRepository.findByPostId(postObjectId),
+      hashtagRepository.findByPostId(postObjectId),
+    ]);
 
     return buildPostPublic(
       post as unknown as LeanPostWithAuthor,
       media,
-      hashtags,
-      {
-        comments_count: commentsCountMap.get(postObjectId.toString()) ?? 0,
-        reactions:
-          reactionsMap.get(postObjectId.toString()) ?? emptyReactionSummary(),
-      }
+      hashtags
     );
   }
 
   async listFeed(
-    query: PostFeedQuery,
-    viewerId?: string
+    query: PostFeedQuery
   ): Promise<CursorPaginatedResponse<PostPublic>> {
     const decodedCursor = query.cursor ? decodeCursor(query.cursor) : null;
 
     let hashtagPostIds: Types.ObjectId[] | null = null;
     if (query.hashtag) {
-      const tag = await hashtagRepository.findHashtagBySlug(
+      const postIds = await hashtagRepository.findPostIdsByHashtagSlug(
         query.hashtag.toLowerCase()
       );
-      if (!tag) {
+      if (postIds === null) {
         return { data: [], next_cursor: null, has_more: false };
       }
-      // We do not want to load every post id for huge tags. The repo will
-      // already filter `_id IN (...)`, so we leverage Mongo's index. If a tag
-      // has too many posts in production, switch to an aggregation pipeline.
-      const rows = await PostHashtag.find({ hashtag_id: tag._id })
-        .select("post_id")
-        .lean<{ post_id: Types.ObjectId }[]>();
-      hashtagPostIds = rows.map((row) => row.post_id);
+      hashtagPostIds = postIds;
     }
 
     const items = await postRepository.findFeed({
@@ -336,36 +308,17 @@ export class PostService {
     }
 
     const postIds = items.map((p) => p._id as Types.ObjectId);
-    const viewerObjectId =
-      viewerId && Types.ObjectId.isValid(viewerId)
-        ? new Types.ObjectId(viewerId)
-        : null;
 
-    const [mediaMap, hashtagMap, commentsCountMap, reactionsMap] =
-      await Promise.all([
-        postMediaRepository.findByPostIds(postIds),
-        hashtagRepository.findHashtagIdsByPostIds(postIds),
-        commentRepository.countActiveByPostIds(postIds),
-        reactionRepository.buildSummaries(
-          ReactionTargetType.POST,
-          postIds,
-          viewerObjectId
-        ),
-      ]);
+    const [mediaMap, hashtagMap] = await Promise.all([
+      postMediaRepository.findByPostIds(postIds),
+      hashtagRepository.findHashtagIdsByPostIds(postIds),
+    ]);
 
     const enriched = items.map((post) => {
       const id = (post._id as Types.ObjectId).toString();
       const media = mediaMap.get(id) ?? [];
       const hashtags = hashtagMap.get(id) ?? [];
-      return buildPostPublic(
-        post as unknown as LeanPostWithAuthor,
-        media,
-        hashtags,
-        {
-          comments_count: commentsCountMap.get(id) ?? 0,
-          reactions: reactionsMap.get(id) ?? emptyReactionSummary(),
-        }
-      );
+      return buildPostPublic(post as unknown as LeanPostWithAuthor, media, hashtags);
     });
 
     return formatCursorResponse(enriched, query.limit, (item) => ({
@@ -395,16 +348,9 @@ export class PostService {
       );
     }
 
-    const update: Partial<{
-      body: string;
-      visibility: PostVisibility;
-      comments_locked: boolean;
-    }> = {};
+    const update: Partial<Pick<IPostDocument, "body" | "visibility">> = {};
     if (input.body !== undefined) update.body = input.body.trim();
     if (input.visibility !== undefined) update.visibility = input.visibility;
-    if (input.comments_locked !== undefined) {
-      update.comments_locked = input.comments_locked;
-    }
 
     const updatedPost = await postRepository.update(postId, update);
     if (!updatedPost) {
@@ -436,28 +382,16 @@ export class PostService {
       }
     }
 
-    const viewerObjectId = new Types.ObjectId(userId);
-    const [media, hashtags, fresh, commentsCountMap, reactionsMap] =
-      await Promise.all([
-        postMediaRepository.findByPostId(postObjectId),
-        hashtagRepository.findByPostId(postObjectId),
-        postRepository.findActiveByIdLean(postId),
-        commentRepository.countActiveByPostIds([postObjectId]),
-        reactionRepository.buildSummaries(
-          ReactionTargetType.POST,
-          [postObjectId],
-          viewerObjectId
-        ),
-      ]);
+    const [media, hashtags, fresh] = await Promise.all([
+      postMediaRepository.findByPostId(postObjectId),
+      hashtagRepository.findByPostId(postObjectId),
+      postRepository.findActiveByIdLean(postId),
+    ]);
 
     const finalPost = (fresh ??
       updatedPost.toObject?.() ??
       updatedPost) as unknown as LeanPostWithAuthor;
-    return buildPostPublic(finalPost, media, hashtags, {
-      comments_count: commentsCountMap.get(postObjectId.toString()) ?? 0,
-      reactions:
-        reactionsMap.get(postObjectId.toString()) ?? emptyReactionSummary(),
-    });
+    return buildPostPublic(finalPost, media, hashtags);
   }
 
   async softDeletePost(postId: string, userId: string): Promise<void> {
@@ -486,19 +420,12 @@ export class PostService {
       );
     }
 
-    // Cascade cleanup so the deleted post stops contributing to feeds,
-    // trending counts, and visible comment threads. Each step is best-effort
-    // and logged: a partial failure shouldn't fail the user-facing delete.
+    // Cascade cleanup — best-effort, logged on failure
     try {
-      const postObjectId = existing._id as Types.ObjectId;
       await Promise.all([
         postMediaRepository.deleteByPostId(postId),
         hashtagService.clearPostHashtags(postId),
         commentRepository.softDeleteByPostId(postId),
-        reactionRepository.deleteByTarget(
-          ReactionTargetType.POST,
-          postObjectId
-        ),
       ]);
     } catch (error) {
       logger.error("Failed to cascade post soft-delete cleanup", error);

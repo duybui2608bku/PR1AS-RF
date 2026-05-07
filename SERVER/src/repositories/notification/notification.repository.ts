@@ -184,6 +184,7 @@ export class NotificationRepository {
   async getOrCreatePreference(
     userId: string
   ): Promise<INotificationPreferenceDocument> {
+    const now = new Date();
     return NotificationPreference.findOneAndUpdate(
       { user_id: new Types.ObjectId(userId) },
       {
@@ -191,9 +192,9 @@ export class NotificationRepository {
           user_id: new Types.ObjectId(userId),
           channels: DEFAULT_CHANNELS,
           muted_types: [],
-          created_at: new Date(),
+          created_at: now,
+          updated_at: now,
         },
-        $set: { updated_at: new Date() },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ) as Promise<INotificationPreferenceDocument>;

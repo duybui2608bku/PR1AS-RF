@@ -6,6 +6,7 @@ import {
 import { modelsName } from "../../models/models.name";
 import mongoose, { PipelineStage } from "mongoose";
 import { ServiceCategory } from "../../types/service/service.type";
+import { escapeRegExp } from "../../utils/string";
 
 export interface UpsertWorkerServicePayload {
   serviceId: string;
@@ -30,9 +31,6 @@ export interface GroupedWorkersFilter {
 
 const LOCATION_RADIUS_KM = 30;
 const KM_PER_LAT_DEGREE = 111.32;
-
-const escapeRegExp = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 class WorkerServiceRepository {
   async upsertManyForWorker(

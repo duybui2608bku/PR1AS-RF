@@ -113,6 +113,10 @@
         "cancelled": {
           "title": "Booking đã bị hủy",
           "body": "Một booking liên quan tới bạn vừa bị hủy."
+        },
+        "updated": {
+          "title": "Booking đã được cập nhật",
+          "body": "Thông tin booking đã được cập nhật."
         }
       },
       "dispute": {
@@ -123,6 +127,48 @@
         "resolved": {
           "title": "Khiếu nại booking đã được xử lý",
           "body": "Khiếu nại booking đã có kết quả xử lý."
+        }
+      },
+      "wallet": {
+        "depositSuccess": {
+          "title": "Nạp tiền thành công",
+          "body": "Số dư ví của bạn đã được cập nhật."
+        },
+        "depositFailed": {
+          "title": "Nạp tiền thất bại",
+          "body": "Số tiền chuyển không khớp với số tiền yêu cầu nạp."
+        },
+        "holdCreated": {
+          "title": "Tạm giữ số dư",
+          "body": "Số tiền đã được tạm giữ cho booking của bạn."
+        },
+        "refundCreated": {
+          "title": "Hoàn tiền",
+          "body": "Tiền hoàn đã được cộng vào ví của bạn."
+        },
+        "payoutCreated": {
+          "title": "Thanh toán hoa hồng",
+          "body": "Tiền thanh toán đã được cộng vào ví của bạn."
+        }
+      },
+      "chat": {
+        "message": {
+          "title": "Tin nhắn mới",
+          "body": "Bạn có tin nhắn mới."
+        },
+        "groupMessage": {
+          "title": "Tin nhắn nhóm mới",
+          "body": "Bạn có tin nhắn mới trong nhóm."
+        }
+      },
+      "review": {
+        "created": {
+          "title": "Đánh giá mới",
+          "body": "Một đánh giá mới đã được gửi cho booking của bạn."
+        },
+        "updated": {
+          "title": "Đánh giá đã được cập nhật",
+          "body": "Một đánh giá về booking của bạn đã được cập nhật."
         }
       }
     }

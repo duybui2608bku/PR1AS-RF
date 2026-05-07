@@ -4,29 +4,7 @@ import Message from "../../models/chat/message.model";
 import type { IMessage, IConversation } from "../../types/chat/chat.types";
 
 export class ConversationRepository {
-  async findOrCreateConversation(
-    sender_id: string,
-    receiver_id: string
-  ): Promise<IConversation> {
-    let conversation = await Conversation.findOne({
-      $or: [
-        { sender_id, receiver_id },
-        { sender_id: receiver_id, receiver_id: sender_id },
-      ],
-    }).lean();
-
-    if (!conversation) {
-      const newConversation = new Conversation({
-        sender_id: new Types.ObjectId(sender_id),
-        receiver_id: new Types.ObjectId(receiver_id),
-        last_message: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-      await newConversation.save();
-      conversation = newConversation.toObject();
-    }
-
+  private toDto(conversation: any): IConversation {
     return {
       _id: conversation._id.toString(),
       sender_id: conversation.sender_id.toString(),
@@ -35,6 +13,46 @@ export class ConversationRepository {
       created_at: conversation.created_at,
       updated_at: conversation.updated_at,
     } as IConversation;
+  }
+
+  async findOrCreateConversation(
+    sender_id: string,
+    receiver_id: string
+  ): Promise<IConversation> {
+    const existing = await Conversation.findOne({
+      $or: [
+        { sender_id, receiver_id },
+        { sender_id: receiver_id, receiver_id: sender_id },
+      ],
+    }).lean();
+
+    if (existing) {
+      return this.toDto(existing);
+    }
+
+    try {
+      const newConversation = new Conversation({
+        sender_id: new Types.ObjectId(sender_id),
+        receiver_id: new Types.ObjectId(receiver_id),
+        last_message: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      await newConversation.save();
+      return this.toDto(newConversation.toObject());
+    } catch (err: any) {
+      // Handle duplicate key race condition
+      if (err.code === 11000) {
+        const retry = await Conversation.findOne({
+          $or: [
+            { sender_id, receiver_id },
+            { sender_id: receiver_id, receiver_id: sender_id },
+          ],
+        }).lean();
+        if (retry) return this.toDto(retry);
+      }
+      throw err;
+    }
   }
 
   async findConversationById(
@@ -68,14 +86,7 @@ export class ConversationRepository {
     ]);
 
     return {
-      conversations: conversations.map((conv) => ({
-        _id: conv._id.toString(),
-        sender_id: conv.sender_id.toString(),
-        receiver_id: conv.receiver_id.toString(),
-        last_message: conv.last_message?.toString() || null,
-        created_at: conv.created_at,
-        updated_at: conv.updated_at,
-      })) as IConversation[],
+      conversations: conversations.map((conv) => this.toDto(conv)),
       total,
     };
   }
@@ -136,14 +147,7 @@ export class ConversationRepository {
     ]);
 
     return {
-      conversation: {
-        _id: conversation._id.toString(),
-        sender_id: conversation.sender_id.toString(),
-        receiver_id: conversation.receiver_id.toString(),
-        last_message: conversation.last_message?.toString() || null,
-        created_at: conversation.created_at,
-        updated_at: conversation.updated_at,
-      } as IConversation,
+      conversation: this.toDto(conversation),
       last_message,
       unread_count,
     };
@@ -161,6 +165,34 @@ export class ConversationRepository {
       filter.conversation_id = new Types.ObjectId(conversation_id);
     }
     return Message.countDocuments(filter);
+  }
+
+  async getConversationUnreadCounts(
+    conversationIds: string[],
+    user_id: string
+  ): Promise<Map<string, number>> {
+    if (conversationIds.length === 0) return new Map();
+
+    const results = await Message.aggregate<{ _id: Types.ObjectId; count: number }>([
+      {
+        $match: {
+          conversation_id: {
+            $in: conversationIds.map((id) => new Types.ObjectId(id)),
+          },
+          receiver_id: new Types.ObjectId(user_id),
+          is_read: false,
+          is_deleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$conversation_id",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return new Map(results.map((r) => [r._id.toString(), r.count]));
   }
 }
 

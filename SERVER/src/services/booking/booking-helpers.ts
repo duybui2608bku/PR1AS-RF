@@ -182,9 +182,4 @@ export class BookingBaseService {
     return updates;
   }
 
-  protected resolveClientId(booking: IBookingDocument): string {
-    return typeof booking.client_id === "object" && booking.client_id?._id
-      ? booking.client_id._id.toString()
-      : String(booking.client_id);
-  }
 }

@@ -23,6 +23,7 @@ const userSchema = new Schema<IUserDocument>(
     password_hash: {
       type: String,
       required: true,
+      select: false,
     },
     avatar: {
       type: String,
@@ -173,7 +174,6 @@ const userSchema = new Schema<IUserDocument>(
   }
 );
 
-userSchema.index({ email: 1 });
 userSchema.index({ password_reset_token: 1 });
 userSchema.index({ email_verification_token: 1 });
 userSchema.index({ pricing_plan_code: 1, pricing_expires_at: 1 });

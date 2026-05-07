@@ -7,7 +7,7 @@ export const sendMessageSchema = z.object({
   type: z.nativeEnum(MessageType, {
     errorMap: () => ({ message: "Invalid message type" }),
   }),
-  content: z.string().min(1, "Content is required"),
+  content: z.string().min(1, "Content is required").max(2000, "Content too long"),
   reply_to_id: z.string().optional().nullable(),
 });
 
@@ -59,7 +59,7 @@ export const sendGroupMessageSchema = z.object({
   type: z.nativeEnum(MessageType, {
     errorMap: () => ({ message: "Invalid message type" }),
   }),
-  content: z.string().min(1, "Content is required"),
+  content: z.string().min(1, "Content is required").max(2000, "Content too long"),
   reply_to_id: z.string().optional().nullable(),
 });
 

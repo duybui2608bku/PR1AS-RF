@@ -9,31 +9,28 @@ import { modelsName } from "../../models/models.name";
 import { ParsedHashtag } from "../../utils/hashtag-parser";
 
 export class HashtagRepository {
-  /**
-   * Upsert each parsed hashtag by `slug`. Returns the persisted Hashtag
-   * documents in the same order as the input. Idempotent — safe to call on
-   * every post create/update.
-   */
   async upsertManyBySlug(parsed: ParsedHashtag[]): Promise<IHashtagDocument[]> {
     if (parsed.length === 0) return [];
 
-    const operations = parsed.map((tag) =>
-      Hashtag.findOneAndUpdate(
-        { slug: tag.slug },
-        {
-          $setOnInsert: {
-            slug: tag.slug,
-            display: tag.display,
-            created_at: new Date(),
+    const now = new Date();
+    await Hashtag.bulkWrite(
+      parsed.map((tag) => ({
+        updateOne: {
+          filter: { slug: tag.slug },
+          update: {
+            $setOnInsert: { slug: tag.slug, display: tag.display, created_at: now },
           },
+          upsert: true,
         },
-        { upsert: true, new: true }
-      )
+      }))
     );
-    const results = await Promise.all(operations);
-    return results.filter(
-      (doc): doc is NonNullable<typeof doc> => doc !== null
-    ) as IHashtagDocument[];
+
+    const slugs = parsed.map((t) => t.slug);
+    const docs = await Hashtag.find({ slug: { $in: slugs } }).lean<IHashtagDocument[]>();
+    const bySlug = new Map(docs.map((d) => [d.slug, d]));
+    return parsed
+      .map((t) => bySlug.get(t.slug))
+      .filter((d): d is IHashtagDocument => d != null);
   }
 
   /**
@@ -101,6 +98,15 @@ export class HashtagRepository {
     return Hashtag.findOne({ slug });
   }
 
+  async findPostIdsByHashtagSlug(slug: string): Promise<Types.ObjectId[] | null> {
+    const tag = await Hashtag.findOne({ slug }).lean();
+    if (!tag) return null;
+    const rows = await PostHashtag.find({ hashtag_id: tag._id })
+      .select("post_id")
+      .lean<{ post_id: Types.ObjectId }[]>();
+    return rows.map((row) => row.post_id);
+  }
+
   /**
    * Trending hashtags = number of unique posts (within window) per hashtag,
    * excluding soft-deleted posts. Uses an aggregation pipeline that joins the
@@ -131,13 +137,7 @@ export class HashtagRepository {
       {
         $group: {
           _id: "$hashtag_id",
-          post_count: { $addToSet: "$post._id" },
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          post_count: { $size: "$post_count" },
+          post_count: { $sum: 1 },
         },
       },
       { $sort: { post_count: -1, _id: 1 } },

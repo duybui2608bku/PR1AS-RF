@@ -41,20 +41,16 @@ class WorkerServiceService {
   private ensureNoDuplicateServiceIds(serviceIds: string[]): void {
     const seen = new Set<string>();
     const duplicates: string[] = [];
-    serviceIds.forEach((id) => {
+
+    for (const id of serviceIds) {
       const normalized = id.trim();
-      if (seen.has(normalized)) {
-        duplicates.push(normalized);
-      }
+      if (seen.has(normalized)) duplicates.push(normalized);
       seen.add(normalized);
-    });
+    }
 
     if (duplicates.length) {
       throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, [
-        {
-          field: "services",
-          message: `Duplicate service_id found: ${duplicates.join(", ")}`,
-        },
+        { field: "services", message: `Duplicate service_id found: ${duplicates.join(", ")}` },
       ]);
     }
   }
@@ -77,9 +73,7 @@ class WorkerServiceService {
       pricingKeys.add(key);
     });
 
-    if (details.length) {
-      throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, details);
-    }
+    if (details.length) throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, details);
 
     return pricing.map((item) => ({
       unit: item.unit,
@@ -89,15 +83,10 @@ class WorkerServiceService {
     }));
   }
 
-  private async ensureWorkerExists(workerId: string): Promise<void> {
+  private async ensureIsWorker(workerId: string): Promise<void> {
     const worker = await userRepository.findById(workerId);
-    if (!worker) {
-      throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
-    }
-
-    if (!worker.roles.includes(UserRole.WORKER)) {
-      throw AppError.forbidden(AUTHZ_MESSAGES.FORBIDDEN);
-    }
+    if (!worker) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    if (!worker.roles.includes(UserRole.WORKER)) throw AppError.forbidden(AUTHZ_MESSAGES.FORBIDDEN);
   }
 
   async createWorkerServices(
@@ -105,7 +94,7 @@ class WorkerServiceService {
   ): Promise<IWorkerServiceDocument[]> {
     const { workerId, services } = input;
 
-    await this.ensureWorkerExists(workerId);
+    await this.ensureIsWorker(workerId);
 
     const serviceIds = services.map((s) => s.service_id);
     this.ensureNoDuplicateServiceIds(serviceIds);
@@ -116,31 +105,21 @@ class WorkerServiceService {
     if (dbServices.length !== serviceIds.length) {
       const missing = serviceIds.filter((id) => !serviceMap.has(id));
       throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, [
-        {
-          field: "services",
-          message: `Service not found or inactive: ${missing.join(", ")}`,
-        },
+        { field: "services", message: `Service not found or inactive: ${missing.join(", ")}` },
       ]);
     }
 
     const now = new Date();
-    const upsertPayloads: UpsertWorkerServicePayload[] = services.map(
-      (item, index) => {
-        const service = serviceMap.get(item.service_id)!;
+    const upsertPayloads: UpsertWorkerServicePayload[] = services.map((item, index) => {
+      const service = serviceMap.get(item.service_id)!;
+      return {
+        serviceId: service._id.toString(),
+        serviceCode: service.code,
+        pricing: this.normalizePricing(item.pricing, index),
+      };
+    });
 
-        return {
-          serviceId: service._id.toString(),
-          serviceCode: service.code,
-          pricing: this.normalizePricing(item.pricing, index),
-        };
-      }
-    );
-
-    return workerServiceRepository.upsertManyForWorker(
-      workerId,
-      upsertPayloads,
-      now
-    );
+    return workerServiceRepository.upsertManyForWorker(workerId, upsertPayloads, now);
   }
 
   async updateWorkerService(
@@ -148,36 +127,21 @@ class WorkerServiceService {
   ): Promise<IWorkerServiceDocument> {
     const { workerId, serviceId, body } = input;
 
-    await this.ensureWorkerExists(workerId);
+    // Parallel: role check and record lookup don't depend on each other
+    const [, existing] = await Promise.all([
+      this.ensureIsWorker(workerId),
+      workerServiceRepository.findOneForWorker(workerId, serviceId),
+    ]);
 
-    const existing = await workerServiceRepository.findOneForWorker(
-      workerId,
-      serviceId
-    );
+    if (!existing) throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
 
-    if (!existing) {
-      throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
-    }
+    const updated = await workerServiceRepository.updateForWorker(workerId, serviceId, {
+      pricing: body.pricing ? this.normalizePricing(body.pricing, 0) : undefined,
+      isActive: body.is_active,
+      now: new Date(),
+    });
 
-    const now = new Date();
-
-    const normalizedPricing = body.pricing
-      ? this.normalizePricing(body.pricing, 0)
-      : undefined;
-
-    const updated = await workerServiceRepository.updateForWorker(
-      workerId,
-      serviceId,
-      {
-        pricing: normalizedPricing,
-        isActive: body.is_active,
-        now,
-      }
-    );
-
-    if (!updated) {
-      throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
-    }
+    if (!updated) throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
 
     return updated;
   }
@@ -185,20 +149,17 @@ class WorkerServiceService {
   async deleteWorkerService(input: DeleteWorkerServiceInput): Promise<void> {
     const { workerId, serviceId } = input;
 
-    await this.ensureWorkerExists(workerId);
+    // Parallel: role check and record lookup don't depend on each other
+    const [, deleted] = await Promise.all([
+      this.ensureIsWorker(workerId),
+      workerServiceRepository.deleteForWorker(workerId, serviceId),
+    ]);
 
-    const deleted = await workerServiceRepository.deleteForWorker(
-      workerId,
-      serviceId
-    );
-
-    if (!deleted) {
-      throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
-    }
+    if (!deleted) throw AppError.notFound(COMMON_MESSAGES.NOT_FOUND);
   }
 
   async getWorkerServices(workerId: string): Promise<IWorkerServiceDocument[]> {
-    await this.ensureWorkerExists(workerId);
+    await this.ensureIsWorker(workerId);
     return workerServiceRepository.findAllForWorker(workerId);
   }
 }

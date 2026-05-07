@@ -15,12 +15,19 @@ import {
   R,
   validateWithSchema,
   extractUserIdFromRequest,
-  AppError,
 } from "../../utils";
-import { userRepository } from "../../repositories/auth/user.repository";
-import { Types } from "mongoose";
 import { PaginationRequest } from "../../middleware";
+import { RoleInfo } from "../../services/booking/booking-helpers";
+import { JWTPayload } from "../../utils/jwt";
 import { UserRole } from "../../types/auth/user.types";
+
+function roleInfoFromJwt(user: JWTPayload): RoleInfo {
+  return {
+    isWorker: user.roles.includes(UserRole.WORKER),
+    isClient: user.roles.includes(UserRole.CLIENT),
+    isAdmin: user.roles.includes(UserRole.ADMIN),
+  };
+}
 
 export class BookingController {
   async createBooking(req: AuthRequest, res: Response): Promise<void> {
@@ -37,7 +44,7 @@ export class BookingController {
   async getBookingById(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const { id } = req.params;
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    const roleInfo = roleInfoFromJwt(req.user!);
     const result = await bookingService.getBookingById(id, userId, roleInfo);
     R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
@@ -50,30 +57,7 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const { page, limit, skip } = req.pagination!;
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
-    const requestedRole = query.role || roleInfo.lastActiveRole;
-    const baseQuery = { ...query, page, limit, skip };
-    let result;
-    if (
-      requestedRole === UserRole.WORKER &&
-      roleInfo.roles.includes(UserRole.WORKER)
-    ) {
-      result = await bookingService.getBookingsByWorker({
-        ...baseQuery,
-        worker_id: new Types.ObjectId(userId),
-      });
-    } else if (
-      requestedRole === UserRole.CLIENT &&
-      roleInfo.roles.includes(UserRole.CLIENT)
-    ) {
-      result = await bookingService.getBookingsByClient({
-        ...baseQuery,
-        client_id: new Types.ObjectId(userId),
-      });
-    } else {
-      throw AppError.forbidden();
-    }
-
+    const result = await bookingService.getMyBookings(userId, { ...query, page, limit, skip });
     R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
   }
 
@@ -86,13 +70,11 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
-
     const result = await bookingService.updateBookingStatus(
       id,
       userId,
       data.status,
-      roleInfo,
+      roleInfoFromJwt(req.user!),
       data.worker_response
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_STATUS_UPDATED, req);
@@ -108,20 +90,18 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const result = await bookingService.cancelBooking(
       id,
       userId,
       data.reason,
       data.notes || "",
-      roleInfo
+      roleInfoFromJwt(req.user!)
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_CANCELLED, req);
   }
 
   async updateBooking(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const { id } = req.params;
     const data = validateWithSchema(
       updateBookingSchema,
@@ -133,7 +113,7 @@ export class BookingController {
       id,
       userId,
       data,
-      roleInfo
+      roleInfoFromJwt(req.user!)
     );
     R.success(res, result, BOOKING_MESSAGES.BOOKING_UPDATED, req);
   }
@@ -166,14 +146,12 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
 
-    const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const result = await bookingService.resolveDispute(
       id,
       userId,
       data.resolution,
       data.resolution_notes,
-      data.refund_amount,
-      roleInfo
+      roleInfoFromJwt(req.user!)
     );
     R.success(res, result, BOOKING_MESSAGES.DISPUTE_RESOLVED, req);
   }

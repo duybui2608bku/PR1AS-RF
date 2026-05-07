@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { User } from "../../models/auth/user.model";
 import {
   IUserDocument,
@@ -6,6 +7,7 @@ import {
 } from "../../types/auth/user.types";
 import { PricingPlanCode } from "../../constants/pricing";
 import { GetUsersQuery } from "../../types/user/user.dto";
+import { escapeRegExp } from "../../utils/string";
 
 export interface CreateUserInput {
   email: string;
@@ -19,13 +21,33 @@ export interface FindAllUsersResult {
   total: number;
 }
 
+export interface UpdateWorkerProfileOptions {
+  coords?: { latitude: number | null; longitude: number | null };
+  addWorkerRole?: boolean;
+  setLastActiveRole?: UserRole;
+}
+
 export class UserRepository {
+  async findManyByIds(ids: string[]): Promise<IUserDocument[]> {
+    if (ids.length === 0) return [];
+    return User.find({
+      _id: { $in: ids.map((id) => new Types.ObjectId(id)) },
+    })
+      .select("-password_hash -refresh_token_hash")
+      .lean() as Promise<IUserDocument[]>;
+  }
+
   async findByEmail(email: string): Promise<IUserDocument | null> {
-    return User.findOne({ email: email.toLowerCase().trim() });
+    return User.findOne({ email: email.toLowerCase().trim() }).select("+password_hash");
   }
 
   async findById(id: string): Promise<IUserDocument | null> {
     return User.findById(id).lean() as Promise<IUserDocument | null>;
+  }
+
+  async findRolesById(id: string): Promise<UserRole[] | null> {
+    const user = await User.findById(id).select("roles").lean();
+    return user ? user.roles : null;
   }
 
   async getLastActiveRoleById(userId: string): Promise<UserRole | null> {
@@ -45,8 +67,9 @@ export class UserRepository {
     isClient: boolean;
     isAdmin: boolean;
   }> {
-    const lastActiveRole = await this.getLastActiveRoleById(userId);
-    const roles = await this.getRolesById(userId);
+    const user = await User.findById(userId).select("last_active_role roles").lean();
+    const lastActiveRole = user?.last_active_role ?? null;
+    const roles = user?.roles ?? [];
     return {
       lastActiveRole,
       roles,
@@ -75,40 +98,48 @@ export class UserRepository {
     return user.save();
   }
 
-  async updateLastLogin(id: string): Promise<IUserDocument | null> {
-    return User.findByIdAndUpdate(
-      id,
-      { last_login: new Date() },
-      { new: true }
-    );
-  }
-
-  async updateRoles(
-    id: string,
-    roles: UserRole[]
-  ): Promise<IUserDocument | null> {
+  async updateRoles(id: string, roles: UserRole[]): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { roles }, { new: true });
   }
 
-  async updateStatus(
-    id: string,
-    status: UserStatus
-  ): Promise<IUserDocument | null> {
+  async updateStatus(id: string, status: UserStatus): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { status }, { new: true });
   }
 
-  async updateLastActiveRole(
-    id: string,
-    last_active_role: UserRole
-  ): Promise<IUserDocument | null> {
+  async updateLastActiveRole(id: string, last_active_role: UserRole): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
   }
 
   async updateWorkerProfile(
     id: string,
-    worker_profile: Partial<IUserDocument["worker_profile"]>
+    profileFields: Record<string, unknown>,
+    options?: UpdateWorkerProfileOptions
   ): Promise<IUserDocument | null> {
-    return User.findByIdAndUpdate(id, { worker_profile }, { new: true });
+    const $set: Record<string, unknown> = {};
+
+    // Dot-notation: update only provided fields, never wipe existing subdoc data
+    for (const [key, val] of Object.entries(profileFields)) {
+      if (val !== undefined) {
+        $set[`worker_profile.${key}`] = val;
+      }
+    }
+
+    if (options?.coords) {
+      $set["coords.latitude"] = options.coords.latitude;
+      $set["coords.longitude"] = options.coords.longitude;
+    }
+
+    if (options?.setLastActiveRole) {
+      $set.last_active_role = options.setLastActiveRole;
+    }
+
+    const update: Record<string, unknown> = { $set };
+
+    if (options?.addWorkerRole) {
+      update.$addToSet = { roles: UserRole.WORKER };
+    }
+
+    return User.findByIdAndUpdate(id, update, { new: true });
   }
 
   async updateBasicProfile(
@@ -122,24 +153,16 @@ export class UserRepository {
   ): Promise<IUserDocument | null> {
     const updateData: Record<string, unknown> = {};
 
-    if (updates.avatar !== undefined) {
-      updateData.avatar = updates.avatar;
-    }
-    if (updates.full_name !== undefined) {
-      updateData.full_name = updates.full_name?.trim() || null;
-    }
-    if (updates.phone !== undefined) {
-      updateData.phone = updates.phone?.trim() || null;
-    }
-    if (updates.password_hash !== undefined) {
-      updateData.password_hash = updates.password_hash;
-    }
+    if (updates.avatar !== undefined) updateData.avatar = updates.avatar;
+    if (updates.full_name !== undefined) updateData.full_name = updates.full_name?.trim() || null;
+    if (updates.phone !== undefined) updateData.phone = updates.phone?.trim() || null;
+    if (updates.password_hash !== undefined) updateData.password_hash = updates.password_hash;
 
     return User.findByIdAndUpdate(id, updateData, { new: true });
   }
 
   async findByIdWithPassword(id: string): Promise<IUserDocument | null> {
-    return User.findById(id);
+    return User.findById(id).select("+password_hash");
   }
 
   async updatePricingInfo(
@@ -162,29 +185,18 @@ export class UserRepository {
   }
 
   async emailExists(email: string): Promise<boolean> {
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-    }).select("_id");
-    return !!user;
+    return User.exists({ email: email.toLowerCase().trim() }).then(Boolean);
   }
 
   async findAllWithFilters(
     query: GetUsersQuery & { skip: number }
   ): Promise<FindAllUsersResult> {
-    const {
-      skip,
-      limit = 10,
-      search,
-      role,
-      status,
-      startDate,
-      endDate,
-    } = query;
+    const { skip, limit = 10, search, role, status, startDate, endDate } = query;
 
     const filter: Record<string, unknown> = {};
 
     if (search) {
-      const searchRegex = new RegExp(search, "i");
+      const searchRegex = new RegExp(escapeRegExp(search), "i");
       filter.$or = [
         { full_name: searchRegex },
         { email: searchRegex },
@@ -192,22 +204,14 @@ export class UserRepository {
       ];
     }
 
-    if (role) {
-      filter.roles = role;
-    }
-
-    if (status) {
-      filter.status = status;
-    }
+    if (role) filter.roles = role;
+    if (status) filter.status = status;
 
     if (startDate || endDate) {
-      filter.created_at = {} as { $gte?: Date; $lte?: Date };
-      if (startDate) {
-        (filter.created_at as { $gte: Date }).$gte = new Date(startDate);
-      }
-      if (endDate) {
-        (filter.created_at as { $lte: Date }).$lte = new Date(endDate);
-      }
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (startDate) dateFilter.$gte = new Date(startDate);
+      if (endDate) dateFilter.$lte = new Date(endDate);
+      filter.created_at = dateFilter;
     }
 
     const [users, total] = await Promise.all([
@@ -220,17 +224,11 @@ export class UserRepository {
       User.countDocuments(filter),
     ]);
 
-    return {
-      users: users as IUserDocument[],
-      total,
-    };
+    return { users: users as IUserDocument[], total };
   }
 
   async findFirstAdmin(): Promise<IUserDocument | null> {
-    return User.findOne({
-      roles: UserRole.ADMIN,
-      status: UserStatus.ACTIVE,
-    })
+    return User.findOne({ roles: UserRole.ADMIN, status: UserStatus.ACTIVE })
       .select("_id")
       .lean() as Promise<IUserDocument | null>;
   }
@@ -239,10 +237,7 @@ export class UserRepository {
     return User.findById(id).select("+refresh_token_hash");
   }
 
-  async setRefreshTokenHash(
-    id: string,
-    refresh_token_hash: string | null
-  ): Promise<void> {
+  async setRefreshTokenHash(id: string, refresh_token_hash: string | null): Promise<void> {
     await User.findByIdAndUpdate(id, {
       refresh_token_hash,
       ...(refresh_token_hash !== null && { last_login: new Date() }),
@@ -253,20 +248,14 @@ export class UserRepository {
     await User.findByIdAndUpdate(id, { refresh_token_hash: null });
   }
 
-  async setPasswordResetToken(
-    id: string,
-    tokenHash: string,
-    expires: Date
-  ): Promise<void> {
+  async setPasswordResetToken(id: string, tokenHash: string, expires: Date): Promise<void> {
     await User.findByIdAndUpdate(id, {
       password_reset_token: tokenHash,
       password_reset_expires: expires,
     });
   }
 
-  async findByPasswordResetToken(
-    tokenHash: string
-  ): Promise<IUserDocument | null> {
+  async findByPasswordResetToken(tokenHash: string): Promise<IUserDocument | null> {
     return User.findOne({ password_reset_token: tokenHash }).select(
       "+password_reset_token +password_reset_expires"
     );
@@ -288,20 +277,14 @@ export class UserRepository {
     });
   }
 
-  async setEmailVerificationToken(
-    id: string,
-    tokenHash: string,
-    expires: Date
-  ): Promise<void> {
+  async setEmailVerificationToken(id: string, tokenHash: string, expires: Date): Promise<void> {
     await User.findByIdAndUpdate(id, {
       email_verification_token: tokenHash,
       email_verification_expires: expires,
     });
   }
 
-  async findByEmailVerificationToken(
-    tokenHash: string
-  ): Promise<IUserDocument | null> {
+  async findByEmailVerificationToken(tokenHash: string): Promise<IUserDocument | null> {
     return User.findOne({ email_verification_token: tokenHash }).select(
       "+email_verification_token +email_verification_expires"
     );

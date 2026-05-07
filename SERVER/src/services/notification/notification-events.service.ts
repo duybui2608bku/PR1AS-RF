@@ -45,44 +45,44 @@ const getBookingStatusNotificationContent = (
   switch (status) {
     case BookingStatus.CONFIRMED:
       return {
-        title: "Booking confirmed",
-        body: "The booking has been confirmed by the worker.",
+        title: "Booking đã được xác nhận",
+        body: "Booking của bạn đã được người thực hiện xác nhận.",
       };
     case BookingStatus.REJECTED:
       return {
-        title: "Booking rejected",
-        body: "The booking request was rejected.",
+        title: "Booking bị từ chối",
+        body: "Yêu cầu booking đã bị từ chối.",
       };
     case BookingStatus.IN_PROGRESS:
       return {
-        title: "Booking in progress",
-        body: "The booking has started and is now in progress.",
+        title: "Booking đang thực hiện",
+        body: "Booking đã bắt đầu và đang được thực hiện.",
       };
     case BookingStatus.COMPLETED:
       return {
-        title: "Booking completed",
-        body: "The booking has been completed successfully.",
+        title: "Booking đã hoàn thành",
+        body: "Booking đã hoàn thành thành công.",
       };
     case BookingStatus.CANCELLED:
       return {
-        title: "Booking cancelled",
-        body: "The booking has been cancelled.",
+        title: "Booking đã bị hủy",
+        body: "Booking đã bị hủy.",
       };
     case BookingStatus.DISPUTED:
       return {
-        title: "Booking disputed",
-        body: "A dispute has been opened for this booking.",
+        title: "Booking đang tranh chấp",
+        body: "Một khiếu nại đã được mở cho booking này.",
       };
     case BookingStatus.EXPIRED:
       return {
-        title: "Booking expired",
-        body: "The booking has expired.",
+        title: "Booking đã hết hạn",
+        body: "Booking đã hết hạn.",
       };
     case BookingStatus.PENDING:
     default:
       return {
-        title: "Booking status updated",
-        body: `Your booking status is now ${status}.`,
+        title: "Trạng thái booking đã cập nhật",
+        body: `Trạng thái booking của bạn hiện là ${status}.`,
       };
   }
 };
@@ -98,8 +98,8 @@ export class NotificationEventService {
       actor_id: clientId,
       type: NotificationType.BOOKING_CREATED,
       category: NotificationCategory.BOOKING,
-      title: "New booking request",
-      body: "You have received a new booking request.",
+      title: "Yêu cầu đặt lịch mới",
+      body: "Bạn vừa nhận được một yêu cầu đặt lịch mới.",
       data: { booking_id: bookingId },
       link: getBookingDashboardLink(workerId, booking),
       priority: NotificationPriority.HIGH,
@@ -156,8 +156,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.BOOKING_CANCELLED,
       category: NotificationCategory.BOOKING,
-      title: "Booking cancelled",
-      body: `A booking was cancelled by ${cancelledBy}.`,
+      title: "Booking đã bị hủy",
+      body: `Một booking đã bị hủy bởi ${cancelledBy}.`,
       data: { booking_id: bookingId, cancelled_by: cancelledBy },
       link: "/notifications",
       priority: NotificationPriority.HIGH,
@@ -179,8 +179,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.BOOKING_UPDATED,
       category: NotificationCategory.BOOKING,
-      title: "Booking updated",
-      body: "A booking has been updated.",
+      title: "Booking đã được cập nhật",
+      body: "Thông tin booking đã được cập nhật.",
       data: { booking_id: bookingId },
       link: "/notifications",
       priority: NotificationPriority.NORMAL,
@@ -205,8 +205,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.DISPUTE_CREATED,
       category: NotificationCategory.DISPUTE,
-      title: "Booking dispute opened",
-      body: "A dispute has been opened for a booking.",
+      title: "Có khiếu nại booking mới",
+      body: "Một khiếu nại mới đã được tạo cho booking.",
       data: { booking_id: bookingId },
       link: "/notifications",
       priority: NotificationPriority.URGENT,
@@ -225,8 +225,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.DISPUTE_RESOLVED,
       category: NotificationCategory.DISPUTE,
-      title: "Booking dispute resolved",
-      body: `A booking dispute was resolved with result: ${resolution}.`,
+      title: "Khiếu nại booking đã được xử lý",
+      body: `Khiếu nại booking đã được xử lý với kết quả: ${resolution}.`,
       data: { booking_id: bookingId, resolution },
       link: "/notifications",
       priority: NotificationPriority.HIGH,
@@ -270,8 +270,8 @@ export class NotificationEventService {
         ? NotificationType.CHAT_GROUP_MESSAGE
         : NotificationType.CHAT_MESSAGE,
       category: NotificationCategory.CHAT,
-      title: input.isGroup ? "New group message" : "New message",
-      body: "You have a new message.",
+      title: input.isGroup ? "Tin nhắn nhóm mới" : "Tin nhắn mới",
+      body: input.isGroup ? "Bạn có tin nhắn mới trong nhóm." : "Bạn có tin nhắn mới.",
       data: {
         message_id: input.messageId,
         conversation_id: input.conversationId,
@@ -296,8 +296,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.REVIEW_CREATED,
       category: NotificationCategory.REVIEW,
-      title: "New review received",
-      body: "A new review has been submitted for a completed booking.",
+      title: "Đánh giá mới",
+      body: "Một đánh giá mới đã được gửi cho booking của bạn.",
       data: {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),
@@ -319,8 +319,8 @@ export class NotificationEventService {
       actor_id: actorId,
       type: NotificationType.REVIEW_UPDATED,
       category: NotificationCategory.REVIEW,
-      title: "Review updated",
-      body: "A review on one of your bookings was updated.",
+      title: "Đánh giá đã được cập nhật",
+      body: "Một đánh giá về booking của bạn đã được cập nhật.",
       data: {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),

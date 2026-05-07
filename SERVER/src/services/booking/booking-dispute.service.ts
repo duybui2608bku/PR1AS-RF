@@ -1,9 +1,7 @@
 import { bookingRepository } from "../../repositories/booking/booking.repository";
-import { escrowService } from "../escrow/escrow.service";
 import { IBookingDocument } from "../../types/booking/booking.types";
 import {
   BookingStatus,
-  BookingPaymentStatus,
   DisputeReason,
   DisputeResolution,
 } from "../../constants/booking";
@@ -13,10 +11,9 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import { BOOKING_MESSAGES } from "../../constants/messages";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
-import { BookingStatusService } from "./booking-status.service";
-import { RoleInfo } from "./booking-helpers";
+import { BookingBaseService, RoleInfo } from "./booking-helpers";
 
-export class BookingDisputeService extends BookingStatusService {
+export class BookingDisputeService extends BookingBaseService {
   async createDispute(
     bookingId: string,
     userId: string,
@@ -51,25 +48,21 @@ export class BookingDisputeService extends BookingStatusService {
       );
     }
 
-    const dispute = {
-      reason,
-      description,
-      evidence_urls: evidenceUrls,
-      disputed_by: userId,
-      disputed_at: new Date(),
-      resolution: null,
-      resolution_notes: "",
-      resolved_by: null,
-      resolved_at: null,
-      refund_amount: 0,
-      penalty_amount: 0,
-    };
-
     const updatedBooking = await bookingRepository.updateStatus(
       bookingId,
       BookingStatus.DISPUTED,
       {
-        dispute,
+        dispute: {
+          reason,
+          description,
+          evidence_urls: evidenceUrls,
+          disputed_by: userId,
+          disputed_at: new Date(),
+          resolution: null,
+          resolution_notes: "",
+          resolved_by: null,
+          resolved_at: null,
+        },
         disputed_at: new Date(),
       } as Partial<IBookingDocument>
     );
@@ -94,10 +87,9 @@ export class BookingDisputeService extends BookingStatusService {
     adminUserId: string,
     resolution: DisputeResolution,
     resolutionNotes: string,
-    refundAmount?: number,
-    roleInfo?: RoleInfo
+    roleInfo: RoleInfo
   ): Promise<IBookingDocument> {
-    if (!roleInfo?.isAdmin) {
+    if (!roleInfo.isAdmin) {
       throw new AppError(
         BOOKING_MESSAGES.ONLY_ADMIN_CAN_RESOLVE_DISPUTE,
         HTTP_STATUS.FORBIDDEN,
@@ -115,69 +107,19 @@ export class BookingDisputeService extends BookingStatusService {
       );
     }
 
-    const clientId = this.resolveClientId(booking);
-
-    let finalStatus: BookingStatus;
-    let paymentStatus: BookingPaymentStatus =
-      booking.payment_status as BookingPaymentStatus;
-    let disputeRefundAmount = 0;
-    let disputePenaltyAmount = 0;
-
-    if (resolution === DisputeResolution.FAVOR_CLIENT) {
-      const result = await escrowService.refundEscrowForCancelledBooking(
-        bookingId,
-        clientId,
-        booking.schedule.start_time
-      );
-      if (result) {
-        disputeRefundAmount = result.refundAmount;
-        disputePenaltyAmount = result.penaltyAmount;
-      }
-      finalStatus = BookingStatus.CANCELLED;
-      paymentStatus = BookingPaymentStatus.REFUNDED;
-    } else if (resolution === DisputeResolution.FAVOR_WORKER) {
-      await escrowService.releaseEscrowForCompletedBooking(bookingId);
-      finalStatus = BookingStatus.COMPLETED;
-    } else if (resolution === DisputeResolution.PARTIAL_REFUND) {
-      if (refundAmount === undefined || refundAmount <= 0) {
-        throw new AppError(
-          BOOKING_MESSAGES.DISPUTE_INVALID_REFUND_AMOUNT,
-          HTTP_STATUS.BAD_REQUEST,
-          ErrorCode.DISPUTE_CANNOT_RESOLVE
-        );
-      }
-      const result = await escrowService.refundEscrowForCancelledBooking(
-        bookingId,
-        clientId,
-        booking.schedule.start_time
-      );
-      if (result) {
-        disputeRefundAmount = result.refundAmount;
-        disputePenaltyAmount = result.penaltyAmount;
-      }
-      finalStatus = BookingStatus.COMPLETED;
-      paymentStatus = BookingPaymentStatus.PARTIALLY_REFUNDED;
-    } else {
-      throw new AppError(
-        BOOKING_MESSAGES.BOOKING_NOT_DISPUTED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.DISPUTE_CANNOT_RESOLVE
-      );
-    }
-
-    const disputeUpdate = {
-      ...booking.dispute,
-      resolution,
-      resolution_notes: resolutionNotes,
-      resolved_by: adminUserId,
-      resolved_at: new Date(),
-      refund_amount: disputeRefundAmount,
-      penalty_amount: disputePenaltyAmount,
-    };
+    const finalStatus =
+      resolution === DisputeResolution.FAVOR_CLIENT
+        ? BookingStatus.CANCELLED
+        : BookingStatus.COMPLETED;
 
     const updateData: Partial<IBookingDocument> = {
-      dispute: disputeUpdate as IBookingDocument["dispute"],
-      payment_status: paymentStatus,
+      dispute: {
+        ...booking.dispute,
+        resolution,
+        resolution_notes: resolutionNotes,
+        resolved_by: adminUserId,
+        resolved_at: new Date(),
+      } as IBookingDocument["dispute"],
     };
 
     if (finalStatus === BookingStatus.COMPLETED) {
@@ -186,7 +128,7 @@ export class BookingDisputeService extends BookingStatusService {
 
     const updatedBooking = await bookingRepository.updateStatus(
       bookingId,
-      finalStatus!,
+      finalStatus,
       updateData
     );
 
@@ -200,9 +142,7 @@ export class BookingDisputeService extends BookingStatusService {
 
     void notificationEventService
       .disputeResolved(updatedBooking, adminUserId, resolution)
-      .catch((error) =>
-        logger.error("Dispute resolution notification failed:", error)
-      );
+      .catch((error) => logger.error("Dispute resolution notification failed:", error));
 
     return updatedBooking;
   }
