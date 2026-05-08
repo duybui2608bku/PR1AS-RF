@@ -77,6 +77,10 @@ export const updatePostSchema = z
     { message: POST_MESSAGES.AT_LEAST_ONE_FIELD_REQUIRED }
   );
 
+export const setCommentsLockSchema = z.object({
+  locked: z.boolean(),
+});
+
 export const getPostsQuerySchema = z.object({
   cursor: z.string().trim().min(1).optional(),
   limit: z
@@ -93,3 +97,4 @@ export const getPostsQuerySchema = z.object({
 export type CreatePostSchemaType = z.infer<typeof createPostSchema>;
 export type UpdatePostSchemaType = z.infer<typeof updatePostSchema>;
 export type GetPostsQuerySchemaType = z.infer<typeof getPostsQuerySchema>;
+export type SetCommentsLockSchemaType = z.infer<typeof setCommentsLockSchema>;

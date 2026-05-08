@@ -40,4 +40,12 @@ export const postService = {
   deletePost: async (id: string) => {
     await api.delete(`/posts/${id}`)
   },
+
+  setCommentsLock: async (id: string, locked: boolean) => {
+    const { data } = await api.patch<ApiResponse<PostPublic>>(
+      `/posts/${id}/comments-lock`,
+      { locked },
+    )
+    return data.data
+  },
 }

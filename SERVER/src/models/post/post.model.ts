@@ -24,6 +24,20 @@ const postSchema = new Schema<IPostDocument>(
       default: PostVisibility.PUBLIC,
       index: true,
     },
+    comments_count: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    reactions_count: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    comments_locked: {
+      type: Boolean,
+      default: false,
+    },
     created_at: {
       type: Date,
       default: Date.now,

@@ -64,4 +64,10 @@ export const queryKeys = {
       ["reviews", "my", params] as const,
     detail: (id: string) => ["reviews", "detail", id] as const,
   },
+  workers: {
+    all: ["workers"] as const,
+    detail: (id: string) => ["workers", "detail", id] as const,
+    schedule: (id: string, params: Record<string, unknown>) =>
+      ["workers", "schedule", id, params] as const,
+  },
 } as const

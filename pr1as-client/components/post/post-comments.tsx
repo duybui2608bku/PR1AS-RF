@@ -8,6 +8,7 @@ import {
   Check,
   Edit3,
   Loader2,
+  Lock,
   MessageCircle,
   Reply,
   Send,
@@ -169,6 +170,7 @@ function CommentItem({
   threadRootId,
   currentUserId,
   nested,
+  canReply = true,
   onReply,
 }: {
   comment: CommentPublic
@@ -176,6 +178,7 @@ function CommentItem({
   threadRootId: string
   currentUserId?: string
   nested?: boolean
+  canReply?: boolean
   onReply: (threadRootId: string, anchorCommentId: string) => void
 }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -275,16 +278,18 @@ function CommentItem({
 
           {!isEditing ? (
             <div className="mt-1 flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground"
-              onClick={() => onReply(threadRootId, comment.id)}
-            >
-              <Reply className="size-3.5" />
-              Trả lời
-            </Button>
+            {canReply ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
+                onClick={() => onReply(threadRootId, comment.id)}
+              >
+                <Reply className="size-3.5" />
+                Trả lời
+              </Button>
+            ) : null}
             {isAuthor ? (
               <>
                 <Button
@@ -367,12 +372,17 @@ export function PostComments({
   enabled,
   currentUserId,
   isAuthenticated,
+  commentsLocked = false,
+  canBypassLock = false,
 }: {
   postId: string
   enabled: boolean
   currentUserId?: string
   isAuthenticated: boolean
+  commentsLocked?: boolean
+  canBypassLock?: boolean
 }) {
+  const canPostComment = isAuthenticated && (!commentsLocked || canBypassLock)
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const {
@@ -411,6 +421,14 @@ export function PostComments({
 
   return (
     <div className="mt-3 border-t pt-3">
+      {commentsLocked ? (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <Lock className="size-4" />
+          {canBypassLock
+            ? "Bạn đã khóa bình luận của bài viết. Người khác sẽ không thể bình luận."
+            : "Tác giả đã khóa bình luận của bài viết này."}
+        </div>
+      ) : null}
       {!isAuthenticated ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
           <MessageCircle className="size-4" />
@@ -435,11 +453,13 @@ export function PostComments({
                   postId={postId}
                   threadRootId={thread.id}
                   currentUserId={currentUserId}
+                  canReply={canPostComment}
                   onReply={(threadRootId, anchorCommentId) =>
                     setReplyTarget({ threadRootId, anchorCommentId })
                   }
                 />
-                {replyTarget?.threadRootId === thread.id &&
+                {canPostComment &&
+                replyTarget?.threadRootId === thread.id &&
                 replyTarget.anchorCommentId === thread.id ? (
                   <div className="ml-10">
                     <CommentForm
@@ -459,11 +479,13 @@ export function PostComments({
                       threadRootId={thread.id}
                       currentUserId={currentUserId}
                       nested
+                      canReply={canPostComment}
                       onReply={(threadRootId, anchorCommentId) =>
                         setReplyTarget({ threadRootId, anchorCommentId })
                       }
                     />
-                    {replyTarget?.threadRootId === thread.id &&
+                    {canPostComment &&
+                    replyTarget?.threadRootId === thread.id &&
                     replyTarget.anchorCommentId === reply.id ? (
                       <div className="ml-16">
                         <CommentForm
@@ -488,7 +510,9 @@ export function PostComments({
             </div>
           ) : null}
 
-          <CommentForm postId={postId} parentCommentId={null} />
+          {canPostComment ? (
+            <CommentForm postId={postId} parentCommentId={null} />
+          ) : null}
         </div>
       )}
     </div>

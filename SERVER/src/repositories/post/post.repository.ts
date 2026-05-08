@@ -120,6 +120,42 @@ export class PostRepository {
       created_at: { $gte: startDate, $lt: endDate },
     });
   }
+
+  async incrementCommentsCount(
+    postId: string | Types.ObjectId,
+    delta: number
+  ): Promise<void> {
+    const id =
+      typeof postId === "string" ? new Types.ObjectId(postId) : postId;
+    await Post.updateOne(
+      { _id: id, deleted_at: null },
+      { $inc: { comments_count: delta } }
+    );
+  }
+
+  async incrementReactionsCount(
+    postId: string | Types.ObjectId,
+    delta: number
+  ): Promise<void> {
+    const id =
+      typeof postId === "string" ? new Types.ObjectId(postId) : postId;
+    await Post.updateOne(
+      { _id: id, deleted_at: null },
+      { $inc: { reactions_count: delta } }
+    );
+  }
+
+  async setCommentsLocked(
+    postId: string,
+    locked: boolean
+  ): Promise<IPostDocument | null> {
+    if (!Types.ObjectId.isValid(postId)) return null;
+    return Post.findOneAndUpdate(
+      { _id: postId, deleted_at: null },
+      { comments_locked: locked, updated_at: new Date() },
+      { new: true }
+    ).populate("author_id", AUTHOR_PUBLIC_FIELDS);
+  }
 }
 
 export const postRepository = new PostRepository();

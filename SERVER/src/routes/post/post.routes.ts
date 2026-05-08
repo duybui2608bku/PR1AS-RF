@@ -46,6 +46,16 @@ router.delete(
   asyncHandler<AuthRequest>(postController.deletePost.bind(postController))
 );
 
+router.patch(
+  "/:id/comments-lock",
+  authenticate,
+  ...csrfProtection,
+  validateObjectId("id"),
+  asyncHandler<AuthRequest>(
+    postController.setCommentsLock.bind(postController)
+  )
+);
+
 router.use("/:postId/comments", postCommentNestedRoutes);
 
 export default router;

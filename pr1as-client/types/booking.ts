@@ -175,3 +175,19 @@ export type CreateDisputePayload = {
   description: string
   evidence_urls?: string[]
 }
+
+export type CreateBookingPayload = {
+  worker_id: string
+  worker_service_id: string
+  service_id: string
+  service_code: string
+  schedule: {
+    start_time: string
+    end_time: string
+  }
+  pricing: {
+    unit: "HOURLY" | "DAILY" | "MONTHLY"
+    quantity: number
+  }
+  client_notes?: string
+}

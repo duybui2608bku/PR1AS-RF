@@ -10,6 +10,7 @@ import { bookingService } from "@/services/booking.service"
 import type {
   BookingListQuery,
   CancelBookingPayload,
+  CreateBookingPayload,
   CreateDisputePayload,
 } from "@/types/booking"
 
@@ -31,6 +32,23 @@ export function useBookingDetail(id?: string) {
     queryKey: queryKeys.bookings.detail(id ?? ""),
     queryFn: () => bookingService.getBookingById(id as string),
     enabled: Boolean(isAuthenticated && id),
+  })
+}
+
+export function useCreateBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateBookingPayload) =>
+      bookingService.createBooking(payload),
+    onSuccess: () => {
+      toast.success("Đã tạo booking. Vui lòng chờ worker xác nhận.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.workers.all })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể tạo booking."))
+    },
   })
 }
 
