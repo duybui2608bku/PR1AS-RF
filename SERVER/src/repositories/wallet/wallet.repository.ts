@@ -208,7 +208,15 @@ export class WalletRepository {
   async findAllTransactions(
     query: TransactionHistoryQuery & { skip: number }
   ): Promise<FindTransactionsResult> {
-    const { skip, limit = 10, type, status, user_id } = query;
+    const {
+      skip,
+      limit = 10,
+      type,
+      status,
+      user_id,
+      start_date,
+      end_date,
+    } = query;
 
     const filter: Record<string, unknown> = {};
 
@@ -222,6 +230,13 @@ export class WalletRepository {
 
     if (status) {
       filter.status = status;
+    }
+
+    if (start_date || end_date) {
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (start_date) dateFilter.$gte = new Date(start_date);
+      if (end_date) dateFilter.$lte = new Date(end_date);
+      filter.created_at = dateFilter;
     }
 
     const [transactions, total] = await Promise.all([
@@ -289,7 +304,7 @@ export class WalletRepository {
 
     const [typeStats, statusStats] = await Promise.all([
       WalletTransaction.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, status: TransactionStatus.SUCCESS } },
         {
           $group: {
             _id: "$type",
@@ -309,16 +324,18 @@ export class WalletRepository {
       ]),
     ]);
 
-    const typeStatsMap: Record<string, { count: number; total_amount: number }> =
-      {};
-    (typeStats as Array<{ _id: string; count: number; total_amount: number }>).forEach(
-      (item) => {
-        typeStatsMap[item._id] = {
-          count: item.count,
-          total_amount: item.total_amount,
-        };
-      }
-    );
+    const typeStatsMap: Record<
+      string,
+      { count: number; total_amount: number }
+    > = {};
+    (
+      typeStats as Array<{ _id: string; count: number; total_amount: number }>
+    ).forEach((item) => {
+      typeStatsMap[item._id] = {
+        count: item.count,
+        total_amount: item.total_amount,
+      };
+    });
 
     const statusStatsMap: Record<string, { count: number }> = {};
     (statusStats as Array<{ _id: string; count: number }>).forEach((item) => {

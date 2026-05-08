@@ -6,6 +6,7 @@ import { Globe, ImagePlus, Loader2, Lock, User, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useCreatePost } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
@@ -22,6 +23,7 @@ type ImagePreview = {
 export function CreatePostForm() {
   const { user } = useAuthStore()
   const createMutation = useCreatePost()
+  const isWorkerActive = isWorkerRoleActive(user)
 
   const [body, setBody] = useState("")
   const [visibility, setVisibility] = useState<PostVisibility>("public")
@@ -80,6 +82,8 @@ export function CreatePostForm() {
 
   const isPending = uploading || createMutation.isPending
   const canSubmit = (body.trim().length > 0 || previews.length > 0) && !isPending
+
+  if (isWorkerActive) return null
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-sm">

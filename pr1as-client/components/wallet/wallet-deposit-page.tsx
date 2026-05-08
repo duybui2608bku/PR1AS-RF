@@ -2,7 +2,15 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Copy, Loader2, QrCode, Wallet, XCircle } from "lucide-react"
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  QrCode,
+  Wallet,
+  XCircle,
+} from "lucide-react"
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -32,7 +40,10 @@ export function WalletDepositPage() {
   const [amount, setAmount] = useState("100000")
   const [payment, setPayment] = useState<DepositPayment | null>(null)
   const notifiedTransactionRef = useRef<string | null>(null)
-  const transactionQuery = useWalletTransaction(payment?.transaction_id, Boolean(payment?.transaction_id))
+  const transactionQuery = useWalletTransaction(
+    payment?.transaction_id,
+    Boolean(payment?.transaction_id)
+  )
   const transactionStatus = transactionQuery.data?.status ?? "pending"
   const isPaymentSuccess = transactionStatus === "success"
   const isPaymentFailed = transactionStatus === "failed"
@@ -49,7 +60,9 @@ export function WalletDepositPage() {
 
     if (isPaymentFailed) {
       notifiedTransactionRef.current = payment.transaction_id
-      toast.error("Giao dich nap tien that bai. Vui long kiem tra lai so tien chuyen khoan.")
+      toast.error(
+        "Giao dich nap tien that bai. Vui long kiem tra lai so tien chuyen khoan."
+      )
     }
   }, [isPaymentFailed, isPaymentSuccess, payment])
 
@@ -73,7 +86,9 @@ export function WalletDepositPage() {
     }
 
     try {
-      const result = await createDepositMutation.mutateAsync({ amount: parsedAmount })
+      const result = await createDepositMutation.mutateAsync({
+        amount: parsedAmount,
+      })
       if (!result) {
         toast.error("Không thể tạo thanh toán.")
         return
@@ -96,10 +111,12 @@ export function WalletDepositPage() {
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Nạp tiền</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Thanh toán qua SePay</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Thanh toán qua SePay
+          </p>
         </div>
         <Button asChild variant="outline">
-          <Link href="/client/wallet">
+          <Link href="/wallet">
             <ArrowLeft className="size-4" />
             Ví của tôi
           </Link>
@@ -122,11 +139,17 @@ export function WalletDepositPage() {
                   id="amount"
                   inputMode="numeric"
                   value={formatAmountInput(amount)}
-                  onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
+                  onChange={(event) =>
+                    setAmount(event.target.value.replace(/[^\d]/g, ""))
+                  }
                   placeholder="100000"
                 />
                 <div className="flex min-h-5 items-center justify-between gap-2 text-xs">
-                  <span className={amountError ? "text-red-600" : "text-muted-foreground"}>
+                  <span
+                    className={
+                      amountError ? "text-red-600" : "text-muted-foreground"
+                    }
+                  >
                     {amountError || formatVnd(parsedAmount)}
                   </span>
                 </div>
@@ -134,14 +157,30 @@ export function WalletDepositPage() {
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {AMOUNT_PRESETS.map((preset) => (
-                  <Button key={preset} type="button" variant="outline" size="sm" onClick={() => setAmount(String(preset))}>
+                  <Button
+                    key={preset}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAmount(String(preset))}
+                  >
                     {formatAmountInput(String(preset))} VND
                   </Button>
                 ))}
               </div>
 
-              <Button type="submit" className="w-full" disabled={createDepositMutation.isPending || Boolean(amountError)}>
-                {createDepositMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <QrCode className="size-4" />}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={
+                  createDepositMutation.isPending || Boolean(amountError)
+                }
+              >
+                {createDepositMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <QrCode className="size-4" />
+                )}
                 Tạo thanh toán
               </Button>
             </form>
@@ -158,7 +197,7 @@ export function WalletDepositPage() {
           <CardContent className="p-6">
             {payment ? (
               <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-                <div className="rounded-lg border bg-white p-3 flex">
+                <div className="flex rounded-lg border bg-white p-3">
                   <Image
                     src={payment.qr_url}
                     alt={`QR ${payment.payment_code}`}
@@ -169,25 +208,39 @@ export function WalletDepositPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <PaymentRow label="Ngân hàng" value={payment.bank_name} onCopy={() => copyText(payment.bank_name, "ngân hàng")} />
+                  <PaymentRow
+                    label="Ngân hàng"
+                    value={payment.bank_name}
+                    onCopy={() => copyText(payment.bank_name, "ngân hàng")}
+                  />
                   <PaymentRow
                     label="Số tài khoản"
                     value={payment.bank_account_number}
-                    onCopy={() => copyText(payment.bank_account_number, "số tài khoản")}
+                    onCopy={() =>
+                      copyText(payment.bank_account_number, "số tài khoản")
+                    }
                   />
-                  <PaymentRow label="Số tiền" value={formatVnd(payment.amount)} onCopy={() => copyText(String(payment.amount), "số tiền")} />
+                  <PaymentRow
+                    label="Số tiền"
+                    value={formatVnd(payment.amount)}
+                    onCopy={() => copyText(String(payment.amount), "số tiền")}
+                  />
                   <PaymentRow
                     label="Nội dung"
                     value={payment.payment_content}
                     onCopy={() => copyText(payment.payment_content, "nội dung")}
                   />
                   <PaymentStatus
-                    isChecking={transactionQuery.isFetching && !isPaymentSuccess && !isPaymentFailed}
+                    isChecking={
+                      transactionQuery.isFetching &&
+                      !isPaymentSuccess &&
+                      !isPaymentFailed
+                    }
                     isFailed={isPaymentFailed}
                     isSuccess={isPaymentSuccess}
                   />
                   <Button asChild variant="outline" className="w-full">
-                    <Link href="/client/wallet">Xem ví</Link>
+                    <Link href="/wallet">Xem ví</Link>
                   </Button>
                 </div>
               </div>
@@ -232,7 +285,11 @@ function PaymentStatus({
 
   return (
     <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
-      {isChecking ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4 text-amber-600" />}
+      {isChecking ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <CheckCircle2 className="size-4 text-amber-600" />
+      )}
       <span>Dang cho SePay xac nhan giao dich</span>
     </div>
   )
@@ -253,7 +310,13 @@ function PaymentRow({
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="truncate font-medium">{value}</p>
       </div>
-      <Button type="button" variant="ghost" size="icon" onClick={onCopy} aria-label={`Sao chép ${label}`}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onCopy}
+        aria-label={`Sao chép ${label}`}
+      >
         <Copy className="size-4" />
       </Button>
     </div>

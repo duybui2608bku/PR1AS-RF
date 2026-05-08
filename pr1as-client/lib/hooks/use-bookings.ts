@@ -11,6 +11,7 @@ import {
   type WorkerBookingScheduleQuery,
 } from "@/services/booking.service"
 import type {
+  AdminBookingAnalyticsQuery,
   BookingListQuery,
   CancelBookingPayload,
   CreateBookingPayload,
@@ -48,6 +49,20 @@ export function useBookingDetail(id?: string) {
     queryKey: queryKeys.bookings.detail(id ?? ""),
     queryFn: () => bookingService.getBookingById(id as string),
     enabled: Boolean(isAuthenticated && id),
+  })
+}
+
+export function useAdminBookingAnalytics(query: AdminBookingAnalyticsQuery) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  return useQuery({
+    queryKey: queryKeys.bookings.adminAnalytics(
+      query as Record<string, unknown>
+    ),
+    queryFn: () => bookingService.getAdminBookingAnalytics(query),
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+    placeholderData: (previousData) => previousData,
   })
 }
 

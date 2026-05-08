@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
+  CalendarCheck,
   CreditCard,
   LayoutDashboard,
   Loader2,
@@ -24,6 +25,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
 } from "@/components/ui/sidebar"
+import { isAdminUser } from "@/lib/auth/roles"
 import { useLogout, useMe } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -40,6 +42,12 @@ const adminNavItems = [
     label: "Người dùng",
     description: "Tài khoản và vai trò",
     icon: Users,
+  },
+  {
+    href: "/dashboard/bookings",
+    label: "Bookings",
+    description: "Thống kê và trạng thái",
+    icon: CalendarCheck,
   },
   {
     href: "/dashboard/transactions",
@@ -66,23 +74,28 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const meQuery = useMe()
+  const hydrated = React.useSyncExternalStore(
+    React.useCallback((onStoreChange) => {
+      if (useAuthStore.persist.hasHydrated()) return () => undefined
+      return useAuthStore.persist.onFinishHydration(onStoreChange)
+    }, []),
+    () => useAuthStore.persist.hasHydrated(),
+    () => true
+  )
 
   const resolvedUser = meQuery.data?.data?.user ?? user
-  const isLoading = Boolean(token) && meQuery.isLoading
+  const isLoading = !hydrated || (Boolean(token) && meQuery.isLoading)
 
   React.useEffect(() => {
-    if (!token || !isAuthenticated) {
+    if (hydrated && (!token || !isAuthenticated)) {
       router.replace("/login")
       return
     }
-  }, [token, isAuthenticated, router])
+  }, [hydrated, token, isAuthenticated, router])
 
   React.useEffect(() => {
     if (meQuery.isSuccess && resolvedUser) {
-      const roles = resolvedUser.roles ?? []
-      const isAdmin = roles.includes("admin") || resolvedUser.role === "admin"
-
-      if (!isAdmin) {
+      if (!isAdminUser(resolvedUser)) {
         toast.error("Bạn không có quyền truy cập trang quản trị.")
         router.replace("/")
       }
@@ -103,10 +116,11 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const roles = resolvedUser?.roles ?? []
-  const isAdmin = roles.includes("admin") || resolvedUser?.role === "admin"
+  if (!token || !isAuthenticated) {
+    return null
+  }
 
-  if (!isAdmin && meQuery.isSuccess) {
+  if (!isAdminUser(resolvedUser) && meQuery.isSuccess) {
     return null
   }
 

@@ -275,10 +275,11 @@ export default function AdminDisputesPage() {
     GroupChatMessage[]
   >([])
   const previousConversationIdRef = React.useRef<string | null>(null)
+  const markedConversationIdRef = React.useRef<string | null>(null)
 
   const conversationsQuery = useGroupConversations({ limit: 50 })
   const sendMessageMutation = useSendGroupMessage()
-  const markReadMutation = useMarkGroupMessagesRead()
+  const { mutate: markGroupMessagesRead } = useMarkGroupMessagesRead()
 
   const conversations =
     conversationsQuery.data?.conversations ?? EMPTY_CONVERSATIONS
@@ -313,13 +314,25 @@ export default function AdminDisputesPage() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.chat.groupConversationsRoot,
       })
+
+      if (payload.message.sender_id !== currentUserId) {
+        markGroupMessagesRead({
+          conversation_group_id: payload.conversation._id,
+        })
+      }
     }
 
     socket.on("new_message", handler as never)
     return () => {
       socket.off("new_message", handler as never)
     }
-  }, [socket, selectedConversationId, queryClient])
+  }, [
+    currentUserId,
+    markGroupMessagesRead,
+    queryClient,
+    selectedConversationId,
+    socket,
+  ])
 
   React.useEffect(() => {
     if (!socket) return
@@ -337,16 +350,21 @@ export default function AdminDisputesPage() {
       socket.emit("join_group_conversation", {
         conversation_group_id: selectedConversationId,
       })
-      markReadMutation.mutate({ conversation_group_id: selectedConversationId })
+
+      if (markedConversationIdRef.current !== selectedConversationId) {
+        markedConversationIdRef.current = selectedConversationId
+        markGroupMessagesRead({ conversation_group_id: selectedConversationId })
+      }
     }
 
     previousConversationIdRef.current = selectedConversationId
-  }, [socket, selectedConversationId, markReadMutation])
+  }, [socket, selectedConversationId, markGroupMessagesRead])
 
   const handleSelectConversation = React.useCallback(
     (conversation: GroupChatConversation) => {
       if (conversation._id === selectedConversationId) return
       setSelectedConversationId(conversation._id)
+      markedConversationIdRef.current = null
       setSocketMessages([])
     },
     [selectedConversationId]

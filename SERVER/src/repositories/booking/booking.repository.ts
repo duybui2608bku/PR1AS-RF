@@ -1,6 +1,8 @@
 import { Types, PopulateOptions, ClientSession } from "mongoose";
 import { Booking } from "../../models/booking/booking.model";
 import {
+  AdminBookingAnalyticsQuery,
+  AdminBookingAnalyticsRaw,
   IBookingDocument,
   CreateBookingInput,
   BookingQuery,
@@ -51,6 +53,21 @@ export class BookingRepository {
       if (query.start_date) scheduleFilter.$gte = query.start_date;
       if (query.end_date) scheduleFilter.$lte = query.end_date;
       filter["schedule.start_time"] = scheduleFilter;
+    }
+
+    return filter;
+  }
+
+  private buildCreatedAtFilter(
+    query: Pick<AdminBookingAnalyticsQuery, "start_date" | "end_date">
+  ): Record<string, unknown> {
+    const filter: Record<string, unknown> = {};
+
+    if (query.start_date || query.end_date) {
+      const createdAtFilter: { $gte?: Date; $lte?: Date } = {};
+      if (query.start_date) createdAtFilter.$gte = query.start_date;
+      if (query.end_date) createdAtFilter.$lte = query.end_date;
+      filter.created_at = createdAtFilter;
     }
 
     return filter;
@@ -116,6 +133,84 @@ export class BookingRepository {
   ): Promise<PaginatedResponse<IBookingDocument>> {
     const filter = this.buildFilter(query);
     return this.findWithPagination(filter, query);
+  }
+
+  async getAdminAnalytics(
+    query: AdminBookingAnalyticsQuery
+  ): Promise<AdminBookingAnalyticsRaw> {
+    const filter = this.buildCreatedAtFilter(query);
+
+    const [
+      statusCounts,
+      createdByDate,
+      completionByDate,
+      recentBookings,
+      total,
+    ] = await Promise.all([
+      Booking.aggregate<{ _id: BookingStatus; count: number }>([
+        { $match: filter },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
+      Booking.aggregate<{ _id: string; count: number }>([
+        { $match: filter },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                date: "$created_at",
+                format: "%Y-%m-%d",
+              },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Booking.aggregate<{ _id: string; total: number; completed: number }>([
+        { $match: filter },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                date: "$created_at",
+                format: "%Y-%m-%d",
+              },
+            },
+            total: { $sum: 1 },
+            completed: {
+              $sum: {
+                $cond: [{ $eq: ["$status", BookingStatus.COMPLETED] }, 1, 0],
+              },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Booking.find(filter)
+        .populate(BOOKING_POPULATE)
+        .sort({ created_at: -1 })
+        .limit(query.recent_limit)
+        .lean(),
+      Booking.countDocuments(filter),
+    ]);
+
+    return {
+      total,
+      status_counts: statusCounts.map((item) => ({
+        status: item._id,
+        count: item.count,
+      })),
+      created_by_date: createdByDate.map((item) => ({
+        date: item._id,
+        count: item.count,
+      })),
+      completion_by_date: completionByDate.map((item) => ({
+        date: item._id,
+        total: item.total,
+        completed: item.completed,
+      })),
+      recent_bookings: recentBookings as IBookingDocument[],
+    };
   }
 
   async updateStatus(

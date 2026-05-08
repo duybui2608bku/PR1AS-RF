@@ -1,5 +1,5 @@
-import { WalletPage } from "@/components/wallet/wallet-page"
+import { redirect } from "next/navigation"
 
 export default function ClientWalletPage() {
-  return <WalletPage />
+  redirect("/wallet")
 }

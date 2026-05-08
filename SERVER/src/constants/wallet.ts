@@ -27,6 +27,7 @@ export enum DateRangePreset {
   YESTERDAY = "yesterday",
   LAST_7_DAYS = "last_7_days",
   LAST_14_DAYS = "last_14_days",
+  LAST_30_DAYS = "last_30_days",
   THIS_MONTH = "this_month",
 }
 
@@ -51,6 +52,7 @@ export const DATE_RANGE_OFFSETS = {
   YESTERDAY_DAYS: 1,
   LAST_7_DAYS_OFFSET: 6,
   LAST_14_DAYS_OFFSET: 13,
+  LAST_30_DAYS_OFFSET: 29,
 } as const;
 
 export const DATE_UNITS = {

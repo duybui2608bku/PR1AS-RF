@@ -14,7 +14,7 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
     booking: "/client/bookings",
     chat: "/client/chat",
     profile: "/client/profile",
-    wallet: "/client/wallet",
+    wallet: "/wallet",
   },
   worker: {
     booking: "/worker/bookings",

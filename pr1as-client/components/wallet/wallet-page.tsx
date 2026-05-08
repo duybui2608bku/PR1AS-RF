@@ -26,8 +26,81 @@ import {
   statusClassName,
   statusLabel,
 } from "@/components/wallet/wallet-format"
+import type { WalletTransaction } from "@/services/wallet.service"
 
 const PAGE_SIZE = 10
+
+function TransactionStatusBadge({
+  status,
+}: {
+  status: WalletTransaction["status"]
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
+        statusClassName[status]
+      )}
+    >
+      {statusLabel[status]}
+    </span>
+  )
+}
+
+function DepositTransactionCard({
+  transaction,
+}: {
+  transaction: WalletTransaction
+}) {
+  const reference =
+    transaction.sepay_reference_code ??
+    transaction.gateway_transaction_id ??
+    "-"
+
+  return (
+    <article className="rounded-lg border bg-background p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">
+            {transaction.payment_code ?? transaction.id}
+          </p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {reference}
+          </p>
+        </div>
+        <TransactionStatusBadge status={transaction.status} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-xs text-muted-foreground">Số tiền</p>
+          <p className="mt-1 font-semibold">{formatVnd(transaction.amount)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Cổng</p>
+          <p className="mt-1 text-muted-foreground uppercase">
+            {transaction.gateway ?? "-"}
+          </p>
+        </div>
+        <div className="col-span-2">
+          <p className="text-xs text-muted-foreground">Thời gian</p>
+          <p className="mt-1 text-muted-foreground">
+            {formatWalletDate(transaction.created_at)}
+          </p>
+        </div>
+      </div>
+
+      {transaction.status === "pending" ? (
+        <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+          <Link href="/wallet/deposit">
+            Tiếp tục thanh toán
+            <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      ) : null}
+    </article>
+  )
+}
 
 export function WalletPage() {
   const [page, setPage] = useState(1)
@@ -89,7 +162,7 @@ export function WalletPage() {
             )}
           </Button>
           <Button asChild>
-            <Link href="/client/wallet/deposit">
+            <Link href="/wallet/deposit">
               <Plus className="size-4" />
               Nạp tiền
             </Link>
@@ -147,71 +220,75 @@ export function WalletPage() {
               <ReceiptText className="size-9 text-muted-foreground" />
               <p className="text-sm font-medium">Chưa có giao dịch nạp tiền</p>
               <Button asChild size="sm">
-                <Link href="/client/wallet/deposit">Nạp tiền</Link>
+                <Link href="/wallet/deposit">Nạp tiền</Link>
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[760px]">
-                <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Mã nạp</th>
-                    <th className="px-4 py-3 font-medium">Số tiền</th>
-                    <th className="px-4 py-3 font-medium">Trạng thái</th>
-                    <th className="px-4 py-3 font-medium">Cổng</th>
-                    <th className="px-4 py-3 font-medium">Thời gian</th>
-                    <th className="px-4 py-3 font-medium" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className="border-b last:border-b-0"
-                    >
-                      <td className="max-w-[220px] px-4 py-3">
-                        <div className="truncate font-medium">
-                          {transaction.payment_code ?? transaction.id}
-                        </div>
-                        <div className="truncate text-xs text-muted-foreground">
-                          {transaction.sepay_reference_code ??
-                            transaction.gateway_transaction_id ??
-                            "-"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-semibold">
-                        {formatVnd(transaction.amount)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
-                            statusClassName[transaction.status]
-                          )}
-                        >
-                          {statusLabel[transaction.status]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground uppercase">
-                        {transaction.gateway ?? "-"}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatWalletDate(transaction.created_at)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {transaction.status === "pending" ? (
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href="/client/wallet/deposit">
-                              <ArrowRight className="size-4" />
-                            </Link>
-                          </Button>
-                        ) : null}
-                      </td>
+            <>
+              <div className="space-y-3 p-3 md:hidden">
+                {transactions.map((transaction) => (
+                  <DepositTransactionCard
+                    key={transaction.id}
+                    transaction={transaction}
+                  />
+                ))}
+              </div>
+
+              <div className="hidden overflow-x-auto md:block">
+                <Table className="min-w-[760px]">
+                  <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Mã nạp</th>
+                      <th className="px-4 py-3 font-medium">Số tiền</th>
+                      <th className="px-4 py-3 font-medium">Trạng thái</th>
+                      <th className="px-4 py-3 font-medium">Cổng</th>
+                      <th className="px-4 py-3 font-medium">Thời gian</th>
+                      <th className="px-4 py-3 font-medium" />
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {transactions.map((transaction) => (
+                      <tr
+                        key={transaction.id}
+                        className="border-b last:border-b-0"
+                      >
+                        <td className="max-w-[220px] px-4 py-3">
+                          <div className="truncate font-medium">
+                            {transaction.payment_code ?? transaction.id}
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {transaction.sepay_reference_code ??
+                              transaction.gateway_transaction_id ??
+                              "-"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-semibold">
+                          {formatVnd(transaction.amount)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <TransactionStatusBadge status={transaction.status} />
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground uppercase">
+                          {transaction.gateway ?? "-"}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatWalletDate(transaction.created_at)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {transaction.status === "pending" ? (
+                            <Button asChild variant="ghost" size="sm">
+                              <Link href="/wallet/deposit">
+                                <ArrowRight className="size-4" />
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

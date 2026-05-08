@@ -17,9 +17,18 @@ import {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
 import { useGetUsers, useUpdateUserStatus } from "@/lib/hooks/use-users"
@@ -32,16 +41,23 @@ import type {
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
 const PAGE_SIZE = 10
+const ALL_FILTER_VALUE = "all"
 
-const ROLE_OPTIONS: { label: string; value: UserRole | "" }[] = [
-  { label: "Tất cả vai trò", value: "" },
+const ROLE_OPTIONS: {
+  label: string
+  value: UserRole | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả vai trò", value: ALL_FILTER_VALUE },
   { label: "Client", value: "client" },
   { label: "Worker", value: "worker" },
   { label: "Admin", value: "admin" },
 ]
 
-const STATUS_OPTIONS: { label: string; value: UserStatus | "" }[] = [
-  { label: "Tất cả trạng thái", value: "" },
+const STATUS_OPTIONS: {
+  label: string
+  value: UserStatus | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả trạng thái", value: ALL_FILTER_VALUE },
   { label: "Hoạt động", value: "active" },
   { label: "Đã khóa", value: "banned" },
 ]
@@ -54,6 +70,21 @@ function formatDate(value?: string | null) {
     dateStyle: "short",
     timeStyle: "short",
   })
+}
+
+function parseFilterDate(value?: string) {
+  if (!value) return undefined
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return new Date(year, month - 1, day)
+}
+
+function formatFilterDate(date?: Date) {
+  if (!date) return ""
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 function StatusBadge({ status }: { status?: string }) {
@@ -203,6 +234,8 @@ export default function AdminUsersPage() {
   const total = usersQuery.data?.pagination?.total ?? 0
   const totalPages = usersQuery.data?.pagination?.totalPages ?? 1
   const currentPage = filters.page ?? 1
+  const startDate = parseFilterDate(filters.startDate)
+  const endDate = parseFilterDate(filters.endDate)
 
   const applySearch = useCallback(
     (e: FormEvent) => {
@@ -219,6 +252,13 @@ export default function AdminUsersPage() {
 
   const handleFilterChange = (key: keyof GetUsersParams, value: string) => {
     setFilters((prev) => ({ ...prev, page: 1, [key]: value }))
+  }
+
+  const handleDateFilterChange = (
+    key: "startDate" | "endDate",
+    value?: Date
+  ) => {
+    handleFilterChange(key, formatFilterDate(value))
   }
 
   const handlePageChange = (page: number) => {
@@ -293,56 +333,72 @@ export default function AdminUsersPage() {
 
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Vai trò</label>
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-                value={filters.role ?? ""}
-                onChange={(e) => handleFilterChange("role", e.target.value)}
-              >
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">
-                Trạng thái
-              </label>
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-                value={filters.status ?? ""}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Từ ngày</label>
-              <Input
-                type="date"
-                className="h-9 w-44"
-                value={filters.startDate ?? ""}
-                onChange={(e) =>
-                  handleFilterChange("startDate", e.target.value)
+              <Label className="text-xs text-muted-foreground">Vai trò</Label>
+              <Select
+                value={filters.role || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "role",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
                 }
+              >
+                <SelectTrigger className="h-9 min-w-36 data-[size=default]:h-9">
+                  <SelectValue placeholder="Chọn vai trò" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">
+                Trạng thái
+              </Label>
+              <Select
+                value={filters.status || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "status",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
+                }
+              >
+                <SelectTrigger className="h-9 min-w-40 data-[size=default]:h-9">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
+              <DatePicker
+                value={startDate}
+                onChange={(date) => handleDateFilterChange("startDate", date)}
+                toDate={endDate}
+                buttonClassName="h-9 w-44 data-[size=default]:h-9"
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Đến ngày</label>
-              <Input
-                type="date"
-                className="h-9 w-44"
-                value={filters.endDate ?? ""}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
+              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
+              <DatePicker
+                value={endDate}
+                onChange={(date) => handleDateFilterChange("endDate", date)}
+                fromDate={startDate}
+                buttonClassName="h-9 w-44 data-[size=default]:h-9"
               />
             </div>
 

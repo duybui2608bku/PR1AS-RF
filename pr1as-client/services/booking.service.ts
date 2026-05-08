@@ -1,5 +1,7 @@
 import { api } from "@/lib/axios"
 import type {
+  AdminBookingAnalytics,
+  AdminBookingAnalyticsQuery,
   Booking,
   BookingListQuery,
   BookingListResponse,
@@ -67,6 +69,22 @@ export const bookingService = {
   },
 
   getMyBookings,
+
+  getAdminBookingAnalytics: async (
+    params: AdminBookingAnalyticsQuery = {}
+  ) => {
+    const query = new URLSearchParams()
+    if (params.start_date) query.set("start_date", params.start_date)
+    if (params.end_date) query.set("end_date", params.end_date)
+    if (params.recent_limit) {
+      query.set("recent_limit", String(params.recent_limit))
+    }
+
+    const response = await api.get<ApiResponse<AdminBookingAnalytics>>(
+      `/bookings/admin/analytics?${query.toString()}`
+    )
+    return response.data.data
+  },
 
   getMyWorkerBookingSchedule: async (query: WorkerBookingScheduleQuery) => {
     const bookings: Booking[] = []

@@ -367,8 +367,9 @@ export function ChatPage({
 
   const sendDirectMessageMutation = useSendDirectMessage()
   const sendGroupMessageMutation = useSendGroupMessage()
-  const markDirectReadMutation = useMarkDirectMessagesRead()
-  const markGroupReadMutation = useMarkGroupMessagesRead()
+  const { mutate: markDirectMessagesReadMutation } =
+    useMarkDirectMessagesRead()
+  const { mutate: markGroupMessagesReadMutation } = useMarkGroupMessagesRead()
   const deleteDirectMessageMutation = useDeleteDirectMessage()
 
   const filteredDirectConversations = React.useMemo(() => {
@@ -660,12 +661,12 @@ export function ChatPage({
       return
     }
 
-    markDirectReadMutation.mutate({ conversation_id: activeDirectId })
+    markDirectMessagesReadMutation({ conversation_id: activeDirectId })
   }, [
     activeDirectId,
     directMessages,
     isNewDirectOpen,
-    markDirectReadMutation,
+    markDirectMessagesReadMutation,
     mode,
     socket,
     user?.id,
@@ -689,11 +690,11 @@ export function ChatPage({
       return
     }
 
-    markGroupReadMutation.mutate({ conversation_group_id: activeGroupId })
+    markGroupMessagesReadMutation({ conversation_group_id: activeGroupId })
   }, [
     activeGroupId,
     groupMessages,
-    markGroupReadMutation,
+    markGroupMessagesReadMutation,
     mode,
     socket,
     user?.id,

@@ -19,7 +19,16 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
 import {
@@ -34,18 +43,24 @@ import type {
 import type { WalletTransactionStatus } from "@/services/wallet.service"
 
 const PAGE_SIZE = 15
+const ALL_FILTER_VALUE = "all"
 
-const STATUS_OPTIONS: { label: string; value: WalletTransactionStatus | "" }[] =
-  [
-    { label: "Tất cả trạng thái", value: "" },
-    { label: "Chờ xử lý", value: "pending" },
-    { label: "Thành công", value: "success" },
-    { label: "Thất bại", value: "failed" },
-    { label: "Đã hủy", value: "cancelled" },
-  ]
+const STATUS_OPTIONS: {
+  label: string
+  value: WalletTransactionStatus | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả trạng thái", value: ALL_FILTER_VALUE },
+  { label: "Chờ xử lý", value: "pending" },
+  { label: "Thành công", value: "success" },
+  { label: "Thất bại", value: "failed" },
+  { label: "Đã hủy", value: "cancelled" },
+]
 
-const TYPE_OPTIONS: { label: string; value: AdminTransactionType | "" }[] = [
-  { label: "Tất cả loại", value: "" },
+const TYPE_OPTIONS: {
+  label: string
+  value: AdminTransactionType | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả loại", value: ALL_FILTER_VALUE },
   { label: "Nạp tiền", value: "deposit" },
   { label: "Rút tiền", value: "withdraw" },
   { label: "Thanh toán", value: "payment" },
@@ -104,6 +119,21 @@ function formatDate(value?: string | null) {
   })
 }
 
+function parseFilterDate(value?: string) {
+  if (!value) return undefined
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return new Date(year, month - 1, day)
+}
+
+function formatFilterDate(date?: Date) {
+  if (!date) return ""
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 function shortId(id: string) {
   return id.length > 12 ? `${id.slice(0, 8)}…` : id
 }
@@ -139,43 +169,101 @@ function BarChart({
 }: {
   data: { date: string; amount: number; label: string }[]
 }) {
-  const max = Math.max(...data.map((d) => d.amount), 1)
-  const display = data.slice(-21)
+  const display = data.slice(-30)
+  const max = Math.max(...display.map((d) => d.amount), 0)
+  const chartWidth = 640
+  const chartHeight = 180
+  const padding = { top: 12, right: 8, bottom: 30, left: 42 }
+  const innerWidth = chartWidth - padding.left - padding.right
+  const innerHeight = chartHeight - padding.top - padding.bottom
+  const barGap = 4
+  const barWidth = Math.max(
+    4,
+    (innerWidth - barGap * Math.max(display.length - 1, 0)) /
+      Math.max(display.length, 1)
+  )
+  const axisY = padding.top + innerHeight
+  const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
+    .filter((index) => display[index])
+    .filter((index, idx, arr) => arr.indexOf(index) === idx)
+
+  if (display.length === 0 || max <= 0) {
+    return (
+      <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">
+        Chưa có giao dịch nạp tiền thành công trong 30 ngày gần nhất
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-2">
-      <div className="flex h-36 items-end gap-0.5">
-        {display.map((item) => {
-          const pct = (item.amount / max) * 100
+    <div className="h-44 w-full">
+      <svg
+        role="img"
+        aria-label="Biểu đồ nạp tiền 30 ngày gần nhất"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="h-full w-full overflow-visible"
+        preserveAspectRatio="none"
+      >
+        {[0.25, 0.5, 0.75, 1].map((ratio) => {
+          const y = axisY - innerHeight * ratio
           return (
-            <div
-              key={item.date}
-              className="group relative flex flex-1 flex-col items-center"
-            >
-              <div className="pointer-events-none absolute bottom-full z-10 mb-1.5 hidden flex-col items-center group-hover:flex">
-                <div className="rounded bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background shadow">
-                  {item.label}
-                  <br />
-                  {formatCurrency(item.amount)}
-                </div>
-                <div className="-mt-0.5 size-1.5 rotate-45 bg-foreground" />
-              </div>
-              <div
-                className="w-full rounded-t-sm bg-primary/75 transition-all hover:bg-primary"
-                style={{ height: `${Math.max(pct, 2)}%` }}
-              />
-            </div>
+            <line
+              key={ratio}
+              x1={padding.left}
+              x2={chartWidth - padding.right}
+              y1={y}
+              y2={y}
+              className="stroke-border"
+              strokeDasharray="4 6"
+              strokeWidth="1"
+            />
           )
         })}
-      </div>
-      <div className="flex justify-between px-0.5">
-        {[0, Math.floor(display.length / 2), display.length - 1]
-          .filter((i) => display[i])
-          .map((i) => (
-            <span key={i} className="text-[11px] text-muted-foreground">
-              {display[i].label}
-            </span>
-          ))}
-      </div>
+        <line
+          x1={padding.left}
+          x2={chartWidth - padding.right}
+          y1={axisY}
+          y2={axisY}
+          className="stroke-border"
+          strokeWidth="1"
+        />
+        {display.map((item, index) => {
+          const height =
+            item.amount > 0 ? Math.max((item.amount / max) * innerHeight, 4) : 0
+          const x = padding.left + index * (barWidth + barGap)
+          const y = axisY - height
+          return (
+            <g
+              key={item.date}
+              className="text-emerald-500 transition-colors hover:text-emerald-400"
+            >
+              <title>{`${item.label}: ${formatCurrency(item.amount)}`}</title>
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={height}
+                rx="3"
+                fill="currentColor"
+              />
+            </g>
+          )
+        })}
+        {tickIndexes.map((index) => {
+          const x = padding.left + index * (barWidth + barGap) + barWidth / 2
+          return (
+            <text
+              key={index}
+              x={x}
+              y={chartHeight - 8}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[11px]"
+            >
+              {display[index].label}
+            </text>
+          )
+        })}
+      </svg>
     </div>
   )
 }
@@ -375,6 +463,8 @@ export default function AdminTransactionsPage() {
   const total = txQuery.data?.pagination?.total ?? 0
   const totalPages = txQuery.data?.pagination?.totalPages ?? 1
   const currentPage = filters.page ?? 1
+  const startDate = parseFilterDate(filters.startDate)
+  const endDate = parseFilterDate(filters.endDate)
 
   const stats = statsQuery.data
   const dailyData =
@@ -413,6 +503,13 @@ export default function AdminTransactionsPage() {
     value: string
   ) => {
     setFilters((prev) => ({ ...prev, page: 1, [key]: value }))
+  }
+
+  const handleDateFilterChange = (
+    key: "startDate" | "endDate",
+    value?: Date
+  ) => {
+    handleFilterChange(key, formatFilterDate(value))
   }
 
   const clearFilters = () => {
@@ -572,58 +669,74 @@ export default function AdminTransactionsPage() {
 
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">
+              <Label className="text-xs text-muted-foreground">
                 Trạng thái
-              </label>
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-                value={filters.status ?? ""}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">
-                Loại giao dịch
-              </label>
-              <select
-                className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-                value={filters.type ?? ""}
-                onChange={(e) => handleFilterChange("type", e.target.value)}
-              >
-                {TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Từ ngày</label>
-              <Input
-                type="date"
-                className="h-9 w-44"
-                value={filters.startDate ?? ""}
-                onChange={(e) =>
-                  handleFilterChange("startDate", e.target.value)
+              </Label>
+              <Select
+                value={filters.status || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "status",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
                 }
+              >
+                <SelectTrigger className="h-9 min-w-40 data-[size=default]:h-9">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">
+                Loại giao dịch
+              </Label>
+              <Select
+                value={filters.type || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "type",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
+                }
+              >
+                <SelectTrigger className="h-9 min-w-40 data-[size=default]:h-9">
+                  <SelectValue placeholder="Chọn loại" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
+              <DatePicker
+                value={startDate}
+                onChange={(date) => handleDateFilterChange("startDate", date)}
+                toDate={endDate}
+                buttonClassName="h-9 w-44 data-[size=default]:h-9"
               />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Đến ngày</label>
-              <Input
-                type="date"
-                className="h-9 w-44"
-                value={filters.endDate ?? ""}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
+              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
+              <DatePicker
+                value={endDate}
+                onChange={(date) => handleDateFilterChange("endDate", date)}
+                fromDate={startDate}
+                buttonClassName="h-9 w-44 data-[size=default]:h-9"
               />
             </div>
 

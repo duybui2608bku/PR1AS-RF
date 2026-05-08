@@ -1,5 +1,5 @@
-import { WalletDepositPage } from "@/components/wallet/wallet-deposit-page"
+import { redirect } from "next/navigation"
 
 export default function ClientWalletDepositPage() {
-  return <WalletDepositPage />
+  redirect("/wallet/deposit")
 }

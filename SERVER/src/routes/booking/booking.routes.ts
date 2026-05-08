@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { bookingController } from "../../controllers/booking/booking.controller";
-import { authenticate } from "../../middleware/auth";
+import { adminOnly, authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
 import { pagination } from "../../middleware";
@@ -21,6 +21,15 @@ router.get(
   pagination(),
   asyncHandler<AuthRequest>(
     bookingController.getMyBookings.bind(bookingController)
+  )
+);
+
+router.get(
+  "/admin/analytics",
+  authenticate,
+  adminOnly,
+  asyncHandler<AuthRequest>(
+    bookingController.getAdminBookingAnalytics.bind(bookingController)
   )
 );
 

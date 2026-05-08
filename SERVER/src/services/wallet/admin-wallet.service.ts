@@ -17,9 +17,10 @@ import { WALLET_MESSAGES } from "../../constants/messages";
 import dayjs from "dayjs";
 
 export class AdminWalletService {
-  private getDateRangeFromPreset(
-    preset: DateRangePreset
-  ): { startDate: Date; endDate: Date } {
+  private getDateRangeFromPreset(preset: DateRangePreset): {
+    startDate: Date;
+    endDate: Date;
+  } {
     const now = dayjs();
 
     switch (preset) {
@@ -51,6 +52,14 @@ export class AdminWalletService {
         return {
           startDate: now
             .subtract(DATE_RANGE_OFFSETS.LAST_14_DAYS_OFFSET, DATE_UNITS.DAY)
+            .startOf(DATE_UNITS.DAY)
+            .toDate(),
+          endDate: now.endOf(DATE_UNITS.DAY).toDate(),
+        };
+      case DateRangePreset.LAST_30_DAYS:
+        return {
+          startDate: now
+            .subtract(DATE_RANGE_OFFSETS.LAST_30_DAYS_OFFSET, DATE_UNITS.DAY)
             .startOf(DATE_UNITS.DAY)
             .toDate(),
           endDate: now.endOf(DATE_UNITS.DAY).toDate(),

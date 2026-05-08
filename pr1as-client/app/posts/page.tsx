@@ -6,12 +6,14 @@ import { SiteLayout } from "@/components/layout/site-layout"
 import { CreatePostForm } from "@/components/post/create-post-form"
 import { PostFeed } from "@/components/post/post-feed"
 import { TrendingHashtags } from "@/components/post/trending-hashtags"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useAuthStore } from "@/lib/store/auth-store"
 
 export default function PostsPage() {
   const searchParams = useSearchParams()
   const hashtag = searchParams.get("hashtag") ?? undefined
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
+  const canCreatePost = isAuthenticated && !isWorkerRoleActive(user)
 
   return (
     <SiteLayout>
@@ -35,7 +37,7 @@ export default function PostsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
           {/* Main Feed */}
           <div className="space-y-4">
-            {isAuthenticated ? <CreatePostForm /> : null}
+            {canCreatePost ? <CreatePostForm /> : null}
             <PostFeed params={hashtag ? { hashtag } : {}} />
           </div>
 

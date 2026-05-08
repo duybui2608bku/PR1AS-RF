@@ -3,6 +3,8 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import {
+  AdminBookingAnalytics,
+  AdminBookingAnalyticsQuery,
   CreateBookingInput,
   BookingQuery,
   IBookingDocument,
@@ -16,6 +18,29 @@ import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
 import { UserRole } from "../../types/auth/user.types";
+import { BookingStatus } from "../../constants/booking";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfUtcDay(date: Date): Date {
+  const next = new Date(date);
+  next.setUTCHours(0, 0, 0, 0);
+  return next;
+}
+
+function endOfUtcDay(date: Date): Date {
+  const next = new Date(date);
+  next.setUTCHours(23, 59, 59, 999);
+  return next;
+}
+
+function formatDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function roundRate(value: number): number {
+  return Math.round(value * 10) / 10;
+}
 
 export class BookingCrudService extends BookingBaseService {
   async createBooking(
@@ -186,5 +211,84 @@ export class BookingCrudService extends BookingBaseService {
     }
 
     throw AppError.forbidden();
+  }
+
+  async getAdminBookingAnalytics(
+    query: AdminBookingAnalyticsQuery
+  ): Promise<AdminBookingAnalytics> {
+    const endDate = endOfUtcDay(query.end_date ?? new Date());
+    const startDate = startOfUtcDay(
+      query.start_date ?? new Date(endDate.getTime() - 29 * DAY_MS)
+    );
+    const raw = await bookingRepository.getAdminAnalytics({
+      start_date: startDate,
+      end_date: endDate,
+      recent_limit: query.recent_limit,
+    });
+
+    const statusCountMap = new Map(
+      raw.status_counts.map((item) => [item.status, item.count])
+    );
+    const completedBookings =
+      statusCountMap.get(BookingStatus.COMPLETED) ?? 0;
+    const cancelledBookings =
+      statusCountMap.get(BookingStatus.CANCELLED) ?? 0;
+    const disputedBookings = statusCountMap.get(BookingStatus.DISPUTED) ?? 0;
+
+    const dateCountMap = new Map(
+      raw.created_by_date.map((item) => [item.date, item.count])
+    );
+    const completionDateMap = new Map(
+      raw.completion_by_date.map((item) => [item.date, item])
+    );
+
+    const createdByDate = [];
+    const completionByDate = [];
+
+    for (
+      let cursor = new Date(startDate);
+      cursor <= endDate;
+      cursor = new Date(cursor.getTime() + DAY_MS)
+    ) {
+      const date = formatDateKey(cursor);
+      const completion = completionDateMap.get(date);
+      const total = completion?.total ?? 0;
+      const completed = completion?.completed ?? 0;
+
+      createdByDate.push({
+        date,
+        count: dateCountMap.get(date) ?? 0,
+      });
+      completionByDate.push({
+        date,
+        total,
+        completed,
+        completion_rate: total > 0 ? roundRate((completed / total) * 100) : 0,
+      });
+    }
+
+    return {
+      total_bookings: raw.total,
+      completed_bookings: completedBookings,
+      completion_rate:
+        raw.total > 0 ? roundRate((completedBookings / raw.total) * 100) : 0,
+      cancelled_bookings: cancelledBookings,
+      cancellation_rate:
+        raw.total > 0 ? roundRate((cancelledBookings / raw.total) * 100) : 0,
+      disputed_bookings: disputedBookings,
+      dispute_rate:
+        raw.total > 0 ? roundRate((disputedBookings / raw.total) * 100) : 0,
+      status_counts: Object.values(BookingStatus).map((status) => {
+        const count = statusCountMap.get(status) ?? 0;
+        return {
+          status,
+          count,
+          percentage: raw.total > 0 ? roundRate((count / raw.total) * 100) : 0,
+        };
+      }),
+      created_by_date: createdByDate,
+      completion_by_date: completionByDate,
+      recent_bookings: raw.recent_bookings,
+    };
   }
 }

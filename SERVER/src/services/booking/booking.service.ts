@@ -18,6 +18,7 @@ class BookingService {
   getBookingsByClient = this.crud.getBookingsByClient.bind(this.crud);
   getBookingsByWorker = this.crud.getBookingsByWorker.bind(this.crud);
   getMyBookings = this.crud.getMyBookings.bind(this.crud);
+  getAdminBookingAnalytics = this.crud.getAdminBookingAnalytics.bind(this.crud);
   updateBooking = this.crud.updateBooking.bind(this.crud);
 
   updateBookingStatus = this.status.updateBookingStatus.bind(this.status);

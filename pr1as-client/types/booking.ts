@@ -116,10 +116,10 @@ export type BookingDispute = {
 export type Booking = {
   _id: string
   id?: string
-  client_id: string | BookingUserRef
-  worker_id: string | BookingUserRef
-  worker_service_id: string | BookingWorkerServiceRef
-  service_id: string | BookingServiceRef
+  client_id: string | BookingUserRef | null
+  worker_id: string | BookingUserRef | null
+  worker_service_id: string | BookingWorkerServiceRef | null
+  service_id: string | BookingServiceRef | null
   service_code: string
   schedule: BookingSchedule
   pricing: BookingPricing
@@ -163,6 +163,44 @@ export type PaginationMeta = {
 export type BookingListResponse = {
   data: Booking[]
   pagination: PaginationMeta
+}
+
+export type AdminBookingAnalyticsQuery = {
+  start_date?: string
+  end_date?: string
+  recent_limit?: number
+}
+
+export type AdminBookingStatusCount = {
+  status: BookingStatus
+  count: number
+  percentage: number
+}
+
+export type AdminBookingDailyCount = {
+  date: string
+  count: number
+}
+
+export type AdminBookingCompletionDailyCount = {
+  date: string
+  total: number
+  completed: number
+  completion_rate: number
+}
+
+export type AdminBookingAnalytics = {
+  total_bookings: number
+  completed_bookings: number
+  completion_rate: number
+  cancelled_bookings: number
+  cancellation_rate: number
+  disputed_bookings: number
+  dispute_rate: number
+  status_counts: AdminBookingStatusCount[]
+  created_by_date: AdminBookingDailyCount[]
+  completion_by_date: AdminBookingCompletionDailyCount[]
+  recent_bookings: Booking[]
 }
 
 export type CancelBookingPayload = {

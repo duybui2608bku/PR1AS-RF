@@ -103,6 +103,51 @@ export interface BookingQuery {
   skip: number;
 }
 
+export interface AdminBookingAnalyticsQuery {
+  start_date?: Date;
+  end_date?: Date;
+  recent_limit: number;
+}
+
+export interface BookingStatusCount {
+  status: BookingStatus;
+  count: number;
+}
+
+export interface BookingDailyCount {
+  date: string;
+  count: number;
+}
+
+export interface BookingCompletionDailyCount {
+  date: string;
+  total: number;
+  completed: number;
+  completion_rate: number;
+}
+
+export interface AdminBookingAnalyticsRaw {
+  total: number;
+  status_counts: BookingStatusCount[];
+  created_by_date: BookingDailyCount[];
+  completion_by_date: Omit<BookingCompletionDailyCount, "completion_rate">[];
+  recent_bookings: IBookingDocument[];
+}
+
+export interface AdminBookingAnalytics {
+  total_bookings: number;
+  completed_bookings: number;
+  completion_rate: number;
+  cancelled_bookings: number;
+  cancellation_rate: number;
+  disputed_bookings: number;
+  dispute_rate: number;
+  status_counts: Array<BookingStatusCount & { percentage: number }>;
+  created_by_date: BookingDailyCount[];
+  completion_by_date: BookingCompletionDailyCount[];
+  recent_bookings: IBookingDocument[];
+}
+
 export interface BookingStats {
   total_bookings: number;
   pending: number;

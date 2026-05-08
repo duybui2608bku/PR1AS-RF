@@ -37,6 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import type { PostPublic } from "@/types"
@@ -302,6 +303,7 @@ export function PostCard({ post }: Props) {
   const [commentsOpen, setCommentsOpen] = useState(false)
 
   const isOwner = user?.id === post.author.id
+  const canManagePost = isOwner && !isWorkerRoleActive(user)
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: true,
     locale: vi,
@@ -343,7 +345,7 @@ export function PostCard({ post }: Props) {
           </div>
         </div>
 
-        {isOwner ? (
+        {canManagePost ? (
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -482,10 +484,10 @@ export function PostCard({ post }: Props) {
         currentUserId={user?.id}
         isAuthenticated={isAuthenticated}
         commentsLocked={post.comments_locked}
-        canBypassLock={isOwner}
+        canBypassLock={canManagePost}
       />
 
-      {editOpen ? (
+      {editOpen && canManagePost ? (
         <EditPostDialog post={post} onClose={() => setEditOpen(false)} />
       ) : null}
     </article>

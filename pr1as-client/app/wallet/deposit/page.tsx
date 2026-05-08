@@ -1,5 +1,10 @@
-import { redirect } from "next/navigation"
+import { SiteLayout } from "@/components/layout/site-layout"
+import { WalletDepositPage } from "@/components/wallet/wallet-deposit-page"
 
 export default function WalletDepositRoutePage() {
-  redirect("/client/wallet/deposit")
+  return (
+    <SiteLayout>
+      <WalletDepositPage />
+    </SiteLayout>
+  )
 }

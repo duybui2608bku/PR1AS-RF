@@ -8,10 +8,21 @@ import {
 } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { queryKeys } from "@/lib/query-keys"
+import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { postService } from "@/services/post.service"
 import type { CreatePostPayload, PostFeedParams, UpdatePostPayload } from "@/types"
+
+const WORKER_POST_PERMISSION_MESSAGE =
+  "Worker chỉ có quyền reaction và bình luận trên bảng tin."
+
+function assertCanManagePosts(user: AuthUser | null) {
+  if (isWorkerRoleActive(user)) {
+    throw new Error(WORKER_POST_PERMISSION_MESSAGE)
+  }
+}
 
 export function useListFeed(params: Omit<PostFeedParams, "cursor"> = {}) {
   return useInfiniteQuery({
@@ -34,9 +45,13 @@ export function useGetPost(id: string) {
 
 export function useCreatePost() {
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
 
   return useMutation({
-    mutationFn: (payload: CreatePostPayload) => postService.createPost(payload),
+    mutationFn: (payload: CreatePostPayload) => {
+      assertCanManagePosts(user)
+      return postService.createPost(payload)
+    },
     onSuccess: () => {
       toast.success("Đăng bài thành công!")
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
@@ -49,9 +64,13 @@ export function useCreatePost() {
 
 export function useUpdatePost(id: string) {
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
 
   return useMutation({
-    mutationFn: (payload: UpdatePostPayload) => postService.updatePost(id, payload),
+    mutationFn: (payload: UpdatePostPayload) => {
+      assertCanManagePosts(user)
+      return postService.updatePost(id, payload)
+    },
     onSuccess: () => {
       toast.success("Cập nhật bài viết thành công!")
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(id) })
@@ -65,9 +84,13 @@ export function useUpdatePost(id: string) {
 
 export function useDeletePost() {
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
 
   return useMutation({
-    mutationFn: (id: string) => postService.deletePost(id),
+    mutationFn: (id: string) => {
+      assertCanManagePosts(user)
+      return postService.deletePost(id)
+    },
     onSuccess: () => {
       toast.success("Đã xóa bài viết.")
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
@@ -80,10 +103,13 @@ export function useDeletePost() {
 
 export function useSetCommentsLock() {
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
 
   return useMutation({
-    mutationFn: ({ id, locked }: { id: string; locked: boolean }) =>
-      postService.setCommentsLock(id, locked),
+    mutationFn: ({ id, locked }: { id: string; locked: boolean }) => {
+      assertCanManagePosts(user)
+      return postService.setCommentsLock(id, locked)
+    },
     onSuccess: (post) => {
       toast.success(
         post.comments_locked

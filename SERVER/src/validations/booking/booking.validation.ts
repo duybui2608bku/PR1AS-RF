@@ -128,6 +128,25 @@ export const getBookingsQuerySchema = z.object({
     .pipe(z.number().int().positive().min(1).max(100)),
 });
 
+export const adminBookingAnalyticsQuerySchema = z
+  .object({
+    start_date: dateSchema.optional(),
+    end_date: dateSchema.optional(),
+    recent_limit: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 10))
+      .pipe(z.number().int().positive().min(1).max(50)),
+  })
+  .refine(
+    (data) =>
+      !data.start_date || !data.end_date || data.start_date <= data.end_date,
+    {
+      message: "start_date must be before or equal to end_date",
+      path: ["end_date"],
+    }
+  );
+
 export const createDisputeSchema = z.object({
   reason: z.nativeEnum(DisputeReason),
   description: z.string().trim().min(10).max(2000),
@@ -144,5 +163,8 @@ export type UpdateBookingStatusSchemaType = z.infer<typeof updateBookingStatusSc
 export type CancelBookingReasonSchemaType = z.infer<typeof cancelBookingReasonSchema>;
 export type UpdateBookingSchemaType = z.infer<typeof updateBookingSchema>;
 export type GetBookingsQuerySchemaType = z.infer<typeof getBookingsQuerySchema>;
+export type AdminBookingAnalyticsQuerySchemaType = z.infer<
+  typeof adminBookingAnalyticsQuerySchema
+>;
 export type CreateDisputeSchemaType = z.infer<typeof createDisputeSchema>;
 export type ResolveDisputeSchemaType = z.infer<typeof resolveDisputeSchema>;

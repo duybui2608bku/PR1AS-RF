@@ -6,6 +6,7 @@ import {
   cancelBookingReasonSchema,
   updateBookingSchema,
   getBookingsQuerySchema,
+  adminBookingAnalyticsQuerySchema,
   createDisputeSchema,
   resolveDisputeSchema,
 } from "../../validations/booking/booking.validation";
@@ -58,6 +59,19 @@ export class BookingController {
     );
     const { page, limit, skip } = req.pagination!;
     const result = await bookingService.getMyBookings(userId, { ...query, page, limit, skip });
+    R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
+  }
+
+  async getAdminBookingAnalytics(
+    req: AuthRequest,
+    res: Response
+  ): Promise<void> {
+    const query = validateWithSchema(
+      adminBookingAnalyticsQuerySchema,
+      req.query,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await bookingService.getAdminBookingAnalytics(query);
     R.success(res, result, BOOKING_MESSAGES.BOOKINGS_FETCHED, req);
   }
 

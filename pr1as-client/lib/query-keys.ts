@@ -31,6 +31,11 @@ export const queryKeys = {
       ["users", "list", params] as const,
     detail: (id: string) => ["users", "detail", id] as const,
   },
+  dashboard: {
+    all: ["dashboard"] as const,
+    analytics: (params?: Record<string, unknown>) =>
+      ["dashboard", "analytics", params] as const,
+  },
   posts: {
     all: ["posts"] as const,
     feed: (params?: Record<string, unknown>) =>
@@ -56,6 +61,8 @@ export const queryKeys = {
     all: ["bookings"] as const,
     list: (params?: Record<string, unknown>) =>
       ["bookings", "list", params] as const,
+    adminAnalytics: (params?: Record<string, unknown>) =>
+      ["bookings", "admin", "analytics", params] as const,
     schedule: (params?: Record<string, unknown>) =>
       ["bookings", "schedule", params] as const,
     detail: (id: string) => ["bookings", "detail", id] as const,
