@@ -8,12 +8,30 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
-import { useRegister } from "@/lib/hooks/use-auth"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { isPasswordStrong, passwordRules } from "@/lib/auth/password.utils"
+import { useRegister } from "@/lib/hooks/use-auth"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function RegisterPage() {
@@ -80,160 +98,169 @@ export default function RegisterPage() {
 
   return (
     <>
-      {showSuccessPopup ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl">
-            <div className="mb-4 flex justify-center">
-              <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
-                <MailCheck className="size-7 text-primary" />
-              </div>
+      <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader className="items-center text-center sm:text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+              <MailCheck className="size-7 text-primary" />
             </div>
-            <h2 className="mb-2 text-center text-lg font-semibold">
-              Đăng ký thành công!
-            </h2>
-            <p className="mb-1 text-center text-sm text-muted-foreground">
-              Vui lòng xác nhận email đã đăng ký:
-            </p>
-            <p className="mb-5 text-center text-sm font-medium break-all text-primary">
-              {registeredEmail}
-            </p>
-            <p className="mb-5 text-center text-xs text-muted-foreground">
-              Kiểm tra hộp thư đến (hoặc thư mục spam) và nhấp vào đường dẫn xác
-              nhận trước khi đăng nhập.
-            </p>
+            <DialogTitle>Đăng ký thành công</DialogTitle>
+            <DialogDescription>
+              Vui lòng xác nhận email đã đăng ký trước khi đăng nhập.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border bg-muted/30 p-3 text-center text-sm font-medium break-all text-primary">
+            {registeredEmail}
+          </div>
+          <DialogFooter>
             <Button className="w-full" onClick={() => router.push("/login")}>
               Đến trang đăng nhập
             </Button>
-          </div>
-        </div>
-      ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader className="text-center">
-          <CardTitle>ĐĂNG KÍ TÀI KHOẢN</CardTitle>
+          <CardTitle>Đăng ký tài khoản</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                inputMode="email"
-                maxLength={254}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="full-name">Họ và tên</Label>
-              <Input
-                id="full-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                maxLength={120}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
-                inputMode="tel"
-                maxLength={32}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
-              <div className="relative">
+        <CardContent className="flex flex-col gap-4">
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  minLength={8}
-                  maxLength={128}
-                  autoComplete="new-password"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  inputMode="email"
+                  maxLength={254}
                   required
-                  className="pr-10"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
-                  onClick={() => setShowPassword((previous) => !previous)}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Xác nhận mật khẩu</Label>
-              <div className="relative">
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="full-name">Họ và tên</FieldLabel>
                 <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  minLength={8}
-                  maxLength={128}
-                  autoComplete="new-password"
-                  required
-                  className="pr-10"
+                  id="full-name"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  autoComplete="name"
+                  maxLength={120}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
-                  onClick={() =>
-                    setShowConfirmPassword((previous) => !previous)
-                  }
-                  aria-label={
-                    showConfirmPassword
-                      ? "Ẩn mật khẩu xác nhận"
-                      : "Hiện mật khẩu xác nhận"
-                  }
-                >
-                  {showConfirmPassword ? <EyeOff /> : <Eye />}
-                </Button>
-              </div>
-            </div>
-            <div className="rounded-md border p-3 text-sm">
-              <p className="mb-2 font-medium">Yêu cầu mật khẩu:</p>
-
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-                {passwordRules.map((rule) => {
-                  const isMet = rule.test(password)
-                  return (
-                    <li key={rule.label} className="flex items-center gap-2">
-                      {isMet ? (
-                        <Check className="size-4 text-emerald-600" />
-                      ) : (
-                        <X className="size-4 text-muted-foreground" />
-                      )}
-                      <span>{rule.label}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="phone">Số điện thoại</FieldLabel>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  maxLength={32}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    minLength={8}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <InputGroupAddon>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => setShowPassword((previous) => !previous)}
+                      aria-label={
+                        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                    >
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </Button>
+                  </InputGroupAddon>
+                </InputGroup>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="confirm-password">
+                  Xác nhận mật khẩu
+                </FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    minLength={8}
+                    maxLength={128}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <InputGroupAddon>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() =>
+                        setShowConfirmPassword((previous) => !previous)
+                      }
+                      aria-label={
+                        showConfirmPassword
+                          ? "Ẩn mật khẩu xác nhận"
+                          : "Hiện mật khẩu xác nhận"
+                      }
+                    >
+                      {showConfirmPassword ? <EyeOff /> : <Eye />}
+                    </Button>
+                  </InputGroupAddon>
+                </InputGroup>
+              </Field>
+              <Field>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <FieldDescription className="mb-2 font-medium text-foreground">
+                    Yêu cầu mật khẩu
+                  </FieldDescription>
+                  <ul className="grid grid-cols-1 gap-1 text-sm text-muted-foreground sm:grid-cols-2">
+                    {passwordRules.map((rule) => {
+                      const isMet = rule.test(password)
+                      return (
+                        <li
+                          key={rule.label}
+                          className="flex items-center gap-2"
+                        >
+                          {isMet ? (
+                            <Check className="size-4 text-primary" />
+                          ) : (
+                            <X className="size-4" />
+                          )}
+                          <span>{rule.label}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              </Field>
+            </FieldGroup>
             <Button
               type="submit"
               className="w-full"
               disabled={registerMutation.isPending}
             >
               {registerMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               ) : null}
               Đăng ký
             </Button>

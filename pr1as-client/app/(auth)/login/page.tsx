@@ -8,22 +8,27 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
-import { useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
+import { useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const token = useAuthStore((s) => s.token)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const user = useAuthStore((s) => s.user)
-  const clearAuth = useAuthStore((s) => s.clearAuth)
+  const token = useAuthStore((state) => state.token)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const user = useAuthStore((state) => state.user)
+  const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
@@ -39,7 +44,8 @@ export default function LoginPage() {
   const meSucceeded = meQuery.isSuccess && meQuery.data?.success === true
   const authenticatedUser = meQuery.data?.data?.user ?? user
   const fromPath = searchParams.get("from")
-  const safeFrom = fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
+  const safeFrom =
+    fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
   const redirectTarget =
     safeFrom ?? (authenticatedUser?.role === "admin" ? "/dashboard" : "/")
 
@@ -90,9 +96,7 @@ export default function LoginPage() {
   }
 
   const handleResendVerification = async () => {
-    if (!pendingVerificationEmail) {
-      return
-    }
+    if (!pendingVerificationEmail) return
 
     try {
       await resendVerificationMutation.mutateAsync({
@@ -111,62 +115,65 @@ export default function LoginPage() {
 
   return (
     <Card>
-      <CardHeader className="text-center">
-        <ShieldCheck className="mx-auto mb-2 size-10 text-primary" />
-        <CardTitle>ĐĂNG NHẬP</CardTitle>
+      <CardHeader className="items-center text-center">
+        <ShieldCheck className="size-10 text-primary" />
+        <CardTitle>Đăng nhập</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@example.com"
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              inputMode="email"
-              maxLength={254}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Mật khẩu</Label>
-            <div className="relative">
+      <CardContent className="flex flex-col gap-4">
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="name@example.com"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                maxLength={254}
                 required
-                minLength={8}
-                maxLength={128}
-                className="pr-10"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
-                onClick={() => setShowPassword((previous) => !previous)}
-                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </Button>
-            </div>
-          </div>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                />
+                <InputGroupAddon>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => setShowPassword((previous) => !previous)}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+          </FieldGroup>
           <Button
             type="submit"
             className="w-full"
             disabled={loginMutation.isPending}
           >
             {loginMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="animate-spin" />
             ) : null}
             Đăng nhập
           </Button>
@@ -180,7 +187,7 @@ export default function LoginPage() {
             disabled={resendVerificationMutation.isPending}
           >
             {resendVerificationMutation.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Loader2 className="animate-spin" />
             ) : null}
             Gửi lại email xác minh
           </Button>

@@ -21,19 +21,28 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAdminTransactions, useAdminTransactionStats } from "@/lib/hooks/use-admin-transactions"
-import type { AdminTransaction, AdminTransactionParams, AdminTransactionType } from "@/services/admin-wallet.service"
+import { Table } from "@/components/ui/table"
+import {
+  useAdminTransactions,
+  useAdminTransactionStats,
+} from "@/lib/hooks/use-admin-transactions"
+import type {
+  AdminTransaction,
+  AdminTransactionParams,
+  AdminTransactionType,
+} from "@/services/admin-wallet.service"
 import type { WalletTransactionStatus } from "@/services/wallet.service"
 
 const PAGE_SIZE = 15
 
-const STATUS_OPTIONS: { label: string; value: WalletTransactionStatus | "" }[] = [
-  { label: "Tất cả trạng thái", value: "" },
-  { label: "Chờ xử lý", value: "pending" },
-  { label: "Thành công", value: "success" },
-  { label: "Thất bại", value: "failed" },
-  { label: "Đã hủy", value: "cancelled" },
-]
+const STATUS_OPTIONS: { label: string; value: WalletTransactionStatus | "" }[] =
+  [
+    { label: "Tất cả trạng thái", value: "" },
+    { label: "Chờ xử lý", value: "pending" },
+    { label: "Thành công", value: "success" },
+    { label: "Thất bại", value: "failed" },
+    { label: "Đã hủy", value: "cancelled" },
+  ]
 
 const TYPE_OPTIONS: { label: string; value: AdminTransactionType | "" }[] = [
   { label: "Tất cả loại", value: "" },
@@ -79,14 +88,20 @@ const STATUS_CONFIG: Record<
 }
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount)
 }
 
 function formatDate(value?: string | null) {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "—"
-  return date.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })
+  return date.toLocaleString("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  })
 }
 
 function shortId(id: string) {
@@ -119,23 +134,30 @@ function TypeBadge({ type }: { type: AdminTransactionType }) {
   )
 }
 
-function BarChart({ data }: { data: { date: string; amount: number; label: string }[] }) {
+function BarChart({
+  data,
+}: {
+  data: { date: string; amount: number; label: string }[]
+}) {
   const max = Math.max(...data.map((d) => d.amount), 1)
   const display = data.slice(-21)
   return (
     <div className="space-y-2">
-      <div className="flex items-end gap-0.5 h-36">
+      <div className="flex h-36 items-end gap-0.5">
         {display.map((item) => {
           const pct = (item.amount / max) * 100
           return (
-            <div key={item.date} className="group relative flex flex-1 flex-col items-center">
-              <div className="absolute bottom-full mb-1.5 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
-                <div className="rounded bg-foreground px-2 py-1 text-xs text-background whitespace-nowrap shadow">
+            <div
+              key={item.date}
+              className="group relative flex flex-1 flex-col items-center"
+            >
+              <div className="pointer-events-none absolute bottom-full z-10 mb-1.5 hidden flex-col items-center group-hover:flex">
+                <div className="rounded bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background shadow">
                   {item.label}
                   <br />
                   {formatCurrency(item.amount)}
                 </div>
-                <div className="size-1.5 rotate-45 bg-foreground -mt-0.5" />
+                <div className="-mt-0.5 size-1.5 rotate-45 bg-foreground" />
               </div>
               <div
                 className="w-full rounded-t-sm bg-primary/75 transition-all hover:bg-primary"
@@ -172,10 +194,30 @@ function StatusBreakdown({
   const total = successCount + pendingCount + failedCount + cancelledCount
 
   const segments = [
-    { label: "Thành công", count: successCount, barClass: "bg-emerald-500", dotClass: "bg-emerald-500" },
-    { label: "Chờ xử lý", count: pendingCount, barClass: "bg-amber-400", dotClass: "bg-amber-400" },
-    { label: "Thất bại", count: failedCount, barClass: "bg-red-500", dotClass: "bg-red-500" },
-    { label: "Đã hủy", count: cancelledCount, barClass: "bg-gray-400", dotClass: "bg-gray-400" },
+    {
+      label: "Thành công",
+      count: successCount,
+      barClass: "bg-emerald-500",
+      dotClass: "bg-emerald-500",
+    },
+    {
+      label: "Chờ xử lý",
+      count: pendingCount,
+      barClass: "bg-amber-400",
+      dotClass: "bg-amber-400",
+    },
+    {
+      label: "Thất bại",
+      count: failedCount,
+      barClass: "bg-red-500",
+      dotClass: "bg-red-500",
+    },
+    {
+      label: "Đã hủy",
+      count: cancelledCount,
+      barClass: "bg-gray-400",
+      dotClass: "bg-gray-400",
+    },
   ]
 
   return (
@@ -193,12 +235,14 @@ function StatusBreakdown({
           <div className="w-full bg-muted" />
         )}
       </div>
-      <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
         {segments.map((seg) => (
           <div key={seg.label} className="flex items-center gap-2 text-sm">
             <div className={`size-2.5 shrink-0 rounded-sm ${seg.dotClass}`} />
             <span className="text-muted-foreground">{seg.label}</span>
-            <span className="ml-auto font-semibold tabular-nums">{seg.count}</span>
+            <span className="ml-auto font-semibold tabular-nums">
+              {seg.count}
+            </span>
           </div>
         ))}
       </div>
@@ -222,12 +266,20 @@ function StatCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={`rounded-lg p-1.5 ${iconClass ?? "bg-primary/10 text-primary"}`}>{icon}</div>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        <div
+          className={`rounded-lg p-1.5 ${iconClass ?? "bg-primary/10 text-primary"}`}
+        >
+          {icon}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold tabular-nums">{value}</div>
-        {sub ? <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p> : null}
+        {sub ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -265,7 +317,10 @@ function TransactionDetailModal({
       <div className="w-full max-w-lg rounded-xl border bg-background shadow-xl">
         <div className="flex items-center justify-between border-b px-5 py-4">
           <h2 className="font-semibold">Chi tiết giao dịch</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
             <X className="size-5" />
           </button>
         </div>
@@ -274,7 +329,7 @@ function TransactionDetailModal({
             {rows.map(([label, val]) => (
               <div key={label} className="flex gap-4 py-2.5">
                 <dt className="w-40 shrink-0 text-muted-foreground">{label}</dt>
-                <dd className="break-all font-medium">{val}</dd>
+                <dd className="font-medium break-all">{val}</dd>
               </div>
             ))}
           </dl>
@@ -326,11 +381,18 @@ export default function AdminTransactionsPage() {
     stats?.dailyData?.map((d) => ({
       date: d.date,
       amount: d.amount,
-      label: new Date(d.date).toLocaleDateString("vi-VN", { month: "numeric", day: "numeric" }),
+      label: new Date(d.date).toLocaleDateString("vi-VN", {
+        month: "numeric",
+        day: "numeric",
+      }),
     })) ?? []
 
   const hasFilters = Boolean(
-    filters.search || filters.status || filters.type || filters.startDate || filters.endDate,
+    filters.search ||
+    filters.status ||
+    filters.type ||
+    filters.startDate ||
+    filters.endDate
   )
 
   const applySearch = useCallback(
@@ -338,7 +400,7 @@ export default function AdminTransactionsPage() {
       e.preventDefault()
       setFilters((prev) => ({ ...prev, page: 1, search: searchInput.trim() }))
     },
-    [searchInput],
+    [searchInput]
   )
 
   const clearSearch = () => {
@@ -346,13 +408,24 @@ export default function AdminTransactionsPage() {
     setFilters((prev) => ({ ...prev, page: 1, search: "" }))
   }
 
-  const handleFilterChange = (key: keyof AdminTransactionParams, value: string) => {
+  const handleFilterChange = (
+    key: keyof AdminTransactionParams,
+    value: string
+  ) => {
     setFilters((prev) => ({ ...prev, page: 1, [key]: value }))
   }
 
   const clearFilters = () => {
     setSearchInput("")
-    setFilters({ page: 1, limit: PAGE_SIZE, search: "", status: "", type: "", startDate: "", endDate: "" })
+    setFilters({
+      page: 1,
+      limit: PAGE_SIZE,
+      search: "",
+      status: "",
+      type: "",
+      startDate: "",
+      endDate: "",
+    })
   }
 
   const handlePageChange = (page: number) => {
@@ -364,9 +437,13 @@ export default function AdminTransactionsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý giao dịch</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Quản lý giao dịch
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Tổng cộng <span className="font-medium text-foreground">{total}</span> giao dịch
+            Tổng cộng{" "}
+            <span className="font-medium text-foreground">{total}</span> giao
+            dịch
           </p>
         </div>
       </div>
@@ -375,7 +452,13 @@ export default function AdminTransactionsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Tổng nạp tiền (thành công)"
-          value={stats ? formatCurrency(stats.successAmount) : <Skeleton className="h-8 w-32" />}
+          value={
+            stats ? (
+              formatCurrency(stats.successAmount)
+            ) : (
+              <Skeleton className="h-8 w-32" />
+            )
+          }
           sub={stats ? `${stats.successCount} giao dịch` : undefined}
           icon={<TrendingUp className="size-4" />}
           iconClass="bg-emerald-100 text-emerald-600"
@@ -394,7 +477,13 @@ export default function AdminTransactionsPage() {
         />
         <StatCard
           title="Thất bại / Đã hủy"
-          value={stats ? stats.failedCount + stats.cancelledCount : <Skeleton className="h-8 w-16" />}
+          value={
+            stats ? (
+              stats.failedCount + stats.cancelledCount
+            ) : (
+              <Skeleton className="h-8 w-16" />
+            )
+          }
           icon={<AlertCircle className="size-4" />}
           iconClass="bg-red-100 text-red-600"
         />
@@ -452,7 +541,9 @@ export default function AdminTransactionsPage() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Bộ lọc</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Bộ lọc
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <form onSubmit={applySearch} className="flex gap-2">
@@ -481,7 +572,9 @@ export default function AdminTransactionsPage() {
 
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Trạng thái</label>
+              <label className="text-xs text-muted-foreground">
+                Trạng thái
+              </label>
               <select
                 className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                 value={filters.status ?? ""}
@@ -496,7 +589,9 @@ export default function AdminTransactionsPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Loại giao dịch</label>
+              <label className="text-xs text-muted-foreground">
+                Loại giao dịch
+              </label>
               <select
                 className="h-9 rounded-md border bg-background px-3 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
                 value={filters.type ?? ""}
@@ -516,7 +611,9 @@ export default function AdminTransactionsPage() {
                 type="date"
                 className="h-9 w-44"
                 value={filters.startDate ?? ""}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
               />
             </div>
 
@@ -545,7 +642,7 @@ export default function AdminTransactionsPage() {
       {/* Table */}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <Table>
             <thead className="border-b bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-left font-medium whitespace-nowrap text-muted-foreground">
@@ -582,7 +679,10 @@ export default function AdminTransactionsPage() {
                 <TableSkeleton />
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-muted-foreground">
+                  <td
+                    colSpan={9}
+                    className="py-16 text-center text-muted-foreground"
+                  >
                     Không tìm thấy giao dịch nào.
                   </td>
                 </tr>
@@ -618,9 +718,11 @@ export default function AdminTransactionsPage() {
                       {tx.gateway ?? "—"}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                      {tx.gateway_transaction_id ? shortId(tx.gateway_transaction_id) : "—"}
+                      {tx.gateway_transaction_id
+                        ? shortId(tx.gateway_transaction_id)
+                        : "—"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">
                       {formatDate(tx.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -636,7 +738,7 @@ export default function AdminTransactionsPage() {
                 ))
               )}
             </tbody>
-          </table>
+          </Table>
         </div>
 
         {totalPages > 1 ? (
@@ -655,7 +757,10 @@ export default function AdminTransactionsPage() {
               </Button>
 
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4))
+                const startPage = Math.max(
+                  1,
+                  Math.min(currentPage - 2, totalPages - 4)
+                )
                 const page = startPage + i
                 return (
                   <Button
@@ -692,7 +797,10 @@ export default function AdminTransactionsPage() {
       </Card>
 
       {detailTx ? (
-        <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
+        <TransactionDetailModal
+          tx={detailTx}
+          onClose={() => setDetailTx(null)}
+        />
       ) : null}
     </div>
   )

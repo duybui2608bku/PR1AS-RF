@@ -14,6 +14,7 @@ import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table } from "@/components/ui/table"
 import {
   useDepositTransactions,
   useWalletBalance,
@@ -151,7 +152,7 @@ export function WalletPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
+              <Table className="min-w-[760px]">
                 <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                   <tr>
                     <th className="px-4 py-3 font-medium">Mã nạp</th>
@@ -209,7 +210,7 @@ export function WalletPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -29,7 +29,10 @@ type CancelBookingDialogProps = {
   open: boolean
   loading?: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: { reason: CancellationReason; notes: string }) => Promise<void> | void
+  onSubmit: (values: {
+    reason: CancellationReason
+    notes: string
+  }) => Promise<void> | void
 }
 
 const REASON_OPTIONS: CancellationReason[] = [
@@ -46,17 +49,21 @@ export function CancelBookingDialog({
   onSubmit,
 }: CancelBookingDialogProps) {
   const [reason, setReason] = React.useState<CancellationReason>(
-    CancellationReason.CLIENT_REQUEST,
+    CancellationReason.CLIENT_REQUEST
   )
   const [notes, setNotes] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (!open) {
+    if (open) return
+
+    const resetTimer = window.setTimeout(() => {
       setReason(CancellationReason.CLIENT_REQUEST)
       setNotes("")
       setError(null)
-    }
+    }, 0)
+
+    return () => window.clearTimeout(resetTimer)
   }, [open])
 
   const handleConfirm = async () => {
@@ -115,9 +122,7 @@ export function CancelBookingDialog({
             />
           </div>
 
-          {error ? (
-            <p className="text-sm text-red-600">{error}</p>
-          ) : null}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
         </div>
 
         <DialogFooter>

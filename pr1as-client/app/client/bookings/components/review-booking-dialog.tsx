@@ -15,10 +15,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import {
-  REVIEW_RATING_LIMITS,
-  type ReviewRatingDetails,
-} from "@/types/review"
+import { REVIEW_RATING_LIMITS, type ReviewRatingDetails } from "@/types/review"
 
 type ReviewBookingDialogProps = {
   open: boolean
@@ -69,10 +66,7 @@ function StarRating({
   const active = hover || value
 
   return (
-    <div
-      className="flex items-center gap-1"
-      onMouseLeave={() => setHover(0)}
-    >
+    <div className="flex items-center gap-1" onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
@@ -83,7 +77,7 @@ function StarRating({
           onMouseEnter={() => setHover(n)}
           className={cn(
             "rounded-sm p-0.5 transition-colors",
-            "hover:text-amber-500 disabled:cursor-not-allowed disabled:opacity-50",
+            "hover:text-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
           )}
         >
           <Star
@@ -91,7 +85,7 @@ function StarRating({
               "size-6 transition-colors",
               n <= active
                 ? "fill-amber-400 text-amber-400"
-                : "text-muted-foreground",
+                : "text-muted-foreground"
             )}
           />
         </button>
@@ -106,16 +100,21 @@ export function ReviewBookingDialog({
   onOpenChange,
   onSubmit,
 }: ReviewBookingDialogProps) {
-  const [details, setDetails] = React.useState<ReviewRatingDetails>(DEFAULT_DETAILS)
+  const [details, setDetails] =
+    React.useState<ReviewRatingDetails>(DEFAULT_DETAILS)
   const [comment, setComment] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (!open) {
+    if (open) return
+
+    const resetTimer = window.setTimeout(() => {
       setDetails(DEFAULT_DETAILS)
       setComment("")
       setError(null)
-    }
+    }, 0)
+
+    return () => window.clearTimeout(resetTimer)
   }, [open])
 
   const overall = computeAverage(details)
@@ -124,7 +123,7 @@ export function ReviewBookingDialog({
     const trimmed = comment.trim()
     if (trimmed.length < REVIEW_RATING_LIMITS.MIN_COMMENT_LENGTH) {
       setError(
-        `Nhận xét phải có ít nhất ${REVIEW_RATING_LIMITS.MIN_COMMENT_LENGTH} ký tự.`,
+        `Nhận xét phải có ít nhất ${REVIEW_RATING_LIMITS.MIN_COMMENT_LENGTH} ký tự.`
       )
       return
     }

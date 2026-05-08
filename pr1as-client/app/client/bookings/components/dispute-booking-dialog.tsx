@@ -29,7 +29,10 @@ type DisputeBookingDialogProps = {
   open: boolean
   loading?: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: { reason: DisputeReason; description: string }) => Promise<void> | void
+  onSubmit: (values: {
+    reason: DisputeReason
+    description: string
+  }) => Promise<void> | void
 }
 
 const REASON_OPTIONS: DisputeReason[] = [
@@ -52,17 +55,21 @@ export function DisputeBookingDialog({
   onSubmit,
 }: DisputeBookingDialogProps) {
   const [reason, setReason] = React.useState<DisputeReason>(
-    DisputeReason.SERVICE_NOT_AS_DESCRIBED,
+    DisputeReason.SERVICE_NOT_AS_DESCRIBED
   )
   const [description, setDescription] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (!open) {
+    if (open) return
+
+    const resetTimer = window.setTimeout(() => {
       setReason(DisputeReason.SERVICE_NOT_AS_DESCRIBED)
       setDescription("")
       setError(null)
-    }
+    }, 0)
+
+    return () => window.clearTimeout(resetTimer)
   }, [open])
 
   const handleConfirm = async () => {
@@ -126,9 +133,7 @@ export function DisputeBookingDialog({
             </p>
           </div>
 
-          {error ? (
-            <p className="text-sm text-red-600">{error}</p>
-          ) : null}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
         </div>
 
         <DialogFooter>

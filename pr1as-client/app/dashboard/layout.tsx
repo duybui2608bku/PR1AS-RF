@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   CreditCard,
   LayoutDashboard,
@@ -13,15 +13,58 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-import { useAuthStore } from "@/lib/store/auth-store"
-import { useMe, useLogout } from "@/lib/hooks/use-auth"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+} from "@/components/ui/sidebar"
+import { useLogout, useMe } from "@/lib/hooks/use-auth"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
+
+const adminNavItems = [
+  {
+    href: "/dashboard",
+    label: "Tổng quan",
+    description: "Số liệu hệ thống",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/dashboard/users",
+    label: "Người dùng",
+    description: "Tài khoản và vai trò",
+    icon: Users,
+  },
+  {
+    href: "/dashboard/transactions",
+    label: "Giao dịch",
+    description: "Nạp tiền và trạng thái",
+    icon: CreditCard,
+  },
+  {
+    href: "/dashboard/disputes",
+    label: "Tranh chấp",
+    description: "Chat xử lý booking",
+    icon: MessageSquare,
+  },
+]
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/dashboard") return pathname === href
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const token = useAuthStore((s) => s.token)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((state) => state.token)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const user = useAuthStore((state) => state.user)
   const meQuery = useMe()
 
   const resolvedUser = meQuery.data?.data?.user ?? user
@@ -38,6 +81,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     if (meQuery.isSuccess && resolvedUser) {
       const roles = resolvedUser.roles ?? []
       const isAdmin = roles.includes("admin") || resolvedUser.role === "admin"
+
       if (!isAdmin) {
         toast.error("Bạn không có quyền truy cập trang quản trị.")
         router.replace("/")
@@ -71,7 +115,19 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
 function AdminSidebar() {
   const router = useRouter()
+  const pathname = usePathname()
   const logoutMutation = useLogout()
+  const user = useAuthStore((state) => state.user)
+
+  const displayName = user?.full_name || user?.name || "Admin"
+  const displayEmail = user?.email || "admin@pr1as.local"
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
 
   const handleLogout = async () => {
     try {
@@ -86,48 +142,82 @@ function AdminSidebar() {
   }
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r bg-background">
-      <div className="flex items-center gap-2 border-b px-5 py-4">
-        <LayoutDashboard className="size-5 text-primary" />
-        <span className="font-semibold tracking-tight">Admin Panel</span>
-      </div>
+    <Sidebar className="sticky top-0">
+      <SidebarHeader className="gap-3">
+        <div className="flex size-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+          <LayoutDashboard className="size-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold tracking-tight">
+            PR1AS Admin
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            Quản trị hệ thống
+          </p>
+        </div>
+      </SidebarHeader>
 
-      <nav className="flex-1 space-y-1 p-3">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <LayoutDashboard className="size-4" />
-          Tổng quan
-        </Link>
-        <Link
-          href="/dashboard/users"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <Users className="size-4" />
-          Quản lý người dùng
-        </Link>
-        <Link
-          href="/dashboard/transactions"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <CreditCard className="size-4" />
-          Giao dịch nạp tiền
-        </Link>
-        <Link
-          href="/dashboard/disputes"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
-        >
-          <MessageSquare className="size-4" />
-          Chat tranh chấp
-        </Link>
-      </nav>
+      <Separator className="bg-sidebar-border" />
 
-      <div className="border-t p-3">
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Điều hướng</SidebarGroupLabel>
+          {adminNavItems.map((item) => {
+            const Icon = item.icon
+            const active = isActiveRoute(pathname, item.href)
+
+            return (
+              <Button
+                key={item.href}
+                asChild
+                variant="ghost"
+                className={cn(
+                  "h-auto w-full justify-start rounded-lg px-3 py-2.5 text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  active &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs"
+                )}
+              >
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {item.label}
+                    </span>
+                    <span className="block truncate text-xs font-normal text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </span>
+                </Link>
+              </Button>
+            )
+          })}
+        </SidebarGroup>
+      </SidebarContent>
+
+      <Separator className="bg-sidebar-border" />
+
+      <SidebarFooter className="flex flex-col gap-3">
+        <div className="flex items-center gap-3 rounded-lg border border-sidebar-border bg-background/60 p-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+            {initials || "AD"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {displayEmail}
+            </p>
+          </div>
+          <Badge variant="outline" className="shrink-0">
+            Admin
+          </Badge>
+        </div>
+
         <Button
           variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2"
+          className="h-10 w-full justify-start rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={handleLogout}
           disabled={logoutMutation.isPending}
         >
@@ -138,8 +228,8 @@ function AdminSidebar() {
           )}
           Đăng xuất
         </Button>
-      </div>
-    </aside>
+      </SidebarFooter>
+    </Sidebar>
   )
 }
 
@@ -150,10 +240,10 @@ export default function DashboardLayout({
 }) {
   return (
     <AdminGuard>
-      <div className="flex min-h-svh bg-muted/30">
+      <div className="flex h-svh overflow-hidden bg-muted/30">
         <AdminSidebar />
-        <div className="flex flex-1 flex-col overflow-auto">
-          <main className="flex-1 p-6">{children}</main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main className="h-full overflow-y-auto p-4 md:p-6">{children}</main>
         </div>
       </div>
     </AdminGuard>

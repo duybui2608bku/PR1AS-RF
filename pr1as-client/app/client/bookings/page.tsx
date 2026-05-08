@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Table } from "@/components/ui/table"
 import {
   useCancelBooking,
   useCreateDispute,
@@ -74,39 +75,65 @@ const PAGE_SIZE = 10
 
 const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] = [
   { value: "all", label: "Tất cả trạng thái" },
-  { value: BookingStatus.PENDING, label: bookingStatusLabel[BookingStatus.PENDING] },
-  { value: BookingStatus.CONFIRMED, label: bookingStatusLabel[BookingStatus.CONFIRMED] },
-  { value: BookingStatus.IN_PROGRESS, label: bookingStatusLabel[BookingStatus.IN_PROGRESS] },
-  { value: BookingStatus.COMPLETED, label: bookingStatusLabel[BookingStatus.COMPLETED] },
-  { value: BookingStatus.CANCELLED, label: bookingStatusLabel[BookingStatus.CANCELLED] },
-  { value: BookingStatus.REJECTED, label: bookingStatusLabel[BookingStatus.REJECTED] },
-  { value: BookingStatus.DISPUTED, label: bookingStatusLabel[BookingStatus.DISPUTED] },
+  {
+    value: BookingStatus.PENDING,
+    label: bookingStatusLabel[BookingStatus.PENDING],
+  },
+  {
+    value: BookingStatus.CONFIRMED,
+    label: bookingStatusLabel[BookingStatus.CONFIRMED],
+  },
+  {
+    value: BookingStatus.IN_PROGRESS,
+    label: bookingStatusLabel[BookingStatus.IN_PROGRESS],
+  },
+  {
+    value: BookingStatus.COMPLETED,
+    label: bookingStatusLabel[BookingStatus.COMPLETED],
+  },
+  {
+    value: BookingStatus.CANCELLED,
+    label: bookingStatusLabel[BookingStatus.CANCELLED],
+  },
+  {
+    value: BookingStatus.REJECTED,
+    label: bookingStatusLabel[BookingStatus.REJECTED],
+  },
+  {
+    value: BookingStatus.DISPUTED,
+    label: bookingStatusLabel[BookingStatus.DISPUTED],
+  },
 ]
 
 export default function ClientBookingsPage() {
   const [page, setPage] = React.useState(1)
-  const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>("all")
+  const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>(
+    "all"
+  )
   const [startDate, setStartDate] = React.useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = React.useState<Date | undefined>(undefined)
 
   const [cancelTarget, setCancelTarget] = React.useState<Booking | null>(null)
   const [disputeTarget, setDisputeTarget] = React.useState<Booking | null>(null)
   const [reviewTarget, setReviewTarget] = React.useState<Booking | null>(null)
-  const [complaintLoadingId, setComplaintLoadingId] = React.useState<string | null>(
-    null,
-  )
+  const [complaintLoadingId, setComplaintLoadingId] = React.useState<
+    string | null
+  >(null)
 
   const router = useRouter()
   const currentUserId = useAuthStore((state) => state.user?.id ?? null)
 
-  const query = React.useMemo<BookingListQuery>(() => ({
-    page,
-    limit: PAGE_SIZE,
-    role: "client",
-    status: statusFilter === "all" ? undefined : statusFilter,
-    start_date: startDate ? startDate.toISOString() : undefined,
-    end_date: endDate ? endDate.toISOString() : undefined,
-  }), [page, statusFilter, startDate, endDate])
+  const query = React.useMemo<BookingListQuery>(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      role: "client",
+      status: statusFilter === "all" ? undefined : statusFilter,
+      start_date: startDate ? startDate.toISOString() : undefined,
+      end_date: endDate ? endDate.toISOString() : undefined,
+    }),
+    [page, statusFilter, startDate, endDate]
+  )
 
   const bookingsQuery = useMyBookings(query)
   const cancelMutation = useCancelBooking()
@@ -285,7 +312,9 @@ export default function ClientBookingsPage() {
           ) : bookingsQuery.isError ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
               <AlertCircle className="size-9 text-red-600" />
-              <p className="text-sm font-medium">Không tải được danh sách booking</p>
+              <p className="text-sm font-medium">
+                Không tải được danh sách booking
+              </p>
               <Button
                 size="sm"
                 variant="outline"
@@ -318,7 +347,7 @@ export default function ClientBookingsPage() {
                 })}
               </div>
               <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[920px] text-sm">
+                <Table className="min-w-[920px]">
                   <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                     <tr>
                       <th className="px-4 py-3 font-medium">Dịch vụ</th>
@@ -326,34 +355,51 @@ export default function ClientBookingsPage() {
                       <th className="px-4 py-3 font-medium">Lịch hẹn</th>
                       <th className="px-4 py-3 font-medium">Trạng thái</th>
                       <th className="px-4 py-3 font-medium">Ngày tạo</th>
-                      <th className="px-4 py-3 font-medium text-right">Hành động</th>
+                      <th className="px-4 py-3 text-right font-medium">
+                        Hành động
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {bookings.map((booking) => {
-                      const expired = isBookingExpired(booking.schedule, booking.status)
-                      const displayStatus = expired ? BookingStatus.EXPIRED : booking.status
-                      const showCancel = !expired && canCancelBooking(booking.status)
-                      const showDispute = !expired && canComplainBooking(booking.status)
-                      const showReview = booking.status === BookingStatus.COMPLETED
-                      const showComplaintGroup = booking.status === BookingStatus.DISPUTED
+                      const expired = isBookingExpired(
+                        booking.schedule,
+                        booking.status
+                      )
+                      const displayStatus = expired
+                        ? BookingStatus.EXPIRED
+                        : booking.status
+                      const showCancel =
+                        !expired && canCancelBooking(booking.status)
+                      const showDispute =
+                        !expired && canComplainBooking(booking.status)
+                      const showReview =
+                        booking.status === BookingStatus.COMPLETED
+                      const showComplaintGroup =
+                        booking.status === BookingStatus.DISPUTED
                       const bookingId = getBookingId(booking)
                       const complaintLoading = complaintLoadingId === bookingId
 
                       return (
                         <tr
                           key={bookingId}
-                          className="border-b last:border-b-0 align-top"
+                          className="border-b align-top last:border-b-0"
                         >
                           <td className="px-4 py-3">
-                            <div className="font-medium">{getServiceLabel(booking)}</div>
-                            <div className="text-xs uppercase text-muted-foreground">
+                            <div className="font-medium">
+                              {getServiceLabel(booking)}
+                            </div>
+                            <div className="text-xs text-muted-foreground uppercase">
                               {booking.service_code}
                             </div>
                           </td>
-                          <td className="px-4 py-3">{getWorkerName(booking.worker_id)}</td>
                           <td className="px-4 py-3">
-                            <div>{formatDateTime(booking.schedule.start_time)}</div>
+                            {getWorkerName(booking.worker_id)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              {formatDateTime(booking.schedule.start_time)}
+                            </div>
                             <div className="text-xs text-muted-foreground">
                               Thời lượng: {booking.schedule.duration_hours} giờ
                             </div>
@@ -363,12 +409,13 @@ export default function ClientBookingsPage() {
                               <span
                                 className={cn(
                                   "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
-                                  bookingStatusBadgeClass[displayStatus],
+                                  bookingStatusBadgeClass[displayStatus]
                                 )}
                               >
                                 {bookingStatusLabel[displayStatus]}
                               </span>
-                              {booking.status === BookingStatus.CANCELLED && booking.cancellation ? (
+                              {booking.status === BookingStatus.CANCELLED &&
+                              booking.cancellation ? (
                                 <HoverCard openDelay={100} closeDelay={100}>
                                   <HoverCardTrigger asChild>
                                     <button
@@ -379,27 +426,50 @@ export default function ClientBookingsPage() {
                                       <Info className="size-4" />
                                     </button>
                                   </HoverCardTrigger>
-                                  <HoverCardContent align="start" className="text-xs">
+                                  <HoverCardContent
+                                    align="start"
+                                    className="text-xs"
+                                  >
                                     <div className="space-y-1.5">
                                       <div>
-                                        <span className="text-muted-foreground">Lý do: </span>
+                                        <span className="text-muted-foreground">
+                                          Lý do:{" "}
+                                        </span>
                                         <span className="font-medium">
-                                          {cancellationReasonLabel[booking.cancellation.reason]}
+                                          {
+                                            cancellationReasonLabel[
+                                              booking.cancellation.reason
+                                            ]
+                                          }
                                         </span>
                                       </div>
                                       <div>
-                                        <span className="text-muted-foreground">Bởi: </span>
+                                        <span className="text-muted-foreground">
+                                          Bởi:{" "}
+                                        </span>
                                         <span className="font-medium">
-                                          {cancelledByLabel[booking.cancellation.cancelled_by]}
+                                          {
+                                            cancelledByLabel[
+                                              booking.cancellation.cancelled_by
+                                            ]
+                                          }
                                         </span>
                                       </div>
                                       <div>
-                                        <span className="text-muted-foreground">Thời điểm: </span>
-                                        <span>{formatDateTime(booking.cancellation.cancelled_at)}</span>
+                                        <span className="text-muted-foreground">
+                                          Thời điểm:{" "}
+                                        </span>
+                                        <span>
+                                          {formatDateTime(
+                                            booking.cancellation.cancelled_at
+                                          )}
+                                        </span>
                                       </div>
                                       {booking.cancellation.notes ? (
                                         <div>
-                                          <div className="text-muted-foreground">Ghi chú:</div>
+                                          <div className="text-muted-foreground">
+                                            Ghi chú:
+                                          </div>
                                           <div className="whitespace-pre-wrap">
                                             {booking.cancellation.notes}
                                           </div>
@@ -420,7 +490,9 @@ export default function ClientBookingsPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleOpenComplaintGroup(booking)}
+                                  onClick={() =>
+                                    handleOpenComplaintGroup(booking)
+                                  }
                                   disabled={complaintLoading}
                                 >
                                   {complaintLoading ? (
@@ -467,7 +539,7 @@ export default function ClientBookingsPage() {
                       )
                     })}
                   </tbody>
-                </table>
+                </Table>
               </div>
             </>
           )}

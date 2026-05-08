@@ -14,18 +14,14 @@ type AuthGuardProps = {
 export function AuthGuard({ children, redirectTo = "/login" }: AuthGuardProps) {
   const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const [hydrated, setHydrated] = React.useState(false)
-
-  React.useEffect(() => {
-    if (useAuthStore.persist.hasHydrated()) {
-      setHydrated(true)
-      return
-    }
-    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true))
-    return () => {
-      unsub()
-    }
-  }, [])
+  const hydrated = React.useSyncExternalStore(
+    React.useCallback((onStoreChange) => {
+      if (useAuthStore.persist.hasHydrated()) return () => undefined
+      return useAuthStore.persist.onFinishHydration(onStoreChange)
+    }, []),
+    () => useAuthStore.persist.hasHydrated(),
+    () => true
+  )
 
   React.useEffect(() => {
     if (hydrated && !isAuthenticated) {

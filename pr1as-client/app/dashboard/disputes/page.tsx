@@ -1,43 +1,71 @@
 "use client"
 
 import * as React from "react"
-import { Loader2, MessageSquare, Send, Users } from "lucide-react"
+import { AlertCircle, Loader2, MessageSquare, Send, Users } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
 import {
   useGroupConversations,
   useGroupMessages,
-  useSendGroupMessage,
   useMarkGroupMessagesRead,
+  useSendGroupMessage,
 } from "@/lib/hooks/use-chat"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { queryKeys } from "@/lib/query-keys"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type {
   GroupChatConversation,
   GroupChatMessage,
 } from "@/services/chat.service"
 
+const EMPTY_CONVERSATIONS: GroupChatConversation[] = []
+const EMPTY_MESSAGES: GroupChatMessage[] = []
+
 function formatTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ""
+
   return date.toLocaleString("vi-VN", {
     dateStyle: "short",
     timeStyle: "short",
   })
 }
 
+function getConversationName(conversation: GroupChatConversation) {
+  return conversation.name || `Tranh chấp #${conversation._id.slice(-6)}`
+}
+
 function ConversationSkeleton() {
   return (
-    <div className="space-y-1 p-2">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-1 rounded-lg p-3">
+    <div className="space-y-2 p-3">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="space-y-2 rounded-lg border p-3">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
+          <Skeleton className="h-3 w-20" />
         </div>
       ))}
     </div>
@@ -47,63 +75,88 @@ function ConversationSkeleton() {
 function MessageSkeleton() {
   return (
     <div className="flex flex-col gap-3 p-4">
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, index) => (
         <div
-          key={i}
-          className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+          key={index}
+          className={`flex ${index % 2 === 0 ? "justify-start" : "justify-end"}`}
         >
-          <Skeleton className="h-10 w-48 rounded-2xl" />
+          <Skeleton className="h-11 w-52 rounded-xl" />
         </div>
       ))}
     </div>
   )
 }
 
-function ConversationItem({
-  conv,
-  selected,
-  onClick,
+function EmptyState({
+  title,
+  description,
 }: {
-  conv: GroupChatConversation
-  selected: boolean
-  onClick: () => void
+  title: string
+  description: string
 }) {
-  const lastMsg = conv.last_message_data
   return (
-    <button
+    <Empty className="h-full min-h-56 border-0">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <MessageSquare className="size-4" />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  )
+}
+
+function ConversationItem({
+  conversation,
+  selected,
+  onSelect,
+}: {
+  conversation: GroupChatConversation
+  selected: boolean
+  onSelect: () => void
+}) {
+  const lastMessage = conversation.last_message_data
+  const unreadCount = conversation.unread_count ?? 0
+
+  return (
+    <Button
       type="button"
-      onClick={onClick}
-      className={`w-full rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted/60 ${
-        selected ? "bg-muted" : ""
-      }`}
+      variant={selected ? "outline" : "ghost"}
+      onClick={onSelect}
+      className="h-auto w-full justify-start rounded-lg px-3 py-3 text-left"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">
-            {conv.name || `Tranh chấp #${conv._id.slice(-6)}`}
-          </p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {lastMsg ? lastMsg.content : "Chưa có tin nhắn"}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {lastMsg && (
-            <span className="text-[10px] whitespace-nowrap text-muted-foreground">
-              {formatTime(lastMsg.created_at)}
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="flex items-start justify-between gap-3">
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium">
+              {getConversationName(conversation)}
             </span>
-          )}
-          {(conv.unread_count ?? 0) > 0 && (
-            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-              {conv.unread_count}
+            <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+              {lastMessage?.content || "Chưa có tin nhắn"}
             </span>
-          )}
-        </div>
-      </div>
-      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-        <Users className="size-3" />
-        <span>{conv.members.length} thành viên</span>
-      </div>
-    </button>
+          </span>
+
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            {lastMessage ? (
+              <span className="text-[10px] font-normal text-muted-foreground">
+                {formatTime(lastMessage.created_at)}
+              </span>
+            ) : null}
+            {unreadCount > 0 ? (
+              <Badge className="h-5 min-w-5 px-1.5 text-[10px]">
+                {unreadCount}
+              </Badge>
+            ) : null}
+          </span>
+        </span>
+
+        <span className="flex items-center gap-1.5 text-[10px] font-normal text-muted-foreground">
+          <Users className="size-3" />
+          {conversation.members.length} thành viên
+        </span>
+      </span>
+    </Button>
   )
 }
 
@@ -119,15 +172,23 @@ function ChatMessages({
   const messagesQuery = useGroupMessages(conversationGroupId, { limit: 100 })
   const bottomRef = React.useRef<HTMLDivElement>(null)
 
-  const fetchedMessages = messagesQuery.data?.messages ?? []
-  const socketIds = new Set(socketMessages.map((m) => m._id))
-  const allMessages = [
-    ...fetchedMessages.filter((m) => !socketIds.has(m._id)),
-    ...socketMessages,
-  ].sort(
-    (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  )
+  const allMessages = React.useMemo(() => {
+    const fetchedMessages = messagesQuery.data?.messages ?? EMPTY_MESSAGES
+    const socketMessageIds = new Set(
+      socketMessages.map((message) => message._id)
+    )
+
+    return [
+      ...fetchedMessages.filter(
+        (message) => !socketMessageIds.has(message._id)
+      ),
+      ...socketMessages,
+    ].sort(
+      (left, right) =>
+        new Date(left.created_at).getTime() -
+        new Date(right.created_at).getTime()
+    )
+  }, [messagesQuery.data?.messages, socketMessages])
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -135,42 +196,62 @@ function ChatMessages({
 
   if (messagesQuery.isLoading) return <MessageSkeleton />
 
+  if (messagesQuery.isError) {
+    return (
+      <div className="p-4">
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Không tải được tin nhắn</AlertTitle>
+          <AlertDescription>
+            {getErrorMessage(messagesQuery.error, "Vui lòng thử lại sau.")}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   if (allMessages.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Chưa có tin nhắn nào.</p>
-      </div>
+      <EmptyState
+        title="Chưa có tin nhắn"
+        description="Cuộc tranh chấp này chưa có trao đổi nào."
+      />
     )
   }
 
   return (
     <div className="flex flex-col gap-2 p-4">
-      {allMessages.map((msg) => {
-        const isMe = msg.sender_id === currentUserId
+      {allMessages.map((message) => {
+        const isCurrentUser = message.sender_id === currentUserId
+
         return (
           <div
-            key={msg._id}
-            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+            key={message._id}
+            className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
-                isMe
+              className={`max-w-[min(70%,42rem)] rounded-xl px-4 py-2 text-sm shadow-xs ${
+                isCurrentUser
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
+                  : "border bg-card text-card-foreground"
               }`}
             >
-              {!isMe && (
-                <p className="mb-1 text-[10px] font-semibold opacity-60">
-                  {msg.sender_id.slice(-8)}
+              {!isCurrentUser ? (
+                <p className="mb-1 text-[10px] font-semibold text-muted-foreground">
+                  {message.sender_id.slice(-8)}
                 </p>
-              )}
-              <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+              ) : null}
+              <p className="break-words whitespace-pre-wrap">
+                {message.content}
+              </p>
               <p
                 className={`mt-1 text-right text-[10px] ${
-                  isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                  isCurrentUser
+                    ? "text-primary-foreground/70"
+                    : "text-muted-foreground"
                 }`}
               >
-                {formatTime(msg.created_at)}
+                {formatTime(message.created_at)}
               </p>
             </div>
           </div>
@@ -183,25 +264,31 @@ function ChatMessages({
 
 export default function AdminDisputesPage() {
   const queryClient = useQueryClient()
-  const currentUserId = useAuthStore((s) => s.user?.id ?? "")
+  const currentUserId = useAuthStore((state) => state.user?.id ?? "")
   const { socket } = useChatSocket()
 
-  const [selectedConvId, setSelectedConvId] = React.useState<string | null>(
-    null
-  )
-  const [selectedConv, setSelectedConv] =
-    React.useState<GroupChatConversation | null>(null)
+  const [selectedConversationId, setSelectedConversationId] = React.useState<
+    string | null
+  >(null)
   const [input, setInput] = React.useState("")
   const [socketMessages, setSocketMessages] = React.useState<
     GroupChatMessage[]
   >([])
-  const prevConvIdRef = React.useRef<string | null>(null)
+  const previousConversationIdRef = React.useRef<string | null>(null)
 
   const conversationsQuery = useGroupConversations({ limit: 50 })
   const sendMessageMutation = useSendGroupMessage()
   const markReadMutation = useMarkGroupMessagesRead()
 
-  const conversations = conversationsQuery.data?.conversations ?? []
+  const conversations =
+    conversationsQuery.data?.conversations ?? EMPTY_CONVERSATIONS
+  const selectedConversation = React.useMemo(
+    () =>
+      conversations.find(
+        (conversation) => conversation._id === selectedConversationId
+      ) ?? null,
+    [conversations, selectedConversationId]
+  )
 
   React.useEffect(() => {
     if (!socket) return
@@ -210,10 +297,18 @@ export default function AdminDisputesPage() {
       message: GroupChatMessage
       conversation: GroupChatConversation
     }) => {
-      if (payload.conversation._id !== selectedConvId) return
-      setSocketMessages((prev) => {
-        if (prev.find((m) => m._id === payload.message._id)) return prev
-        return [...prev, payload.message]
+      if (payload.conversation._id !== selectedConversationId) return
+
+      setSocketMessages((previousMessages) => {
+        if (
+          previousMessages.some(
+            (message) => message._id === payload.message._id
+          )
+        ) {
+          return previousMessages
+        }
+
+        return [...previousMessages, payload.message]
       })
       queryClient.invalidateQueries({
         queryKey: queryKeys.chat.groupConversationsRoot,
@@ -224,165 +319,189 @@ export default function AdminDisputesPage() {
     return () => {
       socket.off("new_message", handler as never)
     }
-  }, [socket, selectedConvId, queryClient])
+  }, [socket, selectedConversationId, queryClient])
 
   React.useEffect(() => {
     if (!socket) return
 
-    if (prevConvIdRef.current && prevConvIdRef.current !== selectedConvId) {
+    if (
+      previousConversationIdRef.current &&
+      previousConversationIdRef.current !== selectedConversationId
+    ) {
       socket.emit("leave_group_conversation", {
-        conversation_group_id: prevConvIdRef.current,
+        conversation_group_id: previousConversationIdRef.current,
       })
     }
 
-    if (selectedConvId) {
+    if (selectedConversationId) {
       socket.emit("join_group_conversation", {
-        conversation_group_id: selectedConvId,
+        conversation_group_id: selectedConversationId,
       })
-      markReadMutation.mutate({ conversation_group_id: selectedConvId })
+      markReadMutation.mutate({ conversation_group_id: selectedConversationId })
     }
 
-    prevConvIdRef.current = selectedConvId
-  }, [socket, selectedConvId]) // eslint-disable-line react-hooks/exhaustive-deps
+    previousConversationIdRef.current = selectedConversationId
+  }, [socket, selectedConversationId, markReadMutation])
 
-  const handleSelectConversation = (conv: GroupChatConversation) => {
-    if (conv._id === selectedConvId) return
-    setSelectedConvId(conv._id)
-    setSelectedConv(conv)
-    setSocketMessages([])
-  }
+  const handleSelectConversation = React.useCallback(
+    (conversation: GroupChatConversation) => {
+      if (conversation._id === selectedConversationId) return
+      setSelectedConversationId(conversation._id)
+      setSocketMessages([])
+    },
+    [selectedConversationId]
+  )
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSend = async (event: React.FormEvent) => {
+    event.preventDefault()
+
     const text = input.trim()
-    if (!text || !selectedConv) return
+    if (!text || !selectedConversation) return
+
     setInput("")
     try {
       await sendMessageMutation.mutateAsync({
-        booking_id: selectedConv.booking_id,
+        booking_id: selectedConversation.booking_id,
         type: "text",
         content: text,
       })
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Không thể gửi tin nhắn."))
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Không thể gửi tin nhắn."))
       setInput(text)
     }
   }
 
   return (
     <div className="flex h-[calc(100svh-6rem)] flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Chat tranh chấp</h1>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="size-5 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight">Chat tranh chấp</h1>
+        </div>
         <p className="text-sm text-muted-foreground">
           Giải quyết các tranh chấp booking đang mở.
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-xl border bg-background shadow-sm">
-        {/* Left — conversation list */}
-        <aside className="flex w-72 shrink-0 flex-col border-r">
-          <div className="border-b px-4 py-3">
-            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Các cuộc tranh chấp
-            </p>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2">
+      <Card className="grid min-h-0 flex-1 overflow-hidden rounded-lg lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <section className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
+          <CardHeader className="space-y-1 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-sm">Cuộc tranh chấp</CardTitle>
+                <CardDescription>
+                  {conversations.length} cuộc hội thoại
+                </CardDescription>
+              </div>
+              <Badge variant="outline">{conversations.length}</Badge>
+            </div>
+          </CardHeader>
+          <Separator />
+
+          <ScrollArea className="min-h-0 flex-1">
             {conversationsQuery.isLoading ? (
               <ConversationSkeleton />
+            ) : conversationsQuery.isError ? (
+              <div className="p-3">
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Không tải được danh sách</AlertTitle>
+                  <AlertDescription>
+                    {getErrorMessage(
+                      conversationsQuery.error,
+                      "Vui lòng thử lại sau."
+                    )}
+                  </AlertDescription>
+                </Alert>
+              </div>
             ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <MessageSquare className="mb-2 size-8 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  Không có tranh chấp nào.
-                </p>
-              </div>
+              <EmptyState
+                title="Không có tranh chấp"
+                description="Hiện chưa có cuộc hội thoại tranh chấp nào."
+              />
             ) : (
-              conversations.map((conv) => (
-                <ConversationItem
-                  key={conv._id}
-                  conv={conv}
-                  selected={selectedConvId === conv._id}
-                  onClick={() => handleSelectConversation(conv)}
-                />
-              ))
+              <div className="space-y-2 p-3">
+                {conversations.map((conversation) => (
+                  <ConversationItem
+                    key={conversation._id}
+                    conversation={conversation}
+                    selected={selectedConversationId === conversation._id}
+                    onSelect={() => handleSelectConversation(conversation)}
+                  />
+                ))}
+              </div>
             )}
-          </div>
-        </aside>
+          </ScrollArea>
+        </section>
 
-        {/* Right — chat panel */}
-        {selectedConvId && selectedConv ? (
-          <div className="flex min-w-0 flex-1 flex-col">
-            {/* Chat header */}
-            <div className="flex items-center gap-3 border-b px-5 py-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-orange-100">
-                <MessageSquare className="size-4 text-orange-600" />
+        {selectedConversationId && selectedConversation ? (
+          <section className="flex min-h-0 flex-col">
+            <CardHeader className="flex-row items-center gap-3 space-y-0 p-4">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted">
+                <MessageSquare className="size-4 text-primary" />
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">
-                  {selectedConv.name ||
-                    `Tranh chấp #${selectedConv._id.slice(-6)}`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Booking ID: {selectedConv.booking_id.slice(-8)} &middot;{" "}
-                  {selectedConv.members.length} thành viên
-                </p>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="truncate text-base">
+                  {getConversationName(selectedConversation)}
+                </CardTitle>
+                <CardDescription className="truncate">
+                  Booking #{selectedConversation.booking_id.slice(-8)}
+                </CardDescription>
               </div>
-            </div>
+              <Badge variant="secondary" className="gap-1">
+                <Users className="size-3" />
+                {selectedConversation.members.length}
+              </Badge>
+            </CardHeader>
+            <Separator />
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto">
+            <ScrollArea className="min-h-0 flex-1">
               <ChatMessages
-                conversationGroupId={selectedConvId}
+                conversationGroupId={selectedConversationId}
                 currentUserId={currentUserId}
                 socketMessages={socketMessages}
               />
-            </div>
+            </ScrollArea>
 
-            {/* Send input */}
-            <form
-              onSubmit={handleSend}
-              className="flex items-end gap-2 border-t px-4 py-3"
-            >
-              <input
-                className="flex-1 rounded-xl border bg-muted/40 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
-                placeholder="Nhập tin nhắn..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend(e as unknown as React.FormEvent)
-                  }
-                }}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!input.trim() || sendMessageMutation.isPending}
-                className="h-10 w-10 shrink-0 rounded-xl"
-              >
-                {sendMessageMutation.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Send className="size-4" />
-                )}
-              </Button>
-            </form>
-          </div>
+            <Separator />
+            <CardContent className="p-3">
+              <form onSubmit={handleSend} className="flex items-end gap-2">
+                <Textarea
+                  className="min-h-10 flex-1 resize-none rounded-lg"
+                  placeholder="Nhập tin nhắn..."
+                  rows={1}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault()
+                      event.currentTarget.form?.requestSubmit()
+                    }
+                  }}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!input.trim() || sendMessageMutation.isPending}
+                  className="size-10 shrink-0 rounded-lg"
+                  aria-label="Gửi tin nhắn"
+                >
+                  {sendMessageMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </section>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-            <MessageSquare className="size-12 text-muted-foreground/30" />
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Chọn một cuộc tranh chấp
-              </p>
-              <p className="text-xs text-muted-foreground">
-                để xem và trả lời tin nhắn
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            title="Chọn một cuộc tranh chấp"
+            description="Chọn hội thoại ở danh sách bên trái để xem và trả lời tin nhắn."
+          />
         )}
-      </div>
+      </Card>
     </div>
   )
 }

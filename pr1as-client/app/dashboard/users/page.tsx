@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Table } from "@/components/ui/table"
 import { useGetUsers, useUpdateUserStatus } from "@/lib/hooks/use-users"
 import type {
   GetUsersParams,
@@ -378,7 +379,7 @@ export default function AdminUsersPage() {
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <Table>
             <thead className="border-b bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-left font-medium whitespace-nowrap text-muted-foreground">
@@ -513,7 +514,7 @@ export default function AdminUsersPage() {
                 ))
               )}
             </tbody>
-          </table>
+          </Table>
         </div>
 
         {totalPages > 1 ? (
