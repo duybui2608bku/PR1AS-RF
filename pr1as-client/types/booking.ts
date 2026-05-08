@@ -170,6 +170,15 @@ export type CancelBookingPayload = {
   notes?: string
 }
 
+export type UpdateBookingStatusPayload = {
+  status: BookingStatus
+  worker_response?: string
+}
+
+export type UpdateBookingPayload = {
+  worker_response?: string
+}
+
 export type CreateDisputePayload = {
   reason: DisputeReason
   description: string

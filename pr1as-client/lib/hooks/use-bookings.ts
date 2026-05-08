@@ -6,12 +6,17 @@ import { toast } from "sonner"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
-import { bookingService } from "@/services/booking.service"
+import {
+  bookingService,
+  type WorkerBookingScheduleQuery,
+} from "@/services/booking.service"
 import type {
   BookingListQuery,
   CancelBookingPayload,
   CreateBookingPayload,
   CreateDisputePayload,
+  UpdateBookingPayload,
+  UpdateBookingStatusPayload,
 } from "@/types/booking"
 
 export function useMyBookings(query: BookingListQuery) {
@@ -22,6 +27,17 @@ export function useMyBookings(query: BookingListQuery) {
     queryFn: () => bookingService.getMyBookings(query),
     enabled: isAuthenticated,
     staleTime: 15_000,
+  })
+}
+
+export function useWorkerBookingSchedule(query: WorkerBookingScheduleQuery) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  return useQuery({
+    queryKey: queryKeys.bookings.schedule(query as Record<string, unknown>),
+    queryFn: () => bookingService.getMyWorkerBookingSchedule(query),
+    enabled: Boolean(isAuthenticated && query.start_date && query.end_date),
+    staleTime: 30_000,
   })
 }
 
@@ -56,8 +72,13 @@ export function useCancelBooking() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: CancelBookingPayload }) =>
-      bookingService.cancelBooking(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: CancelBookingPayload
+    }) => bookingService.cancelBooking(id, payload),
     onSuccess: () => {
       toast.success("Đã hủy booking.")
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })
@@ -68,12 +89,59 @@ export function useCancelBooking() {
   })
 }
 
+export function useUpdateBookingStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: UpdateBookingStatusPayload
+    }) => bookingService.updateBookingStatus(id, payload),
+    onSuccess: () => {
+      toast.success("Đã cập nhật trạng thái booking.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể cập nhật booking."))
+    },
+  })
+}
+
+export function useUpdateBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: UpdateBookingPayload
+    }) => bookingService.updateBooking(id, payload),
+    onSuccess: () => {
+      toast.success("Đã cập nhật booking.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể cập nhật booking."))
+    },
+  })
+}
+
 export function useCreateDispute() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: CreateDisputePayload }) =>
-      bookingService.createDispute(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: CreateDisputePayload
+    }) => bookingService.createDispute(id, payload),
     onSuccess: () => {
       toast.success("Đã gửi khiếu nại.")
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })

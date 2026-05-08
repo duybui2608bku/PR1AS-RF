@@ -16,6 +16,13 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
     profile: "/client/profile",
     wallet: "/client/wallet",
   },
+  worker: {
+    booking: "/worker/bookings",
+    chat: "/chat",
+    posts: "/posts",
+    profile: "/profile",
+    wallet: "/wallet",
+  },
 }
 
 export function getRoleRoute(

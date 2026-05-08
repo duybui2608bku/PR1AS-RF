@@ -6,6 +6,8 @@ import type {
   CancelBookingPayload,
   CreateBookingPayload,
   CreateDisputePayload,
+  UpdateBookingPayload,
+  UpdateBookingStatusPayload,
 } from "@/types/booking"
 
 type ApiResponse<T> = {
@@ -14,6 +16,13 @@ type ApiResponse<T> = {
   message?: string
   data?: T
 }
+
+export type WorkerBookingScheduleQuery = {
+  start_date: string
+  end_date: string
+}
+
+const SCHEDULE_PAGE_SIZE = 100
 
 const emptyList: BookingListResponse = {
   data: [],
@@ -27,7 +36,9 @@ const emptyList: BookingListResponse = {
   },
 }
 
-const buildParams = (query: BookingListQuery): Record<string, string | number> => {
+const buildParams = (
+  query: BookingListQuery
+): Record<string, string | number> => {
   const params: Record<string, string | number> = {
     page: query.page ?? 1,
     limit: query.limit ?? 10,
@@ -41,18 +52,42 @@ const buildParams = (query: BookingListQuery): Record<string, string | number> =
   return params
 }
 
+const getMyBookings = async (query: BookingListQuery = {}) => {
+  const response = await api.get<ApiResponse<BookingListResponse>>(
+    "/bookings/my",
+    { params: buildParams(query) }
+  )
+  return response.data.data ?? emptyList
+}
+
 export const bookingService = {
   createBooking: async (payload: CreateBookingPayload) => {
     const response = await api.post<ApiResponse<Booking>>("/bookings", payload)
     return response.data.data
   },
 
-  getMyBookings: async (query: BookingListQuery = {}) => {
-    const response = await api.get<ApiResponse<BookingListResponse>>(
-      "/bookings/my",
-      { params: buildParams(query) },
-    )
-    return response.data.data ?? emptyList
+  getMyBookings,
+
+  getMyWorkerBookingSchedule: async (query: WorkerBookingScheduleQuery) => {
+    const bookings: Booking[] = []
+    let page = 1
+    let totalPages = 1
+
+    do {
+      const response = await getMyBookings({
+        role: "worker",
+        page,
+        limit: SCHEDULE_PAGE_SIZE,
+        start_date: query.start_date,
+        end_date: query.end_date,
+      })
+
+      bookings.push(...response.data)
+      totalPages = Math.max(response.pagination.totalPages, 1)
+      page += 1
+    } while (page <= totalPages)
+
+    return bookings
   },
 
   getBookingById: async (id: string) => {
@@ -63,7 +98,26 @@ export const bookingService = {
   cancelBooking: async (id: string, payload: CancelBookingPayload) => {
     const response = await api.patch<ApiResponse<Booking>>(
       `/bookings/${id}/cancel`,
-      payload,
+      payload
+    )
+    return response.data.data
+  },
+
+  updateBookingStatus: async (
+    id: string,
+    payload: UpdateBookingStatusPayload
+  ) => {
+    const response = await api.patch<ApiResponse<Booking>>(
+      `/bookings/${id}/status`,
+      payload
+    )
+    return response.data.data
+  },
+
+  updateBooking: async (id: string, payload: UpdateBookingPayload) => {
+    const response = await api.patch<ApiResponse<Booking>>(
+      `/bookings/${id}`,
+      payload
     )
     return response.data.data
   },
@@ -71,7 +125,7 @@ export const bookingService = {
   createDispute: async (id: string, payload: CreateDisputePayload) => {
     const response = await api.post<ApiResponse<Booking>>(
       `/bookings/${id}/dispute`,
-      payload,
+      payload
     )
     return response.data.data
   },
