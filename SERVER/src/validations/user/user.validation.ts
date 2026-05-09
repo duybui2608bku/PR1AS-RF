@@ -71,6 +71,17 @@ export const updateWorkerProfileSchema = z.object({
     gallery_urls: z.array(z.string()).optional().default([]),
     experience: z.nativeEnum(Experience).optional().nullable(),
     title: z.string().trim().max(100).optional().nullable(),
+    work_locations: z
+      .array(
+        z.object({
+          province_code: z.number().int(),
+          ward_code: z.number().int(),
+          label_snapshot: z.string().optional(),
+        })
+      )
+      .max(5)
+      .optional()
+      .default([]),
     coords: z
       .object({
         latitude: z.number().nullable(),

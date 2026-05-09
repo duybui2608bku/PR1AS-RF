@@ -39,6 +39,11 @@ export interface WorkerProfile {
   gallery_urls: string[];
   experience?: Experience;
   title?: string;
+  work_locations?: Array<{
+    province_code: number;
+    ward_code: number;
+    label_snapshot?: string;
+  }>;
 }
 
 export interface ClientProfile {

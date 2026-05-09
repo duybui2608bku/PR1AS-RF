@@ -20,7 +20,6 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
     booking: "/worker/bookings",
     chat: "/chat",
     posts: "/posts",
-    profile: "/profile",
     wallet: "/wallet",
   },
 }

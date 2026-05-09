@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { CalendarIcon, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -138,23 +138,29 @@ export function BookWorkerDialog({
   const [calendarMonth, setCalendarMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   )
+  const [bookingAnchorMs, setBookingAnchorMs] = useState<number | null>(null)
 
-  useEffect(() => {
-    if (!open) {
-      setDate(undefined)
-      setTime("09:00")
-      setQuantity(1)
-      setNotes("")
-      setDatePopoverOpen(false)
-      setCalendarMonth(startOfMonth(new Date()))
-    }
-  }, [open])
+  const resetForm = () => {
+    setDate(undefined)
+    setTime("09:00")
+    setQuantity(1)
+    setNotes("")
+    setDatePopoverOpen(false)
+    setCalendarMonth(startOfMonth(new Date()))
+    setUnit("")
+    setBookingAnchorMs(null)
+  }
 
-  useEffect(() => {
-    if (open) {
+  const handleDialogOpenChange = (next: boolean) => {
+    if (next) {
+      setBookingAnchorMs(Date.now())
       setUnit(availableUnits[0] ?? "")
+      setCalendarMonth(startOfMonth(new Date()))
+    } else {
+      resetForm()
     }
-  }, [open, availableUnits])
+    onOpenChange(next)
+  }
 
   const fetchRange = useMemo(() => {
     const today = startOfDay(new Date())
@@ -197,18 +203,21 @@ export function BookWorkerDialog({
   }, [startDateTime, unit, quantity])
 
   const validationError = useMemo(() => {
+    if (!open) return null
     if (!service) return "Vui lòng chọn dịch vụ"
     if (!unit) return "Vui lòng chọn hình thức"
     if (!date) return "Vui lòng chọn ngày"
     if (quantity < 1) return "Số lượng tối thiểu là 1"
     if (!startDateTime) return "Vui lòng chọn giờ bắt đầu"
 
-    const minStart = new Date(Date.now() + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
+    const t0 = bookingAnchorMs
+    if (t0 == null) return null
+    const minStart = new Date(t0 + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
     if (startDateTime < minStart) {
       return `Lịch phải đặt trước ít nhất ${MIN_ADVANCE_HOURS} giờ`
     }
     return null
-  }, [service, unit, date, quantity, startDateTime])
+  }, [open, service, unit, date, quantity, startDateTime, bookingAnchorMs])
 
   const handleSubmit = async () => {
     if (
@@ -237,14 +246,14 @@ export function BookWorkerDialog({
         },
         client_notes: notes.trim() || undefined,
       })
-      onOpenChange(false)
+      handleDialogOpenChange(false)
     } catch {
       
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Thuê {workerName}</DialogTitle>
@@ -381,7 +390,7 @@ export function BookWorkerDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleDialogOpenChange(false)}
             disabled={createBooking.isPending}
           >
             Hủy

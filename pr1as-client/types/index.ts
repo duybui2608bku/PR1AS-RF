@@ -176,6 +176,12 @@ export type WorkerExperience =
   | "FIVE_TO_10"
   | "MORE_THAN_10"
 
+export interface WorkLocationRef {
+  province_code: number
+  ward_code: number
+  label_snapshot?: string
+}
+
 export type WorkerProfilePublic = {
   date_of_birth?: string | null
   gender?: WorkerGender
@@ -189,13 +195,34 @@ export type WorkerProfilePublic = {
   gallery_urls?: string[]
   experience?: WorkerExperience
   title?: string | null
+  work_locations?: WorkLocationRef[]
   coords?: {
     latitude: number | null
     longitude: number | null
   }
 }
 
+export type WorkerProfileUpdateInput = Omit<WorkerProfilePublic, "coords"> & {
+  coords?: { latitude: number; longitude: number }
+}
+
 export type WorkerPricingUnit = "HOURLY" | "DAILY" | "MONTHLY"
+
+export type WorkerPricingSlot = {
+  unit: WorkerPricingUnit
+  duration: number
+  price: number
+  currency?: string
+}
+
+export type WorkerServiceUpsertItem = {
+  service_id: string
+  pricing: WorkerPricingSlot[]
+}
+
+export type WorkerServiceUpsertPayload = {
+  services: WorkerServiceUpsertItem[]
+}
 
 export type WorkerServicePricing = {
   unit: WorkerPricingUnit

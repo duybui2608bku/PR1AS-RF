@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   RefreshCw,
-  TrendingUp,
   X,
 } from "lucide-react"
 

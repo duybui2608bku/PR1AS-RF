@@ -76,6 +76,13 @@ const userSchema = new Schema<IUserDocument>(
             default: null,
           },
           title: { type: String, default: null, trim: true },
+          work_locations: [
+            {
+              province_code: { type: Number, required: true },
+              ward_code: { type: Number, required: true },
+              label_snapshot: { type: String, default: null },
+            },
+          ],
         },
         { _id: false }
       ),

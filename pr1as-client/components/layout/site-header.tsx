@@ -25,8 +25,9 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { NotificationBell } from "@/components/layout/notification-bell"
 
@@ -53,6 +54,19 @@ const USER_MENU_ITEMS = [
   label: string
   icon: LucideIcon
 }>
+
+const resolveMenuHref = (
+  routeKey: RoleRouteKey,
+  fallbackHref: string,
+  user: AuthUser | null | undefined,
+  activeRole: string | null | undefined,
+) => {
+  if (routeKey === "profile" && isWorkerRoleActive(user) && user?.id) {
+    return `/worker/${user.id}`
+  }
+
+  return getRoleRoute(routeKey, activeRole, fallbackHref)
+}
 
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
@@ -83,7 +97,7 @@ export function SiteHeader() {
     () => [
       ...USER_MENU_ITEMS.map((item) => ({
         ...item,
-        href: getRoleRoute(item.routeKey, activeRole, item.href),
+        href: resolveMenuHref(item.routeKey, item.href, user, activeRole),
       })),
       {
         routeKey: "pricing" as const,
@@ -92,7 +106,7 @@ export function SiteHeader() {
         icon: Crown,
       },
     ],
-    [activeRole, user?.pricing_plan_code]
+    [activeRole, user]
   )
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)

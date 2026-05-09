@@ -78,5 +78,6 @@ export const queryKeys = {
     detail: (id: string) => ["workers", "detail", id] as const,
     schedule: (id: string, params: Record<string, unknown>) =>
       ["workers", "schedule", id, params] as const,
+    myServices: ["workers", "my-services"] as const,
   },
 } as const

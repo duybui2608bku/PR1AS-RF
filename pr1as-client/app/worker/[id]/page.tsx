@@ -7,6 +7,7 @@ import { SiteLayout } from "@/components/layout/site-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkerDetail } from "@/lib/hooks/use-worker"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { WorkerCalendar } from "@/components/worker/worker-calendar"
 import { WorkerInfoCards } from "@/components/worker/worker-info-cards"
 import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
@@ -23,6 +24,8 @@ export default function WorkerProfilePage({
 }) {
   const { id } = use(params)
   const { data, isLoading, error } = useWorkerDetail(id)
+  const currentUserId = useAuthStore((s) => s.user?.id)
+  const isOwnProfile = Boolean(currentUserId && currentUserId === id)
 
   return (
     <SiteLayout>
@@ -41,7 +44,7 @@ export default function WorkerProfilePage({
 
         {data ? (
           <div className="space-y-6">
-            <WorkerProfileHeader worker={data} />
+            <WorkerProfileHeader worker={data} isOwnProfile={isOwnProfile} />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
               <div className="space-y-4">
                 <WorkerStatCards profile={data.worker_profile} />
