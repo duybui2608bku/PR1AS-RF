@@ -70,9 +70,7 @@ export const bookingService = {
 
   getMyBookings,
 
-  getAdminBookingAnalytics: async (
-    params: AdminBookingAnalyticsQuery = {}
-  ) => {
+  getAdminBookingAnalytics: async (params: AdminBookingAnalyticsQuery = {}) => {
     const query = new URLSearchParams()
     if (params.start_date) query.set("start_date", params.start_date)
     if (params.end_date) query.set("end_date", params.end_date)
@@ -87,25 +85,20 @@ export const bookingService = {
   },
 
   getMyWorkerBookingSchedule: async (query: WorkerBookingScheduleQuery) => {
-    const bookings: Booking[] = []
-    let page = 1
-    let totalPages = 1
+    const response = await api.get<ApiResponse<BookingListResponse>>(
+      "/bookings/my",
+      {
+        params: {
+          role: "worker",
+          page: 1,
+          limit: SCHEDULE_PAGE_SIZE,
+          start_date: query.start_date,
+          end_date: query.end_date,
+        },
+      }
+    )
 
-    do {
-      const response = await getMyBookings({
-        role: "worker",
-        page,
-        limit: SCHEDULE_PAGE_SIZE,
-        start_date: query.start_date,
-        end_date: query.end_date,
-      })
-
-      bookings.push(...response.data)
-      totalPages = Math.max(response.pagination.totalPages, 1)
-      page += 1
-    } while (page <= totalPages)
-
-    return bookings
+    return response.data.data?.data ?? []
   },
 
   getBookingById: async (id: string) => {

@@ -1,4 +1,5 @@
 import { SiteLayout } from "@/components/layout/site-layout"
+import { HomeRoleGate } from "@/components/layout/home-role-gate"
 import { WorkersByServiceList } from "@/components/worker/workers-by-service-list"
 import { HomeHero } from "@/components/hero/home-hero"
 import { serviceService } from "@/services/service.service"
@@ -16,8 +17,10 @@ export default async function HomePage() {
 
   return (
     <SiteLayout>
-      <HomeHero initialServices={services} />
-      <WorkersByServiceList groupedServices={workers} hasFetchError={hasWorkersError} />
+      <HomeRoleGate>
+        <HomeHero initialServices={services} />
+        <WorkersByServiceList groupedServices={workers} hasFetchError={hasWorkersError} />
+      </HomeRoleGate>
     </SiteLayout>
   )
 }

@@ -10,7 +10,6 @@ import {
   Inbox,
   Loader2,
   MessageCircle,
-  Plus,
   Reply,
   Search,
   Send,
@@ -66,6 +65,7 @@ type ChatPageProps = {
   initialMode?: ChatMode
   initialDirectConversationId?: string | null
   initialGroupConversationId?: string | null
+  initialReceiverId?: string | null
 }
 
 type NewMessagePayload = Parameters<ServerToClientEvents["new_message"]>[0]
@@ -109,6 +109,21 @@ const getDirectSubtitle = (
     conversation?.other_user?.email ||
     getOtherUserId(conversation, currentUserId) ||
     "Chưa chọn người nhận"
+  )
+}
+
+const isDirectConversationWithUser = (
+  conversation: ChatConversation,
+  currentUserId: string | undefined,
+  targetUserId: string
+) => {
+  if (!targetUserId) return false
+
+  return (
+    getOtherUserId(conversation, currentUserId) === targetUserId ||
+    conversation.sender_id === targetUserId ||
+    conversation.receiver_id === targetUserId ||
+    conversation.other_user?._id === targetUserId
   )
 }
 
@@ -268,11 +283,18 @@ export function ChatPage({
   initialMode = "direct",
   initialDirectConversationId = null,
   initialGroupConversationId = null,
+  initialReceiverId = null,
 }: ChatPageProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const initialReceiverIdValue = initialReceiverId?.trim() ?? ""
+  const shouldStartNewDirect = Boolean(
+    initialReceiverIdValue &&
+      initialMode === "direct" &&
+      !initialDirectConversationId
+  )
   const [mode, setMode] = React.useState<ChatMode>(initialMode)
   const [selectedDirectId, setSelectedDirectId] = React.useState<string | null>(
     initialDirectConversationId
@@ -280,12 +302,14 @@ export function ChatPage({
   const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(
     initialGroupConversationId
   )
-  const [isNewDirectOpen, setIsNewDirectOpen] = React.useState(false)
-  const [receiverId, setReceiverId] = React.useState("")
   const [draft, setDraft] = React.useState("")
   const [search, setSearch] = React.useState("")
   const [mobileThreadOpen, setMobileThreadOpen] = React.useState(
-    Boolean(initialDirectConversationId || initialGroupConversationId)
+    Boolean(
+      initialDirectConversationId ||
+        initialGroupConversationId ||
+        shouldStartNewDirect
+    )
   )
   const [replyTarget, setReplyTarget] = React.useState<ReplyTarget | null>(null)
   const [typingByRoom, setTypingByRoom] = React.useState<
@@ -312,16 +336,40 @@ export function ChatPage({
     () => groupConversationsQuery.data?.conversations ?? [],
     [groupConversationsQuery.data?.conversations]
   )
+
+  const receiverParamTargetId =
+    initialReceiverIdValue &&
+    !initialDirectConversationId &&
+    !initialGroupConversationId
+      ? initialReceiverIdValue
+      : ""
+  const receiverParamConversation = React.useMemo(() => {
+    if (!receiverParamTargetId) return undefined
+
+    return directConversations.find((conversation) =>
+      isDirectConversationWithUser(
+        conversation,
+        user?.id,
+        receiverParamTargetId
+      )
+    )
+  }, [directConversations, receiverParamTargetId, user?.id])
+  const isReceiverParamNewDirect = Boolean(
+    receiverParamTargetId && !receiverParamConversation && !selectedDirectId
+  )
+  const isDirectComposerOpen = isReceiverParamNewDirect
+
   const activeDirectId =
     selectedDirectId ??
-    (mode === "direct" && !isNewDirectOpen
+    receiverParamConversation?._id ??
+    (mode === "direct" && !isDirectComposerOpen
       ? (directConversations[0]?._id ?? null)
       : null)
   const activeGroupId =
     selectedGroupId ??
     (mode === "group" ? (groupConversations[0]?._id ?? null) : null)
 
-  const selectedDirectFromList = isNewDirectOpen
+  const selectedDirectFromList = isDirectComposerOpen
     ? undefined
     : directConversations.find(
         (conversation) => conversation._id === activeDirectId
@@ -330,21 +378,21 @@ export function ChatPage({
     (conversation) => conversation._id === activeGroupId
   )
   const directConversationQuery = useDirectConversation(
-    selectedDirectFromList || isNewDirectOpen
+    selectedDirectFromList || isDirectComposerOpen
       ? undefined
       : (activeDirectId ?? undefined)
   )
   const groupConversationQuery = useGroupConversation(
     selectedGroupFromList ? undefined : (activeGroupId ?? undefined)
   )
-  const selectedDirect = isNewDirectOpen
+  const selectedDirect = isDirectComposerOpen
     ? null
     : (selectedDirectFromList ?? directConversationQuery.data ?? null)
   const selectedGroup =
     selectedGroupFromList ?? groupConversationQuery.data ?? null
 
   const directMessagesQuery = useDirectMessages(
-    mode === "direct" && !isNewDirectOpen
+    mode === "direct" && !isDirectComposerOpen
       ? (activeDirectId ?? undefined)
       : undefined,
     MESSAGE_PARAMS
@@ -363,7 +411,7 @@ export function ChatPage({
   )
   const activeMessages = mode === "direct" ? directMessages : groupMessages
   const activeConversationId =
-    mode === "direct" && !isNewDirectOpen ? activeDirectId : activeGroupId
+    mode === "direct" && !isDirectComposerOpen ? activeDirectId : activeGroupId
 
   const sendDirectMessageMutation = useSendDirectMessage()
   const sendGroupMessageMutation = useSendGroupMessage()
@@ -403,7 +451,7 @@ export function ChatPage({
     : undefined
   const directReceiverId = selectedDirect
     ? getOtherUserId(selectedDirect, user?.id)
-    : receiverId.trim()
+    : receiverParamTargetId
   const canSubmitDirect =
     mode === "direct" && Boolean(directReceiverId && draft.trim())
   const canSubmitGroup =
@@ -412,19 +460,19 @@ export function ChatPage({
     sendDirectMessageMutation.isPending || sendGroupMessageMutation.isPending
   const activeTitle =
     mode === "direct"
-      ? isNewDirectOpen
+      ? isDirectComposerOpen
         ? "Tin nhắn mới"
         : getDirectTitle(selectedDirect)
       : selectedGroup?.name || "Nhóm trò chuyện"
   const activeSubtitle =
     mode === "direct"
-      ? isNewDirectOpen
-        ? "Nhập ID người nhận để bắt đầu"
+      ? isDirectComposerOpen
+        ? "Bắt đầu trò chuyện với worker đã chọn"
         : getDirectSubtitle(selectedDirect, user?.id)
       : selectedGroup
         ? `Đơn ${shortenId(selectedGroup.booking_id)}`
         : "Chưa chọn nhóm"
-  const hasActiveThread = Boolean(activeConversationId || isNewDirectOpen)
+  const hasActiveThread = Boolean(activeConversationId || isDirectComposerOpen)
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -433,14 +481,14 @@ export function ChatPage({
   }, [isAuthenticated, router])
 
   React.useEffect(() => {
-    if (!socket || mode !== "direct" || !activeDirectId || isNewDirectOpen)
+    if (!socket || mode !== "direct" || !activeDirectId || isDirectComposerOpen)
       return
     socket.emit("join_conversation", { conversation_id: activeDirectId })
 
     return () => {
       socket.emit("leave_conversation", { conversation_id: activeDirectId })
     }
-  }, [activeDirectId, isNewDirectOpen, mode, socket])
+  }, [activeDirectId, isDirectComposerOpen, mode, socket])
 
   React.useEffect(() => {
     if (!socket || mode !== "group" || !activeGroupId) return
@@ -644,7 +692,7 @@ export function ChatPage({
   React.useEffect(() => {
     if (
       mode !== "direct" ||
-      isNewDirectOpen ||
+      isDirectComposerOpen ||
       !activeDirectId ||
       directMessages.length === 0
     )
@@ -665,7 +713,7 @@ export function ChatPage({
   }, [
     activeDirectId,
     directMessages,
-    isNewDirectOpen,
+    isDirectComposerOpen,
     markDirectMessagesReadMutation,
     mode,
     socket,
@@ -704,7 +752,7 @@ export function ChatPage({
     (isTypingNow: boolean) => {
       if (!socket) return
 
-      if (mode === "direct" && activeDirectId && !isNewDirectOpen) {
+      if (mode === "direct" && activeDirectId && !isDirectComposerOpen) {
         socket.emit("typing", {
           conversation_id: activeDirectId,
           is_typing: isTypingNow,
@@ -718,7 +766,7 @@ export function ChatPage({
         })
       }
     },
-    [activeDirectId, activeGroupId, isNewDirectOpen, mode, socket]
+    [activeDirectId, activeGroupId, isDirectComposerOpen, mode, socket]
   )
 
   const resetComposer = React.useCallback(() => {
@@ -758,7 +806,7 @@ export function ChatPage({
   const sendImageMessage = async (imageUrl: string) => {
     if (mode === "direct") {
       if (!directReceiverId) {
-        toast.error("Nhập ID người nhận trước khi gửi.")
+        toast.error("Chọn cuộc trò chuyện trước khi gửi.")
         return
       }
 
@@ -770,8 +818,6 @@ export function ChatPage({
       })
 
       setSelectedDirectId(result.conversation._id)
-      setIsNewDirectOpen(false)
-      setReceiverId("")
       setReplyTarget(null)
       return
     }
@@ -825,7 +871,7 @@ export function ChatPage({
     try {
       if (mode === "direct") {
         if (!directReceiverId) {
-          toast.error("Nhập ID người nhận trước khi gửi.")
+          toast.error("Chọn cuộc trò chuyện trước khi gửi.")
           return
         }
 
@@ -837,8 +883,6 @@ export function ChatPage({
         })
 
         setSelectedDirectId(result.conversation._id)
-        setIsNewDirectOpen(false)
-        setReceiverId("")
         setDraft("")
         setReplyTarget(null)
         emitTyping(false)
@@ -990,24 +1034,6 @@ export function ChatPage({
                 placeholder="Tìm cuộc trò chuyện"
               />
             </div>
-            {mode === "direct" ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3 w-full justify-start"
-                onClick={() => {
-                  resetComposer()
-                  setIsNewDirectOpen(true)
-                  setSelectedDirectId(null)
-                  setReceiverId("")
-                  setMobileThreadOpen(true)
-                }}
-              >
-                <Plus className="size-4" />
-                Tin nhắn mới
-              </Button>
-            ) : null}
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -1020,7 +1046,6 @@ export function ChatPage({
                 currentUserId={user?.id}
                 onSelect={(id) => {
                   resetComposer()
-                  setIsNewDirectOpen(false)
                   setSelectedDirectId(id)
                   setMobileThreadOpen(true)
                 }}
@@ -1118,16 +1143,6 @@ export function ChatPage({
           </div>
 
           <form onSubmit={handleSubmit} className="border-t p-3">
-            {mode === "direct" && (isNewDirectOpen || !selectedDirect) ? (
-              <div className="mb-2">
-                <Input
-                  value={receiverId}
-                  onChange={(event) => setReceiverId(event.target.value)}
-                  placeholder="ID người nhận"
-                  disabled={isSending}
-                />
-              </div>
-            ) : null}
             {replyTarget ? (
               <div className="mb-2 flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <Reply className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1188,12 +1203,17 @@ export function ChatPage({
                 onChange={handleDraftChange}
                 onKeyDown={handleDraftKeyDown}
                 placeholder={
-                  activeConversationId || mode === "direct"
+                  activeConversationId ||
+                  (mode === "direct" && directReceiverId)
                     ? "Nhập tin nhắn (Enter để gửi, Shift+Enter xuống dòng)"
                     : "Chọn cuộc trò chuyện"
                 }
                 rows={1}
-                disabled={isSending || (mode === "group" && !selectedGroup)}
+                disabled={
+                  isSending ||
+                  (mode === "direct" && !directReceiverId) ||
+                  (mode === "group" && !selectedGroup)
+                }
                 className="max-h-32 min-h-10 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
               <Button

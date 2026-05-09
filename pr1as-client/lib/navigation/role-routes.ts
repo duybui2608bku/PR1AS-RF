@@ -25,6 +25,12 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
   },
 }
 
+const DEFAULT_ROLE_ROUTES: Record<string, string> = {
+  admin: "/dashboard",
+  client: "/",
+  worker: "/posts",
+}
+
 export function getRoleRoute(
   routeKey: RoleRouteKey,
   activeRole: string | null | undefined,
@@ -33,4 +39,13 @@ export function getRoleRoute(
   if (!activeRole) return fallbackHref
 
   return ROLE_ROUTES[activeRole.toLowerCase()]?.[routeKey] ?? fallbackHref
+}
+
+export function getRoleDefaultRoute(
+  activeRole: string | null | undefined,
+  fallbackHref = "/"
+) {
+  if (!activeRole) return fallbackHref
+
+  return DEFAULT_ROLE_ROUTES[activeRole.toLowerCase()] ?? fallbackHref
 }

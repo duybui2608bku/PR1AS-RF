@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-const AUTH_COOKIE_NAME = "auth_token"
+import {
+  ACTIVE_ROLE_COOKIE_NAME,
+  AUTH_COOKIE_NAME,
+} from "@/lib/auth/auth-cookie"
 
 const PROTECTED_PREFIXES = ["/client", "/chat", "/posts", "/dashboard"]
 const AUTH_PAGES = ["/login", "/register"]
@@ -14,6 +17,13 @@ function isProtectedPath(pathname: string): boolean {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(AUTH_COOKIE_NAME)?.value
+  const activeRole = req.cookies.get(ACTIVE_ROLE_COOKIE_NAME)?.value?.toLowerCase()
+
+  if (pathname === "/" && token && activeRole === "worker") {
+    const url = req.nextUrl.clone()
+    url.pathname = "/posts"
+    return NextResponse.redirect(url)
+  }
 
   if (isProtectedPath(pathname) && !token) {
     const url = req.nextUrl.clone()
@@ -24,7 +34,8 @@ export function middleware(req: NextRequest) {
 
   if (AUTH_PAGES.includes(pathname) && token) {
     const url = req.nextUrl.clone()
-    url.pathname = "/"
+    url.pathname =
+      activeRole === "admin" ? "/dashboard" : activeRole === "worker" ? "/posts" : "/"
     return NextResponse.redirect(url)
   }
 
@@ -37,6 +48,7 @@ export const config = {
     "/chat/:path*",
     "/posts/:path*",
     "/dashboard/:path*",
+    "/",
     "/login",
     "/register",
   ],

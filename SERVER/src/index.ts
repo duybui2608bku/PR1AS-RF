@@ -5,6 +5,10 @@ import { logger } from "./utils/logger";
 import { connectDatabase, closeDatabase } from "./config/database";
 import { initializeSocket } from "./config/socket";
 import { createApp } from "./app";
+import {
+  startBookingExpirationJob,
+  stopBookingExpirationJob,
+} from "./jobs/booking-expiration.job";
 
 const app = createApp();
 const httpServer = createServer(app);
@@ -14,6 +18,7 @@ initializeSocket(httpServer);
 const startServer = async () => {
   try {
     await connectDatabase();
+    startBookingExpirationJob();
 
     httpServer.listen(config.port, () => {
       logger.info(
@@ -28,6 +33,7 @@ const startServer = async () => {
 
 process.on("SIGTERM", async () => {
   logger.info("SIGTERM signal received: closing HTTP server");
+  stopBookingExpirationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();
@@ -37,6 +43,7 @@ process.on("SIGTERM", async () => {
 
 process.on("SIGINT", async () => {
   logger.info("SIGINT signal received: closing HTTP server");
+  stopBookingExpirationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();
