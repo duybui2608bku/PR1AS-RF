@@ -1,6 +1,5 @@
 export enum ReviewType {
   CLIENT_TO_WORKER = "client_to_worker",
-  WORKER_TO_CLIENT = "worker_to_client",
 }
 
 export enum ReviewStatus {

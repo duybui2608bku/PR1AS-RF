@@ -80,6 +80,10 @@ const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] = [
     label: bookingStatusLabel[BookingStatus.IN_PROGRESS],
   },
   {
+    value: BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+    label: bookingStatusLabel[BookingStatus.PENDING_CLIENT_ACCEPTANCE],
+  },
+  {
     value: BookingStatus.COMPLETED,
     label: bookingStatusLabel[BookingStatus.COMPLETED],
   },
@@ -127,6 +131,15 @@ const buildStatusAction = (status: BookingStatus): WorkerBookingAction => {
         title: "Bắt đầu booking",
         description: "Booking sẽ chuyển sang trạng thái đang thực hiện.",
         confirmLabel: "Bắt đầu",
+      }
+    case BookingStatus.PENDING_CLIENT_ACCEPTANCE:
+      return {
+        type: "status",
+        status,
+        title: "Gửi xác nhận hoàn thành",
+        description:
+          "Booking sẽ chuyển sang trạng thái chờ khách hàng xác nhận hoàn thành.",
+        confirmLabel: "Gửi xác nhận",
       }
     case BookingStatus.COMPLETED:
       return {
@@ -185,7 +198,7 @@ function getAvailableActions(
       ]
     case BookingStatus.IN_PROGRESS:
       return [
-        buildStatusAction(BookingStatus.COMPLETED),
+        buildStatusAction(BookingStatus.PENDING_CLIENT_ACCEPTANCE),
         buildResponseAction(booking),
         cancelAction,
       ]
@@ -302,7 +315,11 @@ export default function WorkerBookingsPage() {
 
   const renderActionButtons = (booking: Booking) => {
     const bookingId = getBookingId(booking)
-    const expired = isBookingExpired(booking.schedule, booking.status)
+    const expired = isBookingExpired(
+      booking.schedule,
+      booking.status,
+      booking.created_at
+    )
     const actions = getAvailableActions(booking, expired)
     const complaintLoading = complaintLoadingId === bookingId
 
@@ -492,7 +509,8 @@ export default function WorkerBookingsPage() {
                     {bookings.map((booking) => {
                       const expired = isBookingExpired(
                         booking.schedule,
-                        booking.status
+                        booking.status,
+                        booking.created_at
                       )
                       const displayStatus = expired
                         ? BookingStatus.EXPIRED
@@ -587,7 +605,8 @@ export default function WorkerBookingsPage() {
                         {bookings.map((booking) => {
                           const expired = isBookingExpired(
                             booking.schedule,
-                            booking.status
+                            booking.status,
+                            booking.created_at
                           )
                           const displayStatus = expired
                             ? BookingStatus.EXPIRED

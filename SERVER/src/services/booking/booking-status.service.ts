@@ -30,15 +30,31 @@ export class BookingStatusService extends BookingBaseService {
 
     this.validateStatusTransition(booking.status as BookingStatus, status);
 
+    if (status === BookingStatus.CONFIRMED) {
+      await this.validateScheduleConflict(
+        booking.worker_id.toString(),
+        booking.schedule.start_time,
+        booking.schedule.end_time,
+        bookingId
+      );
+    }
+
     if (
       status === BookingStatus.CONFIRMED ||
       status === BookingStatus.REJECTED ||
       status === BookingStatus.IN_PROGRESS ||
-      status === BookingStatus.COMPLETED
+      status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
     ) {
       this.ensureAuthorized(
         this.isBookingWorker(booking, userId),
         BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_STATUS
+      );
+    }
+
+    if (status === BookingStatus.COMPLETED) {
+      this.ensureAuthorized(
+        this.isBookingClient(booking, userId),
+        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
       );
     }
 

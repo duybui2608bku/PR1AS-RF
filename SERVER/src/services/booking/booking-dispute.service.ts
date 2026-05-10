@@ -30,6 +30,7 @@ export class BookingDisputeService extends BookingBaseService {
 
     const canCreateDispute =
       booking.status === BookingStatus.IN_PROGRESS ||
+      booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE ||
       booking.status === BookingStatus.COMPLETED;
 
     if (!canCreateDispute) {

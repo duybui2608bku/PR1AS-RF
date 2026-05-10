@@ -93,7 +93,7 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
 
   const handleBook = () => {
     if (!isAuthenticated) {
-      router.push("/auth/login")
+      router.push("/login")
       return
     }
     if (isOwnProfile) {
@@ -109,7 +109,7 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
 
   const handleMessage = () => {
     if (!isAuthenticated) {
-      router.push("/auth/login")
+      router.push("/login")
       return
     }
     if (isOwnProfile) {

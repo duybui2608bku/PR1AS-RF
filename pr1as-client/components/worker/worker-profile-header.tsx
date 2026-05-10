@@ -1,9 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { useState } from "react"
 
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -53,16 +53,13 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
   const ratingAverage = stats?.average ?? 0
   const ratingCount = stats?.total ?? 0
 
-  const gallery = useMemo(() => {
-    const list: string[] = []
-    if (worker.user.avatar) list.push(worker.user.avatar)
-    if (profile?.gallery_urls) {
-      for (const url of profile.gallery_urls) {
-        if (!list.includes(url)) list.push(url)
-      }
+  const gallery: string[] = []
+  if (worker.user.avatar) gallery.push(worker.user.avatar)
+  if (profile?.gallery_urls) {
+    for (const url of profile.gallery_urls) {
+      if (!gallery.includes(url)) gallery.push(url)
     }
-    return list
-  }, [worker.user.avatar, profile])
+  }
 
   const [activeIndex, setActiveIndex] = useState(0)
   const activeImage = gallery[activeIndex] ?? gallery[0] ?? null

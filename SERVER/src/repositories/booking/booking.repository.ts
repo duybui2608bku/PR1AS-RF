@@ -226,6 +226,45 @@ export class BookingRepository {
     ).populate(BOOKING_POPULATE);
   }
 
+  async expirePendingBooking(id: string): Promise<IBookingDocument | null> {
+    return Booking.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(id),
+        status: BookingStatus.PENDING,
+      },
+      {
+        status: BookingStatus.EXPIRED,
+        updated_at: new Date(),
+      },
+      { new: true }
+    ).populate(BOOKING_POPULATE);
+  }
+
+  async findPendingBookingsForExpirationScan(
+    now: Date,
+    shortNoticeConfirmMinutes: number,
+    confirmDeadlineBeforeStartHours: number,
+    limit = 100
+  ): Promise<IBookingDocument[]> {
+    const shortNoticeCreatedCutoff = new Date(
+      now.getTime() - shortNoticeConfirmMinutes * 60 * 1000
+    );
+    const scheduleDeadlineCutoff = new Date(
+      now.getTime() + confirmDeadlineBeforeStartHours * 60 * 60 * 1000
+    );
+
+    return Booking.find({
+      status: BookingStatus.PENDING,
+      $or: [
+        { created_at: { $lte: shortNoticeCreatedCutoff } },
+        { "schedule.start_time": { $lte: scheduleDeadlineCutoff } },
+      ],
+    })
+      .populate(BOOKING_POPULATE)
+      .sort({ "schedule.start_time": 1, created_at: 1 })
+      .limit(limit);
+  }
+
   async update(
     id: string,
     updateData: Partial<IBookingDocument>,
@@ -248,9 +287,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       $or: [
@@ -276,9 +315,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       "schedule.start_time": { $lt: endTime },
@@ -304,9 +343,9 @@ export class BookingRepository {
       worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       "schedule.start_time": { $lt: endTime },
@@ -337,9 +376,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
           BookingStatus.DISPUTED,
         ],
       },

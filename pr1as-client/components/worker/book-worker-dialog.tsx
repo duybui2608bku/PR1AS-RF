@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { CalendarIcon, Loader2 } from "lucide-react"
+import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils"
 import type { WorkerPricingUnit, WorkerServiceItem } from "@/types"
 
 const MIN_ADVANCE_HOURS = 2
-const DATE_RANGE_DAYS = 60
+const DATE_RANGE_DAYS = 30
 const WEEKDAY_VI_LONG = [
   "Chủ nhật",
   "Thứ 2",
@@ -129,37 +129,37 @@ export function BookWorkerDialog({
     return [...set]
   }, [service])
 
-  const [unit, setUnit] = useState<WorkerPricingUnit | "">("")
+  const [selectedUnit, setSelectedUnit] = useState<WorkerPricingUnit | "">("")
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState<string>("09:00")
   const [quantity, setQuantity] = useState<number>(1)
   const [notes, setNotes] = useState("")
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
+  const [now, setNow] = useState(0)
   const [calendarMonth, setCalendarMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   )
   const [bookingAnchorMs, setBookingAnchorMs] = useState<number | null>(null)
 
+  const unit =
+    selectedUnit && availableUnits.includes(selectedUnit)
+      ? selectedUnit
+      : availableUnits[0] ?? ""
+
   const resetForm = () => {
+    setSelectedUnit("")
     setDate(undefined)
     setTime("09:00")
     setQuantity(1)
     setNotes("")
     setDatePopoverOpen(false)
+    setNow(Date.now())
     setCalendarMonth(startOfMonth(new Date()))
-    setUnit("")
-    setBookingAnchorMs(null)
   }
 
-  const handleDialogOpenChange = (next: boolean) => {
-    if (next) {
-      setBookingAnchorMs(Date.now())
-      setUnit(availableUnits[0] ?? "")
-      setCalendarMonth(startOfMonth(new Date()))
-    } else {
-      resetForm()
-    }
-    onOpenChange(next)
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) resetForm()
+    onOpenChange(nextOpen)
   }
 
   const fetchRange = useMemo(() => {
@@ -210,14 +210,12 @@ export function BookWorkerDialog({
     if (quantity < 1) return "Số lượng tối thiểu là 1"
     if (!startDateTime) return "Vui lòng chọn giờ bắt đầu"
 
-    const t0 = bookingAnchorMs
-    if (t0 == null) return null
-    const minStart = new Date(t0 + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
+    const minStart = new Date(now + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
     if (startDateTime < minStart) {
       return `Lịch phải đặt trước ít nhất ${MIN_ADVANCE_HOURS} giờ`
     }
     return null
-  }, [open, service, unit, date, quantity, startDateTime, bookingAnchorMs])
+  }, [service, unit, date, quantity, startDateTime, now])
 
   const handleSubmit = async () => {
     if (
@@ -246,14 +244,15 @@ export function BookWorkerDialog({
         },
         client_notes: notes.trim() || undefined,
       })
-      handleDialogOpenChange(false)
+      resetForm()
+      onOpenChange(false)
     } catch {
       
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Thuê {workerName}</DialogTitle>
@@ -265,7 +264,7 @@ export function BookWorkerDialog({
             <Label htmlFor="book-unit">Hình thức</Label>
             <Select
               value={unit}
-              onValueChange={(v) => setUnit(v as WorkerPricingUnit)}
+              onValueChange={(v) => setSelectedUnit(v as WorkerPricingUnit)}
               disabled={availableUnits.length === 0}
             >
               <SelectTrigger id="book-unit" className="w-full">
@@ -306,6 +305,7 @@ export function BookWorkerDialog({
                     mode="single"
                     selected={date}
                     onSelect={(d) => {
+                      setNow(Date.now())
                       setDate(d)
                       if (d) setDatePopoverOpen(false)
                     }}
@@ -329,7 +329,13 @@ export function BookWorkerDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="book-time">Giờ bắt đầu</Label>
-              <Select value={time} onValueChange={setTime}>
+              <Select
+                value={time}
+                onValueChange={(value) => {
+                  setNow(Date.now())
+                  setTime(value)
+                }}
+              >
                 <SelectTrigger id="book-time" className="w-full">
                   <SelectValue placeholder="Chọn giờ" />
                 </SelectTrigger>
@@ -390,7 +396,7 @@ export function BookWorkerDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => handleDialogOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={createBooking.isPending}
           >
             Hủy

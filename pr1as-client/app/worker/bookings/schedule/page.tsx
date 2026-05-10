@@ -89,7 +89,7 @@ const formatDuration = (booking: Booking) => {
 }
 
 const getDisplayStatus = (booking: Booking) =>
-  isBookingExpired(booking.schedule, booking.status)
+  isBookingExpired(booking.schedule, booking.status, booking.created_at)
     ? BookingStatus.EXPIRED
     : booking.status
 
@@ -153,10 +153,10 @@ export default function WorkerBookingSchedulePage() {
   const calendarDays = React.useMemo(() => buildCalendarDays(month), [month])
   const range = React.useMemo(
     () => ({
-      start_date: toDateKey(calendarDays[0]),
-      end_date: toDateKey(calendarDays[calendarDays.length - 1]),
+      start_date: toDateKey(startOfMonth(month)),
+      end_date: toDateKey(endOfMonth(month)),
     }),
-    [calendarDays]
+    [month]
   )
 
   const bookingsQuery = useWorkerBookingSchedule(range)
@@ -200,7 +200,8 @@ export default function WorkerBookingSchedulePage() {
     return (
       status === BookingStatus.PENDING ||
       status === BookingStatus.CONFIRMED ||
-      status === BookingStatus.IN_PROGRESS
+      status === BookingStatus.IN_PROGRESS ||
+      status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
     )
   })
 

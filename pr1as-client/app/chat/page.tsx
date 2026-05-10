@@ -17,12 +17,22 @@ export default async function ChatRoutePage({
     getParam(params, "conversation_id") ?? getParam(params, "conversation")
   const groupConversationId =
     getParam(params, "conversation_group_id") ?? getParam(params, "group")
+  const receiverId = getParam(params, "receiver_id")
+  const chatPageKey = groupConversationId
+    ? `group:${groupConversationId}`
+    : directConversationId
+      ? `direct:${directConversationId}`
+      : receiverId
+        ? `receiver:${receiverId}`
+        : "chat"
 
   return (
     <ChatPage
+      key={chatPageKey}
       initialMode={groupConversationId ? "group" : "direct"}
       initialDirectConversationId={directConversationId ?? null}
       initialGroupConversationId={groupConversationId ?? null}
+      initialReceiverId={receiverId ?? null}
     />
   )
 }

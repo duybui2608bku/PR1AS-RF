@@ -19,6 +19,13 @@ import { VALIDATION_LIMITS } from "../../constants/validation";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 
+const getRefId = (value: unknown): string => {
+  if (value && typeof value === "object" && "_id" in value) {
+    return String((value as { _id: unknown })._id);
+  }
+  return String(value);
+};
+
 export class ReviewService {
   private async checkBookingExists(
     bookingId: string
@@ -40,11 +47,38 @@ export class ReviewService {
   ): Promise<IReviewDocument> {
     const booking = await this.checkBookingExists(input.booking_id.toString());
 
+    if (input.review_type !== ReviewType.CLIENT_TO_WORKER) {
+      throw new AppError(
+        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
+      );
+    }
+
     if (booking.status !== BookingStatus.COMPLETED) {
       throw new AppError(
         REVIEW_MESSAGES.BOOKING_NOT_COMPLETED,
         HTTP_STATUS.BAD_REQUEST,
         ErrorCode.VALIDATION_ERROR
+      );
+    }
+
+    const bookingClientId = getRefId(booking.client_id);
+    const bookingWorkerId = getRefId(booking.worker_id);
+
+    if (bookingClientId !== userId) {
+      throw new AppError(
+        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
+      );
+    }
+
+    if (input.worker_id.toString() !== bookingWorkerId) {
+      throw new AppError(
+        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
       );
     }
 
@@ -62,14 +96,8 @@ export class ReviewService {
 
     const reviewData: CreateReviewInput = {
       ...input,
-      client_id:
-        input.review_type === ReviewType.CLIENT_TO_WORKER
-          ? new Types.ObjectId(userId)
-          : booking.client_id,
-      worker_id:
-        input.review_type === ReviewType.WORKER_TO_CLIENT
-          ? new Types.ObjectId(userId)
-          : booking.worker_id,
+      client_id: new Types.ObjectId(userId),
+      worker_id: new Types.ObjectId(bookingWorkerId),
     };
 
     const review = await reviewRepository.create(reviewData);
@@ -221,9 +249,7 @@ export class ReviewService {
     }
 
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner =
-      review.client_id.toString() === userId ||
-      review.worker_id.toString() === userId;
+    const isOwner = review.client_id.toString() === userId;
 
     if (!isAdmin && !isOwner) {
       throw new AppError(
@@ -266,9 +292,7 @@ export class ReviewService {
     }
 
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner =
-      review.client_id.toString() === userId ||
-      review.worker_id.toString() === userId;
+    const isOwner = review.client_id.toString() === userId;
 
     if (!isAdmin && !isOwner) {
       throw new AppError(

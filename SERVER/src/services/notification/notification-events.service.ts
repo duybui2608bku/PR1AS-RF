@@ -58,6 +58,11 @@ const getBookingStatusNotificationContent = (
         title: "Booking đang thực hiện",
         body: "Booking đã bắt đầu và đang được thực hiện.",
       };
+    case BookingStatus.PENDING_CLIENT_ACCEPTANCE:
+      return {
+        title: "Booking chờ xác nhận hoàn thành",
+        body: "Worker đã báo hoàn thành. Vui lòng xác nhận hoặc khiếu nại nếu cần.",
+      };
     case BookingStatus.COMPLETED:
       return {
         title: "Booking đã hoàn thành",
@@ -162,6 +167,41 @@ export class NotificationEventService {
       link: "/notifications",
       priority: NotificationPriority.HIGH,
       dedupe_key: `booking-cancelled:${bookingId}`,
+    });
+  }
+
+  async bookingAutoExpiredWarning(
+    booking: IBookingDocument,
+    input: {
+      deadline: Date;
+      reason:
+        | "short_notice_confirmation_timeout"
+        | "confirmation_deadline_before_start";
+    }
+  ): Promise<void> {
+    const bookingId = toId(booking._id);
+    const workerId = toId(booking.worker_id);
+    const body =
+      input.reason === "short_notice_confirmation_timeout"
+        ? "Booking gap da het han vi ban khong xac nhan trong thoi gian cho phep."
+        : "Booking da het han vi ban khong xac nhan truoc gio bat dau 6 tieng.";
+
+    await notificationService.notify({
+      recipient_ids: [workerId],
+      type: NotificationType.BOOKING_STATUS_UPDATED,
+      category: NotificationCategory.BOOKING,
+      title: "Canh bao: booking da het han",
+      body: `${body} Vui long phan hoi booking dung han de tranh anh huong uy tin.`,
+      data: {
+        booking_id: bookingId,
+        status: BookingStatus.EXPIRED,
+        reason: input.reason,
+        confirmation_deadline: input.deadline.toISOString(),
+      },
+      link: getBookingDashboardLink(workerId, booking),
+      channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `booking-auto-expired-warning:${bookingId}`,
     });
   }
 

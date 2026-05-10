@@ -9,6 +9,7 @@ export const bookingStatusLabel: Record<BookingStatus, string> = {
   [BookingStatus.PENDING]: "Chờ xác nhận",
   [BookingStatus.CONFIRMED]: "Đã xác nhận",
   [BookingStatus.IN_PROGRESS]: "Đang thực hiện",
+  [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: "Chờ khách xác nhận",
   [BookingStatus.COMPLETED]: "Hoàn thành",
   [BookingStatus.CANCELLED]: "Đã hủy",
   [BookingStatus.REJECTED]: "Bị từ chối",
@@ -20,6 +21,8 @@ export const bookingStatusBadgeClass: Record<BookingStatus, string> = {
   [BookingStatus.PENDING]: "border-amber-200 bg-amber-50 text-amber-700",
   [BookingStatus.CONFIRMED]: "border-blue-200 bg-blue-50 text-blue-700",
   [BookingStatus.IN_PROGRESS]: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  [BookingStatus.PENDING_CLIENT_ACCEPTANCE]:
+    "border-violet-200 bg-violet-50 text-violet-700",
   [BookingStatus.COMPLETED]:
     "border-emerald-200 bg-emerald-50 text-emerald-700",
   [BookingStatus.CANCELLED]: "border-muted bg-muted text-muted-foreground",
@@ -33,7 +36,6 @@ export const cancellationReasonLabel: Record<CancellationReason, string> = {
   [CancellationReason.WORKER_UNAVAILABLE]: "Worker không có sẵn",
   [CancellationReason.SCHEDULE_CONFLICT]: "Trùng lịch",
   [CancellationReason.EMERGENCY]: "Khẩn cấp",
-  [CancellationReason.PAYMENT_FAILED]: "Thanh toán thất bại",
   [CancellationReason.POLICY_VIOLATION]: "Vi phạm chính sách",
   [CancellationReason.OTHER]: "Khác",
 }
@@ -60,10 +62,25 @@ export const formatDateTime = (value?: string | null): string => {
 
 export const isBookingExpired = (
   schedule: Booking["schedule"],
-  status: BookingStatus
+  status: BookingStatus,
+  createdAt?: string | null
 ): boolean => {
+  if (status === BookingStatus.EXPIRED) return true
   if (status !== BookingStatus.PENDING) return false
-  return new Date(schedule.start_time).getTime() < Date.now()
+  const startTime = new Date(schedule.start_time).getTime()
+  const createdTime = createdAt ? new Date(createdAt).getTime() : Number.NaN
+  if (Number.isNaN(startTime)) return false
+  if (Number.isNaN(createdTime)) return startTime < Date.now()
+
+  const confirmDeadlineBeforeStartMs = 6 * 60 * 60 * 1000
+  const shortNoticeConfirmMs = 60 * 60 * 1000
+  const beforeStartDeadline = startTime - confirmDeadlineBeforeStartMs
+  const deadline =
+    beforeStartDeadline <= createdTime
+      ? createdTime + shortNoticeConfirmMs
+      : beforeStartDeadline
+
+  return deadline <= Date.now()
 }
 
 export const getBookingId = (booking: Booking): string =>

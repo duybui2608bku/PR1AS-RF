@@ -1,8 +1,5 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
 import {
   Bell,
   CalendarCheck2,
@@ -19,22 +16,25 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 
+import { NotificationBell } from "@/components/layout/notification-bell"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
-import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
-import { getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
-import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
+import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
-import { NotificationBell } from "@/components/layout/notification-bell"
+import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
+import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 
 const USER_MENU_ITEMS = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
   { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
-  { routeKey: "profile", href: "/profile", label: "Hồ sơ", icon: User },
+  { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
   {
     routeKey: "notifications",
     href: "/notifications",
@@ -88,9 +88,10 @@ export function SiteHeader() {
       ? user.role
       : (userRoles[0] ?? user?.role)
   const activeRole = lastActiveRole ?? fallbackRole
-  const isWorkerActive = lastActiveRole === "worker"
-  const hasWorkerRole = userRoles.includes("worker")
+  const isWorkerActive = activeRole?.toLowerCase() === "worker"
+  const hasWorkerRole = userRoles.some((role) => role.toLowerCase() === "worker")
   const canSwitchRole = isAuthenticated && (isWorkerActive || hasWorkerRole)
+  const homeHref = getRoleDefaultRoute(activeRole)
 
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
   const userMenuItems = React.useMemo(
@@ -124,10 +125,10 @@ export function SiteHeader() {
     }
 
     try {
-      await switchRoleMutation.mutateAsync({
-        last_active_role: isWorkerActive ? "client" : "worker",
-      })
+      const nextRole = isWorkerActive ? "client" : "worker"
+      await switchRoleMutation.mutateAsync({ last_active_role: nextRole })
       toast.success("Chuyển trạng thái tài khoản thành công.")
+      router.replace(getRoleDefaultRoute(nextRole))
       router.refresh()
     } catch (error) {
       const message =
@@ -154,7 +155,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center">
-          <Link href="/" className="font-semibold">
+          <Link href={homeHref} className="font-semibold">
             {siteConfig.name}
           </Link>
         </div>

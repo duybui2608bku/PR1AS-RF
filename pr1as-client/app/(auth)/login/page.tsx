@@ -18,7 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { isAdminUser } from "@/lib/auth/roles"
+import { isAdminUser, isWorkerRoleActive } from "@/lib/auth/roles"
 import { useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
@@ -47,10 +47,13 @@ export default function LoginPage() {
   const fromPath = searchParams.get("from")
   const safeFrom =
     fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
+  const isWorker = authenticatedUser && isWorkerRoleActive(authenticatedUser)
+  const defaultRedirectTarget = isWorker ? "/posts" : "/"
+  const safeRedirectTarget = isWorker && safeFrom === "/" ? null : safeFrom
   const redirectTarget =
     authenticatedUser && isAdminUser(authenticatedUser)
       ? "/dashboard"
-      : (safeFrom ?? "/")
+      : (safeRedirectTarget ?? defaultRedirectTarget)
 
   useEffect(() => {
     if (isSessionActive && meQuery.isError) {
