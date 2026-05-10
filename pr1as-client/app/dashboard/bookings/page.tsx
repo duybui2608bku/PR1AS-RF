@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   RefreshCw,
-  TrendingUp,
   X,
 } from "lucide-react"
 
@@ -43,6 +42,11 @@ const STATUS_CONFIG: Record<
     label: "Đang thực hiện",
     className: "border-indigo-200 bg-indigo-50 text-indigo-700",
     barClassName: "bg-indigo-500",
+  },
+  [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: {
+    label: "Chờ khách xác nhận",
+    className: "border-violet-200 bg-violet-50 text-violet-700",
+    barClassName: "bg-violet-500",
   },
   [BookingStatus.COMPLETED]: {
     label: "Hoàn thành",
@@ -105,14 +109,6 @@ function formatChartLabel(value: string) {
   })
 }
 
-function formatCurrency(amount?: number) {
-  if (typeof amount !== "number") return "—"
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount)
-}
-
 function shortId(id: string) {
   return id.length > 12 ? `${id.slice(0, 8)}…` : id
 }
@@ -136,8 +132,6 @@ function getServiceLabel(service: Booking["service_id"]) {
 }
 
 function getBookingPrice(booking: Booking) {
-  const total = booking.pricing?.total_amount
-  if (typeof total === "number") return formatCurrency(total)
   const quantity = booking.pricing?.quantity
   const unit = booking.pricing?.unit
   return quantity && unit ? `${quantity} ${unit.toLowerCase()}` : "—"

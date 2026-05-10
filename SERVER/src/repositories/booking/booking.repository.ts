@@ -287,9 +287,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       $or: [
@@ -315,9 +315,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       "schedule.start_time": { $lt: endTime },
@@ -343,9 +343,9 @@ export class BookingRepository {
       worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
         ],
       },
       "schedule.start_time": { $lt: endTime },
@@ -376,9 +376,9 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
-          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
+          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
           BookingStatus.DISPUTED,
         ],
       },

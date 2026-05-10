@@ -37,7 +37,7 @@ import { NotificationBell } from "@/components/layout/notification-bell"
 const USER_MENU_ITEMS = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
   { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
-  { routeKey: "profile", href: "/profile", label: "Hồ sơ", icon: User },
+  { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
   {
     routeKey: "notifications",
     href: "/notifications",

@@ -58,6 +58,11 @@ const getBookingStatusNotificationContent = (
         title: "Booking đang thực hiện",
         body: "Booking đã bắt đầu và đang được thực hiện.",
       };
+    case BookingStatus.PENDING_CLIENT_ACCEPTANCE:
+      return {
+        title: "Booking chờ xác nhận hoàn thành",
+        body: "Worker đã báo hoàn thành. Vui lòng xác nhận hoặc khiếu nại nếu cần.",
+      };
     case BookingStatus.COMPLETED:
       return {
         title: "Booking đã hoàn thành",

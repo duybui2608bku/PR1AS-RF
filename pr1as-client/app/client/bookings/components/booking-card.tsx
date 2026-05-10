@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   CalendarDays,
+  CheckCircle2,
   Clock,
   Info,
   Loader2,
@@ -40,8 +41,10 @@ type BookingCardProps = {
   onCancel: (booking: Booking) => void
   onDispute: (booking: Booking) => void
   onReview: (booking: Booking) => void
+  onComplete: (booking: Booking) => void
   onOpenComplaintGroup: (booking: Booking) => void
   openingComplaintGroup?: boolean
+  completing?: boolean
 }
 
 export function BookingCard({
@@ -49,13 +52,21 @@ export function BookingCard({
   onCancel,
   onDispute,
   onReview,
+  onComplete,
   onOpenComplaintGroup,
   openingComplaintGroup,
+  completing,
 }: BookingCardProps) {
-  const expired = isBookingExpired(booking.schedule, booking.status)
+  const expired = isBookingExpired(
+    booking.schedule,
+    booking.status,
+    booking.created_at
+  )
   const displayStatus = expired ? BookingStatus.EXPIRED : booking.status
   const showCancel = !expired && canCancelBooking(booking.status)
   const showDispute = !expired && canComplainBooking(booking.status)
+  const showComplete =
+    !expired && booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
   const showReview = booking.status === BookingStatus.COMPLETED
   const showComplaintGroup = booking.status === BookingStatus.DISPUTED
 
@@ -156,7 +167,11 @@ export function BookingCard({
         </div>
       </dl>
 
-      {showCancel || showDispute || showReview || showComplaintGroup ? (
+      {showCancel ||
+      showDispute ||
+      showComplete ||
+      showReview ||
+      showComplaintGroup ? (
         <div className="mt-3 flex flex-wrap justify-end gap-2 border-t pt-3">
           {showComplaintGroup ? (
             <Button
@@ -181,6 +196,21 @@ export function BookingCard({
             >
               <Star className="size-4" />
               Đánh giá
+            </Button>
+          ) : null}
+          {showComplete ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onComplete(booking)}
+              disabled={completing}
+            >
+              {completing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-4" />
+              )}
+              Xác nhận hoàn thành
             </Button>
           ) : null}
           {showDispute ? (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import {
   AlertCircle,
   CalendarCheck2,
+  CheckCircle2,
   Info,
   Loader2,
   MessageSquare,
@@ -37,6 +38,7 @@ import {
   useCancelBooking,
   useCreateDispute,
   useMyBookings,
+  useUpdateBookingStatus,
 } from "@/lib/hooks/use-bookings"
 import { useCreateComplaintConversation } from "@/lib/hooks/use-chat"
 import { useCreateReview } from "@/lib/hooks/use-reviews"
@@ -86,6 +88,10 @@ const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] = [
   {
     value: BookingStatus.IN_PROGRESS,
     label: bookingStatusLabel[BookingStatus.IN_PROGRESS],
+  },
+  {
+    value: BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+    label: bookingStatusLabel[BookingStatus.PENDING_CLIENT_ACCEPTANCE],
   },
   {
     value: BookingStatus.COMPLETED,
@@ -138,6 +144,7 @@ export default function ClientBookingsPage() {
   const bookingsQuery = useMyBookings(query)
   const cancelMutation = useCancelBooking()
   const disputeMutation = useCreateDispute()
+  const updateStatusMutation = useUpdateBookingStatus()
   const reviewMutation = useCreateReview()
   const complaintMutation = useCreateComplaintConversation()
 
@@ -171,6 +178,13 @@ export default function ClientBookingsPage() {
       payload: values,
     })
     setDisputeTarget(null)
+  }
+
+  const handleCompleteBooking = async (booking: Booking) => {
+    await updateStatusMutation.mutateAsync({
+      id: getBookingId(booking),
+      payload: { status: BookingStatus.COMPLETED },
+    })
   }
 
   const handleReviewSubmit = async (values: {
@@ -340,8 +354,13 @@ export default function ClientBookingsPage() {
                       onCancel={setCancelTarget}
                       onDispute={setDisputeTarget}
                       onReview={setReviewTarget}
+                      onComplete={handleCompleteBooking}
                       onOpenComplaintGroup={handleOpenComplaintGroup}
                       openingComplaintGroup={complaintLoadingId === bookingId}
+                      completing={
+                        updateStatusMutation.isPending &&
+                        updateStatusMutation.variables?.id === bookingId
+                      }
                     />
                   )
                 })}
@@ -364,7 +383,8 @@ export default function ClientBookingsPage() {
                     {bookings.map((booking) => {
                       const expired = isBookingExpired(
                         booking.schedule,
-                        booking.status
+                        booking.status,
+                        booking.created_at
                       )
                       const displayStatus = expired
                         ? BookingStatus.EXPIRED
@@ -373,6 +393,10 @@ export default function ClientBookingsPage() {
                         !expired && canCancelBooking(booking.status)
                       const showDispute =
                         !expired && canComplainBooking(booking.status)
+                      const showComplete =
+                        !expired &&
+                        booking.status ===
+                          BookingStatus.PENDING_CLIENT_ACCEPTANCE
                       const showReview =
                         booking.status === BookingStatus.COMPLETED
                       const showComplaintGroup =
@@ -511,6 +535,21 @@ export default function ClientBookingsPage() {
                                 >
                                   <Star className="size-4" />
                                   Đánh giá
+                                </Button>
+                              ) : null}
+                              {showComplete ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCompleteBooking(booking)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  {updateStatusMutation.isPending ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="size-4" />
+                                  )}
+                                  Xác nhận hoàn thành
                                 </Button>
                               ) : null}
                               {showDispute ? (

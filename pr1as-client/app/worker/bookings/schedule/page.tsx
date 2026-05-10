@@ -89,7 +89,7 @@ const formatDuration = (booking: Booking) => {
 }
 
 const getDisplayStatus = (booking: Booking) =>
-  isBookingExpired(booking.schedule, booking.status)
+  isBookingExpired(booking.schedule, booking.status, booking.created_at)
     ? BookingStatus.EXPIRED
     : booking.status
 
@@ -200,7 +200,8 @@ export default function WorkerBookingSchedulePage() {
     return (
       status === BookingStatus.PENDING ||
       status === BookingStatus.CONFIRMED ||
-      status === BookingStatus.IN_PROGRESS
+      status === BookingStatus.IN_PROGRESS ||
+      status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
     )
   })
 

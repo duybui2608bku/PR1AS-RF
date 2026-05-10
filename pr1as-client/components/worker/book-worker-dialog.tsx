@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { CalendarIcon, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils"
 import type { WorkerPricingUnit, WorkerServiceItem } from "@/types"
 
 const MIN_ADVANCE_HOURS = 2
-const DATE_RANGE_DAYS = 60
+const DATE_RANGE_DAYS = 30
 const WEEKDAY_VI_LONG = [
   "Chủ nhật",
   "Thứ 2",
@@ -129,32 +129,37 @@ export function BookWorkerDialog({
     return [...set]
   }, [service])
 
-  const [unit, setUnit] = useState<WorkerPricingUnit | "">("")
+  const [selectedUnit, setSelectedUnit] = useState<WorkerPricingUnit | "">("")
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState<string>("09:00")
   const [quantity, setQuantity] = useState<number>(1)
   const [notes, setNotes] = useState("")
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
+  const [now, setNow] = useState(0)
   const [calendarMonth, setCalendarMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   )
 
-  useEffect(() => {
-    if (!open) {
-      setDate(undefined)
-      setTime("09:00")
-      setQuantity(1)
-      setNotes("")
-      setDatePopoverOpen(false)
-      setCalendarMonth(startOfMonth(new Date()))
-    }
-  }, [open])
+  const unit =
+    selectedUnit && availableUnits.includes(selectedUnit)
+      ? selectedUnit
+      : availableUnits[0] ?? ""
 
-  useEffect(() => {
-    if (open) {
-      setUnit(availableUnits[0] ?? "")
-    }
-  }, [open, availableUnits])
+  const resetForm = () => {
+    setSelectedUnit("")
+    setDate(undefined)
+    setTime("09:00")
+    setQuantity(1)
+    setNotes("")
+    setDatePopoverOpen(false)
+    setNow(Date.now())
+    setCalendarMonth(startOfMonth(new Date()))
+  }
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) resetForm()
+    onOpenChange(nextOpen)
+  }
 
   const fetchRange = useMemo(() => {
     const today = startOfDay(new Date())
@@ -203,12 +208,12 @@ export function BookWorkerDialog({
     if (quantity < 1) return "Số lượng tối thiểu là 1"
     if (!startDateTime) return "Vui lòng chọn giờ bắt đầu"
 
-    const minStart = new Date(Date.now() + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
+    const minStart = new Date(now + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
     if (startDateTime < minStart) {
       return `Lịch phải đặt trước ít nhất ${MIN_ADVANCE_HOURS} giờ`
     }
     return null
-  }, [service, unit, date, quantity, startDateTime])
+  }, [service, unit, date, quantity, startDateTime, now])
 
   const handleSubmit = async () => {
     if (
@@ -237,6 +242,7 @@ export function BookWorkerDialog({
         },
         client_notes: notes.trim() || undefined,
       })
+      resetForm()
       onOpenChange(false)
     } catch {
       
@@ -244,7 +250,7 @@ export function BookWorkerDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Thuê {workerName}</DialogTitle>
@@ -256,7 +262,7 @@ export function BookWorkerDialog({
             <Label htmlFor="book-unit">Hình thức</Label>
             <Select
               value={unit}
-              onValueChange={(v) => setUnit(v as WorkerPricingUnit)}
+              onValueChange={(v) => setSelectedUnit(v as WorkerPricingUnit)}
               disabled={availableUnits.length === 0}
             >
               <SelectTrigger id="book-unit" className="w-full">
@@ -297,6 +303,7 @@ export function BookWorkerDialog({
                     mode="single"
                     selected={date}
                     onSelect={(d) => {
+                      setNow(Date.now())
                       setDate(d)
                       if (d) setDatePopoverOpen(false)
                     }}
@@ -320,7 +327,13 @@ export function BookWorkerDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="book-time">Giờ bắt đầu</Label>
-              <Select value={time} onValueChange={setTime}>
+              <Select
+                value={time}
+                onValueChange={(value) => {
+                  setNow(Date.now())
+                  setTime(value)
+                }}
+              >
                 <SelectTrigger id="book-time" className="w-full">
                   <SelectValue placeholder="Chọn giờ" />
                 </SelectTrigger>

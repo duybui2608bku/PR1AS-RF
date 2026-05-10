@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { Mars, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 
@@ -49,16 +49,13 @@ export function WorkerProfileHeader({ worker }: Props) {
   const ratingAverage = stats?.average ?? 0
   const ratingCount = stats?.total ?? 0
 
-  const gallery = useMemo(() => {
-    const list: string[] = []
-    if (worker.user.avatar) list.push(worker.user.avatar)
-    if (profile?.gallery_urls) {
-      for (const url of profile.gallery_urls) {
-        if (!list.includes(url)) list.push(url)
-      }
+  const gallery: string[] = []
+  if (worker.user.avatar) gallery.push(worker.user.avatar)
+  if (profile?.gallery_urls) {
+    for (const url of profile.gallery_urls) {
+      if (!gallery.includes(url)) gallery.push(url)
     }
-    return list
-  }, [worker.user.avatar, profile?.gallery_urls])
+  }
 
   const [activeIndex, setActiveIndex] = useState(0)
   const activeImage = gallery[activeIndex] ?? gallery[0] ?? null

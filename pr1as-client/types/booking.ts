@@ -2,6 +2,7 @@ export enum BookingStatus {
   PENDING = "pending",
   CONFIRMED = "confirmed",
   IN_PROGRESS = "in_progress",
+  PENDING_CLIENT_ACCEPTANCE = "pending_client_acceptance",
   COMPLETED = "completed",
   CANCELLED = "cancelled",
   REJECTED = "rejected",
@@ -9,19 +10,11 @@ export enum BookingStatus {
   EXPIRED = "expired",
 }
 
-export enum BookingPaymentStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  PARTIALLY_REFUNDED = "partially_refunded",
-  REFUNDED = "refunded",
-}
-
 export enum CancellationReason {
   CLIENT_REQUEST = "client_request",
   WORKER_UNAVAILABLE = "worker_unavailable",
   SCHEDULE_CONFLICT = "schedule_conflict",
   EMERGENCY = "emergency",
-  PAYMENT_FAILED = "payment_failed",
   POLICY_VIOLATION = "policy_violation",
   OTHER = "other",
 }
@@ -81,13 +74,7 @@ export type BookingSchedule = {
 
 export type BookingPricing = {
   unit: string
-  unit_price: number
   quantity: number
-  subtotal: number
-  platform_fee: number
-  total_amount: number
-  worker_payout: number
-  currency: string
 }
 
 export type BookingCancellation = {
@@ -95,8 +82,6 @@ export type BookingCancellation = {
   cancelled_by: CancelledBy
   reason: CancellationReason
   notes: string
-  refund_amount: number
-  penalty_amount: number
 }
 
 export type BookingDispute = {
@@ -109,8 +94,6 @@ export type BookingDispute = {
   resolution_notes: string
   resolved_by: string | null
   resolved_at: string | null
-  refund_amount: number
-  penalty_amount: number
 }
 
 export type Booking = {
@@ -124,10 +107,6 @@ export type Booking = {
   schedule: BookingSchedule
   pricing: BookingPricing
   status: BookingStatus
-  payment_status: BookingPaymentStatus
-  escrow_id: string | null
-  transaction_id: string | null
-  payout_transaction_id: string | null
   client_notes: string
   worker_response: string
   confirmed_at: string | null
@@ -145,7 +124,6 @@ export type BookingListQuery = {
   limit?: number
   role?: BookingRole
   status?: BookingStatus
-  payment_status?: BookingPaymentStatus
   service_code?: string
   start_date?: string
   end_date?: string

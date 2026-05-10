@@ -2,6 +2,7 @@ export enum BookingStatus {
   PENDING = "pending",
   CONFIRMED = "confirmed",
   IN_PROGRESS = "in_progress",
+  PENDING_CLIENT_ACCEPTANCE = "pending_client_acceptance",
   COMPLETED = "completed",
   CANCELLED = "cancelled",
   REJECTED = "rejected",
@@ -52,8 +53,12 @@ export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> 
     BookingStatus.CANCELLED,
   ],
   [BookingStatus.IN_PROGRESS]: [
-    BookingStatus.COMPLETED,
+    BookingStatus.PENDING_CLIENT_ACCEPTANCE,
     BookingStatus.CANCELLED,
+    BookingStatus.DISPUTED,
+  ],
+  [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: [
+    BookingStatus.COMPLETED,
     BookingStatus.DISPUTED,
   ],
   [BookingStatus.COMPLETED]: [],

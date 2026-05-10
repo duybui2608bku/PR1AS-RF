@@ -47,7 +47,6 @@ const buildParams = (
   }
   if (query.role) params.role = query.role
   if (query.status) params.status = query.status
-  if (query.payment_status) params.payment_status = query.payment_status
   if (query.service_code) params.service_code = query.service_code
   if (query.start_date) params.start_date = query.start_date
   if (query.end_date) params.end_date = query.end_date

@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
+import { siteConfig } from "@/config/site"
 
 export default function NotFound() {
   return (
@@ -14,7 +15,10 @@ export default function NotFound() {
         <Link href="/" className={buttonVariants()}>
           Back to home
         </Link>
-        <Link href="/contact" className={buttonVariants({ variant: "outline" })}>
+        <Link
+          href={`mailto:${siteConfig.contactEmail}`}
+          className={buttonVariants({ variant: "outline" })}
+        >
           Contact support
         </Link>
       </div>
