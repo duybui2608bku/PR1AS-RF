@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { CalendarIcon, Loader2 } from "lucide-react"
+import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -139,6 +139,7 @@ export function BookWorkerDialog({
   const [calendarMonth, setCalendarMonth] = useState<Date>(() =>
     startOfMonth(new Date()),
   )
+  const [bookingAnchorMs, setBookingAnchorMs] = useState<number | null>(null)
 
   const unit =
     selectedUnit && availableUnits.includes(selectedUnit)
@@ -202,6 +203,7 @@ export function BookWorkerDialog({
   }, [startDateTime, unit, quantity])
 
   const validationError = useMemo(() => {
+    if (!open) return null
     if (!service) return "Vui lòng chọn dịch vụ"
     if (!unit) return "Vui lòng chọn hình thức"
     if (!date) return "Vui lòng chọn ngày"
@@ -394,7 +396,7 @@ export function BookWorkerDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={createBooking.isPending}
           >
             Hủy

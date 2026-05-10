@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
-import { Mars, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
@@ -41,9 +43,11 @@ const HOBBY_COLORS = [
 
 type Props = {
   worker: WorkerDetail
+  isOwnProfile?: boolean
 }
 
-export function WorkerProfileHeader({ worker }: Props) {
+export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
+  const router = useRouter()
   const profile = worker.worker_profile
   const stats = worker.review_stats
   const ratingAverage = stats?.average ?? 0
@@ -116,8 +120,8 @@ export function WorkerProfileHeader({ worker }: Props) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-start gap-3">
-          <Avatar size="lg" className="size-12">
+        <div className="flex flex-wrap items-start gap-3">
+          <Avatar size="lg" className="size-12 shrink-0">
             {worker.user.avatar ? (
               <AvatarImage src={worker.user.avatar} alt={fullName} />
             ) : null}
@@ -125,16 +129,30 @@ export function WorkerProfileHeader({ worker }: Props) {
               {initials || <UserIcon className="size-4" />}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              <span>{fullName}</span>
-              {title ? (
-                <span className="font-normal text-muted-foreground">
-                  {" "}
-                  - {title}
-                </span>
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">
+                <span>{fullName}</span>
+                {title ? (
+                  <span className="font-normal text-muted-foreground">
+                    {" "}
+                    - {title}
+                  </span>
+                ) : null}
+              </h1>
+              {isOwnProfile ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                  onClick={() => router.push("/worker/setup")}
+                >
+                  <Pencil className="size-3.5" />
+                  Cập nhật hồ sơ
+                </Button>
               ) : null}
-            </h1>
+            </div>
           </div>
         </div>
 

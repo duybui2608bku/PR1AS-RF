@@ -1,26 +1,33 @@
-import { SiteLayout } from "@/components/layout/site-layout"
-import { HomeRoleGate } from "@/components/layout/home-role-gate"
-import { WorkersByServiceList } from "@/components/worker/workers-by-service-list"
-import { HomeHero } from "@/components/hero/home-hero"
-import { serviceService } from "@/services/service.service"
-import { workerService } from "@/services/worker.service"
+import { redirect, permanentRedirect } from "next/navigation"
 
-export default async function HomePage() {
-  const [servicesResult, workersResult] = await Promise.allSettled([
-    serviceService.getServices(),
-    workerService.getWorkersGroupedByService(),
-  ])
+import type { HomeSearchParams } from "@/lib/home/home-search-params"
 
-  const services = servicesResult.status === "fulfilled" ? servicesResult.value : []
-  const workers = workersResult.status === "fulfilled" ? workersResult.value : []
-  const hasWorkersError = workersResult.status === "rejected"
+type RootPageProps = {
+  searchParams: Promise<HomeSearchParams>
+}
 
-  return (
-    <SiteLayout>
-      <HomeRoleGate>
-        <HomeHero initialServices={services} />
-        <WorkersByServiceList groupedServices={workers} hasFetchError={hasWorkersError} />
-      </HomeRoleGate>
-    </SiteLayout>
-  )
+const buildSearchString = (raw: HomeSearchParams): string => {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(raw)) {
+    if (value == null) continue
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(key, item)
+    } else {
+      params.set(key, value)
+    }
+  }
+  return params.toString()
+}
+
+export default async function RootPage({ searchParams }: RootPageProps) {
+  const raw = await searchParams
+  const queryString = buildSearchString(raw)
+  const target = queryString ? `/services?${queryString}` : "/services"
+  // permanent redirect (308) so search engines / browsers cache the canonical
+  // route. If a query string is present we use a temporary redirect (307)
+  // because the destination URL depends on user input.
+  if (queryString) {
+    redirect(target)
+  }
+  permanentRedirect(target)
 }

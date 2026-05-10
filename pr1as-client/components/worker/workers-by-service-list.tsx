@@ -1,12 +1,26 @@
 import Image from "next/image"
 import Link from "next/link"
-import { AlertCircle, ArrowRight } from "lucide-react"
+import { AlertCircle, ArrowRight, MapPin, X } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
 type Worker = WorkerGroupedByService["workers"][number]
 type Pricing = Worker["pricing"][number]
+type WorkLocation = NonNullable<
+  NonNullable<Worker["worker_profile"]>["work_locations"]
+>[number]
+
+const formatWorkLocations = (locations?: WorkLocation[]): string => {
+  if (!locations?.length) return ""
+  const labels = locations
+    .map((loc) => loc.label_snapshot?.trim())
+    .filter((label): label is string => Boolean(label))
+  if (!labels.length) return ""
+  if (labels.length <= 2) return labels.join(" · ")
+  return `${labels.slice(0, 2).join(" · ")} +${labels.length - 2}`
+}
 
 const formatPricing = (pricing: Pricing[]) => {
   if (!pricing.length) return { label: "Chưa có bảng giá", prefix: "" }
@@ -78,6 +92,19 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
           </p>
         ) : null}
 
+        {(() => {
+          const locationText = formatWorkLocations(
+            worker.worker_profile?.work_locations,
+          )
+          if (!locationText) return null
+          return (
+            <p className="flex items-center gap-1 text-[11px] text-muted-foreground line-clamp-1">
+              <MapPin className="size-3 shrink-0" />
+              <span className="truncate">{locationText}</span>
+            </p>
+          )
+        })()}
+
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <p className="text-xs font-semibold text-foreground">
             {prefix}
@@ -89,15 +116,70 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
   )
 }
 
+export type AppliedFilterChip = {
+  id: string
+  label: string
+  onRemove?: () => void
+}
+
 type WorkersByServiceListProps = {
   groupedServices: WorkerGroupedByService[]
   hasFetchError?: boolean
+  isFetching?: boolean
+  appliedFilters?: AppliedFilterChip[]
+  onClearAllFilters?: () => void
+}
+
+const FilterChips = ({
+  filters,
+  onClearAll,
+}: {
+  filters: AppliedFilterChip[]
+  onClearAll?: () => void
+}) => {
+  if (!filters.length) return null
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium text-muted-foreground">Đang lọc:</span>
+      {filters.map((chip) => (
+        <Badge key={chip.id} variant="secondary" className="gap-1 pr-1">
+          <span>{chip.label}</span>
+          {chip.onRemove ? (
+            <button
+              type="button"
+              onClick={chip.onRemove}
+              aria-label={`Bỏ lọc ${chip.label}`}
+              className="rounded-full p-0.5 hover:bg-muted"
+            >
+              <X className="size-3" />
+            </button>
+          ) : null}
+        </Badge>
+      ))}
+      {onClearAll ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onClearAll}
+          className="h-6 px-2 text-xs"
+        >
+          Xoá tất cả
+        </Button>
+      ) : null}
+    </div>
+  )
 }
 
 export const WorkersByServiceList = ({
   groupedServices,
   hasFetchError = false,
+  isFetching = false,
+  appliedFilters = [],
+  onClearAllFilters,
 }: WorkersByServiceListProps) => {
+  const hasActiveFilters = appliedFilters.length > 0
+
   if (hasFetchError) {
     return (
       <section className="container mx-auto px-4 pb-16">
@@ -114,19 +196,40 @@ export const WorkersByServiceList = ({
 
   if (groupedServices.length === 0) {
     return (
-      <section className="container mx-auto px-4 pb-16">
-        <Alert className="mt-2">
+      <section className="container mx-auto px-4 pb-16 space-y-4">
+        {hasActiveFilters ? (
+          <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} />
+        ) : null}
+        <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Chưa có dữ liệu</AlertTitle>
-          <AlertDescription>Hiện chưa có worker theo dịch vụ để hiển thị.</AlertDescription>
+          <AlertTitle>
+            {isFetching
+              ? "Đang tìm kiếm..."
+              : hasActiveFilters
+                ? "Không có worker phù hợp"
+                : "Chưa có dữ liệu"}
+          </AlertTitle>
+          <AlertDescription>
+            {isFetching
+              ? "Đang tải danh sách worker theo bộ lọc."
+              : hasActiveFilters
+                ? "Hãy thử bỏ bớt một vài tiêu chí, đổi khu vực hoặc xoá toàn bộ filter ở phía trên."
+                : "Hiện chưa có worker nào để hiển thị."}
+          </AlertDescription>
         </Alert>
       </section>
     )
   }
 
   return (
-    <section className="container mx-auto px-4 pb-16">
-      <div className="space-y-12">
+    <section className="container mx-auto px-4 pb-16 space-y-6">
+      {hasActiveFilters ? (
+        <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} />
+      ) : null}
+      <div
+        aria-busy={isFetching}
+        className={isFetching ? "space-y-12 opacity-70 transition-opacity" : "space-y-12"}
+      >
         {groupedServices.map((group) => (
           <div key={group.service.id}>
             <div className="mb-4 flex items-center gap-3">

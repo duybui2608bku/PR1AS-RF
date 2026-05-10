@@ -4,6 +4,29 @@ import { cache } from "react"
 import { api } from "@/lib/axios"
 import type { WorkerDetail, WorkerScheduleItem } from "@/types"
 
+export type WorkersGroupedFilters = {
+  q?: string
+  category?: string
+  province_code?: number
+  ward_code?: number | null
+  schedule?: string
+}
+
+const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
+  if (!filters) return undefined
+  const params: Record<string, string | number> = {}
+  if (filters.q?.trim()) params.q = filters.q.trim()
+  if (filters.category && filters.category !== "ALL") params.category = filters.category
+  if (typeof filters.province_code === "number") {
+    params.province_code = filters.province_code
+    if (typeof filters.ward_code === "number") {
+      params.ward_code = filters.ward_code
+    }
+  }
+  if (filters.schedule) params.schedule = filters.schedule
+  return Object.keys(params).length ? params : undefined
+}
+
 type ApiResponse<T> = {
   success: boolean
   statusCode?: number
@@ -37,6 +60,11 @@ export type WorkerGroupedByService = {
       title: string | null
       introduction: string | null
       gallery_urls: string[]
+      work_locations?: Array<{
+        province_code: number
+        ward_code: number | null
+        label_snapshot: string | null
+      }>
     } | null
     pricing: Array<{
       unit: string
@@ -50,25 +78,32 @@ export type WorkerGroupedByService = {
 const getFallbackName = (name: WorkerGroupedByService["service"]["name"]) =>
   name.vi ?? name.en ?? name.zh ?? name.ko ?? "Dịch vụ"
 
-const getWorkersGroupedByService = cache(
-  async (): Promise<WorkerGroupedByService[]> => {
-    try {
-      const response = await api.get<ApiResponse<WorkerGroupedByService[]>>(
-        "/workers/grouped-by-service",
-      )
-      return response.data.data ?? []
-    } catch (error) {
-      const axiosError = error as AxiosError
-      if (axiosError.response?.status !== 404) {
-        throw error
-      }
-
-      const fallbackResponse = await api.get<ApiResponse<WorkerGroupedByService[]>>(
-        "/worker/grouped-by-service",
-      )
-      return fallbackResponse.data.data ?? []
+const fetchGroupedByService = async (
+  filters?: WorkersGroupedFilters,
+): Promise<WorkerGroupedByService[]> => {
+  const params = buildGroupedParams(filters)
+  try {
+    const response = await api.get<ApiResponse<WorkerGroupedByService[]>>(
+      "/workers/grouped-by-service",
+      { params },
+    )
+    return response.data.data ?? []
+  } catch (error) {
+    const axiosError = error as AxiosError
+    if (axiosError.response?.status !== 404) {
+      throw error
     }
-  },
+    const fallbackResponse = await api.get<ApiResponse<WorkerGroupedByService[]>>(
+      "/worker/grouped-by-service",
+      { params },
+    )
+    return fallbackResponse.data.data ?? []
+  }
+}
+
+const getWorkersGroupedByService = cache(
+  (filters?: WorkersGroupedFilters): Promise<WorkerGroupedByService[]> =>
+    fetchGroupedByService(filters),
 )
 
 const getWorkerById = async (id: string): Promise<WorkerDetail> => {

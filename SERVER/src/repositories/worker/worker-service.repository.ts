@@ -27,6 +27,10 @@ export interface GroupedWorkersFilter {
     latitude: number;
     longitude: number;
   };
+  workLocation?: {
+    provinceCode: number;
+    wardCode?: number | null;
+  };
 }
 
 const LOCATION_RADIUS_KM = 30;
@@ -163,6 +167,11 @@ class WorkerServiceRepository {
           title: string | null;
           introduction: string | null;
           gallery_urls: string[];
+          work_locations: Array<{
+            province_code: number;
+            ward_code: number | null;
+            label_snapshot: string | null;
+          }>;
         } | null;
         pricing: WorkerServicePricing[];
       }>;
@@ -284,6 +293,34 @@ class WorkerServiceRepository {
       });
     }
 
+    if (filters?.workLocation) {
+      const { provinceCode, wardCode } = filters.workLocation;
+      // Workers must declare service in this area. Three scopes are valid:
+      //   - Province-wide (ward_code is null OR field is missing)
+      //   - The exact ward selected by the searcher
+      //   - When only a province is provided, ANY ward inside that province
+      const wardConditions: Record<string, unknown>[] = [
+        { ward_code: null },
+        { ward_code: { $exists: false } },
+      ];
+      if (wardCode != null) {
+        wardConditions.push({ ward_code: wardCode });
+      }
+      const elemMatch: Record<string, unknown> = {
+        province_code: provinceCode,
+      };
+      if (wardCode != null) {
+        elemMatch.$or = wardConditions;
+      }
+      stages.push({
+        $match: {
+          "worker.worker_profile.work_locations": {
+            $elemMatch: elemMatch,
+          },
+        },
+      });
+    }
+
     stages.push(
       {
         $group: {
@@ -306,6 +343,9 @@ class WorkerServiceRepository {
                 title: "$worker.worker_profile.title",
                 introduction: "$worker.worker_profile.introduction",
                 gallery_urls: "$worker.worker_profile.gallery_urls",
+                work_locations: {
+                  $ifNull: ["$worker.worker_profile.work_locations", []],
+                },
               },
               pricing: "$pricing",
             },
@@ -348,6 +388,11 @@ class WorkerServiceRepository {
             title: string | null;
             introduction: string | null;
             gallery_urls: string[];
+            work_locations: Array<{
+              province_code: number;
+              ward_code: number | null;
+              label_snapshot: string | null;
+            }>;
           } | null;
           pricing: WorkerServicePricing[];
         }>;

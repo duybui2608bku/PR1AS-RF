@@ -1,8 +1,5 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
 import {
   Bell,
   CalendarCheck2,
@@ -19,20 +16,20 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 
+import { NotificationBell } from "@/components/layout/notification-bell"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
-import {
-  getRoleDefaultRoute,
-  getRoleRoute,
-  type RoleRouteKey,
-} from "@/lib/navigation/role-routes"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
-import { NotificationBell } from "@/components/layout/notification-bell"
+import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
+import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 
 const USER_MENU_ITEMS = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
@@ -57,6 +54,19 @@ const USER_MENU_ITEMS = [
   label: string
   icon: LucideIcon
 }>
+
+const resolveMenuHref = (
+  routeKey: RoleRouteKey,
+  fallbackHref: string,
+  user: AuthUser | null | undefined,
+  activeRole: string | null | undefined,
+) => {
+  if (routeKey === "profile" && isWorkerRoleActive(user) && user?.id) {
+    return `/worker/${user.id}`
+  }
+
+  return getRoleRoute(routeKey, activeRole, fallbackHref)
+}
 
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
@@ -88,7 +98,7 @@ export function SiteHeader() {
     () => [
       ...USER_MENU_ITEMS.map((item) => ({
         ...item,
-        href: getRoleRoute(item.routeKey, activeRole, item.href),
+        href: resolveMenuHref(item.routeKey, item.href, user, activeRole),
       })),
       {
         routeKey: "pricing" as const,
@@ -97,7 +107,7 @@ export function SiteHeader() {
         icon: Crown,
       },
     ],
-    [activeRole, user?.pricing_plan_code]
+    [activeRole, user]
   )
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
@@ -321,6 +331,24 @@ export function SiteHeader() {
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Toggle theme"
+        disabled
+      >
+        <span className="size-4" aria-hidden="true" />
+      </Button>
+    )
+  }
 
   return (
     <Button

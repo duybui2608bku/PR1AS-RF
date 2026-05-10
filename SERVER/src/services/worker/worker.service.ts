@@ -124,6 +124,14 @@ export class WorkerService {
       q: query.q,
       category: query.category,
       location: parseLocation(query.location),
+      workLocation:
+        typeof query.province_code === "number"
+          ? {
+              provinceCode: query.province_code,
+              wardCode:
+                typeof query.ward_code === "number" ? query.ward_code : null,
+            }
+          : undefined,
     });
 
     if (!query.schedule) return groupedWorkers;
