@@ -331,6 +331,24 @@ export function SiteHeader() {
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Toggle theme"
+        disabled
+      >
+        <span className="size-4" aria-hidden="true" />
+      </Button>
+    )
+  }
 
   return (
     <Button

@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -13,6 +12,8 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
   AlertCircle,
+  ChevronRight,
+  Globe2,
   ImagePlus,
   Loader2,
   MapPin,
@@ -49,6 +50,7 @@ import {
   useUpsertWorkerServices,
 } from "@/lib/hooks/use-worker-setup"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
@@ -64,9 +66,13 @@ import {
   WORKER_SETUP_PRICING_SLOT_ORDER,
 } from "@/lib/worker/worker-setup-pricing"
 import {
-  searchWorkLocations,
+  formatProvinceLabel,
+  formatWardLabel,
+  getProvinces,
+  getWardsByProvince,
   WORK_LOCATIONS_MAX,
-  type WorkLocationOption,
+  type ProvinceOption,
+  type WardOption,
 } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import type {
@@ -134,18 +140,59 @@ export default function WorkerSetupPage() {
   const upsertServicesMutation = useUpsertWorkerServices()
 
   const hydratedRef = useRef(false)
-  const locationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
   const [workLocations, setWorkLocations] = useState<
-    Array<{ province_code: number; ward_code: number; label_snapshot?: string }>
+    Array<{
+      province_code: number
+      ward_code: number | null
+      label_snapshot?: string
+    }>
   >([])
   const [locationOpen, setLocationOpen] = useState(false)
-  const [locationQuery, setLocationQuery] = useState("")
-  const [locationOptions, setLocationOptions] = useState<WorkLocationOption[]>(
-    [],
+  const [provinceQuery, setProvinceQuery] = useState("")
+  const [wardQuery, setWardQuery] = useState("")
+  const [activeProvinceCode, setActiveProvinceCode] = useState<number | null>(
+    null,
   )
-  const [locationLoading, setLocationLoading] = useState(false)
+
+  const provincesQuery = useQuery({
+    queryKey: ["vn", "provinces", "v2"],
+    queryFn: getProvinces,
+    staleTime: Infinity,
+    enabled: locationOpen,
+  })
+
+  const wardsQuery = useQuery({
+    queryKey: ["vn", "wards", "v2", activeProvinceCode],
+    queryFn: () => getWardsByProvince(activeProvinceCode as number),
+    enabled: locationOpen && activeProvinceCode != null,
+    staleTime: Infinity,
+  })
+
+  const activeProvince = useMemo<ProvinceOption | null>(
+    () =>
+      provincesQuery.data?.find((p) => p.code === activeProvinceCode) ?? null,
+    [provincesQuery.data, activeProvinceCode],
+  )
+
+  const filteredProvinces = useMemo(() => {
+    const list = provincesQuery.data ?? []
+    const q = provinceQuery.trim().toLowerCase()
+    if (!q) return list
+    return list.filter(
+      (p) =>
+        p.short_name.toLowerCase().includes(q) ||
+        p.name.toLowerCase().includes(q),
+    )
+  }, [provincesQuery.data, provinceQuery])
+
+  const filteredWards = useMemo(() => {
+    const list = wardsQuery.data ?? []
+    const q = wardQuery.trim().toLowerCase()
+    if (!q) return list
+    return list.filter((w) => w.name.toLowerCase().includes(q))
+  }, [wardsQuery.data, wardQuery])
 
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined)
   const [gender, setGender] = useState<WorkerGender>("MALE")
@@ -225,7 +272,7 @@ export default function WorkerSetupPage() {
         setWorkLocations(
           profile.work_locations.map((w) => ({
             province_code: w.province_code,
-            ward_code: w.ward_code,
+            ward_code: w.ward_code ?? null,
             label_snapshot: w.label_snapshot,
           })),
         )
@@ -271,50 +318,88 @@ export default function WorkerSetupPage() {
     mineQuery.data,
   ])
 
-  const runLocationSearch = useCallback(async (q: string) => {
-    setLocationLoading(true)
-    try {
-      const opts = await searchWorkLocations(q)
-      setLocationOptions(opts)
-    } catch {
-      setLocationOptions([])
-      toast.error("Không tải được danh sách khu vực.")
-    } finally {
-      setLocationLoading(false)
+  useEffect(() => {
+    if (provincesQuery.isError) {
+      toast.error("Không tải được danh sách tỉnh/thành.")
     }
-  }, [])
+  }, [provincesQuery.isError])
 
   useEffect(() => {
-    if (!locationOpen) return
-    if (locationTimerRef.current) clearTimeout(locationTimerRef.current)
-    locationTimerRef.current = setTimeout(() => {
-      void runLocationSearch(locationQuery)
-    }, 320)
-    return () => {
-      if (locationTimerRef.current) clearTimeout(locationTimerRef.current)
+    if (wardsQuery.isError) {
+      toast.error("Không tải được danh sách phường/xã.")
     }
-  }, [locationQuery, locationOpen, runLocationSearch])
+  }, [wardsQuery.isError])
 
-  const addWorkLocation = (opt: WorkLocationOption) => {
-    if (workLocations.length >= WORK_LOCATIONS_MAX) {
-      toast.warning(`Tối đa ${WORK_LOCATIONS_MAX} khu vực.`)
-      return
-    }
-    if (workLocations.some((w) => w.ward_code === opt.ward_code)) return
-    setWorkLocations((prev) => [
-      ...prev,
-      {
-        province_code: opt.province_code,
-        ward_code: opt.ward_code,
-        label_snapshot: opt.label,
-      },
-    ])
-    setLocationOpen(false)
-    setLocationQuery("")
+  const addProvinceLocation = (p: ProvinceOption) => {
+    setWorkLocations((prev) => {
+      const cleaned = prev.filter((w) => w.province_code !== p.code)
+      if (
+        cleaned.some(
+          (w) => w.province_code === p.code && w.ward_code == null,
+        )
+      ) {
+        return cleaned
+      }
+      if (cleaned.length >= WORK_LOCATIONS_MAX) {
+        toast.warning(`Tối đa ${WORK_LOCATIONS_MAX} khu vực.`)
+        return prev
+      }
+      const removedWardCount = prev.length - cleaned.length
+      if (removedWardCount > 0) {
+        toast.info(
+          `Đã thay thế ${removedWardCount} phường/xã của ${p.short_name} bằng lựa chọn toàn tỉnh.`,
+        )
+      }
+      return [
+        ...cleaned,
+        {
+          province_code: p.code,
+          ward_code: null,
+          label_snapshot: formatProvinceLabel(p),
+        },
+      ]
+    })
   }
 
-  const removeWorkLocation = (wardCode: number) => {
-    setWorkLocations((prev) => prev.filter((w) => w.ward_code !== wardCode))
+  const addWardLocation = (p: ProvinceOption, w: WardOption) => {
+    setWorkLocations((prev) => {
+      const cleaned = prev.filter(
+        (x) => !(x.province_code === p.code && x.ward_code == null),
+      )
+      if (cleaned.some((x) => x.ward_code === w.code)) return cleaned
+      if (cleaned.length >= WORK_LOCATIONS_MAX) {
+        toast.warning(`Tối đa ${WORK_LOCATIONS_MAX} khu vực.`)
+        return prev
+      }
+      if (prev.length !== cleaned.length) {
+        toast.info(
+          `Đã bỏ lựa chọn toàn ${p.short_name} để thêm phường/xã cụ thể.`,
+        )
+      }
+      return [
+        ...cleaned,
+        {
+          province_code: p.code,
+          ward_code: w.code,
+          label_snapshot: formatWardLabel(w, p),
+        },
+      ]
+    })
+  }
+
+  const removeWorkLocation = (
+    provinceCode: number,
+    wardCode: number | null,
+  ) => {
+    setWorkLocations((prev) =>
+      prev.filter(
+        (w) =>
+          !(
+            w.province_code === provinceCode &&
+            (w.ward_code ?? null) === (wardCode ?? null)
+          ),
+      ),
+    )
   }
 
   const addHobby = () => {
@@ -561,7 +646,7 @@ export default function WorkerSetupPage() {
           <p className="text-sm text-muted-foreground">
             Điền thông tin cá nhân, ảnh và dịch vụ bạn cung cấp.
           </p>
-        </div>
+            </div>
 
         {catalogQuery.isError ? (
           <Alert variant="destructive">
@@ -593,24 +678,34 @@ export default function WorkerSetupPage() {
                 <div className="space-y-2">
                   <Label>Khu vực làm việc</Label>
                   <div className="flex flex-wrap gap-2">
-                    {workLocations.map((w) => (
-                      <Badge
-                        key={w.ward_code}
-                        variant="secondary"
-                        className="gap-1 pr-1"
-                      >
-                        {w.label_snapshot ??
-                          `${w.province_code} · ${w.ward_code}`}
-                        <button
-                          type="button"
-                          className="rounded-full p-0.5 hover:bg-muted"
-                          aria-label="Xóa"
-                          onClick={() => removeWorkLocation(w.ward_code)}
+                    {workLocations.map((w) => {
+                      const isProvince = w.ward_code == null
+                      const id = `${w.province_code}:${w.ward_code ?? "ALL"}`
+                      return (
+                        <Badge
+                          key={id}
+                          variant={isProvince ? "default" : "secondary"}
+                          className="gap-1 pr-1"
                         >
-                          <X className="size-3" />
-                        </button>
-                      </Badge>
-                    ))}
+                          {isProvince ? (
+                            <Globe2 className="size-3" />
+                          ) : (
+                            <MapPin className="size-3" />
+                          )}
+                          {w.label_snapshot ?? id}
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 hover:bg-muted"
+                            aria-label="Xóa"
+                            onClick={() =>
+                              removeWorkLocation(w.province_code, w.ward_code)
+                            }
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </Badge>
+                      )
+                    })}
                   </div>
                   <Popover open={locationOpen} onOpenChange={setLocationOpen}>
                     <PopoverTrigger asChild>
@@ -618,37 +713,124 @@ export default function WorkerSetupPage() {
                         Thêm khu vực
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-2" align="start">
-                      <Input
-                        placeholder="Tìm phường / xã..."
-                        value={locationQuery}
-                        onChange={(e) => setLocationQuery(e.target.value)}
-                        className="mb-2"
-                      />
-                      <ScrollArea className="h-48 rounded-md border">
-                        <div className="p-1">
-                          {locationLoading ? (
-                            <div className="flex justify-center py-6">
-                              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                    <PopoverContent
+                      className="w-[640px] max-w-[calc(100vw-2rem)] p-0"
+                      align="start"
+                    >
+                      <div className="grid grid-cols-2 divide-x">
+                        <div className="flex flex-col">
+                          <div className="border-b p-2">
+                            <Input
+                              placeholder="Tìm tỉnh / thành phố..."
+                              value={provinceQuery}
+                              onChange={(e) =>
+                                setProvinceQuery(e.target.value)
+                              }
+                              className="h-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-72">
+                            <div className="p-1">
+                              {provincesQuery.isLoading ? (
+                                <div className="flex justify-center py-6">
+                                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                                </div>
+                              ) : filteredProvinces.length === 0 ? (
+                                <p className="p-3 text-xs text-muted-foreground">
+                                  Không có kết quả.
+                                </p>
+                              ) : (
+                                filteredProvinces.map((p) => (
+                                  <button
+                                    key={p.code}
+                                    type="button"
+                                    onMouseEnter={() =>
+                                      setActiveProvinceCode(p.code)
+                                    }
+                                    onClick={() =>
+                                      setActiveProvinceCode(p.code)
+                                    }
+                                    className={cn(
+                                      "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
+                                      activeProvinceCode === p.code &&
+                                        "bg-accent font-medium",
+                                    )}
+                                  >
+                                    <span className="truncate">
+                                      {p.short_name}
+                                    </span>
+                                    <ChevronRight className="size-3 shrink-0 opacity-60" />
+                                  </button>
+                                ))
+                              )}
                             </div>
-                          ) : locationOptions.length === 0 ? (
-                            <p className="p-3 text-xs text-muted-foreground">
-                              Nhập từ khóa để tìm.
-                            </p>
-                          ) : (
-                            locationOptions.map((opt) => (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
-                                onClick={() => addWorkLocation(opt)}
-                              >
-                                {opt.label}
-                              </button>
-                            ))
-                          )}
+                          </ScrollArea>
                         </div>
-                      </ScrollArea>
+                        <div className="flex flex-col">
+                          <div className="border-b p-2">
+                            <Input
+                              placeholder={
+                                activeProvince
+                                  ? `Tìm phường/xã ở ${activeProvince.short_name}...`
+                                  : "Chọn tỉnh bên trái"
+                              }
+                              value={wardQuery}
+                              onChange={(e) => setWardQuery(e.target.value)}
+                              disabled={!activeProvince}
+                              className="h-8"
+                            />
+                          </div>
+                          <ScrollArea className="h-72">
+                            {!activeProvince ? (
+                              <p className="p-3 text-xs text-muted-foreground">
+                                Chọn tỉnh để xem phường/xã.
+                              </p>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    addProvinceLocation(activeProvince)
+                                  }
+                                  className="flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-sm font-medium hover:bg-accent"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Globe2 className="size-4" />
+                                    Toàn {activeProvince.name.toLowerCase()}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Thêm
+                                  </span>
+                                </button>
+                                <div className="p-1">
+                                  {wardsQuery.isLoading ? (
+                                    <div className="flex justify-center py-6">
+                                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                                    </div>
+                                  ) : filteredWards.length === 0 ? (
+                                    <p className="p-3 text-xs text-muted-foreground">
+                                      Không có phường/xã phù hợp.
+                                    </p>
+                                  ) : (
+                                    filteredWards.map((w) => (
+                                      <button
+                                        key={w.code}
+                                        type="button"
+                                        onClick={() =>
+                                          addWardLocation(activeProvince, w)
+                                        }
+                                        className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                                      >
+                                        {w.name}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </ScrollArea>
+                        </div>
+                      </div>
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -684,7 +866,7 @@ export default function WorkerSetupPage() {
                   <div className="space-y-2">
                     <Label>Kinh nghiệm</Label>
                     <Select
-                      value={experience || undefined}
+                      value={experience}
                       onValueChange={(v) =>
                         setExperience(v as WorkerExperience)
                       }
@@ -722,7 +904,7 @@ export default function WorkerSetupPage() {
                   <div className="space-y-2">
                     <Label>Cung hoàng đạo</Label>
                     <Select
-                      value={starSign || undefined}
+                      value={starSign}
                       onValueChange={setStarSign}
                     >
                       <SelectTrigger className="w-full">
@@ -913,14 +1095,14 @@ export default function WorkerSetupPage() {
             </Card>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-6">
-              <Button
+            <Button
                 type="button"
                 variant="ghost"
-                onClick={() => router.back()}
-              >
+              onClick={() => router.back()}
+            >
                 Quay lại
-              </Button>
-              <Button
+            </Button>
+            <Button
                 type="button"
                 onClick={() => void handleSubmit()}
                 disabled={isSaving}
@@ -930,7 +1112,7 @@ export default function WorkerSetupPage() {
                   <Loader2 className="size-4 animate-spin" />
                 ) : null}
                 Hoàn tất
-              </Button>
+            </Button>
             </div>
           </>
         )}

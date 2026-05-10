@@ -178,9 +178,12 @@ export type WorkerExperience =
 
 export interface WorkLocationRef {
   province_code: number
-  ward_code: number
+  ward_code?: number | null
   label_snapshot?: string
 }
+
+export const isProvinceLevelLocation = (ref: WorkLocationRef): boolean =>
+  ref.ward_code == null
 
 export type WorkerProfilePublic = {
   date_of_birth?: string | null

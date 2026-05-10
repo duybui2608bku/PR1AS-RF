@@ -16,6 +16,13 @@ const scheduleSchema = z
     message: "schedule must be a valid datetime",
   });
 
+const integerCode = z
+  .union([z.string(), z.number()])
+  .transform((value) =>
+    typeof value === "string" ? Number(value) : value
+  )
+  .pipe(z.number().int().positive());
+
 export const workerGroupedByServiceQuerySchema = z.object({
   q: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   location: z.preprocess(
@@ -34,6 +41,8 @@ export const workerGroupedByServiceQuerySchema = z.object({
       }, "location latitude must be [-90, 90] and longitude must be [-180, 180]")
       .optional()
   ),
+  province_code: z.preprocess(emptyToUndefined, integerCode.optional()),
+  ward_code: z.preprocess(emptyToUndefined, integerCode.optional()),
   schedule: z.preprocess(emptyToUndefined, scheduleSchema.optional()),
   category: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
 });

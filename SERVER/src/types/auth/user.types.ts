@@ -41,7 +41,7 @@ export interface WorkerProfile {
   title?: string;
   work_locations?: Array<{
     province_code: number;
-    ward_code: number;
+    ward_code?: number | null;
     label_snapshot?: string;
   }>;
 }

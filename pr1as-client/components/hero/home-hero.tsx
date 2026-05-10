@@ -1,7 +1,6 @@
 "use client"
 import * as React from "react"
 import dynamic from "next/dynamic"
-import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 
 const DotLottieReact = dynamic(
@@ -29,6 +28,7 @@ import {
   Users,
 } from "lucide-react"
 
+import { LocationSearchField } from "@/components/hero/location-search-field"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
@@ -37,6 +37,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
+import { type LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -58,15 +59,29 @@ const resolveIcon = (icon: string | null): LucideIcon => {
 
 type HomeHeroProps = {
   initialServices?: ServiceItem[]
+  serviceQuery: string
+  onServiceQueryChange: (value: string) => void
+  activeCode: string
+  onActiveCodeChange: (code: string) => void
+  selectedLocation: LocationSearchResult | null
+  onSelectedLocationChange: (value: LocationSearchResult | null) => void
+  scheduledAt: Date | undefined
+  onScheduledAtChange: (value: Date | undefined) => void
+  onSearchSubmit?: () => void
 }
 
-export function HomeHero({ initialServices }: HomeHeroProps = {}) {
-  const router = useRouter()
-  const [serviceQuery, setServiceQuery] = React.useState("")
-  const [location, setLocation] = React.useState("")
-  const [scheduledAt, setScheduledAt] = React.useState<Date>()
-  const [activeCode, setActiveCode] = React.useState<string>("ALL")
-
+export function HomeHero({
+  initialServices,
+  serviceQuery,
+  onServiceQueryChange,
+  activeCode,
+  onActiveCodeChange,
+  selectedLocation,
+  onSelectedLocationChange,
+  scheduledAt,
+  onScheduledAtChange,
+  onSearchSubmit,
+}: HomeHeroProps) {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services", "list"],
     queryFn: serviceService.getServices,
@@ -76,12 +91,7 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const params = new URLSearchParams()
-    if (serviceQuery.trim()) params.set("q", serviceQuery.trim())
-    if (location.trim()) params.set("location", location.trim())
-    if (scheduledAt) params.set("at", scheduledAt.toISOString().slice(0, 10))
-    if (activeCode && activeCode !== "ALL") params.set("category", activeCode)
-    router.push(`/services?${params.toString()}`)
+    onSearchSubmit?.()
   }
 
   return (
@@ -109,17 +119,17 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
                 label="Bạn cần dịch vụ gì hôm nay?"
                 placeholder="Dịch vụ hỗ trợ"
                 value={serviceQuery}
-                onChange={setServiceQuery}
+                onChange={onServiceQueryChange}
               />
 
               {/* Desktop divider */}
               <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
 
-              <SearchField
+              <LocationSearchField
                 label="Địa điểm"
-                placeholder="Quận 1, TP.HCM"
-                value={location}
-                onChange={setLocation}
+                placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+                value={selectedLocation}
+                onChange={onSelectedLocationChange}
                 icon={<MapPin className="size-4 shrink-0 text-muted-foreground" />}
               />
 
@@ -129,7 +139,7 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
                 label="Thời gian"
                 placeholder="Chọn ngày và giờ"
                 value={scheduledAt}
-                onChange={setScheduledAt}
+                onChange={onScheduledAtChange}
               />
 
               <div className="p-2 sm:p-0 sm:flex sm:items-stretch">
@@ -160,7 +170,7 @@ export function HomeHero({ initialServices }: HomeHeroProps = {}) {
           isLoading={isLoading}
           services={services}
           activeCode={activeCode}
-          onSelect={setActiveCode}
+          onSelect={onActiveCodeChange}
         />
       </div>
     </section>

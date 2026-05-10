@@ -75,7 +75,7 @@ export const updateWorkerProfileSchema = z.object({
       .array(
         z.object({
           province_code: z.number().int(),
-          ward_code: z.number().int(),
+          ward_code: z.number().int().nullable().optional(),
           label_snapshot: z.string().optional(),
         })
       )

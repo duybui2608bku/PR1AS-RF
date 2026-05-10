@@ -58,6 +58,11 @@ export interface WorkersGroupedByServiceItem {
       title: string | null;
       introduction: string | null;
       gallery_urls: string[];
+      work_locations: Array<{
+        province_code: number;
+        ward_code: number | null;
+        label_snapshot: string | null;
+      }>;
     } | null;
     pricing: WorkerServicePricing[];
   }>;
