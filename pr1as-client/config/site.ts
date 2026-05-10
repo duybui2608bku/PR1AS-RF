@@ -7,8 +7,9 @@ export const siteConfig = {
   links: {
     github: "https://github.com/",
     twitter: "https://twitter.com/",
+    zalo: "https://zalo.me/0909090909",
   },
-  contactEmail: "support@pr1as.com",
+  contactEmail: "pr1as.connect@gmail.com",
 } as const
 
 export type SiteConfig = typeof siteConfig

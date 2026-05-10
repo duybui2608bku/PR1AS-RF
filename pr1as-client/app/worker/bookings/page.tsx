@@ -215,6 +215,10 @@ function getActionIcon(action: WorkerBookingAction) {
   return CheckCircle2
 }
 
+function getActionValue(action: WorkerBookingAction) {
+  return action.type === "status" ? `status-${action.status}` : action.type
+}
+
 export default function WorkerBookingsPage() {
   const router = useRouter()
   const [page, setPage] = React.useState(1)
@@ -313,7 +317,7 @@ export default function WorkerBookingsPage() {
     }
   }
 
-  const renderActionButtons = (booking: Booking) => {
+  const renderActionSelect = (booking: Booking) => {
     const bookingId = getBookingId(booking)
     const expired = isBookingExpired(
       booking.schedule,
@@ -322,40 +326,86 @@ export default function WorkerBookingsPage() {
     )
     const actions = getAvailableActions(booking, expired)
     const complaintLoading = complaintLoadingId === bookingId
+    const hasComplaintAction = booking.status === BookingStatus.DISPUTED
+    const hasActions = hasComplaintAction || actions.length > 0
+
+    if (!hasActions) {
+      return (
+        <div className="flex justify-end">
+          <Select disabled value="none">
+            <SelectTrigger className="h-9 w-full min-w-40 text-muted-foreground data-[size=default]:h-9 md:w-44">
+              <SelectValue placeholder="Không có hành động" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Không có hành động</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    }
+
+    const handleActionChange = (value: string) => {
+      if (value === "complaint") {
+        handleOpenComplaintGroup(booking)
+        return
+      }
+
+      const selectedAction = actions.find(
+        (action) => getActionValue(action) === value
+      )
+
+      if (selectedAction) {
+        setActionTarget({ booking, action: selectedAction })
+      }
+    }
 
     return (
-      <div className="flex flex-wrap justify-end gap-2">
-        {booking.status === BookingStatus.DISPUTED ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleOpenComplaintGroup(booking)}
-            disabled={complaintLoading}
+      <div className="flex justify-end">
+        <Select
+          value=""
+          onValueChange={handleActionChange}
+          disabled={complaintLoading}
+        >
+          <SelectTrigger
+            aria-label="Chọn hành động booking"
+            className="h-9 w-full min-w-40 cursor-pointer px-3 data-[size=default]:h-9 md:w-44"
           >
             {complaintLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <MessageSquare className="size-4" />
-            )}
-            Nhóm khiếu nại
-          </Button>
-        ) : null}
-        {actions.map((action) => {
-          const Icon = getActionIcon(action)
-          return (
-            <Button
-              key={`${bookingId}-${action.type}-${
-                action.type === "status" ? action.status : action.type
-              }`}
-              size="sm"
-              variant={action.destructive ? "destructive" : "outline"}
-              onClick={() => setActionTarget({ booking, action })}
-            >
-              <Icon className="size-4" />
-              {action.confirmLabel}
-            </Button>
-          )
-        })}
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            ) : null}
+            <SelectValue placeholder="Chọn hành động" />
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-52">
+            {hasComplaintAction ? (
+              <SelectItem
+                value="complaint"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <MessageSquare className="size-4" />
+                Nhóm khiếu nại
+              </SelectItem>
+            ) : null}
+            {actions.map((action) => {
+              const Icon = getActionIcon(action)
+              const actionValue = getActionValue(action)
+
+              return (
+                <SelectItem
+                  key={`${bookingId}-${actionValue}`}
+                  value={actionValue}
+                  className={cn(
+                    "cursor-pointer py-2 pr-8 pl-2.5",
+                    action.destructive &&
+                      "text-destructive focus:text-destructive"
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {action.confirmLabel}
+                </SelectItem>
+              )
+            })}
+          </SelectContent>
+        </Select>
       </div>
     )
   }
@@ -363,7 +413,7 @@ export default function WorkerBookingsPage() {
   return (
     <SiteLayout>
       <AuthGuard>
-        <div className="container mx-auto max-w-6xl px-4 py-8">
+        <div className="container mx-auto px-4 py-8">
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
@@ -581,7 +631,7 @@ export default function WorkerBookingsPage() {
                             ) : null}
                           </dl>
                           <div className="mt-3 border-t pt-3">
-                            {renderActionButtons(booking)}
+                            {renderActionSelect(booking)}
                           </div>
                         </div>
                       )
@@ -663,7 +713,7 @@ export default function WorkerBookingsPage() {
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                {renderActionButtons(booking)}
+                                {renderActionSelect(booking)}
                               </td>
                             </tr>
                           )

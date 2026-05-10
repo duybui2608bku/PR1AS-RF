@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronRight, Globe2, Loader2, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Globe2, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,14 @@ type LocationSearchFieldProps = {
   onChange: (value: LocationSearchResult | null) => void
   icon?: React.ReactNode
 }
+
+const normalizeSearchText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
 
 export function LocationSearchField({
   label,
@@ -71,15 +79,6 @@ export function LocationSearchField({
     }
   }, [wardsQuery.isError])
 
-  React.useEffect(() => {
-    if (!open) {
-      setProvinceQuery("")
-      setWardQuery("")
-    } else if (value && activeProvinceCode == null) {
-      setActiveProvinceCode(value.province_code)
-    }
-  }, [open, value, activeProvinceCode])
-
   const activeProvince = React.useMemo<ProvinceOption | null>(
     () =>
       provincesQuery.data?.find((p) => p.code === activeProvinceCode) ?? null,
@@ -88,21 +87,37 @@ export function LocationSearchField({
 
   const filteredProvinces = React.useMemo(() => {
     const list = provincesQuery.data ?? []
-    const q = provinceQuery.trim().toLowerCase()
+    const q = normalizeSearchText(provinceQuery.trim())
     if (!q) return list
     return list.filter(
       (p) =>
-        p.short_name.toLowerCase().includes(q) ||
-        p.name.toLowerCase().includes(q),
+        normalizeSearchText(p.short_name).includes(q) ||
+        normalizeSearchText(p.name).includes(q),
     )
   }, [provincesQuery.data, provinceQuery])
 
   const filteredWards = React.useMemo(() => {
     const list = wardsQuery.data ?? []
-    const q = wardQuery.trim().toLowerCase()
+    const q = normalizeSearchText(wardQuery.trim())
     if (!q) return list
-    return list.filter((w) => w.name.toLowerCase().includes(q))
+    return list.filter((w) => normalizeSearchText(w.name).includes(q))
   }, [wardsQuery.data, wardQuery])
+
+  const previewText = value?.label ?? ""
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+
+    if (!nextOpen) {
+      setProvinceQuery("")
+      setWardQuery("")
+      return
+    }
+
+    if (value) {
+      setActiveProvinceCode(value.province_code)
+    }
+  }
 
   const pickProvince = (p: ProvinceOption) => {
     onChange({
@@ -111,7 +126,7 @@ export function LocationSearchField({
       label: p.name,
       short_name: p.short_name,
     })
-    setOpen(false)
+    handleOpenChange(false)
   }
 
   const pickWard = (p: ProvinceOption, w: WardOption) => {
@@ -123,20 +138,33 @@ export function LocationSearchField({
       province_short_name: p.short_name,
       label: `${w.name}, ${p.short_name}`,
     })
-    setOpen(false)
+    handleOpenChange(false)
+  }
+
+  const handleProvinceSelect = (p: ProvinceOption) => {
+    setActiveProvinceCode(p.code)
+    setWardQuery("")
+  }
+
+  const handleBackToProvinces = () => {
+    setActiveProvinceCode(null)
+    setWardQuery("")
   }
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation()
     onChange(null)
+    setActiveProvinceCode(null)
+    setProvinceQuery("")
+    setWardQuery("")
   }
 
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5",
+        "flex min-h-[76px] flex-1 flex-col justify-center gap-1 px-4 py-3",
         "hover:bg-accent/50 transition-colors cursor-pointer",
-        "sm:py-2 sm:rounded-full",
+        "sm:min-h-0 sm:gap-0.5 sm:px-5 sm:py-2 sm:rounded-full",
       )}
     >
       <Label
@@ -145,46 +173,58 @@ export function LocationSearchField({
       >
         {label}
       </Label>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverAnchor asChild>
-          <div className="flex items-center gap-2">
+          <div
+            className="flex min-w-0 items-center gap-2"
+            onClick={() => handleOpenChange(true)}
+          >
             {icon}
             <Input
               id={id}
               readOnly
-              value={value?.label ?? ""}
-              onClick={() => setOpen(true)}
+              value={previewText}
+              onClick={() => handleOpenChange(true)}
+              onFocus={() => handleOpenChange(true)}
+              aria-expanded={open}
+              aria-haspopup="listbox"
               placeholder={placeholder}
-              className="h-auto border-none p-0 shadow-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground bg-transparent cursor-pointer"
+              className="h-auto min-w-0 truncate border-none bg-transparent p-0 text-base shadow-none cursor-pointer placeholder:text-muted-foreground focus-visible:ring-0 sm:text-sm"
             />
             {value ? (
               <button
                 type="button"
                 onClick={handleClear}
-                className="rounded-full p-0.5 hover:bg-muted"
+                className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-muted sm:size-5"
                 aria-label="Xóa"
               >
-                <X className="size-3" />
+                <X className="size-4 sm:size-3" />
               </button>
             ) : null}
           </div>
         </PopoverAnchor>
         <PopoverContent
-          className="w-[640px] max-w-[calc(100vw-2rem)] p-0"
+          className="w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl p-0 sm:w-[640px] sm:rounded-md"
           align="start"
+          sideOffset={8}
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="grid grid-cols-2 divide-x">
-            <div className="flex flex-col">
+          <div className="grid max-h-[min(74vh,560px)] grid-cols-1 sm:grid-cols-2 sm:divide-x">
+            <div
+              className={cn(
+                "min-h-0 flex-col",
+                activeProvince ? "hidden sm:flex" : "flex",
+              )}
+            >
               <div className="border-b p-2">
                 <Input
                   placeholder="Tìm tỉnh / thành phố..."
                   value={provinceQuery}
                   onChange={(e) => setProvinceQuery(e.target.value)}
-                  className="h-8"
+                  className="h-11 text-base sm:h-8 sm:text-sm"
                 />
               </div>
-              <ScrollArea className="h-72">
+              <ScrollArea className="h-[min(56vh,360px)] sm:h-72">
                 <div className="p-1">
                   {provincesQuery.isLoading ? (
                     <div className="flex justify-center py-6">
@@ -200,22 +240,47 @@ export function LocationSearchField({
                         key={p.code}
                         type="button"
                         onMouseEnter={() => setActiveProvinceCode(p.code)}
-                        onClick={() => setActiveProvinceCode(p.code)}
+                        onClick={() => handleProvinceSelect(p)}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
+                          "flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base hover:bg-accent sm:min-h-0 sm:rounded-md sm:px-2 sm:py-1.5 sm:text-sm",
                           activeProvinceCode === p.code &&
                             "bg-accent font-medium",
                         )}
                       >
                         <span className="truncate">{p.short_name}</span>
-                        <ChevronRight className="size-3 shrink-0 opacity-60" />
+                        <ChevronRight className="size-4 shrink-0 opacity-60 sm:size-3" />
                       </button>
                     ))
                   )}
                 </div>
               </ScrollArea>
             </div>
-            <div className="flex flex-col">
+            <div
+              className={cn(
+                "min-h-0 flex-col",
+                activeProvince ? "flex" : "hidden sm:flex",
+              )}
+            >
+              {activeProvince ? (
+                <div className="flex items-center gap-2 border-b p-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={handleBackToProvinces}
+                    className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-accent"
+                    aria-label="Chọn tỉnh khác"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </button>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {activeProvince.short_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Chọn toàn khu vực hoặc phường/xã
+                    </p>
+                  </div>
+                </div>
+              ) : null}
               <div className="border-b p-2">
                 <Input
                   placeholder={
@@ -226,10 +291,10 @@ export function LocationSearchField({
                   value={wardQuery}
                   onChange={(e) => setWardQuery(e.target.value)}
                   disabled={!activeProvince}
-                  className="h-8"
+                  className="h-11 text-base sm:h-8 sm:text-sm"
                 />
               </div>
-              <ScrollArea className="h-72">
+              <ScrollArea className="h-[min(56vh,360px)] sm:h-72">
                 {!activeProvince ? (
                   <p className="p-3 text-xs text-muted-foreground">
                     Chọn tỉnh để xem phường/xã.
@@ -239,11 +304,13 @@ export function LocationSearchField({
                     <button
                       type="button"
                       onClick={() => pickProvince(activeProvince)}
-                      className="flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-sm font-medium hover:bg-accent"
+                      className="flex min-h-12 w-full items-center justify-between gap-2 border-b px-3 py-2.5 text-base font-medium hover:bg-accent sm:min-h-0 sm:py-2 sm:text-sm"
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
                         <Globe2 className="size-4" />
-                        Toàn {activeProvince.name.toLowerCase()}
+                        <span className="truncate">
+                          Toàn {activeProvince.name.toLowerCase()}
+                        </span>
                       </span>
                       <span className="text-xs text-muted-foreground">
                         Chọn
@@ -264,7 +331,7 @@ export function LocationSearchField({
                             key={w.code}
                             type="button"
                             onClick={() => pickWard(activeProvince, w)}
-                            className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                            className="min-h-11 w-full rounded-lg px-3 py-2.5 text-left text-base hover:bg-accent sm:min-h-0 sm:rounded-md sm:px-2 sm:py-1.5 sm:text-sm"
                           >
                             {w.name}
                           </button>

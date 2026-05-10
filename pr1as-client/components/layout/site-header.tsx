@@ -103,7 +103,7 @@ export function SiteHeader() {
       {
         routeKey: "pricing" as const,
         href: "/pricing",
-        label: `Gói hiện tại: ${formatPricingPlan(user?.pricing_plan_code)}`,
+        label: `${formatPricingPlan(user?.pricing_plan_code)}`,
         icon: Crown,
       },
     ],

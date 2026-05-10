@@ -225,8 +225,131 @@ export default function ClientBookingsPage() {
     }
   }
 
+  const renderActionSelect = (booking: Booking) => {
+    const bookingId = getBookingId(booking)
+    const expired = isBookingExpired(
+      booking.schedule,
+      booking.status,
+      booking.created_at
+    )
+    const showCancel = !expired && canCancelBooking(booking.status)
+    const showDispute = !expired && canComplainBooking(booking.status)
+    const showComplete =
+      !expired && booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
+    const showReview = booking.status === BookingStatus.COMPLETED
+    const showComplaintGroup = booking.status === BookingStatus.DISPUTED
+    const complaintLoading = complaintLoadingId === bookingId
+    const completing =
+      updateStatusMutation.isPending &&
+      updateStatusMutation.variables?.id === bookingId
+    const hasActions =
+      showComplaintGroup || showReview || showComplete || showDispute || showCancel
+
+    if (!hasActions) {
+      return (
+        <div className="flex justify-end">
+          <Select disabled value="none">
+            <SelectTrigger className="h-9 w-full min-w-40 text-muted-foreground data-[size=default]:h-9 md:w-44">
+              <SelectValue placeholder="Không có hành động" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Không có hành động</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    }
+
+    const handleActionChange = (value: string) => {
+      switch (value) {
+        case "complaint-group":
+          void handleOpenComplaintGroup(booking)
+          break
+        case "review":
+          setReviewTarget(booking)
+          break
+        case "complete":
+          void handleCompleteBooking(booking)
+          break
+        case "dispute":
+          setDisputeTarget(booking)
+          break
+        case "cancel":
+          setCancelTarget(booking)
+          break
+      }
+    }
+
+    return (
+      <div className="flex justify-end">
+        <Select
+          value=""
+          onValueChange={handleActionChange}
+          disabled={complaintLoading || completing}
+        >
+          <SelectTrigger
+            aria-label="Chọn hành động booking"
+            className="h-9 w-full min-w-40 cursor-pointer px-3 data-[size=default]:h-9 md:w-44"
+          >
+            {complaintLoading || completing ? (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            ) : null}
+            <SelectValue placeholder="Chọn hành động" />
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-52">
+            {showComplaintGroup ? (
+              <SelectItem
+                value="complaint-group"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <MessageSquare className="size-4" />
+                Mở nhóm khiếu nại
+              </SelectItem>
+            ) : null}
+            {showReview ? (
+              <SelectItem
+                value="review"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <Star className="size-4" />
+                Đánh giá
+              </SelectItem>
+            ) : null}
+            {showComplete ? (
+              <SelectItem
+                value="complete"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <CheckCircle2 className="size-4" />
+                Xác nhận hoàn thành
+              </SelectItem>
+            ) : null}
+            {showDispute ? (
+              <SelectItem
+                value="dispute"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <MessageSquareWarning className="size-4" />
+                Khiếu nại
+              </SelectItem>
+            ) : null}
+            {showCancel ? (
+              <SelectItem
+                value="cancel"
+                className="cursor-pointer py-2 pr-8 pl-2.5 text-destructive focus:text-destructive"
+              >
+                <XCircle className="size-4" />
+                Hủy
+              </SelectItem>
+            ) : null}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
@@ -366,7 +489,7 @@ export default function ClientBookingsPage() {
                 })}
               </div>
               <div className="hidden overflow-x-auto md:block">
-                <Table className="min-w-[920px]">
+                <Table className="min-w-[1040px]">
                   <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                     <tr>
                       <th className="px-4 py-3 font-medium">Dịch vụ</th>
@@ -374,6 +497,9 @@ export default function ClientBookingsPage() {
                       <th className="px-4 py-3 font-medium">Lịch hẹn</th>
                       <th className="px-4 py-3 font-medium">Trạng thái</th>
                       <th className="px-4 py-3 font-medium">Ngày tạo</th>
+                      <th className="px-4 py-3 font-medium">
+                        Ghi chú worker
+                      </th>
                       <th className="px-4 py-3 text-right font-medium">
                         Hành động
                       </th>
@@ -389,20 +515,7 @@ export default function ClientBookingsPage() {
                       const displayStatus = expired
                         ? BookingStatus.EXPIRED
                         : booking.status
-                      const showCancel =
-                        !expired && canCancelBooking(booking.status)
-                      const showDispute =
-                        !expired && canComplainBooking(booking.status)
-                      const showComplete =
-                        !expired &&
-                        booking.status ===
-                          BookingStatus.PENDING_CLIENT_ACCEPTANCE
-                      const showReview =
-                        booking.status === BookingStatus.COMPLETED
-                      const showComplaintGroup =
-                        booking.status === BookingStatus.DISPUTED
                       const bookingId = getBookingId(booking)
-                      const complaintLoading = complaintLoadingId === bookingId
 
                       return (
                         <tr
@@ -508,71 +621,17 @@ export default function ClientBookingsPage() {
                           <td className="px-4 py-3 text-muted-foreground">
                             {formatDateTime(booking.created_at)}
                           </td>
+                          <td className="max-w-[260px] px-4 py-3 text-sm text-muted-foreground">
+                            {booking.worker_response ? (
+                              <div className="line-clamp-3 whitespace-pre-wrap">
+                                {booking.worker_response}
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-wrap justify-end gap-2">
-                              {showComplaintGroup ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    handleOpenComplaintGroup(booking)
-                                  }
-                                  disabled={complaintLoading}
-                                >
-                                  {complaintLoading ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <MessageSquare className="size-4" />
-                                  )}
-                                  Mở nhóm khiếu nại
-                                </Button>
-                              ) : null}
-                              {showReview ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setReviewTarget(booking)}
-                                >
-                                  <Star className="size-4" />
-                                  Đánh giá
-                                </Button>
-                              ) : null}
-                              {showComplete ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleCompleteBooking(booking)}
-                                  disabled={updateStatusMutation.isPending}
-                                >
-                                  {updateStatusMutation.isPending ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  ) : (
-                                    <CheckCircle2 className="size-4" />
-                                  )}
-                                  Xác nhận hoàn thành
-                                </Button>
-                              ) : null}
-                              {showDispute ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setDisputeTarget(booking)}
-                                >
-                                  <MessageSquareWarning className="size-4" />
-                                  Khiếu nại
-                                </Button>
-                              ) : null}
-                              {showCancel ? (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => setCancelTarget(booking)}
-                                >
-                                  <XCircle className="size-4" />
-                                  Hủy
-                                </Button>
-                              ) : null}
-                            </div>
+                            {renderActionSelect(booking)}
                           </td>
                         </tr>
                       )

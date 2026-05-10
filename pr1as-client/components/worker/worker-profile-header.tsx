@@ -149,7 +149,6 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
                   onClick={() => router.push("/worker/setup")}
                 >
                   <Pencil className="size-3.5" />
-                  Cập nhật hồ sơ
                 </Button>
               ) : null}
             </div>

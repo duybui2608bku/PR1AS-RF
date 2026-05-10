@@ -105,8 +105,6 @@ export function HomeHero({
             <p className="mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
               Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển chọn và xác minh.
             </p>
-
-            {/* Search Bar */}
             <form
               onSubmit={handleSearch}
               className={cn(
@@ -116,13 +114,11 @@ export function HomeHero({
               )}
             >
               <SearchField
-                label="Bạn cần dịch vụ gì hôm nay?"
+                label="Bạn cần dịch vụ gì?"
                 placeholder="Dịch vụ hỗ trợ"
                 value={serviceQuery}
                 onChange={onServiceQueryChange}
               />
-
-              {/* Desktop divider */}
               <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
 
               <LocationSearchField
@@ -142,11 +138,11 @@ export function HomeHero({
                 onChange={onScheduledAtChange}
               />
 
-              <div className="p-2 sm:p-0 sm:flex sm:items-stretch">
+              <div className="flex justify-center items-center p-2 sm:p-0 sm:flex sm:items-stretch">
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full rounded-xl sm:w-auto sm:rounded-full sm:px-6"
+                  className="w-[50%] h-[50px] rounded-[50px] sm:w-full sm:h-full sm:rounded-xl md:w-auto md:rounded-full md:px-6"
                 >
                   <Search className="size-4" />
                   Tìm kiếm

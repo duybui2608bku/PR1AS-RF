@@ -3,17 +3,28 @@
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { MessageCircle, ShoppingCart } from "lucide-react"
+import { Crown, MessageCircle, ShoppingCart } from "lucide-react"
 import { toast } from "sonner"
 
 import { BookWorkerDialog } from "@/components/worker/book-worker-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useMyPricing } from "@/lib/hooks/use-pricing"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { serviceService } from "@/services/service.service"
 import type { WorkerServiceItem, WorkerServicePricing } from "@/types"
+
+const MESSAGING_PLAN_CODES = new Set(["gold", "diamond"])
 
 const formatPrice = (pricing: WorkerServicePricing | undefined) => {
   if (!pricing) return "Chưa có giá"
@@ -50,10 +61,27 @@ type Props = {
 
 export function WorkerServices({ workerId, workerName, services }: Props) {
   const [bookOpen, setBookOpen] = useState(false)
+  const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const currentUserId = useAuthStore((s) => s.user?.id)
+  const user = useAuthStore((s) => s.user)
+  const currentUserId = user?.id
   const isOwnProfile = currentUserId === workerId
+  const storedPlanCode = user?.pricing_plan_code?.toLowerCase()
+  const storedPlanAllowsMessaging = storedPlanCode
+    ? MESSAGING_PLAN_CODES.has(storedPlanCode)
+    : false
+
+  const myPricingQuery = useMyPricing()
+  const canMessageWorker =
+    myPricingQuery.data !== undefined
+      ? !myPricingQuery.data.is_expired &&
+        myPricingQuery.data.package.features.messaging_enabled
+      : storedPlanAllowsMessaging
+  const isCheckingPricing =
+    isAuthenticated && myPricingQuery.isLoading && !storedPlanCode
+  const isMessageLocked =
+    isAuthenticated && !isOwnProfile && !canMessageWorker
 
   const { data: catalog = [] } = useQuery({
     queryKey: ["services", "list"],
@@ -114,6 +142,14 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
     }
     if (isOwnProfile) {
       toast.info("Bạn không thể nhắn tin chính mình.")
+      return
+    }
+    if (isCheckingPricing) {
+      toast.info("Đang kiểm tra gói hiện tại của bạn.")
+      return
+    }
+    if (!canMessageWorker) {
+      setUpgradePlanOpen(true)
       return
     }
     router.push(`/chat?receiver_id=${workerId}`)
@@ -186,12 +222,13 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
         <Button
           type="button"
           variant="outline"
-          className="w-full"
-          disabled={isOwnProfile}
+          className={cn("w-full", isMessageLocked && "opacity-60")}
+          disabled={isOwnProfile || isCheckingPricing}
+          aria-disabled={isMessageLocked}
           onClick={handleMessage}
         >
           <MessageCircle className="size-4" />
-          Nhắn tin
+          {isCheckingPricing ? "Đang kiểm tra..." : "Nhắn tin"}
         </Button>
       </CardContent>
 
@@ -203,6 +240,39 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
         service={selectedService}
         serviceName={selectedServiceName}
       />
+
+      <Dialog open={upgradePlanOpen} onOpenChange={setUpgradePlanOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Crown className="size-5" />
+            </div>
+            <DialogTitle>Cần nâng cấp gói</DialogTitle>
+            <DialogDescription>
+              Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng
+              cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setUpgradePlanOpen(false)}
+            >
+              Để sau
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setUpgradePlanOpen(false)
+                router.push("/pricing")
+              }}
+            >
+              Nâng cấp gói
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

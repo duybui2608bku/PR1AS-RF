@@ -190,7 +190,7 @@ export class AuthService {
         resetExpires
       );
 
-      const resetLink = `${config.frontendUrl}/auth/reset-password?token=${resetToken}`;
+      const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
 
       await nodemailerUtils({
         email: user.email,
@@ -263,7 +263,7 @@ export class AuthService {
       verificationExpires
     );
 
-    const verificationLink = `${config.frontendUrl}/auth/verify-email?token=${verificationToken}`;
+    const verificationLink = `${config.frontendUrl}/verify-email?token=${verificationToken}`;
 
     await nodemailerUtils({
       email: user.email,
