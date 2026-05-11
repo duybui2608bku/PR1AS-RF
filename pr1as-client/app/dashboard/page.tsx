@@ -12,7 +12,13 @@ import {
   Users,
 } from "lucide-react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -92,7 +98,9 @@ function MetricCard({
   href?: string
 }) {
   const content = (
-    <Card className={cn(href && "cursor-pointer transition-shadow hover:shadow-md")}>
+    <Card
+      className={cn(href && "cursor-pointer transition-shadow hover:shadow-md")}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
@@ -342,7 +350,12 @@ function PackageBreakdown({
         <div key={item.plan_code} className="space-y-1.5">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="flex items-center gap-2 text-muted-foreground">
-              <span className={cn("size-2.5 rounded-sm", PLAN_COLORS[item.plan_code])} />
+              <span
+                className={cn(
+                  "size-2.5 rounded-sm",
+                  PLAN_COLORS[item.plan_code]
+                )}
+              />
               {PLAN_LABELS[item.plan_code]}
             </span>
             <span className="font-medium tabular-nums">
@@ -368,7 +381,9 @@ export default function DashboardPage() {
     date.setDate(date.getDate() - 29)
     return date
   }, [today])
-  const [startDate, setStartDate] = React.useState(formatFilterDate(initialStartDate))
+  const [startDate, setStartDate] = React.useState(
+    formatFilterDate(initialStartDate)
+  )
   const [endDate, setEndDate] = React.useState(formatFilterDate(today))
 
   const dashboardQuery = useDashboardAnalytics({
@@ -396,7 +411,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tổng quan</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="hidden text-sm text-muted-foreground sm:block">
             Theo dõi user đăng ký mới và lượt đăng ký gói theo thời gian.
           </p>
         </div>
@@ -407,7 +422,10 @@ export default function DashboardPage() {
           disabled={dashboardQuery.isFetching}
         >
           <RefreshCw
-            className={cn("size-4", dashboardQuery.isFetching && "animate-spin")}
+            className={cn(
+              "size-4",
+              dashboardQuery.isFetching && "animate-spin"
+            )}
           />
           Làm mới
         </Button>
@@ -415,23 +433,23 @@ export default function DashboardPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Từ ngày</Label>
               <DatePicker
                 value={parsedStartDate}
                 onChange={(date) => setStartDate(formatFilterDate(date))}
                 toDate={parsedEndDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Đến ngày</Label>
               <DatePicker
                 value={parsedEndDate}
                 onChange={(date) => setEndDate(formatFilterDate(date))}
                 fromDate={parsedStartDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
           </div>
@@ -454,7 +472,11 @@ export default function DashboardPage() {
           href="/dashboard/users"
           title="Tổng người dùng"
           value={
-            analytics ? analytics.total_users : <Skeleton className="h-8 w-16" />
+            analytics ? (
+              analytics.total_users
+            ) : (
+              <Skeleton className="h-8 w-16" />
+            )
           }
           sub={
             analytics

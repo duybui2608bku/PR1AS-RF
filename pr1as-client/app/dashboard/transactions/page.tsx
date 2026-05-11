@@ -532,7 +532,7 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             Quản lý giao dịch
@@ -643,7 +643,10 @@ export default function AdminTransactionsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <form onSubmit={applySearch} className="flex gap-2">
+          <form
+            onSubmit={applySearch}
+            className="flex flex-col gap-2 sm:flex-row"
+          >
             <div className="relative flex-1">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -662,13 +665,13 @@ export default function AdminTransactionsPage() {
                 </button>
               ) : null}
             </div>
-            <Button type="submit" size="sm">
+            <Button type="submit" size="sm" className="w-full sm:w-auto">
               Tìm kiếm
             </Button>
           </form>
 
-          <div className="flex flex-wrap gap-3">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">
                 Trạng thái
               </Label>
@@ -681,7 +684,7 @@ export default function AdminTransactionsPage() {
                   )
                 }
               >
-                <SelectTrigger className="h-9 min-w-40 data-[size=default]:h-9">
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9 sm:min-w-40">
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
@@ -694,7 +697,7 @@ export default function AdminTransactionsPage() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">
                 Loại giao dịch
               </Label>
@@ -707,7 +710,7 @@ export default function AdminTransactionsPage() {
                   )
                 }
               >
-                <SelectTrigger className="h-9 min-w-40 data-[size=default]:h-9">
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9 sm:min-w-40">
                   <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
                 <SelectContent>
@@ -720,28 +723,28 @@ export default function AdminTransactionsPage() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Từ ngày</Label>
               <DatePicker
                 value={startDate}
                 onChange={(date) => handleDateFilterChange("startDate", date)}
                 toDate={endDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Đến ngày</Label>
               <DatePicker
                 value={endDate}
                 onChange={(date) => handleDateFilterChange("endDate", date)}
                 fromDate={startDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
 
             {hasFilters ? (
-              <div className="flex items-end">
+              <div className="flex w-full items-end sm:w-auto">
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
                   <X className="mr-1 size-4" />
                   Xóa bộ lọc
@@ -855,7 +858,7 @@ export default function AdminTransactionsPage() {
         </div>
 
         {totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted-foreground">
               Trang {currentPage} / {totalPages} — {total} kết quả
             </p>

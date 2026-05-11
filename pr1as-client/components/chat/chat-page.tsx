@@ -48,6 +48,7 @@ import type {
   ChatMessage,
   DirectMessageListResult,
   GroupChatConversation,
+  GroupChatMember,
   GroupChatMessage,
   GroupMessageListResult,
 } from "@/services/chat.service"
@@ -142,6 +143,37 @@ const getMessagePreview = (message?: ChatMessage | GroupChatMessage | null) => {
   return message.content
 }
 
+const getMemberName = (member?: GroupChatMember | null) => {
+  return member?.full_name || member?.email || "Thành viên"
+}
+
+const isAdminMember = (member?: GroupChatMember | null) => {
+  return member?.roles.includes("admin") ?? false
+}
+
+const getGroupMemberNames = (
+  conversation: GroupChatConversation | null | undefined,
+  currentUserId?: string
+) => {
+  const members = conversation?.members_data ?? []
+  const visibleMembers = members.filter(
+    (member) => member._id !== currentUserId
+  )
+
+  if (visibleMembers.length === 0) {
+    return `${conversation?.members.length ?? 0} thành viên`
+  }
+
+  return visibleMembers.map(getMemberName).join(", ")
+}
+
+const getGroupTitle = (
+  conversation: GroupChatConversation | null | undefined
+) => {
+  if (!conversation) return "Nhóm trò chuyện"
+  return conversation.name || `Booking ${shortenId(conversation.booking_id)}`
+}
+
 const getReplyTargetFromMessage = (
   message: ChatMessage | GroupChatMessage
 ): ReplyTarget => ({
@@ -182,6 +214,14 @@ const formatTime = (value?: string | null) => {
 const shortenId = (value?: string | null) => {
   if (!value) return "-"
   return value.length > 10 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value
+}
+
+const formatDateTime = (value?: string | null) => {
+  if (!value) return ""
+  return new Intl.DateTimeFormat("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value))
 }
 
 const appendDirectMessage = (
@@ -292,8 +332,8 @@ export function ChatPage({
   const initialReceiverIdValue = initialReceiverId?.trim() ?? ""
   const shouldStartNewDirect = Boolean(
     initialReceiverIdValue &&
-      initialMode === "direct" &&
-      !initialDirectConversationId
+    initialMode === "direct" &&
+    !initialDirectConversationId
   )
   const [mode, setMode] = React.useState<ChatMode>(initialMode)
   const [selectedDirectId, setSelectedDirectId] = React.useState<string | null>(
@@ -307,8 +347,8 @@ export function ChatPage({
   const [mobileThreadOpen, setMobileThreadOpen] = React.useState(
     Boolean(
       initialDirectConversationId ||
-        initialGroupConversationId ||
-        shouldStartNewDirect
+      initialGroupConversationId ||
+      shouldStartNewDirect
     )
   )
   const [replyTarget, setReplyTarget] = React.useState<ReplyTarget | null>(null)
@@ -415,8 +455,7 @@ export function ChatPage({
 
   const sendDirectMessageMutation = useSendDirectMessage()
   const sendGroupMessageMutation = useSendGroupMessage()
-  const { mutate: markDirectMessagesReadMutation } =
-    useMarkDirectMessagesRead()
+  const { mutate: markDirectMessagesReadMutation } = useMarkDirectMessagesRead()
   const { mutate: markGroupMessagesReadMutation } = useMarkGroupMessagesRead()
   const deleteDirectMessageMutation = useDeleteDirectMessage()
 
@@ -463,14 +502,14 @@ export function ChatPage({
       ? isDirectComposerOpen
         ? "Tin nhắn mới"
         : getDirectTitle(selectedDirect)
-      : selectedGroup?.name || "Nhóm trò chuyện"
+      : getGroupTitle(selectedGroup)
   const activeSubtitle =
     mode === "direct"
       ? isDirectComposerOpen
         ? "Bắt đầu trò chuyện với worker đã chọn"
         : getDirectSubtitle(selectedDirect, user?.id)
       : selectedGroup
-        ? `Đơn ${shortenId(selectedGroup.booking_id)}`
+        ? getGroupMemberNames(selectedGroup, user?.id)
         : "Chưa chọn nhóm"
   const hasActiveThread = Boolean(activeConversationId || isDirectComposerOpen)
 
@@ -797,7 +836,11 @@ export function ChatPage({
   const handleDraftKeyDown = (
     event: React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
-    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing)
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.nativeEvent.isComposing
+    )
       return
     event.preventDefault()
     event.currentTarget.form?.requestSubmit()
@@ -1085,11 +1128,15 @@ export function ChatPage({
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <ThreadAvatar
-                mode={mode}
-                title={activeTitle}
-                avatar={selectedDirect?.other_user?.avatar}
-              />
+              {mode === "direct" ? (
+                <ThreadAvatar
+                  mode={mode}
+                  title={activeTitle}
+                  avatar={selectedDirect?.other_user?.avatar}
+                />
+              ) : (
+                <GroupMemberAvatars members={selectedGroup?.members_data} />
+              )}
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold">
                   {activeTitle}
@@ -1110,6 +1157,9 @@ export function ChatPage({
             ref={messageScrollerRef}
             className="flex-1 overflow-y-auto bg-muted/20 px-4 py-4"
           >
+            {mode === "group" && selectedGroup?.booking_data ? (
+              <GroupBookingSummary conversation={selectedGroup} />
+            ) : null}
             <MessagePane
               mode={mode}
               loading={
@@ -1123,6 +1173,7 @@ export function ChatPage({
                 hasActiveThread ? (activeConversationId ?? "new") : null
               }
               directPeer={selectedDirect?.other_user}
+              groupConversation={selectedGroup}
               onReply={(message) =>
                 setReplyTarget(getReplyTargetFromMessage(message))
               }
@@ -1279,10 +1330,10 @@ function ConversationList({
           : (conversation as GroupChatConversation)
         const title = isDirect
           ? getDirectTitle(directConversation)
-          : groupConversation?.name || "Nhóm trò chuyện"
+          : getGroupTitle(groupConversation)
         const subtitle = isDirect
           ? getDirectSubtitle(directConversation, currentUserId)
-          : `Đơn ${shortenId(groupConversation?.booking_id)}`
+          : getGroupMemberNames(groupConversation, currentUserId)
         const lastMessage = isDirect
           ? getMessagePreview(directConversation?.last_message_data)
           : getMessagePreview(groupConversation?.last_message_data)
@@ -1307,11 +1358,15 @@ function ConversationList({
             )}
             onClick={() => onSelect(conversation._id)}
           >
-            <ThreadAvatar
-              mode={type}
-              title={title}
-              avatar={directConversation?.other_user?.avatar}
-            />
+            {isDirect ? (
+              <ThreadAvatar
+                mode={type}
+                title={title}
+                avatar={directConversation?.other_user?.avatar}
+              />
+            ) : (
+              <GroupMemberAvatars members={groupConversation?.members_data} />
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p
@@ -1389,6 +1444,88 @@ function ThreadAvatar({
   )
 }
 
+function GroupMemberAvatars({ members }: { members?: GroupChatMember[] }) {
+  const visibleMembers = (members ?? [])
+    .filter((member) => !isAdminMember(member))
+    .slice(0, 3)
+
+  if (visibleMembers.length === 0) {
+    return (
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        N
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex size-10 shrink-0 items-center">
+      {visibleMembers.map((member, index) => {
+        const name = getMemberName(member)
+
+        return member.avatar ? (
+          <Image
+            key={member._id}
+            src={member.avatar}
+            alt={name}
+            width={32}
+            height={32}
+            className={cn(
+              "size-8 rounded-full border-2 border-card object-cover",
+              index > 0 && "-ml-4"
+            )}
+          />
+        ) : (
+          <div
+            key={member._id}
+            className={cn(
+              "flex size-8 items-center justify-center rounded-full border-2 border-card bg-amber-100 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+              index > 0 && "-ml-4"
+            )}
+          >
+            {name.trim().charAt(0).toUpperCase() || "N"}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function GroupBookingSummary({
+  conversation,
+}: {
+  conversation: GroupChatConversation
+}) {
+  const booking = conversation.booking_data
+  if (!booking) return null
+
+  return (
+    <div className="mb-4 rounded-lg border bg-background px-4 py-3 shadow-xs">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">
+            Booking {booking.service_code}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatDateTime(booking.schedule.start_time)} -{" "}
+            {formatDateTime(booking.schedule.end_time)}
+          </p>
+        </div>
+        <Badge variant="outline">{booking.status}</Badge>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+        <p className="truncate">Client: {getMemberName(booking.client)}</p>
+        <p className="truncate">Worker: {getMemberName(booking.worker)}</p>
+      </div>
+      {booking.dispute ? (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          <p className="font-medium">Tranh chấp: {booking.dispute.reason}</p>
+          <p className="mt-1 line-clamp-2">{booking.dispute.description}</p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function MessagePane({
   mode,
   loading,
@@ -1396,6 +1533,7 @@ function MessagePane({
   currentUserId,
   selectedConversationId,
   directPeer,
+  groupConversation,
   onReply,
   onDeleteDirect,
   deletingMessageId,
@@ -1406,10 +1544,18 @@ function MessagePane({
   currentUserId?: string
   selectedConversationId: string | null
   directPeer?: ChatConversation["other_user"]
+  groupConversation?: GroupChatConversation | null
   onReply: (message: ChatMessage | GroupChatMessage) => void
   onDeleteDirect: (messageId: string) => void
   deletingMessageId: string | null
 }) {
+  const groupMemberMap = new Map(
+    (groupConversation?.members_data ?? []).map((member) => [
+      member._id,
+      member,
+    ])
+  )
+
   if (!selectedConversationId) {
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
@@ -1447,6 +1593,10 @@ function MessagePane({
           mine && groupMessage
             ? Math.max(groupMessage.read_by.length - 1, 0)
             : 0
+        const groupSender = groupMessage
+          ? groupMemberMap.get(groupMessage.sender_id)
+          : undefined
+        const groupSenderIsAdmin = isAdminMember(groupSender)
         const senderName =
           mode === "direct"
             ? mine
@@ -1454,7 +1604,7 @@ function MessagePane({
               : directPeer?.full_name || directPeer?.email || "Người gửi"
             : mine
               ? "Bạn"
-              : `Người dùng ${shortenId(message.sender_id)}`
+              : getMemberName(groupSender)
 
         return (
           <div
@@ -1468,7 +1618,9 @@ function MessagePane({
               <ThreadAvatar
                 mode={mode}
                 title={senderName}
-                avatar={mode === "direct" ? directPeer?.avatar : null}
+                avatar={
+                  mode === "direct" ? directPeer?.avatar : groupSender?.avatar
+                }
                 className="size-8"
               />
             ) : null}
@@ -1477,12 +1629,26 @@ function MessagePane({
                 "max-w-[min(78%,40rem)] rounded-lg px-3 py-2 shadow-xs",
                 mine
                   ? "bg-primary text-primary-foreground"
-                  : "border bg-background"
+                  : groupSenderIsAdmin
+                    ? "border border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                    : "border bg-background"
               )}
             >
               {mode === "group" && !mine ? (
-                <p className="mb-1 text-[11px] font-medium text-muted-foreground">
+                <p
+                  className={cn(
+                    "mb-1 text-[11px] font-medium",
+                    groupSenderIsAdmin
+                      ? "text-amber-700 dark:text-amber-200"
+                      : "text-muted-foreground"
+                  )}
+                >
                   {senderName}
+                  {groupSenderIsAdmin ? (
+                    <span className="ml-2 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-800 dark:text-amber-50">
+                      Admin
+                    </span>
+                  ) : null}
                 </p>
               ) : null}
               {replyMessage ? (

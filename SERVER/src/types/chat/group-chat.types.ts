@@ -1,4 +1,7 @@
 import { MessageType } from "./message.type";
+import { BookingStatus } from "../../constants/booking";
+import { PricingUnit } from "../worker/worker-service";
+import { UserRole } from "../auth/user.types";
 
 export interface IMessageGroupReadBy {
   user_id: string;
@@ -28,6 +31,45 @@ export interface IConversationGroup {
   updated_at: Date;
 }
 
+export interface GroupChatMember {
+  _id: string;
+  full_name: string | null;
+  avatar: string | null;
+  email: string;
+  roles: UserRole[];
+}
+
+export interface GroupChatBooking {
+  _id: string;
+  service_code: string;
+  status: BookingStatus;
+  schedule: {
+    start_time: Date;
+    end_time: Date;
+    duration_hours: number;
+  };
+  pricing: {
+    unit: PricingUnit;
+    quantity: number;
+  };
+  client_id: string;
+  worker_id: string;
+  client?: GroupChatMember;
+  worker?: GroupChatMember;
+  dispute?: {
+    reason: string;
+    description: string;
+    evidence_urls: string[];
+    disputed_by: string;
+    disputed_at: Date;
+    resolution: string | null;
+    resolution_notes: string;
+    resolved_by: string | null;
+    resolved_at: Date | null;
+  } | null;
+  disputed_at: Date | null;
+}
+
 export interface CreateGroupMessageInput {
   booking_id: string;
   type: MessageType;
@@ -55,6 +97,8 @@ export interface GetGroupConversationsQuery {
 export interface GroupConversationWithLastMessage extends IConversationGroup {
   last_message_data?: IMessageGroup;
   unread_count?: number;
+  members_data?: GroupChatMember[];
+  booking_data?: GroupChatBooking;
 }
 
 export interface MarkGroupMessagesReadInput {

@@ -54,6 +54,45 @@ export type GroupChatMessage = {
   updated_at: string
 }
 
+export type GroupChatMember = {
+  _id: string
+  full_name: string | null
+  avatar: string | null
+  email: string
+  roles: string[]
+}
+
+export type GroupChatBooking = {
+  _id: string
+  service_code: string
+  status: string
+  schedule: {
+    start_time: string
+    end_time: string
+    duration_hours: number
+  }
+  pricing: {
+    unit: string
+    quantity: number
+  }
+  client_id: string
+  worker_id: string
+  client?: GroupChatMember
+  worker?: GroupChatMember
+  dispute?: {
+    reason: string
+    description: string
+    evidence_urls: string[]
+    disputed_by: string
+    disputed_at: string
+    resolution: string | null
+    resolution_notes: string
+    resolved_by: string | null
+    resolved_at: string | null
+  } | null
+  disputed_at: string | null
+}
+
 export type GroupChatConversation = {
   _id: string
   booking_id: string
@@ -64,6 +103,8 @@ export type GroupChatConversation = {
   updated_at: string
   last_message_data?: GroupChatMessage
   unread_count?: number
+  members_data?: GroupChatMember[]
+  booking_data?: GroupChatBooking
 }
 
 export type ChatListParams = {

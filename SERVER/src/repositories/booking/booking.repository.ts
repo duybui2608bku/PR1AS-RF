@@ -107,11 +107,23 @@ export class BookingRepository {
       updated_at: new Date(),
     });
     const saved = await booking.save({ session });
-    return Booking.findById(saved._id).populate(BOOKING_POPULATE) as Promise<IBookingDocument>;
+    return Booking.findById(saved._id).populate(
+      BOOKING_POPULATE
+    ) as Promise<IBookingDocument>;
   }
 
   async findById(id: string): Promise<IBookingDocument | null> {
     return Booking.findById(id).populate(BOOKING_POPULATE);
+  }
+
+  async findManyByIds(ids: string[]): Promise<IBookingDocument[]> {
+    if (ids.length === 0) return [];
+
+    return Booking.find({
+      _id: { $in: ids.map((id) => new Types.ObjectId(id)) },
+    })
+      .populate(BOOKING_POPULATE)
+      .lean() as Promise<IBookingDocument[]>;
   }
 
   async findByClientId(
@@ -295,7 +307,10 @@ export class BookingRepository {
       $or: [
         { "schedule.start_time": { $gte: startTime, $lt: endTime } },
         { "schedule.end_time": { $gt: startTime, $lte: endTime } },
-        { "schedule.start_time": { $lte: startTime }, "schedule.end_time": { $gte: endTime } },
+        {
+          "schedule.start_time": { $lte: startTime },
+          "schedule.end_time": { $gte: endTime },
+        },
       ],
     };
 

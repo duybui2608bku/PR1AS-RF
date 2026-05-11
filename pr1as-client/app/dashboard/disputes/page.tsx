@@ -1,7 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, Loader2, MessageSquare, Send, Users } from "lucide-react"
+import {
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  MessageSquare,
+  Send,
+  Users,
+} from "lucide-react"
+import Image from "next/image"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -35,9 +43,11 @@ import {
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type {
   GroupChatConversation,
+  GroupChatMember,
   GroupChatMessage,
 } from "@/services/chat.service"
 
@@ -52,6 +62,31 @@ function formatTime(value: string) {
     dateStyle: "short",
     timeStyle: "short",
   })
+}
+
+function formatConversationTime(value?: string | null) {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+
+  return date.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+function getMemberName(member?: GroupChatMember | null) {
+  return member?.full_name || member?.email || "Thành viên"
+}
+
+function isAdminMember(member?: GroupChatMember | null) {
+  return member?.roles.includes("admin") ?? false
+}
+
+function getConversationMembers(conversation: GroupChatConversation) {
+  const members = conversation.members_data ?? []
+  if (members.length === 0) return `${conversation.members.length} thành viên`
+  return members.map(getMemberName).join(", ")
 }
 
 function getConversationName(conversation: GroupChatConversation) {
@@ -107,6 +142,52 @@ function EmptyState({
   )
 }
 
+function MemberAvatarStack({ members }: { members?: GroupChatMember[] }) {
+  const visibleMembers = (members ?? [])
+    .filter((member) => !isAdminMember(member))
+    .slice(0, 3)
+
+  if (visibleMembers.length === 0) {
+    return (
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full border bg-muted text-xs font-semibold">
+        N
+      </span>
+    )
+  }
+
+  return (
+    <span className="flex h-9 w-11 shrink-0 items-center">
+      {visibleMembers.map((member, index) => {
+        const name = getMemberName(member)
+
+        return member.avatar ? (
+          <Image
+            key={member._id}
+            src={member.avatar}
+            alt={name}
+            width={28}
+            height={28}
+            className={cn(
+              "size-7 rounded-full border-2 border-background object-cover shadow-xs",
+              index > 0 && "-ml-3"
+            )}
+          />
+        ) : (
+          <span
+            key={member._id}
+            className={cn(
+              "flex size-7 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-semibold shadow-xs",
+              index > 0 && "-ml-3"
+            )}
+          >
+            {name.trim().charAt(0).toUpperCase() || "N"}
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
 function ConversationItem({
   conversation,
   selected,
@@ -118,59 +199,109 @@ function ConversationItem({
 }) {
   const lastMessage = conversation.last_message_data
   const unreadCount = conversation.unread_count ?? 0
+  const lastMessagePreview = lastMessage?.content || "Chưa có tin nhắn"
+  const updatedAt = lastMessage?.created_at ?? conversation.updated_at
 
   return (
-    <Button
+    <button
       type="button"
-      variant={selected ? "outline" : "ghost"}
       onClick={onSelect}
-      className="h-auto w-full justify-start rounded-lg px-3 py-3 text-left"
+      className={cn(
+        "flex w-full min-w-0 items-start gap-3 overflow-hidden border-b px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:px-4",
+        selected && "bg-muted/70"
+      )}
     >
-      <span className="flex min-w-0 flex-1 flex-col gap-2">
-        <span className="flex items-start justify-between gap-3">
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">
+      <MemberAvatarStack members={conversation.members_data} />
+      <span className="w-0 min-w-0 flex-1 overflow-hidden">
+        <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_3rem] items-start gap-2">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm leading-5 font-semibold">
               {getConversationName(conversation)}
             </span>
-            <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
-              {lastMessage?.content || "Chưa có tin nhắn"}
+            <span className="mt-0.5 block truncate text-xs leading-4 text-muted-foreground">
+              {lastMessagePreview}
             </span>
           </span>
 
-          <span className="flex shrink-0 flex-col items-end gap-1">
-            {lastMessage ? (
-              <span className="text-[10px] font-normal text-muted-foreground">
-                {formatTime(lastMessage.created_at)}
-              </span>
-            ) : null}
+          <span className="flex w-12 shrink-0 flex-col items-end gap-1 pt-0.5">
+            <span className="text-[10px] leading-3 text-muted-foreground">
+              {formatConversationTime(updatedAt)}
+            </span>
             {unreadCount > 0 ? (
-              <Badge className="h-5 min-w-5 px-1.5 text-[10px]">
-                {unreadCount}
+              <Badge className="h-5 min-w-5 justify-center px-1.5 text-[10px]">
+                {unreadCount > 99 ? "99+" : unreadCount}
               </Badge>
             ) : null}
           </span>
         </span>
 
-        <span className="flex items-center gap-1.5 text-[10px] font-normal text-muted-foreground">
-          <Users className="size-3" />
-          {conversation.members.length} thành viên
+        <span className="mt-2 flex max-w-full min-w-0 items-center gap-1.5 overflow-hidden text-[11px] leading-4 text-muted-foreground">
+          <Users className="size-3 shrink-0" />
+          <span className="block min-w-0 truncate">
+            {getConversationMembers(conversation)}
+          </span>
         </span>
       </span>
-    </Button>
+    </button>
+  )
+}
+
+function BookingSummary({
+  conversation,
+}: {
+  conversation: GroupChatConversation
+}) {
+  const booking = conversation.booking_data
+  if (!booking) return null
+
+  return (
+    <div className="border-b bg-muted/30 px-4 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">
+            Booking {booking.service_code}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatTime(booking.schedule.start_time)} -{" "}
+            {formatTime(booking.schedule.end_time)}
+          </p>
+        </div>
+        <Badge variant="outline">{booking.status}</Badge>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+        <p className="truncate">Client: {getMemberName(booking.client)}</p>
+        <p className="truncate">Worker: {getMemberName(booking.worker)}</p>
+      </div>
+      {booking.dispute ? (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          <p className="font-medium">Lý do: {booking.dispute.reason}</p>
+          <p className="mt-1 line-clamp-2">{booking.dispute.description}</p>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
 function ChatMessages({
+  conversation,
   conversationGroupId,
   currentUserId,
   socketMessages,
 }: {
+  conversation: GroupChatConversation
   conversationGroupId: string
   currentUserId: string
   socketMessages: GroupChatMessage[]
 }) {
   const messagesQuery = useGroupMessages(conversationGroupId, { limit: 100 })
   const bottomRef = React.useRef<HTMLDivElement>(null)
+  const memberMap = React.useMemo(
+    () =>
+      new Map(
+        (conversation.members_data ?? []).map((member) => [member._id, member])
+      ),
+    [conversation.members_data]
+  )
 
   const allMessages = React.useMemo(() => {
     const fetchedMessages = messagesQuery.data?.messages ?? EMPTY_MESSAGES
@@ -223,6 +354,8 @@ function ChatMessages({
     <div className="flex flex-col gap-2 p-4">
       {allMessages.map((message) => {
         const isCurrentUser = message.sender_id === currentUserId
+        const sender = memberMap.get(message.sender_id)
+        const senderIsAdmin = isAdminMember(sender)
 
         return (
           <div
@@ -230,15 +363,28 @@ function ChatMessages({
             className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[min(70%,42rem)] rounded-xl px-4 py-2 text-sm shadow-xs ${
+              className={`max-w-[min(86%,42rem)] rounded-xl px-3 py-2 text-sm shadow-xs sm:max-w-[min(70%,42rem)] sm:px-4 ${
                 isCurrentUser
                   ? "bg-primary text-primary-foreground"
-                  : "border bg-card text-card-foreground"
+                  : senderIsAdmin
+                    ? "border border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                    : "border bg-card text-card-foreground"
               }`}
             >
               {!isCurrentUser ? (
-                <p className="mb-1 text-[10px] font-semibold text-muted-foreground">
-                  {message.sender_id.slice(-8)}
+                <p
+                  className={`mb-1 text-[10px] font-semibold ${
+                    senderIsAdmin
+                      ? "text-amber-700 dark:text-amber-200"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {getMemberName(sender)}
+                  {senderIsAdmin ? (
+                    <span className="ml-2 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-800 dark:text-amber-50">
+                      Admin
+                    </span>
+                  ) : null}
                 </p>
               ) : null}
               <p className="break-words whitespace-pre-wrap">
@@ -390,19 +536,20 @@ export default function AdminDisputesPage() {
   }
 
   return (
-    <div className="flex h-[calc(100svh-6rem)] flex-col gap-4">
+    <div className="flex h-[calc(100svh-7.5rem)] flex-col gap-3 md:h-[calc(100svh-6rem)] md:gap-4">
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="size-5 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Chat tranh chấp</h1>
-        </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="hidden text-sm text-muted-foreground sm:block">
           Giải quyết các tranh chấp booking đang mở.
         </p>
       </div>
 
       <Card className="grid min-h-0 flex-1 overflow-hidden rounded-lg lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <section className="flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
+        <section
+          className={cn(
+            "flex min-h-0 flex-col border-b lg:border-r lg:border-b-0",
+            selectedConversationId && "max-lg:hidden"
+          )}
+        >
           <CardHeader className="space-y-1 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -454,7 +601,17 @@ export default function AdminDisputesPage() {
 
         {selectedConversationId && selectedConversation ? (
           <section className="flex min-h-0 flex-col">
-            <CardHeader className="flex-row items-center gap-3 space-y-0 p-4">
+            <CardHeader className="flex-row items-center gap-2 space-y-0 p-3 sm:gap-3 sm:p-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9 shrink-0 rounded-lg lg:hidden"
+                onClick={() => setSelectedConversationId(null)}
+                aria-label="Quay lai danh sach"
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted">
                 <MessageSquare className="size-4 text-primary" />
               </div>
@@ -463,10 +620,13 @@ export default function AdminDisputesPage() {
                   {getConversationName(selectedConversation)}
                 </CardTitle>
                 <CardDescription className="truncate">
-                  Booking #{selectedConversation.booking_id.slice(-8)}
+                  {getConversationMembers(selectedConversation)}
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="gap-1">
+              <Badge
+                variant="secondary"
+                className="hidden gap-1 sm:inline-flex"
+              >
                 <Users className="size-3" />
                 {selectedConversation.members.length}
               </Badge>
@@ -474,7 +634,9 @@ export default function AdminDisputesPage() {
             <Separator />
 
             <ScrollArea className="min-h-0 flex-1">
+              <BookingSummary conversation={selectedConversation} />
               <ChatMessages
+                conversation={selectedConversation}
                 conversationGroupId={selectedConversationId}
                 currentUserId={currentUserId}
                 socketMessages={socketMessages}
@@ -482,7 +644,7 @@ export default function AdminDisputesPage() {
             </ScrollArea>
 
             <Separator />
-            <CardContent className="p-3">
+            <CardContent className="p-2 sm:p-3">
               <form onSubmit={handleSend} className="flex items-end gap-2">
                 <Textarea
                   className="min-h-10 flex-1 resize-none rounded-lg"
@@ -514,10 +676,12 @@ export default function AdminDisputesPage() {
             </CardContent>
           </section>
         ) : (
-          <EmptyState
-            title="Chọn một cuộc tranh chấp"
-            description="Chọn hội thoại ở danh sách bên trái để xem và trả lời tin nhắn."
-          />
+          <div className="hidden min-h-0 lg:block">
+            <EmptyState
+              title="Chọn một cuộc tranh chấp"
+              description="Chọn hội thoại ở danh sách bên trái để xem và trả lời tin nhắn."
+            />
+          </div>
         )}
       </Card>
     </div>

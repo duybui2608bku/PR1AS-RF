@@ -124,10 +124,7 @@ function getServiceLabel(service: Booking["service_id"]) {
   if (typeof service === "string") return shortId(service)
   if (typeof service.name === "string") return service.name
   return (
-    service.name?.vi ||
-    service.name?.en ||
-    service.code ||
-    shortId(service._id)
+    service.name?.vi || service.name?.en || service.code || shortId(service._id)
   )
 }
 
@@ -170,7 +167,9 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold tabular-nums">{value}</div>
-        {sub ? <p className="mt-1 text-xs text-muted-foreground">{sub}</p> : null}
+        {sub ? (
+          <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -284,7 +283,12 @@ function BookingCreatedChart({
 function CompletionTrendChart({
   data,
 }: {
-  data: { date: string; completion_rate: number; completed: number; total: number }[]
+  data: {
+    date: string
+    completion_rate: number
+    completed: number
+    total: number
+  }[]
 }) {
   const display = data.slice(-31)
   const chartWidth = 720
@@ -295,7 +299,8 @@ function CompletionTrendChart({
   const pointGap = innerWidth / Math.max(display.length - 1, 1)
   const points = display.map((item, index) => {
     const x = padding.left + index * pointGap
-    const y = padding.top + innerHeight - (item.completion_rate / 100) * innerHeight
+    const y =
+      padding.top + innerHeight - (item.completion_rate / 100) * innerHeight
     return { ...item, x, y }
   })
   const linePath = points
@@ -345,7 +350,12 @@ function CompletionTrendChart({
             </g>
           )
         })}
-        <path d={linePath} fill="none" className="stroke-emerald-500" strokeWidth="3" />
+        <path
+          d={linePath}
+          fill="none"
+          className="stroke-emerald-500"
+          strokeWidth="3"
+        />
         {points.map((point) => (
           <g key={point.date} className="text-emerald-500">
             <title>
@@ -461,7 +471,9 @@ export default function AdminBookingsPage() {
     date.setDate(date.getDate() - 29)
     return date
   }, [today])
-  const [startDate, setStartDate] = React.useState(formatFilterDate(initialStartDate))
+  const [startDate, setStartDate] = React.useState(
+    formatFilterDate(initialStartDate)
+  )
   const [endDate, setEndDate] = React.useState(formatFilterDate(today))
 
   const analyticsQuery = useAdminBookingAnalytics({
@@ -505,7 +517,10 @@ export default function AdminBookingsPage() {
           disabled={analyticsQuery.isFetching}
         >
           <RefreshCw
-            className={cn("size-4", analyticsQuery.isFetching && "animate-spin")}
+            className={cn(
+              "size-4",
+              analyticsQuery.isFetching && "animate-spin"
+            )}
           />
           Làm mới
         </Button>
@@ -513,23 +528,23 @@ export default function AdminBookingsPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Từ ngày</Label>
               <DatePicker
                 value={parsedStartDate}
                 onChange={(date) => setStartDate(formatFilterDate(date))}
                 toDate={parsedEndDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex w-full flex-col gap-1 sm:w-auto">
               <Label className="text-xs text-muted-foreground">Đến ngày</Label>
               <DatePicker
                 value={parsedEndDate}
                 onChange={(date) => setEndDate(formatFilterDate(date))}
                 fromDate={parsedStartDate}
-                buttonClassName="h-9 w-44 data-[size=default]:h-9"
+                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
               />
             </div>
           </div>
@@ -580,7 +595,9 @@ export default function AdminBookingsPage() {
               <Skeleton className="h-8 w-16" />
             )
           }
-          sub={analytics ? `${analytics.completion_rate}% tổng booking` : undefined}
+          sub={
+            analytics ? `${analytics.completion_rate}% tổng booking` : undefined
+          }
           icon={<CheckCircle2 className="size-4" />}
           iconClassName="bg-emerald-100 text-emerald-600"
         />
@@ -588,9 +605,9 @@ export default function AdminBookingsPage() {
           title="Đang chờ"
           value={
             analytics ? (
-              analytics.status_counts.find(
+              (analytics.status_counts.find(
                 (item) => item.status === BookingStatus.PENDING
-              )?.count ?? 0
+              )?.count ?? 0)
             ) : (
               <Skeleton className="h-8 w-16" />
             )
@@ -653,7 +670,9 @@ export default function AdminBookingsPage() {
                     <div className="font-semibold tabular-nums">
                       {analytics.completed_bookings}
                     </div>
-                    <div className="text-xs text-muted-foreground">Hoàn thành</div>
+                    <div className="text-xs text-muted-foreground">
+                      Hoàn thành
+                    </div>
                   </div>
                   <div className="rounded-lg border p-2">
                     <div className="font-semibold tabular-nums">

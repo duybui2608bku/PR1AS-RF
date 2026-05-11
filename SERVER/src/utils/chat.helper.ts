@@ -18,6 +18,17 @@ export const formatOtherUser = (user: IUserDocument | null) => {
   };
 };
 
+export const formatGroupMember = (user: IUserDocument | null) => {
+  if (!user) return undefined;
+  return {
+    _id: user._id.toString(),
+    full_name: user.full_name || null,
+    avatar: user.avatar || null,
+    email: user.email,
+    roles: user.roles,
+  };
+};
+
 export const getUserRoom = (userId: string): string => {
   return `user:${userId}`;
 };
