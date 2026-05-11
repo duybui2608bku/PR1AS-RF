@@ -1,3 +1,5 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
+
 import { SiteLayout } from "@/components/layout/site-layout"
 import { HomeRoleGate } from "@/components/layout/home-role-gate"
 import { HomeSearchExperience } from "@/components/home/home-search-experience"
@@ -6,6 +8,7 @@ import {
   parseHomeSearchParams,
   type HomeSearchParams,
 } from "@/lib/home/home-search-params"
+import { getQueryClient } from "@/lib/query-client"
 import { serviceService } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
 
@@ -18,24 +21,25 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   const initialState = parseHomeSearchParams(rawParams)
   const initialFilters = homeStateToFilters(initialState)
 
-  const [servicesResult, workersResult] = await Promise.allSettled([
-    serviceService.getServices(),
-    workerService.getWorkersGroupedByService(initialFilters),
-  ])
+  const queryClient = getQueryClient()
 
-  const services = servicesResult.status === "fulfilled" ? servicesResult.value : []
-  const workers = workersResult.status === "fulfilled" ? workersResult.value : []
-  const hasWorkersError = workersResult.status === "rejected"
+  await Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: ["services", "list"],
+      queryFn: serviceService.getServices,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["workers", "grouped-by-service", initialFilters],
+      queryFn: () => workerService.getWorkersGroupedByService(initialFilters),
+    }),
+  ])
 
   return (
     <SiteLayout>
       <HomeRoleGate>
-        <HomeSearchExperience
-          initialServices={services}
-          initialWorkers={workers}
-          hasWorkersError={hasWorkersError}
-          initialState={initialState}
-        />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <HomeSearchExperience initialState={initialState} />
+        </HydrationBoundary>
       </HomeRoleGate>
     </SiteLayout>
   )

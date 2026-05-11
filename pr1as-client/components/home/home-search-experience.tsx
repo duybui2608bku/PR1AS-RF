@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 
 import { HomeHero } from "@/components/hero/home-hero"
@@ -16,15 +16,9 @@ import {
 } from "@/lib/home/home-search-params"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
-import {
-  workerService,
-  type WorkerGroupedByService,
-} from "@/services/worker.service"
+import { workerService } from "@/services/worker.service"
 
 type HomeSearchExperienceProps = {
-  initialServices: ServiceItem[]
-  initialWorkers: WorkerGroupedByService[]
-  hasWorkersError: boolean
   initialState: HomeSearchState
 }
 
@@ -63,13 +57,7 @@ const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
   return CATEGORY_LABEL[code] ?? code
 }
 
-export function HomeSearchExperience({
-  initialServices,
-  initialWorkers,
-  hasWorkersError,
-  initialState,
-}: HomeSearchExperienceProps) {
-  const router = useRouter()
+export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
   const pathname = usePathname()
 
   const [draft, setDraft] = React.useState<DraftState>(() =>
@@ -81,33 +69,35 @@ export function HomeSearchExperience({
   const filters = React.useMemo(() => homeStateToFilters(applied), [applied])
   const hasFilters = Object.keys(filters).length > 0
 
-  // Sync applied state -> URL. Skip the first render when the URL already
-  // matches the initial applied state (avoids spurious history entry).
+  // Sync applied state -> URL without triggering RSC navigation.
+  // Using replaceState directly keeps the URL shareable/bookmarkable
+  // while letting TanStack Query handle all data fetching client-side.
   const isFirstSyncRef = React.useRef(true)
   React.useEffect(() => {
     const queryString = homeStateToQueryString(applied)
     if (isFirstSyncRef.current) {
       isFirstSyncRef.current = false
-      const currentSearch =
-        typeof window !== "undefined"
-          ? window.location.search.replace(/^\?/, "")
-          : ""
-      if (queryString === currentSearch) return
+      if (queryString === window.location.search.replace(/^\?/, "")) return
     }
     const url = queryString ? `${pathname}?${queryString}` : pathname
-    router.replace(url, { scroll: false })
-  }, [applied, pathname, router])
+    window.history.replaceState(null, "", url)
+  }, [applied, pathname])
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services", "list"],
+    queryFn: serviceService.getServices,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const workersQuery = useQuery({
     queryKey: ["workers", "grouped-by-service", filters],
     queryFn: () => workerService.getWorkersGroupedByService(filters),
-    initialData: initialWorkers,
     placeholderData: (previous) => previous,
     staleTime: 30 * 1000,
   })
 
   const groupedServices = workersQuery.data ?? []
-  const showFetchError = workersQuery.isError ? true : hasWorkersError && !hasFilters
+  const showFetchError = workersQuery.isError
 
   const handleSearchSubmit = React.useCallback(() => {
     setApplied((prev) => ({
@@ -171,7 +161,7 @@ export function HomeSearchExperience({
     if (applied.activeCode && applied.activeCode !== "ALL") {
       chips.push({
         id: "category",
-        label: findCategoryLabel(applied.activeCode, initialServices),
+        label: findCategoryLabel(applied.activeCode, services),
         onRemove: removeCategoryFilter,
       })
     }
@@ -192,7 +182,7 @@ export function HomeSearchExperience({
     return chips
   }, [
     applied,
-    initialServices,
+    services,
     removeQueryFilter,
     removeCategoryFilter,
     removeLocationFilter,
@@ -202,7 +192,6 @@ export function HomeSearchExperience({
   return (
     <>
       <HomeHero
-        initialServices={initialServices}
         serviceQuery={draft.serviceQuery}
         onServiceQueryChange={(value) =>
           setDraft((prev) => ({ ...prev, serviceQuery: value }))

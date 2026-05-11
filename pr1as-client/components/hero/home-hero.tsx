@@ -58,7 +58,6 @@ const resolveIcon = (icon: string | null): LucideIcon => {
 }
 
 type HomeHeroProps = {
-  initialServices?: ServiceItem[]
   serviceQuery: string
   onServiceQueryChange: (value: string) => void
   activeCode: string
@@ -71,7 +70,6 @@ type HomeHeroProps = {
 }
 
 export function HomeHero({
-  initialServices,
   serviceQuery,
   onServiceQueryChange,
   activeCode,
@@ -86,7 +84,6 @@ export function HomeHero({
     queryKey: ["services", "list"],
     queryFn: serviceService.getServices,
     staleTime: 5 * 60 * 1000,
-    initialData: initialServices,
   })
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
