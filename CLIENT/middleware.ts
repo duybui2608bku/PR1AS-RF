@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { MAINTENANCE_PAGE_ENABLED } from "@/lib/constants/maintenance";
 import { UserRole } from "@/lib/constants/routes";
 
 const CLIENT_ROUTE_PREFIX = "/client";
 const HOME_ROUTE = "/";
 const WORKER_FEED_ROUTE = "/worker/feed";
 const WORKER_SETUP_ROUTE = "/worker/setup";
+const MAINTENANCE_ROUTE = "/maintenance";
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  if (MAINTENANCE_PAGE_ENABLED) {
+    if (pathname !== MAINTENANCE_ROUTE) {
+      return NextResponse.redirect(new URL(MAINTENANCE_ROUTE, request.url));
+    }
+    return NextResponse.next();
+  }
+
   const authStorage = request.cookies.get("auth-storage");
 
   if (pathname === HOME_ROUTE && authStorage) {

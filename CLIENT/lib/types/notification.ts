@@ -15,6 +15,7 @@ export type NotificationPriority = "low" | "normal" | "high" | "urgent";
 
 export type NotificationType =
   | "booking.created"
+  | "booking.updated"
   | "booking.status_updated"
   | "booking.cancelled"
   | "dispute.created"

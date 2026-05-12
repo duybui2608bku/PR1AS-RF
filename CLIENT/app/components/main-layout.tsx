@@ -14,8 +14,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
   const isChatPage = pathname?.startsWith("/chat");
+  const isMaintenance = pathname === "/maintenance";
 
-  if (isAdmin) {
+  if (isAdmin || isMaintenance) {
     return <Fragment>{children}</Fragment>;
   }
 
