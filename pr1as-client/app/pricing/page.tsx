@@ -5,6 +5,14 @@ import { PricingPlans } from "@/components/pricing/pricing-plans"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { pricingService, type PricingPackage } from "@/services/pricing.service"
 import { cn } from "@/lib/utils"
+import { createPageMetadata } from "@/lib/seo"
+
+export const metadata = createPageMetadata({
+  title: "Bảng giá",
+  description:
+    "So sánh các gói Standard, Gold và Diamond của PR1AS để nâng cấp hồ sơ, nhắn tin với khách hàng và quản lý dịch vụ.",
+  path: "/pricing",
+})
 
 const MONTHLY_PRICE: Record<PricingPackage["package_code"], number> = {
   standard: 0,

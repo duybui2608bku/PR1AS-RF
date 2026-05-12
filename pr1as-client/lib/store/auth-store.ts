@@ -2,9 +2,8 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
 import {
-  clearAuthCookie,
   setActiveRoleCookie,
-  setAuthCookie,
+  clearActiveRoleCookie,
 } from "@/lib/auth/auth-cookie"
 import { getActiveRole } from "@/lib/auth/roles"
 
@@ -43,9 +42,12 @@ export type AuthUser = {
 
 type AuthState = {
   user: AuthUser | null
+  /** In-memory only — NOT persisted to localStorage. Cleared on page refresh. */
   token: string | null
   isAuthenticated: boolean
   setAuth: (payload: { user: AuthUser; token: string }) => void
+  /** Updates user info without touching the token (e.g. after role switch or profile update). */
+  setUser: (user: AuthUser) => void
   clearAuth: () => void
 }
 
@@ -57,13 +59,16 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       setAuth: ({ user, token }) => {
         removeLegacyAuthToken()
-        setAuthCookie(token)
         setActiveRoleCookie(getActiveRole(user))
         set({ user, token, isAuthenticated: true })
       },
+      setUser: (user) => {
+        setActiveRoleCookie(getActiveRole(user))
+        set({ user })
+      },
       clearAuth: () => {
         removeLegacyAuthToken()
-        clearAuthCookie()
+        clearActiveRoleCookie()
         set({ user: null, token: null, isAuthenticated: false })
       },
     }),
@@ -72,15 +77,9 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        // token intentionally excluded — kept in memory only to avoid localStorage exposure
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state?.token) {
-          setAuthCookie(state.token)
-          setActiveRoleCookie(getActiveRole(state.user))
-        }
-      },
     }
   )
 )

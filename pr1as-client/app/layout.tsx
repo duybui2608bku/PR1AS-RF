@@ -4,6 +4,7 @@ import { Montserrat, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import { siteConfig } from "@/config/site"
+import { defaultKeywords } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-sans" })
@@ -12,9 +13,15 @@ const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
-    template: `%s · ${siteConfig.name}`,
+    template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: defaultKeywords,
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  category: "service marketplace",
   metadataBase: new URL(siteConfig.url),
   openGraph: {
     title: siteConfig.name,
@@ -22,6 +29,7 @@ export const metadata: Metadata = {
     url: siteConfig.url,
     siteName: siteConfig.name,
     images: [{ url: siteConfig.ogImage }],
+    locale: "vi_VN",
     type: "website",
   },
   twitter: {
@@ -49,7 +57,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, "font-sans", montserrat.variable)}
     >

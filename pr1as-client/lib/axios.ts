@@ -4,6 +4,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { toApiError } from "@/lib/utils/error-handler"
 import { getQueryClient } from "@/lib/query-client"
 
@@ -41,6 +42,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== "undefined") {
       useAuthStore.getState().clearAuth()
       getQueryClient().clear()
+      // Fire-and-forget: clear the httpOnly session cookie so the middleware
+      // no longer sees it and doesn't gate-crash the unauthenticated state.
+      void clearSessionCookie()
     }
 
     const apiError = toApiError(error)

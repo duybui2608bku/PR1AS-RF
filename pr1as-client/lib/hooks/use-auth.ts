@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "@/lib/axios"
+import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
@@ -68,12 +69,17 @@ export function useLogin() {
       })
       return response.data
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (!data.success || !data.data) {
         return
       }
 
-      setAuth({ user: data.data.user, token: data.data.token })
+      const { user, token } = data.data
+      setAuth({ user, token })
+      // Set the httpOnly session cookie from the server side so it is
+      // inaccessible to JavaScript (XSS-safe). Fire before invalidating
+      // queries so the cookie is present for any subsequent SSR checks.
+      await setSessionCookie(token)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -92,11 +98,13 @@ export function useRegister() {
 }
 
 export function useMe() {
-  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return useQuery({
     queryKey: queryKeys.auth.me,
-    enabled: Boolean(token),
+    // Enabled whenever the store believes the user is authenticated —
+    // on a fresh page load the httpOnly cookie handles the actual auth.
+    enabled: isAuthenticated,
     retry: false,
     refetchOnWindowFocus: false,
     queryFn: async () => {
@@ -113,6 +121,9 @@ export function useLogout() {
   return useMutation({
     mutationFn: async () => {
       await api.post("/auth/logout")
+      // Clear the httpOnly cookie via the Route Handler. Must finish before
+      // clearAuth() so the middleware no longer sees a session cookie.
+      await clearSessionCookie()
     },
     onSettled: () => {
       clearAuth()
@@ -122,9 +133,7 @@ export function useLogout() {
 }
 
 export function useSwitchRole() {
-  const user = useAuthStore((s) => s.user)
-  const token = useAuthStore((s) => s.token)
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const setUser = useAuthStore((s) => s.setUser)
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -133,11 +142,11 @@ export function useSwitchRole() {
       return response.data
     },
     onSuccess: (data) => {
-      if (!data.success || !data.data?.user || !user || !token) {
+      if (!data.success || !data.data?.user) {
         return
       }
 
-      setAuth({ user: data.data.user, token })
+      setUser(data.data.user)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -182,8 +191,7 @@ export interface UpdateBasicProfileRequest {
 
 export function useUpdateBasicProfile() {
   const user = useAuthStore((s) => s.user)
-  const token = useAuthStore((s) => s.token)
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const setUser = useAuthStore((s) => s.setUser)
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -192,9 +200,9 @@ export function useUpdateBasicProfile() {
       return response.data
     },
     onSuccess: (data) => {
-      if (!data.success || !data.data?.user || !token) return
+      if (!data.success || !data.data?.user) return
 
-      setAuth({ user: { ...user, ...data.data.user }, token })
+      setUser({ ...user, ...data.data.user } as AuthUser)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
