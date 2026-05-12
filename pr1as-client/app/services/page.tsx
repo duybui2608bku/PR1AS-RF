@@ -8,9 +8,17 @@ import {
   parseHomeSearchParams,
   type HomeSearchParams,
 } from "@/lib/home/home-search-params"
+import { createPageMetadata } from "@/lib/seo"
 import { getQueryClient } from "@/lib/query-client"
 import { serviceService } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
+
+export const metadata = createPageMetadata({
+  title: "Tìm dịch vụ và worker",
+  description:
+    "Tìm kiếm worker phù hợp, lọc theo dịch vụ và khu vực, xem hồ sơ và đặt lịch trực tuyến trên PR1AS.",
+  path: "/services",
+})
 
 type ServicesPageProps = {
   searchParams: Promise<HomeSearchParams>

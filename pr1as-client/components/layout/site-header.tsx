@@ -329,13 +329,17 @@ export function SiteHeader() {
   )
 }
 
+function useHasMounted() {
+  return React.useSyncExternalStore(
+    React.useCallback(() => () => undefined, []),
+    () => true,
+    () => false
+  )
+}
+
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useHasMounted()
 
   if (!mounted) {
     return (

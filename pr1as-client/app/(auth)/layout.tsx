@@ -1,6 +1,12 @@
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
+import { privateRouteMetadata } from "@/lib/seo"
+
+export const metadata = {
+  ...privateRouteMetadata,
+  title: "Tài khoản",
+}
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
