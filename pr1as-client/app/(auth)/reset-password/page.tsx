@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
@@ -17,7 +17,11 @@ export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const resetPasswordMutation = useResetPassword()
-  const tokenFromQuery = searchParams?.get("token") ?? ""
+
+  // Capture the token from the URL on first render, then immediately clean the
+  // URL so the token is not stored in browser history or leaked via Referer headers.
+  const tokenRef = useRef(searchParams?.get("token") ?? "")
+  const tokenFromQuery = tokenRef.current
 
   const [tokenInput, setTokenInput] = useState("")
   const [password, setPassword] = useState("")
@@ -26,6 +30,12 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
+
+  useEffect(() => {
+    if (tokenRef.current) {
+      router.replace("/reset-password", { scroll: false })
+    }
+  }, [router])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -139,7 +149,7 @@ export default function ResetPasswordPage() {
           </form>
         ) : null}
 
-        {!tokenFromQuery && !isSuccess ? (
+        {!tokenFromQuery && !tokenInput && !isSuccess ? (
           <Alert>
             <AlertTitle>Lưu ý</AlertTitle>
             <AlertDescription>Bạn có thể dán mã đặt lại được gửi qua email vào ô phía trên.</AlertDescription>

@@ -1,12 +1,21 @@
-export const AUTH_COOKIE_NAME = "auth_token"
+// Cookie name used by both Next.js middleware and Express (req.cookies?.token)
+export const TOKEN_COOKIE_NAME = "token"
 export const ACTIVE_ROLE_COOKIE_NAME = "active_role"
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
-export function setAuthCookie(token: string): void {
-  if (typeof document === "undefined") return
-  const secure = window.location.protocol === "https:" ? "; Secure" : ""
-  document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${MAX_AGE_SECONDS}; SameSite=Lax${secure}`
+/** Sets the httpOnly session cookie via the server-side Route Handler. */
+export async function setSessionCookie(token: string): Promise<void> {
+  await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  })
+}
+
+/** Clears the httpOnly session cookie via the server-side Route Handler. */
+export async function clearSessionCookie(): Promise<void> {
+  await fetch("/api/auth/session", { method: "DELETE" })
 }
 
 export function setActiveRoleCookie(activeRole: string | null | undefined): void {
@@ -21,8 +30,7 @@ export function setActiveRoleCookie(activeRole: string | null | undefined): void
   document.cookie = `${ACTIVE_ROLE_COOKIE_NAME}=${encodeURIComponent(activeRole)}; path=/; max-age=${MAX_AGE_SECONDS}; SameSite=Lax${secure}`
 }
 
-export function clearAuthCookie(): void {
+export function clearActiveRoleCookie(): void {
   if (typeof document === "undefined") return
-  document.cookie = `${AUTH_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`
   document.cookie = `${ACTIVE_ROLE_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`
 }
