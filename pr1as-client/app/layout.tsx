@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Montserrat, Geist_Mono } from "next/font/google"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages } from "next-intl/server"
 
 import "./globals.css"
 import { Providers } from "@/components/providers"
@@ -52,9 +54,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const messages = await getMessages()
   return (
     <html
       lang="vi"
@@ -62,7 +65,9 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", montserrat.variable)}
     >
       <body>
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

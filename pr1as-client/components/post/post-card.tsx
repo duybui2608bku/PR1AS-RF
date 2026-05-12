@@ -1,9 +1,11 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
+import { useTranslations } from "next-intl"
 import {
   ChevronLeft,
   ChevronRight,
@@ -127,6 +129,7 @@ function MediaSlider({
   onClose: () => void
   onChange: (index: number) => void
 }) {
+  const t = useTranslations("PostCard")
   const item = items[currentIndex]
   const hasMultiple = items.length > 1
 
@@ -158,7 +161,7 @@ function MediaSlider({
           variant="ghost"
           size="icon"
           className="rounded-full bg-muted/80"
-          aria-label="ÄÃ³ng"
+          aria-label={t("close")}
           onClick={onClose}
         >
           <X className="size-5" />
@@ -172,7 +175,7 @@ function MediaSlider({
             variant="ghost"
             size="icon"
             className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-muted/80"
-            aria-label="áº¢nh trÆ°á»›c"
+            aria-label={t("prevImage")}
             onClick={() => onChange((currentIndex - 1 + items.length) % items.length)}
           >
             <ChevronLeft className="size-6" />
@@ -182,7 +185,7 @@ function MediaSlider({
             variant="ghost"
             size="icon"
             className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-muted/80"
-            aria-label="áº¢nh sau"
+            aria-label={t("nextImage")}
             onClick={() => onChange((currentIndex + 1) % items.length)}
           >
             <ChevronRight className="size-6" />
@@ -216,6 +219,7 @@ function MediaSlider({
 }
 
 function PostMedia({ media }: { media: PostPublic["media"] }) {
+  const t = useTranslations("PostCard")
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
 
   if (media.length === 0) return null
@@ -237,7 +241,7 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
             type="button"
             className="relative block max-h-[32rem] w-full overflow-hidden rounded-lg border bg-muted"
             onClick={() => setViewerIndex(0)}
-            aria-label="Xem ảnh"
+            aria-label={t("viewImage")}
           >
             <Image
               src={item.url}
@@ -270,12 +274,12 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
             type="button"
             className="group relative aspect-square overflow-hidden rounded border bg-muted"
             onClick={() => setViewerIndex(index)}
-            aria-label={`Má»Ÿ media ${index + 1}`}
+            aria-label={t("openMedia", { index: index + 1 })}
           >
             <MediaPreview item={item} className="h-full w-full object-contain" />
             {index === 3 && hiddenCount > 0 ? (
               <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white transition-colors group-hover:bg-black/45">
-                Xem thÃªm +{hiddenCount}
+                {t("viewMore", { count: hiddenCount })}
               </span>
             ) : null}
           </button>
@@ -295,6 +299,7 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
 }
 
 export function PostCard({ post }: Props) {
+  const t = useTranslations("PostCard")
   const { user, isAuthenticated } = useAuthStore()
   const deleteMutation = useDeletePost()
   const lockMutation = useSetCommentsLock()
@@ -308,6 +313,7 @@ export function PostCard({ post }: Props) {
     addSuffix: true,
     locale: vi,
   })
+  const workerHref = post.author.has_worker_profile ? `/worker/${post.author.id}` : null
 
   const handleDelete = async () => {
     try {
@@ -328,14 +334,26 @@ export function PostCard({ post }: Props) {
       {/* Header */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
-          <AuthorAvatar avatar={post.author.avatar} name={post.author.full_name} />
+          {workerHref ? (
+            <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+              <AuthorAvatar avatar={post.author.avatar} name={post.author.full_name} />
+            </Link>
+          ) : (
+            <AuthorAvatar avatar={post.author.avatar} name={post.author.full_name} />
+          )}
           <div>
-            <p className="text-sm font-semibold leading-tight">
-              {post.author.full_name ?? "Người dùng"}
-            </p>
+            {workerHref ? (
+              <Link href={workerHref} className="text-sm font-semibold leading-tight hover:underline">
+                {post.author.full_name ?? t("defaultUser")}
+              </Link>
+            ) : (
+              <p className="text-sm font-semibold leading-tight">
+                {post.author.full_name ?? t("defaultUser")}
+              </p>
+            )}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span>{timeAgo}</span>
-              <span>Â·</span>
+              <span>·</span>
               {post.visibility === "public" ? (
                 <Globe className="size-3" />
               ) : (
@@ -353,7 +371,7 @@ export function PostCard({ post }: Props) {
                   variant="ghost"
                   size="sm"
                   className="size-8 p-0"
-                  aria-label="Menu bài viết"
+                  aria-label={t("menuLabel")}
                 >
                   <MoreHorizontal className="size-4" />
                 </Button>
@@ -361,7 +379,7 @@ export function PostCard({ post }: Props) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => setEditOpen(true)}>
                   <Pencil className="size-3.5" />
-                  Chỉnh sửa
+                  {t("editPost")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={lockMutation.isPending}
@@ -373,12 +391,12 @@ export function PostCard({ post }: Props) {
                   {post.comments_locked ? (
                     <>
                       <LockOpen className="size-3.5" />
-                      Mở khóa bình luận
+                      {t("unlockComments")}
                     </>
                   ) : (
                     <>
                       <Lock className="size-3.5" />
-                      Khóa bình luận
+                      {t("lockComments")}
                     </>
                   )}
                 </DropdownMenuItem>
@@ -389,21 +407,21 @@ export function PostCard({ post }: Props) {
                   onSelect={() => setDeleteOpen(true)}
                 >
                   <Trash2 className="size-3.5" />
-                  Xóa bài
+                  {t("deletePost")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Xóa bài viết?</AlertDialogTitle>
+                <AlertDialogTitle>{t("deletePostTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Bài viết sẽ bị xóa khỏi bảng tin. Hành động này không thể hoàn tác.
+                  {t("deletePostDescription")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={deleteMutation.isPending}>
-                  Hủy
+                  {t("cancel")}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-red-600 text-white hover:bg-red-700"
@@ -413,12 +431,13 @@ export function PostCard({ post }: Props) {
                     handleDelete()
                   }}
                 >
-                  {deleteMutation.isPending ? "Đang xóa..." : "Xóa bài"}
+                  {deleteMutation.isPending ? t("deleting") : t("deletePost")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        ) : null}      </div>
+        ) : null}
+      </div>
 
       {/* Body */}
       <div className="mb-3">
@@ -445,15 +464,15 @@ export function PostCard({ post }: Props) {
 
       <div className="mt-3 flex flex-col gap-2 border-t pt-2">
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span aria-label="Số bình luận">
+          <span aria-label={t("commentsCountLabel")}>
             {post.comments_count > 0
-              ? `${post.comments_count} bình luận`
-              : "Chưa có bình luận"}
+              ? t("commentsCount", { count: post.comments_count })
+              : t("noComments")}
           </span>
           {post.comments_locked ? (
             <span className="inline-flex items-center gap-1 text-amber-600">
               <Lock className="size-3" />
-              Đã khóa bình luận
+              {t("commentsLocked")}
             </span>
           ) : null}
         </div>
@@ -468,7 +487,7 @@ export function PostCard({ post }: Props) {
             onClick={() => setCommentsOpen((open) => !open)}
           >
             <MessageCircle className="size-4" />
-            Bình luận
+            {t("commentButton")}
             {post.comments_count > 0 ? (
               <span className="ml-1 text-xs font-medium">
                 ({post.comments_count})
@@ -485,6 +504,7 @@ export function PostCard({ post }: Props) {
         isAuthenticated={isAuthenticated}
         commentsLocked={post.comments_locked}
         canBypassLock={canManagePost}
+        isPostOwner={canManagePost}
       />
 
       {editOpen && canManagePost ? (

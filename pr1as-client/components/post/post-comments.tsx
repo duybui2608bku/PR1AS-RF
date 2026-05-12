@@ -2,8 +2,10 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { useTranslations } from "next-intl"
 import {
   Check,
   Edit3,
@@ -41,9 +43,17 @@ import type { CommentPublic, CommentThreadItem } from "@/types"
 
 const COMMENT_MAX_LENGTH = 2000
 
+// Stored format for worker mentions: @[Display Name](userId)
+const BODY_TOKEN_RE = /(@\[[^\]]+\]\([^)]+\)|#[\p{L}\p{N}_]{1,50})/gu
+
 type ReplyTarget = {
   threadRootId: string
   anchorCommentId: string
+  author: {
+    id: string
+    name: string | null
+    hasWorkerProfile: boolean
+  }
 }
 
 function CommentAvatar({
@@ -76,19 +86,55 @@ function CommentAvatar({
   )
 }
 
+// Renders comment body parsing @[Name](userId) mentions and #hashtags as interactive chips.
+function CommentBodyRenderer({ body }: { body: string }) {
+  const parts = body.split(BODY_TOKEN_RE)
+  return (
+    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed">
+      {parts.map((part, i) => {
+        const mentionMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/)
+        if (mentionMatch) {
+          const [, name, userId] = mentionMatch
+          return (
+            <Link
+              key={i}
+              href={`/worker/${userId}`}
+              className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              @{name}
+            </Link>
+          )
+        }
+        if (part.startsWith("#")) {
+          return (
+            <span key={i} className="cursor-pointer font-medium text-primary hover:underline">
+              {part}
+            </span>
+          )
+        }
+        return part
+      })}
+    </p>
+  )
+}
+
 function CommentForm({
   postId,
   parentCommentId,
+  replyAuthor,
   compact,
   onCancel,
   onSuccess,
 }: {
   postId: string
   parentCommentId: string | null
+  replyAuthor?: { id: string; name: string | null; hasWorkerProfile: boolean }
   compact?: boolean
   onCancel?: () => void
   onSuccess?: () => void
 }) {
+  const t = useTranslations("PostComments")
+  const displayName = replyAuthor?.name?.trim() || t("defaultUser")
   const [body, setBody] = useState("")
   const createComment = useCreateComment(postId)
   const trimmed = body.trim()
@@ -97,9 +143,14 @@ function CommentForm({
   const handleSubmit = async () => {
     if (!canSubmit || createComment.isPending) return
 
+    // For worker replies, prepend @[Name](userId) so the chip is rendered on display
+    const finalBody = replyAuthor?.hasWorkerProfile
+      ? `@[${displayName}](${replyAuthor.id}) ${trimmed}`
+      : trimmed
+
     try {
       await createComment.mutateAsync({
-        body: trimmed,
+        body: finalBody,
         parent_comment_id: parentCommentId,
       })
       setBody("")
@@ -113,22 +164,56 @@ function CommentForm({
     if (event.nativeEvent.isComposing || event.key !== "Enter" || event.shiftKey) {
       return
     }
-
     event.preventDefault()
     handleSubmit()
   }
 
   return (
     <div className={cn("space-y-2", compact ? "rounded-lg bg-muted/40 p-2" : "")}>
-      <Textarea
-        value={body}
-        maxLength={COMMENT_MAX_LENGTH}
-        rows={compact ? 2 : 3}
-        placeholder={parentCommentId ? "Viết phản hồi..." : "Viết bình luận..."}
-        className={cn("resize-none", compact ? "min-h-14 text-sm" : "min-h-20")}
-        onChange={(event) => setBody(event.target.value)}
-        onKeyDown={handleKeyDown}
-      />
+      {replyAuthor ? (
+        // Chip + textarea in one unified input container
+        <div
+          className={cn(
+            "flex flex-wrap items-start gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm",
+            "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+            compact ? "min-h-14" : "min-h-20",
+          )}
+        >
+          {replyAuthor.hasWorkerProfile ? (
+            <Link
+              href={`/worker/${replyAuthor.id}`}
+              className="mt-0.5 inline-flex shrink-0 cursor-pointer items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              @{displayName}
+            </Link>
+          ) : (
+            <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+              @{displayName}
+            </span>
+          )}
+          <textarea
+            value={body}
+            maxLength={COMMENT_MAX_LENGTH}
+            placeholder={t("replyPlaceholder")}
+            className={cn(
+              "min-w-0 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground",
+              compact ? "min-h-8" : "min-h-14",
+            )}
+            onChange={(event) => setBody(event.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+      ) : (
+        <Textarea
+          value={body}
+          maxLength={COMMENT_MAX_LENGTH}
+          rows={compact ? 2 : 3}
+          placeholder={t("commentPlaceholder")}
+          className={cn("resize-none", compact ? "min-h-14 text-sm" : "min-h-20")}
+          onChange={(event) => setBody(event.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      )}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">
           {trimmed.length}/{COMMENT_MAX_LENGTH}
@@ -142,7 +227,7 @@ function CommentForm({
               disabled={createComment.isPending}
               onClick={onCancel}
             >
-              Hủy
+              {t("cancel")}
             </Button>
           ) : null}
           <Button
@@ -156,7 +241,7 @@ function CommentForm({
             ) : (
               <Send className="size-4" />
             )}
-            {parentCommentId ? "Trả lời" : "Gửi"}
+            {parentCommentId ? t("replyButton") : t("sendButton")}
           </Button>
         </div>
       </div>
@@ -171,6 +256,7 @@ function CommentItem({
   currentUserId,
   nested,
   canReply = true,
+  isPostOwner = false,
   onReply,
 }: {
   comment: CommentPublic
@@ -179,15 +265,19 @@ function CommentItem({
   currentUserId?: string
   nested?: boolean
   canReply?: boolean
-  onReply: (threadRootId: string, anchorCommentId: string) => void
+  isPostOwner?: boolean
+  onReply: (threadRootId: string, anchorCommentId: string, author: { id: string; name: string | null; hasWorkerProfile: boolean }) => void
 }) {
+  const t = useTranslations("PostComments")
   const [isEditing, setIsEditing] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [draft, setDraft] = useState(comment.body)
   const updateComment = useUpdateComment(postId)
   const deleteComment = useDeleteComment(postId)
   const isAuthor = currentUserId === comment.author.id
-  const displayName = comment.author.full_name?.trim() || "Người dùng"
+  const canDelete = isAuthor || isPostOwner
+  const displayName = comment.author.full_name?.trim() || t("defaultUser")
+  const workerHref = comment.author.has_worker_profile ? `/worker/${comment.author.id}` : null
   const trimmedDraft = draft.trim()
   const canSave =
     trimmedDraft.length > 0 &&
@@ -221,11 +311,23 @@ function CommentItem({
   return (
     <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
       <div className={cn("flex gap-2", nested ? "ml-8" : "")}>
-        <CommentAvatar avatar={comment.author.avatar} name={displayName} nested={nested} />
+        {workerHref ? (
+          <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+            <CommentAvatar avatar={comment.author.avatar} name={displayName} nested={nested} />
+          </Link>
+        ) : (
+          <CommentAvatar avatar={comment.author.avatar} name={displayName} nested={nested} />
+        )}
         <div className="min-w-0 flex-1">
           <div className="rounded-lg bg-muted/50 px-3 py-2">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-sm font-semibold">{displayName}</span>
+            {workerHref ? (
+              <Link href={workerHref} className="text-sm font-semibold hover:underline">
+                {displayName}
+              </Link>
+            ) : (
+              <span className="text-sm font-semibold">{displayName}</span>
+            )}
             <span className="text-xs text-muted-foreground">
               {format(new Date(comment.created_at), "HH:mm dd/MM/yyyy", { locale: vi })}
             </span>
@@ -252,7 +354,7 @@ function CommentItem({
                   }}
                 >
                   <X className="size-4" />
-                  Hủy
+                  {t("cancel")}
                 </Button>
                 <Button
                   type="button"
@@ -265,14 +367,12 @@ function CommentItem({
                   ) : (
                     <Check className="size-4" />
                   )}
-                  Lưu
+                  {t("save")}
                 </Button>
               </div>
             </div>
           ) : (
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed">
-              {comment.body}
-            </p>
+            <CommentBodyRenderer body={comment.body} />
           )}
         </div>
 
@@ -284,43 +384,47 @@ function CommentItem({
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={() => onReply(threadRootId, comment.id)}
+                onClick={() => onReply(threadRootId, comment.id, {
+                  id: comment.author.id,
+                  name: comment.author.full_name,
+                  hasWorkerProfile: comment.author.has_worker_profile,
+                })}
               >
                 <Reply className="size-3.5" />
-                Trả lời
+                {t("replyButton")}
               </Button>
             ) : null}
             {isAuthor ? (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground"
-                  onClick={() => {
-                    setDraft(comment.body)
-                    setIsEditing(true)
-                  }}
-                >
-                  <Edit3 className="size-3.5" />
-                  Sửa
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
-                  disabled={deleteComment.isPending}
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  {deleteComment.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="size-3.5" />
-                  )}
-                  Xóa
-                </Button>
-              </>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground"
+                onClick={() => {
+                  setDraft(comment.body)
+                  setIsEditing(true)
+                }}
+              >
+                <Edit3 className="size-3.5" />
+                {t("editButton")}
+              </Button>
+            ) : null}
+            {canDelete ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                disabled={deleteComment.isPending}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {deleteComment.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="size-3.5" />
+                )}
+                {t("deleteButton")}
+              </Button>
             ) : null}
             </div>
           ) : null}
@@ -328,13 +432,13 @@ function CommentItem({
       </div>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa bình luận?</AlertDialogTitle>
+          <AlertDialogTitle>{t("deleteCommentTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Bình luận này sẽ bị xóa khỏi bài viết. Hành động này không thể hoàn tác.
+            {t("deleteCommentDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteComment.isPending}>Hủy</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteComment.isPending}>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-red-600 text-white hover:bg-red-700"
             disabled={deleteComment.isPending}
@@ -343,7 +447,7 @@ function CommentItem({
               handleDelete()
             }}
           >
-            {deleteComment.isPending ? "Đang xóa..." : "Xóa bình luận"}
+            {deleteComment.isPending ? t("deleting") : t("deleteComment")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -374,6 +478,7 @@ export function PostComments({
   isAuthenticated,
   commentsLocked = false,
   canBypassLock = false,
+  isPostOwner = false,
 }: {
   postId: string
   enabled: boolean
@@ -381,7 +486,9 @@ export function PostComments({
   isAuthenticated: boolean
   commentsLocked?: boolean
   canBypassLock?: boolean
+  isPostOwner?: boolean
 }) {
+  const t = useTranslations("PostComments")
   const canPostComment = isAuthenticated && (!commentsLocked || canBypassLock)
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -424,26 +531,24 @@ export function PostComments({
       {commentsLocked ? (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
           <Lock className="size-4" />
-          {canBypassLock
-            ? "Bạn đã khóa bình luận của bài viết. Người khác sẽ không thể bình luận."
-            : "Tác giả đã khóa bình luận của bài viết này."}
+          {canBypassLock ? t("lockedByOwner") : t("lockedByAuthor")}
         </div>
       ) : null}
       {!isAuthenticated ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
           <MessageCircle className="size-4" />
-          Vui lòng đăng nhập để xem và bình luận.
+          {t("loginRequired")}
         </div>
       ) : isLoading ? (
         <CommentsLoading />
       ) : isError ? (
-        <p className="text-sm text-red-600">Không tải được bình luận.</p>
+        <p className="text-sm text-red-600">{t("loadError")}</p>
       ) : (
         <div className="space-y-4">
           {threads.length === 0 ? (
             <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
               <MessageCircle className="size-4" />
-              Chưa có bình luận nào.
+              {t("empty")}
             </div>
           ) : (
             threads.map((thread) => (
@@ -454,8 +559,9 @@ export function PostComments({
                   threadRootId={thread.id}
                   currentUserId={currentUserId}
                   canReply={canPostComment}
-                  onReply={(threadRootId, anchorCommentId) =>
-                    setReplyTarget({ threadRootId, anchorCommentId })
+                  isPostOwner={isPostOwner}
+                  onReply={(threadRootId, anchorCommentId, author) =>
+                    setReplyTarget({ threadRootId, anchorCommentId, author })
                   }
                 />
                 {canPostComment &&
@@ -465,6 +571,7 @@ export function PostComments({
                     <CommentForm
                       postId={postId}
                       parentCommentId={replyTarget.threadRootId}
+                      replyAuthor={replyTarget.author}
                       compact
                       onCancel={() => setReplyTarget(null)}
                       onSuccess={() => setReplyTarget(null)}
@@ -480,8 +587,9 @@ export function PostComments({
                       currentUserId={currentUserId}
                       nested
                       canReply={canPostComment}
-                      onReply={(threadRootId, anchorCommentId) =>
-                        setReplyTarget({ threadRootId, anchorCommentId })
+                      isPostOwner={isPostOwner}
+                      onReply={(threadRootId, anchorCommentId, author) =>
+                        setReplyTarget({ threadRootId, anchorCommentId, author })
                       }
                     />
                     {canPostComment &&
@@ -491,6 +599,7 @@ export function PostComments({
                         <CommentForm
                           postId={postId}
                           parentCommentId={replyTarget.threadRootId}
+                          replyAuthor={replyTarget.author}
                           compact
                           onCancel={() => setReplyTarget(null)}
                           onSuccess={() => setReplyTarget(null)}

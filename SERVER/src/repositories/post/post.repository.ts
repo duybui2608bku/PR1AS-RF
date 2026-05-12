@@ -52,13 +52,31 @@ export class PostRepository {
     query: PostFeedQuery;
     decodedCursor: CursorValue | null;
     hashtagPostIds?: Types.ObjectId[] | null;
+    viewerId?: string;
   }): Promise<IPostDocument[]> {
-    const { query, decodedCursor, hashtagPostIds } = params;
+    const { query, decodedCursor, hashtagPostIds, viewerId } = params;
 
     const filter: Record<string, unknown> = { deleted_at: null };
 
     if (query.author_id && Types.ObjectId.isValid(query.author_id)) {
       filter.author_id = new Types.ObjectId(query.author_id);
+      // When viewing another user's profile, hide their private posts
+      if (!viewerId || viewerId !== query.author_id) {
+        filter.visibility = PostVisibility.PUBLIC;
+      }
+    } else {
+      // General feed: public posts from everyone + viewer's own private posts
+      if (viewerId && Types.ObjectId.isValid(viewerId)) {
+        filter.$or = [
+          { visibility: PostVisibility.PUBLIC },
+          {
+            visibility: PostVisibility.PRIVATE,
+            author_id: new Types.ObjectId(viewerId),
+          },
+        ];
+      } else {
+        filter.visibility = PostVisibility.PUBLIC;
+      }
     }
 
     if (hashtagPostIds) {

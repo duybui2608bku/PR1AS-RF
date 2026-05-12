@@ -346,6 +346,7 @@ export class PostService {
       query,
       decodedCursor,
       hashtagPostIds,
+      viewerId,
     });
 
     if (items.length === 0) {

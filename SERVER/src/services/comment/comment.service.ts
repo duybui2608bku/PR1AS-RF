@@ -264,12 +264,20 @@ export class CommentService {
         ErrorCode.COMMENT_NOT_FOUND
       );
     }
-    if (commentAuthorIdToString(existing.author_id) !== userId) {
-      throw new AppError(
-        COMMENT_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.COMMENT_UNAUTHORIZED_ACCESS
-      );
+
+    const isCommentAuthor = commentAuthorIdToString(existing.author_id) === userId;
+    if (!isCommentAuthor) {
+      const post = await postRepository.findActiveById(existing.post_id.toString());
+      const postAuthorId = post
+        ? commentAuthorIdToString(post.author_id as unknown)
+        : "";
+      if (postAuthorId !== userId) {
+        throw new AppError(
+          COMMENT_MESSAGES.UNAUTHORIZED_ACCESS,
+          HTTP_STATUS.FORBIDDEN,
+          ErrorCode.COMMENT_UNAUTHORIZED_ACCESS
+        );
+      }
     }
 
     const deleted = await commentRepository.softDelete(commentId);
