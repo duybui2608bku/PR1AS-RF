@@ -164,6 +164,15 @@ export function useMarkGroupMessagesRead() {
   })
 }
 
+export function useAdminContact(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.chat.adminContact,
+    queryFn: () => chatService.getAdminContact(),
+    enabled,
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function useCreateComplaintConversation() {
   const queryClient = useQueryClient()
 

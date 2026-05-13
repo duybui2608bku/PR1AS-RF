@@ -31,6 +31,12 @@ const pricingPackageSchema = new Schema<IPricingPackageDocument>(
       trim: true,
       maxlength: 100,
     },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
     is_active: {
       type: Boolean,
       default: true,

@@ -169,6 +169,13 @@ export type SendDirectMessageResult = {
   conversation: ChatConversation
 }
 
+export type AdminContact = {
+  _id: string
+  full_name: string | null
+  avatar: string | null
+  email: string
+}
+
 export type SendGroupMessageResult = {
   message: GroupChatMessage
   conversation: GroupChatConversation
@@ -304,6 +311,13 @@ export const chatService = {
       payload
     )
     return response.data.data ?? { updated_count: 0 }
+  },
+
+  getAdminContact: async () => {
+    const response = await api.get<ApiResponse<{ admin: AdminContact | null }>>(
+      "/chat/admin-contact"
+    )
+    return response.data.data?.admin ?? null
   },
 
   createComplaintConversation: async (booking_id: string) => {

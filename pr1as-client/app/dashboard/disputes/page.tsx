@@ -1,15 +1,18 @@
-import { AdminDashboardShell } from "@/components/layout/admin-dashboard-shell"
+import { ChatPage } from "@/components/chat/chat-page"
 import { privateRouteMetadata } from "@/lib/seo"
 
 export const metadata = {
   ...privateRouteMetadata,
-  title: "Quản trị",
+  title: "Tranh chấp",
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return <AdminDashboardShell>{children}</AdminDashboardShell>
+export default function DashboardDisputesPage() {
+  return (
+    <ChatPage
+      initialMode="group"
+      variant="embedded"
+      title="Tranh chấp"
+      showHomeButton={false}
+    />
+  )
 }

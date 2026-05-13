@@ -22,9 +22,11 @@ export type PricingPlanFeatures = {
 }
 
 export type PricingPackage = {
-  _id: string
+  id: string
+  _id?: string
   package_code: PricingPlanCode
   display_name: string
+  price: number
   is_active: boolean
   features: PricingPlanFeatures
   created_at: string
@@ -44,6 +46,18 @@ export type UpgradePricingPayload = {
   duration_months?: number
   idempotency_key?: string
 }
+
+export type PricingPackagePayload = {
+  package_code: PricingPlanCode
+  display_name: string
+  price: number
+  is_active?: boolean
+  features: PricingPlanFeatures
+}
+
+export type UpdatePricingPackagePayload = Partial<
+  Omit<PricingPackagePayload, "package_code">
+>
 
 const getPublicPackages = cache(async () => {
   const response = await api.get<ApiResponse<PricingPackage[]>>("/pricing/packages")
@@ -66,8 +80,45 @@ const upgrade = async (payload: UpgradePricingPayload) => {
   return response.data.data
 }
 
+const getAdminPackages = async () => {
+  const response = await api.get<ApiResponse<PricingPackage[]>>(
+    "/pricing/packages/admin"
+  )
+  return response.data.data ?? []
+}
+
+const createPackage = async (payload: PricingPackagePayload) => {
+  const response = await api.post<ApiResponse<PricingPackage>>(
+    "/pricing/packages/admin",
+    payload
+  )
+  return response.data.data
+}
+
+const updatePackage = async (
+  id: string,
+  payload: UpdatePricingPackagePayload
+) => {
+  const response = await api.patch<ApiResponse<PricingPackage>>(
+    `/pricing/packages/admin/${id}`,
+    payload
+  )
+  return response.data.data
+}
+
+const deletePackage = async (id: string) => {
+  const response = await api.delete<ApiResponse<null>>(
+    `/pricing/packages/admin/${id}`
+  )
+  return response.data.data
+}
+
 export const pricingService = {
   getPublicPackages,
   getMyPricing,
   upgrade,
+  getAdminPackages,
+  createPackage,
+  updatePackage,
+  deletePackage,
 }

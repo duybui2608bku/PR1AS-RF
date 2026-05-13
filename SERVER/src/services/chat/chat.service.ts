@@ -14,6 +14,7 @@ import type {
 } from "../../types/chat/chat.types";
 
 import { userRepository } from "../../repositories/auth/user.repository";
+import { UserRole } from "../../types/auth/user.types";
 
 import { getSocketIO } from "../../config/socket";
 
@@ -53,18 +54,27 @@ export class ChatService {
       );
     }
 
-    const hasConfirmedBooking =
-      await bookingRepository.hasConfirmedBookingBetweenUsers(
-        sender_id,
-        input.receiver_id
-      );
+    // Admin support chat bypasses the booking requirement so any user can
+    // contact admin (and admin can reach out to any user) at any time.
+    const sender = await userRepository.findById(sender_id);
+    const isAdminConversation =
+      receiver.roles?.includes(UserRole.ADMIN) ||
+      sender?.roles?.includes(UserRole.ADMIN);
 
-    if (!hasConfirmedBooking) {
-      throw new AppError(
-        CHAT_MESSAGES.BOOKING_CONFIRMATION_REQUIRED,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.FORBIDDEN
-      );
+    if (!isAdminConversation) {
+      const hasConfirmedBooking =
+        await bookingRepository.hasConfirmedBookingBetweenUsers(
+          sender_id,
+          input.receiver_id
+        );
+
+      if (!hasConfirmedBooking) {
+        throw new AppError(
+          CHAT_MESSAGES.BOOKING_CONFIRMATION_REQUIRED,
+          HTTP_STATUS.FORBIDDEN,
+          ErrorCode.FORBIDDEN
+        );
+      }
     }
 
     if (input.reply_to_id) {
@@ -284,6 +294,18 @@ export class ChatService {
   ): Promise<{ unread_count: number }> {
     const count = await chatRepository.getUnreadCount(user_id, conversation_id);
     return { unread_count: count };
+  }
+
+  async getAdminContact(): Promise<{
+    _id: string;
+    full_name: string | null;
+    avatar: string | null;
+    email: string;
+  } | null> {
+    const admin = await userRepository.findFirstAdmin();
+    if (!admin) return null;
+    const formatted = formatOtherUser(admin);
+    return formatted ?? null;
   }
 
   async deleteMessage(

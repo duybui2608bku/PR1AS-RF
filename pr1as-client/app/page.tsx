@@ -1,4 +1,4 @@
-import { redirect, permanentRedirect } from "next/navigation"
+import { redirect } from "next/navigation"
 
 import type { HomeSearchParams } from "@/lib/home/home-search-params"
 
@@ -23,11 +23,5 @@ export default async function RootPage({ searchParams }: RootPageProps) {
   const raw = await searchParams
   const queryString = buildSearchString(raw)
   const target = queryString ? `/services?${queryString}` : "/services"
-  // permanent redirect (308) so search engines / browsers cache the canonical
-  // route. If a query string is present we use a temporary redirect (307)
-  // because the destination URL depends on user input.
-  if (queryString) {
-    redirect(target)
-  }
-  permanentRedirect(target)
+  redirect(target)
 }

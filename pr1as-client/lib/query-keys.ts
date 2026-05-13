@@ -24,6 +24,7 @@ export const queryKeys = {
       conversationGroupId: string,
       params?: Record<string, unknown>
     ) => ["chat", "group", "messages", conversationGroupId, params] as const,
+    adminContact: ["chat", "admin-contact"] as const,
   },
   users: {
     all: ["users"] as const,

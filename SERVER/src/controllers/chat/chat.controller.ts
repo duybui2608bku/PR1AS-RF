@@ -164,6 +164,11 @@ export class ChatController {
     R.success(res, result, undefined, req);
   }
 
+  async getAdminContact(req: AuthRequest, res: Response): Promise<void> {
+    const admin = await chatService.getAdminContact();
+    R.success(res, { admin }, undefined, req);
+  }
+
   async createComplaintConversation(
     req: AuthRequest,
     res: Response

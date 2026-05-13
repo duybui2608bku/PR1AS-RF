@@ -10,7 +10,6 @@ import { getRoleDefaultRoute } from "@/lib/navigation/role-routes"
 
 export function HomeRoleGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const token = useAuthStore((state) => state.token)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const meQuery = useMe()
@@ -23,7 +22,7 @@ export function HomeRoleGate({ children }: { children: React.ReactNode }) {
     () => true
   )
 
-  const hasSession = hydrated && Boolean(token && isAuthenticated)
+  const hasSession = hydrated && isAuthenticated
   const resolvedUser = meQuery.data?.data?.user ?? user
   const isWorker = hasSession && isWorkerRoleActive(resolvedUser)
   const shouldHoldHome =

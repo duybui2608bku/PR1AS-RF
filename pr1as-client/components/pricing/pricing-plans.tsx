@@ -29,12 +29,6 @@ const PLAN_RANK: Record<PricingPlanCode, number> = {
   diamond: 2,
 }
 
-const MONTHLY_PRICE: Record<PricingPlanCode, number> = {
-  standard: 0,
-  gold: 199_000,
-  diamond: 399_000,
-}
-
 const PLAN_META: Record<
   PricingPlanCode,
   {
@@ -72,6 +66,9 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     amount
   )
+
+const getPackagePrice = (pkg: PricingPackage) =>
+  Number.isFinite(pkg.price) ? pkg.price : 0
 
 const formatLimit = (value: number | null, unit = "") =>
   value === null ? "Không giới hạn" : `${value}${unit ? " " + unit : ""}`
@@ -161,10 +158,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const [pendingPkg, setPendingPkg] = useState<PricingPackage | null>(null)
 
   const sortedPackages = useMemo(
-    () =>
-      [...packages].sort(
-        (a, b) => MONTHLY_PRICE[a.package_code] - MONTHLY_PRICE[b.package_code]
-      ),
+    () => [...packages].sort((a, b) => getPackagePrice(a) - getPackagePrice(b)),
     [packages]
   )
 
@@ -203,7 +197,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
       <div className="mx-auto mt-10 grid w-full gap-6 md:w-10/12 md:grid-cols-3">
         {sortedPackages.map((pkg) => {
           const meta = PLAN_META[pkg.package_code]
-          const price = MONTHLY_PRICE[pkg.package_code]
+          const price = getPackagePrice(pkg)
           const state = getButtonState(
             pkg.package_code,
             isAuthenticated,
@@ -213,7 +207,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
 
           return (
             <div
-              key={pkg._id}
+              key={pkg.id}
               className={cn(
                 "relative flex flex-col rounded-2xl border-2 bg-card p-6 shadow-sm transition-shadow hover:shadow-md",
                 meta.border,
@@ -304,7 +298,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
                 meta={meta}
                 isLoading={
                   upgradeMutation.isPending &&
-                  pendingPkg?._id === pkg._id
+                  pendingPkg?.id === pkg.id
                 }
                 onClick={() => handleClick(pkg, state)}
               />
@@ -347,7 +341,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Số tiền</span>
                   <span className="text-base font-bold text-primary">
-                    {formatCurrency(MONTHLY_PRICE[pendingPkg.package_code])}
+                    {formatCurrency(getPackagePrice(pendingPkg))}
                   </span>
                 </div>
               </div>
