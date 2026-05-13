@@ -183,15 +183,15 @@ export class NotificationEventService {
     const workerId = toId(booking.worker_id);
     const body =
       input.reason === "short_notice_confirmation_timeout"
-        ? "Booking gap da het han vi ban khong xac nhan trong thoi gian cho phep."
-        : "Booking da het han vi ban khong xac nhan truoc gio bat dau 6 tieng.";
+        ? "Booking đã hết hạn vì bạn không xác nhận trong thời gian cho phép."
+        : "Booking đã hết hạn vì bạn không xác nhận trước giờ bắt đầu 6 giờ.";
 
     await notificationService.notify({
       recipient_ids: [workerId],
       type: NotificationType.BOOKING_STATUS_UPDATED,
       category: NotificationCategory.BOOKING,
-      title: "Canh bao: booking da het han",
-      body: `${body} Vui long phan hoi booking dung han de tranh anh huong uy tin.`,
+      title: "Cảnh báo: booking đã hết hạn",
+      body: `${body} Vui lòng phản hồi booking đúng hạn để tránh ảnh hưởng uy tín.`,
       data: {
         booking_id: bookingId,
         status: BookingStatus.EXPIRED,

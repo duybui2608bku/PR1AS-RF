@@ -8,11 +8,16 @@ import {
   pricingService,
   type PricingMeResponse,
   type UpgradePricingPayload,
+  type PricingPackage,
+  type PricingPackagePayload,
+  type UpdatePricingPackagePayload,
 } from "@/services/pricing.service"
 
 export const PRICING_KEYS = {
   all: ["pricing"] as const,
   me: () => [...PRICING_KEYS.all, "me"] as const,
+  publicPackages: () => [...PRICING_KEYS.all, "packages"] as const,
+  adminPackages: () => [...PRICING_KEYS.all, "packages", "admin"] as const,
 }
 
 export function useMyPricing() {
@@ -28,27 +33,79 @@ export function useMyPricing() {
 
 export function useUpgradePricing() {
   const queryClient = useQueryClient()
-  const user = useAuthStore((s) => s.user)
-  const token = useAuthStore((s) => s.token)
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const setUser = useAuthStore((s) => s.setUser)
 
   return useMutation({
     mutationFn: (payload: UpgradePricingPayload) => pricingService.upgrade(payload),
     onSuccess: (data) => {
-      if (data && user && token) {
-        setAuth({
-          user: {
-            ...user,
+      if (data) {
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          setUser({
+            ...currentUser,
             pricing_plan_code: data.plan_code,
             pricing_started_at: data.started_at,
             pricing_expires_at: data.expires_at,
-          },
-          token,
-        })
+          })
+        }
+        queryClient.setQueryData(PRICING_KEYS.me(), data)
       }
       queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       queryClient.invalidateQueries({ queryKey: ["wallet"] })
+    },
+  })
+}
+
+export function useAdminPricingPackages() {
+  return useQuery<PricingPackage[]>({
+    queryKey: PRICING_KEYS.adminPackages(),
+    queryFn: pricingService.getAdminPackages,
+    staleTime: 30_000,
+  })
+}
+
+export function useCreatePricingPackage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: PricingPackagePayload) =>
+      pricingService.createPackage(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.adminPackages() })
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.publicPackages() })
+    },
+  })
+}
+
+export function useUpdatePricingPackage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: UpdatePricingPackagePayload
+    }) => pricingService.updatePackage(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.adminPackages() })
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.publicPackages() })
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
+    },
+  })
+}
+
+export function useDeletePricingPackage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => pricingService.deletePackage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.adminPackages() })
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.publicPackages() })
+      queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
     },
   })
 }

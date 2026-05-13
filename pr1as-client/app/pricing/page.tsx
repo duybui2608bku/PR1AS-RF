@@ -14,12 +14,6 @@ export const metadata = createPageMetadata({
   path: "/pricing",
 })
 
-const MONTHLY_PRICE: Record<PricingPackage["package_code"], number> = {
-  standard: 0,
-  gold: 199_000,
-  diamond: 399_000,
-}
-
 const PLAN_META: Record<
   PricingPackage["package_code"],
   {
@@ -45,6 +39,9 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     amount
   )
+
+const getPackagePrice = (pkg: PricingPackage) =>
+  Number.isFinite(pkg.price) ? pkg.price : 0
 
 const formatLimit = (value: number | null, unit = "") =>
   value === null ? "Không giới hạn" : `${value}${unit ? " " + unit : ""}`
@@ -95,9 +92,7 @@ export default async function PricingPage() {
 
   try {
     const raw = await pricingService.getPublicPackages()
-    packages = [...raw].sort(
-      (a, b) => MONTHLY_PRICE[a.package_code] - MONTHLY_PRICE[b.package_code]
-    )
+    packages = [...raw].sort((a, b) => getPackagePrice(a) - getPackagePrice(b))
   } catch {
     fetchError = true
   }
@@ -145,9 +140,9 @@ export default async function PricingPage() {
                     get: (pkg: PricingPackage) => ({
                       enabled: true,
                       text:
-                        MONTHLY_PRICE[pkg.package_code] === 0
+                        getPackagePrice(pkg) === 0
                           ? "Miễn phí"
-                          : formatCurrency(MONTHLY_PRICE[pkg.package_code]),
+                          : formatCurrency(getPackagePrice(pkg)),
                     }),
                   },
                   ...FEATURE_ROWS,
@@ -163,7 +158,7 @@ export default async function PricingPage() {
                         const { enabled, text } = row.get(pkg)
                         return (
                           <li
-                            key={pkg._id}
+                            key={pkg.id}
                             className="flex items-center justify-between gap-3 py-2.5 text-sm"
                           >
                             <span
@@ -205,7 +200,7 @@ export default async function PricingPage() {
                         const meta = PLAN_META[pkg.package_code]
                         return (
                           <th
-                            key={pkg._id}
+                            key={pkg.id}
                             className={cn(
                               "px-6 py-4 text-center font-bold",
                               meta.color
@@ -226,12 +221,12 @@ export default async function PricingPage() {
                       <td className="px-6 py-4 font-medium">Giá / tháng</td>
                       {packages.map((pkg) => (
                         <td
-                          key={pkg._id}
+                          key={pkg.id}
                           className="px-6 py-4 text-center font-semibold"
                         >
-                          {MONTHLY_PRICE[pkg.package_code] === 0
+                          {getPackagePrice(pkg) === 0
                             ? "Miễn phí"
-                            : formatCurrency(MONTHLY_PRICE[pkg.package_code])}
+                            : formatCurrency(getPackagePrice(pkg))}
                         </td>
                       ))}
                     </tr>
@@ -248,7 +243,7 @@ export default async function PricingPage() {
                         {packages.map((pkg) => {
                           const { enabled, text } = row.get(pkg)
                           return (
-                            <td key={pkg._id} className="px-6 py-4 text-center">
+                            <td key={pkg.id} className="px-6 py-4 text-center">
                               {enabled ? (
                                 <span className="flex flex-col items-center gap-0.5">
                                   <Check className="size-4 text-green-500" />

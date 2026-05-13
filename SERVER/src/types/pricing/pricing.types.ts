@@ -4,6 +4,7 @@ import { PricingPlanCode, PricingPlanFeatures } from "../../constants/pricing";
 export interface IPricingPackage {
   package_code: PricingPlanCode;
   display_name: string;
+  price: number;
   is_active: boolean;
   features: PricingPlanFeatures;
   created_at: Date;

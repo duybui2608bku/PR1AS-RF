@@ -22,25 +22,25 @@ export default function VerifyEmailPage() {
   const verifyEmailMutation = useVerifyEmail()
   const resendVerificationMutation = useResendVerification()
 
-  // Capture token and email from the URL immediately into refs, then clean
+  // Capture token and email from the URL immediately, then clean
   // the URL so these values are not stored in browser history or leaked via
   // the Referer header when the page loads external resources.
-  const tokenRef = useRef(searchParams?.get("token") ?? "")
-  const initialEmailRef = useRef(searchParams?.get("email") ?? "")
+  const [tokenFromQuery] = useState(() => searchParams?.get("token") ?? "")
+  const [initialEmail] = useState(() => searchParams?.get("email") ?? "")
 
-  const [email, setEmail] = useState(normalizeEmail(initialEmailRef.current))
-  const [status, setStatus] = useState<VerifyStatus>(tokenRef.current ? "loading" : "no-token")
+  const [email, setEmail] = useState(() => normalizeEmail(initialEmail))
+  const [status, setStatus] = useState<VerifyStatus>(() => tokenFromQuery ? "loading" : "no-token")
   const [message, setMessage] = useState<string | null>(null)
   const hasVerifiedRef = useRef(false)
 
   useEffect(() => {
-    if (tokenRef.current || initialEmailRef.current) {
+    if (tokenFromQuery || initialEmail) {
       router.replace("/verify-email", { scroll: false })
     }
-  }, [router])
+  }, [initialEmail, router, tokenFromQuery])
 
   useEffect(() => {
-    const token = tokenRef.current
+    const token = tokenFromQuery
     if (!token || hasVerifiedRef.current) {
       return
     }
@@ -54,7 +54,7 @@ export default function VerifyEmailPage() {
         setStatus("error")
       }
     })()
-  }, [verifyEmailMutation])
+  }, [tokenFromQuery, verifyEmailMutation])
 
   const handleResend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

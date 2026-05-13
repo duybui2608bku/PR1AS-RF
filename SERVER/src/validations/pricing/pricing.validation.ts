@@ -21,6 +21,7 @@ export const pricingPlanFeaturesSchema = z.object({
 export const createPricingPackageSchema = z.object({
   package_code: z.nativeEnum(PricingPlanCode),
   display_name: z.string().trim().min(1).max(100),
+  price: z.number().min(0),
   is_active: z.boolean().optional().default(true),
   features: pricingPlanFeaturesSchema,
 });
@@ -28,12 +29,14 @@ export const createPricingPackageSchema = z.object({
 export const updatePricingPackageSchema = z
   .object({
     display_name: z.string().trim().min(1).max(100).optional(),
+    price: z.number().min(0).optional(),
     is_active: z.boolean().optional(),
     features: pricingPlanFeaturesSchema.optional(),
   })
   .refine(
     (value) =>
       value.display_name !== undefined ||
+      value.price !== undefined ||
       value.is_active !== undefined ||
       value.features !== undefined,
     {

@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
@@ -18,22 +18,23 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { isAdminUser, isWorkerRoleActive } from "@/lib/auth/roles"
-import { useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
+import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
+import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const token = useAuthStore((state) => state.token)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
+  const forgotPasswordMutation = useForgotPassword()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
 
+  const emailInputRef = useRef<HTMLInputElement>(null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -41,17 +42,21 @@ export default function LoginPage() {
     string | null
   >(null)
 
-  const isSessionActive = Boolean(token && isAuthenticated)
+  const isSessionActive = isAuthenticated
   const meSucceeded = meQuery.isSuccess && meQuery.data?.success === true
   const authenticatedUser = meQuery.data?.data?.user ?? user
+  const isWorker = authenticatedUser && isWorkerRoleActive(authenticatedUser)
+  const activeRole = getActiveRole(authenticatedUser)
+  const isAdminActive = activeRole === "admin"
   const fromPath = searchParams.get("from")
   const safeFrom =
     fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
-  const isWorker = authenticatedUser && isWorkerRoleActive(authenticatedUser)
+  const allowedSafeFrom =
+    safeFrom?.startsWith("/dashboard") && !isAdminActive ? null : safeFrom
   const defaultRedirectTarget = isWorker ? "/posts" : "/"
-  const safeRedirectTarget = isWorker && safeFrom === "/" ? null : safeFrom
+  const safeRedirectTarget = isWorker && allowedSafeFrom === "/" ? null : allowedSafeFrom
   const redirectTarget =
-    authenticatedUser && isAdminUser(authenticatedUser)
+    authenticatedUser && isAdminActive
       ? "/dashboard"
       : (safeRedirectTarget ?? defaultRedirectTarget)
 
@@ -119,6 +124,39 @@ export default function LoginPage() {
     }
   }
 
+  const handleForgotPassword = async () => {
+    if (!emailInputRef.current?.checkValidity()) {
+      emailInputRef.current?.reportValidity()
+      emailInputRef.current?.focus()
+      return
+    }
+
+    const normalizedEmail = normalizeEmail(email)
+
+    try {
+      const response = await forgotPasswordMutation.mutateAsync({
+        email: normalizedEmail,
+      })
+
+      if (!response.success) {
+        toast.error(response.message ?? "Gửi email đặt lại mật khẩu thất bại.")
+        return
+      }
+
+      toast.success(
+        response.message ??
+          "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi."
+      )
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại."
+        )
+      )
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="items-center text-center">
@@ -131,6 +169,7 @@ export default function LoginPage() {
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
+                ref={emailInputRef}
                 id="email"
                 type="email"
                 value={email}
@@ -171,6 +210,21 @@ export default function LoginPage() {
                   </Button>
                 </InputGroupAddon>
               </InputGroup>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto px-0 py-0"
+                  onClick={handleForgotPassword}
+                  disabled={forgotPasswordMutation.isPending}
+                >
+                  {forgotPasswordMutation.isPending ? (
+                    <Loader2 className="animate-spin" />
+                  ) : null}
+                  Quên mật khẩu?
+                </Button>
+              </div>
             </Field>
           </FieldGroup>
           <Button

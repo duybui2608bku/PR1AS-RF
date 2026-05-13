@@ -229,7 +229,7 @@ export class UserRepository {
 
   async findFirstAdmin(): Promise<IUserDocument | null> {
     return User.findOne({ roles: UserRole.ADMIN, status: UserStatus.ACTIVE })
-      .select("_id")
+      .select("_id full_name email avatar roles")
       .lean() as Promise<IUserDocument | null>;
   }
 

@@ -87,6 +87,13 @@ router.get(
   )
 );
 
+router.get(
+  "/admin-contact",
+  asyncHandler<AuthRequest>(
+    chatController.getAdminContact.bind(chatController)
+  )
+);
+
 router.post(
   "/group/complaint",
   asyncHandler<AuthRequest>(

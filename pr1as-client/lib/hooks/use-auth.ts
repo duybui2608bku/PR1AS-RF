@@ -49,6 +49,10 @@ export interface ResetPasswordRequest {
   password: string
 }
 
+export interface ForgotPasswordRequest {
+  email: string
+}
+
 export interface VerifyEmailRequest {
   token: string
 }
@@ -165,6 +169,17 @@ export function useResendVerification() {
   return useMutation({
     mutationFn: async (payload: ResendVerificationRequest) => {
       const response = await api.post<ApiResponse<{ message: string }>>("/auth/resend-verification", {
+        email: normalizeEmail(payload.email),
+      })
+      return response.data
+    },
+  })
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: async (payload: ForgotPasswordRequest) => {
+      const response = await api.post<ApiResponse<{ message: string }>>("/auth/forgot-password", {
         email: normalizeEmail(payload.email),
       })
       return response.data

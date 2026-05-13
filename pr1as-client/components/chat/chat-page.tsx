@@ -3,8 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
+  BadgeCheck,
   Check,
   CheckCheck,
+  Headset,
   Home,
   ImagePlus,
   Inbox,
@@ -28,6 +30,7 @@ import { Input } from "@/components/ui/input"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
+  useAdminContact,
   useDirectConversation,
   useDirectConversations,
   useDirectMessages,
@@ -67,6 +70,9 @@ type ChatPageProps = {
   initialDirectConversationId?: string | null
   initialGroupConversationId?: string | null
   initialReceiverId?: string | null
+  showHomeButton?: boolean
+  title?: string
+  variant?: "standalone" | "embedded"
 }
 
 type NewMessagePayload = Parameters<ServerToClientEvents["new_message"]>[0]
@@ -224,6 +230,31 @@ const formatDateTime = (value?: string | null) => {
   }).format(new Date(value))
 }
 
+function AdminVerifiedBadge({
+  className,
+  withLabel = false,
+}: {
+  className?: string
+  withLabel?: boolean
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 text-sky-500",
+        className
+      )}
+      title="Tài khoản admin đã xác minh"
+    >
+      <BadgeCheck className="size-4 fill-sky-500 text-white" />
+      {withLabel ? (
+        <span className="text-[10px] font-semibold tracking-wide text-sky-600 uppercase">
+          Admin
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 const appendDirectMessage = (
   current: DirectMessageListResult | undefined,
   message: ChatMessage
@@ -324,6 +355,9 @@ export function ChatPage({
   initialDirectConversationId = null,
   initialGroupConversationId = null,
   initialReceiverId = null,
+  showHomeButton = true,
+  title = "Tin nhắn",
+  variant = "standalone",
 }: ChatPageProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -365,9 +399,14 @@ export function ChatPage({
     Record<string, ReturnType<typeof setTimeout>>
   >({})
 
+  const isAdminUser = Boolean(user?.roles?.includes("admin"))
+
   const { socket } = useChatSocket()
   const directConversationsQuery = useDirectConversations(CONVERSATION_PARAMS)
   const groupConversationsQuery = useGroupConversations(CONVERSATION_PARAMS)
+  const adminContactQuery = useAdminContact(!isAdminUser)
+  const adminContact = adminContactQuery.data ?? null
+  const adminUserId = adminContact?._id ?? null
   const directConversations = React.useMemo(
     () => directConversationsQuery.data?.conversations ?? [],
     [directConversationsQuery.data?.conversations]
@@ -512,6 +551,12 @@ export function ChatPage({
         ? getGroupMemberNames(selectedGroup, user?.id)
         : "Chưa chọn nhóm"
   const hasActiveThread = Boolean(activeConversationId || isDirectComposerOpen)
+  const isActiveDirectAdmin = Boolean(
+    mode === "direct" &&
+      adminUserId &&
+      (selectedDirect?.other_user?._id === adminUserId ||
+        directReceiverId === adminUserId)
+  )
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -955,6 +1000,34 @@ export function ChatPage({
     }
   }
 
+  const handleContactAdmin = React.useCallback(() => {
+    if (!adminContact) {
+      toast.error("Không tìm thấy admin để liên hệ.")
+      return
+    }
+
+    if (adminContact._id === user?.id) return
+
+    resetComposer()
+    setMode("direct")
+    setSearch("")
+
+    const existing = directConversations.find((conversation) =>
+      isDirectConversationWithUser(conversation, user?.id, adminContact._id)
+    )
+
+    if (existing) {
+      setSelectedDirectId(existing._id)
+      setMobileThreadOpen(true)
+      router.replace(`/chat?conversation_id=${existing._id}`)
+      return
+    }
+
+    setSelectedDirectId(null)
+    setMobileThreadOpen(true)
+    router.replace(`/chat?receiver_id=${adminContact._id}`)
+  }, [adminContact, directConversations, resetComposer, router, user?.id])
+
   const handleDeleteDirectMessage = async (messageId: string) => {
     try {
       await deleteDirectMessageMutation.mutateAsync(messageId)
@@ -989,19 +1062,26 @@ export function ChatPage({
   }
 
   return (
-    <div className="flex h-svh flex-col overflow-hidden bg-background p-0 md:p-4">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden bg-background p-0",
+        variant === "embedded" ? "h-full min-h-0" : "h-svh md:p-4"
+      )}
+    >
       <div className="flex shrink-0 flex-col gap-3 border-b px-4 py-3 md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/")}
-            aria-label="Về trang chủ"
-          >
-            <Home className="size-4" />
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Tin nhắn</h1>
+          {showHomeButton ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/")}
+              aria-label="Về trang chủ"
+            >
+              <Home className="size-4" />
+            </Button>
+          ) : null}
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         </div>
         {/* <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -1068,6 +1148,32 @@ export function ChatPage({
                 Nhóm
               </button>
             </div>
+            {!isAdminUser ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full justify-start gap-2 border-sky-300 bg-sky-50/60 text-sky-800 hover:bg-sky-100 hover:text-sky-900 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-900/40"
+                onClick={handleContactAdmin}
+                disabled={adminContactQuery.isLoading || !adminContact}
+              >
+                {adminContactQuery.isLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Headset className="size-4 text-sky-600" />
+                )}
+                <span className="flex flex-1 items-center gap-1.5 text-left">
+                  Liên hệ admin
+                  <AdminVerifiedBadge />
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="bg-sky-100 text-[10px] text-sky-800 dark:bg-sky-900 dark:text-sky-100"
+                >
+                  Hỗ trợ
+                </Badge>
+              </Button>
+            ) : null}
             <div className="relative mt-3">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1087,6 +1193,7 @@ export function ChatPage({
                 conversations={filteredDirectConversations}
                 selectedId={activeDirectId}
                 currentUserId={user?.id}
+                adminUserId={adminUserId}
                 onSelect={(id) => {
                   resetComposer()
                   setSelectedDirectId(id)
@@ -1100,6 +1207,7 @@ export function ChatPage({
                 conversations={filteredGroupConversations}
                 selectedId={activeGroupId}
                 currentUserId={user?.id}
+                adminUserId={adminUserId}
                 onSelect={(id) => {
                   resetComposer()
                   setSelectedGroupId(id)
@@ -1133,13 +1241,22 @@ export function ChatPage({
                   mode={mode}
                   title={activeTitle}
                   avatar={selectedDirect?.other_user?.avatar}
+                  highlight={isActiveDirectAdmin ? "admin" : undefined}
                 />
               ) : (
                 <GroupMemberAvatars members={selectedGroup?.members_data} />
               )}
               <div className="min-w-0">
-                <h2 className="truncate text-base font-semibold">
-                  {activeTitle}
+                <h2
+                  className={cn(
+                    "flex min-w-0 items-center gap-1.5 truncate text-base font-semibold",
+                    isActiveDirectAdmin && "text-sky-700 dark:text-sky-300"
+                  )}
+                >
+                  <span className="truncate">{activeTitle}</span>
+                  {isActiveDirectAdmin ? (
+                    <AdminVerifiedBadge withLabel />
+                  ) : null}
                 </h2>
                 <p className="truncate text-xs text-muted-foreground">
                   {activeSubtitle}
@@ -1169,6 +1286,7 @@ export function ChatPage({
               }
               messages={activeMessages}
               currentUserId={user?.id}
+              adminUserId={adminUserId}
               selectedConversationId={
                 hasActiveThread ? (activeConversationId ?? "new") : null
               }
@@ -1187,7 +1305,7 @@ export function ChatPage({
             />
           </div>
 
-          <div className="min-h-7 border-t bg-background px-4 py-1 text-xs text-muted-foreground">
+          <div className="min-h-0 border-t bg-background px-4 text-xs text-muted-foreground">
             {activeTypingUser
               ? `${shortenId(activeTypingUser)} đang nhập...`
               : null}
@@ -1256,7 +1374,7 @@ export function ChatPage({
                 placeholder={
                   activeConversationId ||
                   (mode === "direct" && directReceiverId)
-                    ? "Nhập tin nhắn (Enter để gửi, Shift+Enter xuống dòng)"
+                    ? "Nhập tin nhắn"
                     : "Chọn cuộc trò chuyện"
                 }
                 rows={1}
@@ -1292,6 +1410,7 @@ function ConversationList({
   conversations,
   selectedId,
   currentUserId,
+  adminUserId,
   onSelect,
 }: {
   type: ChatMode
@@ -1299,6 +1418,7 @@ function ConversationList({
   conversations: ChatConversation[] | GroupChatConversation[]
   selectedId: string | null
   currentUserId?: string
+  adminUserId?: string | null
   onSelect: (id: string) => void
 }) {
   if (loading) {
@@ -1347,6 +1467,11 @@ function ConversationList({
           isDirect &&
           directConversation &&
           shouldHighlightDirectConversation(directConversation, currentUserId)
+        const isAdminDirect = Boolean(
+          isDirect &&
+            adminUserId &&
+            directConversation?.other_user?._id === adminUserId
+        )
 
         return (
           <button
@@ -1354,7 +1479,9 @@ function ConversationList({
             type="button"
             className={cn(
               "flex w-full items-start gap-3 border-b px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-accent",
-              selectedId === conversation._id && "bg-accent"
+              selectedId === conversation._id && "bg-accent",
+              isAdminDirect &&
+                "border-l-2 border-l-sky-500 bg-sky-50/60 dark:bg-sky-950/30"
             )}
             onClick={() => onSelect(conversation._id)}
           >
@@ -1363,6 +1490,7 @@ function ConversationList({
                 mode={type}
                 title={title}
                 avatar={directConversation?.other_user?.avatar}
+                highlight={isAdminDirect ? "admin" : undefined}
               />
             ) : (
               <GroupMemberAvatars members={groupConversation?.members_data} />
@@ -1371,11 +1499,15 @@ function ConversationList({
               <div className="flex items-center justify-between gap-2">
                 <p
                   className={cn(
-                    "truncate text-sm font-medium",
-                    needsResponse && "text-red-600"
+                    "flex min-w-0 items-center gap-1 truncate text-sm font-medium",
+                    needsResponse && "text-red-600",
+                    isAdminDirect && "text-sky-700 dark:text-sky-300"
                   )}
                 >
-                  {title}
+                  <span className="truncate">{title}</span>
+                  {isAdminDirect ? (
+                    <AdminVerifiedBadge className="ml-0.5" />
+                  ) : null}
                 </p>
                 <span className="shrink-0 text-[11px] text-muted-foreground">
                   {formatTime(updatedAt)}
@@ -1408,38 +1540,54 @@ function ThreadAvatar({
   mode,
   avatar,
   className,
+  highlight,
 }: {
   title: string
   mode: ChatMode
   avatar?: string | null
   className?: string
+  highlight?: "admin"
 }) {
   const initial =
     title.trim().charAt(0).toUpperCase() || (mode === "direct" ? "C" : "N")
+  const ringClass =
+    highlight === "admin"
+      ? "ring-2 ring-sky-500 ring-offset-2 ring-offset-background"
+      : ""
 
   if (avatar) {
     return (
-      <Image
-        src={avatar}
-        alt={title}
-        width={40}
-        height={40}
-        className={cn("size-10 shrink-0 rounded-full object-cover", className)}
-      />
+      <div className={cn("relative shrink-0", className)}>
+        <Image
+          src={avatar}
+          alt={title}
+          width={40}
+          height={40}
+          className={cn("size-10 rounded-full object-cover", ringClass)}
+        />
+        {highlight === "admin" ? (
+          <BadgeCheck className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full fill-sky-500 text-white" />
+        ) : null}
+      </div>
     )
   }
 
   return (
-    <div
-      className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-        mode === "direct"
-          ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200"
-          : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-        className
-      )}
-    >
-      {initial}
+    <div className={cn("relative shrink-0", className)}>
+      <div
+        className={cn(
+          "flex size-10 items-center justify-center rounded-full text-sm font-semibold",
+          mode === "direct"
+            ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200"
+            : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+          ringClass
+        )}
+      >
+        {initial}
+      </div>
+      {highlight === "admin" ? (
+        <BadgeCheck className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full fill-sky-500 text-white" />
+      ) : null}
     </div>
   )
 }
@@ -1531,6 +1679,7 @@ function MessagePane({
   loading,
   messages,
   currentUserId,
+  adminUserId,
   selectedConversationId,
   directPeer,
   groupConversation,
@@ -1542,6 +1691,7 @@ function MessagePane({
   loading: boolean
   messages: Array<ChatMessage | GroupChatMessage>
   currentUserId?: string
+  adminUserId?: string | null
   selectedConversationId: string | null
   directPeer?: ChatConversation["other_user"]
   groupConversation?: GroupChatConversation | null
@@ -1597,6 +1747,13 @@ function MessagePane({
           ? groupMemberMap.get(groupMessage.sender_id)
           : undefined
         const groupSenderIsAdmin = isAdminMember(groupSender)
+        const isDirectAdminPeer = Boolean(
+          mode === "direct" &&
+            !mine &&
+            adminUserId &&
+            (directPeer?._id === adminUserId ||
+              message.sender_id === adminUserId)
+        )
         const senderName =
           mode === "direct"
             ? mine
@@ -1622,6 +1779,9 @@ function MessagePane({
                   mode === "direct" ? directPeer?.avatar : groupSender?.avatar
                 }
                 className="size-8"
+                highlight={
+                  isDirectAdminPeer || groupSenderIsAdmin ? "admin" : undefined
+                }
               />
             ) : null}
             <div
@@ -1629,26 +1789,30 @@ function MessagePane({
                 "max-w-[min(78%,40rem)] rounded-lg px-3 py-2 shadow-xs",
                 mine
                   ? "bg-primary text-primary-foreground"
-                  : groupSenderIsAdmin
-                    ? "border border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
-                    : "border bg-background"
+                  : isDirectAdminPeer
+                    ? "border border-sky-300 bg-sky-50 text-sky-950 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100"
+                    : groupSenderIsAdmin
+                      ? "border border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                      : "border bg-background"
               )}
             >
+              {mode === "direct" && isDirectAdminPeer ? (
+                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-sky-700 dark:text-sky-300">
+                  <span>{senderName}</span>
+                  <AdminVerifiedBadge withLabel />
+                </p>
+              ) : null}
               {mode === "group" && !mine ? (
                 <p
                   className={cn(
-                    "mb-1 text-[11px] font-medium",
+                    "mb-1 flex items-center gap-1.5 text-[11px] font-medium",
                     groupSenderIsAdmin
                       ? "text-amber-700 dark:text-amber-200"
                       : "text-muted-foreground"
                   )}
                 >
-                  {senderName}
-                  {groupSenderIsAdmin ? (
-                    <span className="ml-2 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] text-amber-900 dark:bg-amber-800 dark:text-amber-50">
-                      Admin
-                    </span>
-                  ) : null}
+                  <span>{senderName}</span>
+                  {groupSenderIsAdmin ? <AdminVerifiedBadge withLabel /> : null}
                 </p>
               ) : null}
               {replyMessage ? (

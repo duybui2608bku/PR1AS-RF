@@ -269,7 +269,7 @@ function PaymentStatus({
     return (
       <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
         <CheckCircle2 className="size-4" />
-        <span>Da nhan tien va cap nhat vi</span>
+        <span>Đã nhận tiền và cập nhật ví</span>
       </div>
     )
   }
@@ -278,7 +278,7 @@ function PaymentStatus({
     return (
       <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
         <XCircle className="size-4" />
-        <span>Giao dich that bai hoac sai so tien</span>
+        <span>Giao dịch thất bại hoặc sai số tiền</span>
       </div>
     )
   }
@@ -290,7 +290,7 @@ function PaymentStatus({
       ) : (
         <CheckCircle2 className="size-4 text-amber-600" />
       )}
-      <span>Dang cho SePay xac nhan giao dich</span>
+      <span>Đang chờ xác nhận giao dịch</span>
     </div>
   )
 }

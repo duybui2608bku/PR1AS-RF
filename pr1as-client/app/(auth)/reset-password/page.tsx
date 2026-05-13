@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useRef, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
@@ -20,8 +20,7 @@ export default function ResetPasswordPage() {
 
   // Capture the token from the URL on first render, then immediately clean the
   // URL so the token is not stored in browser history or leaked via Referer headers.
-  const tokenRef = useRef(searchParams?.get("token") ?? "")
-  const tokenFromQuery = tokenRef.current
+  const [tokenFromQuery] = useState(() => searchParams?.get("token") ?? "")
 
   const [tokenInput, setTokenInput] = useState("")
   const [password, setPassword] = useState("")
@@ -32,10 +31,10 @@ export default function ResetPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false)
 
   useEffect(() => {
-    if (tokenRef.current) {
+    if (tokenFromQuery) {
       router.replace("/reset-password", { scroll: false })
     }
-  }, [router])
+  }, [router, tokenFromQuery])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

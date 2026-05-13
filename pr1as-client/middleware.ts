@@ -8,6 +8,54 @@ import {
 const PROTECTED_PREFIXES = ["/client", "/chat", "/posts", "/dashboard"]
 const AUTH_PAGES = ["/login", "/register"]
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1]
+    if (!payload) return null
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    )
+
+    return JSON.parse(atob(padded)) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+function getTokenRole(token: string | undefined): string | null {
+  if (!token) return null
+
+  const payload = decodeJwtPayload(token)
+  if (!payload) return null
+
+  const roles = Array.isArray(payload.roles)
+    ? payload.roles
+        .filter((role): role is string => typeof role === "string")
+        .map((role) => role.toLowerCase())
+    : []
+  const role = typeof payload.role === "string" ? payload.role.toLowerCase() : null
+  const lastActiveRole =
+    typeof payload.last_active_role === "string"
+      ? payload.last_active_role.toLowerCase()
+      : null
+
+  if (
+    lastActiveRole &&
+    (roles.length === 0 || roles.includes(lastActiveRole) || lastActiveRole === role)
+  ) {
+    return lastActiveRole
+  }
+
+  if (role && (roles.length === 0 || roles.includes(role))) {
+    return role
+  }
+
+  return roles[0] ?? role
+}
+
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -17,7 +65,15 @@ function isProtectedPath(pathname: string): boolean {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
-  const activeRole = req.cookies.get(ACTIVE_ROLE_COOKIE_NAME)?.value?.toLowerCase()
+  const cookieRole = req.cookies.get(ACTIVE_ROLE_COOKIE_NAME)?.value?.toLowerCase()
+  const tokenRole = getTokenRole(token)
+  const activeRole = tokenRole === "admin" ? tokenRole : (cookieRole ?? tokenRole)
+
+  if (token && activeRole === "admin" && !pathname.startsWith("/dashboard")) {
+    const url = req.nextUrl.clone()
+    url.pathname = "/dashboard"
+    return NextResponse.redirect(url)
+  }
 
   if (pathname === "/" && token && activeRole === "worker") {
     const url = req.nextUrl.clone()

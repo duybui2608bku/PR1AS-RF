@@ -27,12 +27,14 @@ import { TransactionStatus, TransactionType } from "../../constants/wallet";
 interface CreatePricingPlanInput {
   package_code: PricingPlanCode;
   display_name: string;
+  price: number;
   is_active?: boolean;
   features: PricingPlanFeatures;
 }
 
 interface UpdatePricingPlanInput {
   display_name?: string;
+  price?: number;
   is_active?: boolean;
   features?: PricingPlanFeatures;
 }
@@ -84,13 +86,6 @@ class PricingService {
     };
   }
 
-  private getPackagePriceByMonths(
-    planCode: PricingPlanCode,
-    durationMonths: number
-  ): number {
-    return PRICING_PLAN_MONTHLY_PRICE[planCode] * durationMonths;
-  }
-
   private addMonths(baseDate: Date, months: number): Date {
     const next = new Date(baseDate);
     next.setMonth(next.getMonth() + months);
@@ -134,6 +129,7 @@ class PricingService {
   }
 
   async getMyPricing(userId: string): Promise<PricingMeResponse> {
+    await this.ensureDefaultPackages();
     await this.ensureUserPlanActive(userId);
     const user = await userRepository.findById(userId);
     if (!user) {
@@ -169,6 +165,7 @@ class PricingService {
     userId: string,
     payload: UpgradePricingInput
   ): Promise<PricingMeResponse> {
+    await this.ensureDefaultPackages();
     await this.ensureUserPlanActive(userId);
 
     const user = await userRepository.findById(userId);
@@ -208,10 +205,7 @@ class PricingService {
       }
     }
 
-    const amount = this.getPackagePriceByMonths(
-      payload.target_plan_code,
-      payload.duration_months
-    );
+    const amount = targetPackage.price * payload.duration_months;
     const currentBalance = await walletRepository.calculateUserBalance(userId);
     if (currentBalance < amount) {
       throw AppError.badRequest(PRICING_MESSAGES.PRICING_INSUFFICIENT_BALANCE);
@@ -219,6 +213,12 @@ class PricingService {
 
     const startedAt = new Date();
     const expiresAt = this.addMonths(startedAt, payload.duration_months);
+
+    const previousPricing = {
+      pricing_plan_code: user.pricing_plan_code,
+      pricing_started_at: user.pricing_started_at ?? null,
+      pricing_expires_at: user.pricing_expires_at ?? null,
+    };
 
     const paymentTransaction = await walletRepository.create({
       user_id: userId,
@@ -232,6 +232,7 @@ class PricingService {
       currentBalance - amount
     );
 
+    let userPricingUpdated = false;
     try {
       const updatedUser = await userRepository.updatePricingInfo(userId, {
         pricing_plan_code: payload.target_plan_code,
@@ -242,6 +243,7 @@ class PricingService {
       if (!updatedUser) {
         throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
       }
+      userPricingUpdated = true;
 
       await UserSubscriptionHistory.create({
         user_id: userId,
@@ -260,6 +262,9 @@ class PricingService {
         },
       });
     } catch (error) {
+      if (userPricingUpdated) {
+        await userRepository.updatePricingInfo(userId, previousPricing);
+      }
       await walletRepository.create({
         user_id: userId,
         type: TransactionType.REFUND,
@@ -275,27 +280,34 @@ class PricingService {
   }
 
   async ensureDefaultPackages(): Promise<void> {
-    const existingCount = await PricingPackage.countDocuments({
-      package_code: { $in: Object.values(PricingPlanCode) },
-    });
-
-    if (existingCount === Object.values(PricingPlanCode).length) {
-      return;
-    }
-
     await Promise.all(
       Object.values(PricingPlanCode).map(async (code) => {
+        const defaultPrice = PRICING_PLAN_MONTHLY_PRICE[code];
         await PricingPackage.findOneAndUpdate(
           { package_code: code },
           {
             $setOnInsert: {
               package_code: code,
               display_name: this.getDefaultPlanDisplayName(code),
+              price: defaultPrice,
               is_active: true,
               features: DEFAULT_PRICING_PLAN_FEATURES[code],
             },
           },
           { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        await PricingPackage.updateMany(
+          {
+            package_code: code,
+            $or: [{ price: { $exists: false } }, { price: null }],
+          },
+          {
+            $set: {
+              price: defaultPrice,
+              updated_at: new Date(),
+            },
+          }
         );
       })
     );
@@ -338,6 +350,7 @@ class PricingService {
     return PricingPackage.create({
       package_code: payload.package_code,
       display_name: payload.display_name,
+      price: payload.price,
       is_active: payload.is_active ?? true,
       features: this.normalizeFeatures(payload.features),
     });
@@ -357,6 +370,9 @@ class PricingService {
       {
         ...(payload.display_name !== undefined && {
           display_name: payload.display_name,
+        }),
+        ...(payload.price !== undefined && {
+          price: payload.price,
         }),
         ...(payload.is_active !== undefined && {
           is_active: payload.is_active,
