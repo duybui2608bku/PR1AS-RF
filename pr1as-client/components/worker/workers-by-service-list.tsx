@@ -1,9 +1,19 @@
 import Image from "next/image"
 import Link from "next/link"
-import { AlertCircle, ArrowRight, MapPin, X } from "lucide-react"
+import { AlertCircle, ArrowRight, Info, MapPin, X } from "lucide-react"
+import ReactMarkdown, { type Components } from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { serviceService } from "@/services/service.service"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
 type Worker = WorkerGroupedByService["workers"][number]
@@ -119,6 +129,7 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
 export type AppliedFilterChip = {
   id: string
   label: string
+  description?: string
   onRemove?: () => void
 }
 
@@ -128,6 +139,34 @@ type WorkersByServiceListProps = {
   isFetching?: boolean
   appliedFilters?: AppliedFilterChip[]
   onClearAllFilters?: () => void
+}
+
+const markdownComponents: Components = {
+  h2: ({ children }) => (
+    <h2 className="mt-6 mb-2 text-base font-semibold text-foreground first:mt-0">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mt-4 mb-1.5 text-sm font-semibold text-foreground">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p className="mb-3 text-sm leading-relaxed text-muted-foreground last:mb-0">
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul className="mb-3 ml-4 list-disc space-y-1 last:mb-0">{children}</ul>
+  ),
+  li: ({ children }) => (
+    <li className="text-sm leading-relaxed text-muted-foreground">{children}</li>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-foreground">{children}</strong>
+  ),
+  hr: () => <hr className="my-5 border-border" />,
 }
 
 const FilterChips = ({
@@ -144,6 +183,32 @@ const FilterChips = ({
       {filters.map((chip) => (
         <Badge key={chip.id} variant="secondary" className="gap-1 pr-1">
           <span>{chip.label}</span>
+          {chip.description ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Xem mô tả ${chip.label}`}
+                  className="cursor-pointer rounded-full p-0.5 hover:bg-muted"
+                >
+                  <Info className="size-3" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0">
+                <DialogHeader className="border-b px-6 py-4">
+                  <DialogTitle>{chip.label}</DialogTitle>
+                </DialogHeader>
+                <div className="overflow-y-auto px-6 py-5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {chip.description}
+                  </ReactMarkdown>
+                </div>
+              </DialogContent>
+            </Dialog>
+          ) : null}
           {chip.onRemove ? (
             <button
               type="button"
@@ -233,11 +298,39 @@ export const WorkersByServiceList = ({
         {groupedServices.map((group) => (
           <div key={group.service.id}>
             <div className="mb-4 flex items-center gap-3">
-              <div>
+              <div className="flex items-center gap-1.5">
                 <h3 className="text-xl font-bold tracking-tight">
                   {workerService.getFallbackName(group.service.name)}
                 </h3>
-                {/* <p className="text-muted-foreground text-xs mt-0.5">{group.service.code}</p> */}
+                {group.service.description &&
+                serviceService.getDescription(group.service.description) ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`Xem mô tả ${workerService.getFallbackName(group.service.name)}`}
+                        className="cursor-pointer rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        <Info className="size-4" />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0">
+                      <DialogHeader className="border-b px-6 py-4">
+                        <DialogTitle>
+                          {workerService.getFallbackName(group.service.name)}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="overflow-y-auto px-6 py-5">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={markdownComponents}
+                        >
+                          {serviceService.getDescription(group.service.description)!}
+                        </ReactMarkdown>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : null}
               </div>
               <div className="ml-auto flex items-center gap-2 shrink-0">
                 <Badge variant="outline">{group.workers.length} worker</Badge>

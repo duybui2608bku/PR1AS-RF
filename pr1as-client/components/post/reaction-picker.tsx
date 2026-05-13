@@ -18,7 +18,7 @@ import type {
 } from "@/types"
 import { REACTION_TYPES } from "@/types"
 
-const REACTION_META: Record<
+export const REACTION_META: Record<
   ReactionType,
   { emoji: string; label: string; color: string }
 > = {
@@ -30,7 +30,7 @@ const REACTION_META: Record<
   angry: { emoji: "😡", label: "Phẫn nộ", color: "text-orange-600" },
 }
 
-function topReactionTypes(summary: ReactionSummaryPublic): ReactionType[] {
+export function topReactionTypes(summary: ReactionSummaryPublic): ReactionType[] {
   const entries = Object.entries(summary.counts ?? {}) as [
     ReactionType,
     number,
@@ -59,7 +59,7 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
   const triggerLabel = myMeta?.label ?? "Thích"
 
   return (
-    <div className="flex flex-1 items-center justify-between gap-2">
+    <div className="flex flex-1 items-center gap-2">
       <HoverCard open={open} onOpenChange={setOpen} openDelay={150} closeDelay={100}>
         <HoverCardTrigger asChild>
           <Button
@@ -109,22 +109,6 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
           })}
         </HoverCardContent>
       </HoverCard>
-
-      {summary.total > 0 ? (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <div className="flex -space-x-1">
-            {top.map((type) => (
-              <span
-                key={type}
-                className="inline-flex size-5 items-center justify-center rounded-full border border-background bg-muted text-sm leading-none"
-              >
-                {REACTION_META[type].emoji}
-              </span>
-            ))}
-          </div>
-          <span>{summary.total}</span>
-        </div>
-      ) : null}
     </div>
   )
 }

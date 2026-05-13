@@ -48,4 +48,6 @@ export const serviceService = {
   getServices,
   getName: (name: LocalizedText) =>
     name.vi ?? name.en ?? name.zh ?? name.ko ?? "Dịch vụ",
+  getDescription: (desc: LocalizedText) =>
+    desc.vi ?? desc.en ?? desc.zh ?? desc.ko ?? null,
 }

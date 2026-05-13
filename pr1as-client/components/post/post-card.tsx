@@ -45,7 +45,7 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import type { PostPublic } from "@/types"
 import { EditPostDialog } from "./edit-post-dialog"
 import { PostComments } from "./post-comments"
-import { ReactionPicker } from "./reaction-picker"
+import { REACTION_META, ReactionPicker, topReactionTypes } from "./reaction-picker"
 
 type Props = {
   post: PostPublic
@@ -464,17 +464,34 @@ export function PostCard({ post }: Props) {
 
       <div className="mt-3 flex flex-col gap-2 border-t pt-2">
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span aria-label={t("commentsCountLabel")}>
-            {post.comments_count > 0
-              ? t("commentsCount", { count: post.comments_count })
-              : t("noComments")}
-          </span>
-          {post.comments_locked ? (
-            <span className="inline-flex items-center gap-1 text-amber-600">
-              <Lock className="size-3" />
-              {t("commentsLocked")}
+          {post.reactions.total > 0 ? (
+            <div className="flex items-center gap-1">
+              <div className="flex -space-x-1">
+                {topReactionTypes(post.reactions).map((type) => (
+                  <span
+                    key={type}
+                    className="inline-flex size-5 items-center justify-center rounded-full border border-background bg-muted text-sm leading-none"
+                  >
+                    {REACTION_META[type].emoji}
+                  </span>
+                ))}
+              </div>
+              <span>{post.reactions.total}</span>
+            </div>
+          ) : <span />}
+          <div className="flex items-center gap-2">
+            <span aria-label={t("commentsCountLabel")}>
+              {post.comments_count > 0
+                ? t("commentsCount", { count: post.comments_count })
+                : t("noComments")}
             </span>
-          ) : null}
+            {post.comments_locked ? (
+              <span className="inline-flex items-center gap-1 text-amber-600">
+                <Lock className="size-3" />
+                {t("commentsLocked")}
+              </span>
+            ) : null}
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <ReactionPicker post={post} />

@@ -57,6 +57,7 @@ const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
   return CATEGORY_LABEL[code] ?? code
 }
 
+
 export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
   const pathname = usePathname()
 
@@ -159,9 +160,13 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
       })
     }
     if (applied.activeCode && applied.activeCode !== "ALL") {
+      const matchedService = services.find((s) => s.code === applied.activeCode)
       chips.push({
         id: "category",
         label: findCategoryLabel(applied.activeCode, services),
+        description: matchedService?.description
+          ? serviceService.getDescription(matchedService.description) ?? undefined
+          : undefined,
         onRemove: removeCategoryFilter,
       })
     }
