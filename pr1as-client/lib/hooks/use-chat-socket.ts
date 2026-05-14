@@ -4,6 +4,7 @@ import * as React from "react"
 
 import { disconnectChatSocket, getChatSocket } from "@/lib/chat-socket"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { localizeServerMessage } from "@/lib/utils/error-handler"
 
 export type ChatSocketStatus =
   | "idle"
@@ -38,7 +39,9 @@ export function useChatSocket() {
 
     const handleConnectError = (connectError: Error) => {
       setStatus("error")
-      setError(connectError.message)
+      setError(
+        localizeServerMessage(connectError.message, "Không thể kết nối trò chuyện.")
+      )
     }
 
     socket.on("connect", handleConnect)

@@ -40,7 +40,7 @@ type LeanPostWithAuthor = IPostDocument & {
   author_id:
     | Pick<
         IUserDocument,
-        "_id" | "full_name" | "avatar" | "worker_profile"
+        "_id" | "full_name" | "avatar" | "worker_profile" | "meta_data"
       >
     | null;
 };
@@ -78,6 +78,9 @@ const toAuthorPublic = (
       full_name: populated.full_name ?? null,
       avatar: populated.avatar ?? null,
       has_worker_profile: !!populated.worker_profile,
+      meta_data: {
+        pricing_plan_code: populated.meta_data?.pricing_plan_code ?? null,
+      },
     };
   }
   return {

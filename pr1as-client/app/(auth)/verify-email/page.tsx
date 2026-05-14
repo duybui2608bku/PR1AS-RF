@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { useResendVerification, useVerifyEmail } from "@/lib/hooks/use-auth"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
 type VerifyStatus = "loading" | "success" | "error" | "no-token"
 
@@ -62,7 +62,11 @@ export default function VerifyEmailPage() {
 
     try {
       const response = await resendVerificationMutation.mutateAsync({ email })
-      setMessage(response.success ? "Đã gửi lại email xác minh." : response.message ?? "Gửi email thất bại.")
+      setMessage(
+        response.success
+          ? "Đã gửi lại email xác minh."
+          : localizeServerMessage(response.message, "Gửi email thất bại.")
+      )
     } catch (error) {
       setMessage(getErrorMessage(error, "Không thể gửi lại email xác minh."))
     }

@@ -34,6 +34,7 @@ import { isAdminUser } from "@/lib/auth/roles"
 import { useLogout, useMe } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/utils/error-handler"
 
 const adminNavItems = [
   {
@@ -171,9 +172,7 @@ function AdminSidebar({
       toast.success("Đăng xuất thành công.")
       router.replace("/login")
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể đăng xuất."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể đăng xuất."))
     }
   }
 

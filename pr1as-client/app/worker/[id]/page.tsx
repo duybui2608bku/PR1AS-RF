@@ -14,6 +14,7 @@ import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
 import { WorkerReviews } from "@/components/worker/worker-reviews"
 import { WorkerServices } from "@/components/worker/worker-services"
 import { WorkerStatCards } from "@/components/worker/worker-stat-cards"
+import { WorkerSuggestions } from "@/components/worker/worker-suggestions"
 
 type PageParams = { id: string }
 
@@ -29,40 +30,47 @@ export default function WorkerProfilePage({
 
   return (
     <SiteLayout>
-      <div className="container mx-auto max-w-6xl px-4 py-8">
-        {isLoading ? <WorkerProfileSkeleton /> : null}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+            {isLoading ? <WorkerProfileSkeleton /> : null}
 
-        {error ? (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Không thể tải thông tin worker</AlertTitle>
-            <AlertDescription>
-              Vui lòng thử lại sau hoặc kiểm tra đường dẫn.
-            </AlertDescription>
-          </Alert>
-        ) : null}
+            {error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Không thể tải thông tin worker</AlertTitle>
+                <AlertDescription>
+                  Vui lòng thử lại sau hoặc kiểm tra đường dẫn.
+                </AlertDescription>
+              </Alert>
+            ) : null}
 
-        {data ? (
-          <div className="space-y-6">
-            <WorkerProfileHeader worker={data} isOwnProfile={isOwnProfile} />
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
-              <div className="space-y-4">
-                <WorkerStatCards profile={data.worker_profile} />
-                <WorkerInfoCards profile={data.worker_profile} />
-                <WorkerReviews reviews={data.reviews ?? []} />
+            {data ? (
+              <div className="space-y-6">
+                <WorkerProfileHeader worker={data} isOwnProfile={isOwnProfile} />
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
+                  <div className="space-y-4">
+                    <WorkerStatCards profile={data.worker_profile} />
+                    <WorkerInfoCards profile={data.worker_profile} />
+                    <WorkerReviews reviews={data.reviews ?? []} />
+                  </div>
+                  <aside className="space-y-4">
+                    <WorkerCalendar workerId={data.user.id} />
+                    <WorkerServices
+                      workerId={data.user.id}
+                      workerName={data.user.full_name ?? "worker"}
+                      services={data.services ?? []}
+                      workerReputationScore={data.user.meta_data?.reputation_score}
+                    />
+                  </aside>
+                </div>
               </div>
-              <aside className="space-y-4">
-                <WorkerCalendar workerId={data.user.id} />
-                <WorkerServices
-                  workerId={data.user.id}
-                  workerName={data.user.full_name ?? "worker"}
-                  services={data.services ?? []}
-                  workerReputationScore={data.user.meta_data?.reputation_score}
-                />
-              </aside>
-            </div>
+            ) : null}
           </div>
-        ) : null}
+          <aside className="hidden xl:block">
+            <WorkerSuggestions />
+          </aside>
+        </div>
       </div>
     </SiteLayout>
   )

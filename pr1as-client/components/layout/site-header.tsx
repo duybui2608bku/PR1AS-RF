@@ -29,6 +29,7 @@ import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
 
 const USER_MENU_ITEMS = [
@@ -131,9 +132,7 @@ export function SiteHeader() {
       router.replace(getRoleDefaultRoute(nextRole))
       router.refresh()
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể đổi role."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể đổi role."))
     }
   }
 
@@ -145,9 +144,7 @@ export function SiteHeader() {
       toast.success("Đăng xuất thành công.")
       router.replace("/login")
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể đăng xuất."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể đăng xuất."))
     }
   }
 

@@ -24,6 +24,7 @@ export const api: AxiosInstance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+    "Accept-Language": "vi",
   },
   timeout: 15_000,
 })

@@ -32,7 +32,7 @@ import { Separator } from "@/components/ui/separator"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { isPasswordStrong, passwordRules } from "@/lib/auth/password.utils"
 import { useRegister } from "@/lib/hooks/use-auth"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -79,7 +79,7 @@ export default function RegisterPage() {
       })
 
       if (!response.success) {
-        toast.error(response.message ?? "Đăng ký thất bại.")
+        toast.error(localizeServerMessage(response.message, "Đăng ký thất bại."))
         return
       }
 

@@ -63,6 +63,9 @@ export interface AuthorPublic {
   full_name: string | null;
   avatar: string | null;
   has_worker_profile: boolean;
+  meta_data?: {
+    pricing_plan_code?: string | null;
+  };
 }
 
 export interface PostMediaPublic {

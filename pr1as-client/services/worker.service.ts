@@ -2,7 +2,7 @@ import { AxiosError } from "axios"
 import { cache } from "react"
 
 import { api } from "@/lib/axios"
-import type { WorkerDetail, WorkerScheduleItem } from "@/types"
+import type { WorkerDetail, WorkerReviewItem, WorkerReviewStats, WorkerScheduleItem } from "@/types"
 
 export type WorkersGroupedFilters = {
   q?: string
@@ -32,6 +32,58 @@ type ApiResponse<T> = {
   statusCode?: number
   message?: string
   data?: T
+}
+
+type ApiWorkerReviewStats =
+  | WorkerReviewStats
+  | {
+      total_reviews?: number
+      average_rating?: number
+      rating_distribution?: Partial<Record<1 | 2 | 3 | 4 | 5 | "1" | "2" | "3" | "4" | "5", number>>
+    }
+
+type ApiWorkerDetail = Omit<WorkerDetail, "review_stats"> & {
+  review_stats?: ApiWorkerReviewStats
+}
+
+const getReviewStatValue = (
+  stats: ApiWorkerReviewStats | undefined,
+  key: keyof WorkerReviewStats,
+  apiKey: "total_reviews" | "average_rating",
+): number | undefined => {
+  if (!stats) return undefined
+  const frontendValue = (stats as WorkerReviewStats)[key]
+  if (typeof frontendValue === "number") return frontendValue
+  const apiValue = (stats as Record<string, unknown>)[apiKey]
+  return typeof apiValue === "number" ? apiValue : undefined
+}
+
+const getReviewDistribution = (
+  stats: ApiWorkerReviewStats | undefined,
+): WorkerReviewStats["distribution"] => {
+  if (!stats) return undefined
+  const source = stats as {
+    distribution?: WorkerReviewStats["distribution"]
+    rating_distribution?: WorkerReviewStats["distribution"]
+  }
+  return source.distribution ?? source.rating_distribution
+}
+
+const normalizeReviewStats = (
+  stats: ApiWorkerReviewStats | undefined,
+  reviews: WorkerReviewItem[] | undefined,
+): WorkerReviewStats => {
+  const fallbackTotal = reviews?.length ?? 0
+  const fallbackAverage =
+    fallbackTotal > 0 && reviews
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / fallbackTotal
+      : 0
+
+  return {
+    total: getReviewStatValue(stats, "total", "total_reviews") ?? fallbackTotal,
+    average: getReviewStatValue(stats, "average", "average_rating") ?? fallbackAverage,
+    distribution: getReviewDistribution(stats),
+  }
 }
 
 export type WorkerGroupedByService = {
@@ -107,11 +159,15 @@ const getWorkersGroupedByService = cache(
 )
 
 const getWorkerById = async (id: string): Promise<WorkerDetail> => {
-  const response = await api.get<ApiResponse<WorkerDetail>>(`/workers/${id}`)
+  const response = await api.get<ApiResponse<ApiWorkerDetail>>(`/workers/${id}`)
   if (!response.data.data) {
     throw new Error("Không tìm thấy worker")
   }
-  return response.data.data
+  const worker = response.data.data
+  return {
+    ...worker,
+    review_stats: normalizeReviewStats(worker.review_stats, worker.reviews),
+  }
 }
 
 const getWorkerSchedule = async (

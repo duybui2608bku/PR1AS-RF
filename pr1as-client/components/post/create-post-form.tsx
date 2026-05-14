@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useCreatePost } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
 import type { PostVisibility } from "@/types"
 
@@ -94,10 +96,18 @@ export function CreatePostForm() {
             alt={user.full_name ?? "Avatar"}
             width={40}
             height={40}
-            className="size-10 shrink-0 rounded-full object-cover"
+            className={cn(
+              "size-10 shrink-0 rounded-full object-cover",
+              getPlanRingClass(user.meta_data?.pricing_plan_code)
+            )}
           />
         ) : (
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+          <div
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-full bg-muted",
+              getPlanRingClass(user?.meta_data?.pricing_plan_code)
+            )}
+          >
             <User className="size-5 text-muted-foreground" />
           </div>
         )}

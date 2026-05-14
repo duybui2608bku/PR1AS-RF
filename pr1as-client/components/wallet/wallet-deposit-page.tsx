@@ -55,13 +55,13 @@ export function WalletDepositPage() {
 
     if (isPaymentSuccess) {
       notifiedTransactionRef.current = payment.transaction_id
-      toast.success("Nap tien thanh cong. So du vi da duoc cap nhat.")
+      toast.success("Nạp tiền thành công. Số dư ví đã được cập nhật.")
     }
 
     if (isPaymentFailed) {
       notifiedTransactionRef.current = payment.transaction_id
       toast.error(
-        "Giao dich nap tien that bai. Vui long kiem tra lai so tien chuyen khoan."
+        "Giao dịch nạp tiền thất bại. Vui lòng kiểm tra lại số tiền chuyển khoản."
       )
     }
   }, [isPaymentFailed, isPaymentSuccess, payment])

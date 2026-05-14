@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios"
+import { localizeServerMessage } from "@/lib/utils/error-handler"
 
 type ApiResponse<T> = {
   success: boolean
@@ -245,7 +246,9 @@ export const chatService = {
       }
     )
     if (!response.data.data) {
-      throw new Error(response.data.message ?? "Cannot send message.")
+      throw new Error(
+        localizeServerMessage(response.data.message, "Không thể gửi tin nhắn.")
+      )
     }
     return response.data.data
   },
@@ -300,7 +303,9 @@ export const chatService = {
       }
     )
     if (!response.data.data) {
-      throw new Error(response.data.message ?? "Cannot send group message.")
+      throw new Error(
+        localizeServerMessage(response.data.message, "Không thể gửi tin nhắn nhóm.")
+      )
     }
     return response.data.data
   },
@@ -330,7 +335,7 @@ export const chatService = {
     const conversation = response.data.data?.conversation
     if (!conversation) {
       throw new Error(
-        response.data.message ?? "Cannot open complaint conversation."
+        localizeServerMessage(response.data.message, "Không thể mở nhóm khiếu nại.")
       )
     }
     return conversation

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const token = body?.token
 
   if (!token || typeof token !== "string" || !isBasicJwt(token)) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 400 })
+    return NextResponse.json({ error: "Token không hợp lệ." }, { status: 400 })
   }
 
   const res = NextResponse.json({ ok: true })

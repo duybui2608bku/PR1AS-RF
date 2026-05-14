@@ -21,7 +21,7 @@ import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
 import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -84,7 +84,7 @@ export default function LoginPage() {
       })
 
       if (!response.success) {
-        toast.error(response.message ?? "Đăng nhập thất bại.")
+        toast.error(localizeServerMessage(response.message, "Đăng nhập thất bại."))
         return
       }
 
@@ -139,13 +139,17 @@ export default function LoginPage() {
       })
 
       if (!response.success) {
-        toast.error(response.message ?? "Gửi email đặt lại mật khẩu thất bại.")
+        toast.error(
+          localizeServerMessage(response.message, "Gửi email đặt lại mật khẩu thất bại.")
+        )
         return
       }
 
       toast.success(
-        response.message ??
+        localizeServerMessage(
+          response.message,
           "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi."
+        )
       )
     } catch (error) {
       toast.error(

@@ -42,6 +42,8 @@ import {
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import type { PostPublic } from "@/types"
 import { EditPostDialog } from "./edit-post-dialog"
 import { PostComments } from "./post-comments"
@@ -51,7 +53,15 @@ type Props = {
   post: PostPublic
 }
 
-function AuthorAvatar({ avatar, name }: { avatar: string | null; name: string | null }) {
+function AuthorAvatar({
+  avatar,
+  name,
+  planCode,
+}: {
+  avatar: string | null
+  name: string | null
+  planCode?: string | null
+}) {
   if (avatar) {
     return (
       <Image
@@ -59,12 +69,20 @@ function AuthorAvatar({ avatar, name }: { avatar: string | null; name: string | 
         alt={name ?? "Avatar"}
         width={40}
         height={40}
-        className="size-10 rounded-full object-cover"
+        className={cn(
+          "size-10 rounded-full object-cover",
+          getPlanRingClass(planCode)
+        )}
       />
     )
   }
   return (
-    <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+    <div
+      className={cn(
+        "flex size-10 items-center justify-center rounded-full bg-muted",
+        getPlanRingClass(planCode)
+      )}
+    >
       <User className="size-5 text-muted-foreground" />
     </div>
   )
@@ -336,10 +354,18 @@ export function PostCard({ post }: Props) {
         <div className="flex items-center gap-3">
           {workerHref ? (
             <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
-              <AuthorAvatar avatar={post.author.avatar} name={post.author.full_name} />
+              <AuthorAvatar
+                avatar={post.author.avatar}
+                name={post.author.full_name}
+                planCode={post.author.meta_data?.pricing_plan_code}
+              />
             </Link>
           ) : (
-            <AuthorAvatar avatar={post.author.avatar} name={post.author.full_name} />
+            <AuthorAvatar
+              avatar={post.author.avatar}
+              name={post.author.full_name}
+              planCode={post.author.meta_data?.pricing_plan_code}
+            />
           )}
           <div>
             {workerHref ? (

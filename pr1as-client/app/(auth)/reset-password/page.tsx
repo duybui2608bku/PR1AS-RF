@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useResetPassword } from "@/lib/hooks/use-auth"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -55,7 +55,9 @@ export default function ResetPasswordPage() {
     try {
       const response = await resetPasswordMutation.mutateAsync({ token, password })
       if (!response.success) {
-        setErrorMessage(response.message ?? "Đặt lại mật khẩu thất bại.")
+        setErrorMessage(
+          localizeServerMessage(response.message, "Đặt lại mật khẩu thất bại.")
+        )
         return
       }
 

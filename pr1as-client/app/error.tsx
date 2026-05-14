@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
+import { localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function GlobalError({
   error,
@@ -17,14 +18,17 @@ export default function GlobalError({
 
   return (
     <div className="container mx-auto flex min-h-[60svh] flex-col items-center justify-center gap-4 px-4 text-center">
-      <p className="text-destructive text-sm font-medium">Something went wrong</p>
-      <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">An unexpected error occurred</h1>
+      <p className="text-destructive text-sm font-medium">Đã xảy ra lỗi</p>
+      <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Ứng dụng gặp lỗi ngoài ý muốn</h1>
       <p className="text-muted-foreground max-w-md text-sm">
-        {error.message || "Please try again. If the issue persists, contact support."}
+        {localizeServerMessage(
+          error.message,
+          "Vui lòng thử lại. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ."
+        )}
       </p>
       <div className="mt-2 flex gap-2">
-        <Button onClick={reset}>Try again</Button>
-        <Button variant="outline" onClick={() => window.location.assign("/")}>Go home</Button>
+        <Button onClick={reset}>Thử lại</Button>
+        <Button variant="outline" onClick={() => window.location.assign("/")}>Về trang chủ</Button>
       </div>
     </div>
   )

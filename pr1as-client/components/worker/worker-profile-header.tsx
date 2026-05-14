@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { AlertTriangle, Mars, Pencil, ShieldCheck, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
+import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
 const EXPERIENCE_LABEL: Record<WorkerExperience, string> = {
@@ -69,7 +70,7 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
   const fullName = worker.user.full_name ?? "Chưa cập nhật"
   const title = profile?.title ?? null
   const initials = (fullName || "?").trim().charAt(0).toUpperCase()
-  const reputationScore = worker.user.meta_data?.reputation_score ?? 100
+  const reputationScore = getReputationScore(worker.user.meta_data?.reputation_score)
   const isLowReputation = reputationScore < 30
 
   return (
@@ -168,7 +169,7 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <div className="flex items-center">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
@@ -182,6 +183,10 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
             ))}
           </div>
           <span>({ratingCount} đánh giá)</span>
+          <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+            <ShieldCheck className="size-3.5" />
+            Điểm uy tín {reputationScore}/100
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm">

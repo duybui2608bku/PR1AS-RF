@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios"
+import { localizeServerMessage } from "@/lib/utils/error-handler"
 import type { AuthUser } from "@/lib/store/auth-store"
 import type {
   WorkerProfileUpdateInput,
@@ -20,7 +21,9 @@ export const workerProfileService = {
       worker_profile,
     })
     if (!response.data.success || !response.data.data?.user) {
-      throw new Error(response.data.message ?? "Không thể cập nhật hồ sơ worker")
+      throw new Error(
+        localizeServerMessage(response.data.message, "Không thể cập nhật hồ sơ worker")
+      )
     }
     return response.data.data
   },
@@ -46,7 +49,9 @@ export const workerProfileService = {
     }
     const response = await api.post<ApiResponse<unknown>>("/worker/services", body)
     if (!response.data.success) {
-      throw new Error(response.data.message ?? "Không thể lưu dịch vụ")
+      throw new Error(
+        localizeServerMessage(response.data.message, "Không thể lưu dịch vụ")
+      )
     }
   },
 }

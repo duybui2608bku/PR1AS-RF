@@ -22,7 +22,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
 import { ProfileEditModal } from "@/app/client/profile/components/profile-edit-modal"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { cn } from "@/lib/utils"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import { uploadImage } from "@/lib/utils/upload-image"
 
 const formatDateTime = (value?: string | null): string => {
@@ -61,6 +63,7 @@ export default function ClientProfilePage() {
   const profileData = meQuery.data?.data?.user ?? user
   const userRoles = profileData?.roles ?? []
   const displayName = profileData?.full_name ?? "Người dùng"
+  const reputationScore = getReputationScore(profileData?.meta_data?.reputation_score)
 
   const closeModal = () => setIsEditModalOpen(false)
 
@@ -79,7 +82,7 @@ export default function ClientProfilePage() {
     try {
       const response = await updateProfileMutation.mutateAsync(payload)
       if (!response.success) {
-        toast.error(response.message ?? "Cập nhật thất bại.")
+        toast.error(localizeServerMessage(response.message, "Cập nhật thất bại."))
         return
       }
 
@@ -99,7 +102,9 @@ export default function ClientProfilePage() {
       const avatarUrl = await uploadImage(file)
       const response = await updateProfileMutation.mutateAsync({ avatar: avatarUrl })
       if (!response.success) {
-        toast.error(response.message ?? "Không thể cập nhật ảnh đại diện.")
+        toast.error(
+          localizeServerMessage(response.message, "Không thể cập nhật ảnh đại diện.")
+        )
         return
       }
       toast.success("Cập nhật ảnh đại diện thành công.")
@@ -164,6 +169,10 @@ export default function ClientProfilePage() {
                 </div>
                 <p className="text-sm text-muted-foreground">{profileData?.email ?? "—"}</p>
                 <div className="flex flex-wrap gap-2 pt-1">
+                  <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+                    <ShieldCheck className="size-3.5" />
+                    Điểm uy tín {reputationScore}/100
+                  </span>
                   {userRoles.map((role) => (
                     <span key={role} className="rounded-full bg-muted px-3 py-1 text-xs capitalize text-muted-foreground">
                       {role}
@@ -225,6 +234,15 @@ export default function ClientProfilePage() {
                 icon={<User className="size-4" />}
                 label="Vai trò hoạt động cuối"
                 value={profileData?.last_active_role ?? "—"}
+              />
+              <InfoRow
+                icon={<ShieldCheck className="size-4" />}
+                label="Điểm uy tín"
+                value={
+                  <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+                    {reputationScore}/100
+                  </span>
+                }
               />
               <InfoRow icon={<User className="size-4" />} label="ID người dùng" value={profileData?.id ?? "—"} />
             </CardContent>

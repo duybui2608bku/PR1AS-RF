@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getPlanRingClass } from "@/lib/utils/plan"
+import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
@@ -733,7 +734,9 @@ export function ChatPage({
     }
 
     const handleSocketError = (payload: { message?: string } | Error) => {
-      toast.error(payload.message ?? "Không thể kết nối trò chuyện.")
+      toast.error(
+        localizeServerMessage(payload.message, "Không thể kết nối trò chuyện.")
+      )
     }
 
     socket.on("new_message", handleNewMessage)
@@ -945,9 +948,7 @@ export function ChatPage({
       const imageUrl = await uploadImage(file)
       await sendImageMessage(imageUrl)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể gửi ảnh."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể gửi ảnh."))
     } finally {
       setIsUploadingImage(false)
     }
@@ -996,9 +997,7 @@ export function ChatPage({
       setReplyTarget(null)
       emitTyping(false)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể gửi tin nhắn."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể gửi tin nhắn."))
     }
   }
 
@@ -1049,9 +1048,7 @@ export function ChatPage({
       }
       toast.success("Đã xóa tin nhắn.")
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể xóa tin nhắn."
-      toast.error(message)
+      toast.error(getErrorMessage(error, "Không thể xóa tin nhắn."))
     }
   }
 
