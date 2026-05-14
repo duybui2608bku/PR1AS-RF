@@ -256,6 +256,9 @@ export type WorkerReviewItem = {
     id: string
     full_name: string | null
     avatar: string | null
+    meta_data?: {
+      pricing_plan_code?: string | null
+    }
   }
   worker_reply: string | null
   worker_replied_at: string | null
@@ -268,6 +271,10 @@ export type WorkerDetail = {
     full_name: string | null
     avatar: string | null
     email: string
+    meta_data?: {
+      pricing_plan_code?: string | null
+      reputation_score?: number
+    }
   }
   worker_profile: WorkerProfilePublic | null
   services?: WorkerServiceItem[]

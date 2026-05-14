@@ -43,9 +43,12 @@ export function useUpgradePricing() {
         if (currentUser) {
           setUser({
             ...currentUser,
-            pricing_plan_code: data.plan_code,
-            pricing_started_at: data.started_at,
-            pricing_expires_at: data.expires_at,
+            meta_data: {
+              ...currentUser.meta_data,
+              pricing_plan_code: data.plan_code,
+              pricing_started_at: data.started_at,
+              pricing_expires_at: data.expires_at,
+            },
           })
         }
         queryClient.setQueryData(PRICING_KEYS.me(), data)

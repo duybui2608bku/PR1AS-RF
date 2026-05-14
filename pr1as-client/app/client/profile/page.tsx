@@ -240,8 +240,8 @@ export default function ClientProfilePage() {
               </CardTitle>
               <CardDescription>Gói hiện tại và thời hạn hiệu lực của bạn</CardDescription>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${toPlanColor(profileData?.pricing_plan_code)}`}>
-              {profileData?.pricing_plan_code ?? "standard"}
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${toPlanColor(profileData?.meta_data?.pricing_plan_code ?? undefined)}`}>
+              {profileData?.meta_data?.pricing_plan_code ?? "standard"}
             </span>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
@@ -250,14 +250,14 @@ export default function ClientProfilePage() {
                 <CalendarDays className="size-3.5" />
                 Bắt đầu gói
               </p>
-              <p className="font-medium">{formatDateTime(profileData?.pricing_started_at as string | null | undefined)}</p>
+              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_started_at ?? undefined)}</p>
             </div>
             <div className="rounded-lg border p-4">
               <p className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                 <CalendarDays className="size-3.5" />
                 Hết hạn gói
               </p>
-              <p className="font-medium">{formatDateTime(profileData?.pricing_expires_at as string | null | undefined)}</p>
+              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_expires_at ?? undefined)}</p>
             </div>
           </CardContent>
         </Card>

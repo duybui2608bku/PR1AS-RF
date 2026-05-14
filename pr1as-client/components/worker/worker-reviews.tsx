@@ -3,6 +3,8 @@ import { Star, User as UserIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import type { WorkerReviewItem } from "@/types"
 
 const formatDate = (value: string) => {
@@ -20,7 +22,7 @@ const ReviewItem = ({ review }: { review: WorkerReviewItem }) => {
     (review.client.full_name ?? "?").trim().charAt(0).toUpperCase() || "?"
   return (
     <div className="flex items-start gap-3 px-4 py-3">
-      <Avatar className="size-9">
+      <Avatar className={cn("size-9", getPlanRingClass(review.client.meta_data?.pricing_plan_code))}>
         {review.client.avatar ? (
           <AvatarImage
             src={review.client.avatar}

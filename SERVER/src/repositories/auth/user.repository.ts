@@ -90,9 +90,6 @@ export class UserRepository {
       verify_email: false,
       created_at: new Date(),
       last_login: null,
-      pricing_plan_code: PricingPlanCode.STANDARD,
-      pricing_started_at: null,
-      pricing_expires_at: null,
     });
 
     return user.save();
@@ -176,9 +173,9 @@ export class UserRepository {
     return User.findByIdAndUpdate(
       id,
       {
-        pricing_plan_code: pricing.pricing_plan_code,
-        pricing_started_at: pricing.pricing_started_at,
-        pricing_expires_at: pricing.pricing_expires_at,
+        "meta_data.pricing_plan_code": pricing.pricing_plan_code,
+        "meta_data.pricing_started_at": pricing.pricing_started_at,
+        "meta_data.pricing_expires_at": pricing.pricing_expires_at,
       },
       { new: true }
     );
@@ -225,6 +222,34 @@ export class UserRepository {
     ]);
 
     return { users: users as IUserDocument[], total };
+  }
+
+  async adjustReputationScore(
+    id: string,
+    delta: number
+  ): Promise<{ newScore: number; previousScore: number } | null> {
+    const doc = await User.findById(id).select("meta_data.reputation_score").lean();
+    if (!doc) return null;
+    const previousScore =
+      (doc as unknown as { meta_data?: { reputation_score?: number } })
+        ?.meta_data?.reputation_score ?? 100;
+    const newScore = Math.max(0, Math.min(100, previousScore + delta));
+    await User.findByIdAndUpdate(id, { "meta_data.reputation_score": newScore });
+    return { newScore, previousScore };
+  }
+
+  async incrementReputationScoreForAll(delta: number): Promise<number> {
+    const result = await User.updateMany(
+      { "meta_data.reputation_score": { $lt: 100 } },
+      [{
+        $set: {
+          "meta_data.reputation_score": {
+            $min: [100, { $add: ["$meta_data.reputation_score", delta] }],
+          },
+        },
+      }]
+    );
+    return result.modifiedCount;
   }
 
   async findFirstAdmin(): Promise<IUserDocument | null> {

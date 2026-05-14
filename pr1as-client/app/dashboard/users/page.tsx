@@ -544,7 +544,7 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <PlanBadge code={user.pricing_plan_code} />
+                      <PlanBadge code={user.meta_data?.pricing_plan_code ?? undefined} />
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {formatDate(user.last_login)}

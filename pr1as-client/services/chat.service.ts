@@ -37,6 +37,9 @@ export type ChatConversation = {
     full_name: string | null
     avatar: string | null
     email: string
+    meta_data?: {
+      pricing_plan_code?: string | null
+    }
   }
   unread_count?: number
 }

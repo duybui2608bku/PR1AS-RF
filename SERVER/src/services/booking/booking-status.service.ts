@@ -10,6 +10,7 @@ import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { BOOKING_MESSAGES } from "../../constants/messages";
 import { notificationEventService } from "../notification";
+import { reputationService } from "../reputation/reputation.service";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
 
@@ -138,6 +139,14 @@ export class BookingStatusService extends BookingBaseService {
     void notificationEventService
       .bookingCancelled(updatedBooking, userId, cancelledBy)
       .catch((error) => logger.error("Booking cancellation notification failed:", error));
+
+    // Worker-initiated cancellation = failed commitment → -10 reputation
+    if (cancelledBy === CancelledBy.WORKER) {
+      const workerId = updatedBooking.worker_id.toString();
+      void reputationService
+        .deductPoints(workerId, 10)
+        .catch((err) => logger.error("Reputation deduction after worker cancel failed:", err));
+    }
 
     return updatedBooking;
   }

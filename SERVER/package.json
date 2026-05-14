@@ -48,6 +48,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
     "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",

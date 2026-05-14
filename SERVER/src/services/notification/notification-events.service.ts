@@ -349,6 +349,26 @@ export class NotificationEventService {
     });
   }
 
+  async reputationWarning(userId: string, newScore: number): Promise<void> {
+    const body =
+      newScore < 30
+        ? `Điểm uy tín của bạn hiện là ${newScore}/100. Dưới 30 điểm, bạn bị hạn chế một số tính năng.`
+        : `Điểm uy tín của bạn hiện là ${newScore}/100. Hãy hoàn thành booking đúng hạn để duy trì điểm.`;
+
+    await notificationService.notify({
+      recipient_ids: [userId],
+      type: NotificationType.REPUTATION_WARNING,
+      category: NotificationCategory.REPUTATION,
+      title: "Cảnh báo điểm uy tín",
+      body,
+      data: { reputation_score: newScore },
+      link: "/notifications",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `reputation-warning:${userId}:${newScore}`,
+    });
+  }
+
   async reviewUpdated(review: IReviewDocument, actorId: string): Promise<void> {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);

@@ -17,6 +17,7 @@ import { PaginationHelper } from "../../utils/pagination";
 import { IBookingDocument, UserRole } from "../../types";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 import { notificationEventService } from "../notification";
+import { reputationService } from "../reputation/reputation.service";
 import { logger } from "../../utils/logger";
 
 const getRefId = (value: unknown): string => {
@@ -101,9 +102,18 @@ export class ReviewService {
     };
 
     const review = await reviewRepository.create(reviewData);
+
     void notificationEventService
       .reviewCreated(review, userId)
       .catch((error) => logger.error("Review notification failed:", error));
+
+    // Booking completed but low rating (1-2 stars) → -5 reputation for worker
+    if (input.rating <= 2) {
+      void reputationService
+        .deductPoints(bookingWorkerId, 5)
+        .catch((err) => logger.error("Reputation deduction after low review failed:", err));
+    }
+
     return review;
   }
 

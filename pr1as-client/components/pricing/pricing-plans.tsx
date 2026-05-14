@@ -145,7 +145,7 @@ function getButtonState(
 export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const storedPlan = useAuthStore((s) => s.user?.pricing_plan_code) as
+  const storedPlan = useAuthStore((s) => s.user?.meta_data?.pricing_plan_code) as
     | PricingPlanCode
     | undefined
 

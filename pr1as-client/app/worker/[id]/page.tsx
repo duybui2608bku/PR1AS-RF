@@ -57,6 +57,7 @@ export default function WorkerProfilePage({
                   workerId={data.user.id}
                   workerName={data.user.full_name ?? "worker"}
                   services={data.services ?? []}
+                  workerReputationScore={data.user.meta_data?.reputation_score}
                 />
               </aside>
             </div>

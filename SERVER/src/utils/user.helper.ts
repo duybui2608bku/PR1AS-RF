@@ -1,4 +1,5 @@
 import { IUserDocument, IUserPublic } from "../types/auth/user.types";
+import { PricingPlanCode } from "../constants/pricing";
 import { AuthRequest } from "../middleware/auth";
 import { AppError } from "./AppError";
 import { AUTH_MESSAGES } from "../constants/messages";
@@ -18,9 +19,12 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     client_profile: user.client_profile,
     created_at: user.created_at,
     coords: user.coords,
-    pricing_plan_code: user.pricing_plan_code,
-    pricing_started_at: user.pricing_started_at,
-    pricing_expires_at: user.pricing_expires_at,
+    meta_data: {
+      reputation_score: user.meta_data?.reputation_score ?? 100,
+      pricing_plan_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
+      pricing_started_at: user.meta_data?.pricing_started_at ?? null,
+      pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
+    },
   };
 };
 

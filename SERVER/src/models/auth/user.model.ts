@@ -141,30 +141,40 @@ const userSchema = new Schema<IUserDocument>(
       select: false,
       default: null,
     },
-    coords: {
-      latitude: {
-        type: Number,
-        default: null,
-      },
-      longitude: {
-        type: Number,
-        default: null,
-      },
-    },
-    pricing_plan_code: {
-      type: String,
-      enum: Object.values(PricingPlanCode),
-      default: PricingPlanCode.STANDARD,
-      index: true,
-    },
-    pricing_started_at: {
-      type: Date,
-      default: null,
-    },
-    pricing_expires_at: {
-      type: Date,
-      default: null,
-      index: true,
+    meta_data: {
+      type: new Schema(
+        {
+          reputation_score: {
+            type: Number,
+            default: 100,
+            min: 0,
+            max: 100,
+            index: true,
+          },
+          pricing_plan_code: {
+            type: String,
+            enum: Object.values(PricingPlanCode),
+            default: PricingPlanCode.STANDARD,
+            index: true,
+          },
+          pricing_started_at: {
+            type: Date,
+            default: null,
+          },
+          pricing_expires_at: {
+            type: Date,
+            default: null,
+            index: true,
+          },
+        },
+        { _id: false }
+      ),
+      default: () => ({
+        reputation_score: 100,
+        pricing_plan_code: PricingPlanCode.STANDARD,
+        pricing_started_at: null,
+        pricing_expires_at: null,
+      }),
     },
   },
   {
@@ -183,6 +193,6 @@ const userSchema = new Schema<IUserDocument>(
 
 userSchema.index({ password_reset_token: 1 });
 userSchema.index({ email_verification_token: 1 });
-userSchema.index({ pricing_plan_code: 1, pricing_expires_at: 1 });
+userSchema.index({ "meta_data.pricing_plan_code": 1, "meta_data.pricing_expires_at": 1 });
 
 export const User = mongoose.model<IUserDocument>(modelsName.USER, userSchema);

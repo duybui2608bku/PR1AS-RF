@@ -1,15 +1,17 @@
 "use client"
 
-import { Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { AlertTriangle, Mars, Pencil, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
 const EXPERIENCE_LABEL: Record<WorkerExperience, string> = {
@@ -67,8 +69,19 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
   const fullName = worker.user.full_name ?? "Chưa cập nhật"
   const title = profile?.title ?? null
   const initials = (fullName || "?").trim().charAt(0).toUpperCase()
+  const reputationScore = worker.user.meta_data?.reputation_score ?? 100
+  const isLowReputation = reputationScore < 30
 
   return (
+    <div className="space-y-4">
+    {isLowReputation ? (
+      <Alert className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
+        <AlertTriangle className="size-4 text-red-500" />
+        <AlertDescription className="font-medium">
+          Worker này có điểm uy tín thấp ({reputationScore}/100). Dịch vụ đặt lịch tạm thời bị hạn chế.
+        </AlertDescription>
+      </Alert>
+    ) : null}
     <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,600px)_1fr]">
       <div className="space-y-3">
         <AspectRatio
@@ -121,7 +134,7 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-start gap-3">
-          <Avatar size="lg" className="size-12 shrink-0">
+          <Avatar size="lg" className={cn("size-12 shrink-0", getPlanRingClass(worker.user.meta_data?.pricing_plan_code))}>
             {worker.user.avatar ? (
               <AvatarImage src={worker.user.avatar} alt={fullName} />
             ) : null}
@@ -208,6 +221,7 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
           </p>
         ) : null}
       </div>
+    </div>
     </div>
   )
 }

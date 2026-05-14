@@ -8,6 +8,7 @@ import { reactionRepository } from "../../repositories/reaction/reaction.reposit
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
 import { PricingPackage } from "../../models/pricing";
+import { PricingPlanCode } from "../../constants/pricing";
 import { ReactionTargetType, ReactionType } from "../../constants/reaction";
 import {
   CreatePostInput,
@@ -25,7 +26,7 @@ import { IHashtagDocument } from "../../types/hashtag/hashtag.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { POST_MESSAGES, PRICING_MESSAGES } from "../../constants/messages";
+import { POST_MESSAGES, PRICING_MESSAGES, REPUTATION_MESSAGES } from "../../constants/messages";
 import { POST_LIMITS, PostVisibility } from "../../constants/post";
 import {
   CursorPaginatedResponse,
@@ -171,7 +172,7 @@ export class PostService {
     }
 
     const pricingPackage = await PricingPackage.findOne({
-      package_code: user.pricing_plan_code,
+      package_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
       is_active: true,
     }).lean();
 
@@ -230,6 +231,16 @@ export class PostService {
   }
 
   private async assertUserCanCreatePost(userId: string): Promise<void> {
+    const user = await userRepository.findById(userId);
+    const reputation = user?.meta_data?.reputation_score ?? 100;
+    if (reputation < 30) {
+      throw new AppError(
+        REPUTATION_MESSAGES.TOO_LOW_FOR_POST,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REPUTATION_SCORE_TOO_LOW
+      );
+    }
+
     const quota = await this.getPostCreateQuota(userId);
 
     if (!quota.isCreateJobEnabled) {

@@ -35,9 +35,12 @@ export type AuthUser = {
   client_profile?: ClientProfile | null
   avatar?: string | null
   verify_email?: boolean
-  pricing_plan_code?: string
-  pricing_started_at?: string | null
-  pricing_expires_at?: string | null
+  meta_data?: {
+    pricing_plan_code?: string | null
+    pricing_started_at?: string | null
+    pricing_expires_at?: string | null
+    reputation_score?: number
+  }
 }
 
 type AuthState = {

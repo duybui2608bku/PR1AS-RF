@@ -19,6 +19,7 @@ import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
 import { UserRole } from "../../types/auth/user.types";
 import { BookingStatus } from "../../constants/booking";
+import { REPUTATION_MESSAGES } from "../../constants/messages";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -54,6 +55,16 @@ export class BookingCrudService extends BookingBaseService {
         BOOKING_MESSAGES.SELF_BOOKING_NOT_ALLOWED,
         HTTP_STATUS.BAD_REQUEST,
         ErrorCode.BOOKING_SELF_BOOKING_NOT_ALLOWED
+      );
+    }
+
+    const clientDoc = await userRepository.findById(clientId);
+    const clientReputation = clientDoc?.meta_data?.reputation_score ?? 100;
+    if (clientReputation < 30) {
+      throw new AppError(
+        REPUTATION_MESSAGES.TOO_LOW_FOR_BOOKING,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REPUTATION_SCORE_TOO_LOW
       );
     }
 

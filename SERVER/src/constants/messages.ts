@@ -294,3 +294,9 @@ export const PRICING_MESSAGES = {
     "Current plan is already equal or higher than target plan",
   PRICING_PACKAGE_NOT_AVAILABLE: "Target pricing package is not available",
 } as const;
+
+export const REPUTATION_MESSAGES = {
+  TOO_LOW_FOR_BOOKING: "Điểm uy tín của bạn quá thấp để tạo booking (cần tối thiểu 30 điểm)",
+  TOO_LOW_FOR_POST: "Điểm uy tín của bạn quá thấp để đăng bài (cần tối thiểu 30 điểm)",
+  TOO_LOW_FOR_COMMENT: "Điểm uy tín của bạn quá thấp để bình luận (cần tối thiểu 30 điểm)",
+} as const;

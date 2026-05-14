@@ -9,13 +9,10 @@ import {
   LogOut,
   Menu,
   MessageCircle,
-  Moon,
-  Sun,
   User,
   Wallet,
   type LucideIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -23,6 +20,7 @@ import * as React from "react"
 import { toast } from "sonner"
 
 import { NotificationBell } from "@/components/layout/notification-bell"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
@@ -30,6 +28,8 @@ import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
+import { cn } from "@/lib/utils"
+import { getPlanRingClass } from "@/lib/utils/plan"
 
 const USER_MENU_ITEMS = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
@@ -103,7 +103,7 @@ export function SiteHeader() {
       {
         routeKey: "pricing" as const,
         href: "/pricing",
-        label: `${formatPricingPlan(user?.pricing_plan_code)}`,
+        label: `${formatPricingPlan(user?.meta_data?.pricing_plan_code)}`,
         icon: Crown,
       },
     ],
@@ -190,10 +190,12 @@ export function SiteHeader() {
                     alt={user.email ?? "User avatar"}
                     width={32}
                     height={32}
-                    className="size-8 rounded-full object-cover"
+                    className={cn("size-8 rounded-full object-cover", getPlanRingClass(user?.meta_data?.pricing_plan_code))}
                   />
                 ) : (
-                  <User className="size-4" />
+                  <div className={cn("flex size-8 items-center justify-center rounded-full bg-muted", getPlanRingClass(user?.meta_data?.pricing_plan_code))}>
+                    <User className="size-4" />
+                  </div>
                 )}
               </Button>
               {menuOpen ? (
@@ -329,43 +331,3 @@ export function SiteHeader() {
   )
 }
 
-function useHasMounted() {
-  return React.useSyncExternalStore(
-    React.useCallback(() => () => undefined, []),
-    () => true,
-    () => false
-  )
-}
-
-function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const mounted = useHasMounted()
-
-  if (!mounted) {
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Toggle theme"
-        disabled
-      >
-        <span className="size-4" aria-hidden="true" />
-      </Button>
-    )
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Toggle theme"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-    >
-      {resolvedTheme === "dark" ? (
-        <Sun className="size-4" />
-      ) : (
-        <Moon className="size-4" />
-      )}
-    </Button>
-  )
-}

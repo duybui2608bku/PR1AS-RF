@@ -29,7 +29,7 @@ const getUserPlanFromRequest = async (
     );
   }
 
-  return user.pricing_plan_code;
+  return user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
 };
 
 export const requireMinPlan = (requiredPlan: PricingPlanCode) => {

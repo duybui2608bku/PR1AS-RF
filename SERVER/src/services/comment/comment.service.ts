@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { commentRepository } from "../../repositories/comment/comment.repository";
 import { postRepository } from "../../repositories/post/post.repository";
 import { reactionRepository } from "../../repositories/reaction/reaction.repository";
+import { userRepository } from "../../repositories/auth/user.repository";
 import {
   CommentFeedQuery,
   CommentPublic,
@@ -13,7 +14,7 @@ import { IUserDocument } from "../../types/auth/user.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { COMMENT_MESSAGES } from "../../constants/messages";
+import { COMMENT_MESSAGES, REPUTATION_MESSAGES } from "../../constants/messages";
 import { ReactionTargetType } from "../../constants/reaction";
 import { logger } from "../../utils/logger";
 import {
@@ -82,6 +83,16 @@ export class CommentService {
     userId: string,
     input: CreateCommentInput
   ): Promise<CommentPublic & { replies: CommentPublic[] }> {
+    const commenter = await userRepository.findById(userId);
+    const reputation = commenter?.meta_data?.reputation_score ?? 100;
+    if (reputation < 30) {
+      throw new AppError(
+        REPUTATION_MESSAGES.TOO_LOW_FOR_COMMENT,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REPUTATION_SCORE_TOO_LOW
+      );
+    }
+
     if (!Types.ObjectId.isValid(postId)) {
       throw new AppError(
         COMMENT_MESSAGES.POST_NOT_FOUND,

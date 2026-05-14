@@ -323,6 +323,24 @@ class WorkerServiceRepository {
 
     stages.push(
       {
+        $addFields: {
+          // Workers with reputation_score < 30 get sort priority 1 (pushed to back), others get 0
+          _reputation_priority: {
+            $cond: {
+              if: { $lt: [{ $ifNull: ["$worker.meta_data.reputation_score", 100] }, 30] },
+              then: 1,
+              else: 0,
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          _reputation_priority: 1,
+          "worker.meta_data.reputation_score": -1,
+        },
+      },
+      {
         $group: {
           _id: "$service_id",
           service: {

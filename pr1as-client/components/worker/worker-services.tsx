@@ -57,9 +57,10 @@ type Props = {
   workerId: string
   workerName: string
   services: WorkerServiceItem[]
+  workerReputationScore?: number
 }
 
-export function WorkerServices({ workerId, workerName, services }: Props) {
+export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100 }: Props) {
   const [bookOpen, setBookOpen] = useState(false)
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
@@ -67,7 +68,8 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
   const user = useAuthStore((s) => s.user)
   const currentUserId = user?.id
   const isOwnProfile = currentUserId === workerId
-  const storedPlanCode = user?.pricing_plan_code?.toLowerCase()
+  const isWorkerLowReputation = workerReputationScore < 30
+  const storedPlanCode = user?.meta_data?.pricing_plan_code?.toLowerCase()
   const storedPlanAllowsMessaging = storedPlanCode
     ? MESSAGING_PLAN_CODES.has(storedPlanCode)
     : false
@@ -126,6 +128,10 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
     }
     if (isOwnProfile) {
       toast.info("Bạn không thể đặt lịch chính mình.")
+      return
+    }
+    if (isWorkerLowReputation) {
+      toast.error("Worker này hiện không thể nhận booking do điểm uy tín thấp.")
       return
     }
     if (!selectedId) {
@@ -212,11 +218,11 @@ export function WorkerServices({ workerId, workerName, services }: Props) {
         <Button
           type="button"
           className="w-full"
-          disabled={!selectedId || isOwnProfile}
+          disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
           onClick={handleBook}
         >
           <ShoppingCart className="size-4" />
-          Thuê ngay
+          {isWorkerLowReputation ? "Không thể đặt (điểm uy tín thấp)" : "Thuê ngay"}
         </Button>
 
         <Button

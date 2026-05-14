@@ -99,11 +99,9 @@ class PricingService {
     }
 
     const now = new Date();
-    if (
-      user.pricing_plan_code !== PricingPlanCode.STANDARD &&
-      user.pricing_expires_at &&
-      user.pricing_expires_at < now
-    ) {
+    const planCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+    const expiresAt = user.meta_data?.pricing_expires_at ?? null;
+    if (planCode !== PricingPlanCode.STANDARD && expiresAt && expiresAt < now) {
       await userRepository.updatePricingInfo(userId, {
         pricing_plan_code: PricingPlanCode.STANDARD,
         pricing_started_at: null,
@@ -112,7 +110,7 @@ class PricingService {
 
       await UserSubscriptionHistory.create({
         user_id: userId,
-        from_plan_code: user.pricing_plan_code,
+        from_plan_code: planCode,
         to_plan_code: PricingPlanCode.STANDARD,
         event_type: SubscriptionEventType.EXPIRED_DOWNGRADE,
         status: SubscriptionEventStatus.SUCCESS,
@@ -122,7 +120,7 @@ class PricingService {
         expires_at: null,
         metadata: {
           reason: "expired",
-          previous_expires_at: user.pricing_expires_at,
+          previous_expires_at: expiresAt,
         },
       });
     }
@@ -136,8 +134,12 @@ class PricingService {
       throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
     }
 
+    const userPlanCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+    const userStartedAt = user.meta_data?.pricing_started_at ?? null;
+    const userExpiresAt = user.meta_data?.pricing_expires_at ?? null;
+
     const pkg = await PricingPackage.findOne({
-      package_code: user.pricing_plan_code,
+      package_code: userPlanCode,
       is_active: true,
     });
     const fallbackPackage = pkg
@@ -151,12 +153,10 @@ class PricingService {
     }
 
     return {
-      plan_code: user.pricing_plan_code,
-      started_at: user.pricing_started_at,
-      expires_at: user.pricing_expires_at,
-      is_expired:
-        Boolean(user.pricing_expires_at) &&
-        (user.pricing_expires_at as Date) < new Date(),
+      plan_code: userPlanCode,
+      started_at: userStartedAt,
+      expires_at: userExpiresAt,
+      is_expired: Boolean(userExpiresAt) && (userExpiresAt as Date) < new Date(),
       package: fallbackPackage.toJSON(),
     };
   }
@@ -177,9 +177,10 @@ class PricingService {
       throw AppError.badRequest(PRICING_MESSAGES.PRICING_INVALID_TARGET_PLAN);
     }
 
+    const currentPlanCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
     if (
-      hasMinPlan(user.pricing_plan_code, payload.target_plan_code) &&
-      user.pricing_plan_code !== PricingPlanCode.STANDARD
+      hasMinPlan(currentPlanCode, payload.target_plan_code) &&
+      currentPlanCode !== PricingPlanCode.STANDARD
     ) {
       throw AppError.badRequest(
         PRICING_MESSAGES.PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER
@@ -215,9 +216,9 @@ class PricingService {
     const expiresAt = this.addMonths(startedAt, payload.duration_months);
 
     const previousPricing = {
-      pricing_plan_code: user.pricing_plan_code,
-      pricing_started_at: user.pricing_started_at ?? null,
-      pricing_expires_at: user.pricing_expires_at ?? null,
+      pricing_plan_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
+      pricing_started_at: user.meta_data?.pricing_started_at ?? null,
+      pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
     };
 
     const paymentTransaction = await walletRepository.create({
@@ -247,7 +248,7 @@ class PricingService {
 
       await UserSubscriptionHistory.create({
         user_id: userId,
-        from_plan_code: user.pricing_plan_code,
+        from_plan_code: currentPlanCode,
         to_plan_code: payload.target_plan_code,
         event_type: SubscriptionEventType.UPGRADE,
         status: SubscriptionEventStatus.SUCCESS,

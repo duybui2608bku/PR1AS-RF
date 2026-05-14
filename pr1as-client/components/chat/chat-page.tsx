@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react"
 import Image from "next/image"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
@@ -27,6 +28,7 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
@@ -1083,25 +1085,9 @@ export function ChatPage({
           ) : null}
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         </div>
-        {/* <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={
-              directConversationsQuery.isFetching ||
-              groupConversationsQuery.isFetching
-            }
-          >
-            {directConversationsQuery.isFetching ||
-            groupConversationsQuery.isFetching ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-          </Button>
-        </div> */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="grid min-h-0 flex-1 overflow-hidden md:gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -1242,6 +1228,7 @@ export function ChatPage({
                   title={activeTitle}
                   avatar={selectedDirect?.other_user?.avatar}
                   highlight={isActiveDirectAdmin ? "admin" : undefined}
+                  planCode={selectedDirect?.other_user?.meta_data?.pricing_plan_code}
                 />
               ) : (
                 <GroupMemberAvatars members={selectedGroup?.members_data} />
@@ -1491,6 +1478,7 @@ function ConversationList({
                 title={title}
                 avatar={directConversation?.other_user?.avatar}
                 highlight={isAdminDirect ? "admin" : undefined}
+                planCode={directConversation?.other_user?.meta_data?.pricing_plan_code}
               />
             ) : (
               <GroupMemberAvatars members={groupConversation?.members_data} />
@@ -1541,19 +1529,21 @@ function ThreadAvatar({
   avatar,
   className,
   highlight,
+  planCode,
 }: {
   title: string
   mode: ChatMode
   avatar?: string | null
   className?: string
   highlight?: "admin"
+  planCode?: string | null
 }) {
   const initial =
     title.trim().charAt(0).toUpperCase() || (mode === "direct" ? "C" : "N")
   const ringClass =
     highlight === "admin"
       ? "ring-2 ring-sky-500 ring-offset-2 ring-offset-background"
-      : ""
+      : getPlanRingClass(planCode)
 
   if (avatar) {
     return (
@@ -1782,6 +1772,7 @@ function MessagePane({
                 highlight={
                   isDirectAdminPeer || groupSenderIsAdmin ? "admin" : undefined
                 }
+                planCode={mode === "direct" ? directPeer?.meta_data?.pricing_plan_code : undefined}
               />
             ) : null}
             <div

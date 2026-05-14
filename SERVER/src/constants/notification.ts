@@ -14,6 +14,7 @@ export enum NotificationCategory {
   SECURITY = "security",
   ADMIN = "admin",
   SYSTEM = "system",
+  REPUTATION = "reputation",
 }
 
 export enum NotificationPriority {
@@ -41,6 +42,7 @@ export enum NotificationType {
   REVIEW_UPDATED = "review.updated",
   SECURITY_ALERT = "security.alert",
   SYSTEM_ANNOUNCEMENT = "system.announcement",
+  REPUTATION_WARNING = "reputation.warning",
 }
 
 export enum NotificationDeliveryStatus {
