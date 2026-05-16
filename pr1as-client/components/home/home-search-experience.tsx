@@ -27,13 +27,11 @@ type HomeSearchExperienceProps = {
 // Form fields update only the draft; clicking the search button (or
 // removing a chip) writes into the applied state.
 type DraftState = {
-  serviceQuery: string
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
 }
 
 const draftFromState = (state: HomeSearchState): DraftState => ({
-  serviceQuery: state.serviceQuery,
   selectedLocation: state.selectedLocation,
   scheduledAt: state.scheduledAt,
 })
@@ -51,7 +49,7 @@ const formatScheduledLabel = (value: Date): string =>
   })
 
 const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
-  if (!code || code === "ALL") return ""
+  if (!code) return ""
   const match = services.find((s) => s.code === code)
   if (match) return serviceService.getName(match.name)
   return CATEGORY_LABEL[code] ?? code
@@ -68,11 +66,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   const resultsRef = React.useRef<HTMLDivElement>(null)
 
   const filters = React.useMemo(() => homeStateToFilters(applied), [applied])
-  const hasFilters = Object.keys(filters).length > 0
 
   // Sync applied state -> URL without triggering RSC navigation.
-  // Using replaceState directly keeps the URL shareable/bookmarkable
-  // while letting TanStack Query handle all data fetching client-side.
   const isFirstSyncRef = React.useRef(true)
   React.useEffect(() => {
     const queryString = homeStateToQueryString(applied)
@@ -103,7 +98,6 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   const handleSearchSubmit = React.useCallback(() => {
     setApplied((prev) => ({
       ...prev,
-      serviceQuery: draft.serviceQuery,
       selectedLocation: draft.selectedLocation,
       scheduledAt: draft.scheduledAt,
     }))
@@ -112,31 +106,29 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     })
   }, [draft])
 
-  const handlePillSelect = React.useCallback((code: string) => {
-    setApplied((prev) => ({ ...prev, activeCode: code }))
+  const handleToggleCode = React.useCallback((code: string) => {
+    setApplied((prev) => {
+      if (code === "ALL") return { ...prev, activeCodes: [] }
+      const already = prev.activeCodes.includes(code)
+      return {
+        ...prev,
+        activeCodes: already
+          ? prev.activeCodes.filter((c) => c !== code)
+          : [...prev.activeCodes, code],
+      }
+    })
   }, [])
 
   const handleClearAllFilters = React.useCallback(() => {
-    setDraft({
-      serviceQuery: "",
-      selectedLocation: null,
-      scheduledAt: undefined,
-    })
-    setApplied({
-      serviceQuery: "",
-      activeCode: "ALL",
-      selectedLocation: null,
-      scheduledAt: undefined,
-    })
+    setDraft({ selectedLocation: null, scheduledAt: undefined })
+    setApplied({ activeCodes: [], selectedLocation: null, scheduledAt: undefined })
   }, [])
 
-  const removeQueryFilter = React.useCallback(() => {
-    setDraft((prev) => ({ ...prev, serviceQuery: "" }))
-    setApplied((prev) => ({ ...prev, serviceQuery: "" }))
-  }, [])
-
-  const removeCategoryFilter = React.useCallback(() => {
-    setApplied((prev) => ({ ...prev, activeCode: "ALL" }))
+  const removeCategoryCode = React.useCallback((code: string) => {
+    setApplied((prev) => ({
+      ...prev,
+      activeCodes: prev.activeCodes.filter((c) => c !== code),
+    }))
   }, [])
 
   const removeLocationFilter = React.useCallback(() => {
@@ -151,23 +143,15 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const appliedFilters = React.useMemo<AppliedFilterChip[]>(() => {
     const chips: AppliedFilterChip[] = []
-    const trimmedQuery = applied.serviceQuery.trim()
-    if (trimmedQuery) {
+    for (const code of applied.activeCodes) {
+      const matchedService = services.find((s) => s.code === code)
       chips.push({
-        id: "q",
-        label: `“${trimmedQuery}”`,
-        onRemove: removeQueryFilter,
-      })
-    }
-    if (applied.activeCode && applied.activeCode !== "ALL") {
-      const matchedService = services.find((s) => s.code === applied.activeCode)
-      chips.push({
-        id: "category",
-        label: findCategoryLabel(applied.activeCode, services),
+        id: `category-${code}`,
+        label: findCategoryLabel(code, services),
         description: matchedService?.description
           ? serviceService.getDescription(matchedService.description) ?? undefined
           : undefined,
-        onRemove: removeCategoryFilter,
+        onRemove: () => removeCategoryCode(code),
       })
     }
     if (applied.selectedLocation) {
@@ -188,8 +172,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   }, [
     applied,
     services,
-    removeQueryFilter,
-    removeCategoryFilter,
+    removeCategoryCode,
     removeLocationFilter,
     removeDateFilter,
   ])
@@ -197,12 +180,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   return (
     <>
       <HomeHero
-        serviceQuery={draft.serviceQuery}
-        onServiceQueryChange={(value) =>
-          setDraft((prev) => ({ ...prev, serviceQuery: value }))
-        }
-        activeCode={applied.activeCode}
-        onActiveCodeChange={handlePillSelect}
+        activeCodes={applied.activeCodes}
+        onToggleCode={handleToggleCode}
         selectedLocation={draft.selectedLocation}
         onSelectedLocationChange={(value) =>
           setDraft((prev) => ({ ...prev, selectedLocation: value }))

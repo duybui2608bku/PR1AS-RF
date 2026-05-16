@@ -121,8 +121,7 @@ export class WorkerService {
     query: WorkerGroupedByServiceQuery
   ): Promise<WorkersGroupedByServiceItem[]> {
     const groupedWorkers = await workerServiceRepository.findWorkersGroupedByService({
-      q: query.q,
-      category: query.category,
+      categories: query.category,
       location: parseLocation(query.location),
       workLocation:
         typeof query.province_code === "number"

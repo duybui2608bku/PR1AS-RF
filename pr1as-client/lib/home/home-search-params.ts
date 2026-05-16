@@ -4,7 +4,6 @@ import type { WorkersGroupedFilters } from "@/services/worker.service"
 export type HomeSearchParamRaw = string | string[] | undefined
 
 export type HomeSearchParams = {
-  q?: HomeSearchParamRaw
   category?: HomeSearchParamRaw
   province_code?: HomeSearchParamRaw
   ward_code?: HomeSearchParamRaw
@@ -13,15 +12,9 @@ export type HomeSearchParams = {
 }
 
 export type HomeSearchState = {
-  serviceQuery: string
-  activeCode: string
+  activeCodes: string[]
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
-}
-
-const firstString = (raw: HomeSearchParamRaw): string | undefined => {
-  if (!raw) return undefined
-  return Array.isArray(raw) ? raw[0] : raw
 }
 
 const toPositiveInt = (raw?: string): number | null => {
@@ -30,13 +23,24 @@ const toPositiveInt = (raw?: string): number | null => {
   return Number.isFinite(value) && value > 0 ? value : null
 }
 
+const firstString = (raw: HomeSearchParamRaw): string | undefined => {
+  if (!raw) return undefined
+  return Array.isArray(raw) ? raw[0] : raw
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export const parseHomeSearchParams = (
   raw?: HomeSearchParams,
 ): HomeSearchState => {
-  const serviceQuery = firstString(raw?.q) ?? ""
-  const activeCode = firstString(raw?.category) ?? "ALL"
+  const rawCategory = raw?.category
+  let activeCodes: string[] = []
+  if (Array.isArray(rawCategory)) {
+    activeCodes = rawCategory.filter((c): c is string => typeof c === "string" && c.trim().length > 0)
+  } else if (typeof rawCategory === "string" && rawCategory.trim()) {
+    activeCodes = rawCategory.trim().split(",").map((s) => s.trim()).filter(Boolean)
+  }
+
   const locationLabel = firstString(raw?.location) ?? ""
   const provinceCode = toPositiveInt(firstString(raw?.province_code))
   const wardCode = toPositiveInt(firstString(raw?.ward_code))
@@ -69,17 +73,15 @@ export const parseHomeSearchParams = (
     if (!Number.isNaN(parsed.getTime())) scheduledAt = parsed
   }
 
-  return { serviceQuery, activeCode, selectedLocation, scheduledAt }
+  return { activeCodes, selectedLocation, scheduledAt }
 }
 
 export const homeStateToFilters = (
   state: HomeSearchState,
 ): WorkersGroupedFilters => {
   const filters: WorkersGroupedFilters = {}
-  const trimmedQuery = state.serviceQuery.trim()
-  if (trimmedQuery) filters.q = trimmedQuery
-  if (state.activeCode && state.activeCode !== "ALL") {
-    filters.category = state.activeCode
+  if (state.activeCodes.length > 0) {
+    filters.categories = state.activeCodes
   }
   if (state.selectedLocation) {
     filters.province_code = state.selectedLocation.province_code
@@ -95,10 +97,8 @@ export const homeStateToFilters = (
 
 export const homeStateToQueryString = (state: HomeSearchState): string => {
   const params = new URLSearchParams()
-  const trimmedQuery = state.serviceQuery.trim()
-  if (trimmedQuery) params.set("q", trimmedQuery)
-  if (state.activeCode && state.activeCode !== "ALL") {
-    params.set("category", state.activeCode)
+  if (state.activeCodes.length > 0) {
+    params.set("category", state.activeCodes.join(","))
   }
   if (state.selectedLocation) {
     params.set("province_code", String(state.selectedLocation.province_code))

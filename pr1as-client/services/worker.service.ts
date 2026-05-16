@@ -5,8 +5,7 @@ import { api } from "@/lib/axios"
 import type { WorkerDetail, WorkerReviewItem, WorkerReviewStats, WorkerScheduleItem } from "@/types"
 
 export type WorkersGroupedFilters = {
-  q?: string
-  category?: string
+  categories?: string[]
   province_code?: number
   ward_code?: number | null
   schedule?: string
@@ -15,8 +14,7 @@ export type WorkersGroupedFilters = {
 const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
   if (!filters) return undefined
   const params: Record<string, string | number> = {}
-  if (filters.q?.trim()) params.q = filters.q.trim()
-  if (filters.category && filters.category !== "ALL") params.category = filters.category
+  if (filters.categories?.length) params.category = filters.categories.join(",")
   if (typeof filters.province_code === "number") {
     params.province_code = filters.province_code
     if (typeof filters.ward_code === "number") {

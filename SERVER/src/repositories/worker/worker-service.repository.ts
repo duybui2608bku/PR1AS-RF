@@ -6,7 +6,6 @@ import {
 import { modelsName } from "../../models/models.name";
 import mongoose, { PipelineStage } from "mongoose";
 import { ServiceCategory } from "../../types/service/service.type";
-import { escapeRegExp } from "../../utils/string";
 
 export interface UpsertWorkerServicePayload {
   serviceId: string;
@@ -21,8 +20,7 @@ interface UpdateWorkerServiceOptions {
 }
 
 export interface GroupedWorkersFilter {
-  q?: string;
-  category?: string;
+  categories?: string[];
   location?: {
     latitude: number;
     longitude: number;
@@ -177,15 +175,9 @@ class WorkerServiceRepository {
       }>;
     }>
   > {
-    const q = filters?.q?.trim();
-    const category = filters?.category?.trim();
-    const normalizedCategory = category?.toUpperCase();
-
-    const isParentCategory =
-      normalizedCategory &&
-      Object.values(ServiceCategory).includes(
-        normalizedCategory as ServiceCategory
-      );
+    const normalizedCategories = filters?.categories
+      ?.map((c) => c.trim().toUpperCase())
+      .filter(Boolean);
 
     const stages: PipelineStage[] = [
       {
@@ -214,38 +206,26 @@ class WorkerServiceRepository {
       },
     ];
 
-    if (normalizedCategory) {
-      if (isParentCategory) {
-        stages.push({
-          $match: {
-            "service.category": normalizedCategory,
-          },
-        });
-      } else {
-        stages.push({
-          $match: {
-            $or: [
-              { "service.code": normalizedCategory },
-              { service_code: normalizedCategory },
-            ],
-          },
-        });
-      }
-    }
+    if (normalizedCategories && normalizedCategories.length > 0) {
+      const parentCodes = normalizedCategories.filter((c) =>
+        Object.values(ServiceCategory).includes(c as ServiceCategory)
+      );
+      const serviceCodes = normalizedCategories.filter(
+        (c) => !Object.values(ServiceCategory).includes(c as ServiceCategory)
+      );
 
-    if (q) {
-      const qRegex = new RegExp(escapeRegExp(q), "i");
-      stages.push({
-        $match: {
-          $or: [
-            { "service.code": qRegex },
-            { "service.name.vi": qRegex },
-            { "service.name.en": qRegex },
-            { "service.name.zh": qRegex },
-            { "service.name.ko": qRegex },
-          ],
-        },
-      });
+      const orClauses: Record<string, unknown>[] = [];
+      if (parentCodes.length > 0) {
+        orClauses.push({ "service.category": { $in: parentCodes } });
+      }
+      if (serviceCodes.length > 0) {
+        orClauses.push({ "service.code": { $in: serviceCodes } });
+        orClauses.push({ service_code: { $in: serviceCodes } });
+      }
+
+      if (orClauses.length > 0) {
+        stages.push({ $match: { $or: orClauses } });
+      }
     }
 
     stages.push(

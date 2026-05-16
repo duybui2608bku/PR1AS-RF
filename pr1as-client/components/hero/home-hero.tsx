@@ -12,8 +12,6 @@ const DotLottieReact = dynamic(
 )
 import {
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
   Crown,
   HeartHandshake,
   LayoutGrid,
@@ -31,8 +29,8 @@ import {
 import { LocationSearchField } from "@/components/hero/location-search-field"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
@@ -58,10 +56,8 @@ const resolveIcon = (icon: string | null): LucideIcon => {
 }
 
 type HomeHeroProps = {
-  serviceQuery: string
-  onServiceQueryChange: (value: string) => void
-  activeCode: string
-  onActiveCodeChange: (code: string) => void
+  activeCodes: string[]
+  onToggleCode: (code: string) => void
   selectedLocation: LocationSearchResult | null
   onSelectedLocationChange: (value: LocationSearchResult | null) => void
   scheduledAt: Date | undefined
@@ -70,10 +66,8 @@ type HomeHeroProps = {
 }
 
 export function HomeHero({
-  serviceQuery,
-  onServiceQueryChange,
-  activeCode,
-  onActiveCodeChange,
+  activeCodes,
+  onToggleCode,
   selectedLocation,
   onSelectedLocationChange,
   scheduledAt,
@@ -110,12 +104,13 @@ export function HomeHero({
                 "sm:flex-row sm:divide-x sm:divide-y-0 sm:items-stretch sm:rounded-full sm:p-2 sm:divide-none sm:gap-0",
               )}
             >
-              <SearchField
-                label="Bạn cần dịch vụ gì?"
-                placeholder="Dịch vụ hỗ trợ"
-                value={serviceQuery}
-                onChange={onServiceQueryChange}
+              <ServicePickerField
+                services={services}
+                isLoading={isLoading}
+                activeCodes={activeCodes}
+                onToggle={onToggleCode}
               />
+
               <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
 
               <LocationSearchField
@@ -158,154 +153,82 @@ export function HomeHero({
             </div>
           </div>
         </div>
-
-        <FilterPillsRow
-          isLoading={isLoading}
-          services={services}
-          activeCode={activeCode}
-          onSelect={onActiveCodeChange}
-        />
       </div>
     </section>
   )
 }
 
-// ─── FilterPillsRow ───────────────────────────────────────────────────────────
+// ─── ServicePickerField ───────────────────────────────────────────────────────
 
-type FilterPillsRowProps = {
-  isLoading: boolean
+type ServicePickerFieldProps = {
   services: ServiceItem[]
-  activeCode: string
-  onSelect: (code: string) => void
+  isLoading: boolean
+  activeCodes: string[]
+  onToggle: (code: string) => void
 }
 
-function FilterPillsRow({ isLoading, services, activeCode, onSelect }: FilterPillsRowProps) {
-  const scrollRef = React.useRef<HTMLDivElement>(null)
-  const [canLeft, setCanLeft] = React.useState(false)
-  const [canRight, setCanRight] = React.useState(false)
-
-  const updateArrows = React.useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    setCanLeft(el.scrollLeft > 2)
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2)
-  }, [])
-
-  React.useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    el.addEventListener("scroll", updateArrows, { passive: true })
-    const ro = new ResizeObserver(updateArrows)
-    ro.observe(el)
-    return () => {
-      el.removeEventListener("scroll", updateArrows)
-      ro.disconnect()
+function ServicePickerField({ services, isLoading, activeCodes, onToggle }: ServicePickerFieldProps) {
+  const displayValue = React.useMemo(() => {
+    if (activeCodes.length === 0) return null
+    if (activeCodes.length === 1) {
+      const match = services.find((s) => s.code === activeCodes[0])
+      return match ? serviceService.getName(match.name) : activeCodes[0]
     }
-  }, [updateArrows])
-
-  React.useEffect(() => {
-    updateArrows()
-  }, [updateArrows, isLoading])
-
-  const scroll = (dir: "left" | "right") => {
-    scrollRef.current?.scrollBy({ left: dir === "left" ? -240 : 240, behavior: "smooth" })
-  }
+    return `${activeCodes.length} dịch vụ`
+  }, [activeCodes, services])
 
   return (
-    <div className="relative mt-8 flex items-center gap-2">
-      {/* Arrow Left — hidden on mobile */}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={() => scroll("left")}
-        disabled={!canLeft}
-        aria-label="Cuộn trái"
-        className="hidden sm:inline-flex shrink-0 rounded-full"
-      >
-        <ChevronLeft className="size-4" />
-      </Button>
-
-      {/* Scrollable pills */}
-      <div ref={scrollRef} className="overflow-x-auto scrollbar-none flex-1">
-        <div className="flex w-max items-center gap-2 pb-1">
-          <ServicePill
-            icon={LayoutGrid}
-            label="Tất cả"
-            isActive={activeCode === "ALL"}
-            onClick={() => onSelect("ALL")}
-          />
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-28 shrink-0 rounded-full" />
-              ))
-            : services.map((service) => (
-                <ServicePill
-                  key={service.id}
-                  icon={resolveIcon(service.icon)}
-                  label={serviceService.getName(service.name)}
-                  isActive={activeCode === service.code}
-                  onClick={() => onSelect(service.code)}
-                />
-              ))}
-        </div>
-      </div>
-
-      {/* Arrow Right — hidden on mobile */}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={() => scroll("right")}
-        disabled={!canRight}
-        aria-label="Cuộn phải"
-        className="hidden sm:inline-flex shrink-0 rounded-full"
-      >
-        <ChevronRight className="size-4" />
-      </Button>
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5 text-left",
+            "hover:bg-accent/50 transition-colors cursor-pointer",
+            "sm:py-2 sm:rounded-full",
+          )}
+        >
+          <span className="text-xs font-semibold text-foreground">Dịch vụ</span>
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="size-4 shrink-0 text-muted-foreground" />
+            <span className={cn("text-sm truncate", displayValue ? "text-foreground" : "text-muted-foreground")}>
+              {displayValue ?? "Chọn dịch vụ"}
+            </span>
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" sideOffset={8} className="w-64 p-2">
+        {isLoading ? (
+          <div className="flex flex-col gap-1">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <ServicePill
+              icon={LayoutGrid}
+              label="Tất cả"
+              isActive={activeCodes.length === 0}
+              onClick={() => onToggle("ALL")}
+            />
+            {services.map((service) => (
+              <ServicePill
+                key={service.id}
+                icon={resolveIcon(service.icon)}
+                label={serviceService.getName(service.name)}
+                isActive={activeCodes.includes(service.code)}
+                onClick={() => onToggle(service.code)}
+              />
+            ))}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }
 
-// ─── SearchField ──────────────────────────────────────────────────────────────
-
-type SearchFieldProps = {
-  label: string
-  placeholder: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  icon?: React.ReactNode
-}
-
-function SearchField({ label, placeholder, value, onChange, type = "text", icon }: SearchFieldProps) {
-  const id = React.useId()
-
-  return (
-    <div
-      className={cn(
-        "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5",
-        "hover:bg-accent/50 transition-colors cursor-text",
-        "sm:py-2 sm:rounded-full",
-      )}
-    >
-      <Label htmlFor={id} className="text-xs font-semibold text-foreground cursor-pointer">
-        {label}
-      </Label>
-      <div className="flex items-center gap-2">
-        {icon}
-        <Input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="h-auto border-none p-0 shadow-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground bg-transparent"
-        />
-      </div>
-    </div>
-  )
-}
+// ─── SearchDateField ──────────────────────────────────────────────────────────
 
 type SearchDateFieldProps = {
   label: string
@@ -359,7 +282,7 @@ function ServicePill({ icon: Icon, label, isActive, onClick }: ServicePillProps)
       variant="outline"
       size="sm"
       className={cn(
-        "rounded-full px-4 h-9 gap-2 font-medium whitespace-nowrap shrink-0",
+        "w-full justify-start rounded-full px-4 h-9 gap-2 font-medium",
         "data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:border-foreground",
       )}
     >

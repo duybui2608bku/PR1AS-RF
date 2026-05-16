@@ -24,7 +24,6 @@ const integerCode = z
   .pipe(z.number().int().positive());
 
 export const workerGroupedByServiceQuerySchema = z.object({
-  q: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   location: z.preprocess(
     emptyToUndefined,
     z
@@ -44,7 +43,12 @@ export const workerGroupedByServiceQuerySchema = z.object({
   province_code: z.preprocess(emptyToUndefined, integerCode.optional()),
   ward_code: z.preprocess(emptyToUndefined, integerCode.optional()),
   schedule: z.preprocess(emptyToUndefined, scheduleSchema.optional()),
-  category: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
+  category: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().min(1)
+      .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean))
+      .optional()
+  ),
 });
 
 export type WorkerGroupedByServiceQuery = z.infer<
