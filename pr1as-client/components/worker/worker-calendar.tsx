@@ -64,7 +64,7 @@ export function WorkerCalendar({ workerId }: Props) {
   )
 
   return (
-    <div className="rounded-2xl border bg-card p-3 shadow-sm">
+    <div className="rounded-2xl border bg-card shadow-sm">
       <Calendar
         mode="single"
         month={month}
