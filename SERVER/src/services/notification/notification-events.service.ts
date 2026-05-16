@@ -318,8 +318,10 @@ export class NotificationEventService {
         conversation_group_id: input.conversationGroupId,
       },
       link: input.isGroup
-        ? `/chat/group?group=${input.conversationGroupId || ""}`
-        : "/chat",
+        ? `/chat?conversation_group_id=${input.conversationGroupId || ""}`
+        : input.conversationId
+          ? `/chat?conversation_id=${input.conversationId}`
+          : "/chat",
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.NORMAL,
       dedupe_key: `chat-message:${input.messageId}`,

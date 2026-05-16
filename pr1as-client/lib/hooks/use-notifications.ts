@@ -49,3 +49,14 @@ export function useMarkAllNotificationsAsRead() {
     },
   })
 }
+
+export function useMarkNotificationsByConversation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (params: { conversation_id?: string; conversation_group_id?: string }) =>
+      notificationService.markAsReadByConversation(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: NOTIFICATION_KEYS.all })
+    },
+  })
+}

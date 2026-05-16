@@ -46,6 +46,7 @@ import {
   useSendDirectMessage,
   useSendGroupMessage,
 } from "@/lib/hooks/use-chat"
+import { useMarkNotificationsByConversation } from "@/lib/hooks/use-notifications"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -499,6 +500,7 @@ export function ChatPage({
   const sendGroupMessageMutation = useSendGroupMessage()
   const { mutate: markDirectMessagesReadMutation } = useMarkDirectMessagesRead()
   const { mutate: markGroupMessagesReadMutation } = useMarkGroupMessagesRead()
+  const { mutate: markNotificationsByConversation } = useMarkNotificationsByConversation()
   const deleteDirectMessageMutation = useDeleteDirectMessage()
 
   const filteredDirectConversations = React.useMemo(() => {
@@ -778,6 +780,9 @@ export function ChatPage({
     scroller.scrollTo({ top: scroller.scrollHeight })
   }, [activeMessages.length, activeDirectId, activeGroupId, mode])
 
+  const notifSyncedDirectRef = React.useRef<string | null>(null)
+  const notifSyncedGroupRef = React.useRef<string | null>(null)
+
   React.useEffect(() => {
     if (
       mode !== "direct" ||
@@ -795,15 +800,20 @@ export function ChatPage({
 
     if (socket?.connected) {
       socket.emit("mark_read", { conversation_id: activeDirectId })
-      return
+    } else {
+      markDirectMessagesReadMutation({ conversation_id: activeDirectId })
     }
 
-    markDirectMessagesReadMutation({ conversation_id: activeDirectId })
+    if (notifSyncedDirectRef.current !== activeDirectId) {
+      notifSyncedDirectRef.current = activeDirectId
+      markNotificationsByConversation({ conversation_id: activeDirectId })
+    }
   }, [
     activeDirectId,
     directMessages,
     isDirectComposerOpen,
     markDirectMessagesReadMutation,
+    markNotificationsByConversation,
     mode,
     socket,
     user?.id,
@@ -824,14 +834,19 @@ export function ChatPage({
 
     if (socket?.connected) {
       socket.emit("mark_group_read", { conversation_group_id: activeGroupId })
-      return
+    } else {
+      markGroupMessagesReadMutation({ conversation_group_id: activeGroupId })
     }
 
-    markGroupMessagesReadMutation({ conversation_group_id: activeGroupId })
+    if (notifSyncedGroupRef.current !== activeGroupId) {
+      notifSyncedGroupRef.current = activeGroupId
+      markNotificationsByConversation({ conversation_group_id: activeGroupId })
+    }
   }, [
     activeGroupId,
     groupMessages,
     markGroupMessagesReadMutation,
+    markNotificationsByConversation,
     mode,
     socket,
     user?.id,

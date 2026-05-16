@@ -226,6 +226,22 @@ export class NotificationService {
     return { updated_count: updatedCount };
   }
 
+  async markAsReadByConversation(
+    userId: string,
+    conversationId?: string,
+    conversationGroupId?: string
+  ): Promise<{ updated_count: number }> {
+    const updatedCount = await notificationRepository.markAsReadByConversation(
+      userId,
+      conversationId,
+      conversationGroupId
+    );
+    if (updatedCount > 0) {
+      await this.emitUnreadCount(userId);
+    }
+    return { updated_count: updatedCount };
+  }
+
   async getPreferences(
     userId: string
   ): Promise<INotificationPreferenceDocument> {

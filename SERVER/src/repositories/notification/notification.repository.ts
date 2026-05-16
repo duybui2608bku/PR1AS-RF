@@ -8,6 +8,7 @@ import {
 import {
   NotificationChannel,
   NotificationDeliveryStatus,
+  NotificationType,
 } from "../../constants/notification";
 import type {
   INotificationDocument,
@@ -155,6 +156,34 @@ export class NotificationRepository {
         updated_at: new Date(),
       }
     );
+
+    return result.modifiedCount;
+  }
+
+  async markAsReadByConversation(
+    userId: string,
+    conversationId?: string,
+    conversationGroupId?: string
+  ): Promise<number> {
+    if (!conversationId && !conversationGroupId) return 0;
+
+    const filter: Record<string, unknown> = {
+      recipient_id: new Types.ObjectId(userId),
+      read_at: null,
+      type: conversationGroupId
+        ? NotificationType.CHAT_GROUP_MESSAGE
+        : NotificationType.CHAT_MESSAGE,
+    };
+
+    if (conversationId) {
+      filter["data.conversation_id"] = conversationId;
+    } else {
+      filter["data.conversation_group_id"] = conversationGroupId;
+    }
+
+    const result = await Notification.updateMany(filter, {
+      $set: { read_at: new Date(), updated_at: new Date() },
+    });
 
     return result.modifiedCount;
   }

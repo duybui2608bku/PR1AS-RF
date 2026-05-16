@@ -72,6 +72,14 @@ router.patch(
 );
 
 router.patch(
+  "/read-by-conversation",
+  authenticate,
+  asyncHandler<AuthRequest>(
+    notificationController.markAsReadByConversation.bind(notificationController)
+  )
+);
+
+router.patch(
   "/:id/read",
   authenticate,
   asyncHandler<AuthRequest>(

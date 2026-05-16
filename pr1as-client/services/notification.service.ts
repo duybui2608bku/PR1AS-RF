@@ -15,6 +15,8 @@ export type Notification = {
   title: string
   body: string
   data?: Record<string, unknown>
+  link?: string | null
+  read_at?: string | null
   is_read: boolean
   created_at: string
   updated_at: string
@@ -156,12 +158,14 @@ const localizeNotificationText = (
   return localized
 }
 
-const normalizeNotification = (notification: Notification): Notification => {
-  const fallback = getNotificationFallback(notification)
+const normalizeNotification = (raw: Notification): Notification => {
+  const fallback = getNotificationFallback(raw)
   return {
-    ...notification,
-    title: localizeNotificationText(notification.title, fallback?.title),
-    body: localizeNotificationText(notification.body, fallback?.body),
+    ...raw,
+    is_read: raw.read_at !== null && raw.read_at !== undefined,
+    link: raw.link ?? null,
+    title: localizeNotificationText(raw.title, fallback?.title),
+    body: localizeNotificationText(raw.body, fallback?.body),
   }
 }
 
@@ -187,6 +191,14 @@ export const notificationService = {
 
   markAllAsRead: async () => {
     const { data } = await api.patch("/notifications/read-all")
+    return data
+  },
+
+  markAsReadByConversation: async (params: {
+    conversation_id?: string
+    conversation_group_id?: string
+  }) => {
+    const { data } = await api.patch("/notifications/read-by-conversation", params)
     return data
   },
 }

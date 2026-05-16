@@ -5,10 +5,14 @@ import { Bell, CheckCheck, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
+import { useSwitchRole } from "@/lib/hooks/use-auth"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { getActiveRole } from "@/lib/auth/roles"
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -17,9 +21,32 @@ import {
 } from "@/lib/hooks/use-notifications"
 import type { Notification } from "@/services/notification.service"
 
+function getNotificationUrl(notif: Notification): string | null {
+  if (notif.type === "chat.message") {
+    const cid = notif.data?.conversation_id as string | undefined
+    return cid ? `/chat?conversation_id=${cid}` : (notif.link ?? null)
+  }
+  if (notif.type === "chat.group_message") {
+    const gid = notif.data?.conversation_group_id as string | undefined
+    return gid ? `/chat?conversation_group_id=${gid}` : (notif.link ?? null)
+  }
+  return notif.link ?? null
+}
+
+function getRequiredRole(url: string): "worker" | "client" | null {
+  if (url.startsWith("/worker")) return "worker"
+  if (url.startsWith("/client")) return "client"
+  return null
+}
+
 export function NotificationBell() {
   const [open, setOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
+  const user = useAuthStore((s) => s.user)
+  const setUser = useAuthStore((s) => s.setUser)
+  const switchRoleMutation = useSwitchRole()
 
   const { data: unreadData } = useUnreadNotificationCount()
   const { data: notifData, isLoading } = useNotifications({ page: 1, limit: 10 })
@@ -31,14 +58,6 @@ export function NotificationBell() {
 
   useClickOutside(dropdownRef, () => setOpen(false), open)
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await markAsReadMutation.mutateAsync(id)
-    } catch {
-      toast.error("Không thể đánh dấu đã đọc.")
-    }
-  }
-
   const handleMarkAllAsRead = async () => {
     try {
       await markAllMutation.mutateAsync()
@@ -46,6 +65,30 @@ export function NotificationBell() {
     } catch {
       toast.error("Không thể đánh dấu tất cả đã đọc.")
     }
+  }
+
+  const handleItemClick = async (notif: Notification) => {
+    try {
+      if (!notif.is_read) {
+        await markAsReadMutation.mutateAsync(notif.id)
+      }
+    } catch {
+      toast.error("Không thể đánh dấu đã đọc.")
+    }
+
+    const url = getNotificationUrl(notif)
+    if (url) {
+      const requiredRole = getRequiredRole(url)
+      const currentRole = getActiveRole(user)
+      if (requiredRole && currentRole !== requiredRole && user) {
+        // Cập nhật role ngay lập tức (optimistic) để cookie được set trước khi navigate
+        setUser({ ...user, last_active_role: requiredRole })
+        // Persist lên server ở background
+        switchRoleMutation.mutate({ last_active_role: requiredRole })
+      }
+      router.push(url)
+    }
+    setOpen(false)
   }
 
   return (
@@ -101,7 +144,7 @@ export function NotificationBell() {
                 <NotificationItem
                   key={notif.id}
                   notification={notif}
-                  onRead={handleMarkAsRead}
+                  onClick={() => handleItemClick(notif)}
                   isMarking={markAsReadMutation.isPending && markAsReadMutation.variables === notif.id}
                 />
               ))
@@ -115,11 +158,11 @@ export function NotificationBell() {
 
 function NotificationItem({
   notification,
-  onRead,
+  onClick,
   isMarking,
 }: {
   notification: Notification
-  onRead: (id: string) => void
+  onClick: () => void
   isMarking: boolean
 }) {
   return (
@@ -129,7 +172,7 @@ function NotificationItem({
         "hover:bg-accent flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
         !notification.is_read && "bg-blue-50/50 dark:bg-blue-950/20",
       )}
-      onClick={() => !notification.is_read && onRead(notification.id)}
+      onClick={onClick}
       disabled={isMarking}
     >
       <div className="mt-0.5 shrink-0">

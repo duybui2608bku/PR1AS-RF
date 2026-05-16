@@ -58,6 +58,20 @@ export class NotificationController {
     );
   }
 
+  async markAsReadByConversation(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { conversation_id, conversation_group_id } = req.body as {
+      conversation_id?: string;
+      conversation_group_id?: string;
+    };
+    const result = await notificationService.markAsReadByConversation(
+      userId,
+      conversation_id,
+      conversation_group_id
+    );
+    R.success(res, result, NOTIFICATION_MESSAGES.NOTIFICATIONS_MARKED_READ, req);
+  }
+
   async getPreferences(req: AuthRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const result = await notificationService.getPreferences(userId);

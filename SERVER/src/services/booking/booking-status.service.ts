@@ -32,8 +32,10 @@ export class BookingStatusService extends BookingBaseService {
     this.validateStatusTransition(booking.status as BookingStatus, status);
 
     if (status === BookingStatus.CONFIRMED) {
+      const workerIdRaw = booking.worker_id as unknown as { _id?: unknown }
+      const workerId = String(workerIdRaw?._id ?? booking.worker_id)
       await this.validateScheduleConflict(
-        booking.worker_id.toString(),
+        workerId,
         booking.schedule.start_time,
         booking.schedule.end_time,
         bookingId
