@@ -141,7 +141,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   const handleToggleFavorite = React.useCallback(
     (workerId: string, favorite: boolean) => {
       if (!isAuthenticated) {
-        toast.info("Vui lÃ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ lÆ°u worker yÃªu thÃ­ch.")
+        toast.info("Vui lòng đăng nhập để lưu worker yêu thích.")
         router.push(`/login?from=${encodeURIComponent(pathname)}`)
         return
       }
@@ -150,7 +150,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         { workerId, favorite },
         {
           onError: () => {
-            toast.error("KhÃ´ng thá»ƒ cáº­p nháº­t danh sÃ¡ch yÃªu thÃ­ch.")
+            toast.error("Không thể cập nhật danh sách yêu thích.")
           },
         },
       )

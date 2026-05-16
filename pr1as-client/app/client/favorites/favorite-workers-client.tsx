@@ -16,7 +16,7 @@ import { workerService } from "@/services/worker.service"
 import type { WorkerFavorite, WorkerServicePricing } from "@/types"
 
 const formatPricing = (pricing: WorkerServicePricing[]) => {
-  if (!pricing.length) return "Chua co bang gia"
+  if (!pricing.length) return "Chưa có bảng giá"
 
   const item = [...pricing].sort((a, b) => a.price - b.price)[0]
   const currencyMap: Record<string, string> = { VND: "d", USD: "$" }
@@ -27,10 +27,10 @@ const formatPricing = (pricing: WorkerServicePricing[]) => {
       : `${symbol}${new Intl.NumberFormat("en-US").format(item.price)}`
   const unit =
     item.unit === "HOURLY"
-      ? "gio"
+      ? "giờ"
       : item.unit === "DAILY"
-        ? "ngay"
-        : "thang"
+        ? "ngày"
+        : "tháng"
 
   return `${value} / ${unit}`
 }
@@ -93,14 +93,14 @@ function FavoriteWorkerCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-              Chua co anh
+              Chưa có ảnh
             </div>
           )}
         </div>
         <div className="space-y-3 p-4">
           <div className="min-w-0">
             <p className="line-clamp-1 font-semibold">
-              {worker.full_name ?? "Chua cap nhat ten"}
+              {worker.full_name ?? "Chưa cập nhật tên"}
             </p>
             {worker.worker_profile?.title ? (
               <p className="line-clamp-1 text-sm text-muted-foreground">
@@ -158,8 +158,8 @@ export function FavoriteWorkersClient() {
     toggleFavoriteMutation.mutate(
       { workerId, favorite: false },
       {
-        onSuccess: () => toast.success("Da bo worker khoi danh sach yeu thich."),
-        onError: () => toast.error("Khong the cap nhat danh sach yeu thich."),
+        onSuccess: () => toast.success("Đã bỏ worker khỏi danh sách yêu thích."),
+        onError: () => toast.error("Không thể cập nhật danh sách yêu thích."),
       },
     )
   }
@@ -172,10 +172,10 @@ export function FavoriteWorkersClient() {
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Worker yeu thich
+            Worker yêu thích
           </h1>
           <p className="text-sm text-muted-foreground">
-            Danh sach worker ban da luu tu trang dich vu.
+            Danh sách worker bạn đã lưu từ trang dịch vụ.
           </p>
         </div>
       </div>
@@ -184,7 +184,7 @@ export function FavoriteWorkersClient() {
 
       {!favoritesQuery.isLoading && favoritesQuery.isError ? (
         <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          Khong the tai danh sach worker yeu thich.
+          Không thể tải danh sách worker yêu thích.
         </div>
       ) : null}
 
@@ -192,12 +192,12 @@ export function FavoriteWorkersClient() {
       !favoritesQuery.isError &&
       favorites.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="font-medium">Chua co worker yeu thich</p>
+          <p className="font-medium">Chưa có worker yêu thích</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Bam icon tim tren worker card de luu worker vao danh sach nay.
+            Bấm icon tim trên worker card để lưu worker vào danh sách này.
           </p>
           <Button className="mt-4" asChild>
-            <Link href="/services">Tim worker</Link>
+            <Link href="/services">Tìm worker</Link>
           </Button>
         </div>
       ) : null}

@@ -6,8 +6,9 @@ import { AlertCircle } from "lucide-react"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useWorkerDetail } from "@/lib/hooks/use-worker"
+import { useFavoriteWorkerIds, useToggleFavoriteWorker, useWorkerDetail } from "@/lib/hooks/use-worker"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { toast } from "sonner"
 import { WorkerCalendar } from "@/components/worker/worker-calendar"
 import { WorkerInfoCards } from "@/components/worker/worker-info-cards"
 import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
@@ -26,7 +27,23 @@ export default function WorkerProfilePage({
   const { id } = use(params)
   const { data, isLoading, error } = useWorkerDetail(id)
   const currentUserId = useAuthStore((s) => s.user?.id)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isOwnProfile = Boolean(currentUserId && currentUserId === id)
+
+  const favoriteIdsQuery = useFavoriteWorkerIds()
+  const toggleFavoriteMutation = useToggleFavoriteWorker()
+  const isFavorite = favoriteIdsQuery.data?.includes(id) ?? false
+
+  const handleToggleFavorite = () => {
+    if (!isAuthenticated) {
+      toast.info("Vui lòng đăng nhập để lưu worker yêu thích.")
+      return
+    }
+    toggleFavoriteMutation.mutate(
+      { workerId: id, favorite: !isFavorite },
+      { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") },
+    )
+  }
 
   return (
     <SiteLayout>
@@ -50,6 +67,12 @@ export default function WorkerProfilePage({
                 <WorkerProfileHeader
                   worker={data}
                   isOwnProfile={isOwnProfile}
+                  isFavorite={isFavorite}
+                  isFavoritePending={
+                    toggleFavoriteMutation.isPending &&
+                    toggleFavoriteMutation.variables?.workerId === id
+                  }
+                  onToggleFavorite={isOwnProfile ? undefined : handleToggleFavorite}
                 />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
                   <div className="space-y-4">

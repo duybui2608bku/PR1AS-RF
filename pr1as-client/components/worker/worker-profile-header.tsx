@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Mars, Pencil, ShieldCheck, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { AlertTriangle, Heart, Loader2, Mars, Pencil, ShieldCheck, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -47,9 +47,18 @@ const HOBBY_COLORS = [
 type Props = {
   worker: WorkerDetail
   isOwnProfile?: boolean
+  isFavorite?: boolean
+  isFavoritePending?: boolean
+  onToggleFavorite?: () => void
 }
 
-export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
+export function WorkerProfileHeader({
+  worker,
+  isOwnProfile = false,
+  isFavorite = false,
+  isFavoritePending = false,
+  onToggleFavorite,
+}: Props) {
   const router = useRouter()
   const profile = worker.worker_profile
   const stats = worker.review_stats
@@ -163,6 +172,29 @@ export function WorkerProfileHeader({ worker, isOwnProfile = false }: Props) {
                   onClick={() => router.push("/worker/setup")}
                 >
                   <Pencil className="size-3.5" />
+                </Button>
+              ) : onToggleFavorite ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={onToggleFavorite}
+                  disabled={isFavoritePending}
+                  aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                  title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                >
+                  {isFavoritePending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Heart
+                      className={
+                        isFavorite
+                          ? "size-4 fill-red-500 text-red-500"
+                          : "size-4"
+                      }
+                    />
+                  )}
                 </Button>
               ) : null}
             </div>

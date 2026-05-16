@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -146,11 +146,11 @@ const WorkerCard = ({
           type="button"
           aria-label={
             isFavorite
-              ? "Bá» worker khá»i yÃªu thÃ­ch"
-              : "ThÃªm worker vÃ o yÃªu thÃ­ch"
+              ? "Bá» worker khá»i Yêu thích"
+              : "ThÃªm worker vÃ o Yêu thích"
           }
           aria-pressed={isFavorite}
-          title={isFavorite ? "Bá» yÃªu thÃ­ch" : "YÃªu thÃ­ch"}
+          title={isFavorite ? "Bá» Yêu thích" : "Yêu thích"}
           disabled={isFavoritePending}
           onClick={(event) => {
             event.preventDefault()
