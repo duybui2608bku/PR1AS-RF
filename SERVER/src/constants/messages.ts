@@ -225,7 +225,12 @@ export const ESCROW_MESSAGES = {
 export const WORKER_MESSAGES = {
   WORKERS_GROUPED_BY_SERVICE_FETCHED:
     "Workers grouped by service fetched successfully",
+  WORKER_SUGGESTIONS_FETCHED: "Worker suggestions fetched successfully",
   LOCATION_SUGGESTIONS_FETCHED: "Location suggestions fetched successfully",
+  FAVORITE_WORKERS_FETCHED: "Favorite workers fetched successfully",
+  FAVORITE_WORKER_ADDED: "Worker added to favorites successfully",
+  FAVORITE_WORKER_REMOVED: "Worker removed from favorites successfully",
+  CANNOT_FAVORITE_SELF: "You cannot add yourself to favorites",
 } as const;
 
 export const POST_MESSAGES = {
@@ -296,7 +301,10 @@ export const PRICING_MESSAGES = {
 } as const;
 
 export const REPUTATION_MESSAGES = {
-  TOO_LOW_FOR_BOOKING: "Điểm uy tín của bạn quá thấp để tạo booking (cần tối thiểu 30 điểm)",
-  TOO_LOW_FOR_POST: "Điểm uy tín của bạn quá thấp để đăng bài (cần tối thiểu 30 điểm)",
-  TOO_LOW_FOR_COMMENT: "Điểm uy tín của bạn quá thấp để bình luận (cần tối thiểu 30 điểm)",
+  TOO_LOW_FOR_BOOKING:
+    "Điểm uy tín của bạn quá thấp để tạo booking (cần tối thiểu 30 điểm)",
+  TOO_LOW_FOR_POST:
+    "Điểm uy tín của bạn quá thấp để đăng bài (cần tối thiểu 30 điểm)",
+  TOO_LOW_FOR_COMMENT:
+    "Điểm uy tín của bạn quá thấp để bình luận (cần tối thiểu 30 điểm)",
 } as const;

@@ -47,7 +47,10 @@ export default function WorkerProfilePage({
 
             {data ? (
               <div className="space-y-6">
-                <WorkerProfileHeader worker={data} isOwnProfile={isOwnProfile} />
+                <WorkerProfileHeader
+                  worker={data}
+                  isOwnProfile={isOwnProfile}
+                />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
                   <div className="space-y-4">
                     <WorkerStatCards profile={data.worker_profile} />
@@ -60,7 +63,9 @@ export default function WorkerProfilePage({
                       workerId={data.user.id}
                       workerName={data.user.full_name ?? "worker"}
                       services={data.services ?? []}
-                      workerReputationScore={data.user.meta_data?.reputation_score}
+                      workerReputationScore={
+                        data.user.meta_data?.reputation_score
+                      }
                     />
                   </aside>
                 </div>
@@ -68,7 +73,7 @@ export default function WorkerProfilePage({
             ) : null}
           </div>
           <aside className="hidden xl:block">
-            <WorkerSuggestions />
+            <WorkerSuggestions workerId={id} />
           </aside>
         </div>
       </div>

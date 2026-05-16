@@ -1,6 +1,16 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
-import { AlertCircle, ArrowRight, Info, MapPin, X } from "lucide-react"
+import {
+  AlertCircle,
+  ArrowRight,
+  Heart,
+  Info,
+  Loader2,
+  MapPin,
+  X,
+} from "lucide-react"
 import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -55,15 +65,23 @@ const formatPricing = (pricing: Pricing[]) => {
   }
 }
 
-const WorkerCard = ({ worker }: { worker: Worker }) => {
+const WorkerCard = ({
+  worker,
+  isFavorite = false,
+  isFavoritePending = false,
+  onToggleFavorite,
+}: {
+  worker: Worker
+  isFavorite?: boolean
+  isFavoritePending?: boolean
+  onToggleFavorite?: (workerId: string, favorite: boolean) => void
+}) => {
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
   const { label, prefix } = formatPricing(worker.pricing)
 
   return (
-    <Link
-      href={`/worker/${worker.id}`}
-      className="cursor-pointer group relative overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md flex-none w-[44vw] sm:w-auto snap-start block"
-    >
+    <article className="group relative flex-none w-[44vw] overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto snap-start">
+      <Link href={`/worker/${worker.id}`} className="block cursor-pointer">
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
         {imageSrc ? (
           <Image
@@ -122,7 +140,37 @@ const WorkerCard = ({ worker }: { worker: Worker }) => {
           </p>
         </div>
       </div>
-    </Link>
+      </Link>
+      {onToggleFavorite ? (
+        <button
+          type="button"
+          aria-label={
+            isFavorite
+              ? "Bá» worker khá»i yÃªu thÃ­ch"
+              : "ThÃªm worker vÃ o yÃªu thÃ­ch"
+          }
+          aria-pressed={isFavorite}
+          title={isFavorite ? "Bá» yÃªu thÃ­ch" : "YÃªu thÃ­ch"}
+          disabled={isFavoritePending}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onToggleFavorite(worker.id, !isFavorite)
+          }}
+          className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
+        >
+          {isFavoritePending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Heart
+              className={
+                isFavorite ? "size-4 fill-red-500 text-red-500" : "size-4"
+              }
+            />
+          )}
+        </button>
+      ) : null}
+    </article>
   )
 }
 
@@ -139,6 +187,9 @@ type WorkersByServiceListProps = {
   isFetching?: boolean
   appliedFilters?: AppliedFilterChip[]
   onClearAllFilters?: () => void
+  favoriteWorkerIds?: Set<string>
+  favoritePendingWorkerId?: string | null
+  onToggleFavorite?: (workerId: string, favorite: boolean) => void
 }
 
 const markdownComponents: Components = {
@@ -242,6 +293,9 @@ export const WorkersByServiceList = ({
   isFetching = false,
   appliedFilters = [],
   onClearAllFilters,
+  favoriteWorkerIds,
+  favoritePendingWorkerId,
+  onToggleFavorite,
 }: WorkersByServiceListProps) => {
   const hasActiveFilters = appliedFilters.length > 0
 
@@ -351,7 +405,13 @@ export const WorkersByServiceList = ({
               scrollbar-none
             ">
               {group.workers.map((worker) => (
-                <WorkerCard key={worker.id} worker={worker} />
+                <WorkerCard
+                  key={worker.id}
+                  worker={worker}
+                  isFavorite={favoriteWorkerIds?.has(worker.id) ?? false}
+                  isFavoritePending={favoritePendingWorkerId === worker.id}
+                  onToggleFavorite={onToggleFavorite}
+                />
               ))}
             </div>
           </div>

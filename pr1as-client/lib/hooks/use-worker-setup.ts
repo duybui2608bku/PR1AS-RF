@@ -8,7 +8,7 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import type { WorkerProfileUpdateInput, WorkerServiceUpsertPayload } from "@/types"
 
 export function useMyWorkerServices() {
-  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return useQuery({
     queryKey: queryKeys.workers.myServices,
@@ -19,7 +19,7 @@ export function useMyWorkerServices() {
         return []
       }
     },
-    enabled: Boolean(token),
+    enabled: isAuthenticated,
     staleTime: 30_000,
     retry: false,
   })
@@ -27,16 +27,15 @@ export function useMyWorkerServices() {
 
 export function useUpdateWorkerProfile() {
   const queryClient = useQueryClient()
-  const token = useAuthStore((s) => s.token)
-  const setAuth = useAuthStore((s) => s.setAuth)
+  const setUser = useAuthStore((s) => s.setUser)
   const userId = useAuthStore((s) => s.user?.id)
 
   return useMutation({
     mutationFn: (payload: WorkerProfileUpdateInput) =>
       workerProfileService.updateWorkerProfile(payload),
     onSuccess: (data) => {
-      if (!token || !data?.user) return
-      setAuth({ user: data.user, token })
+      if (!data?.user) return
+      setUser(data.user)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       const id = data.user.id ?? userId
       if (id) {

@@ -285,6 +285,72 @@ export type WorkerDetail = {
   reviews?: WorkerReviewItem[]
 }
 
+export type WorkerSuggestion = {
+  id: string
+  full_name: string | null
+  avatar: string | null
+  worker_profile: {
+    title: string | null
+    introduction: string | null
+    gallery_urls: string[]
+    work_locations: WorkLocationRef[]
+  } | null
+  matched_service: {
+    id: string
+    code: string
+    name: {
+      en?: string | null
+      vi?: string | null
+      zh?: string | null
+      ko?: string | null
+    }
+    category: string
+  }
+  pricing: WorkerServicePricing | null
+  review_stats: {
+    total: number
+    average: number
+  }
+  completed_bookings: number
+  price_difference_percent: number | null
+}
+
+export type WorkerFavoriteService = {
+  service_id: string
+  service_code: string
+  pricing: WorkerServicePricing[]
+  service: {
+    id: string
+    code: string
+    name: {
+      en?: string | null
+      vi?: string | null
+      zh?: string | null
+      ko?: string | null
+    }
+    category: string
+  } | null
+}
+
+export type WorkerFavorite = {
+  id: string
+  favorited_at: string
+  full_name: string | null
+  avatar: string | null
+  worker_profile: {
+    title: string | null
+    introduction: string | null
+    gallery_urls: string[]
+    work_locations: WorkLocationRef[]
+  } | null
+  services: WorkerFavoriteService[]
+}
+
+export type WorkerFavoriteMutationResult = {
+  worker_id: string
+  is_favorite: boolean
+}
+
 export type WorkerScheduleItem = {
   booking_id: string
   start_time: string

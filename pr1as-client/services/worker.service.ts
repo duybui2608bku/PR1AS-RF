@@ -2,7 +2,15 @@ import { AxiosError } from "axios"
 import { cache } from "react"
 
 import { api } from "@/lib/axios"
-import type { WorkerDetail, WorkerReviewItem, WorkerReviewStats, WorkerScheduleItem } from "@/types"
+import type {
+  WorkerDetail,
+  WorkerFavorite,
+  WorkerFavoriteMutationResult,
+  WorkerReviewItem,
+  WorkerReviewStats,
+  WorkerScheduleItem,
+  WorkerSuggestion,
+} from "@/types"
 
 export type WorkersGroupedFilters = {
   categories?: string[]
@@ -37,7 +45,9 @@ type ApiWorkerReviewStats =
   | {
       total_reviews?: number
       average_rating?: number
-      rating_distribution?: Partial<Record<1 | 2 | 3 | 4 | 5 | "1" | "2" | "3" | "4" | "5", number>>
+      rating_distribution?: Partial<
+        Record<1 | 2 | 3 | 4 | 5 | "1" | "2" | "3" | "4" | "5", number>
+      >
     }
 
 type ApiWorkerDetail = Omit<WorkerDetail, "review_stats"> & {
@@ -47,7 +57,7 @@ type ApiWorkerDetail = Omit<WorkerDetail, "review_stats"> & {
 const getReviewStatValue = (
   stats: ApiWorkerReviewStats | undefined,
   key: keyof WorkerReviewStats,
-  apiKey: "total_reviews" | "average_rating",
+  apiKey: "total_reviews" | "average_rating"
 ): number | undefined => {
   if (!stats) return undefined
   const frontendValue = (stats as WorkerReviewStats)[key]
@@ -57,7 +67,7 @@ const getReviewStatValue = (
 }
 
 const getReviewDistribution = (
-  stats: ApiWorkerReviewStats | undefined,
+  stats: ApiWorkerReviewStats | undefined
 ): WorkerReviewStats["distribution"] => {
   if (!stats) return undefined
   const source = stats as {
@@ -69,7 +79,7 @@ const getReviewDistribution = (
 
 const normalizeReviewStats = (
   stats: ApiWorkerReviewStats | undefined,
-  reviews: WorkerReviewItem[] | undefined,
+  reviews: WorkerReviewItem[] | undefined
 ): WorkerReviewStats => {
   const fallbackTotal = reviews?.length ?? 0
   const fallbackAverage =
@@ -79,7 +89,8 @@ const normalizeReviewStats = (
 
   return {
     total: getReviewStatValue(stats, "total", "total_reviews") ?? fallbackTotal,
-    average: getReviewStatValue(stats, "average", "average_rating") ?? fallbackAverage,
+    average:
+      getReviewStatValue(stats, "average", "average_rating") ?? fallbackAverage,
     distribution: getReviewDistribution(stats),
   }
 }
@@ -129,13 +140,13 @@ const getFallbackName = (name: WorkerGroupedByService["service"]["name"]) =>
   name.vi ?? name.en ?? name.zh ?? name.ko ?? "Dịch vụ"
 
 const fetchGroupedByService = async (
-  filters?: WorkersGroupedFilters,
+  filters?: WorkersGroupedFilters
 ): Promise<WorkerGroupedByService[]> => {
   const params = buildGroupedParams(filters)
   try {
     const response = await api.get<ApiResponse<WorkerGroupedByService[]>>(
       "/workers/grouped-by-service",
-      { params },
+      { params }
     )
     return response.data.data ?? []
   } catch (error) {
@@ -143,17 +154,16 @@ const fetchGroupedByService = async (
     if (axiosError.response?.status !== 404) {
       throw error
     }
-    const fallbackResponse = await api.get<ApiResponse<WorkerGroupedByService[]>>(
-      "/worker/grouped-by-service",
-      { params },
-    )
+    const fallbackResponse = await api.get<
+      ApiResponse<WorkerGroupedByService[]>
+    >("/worker/grouped-by-service", { params })
     return fallbackResponse.data.data ?? []
   }
 }
 
 const getWorkersGroupedByService = cache(
   (filters?: WorkersGroupedFilters): Promise<WorkerGroupedByService[]> =>
-    fetchGroupedByService(filters),
+    fetchGroupedByService(filters)
 )
 
 const getWorkerById = async (id: string): Promise<WorkerDetail> => {
@@ -170,18 +180,65 @@ const getWorkerById = async (id: string): Promise<WorkerDetail> => {
 
 const getWorkerSchedule = async (
   id: string,
-  params: { start_date: string; end_date: string },
+  params: { start_date: string; end_date: string }
 ): Promise<WorkerScheduleItem[]> => {
   const response = await api.get<ApiResponse<WorkerScheduleItem[]>>(
     `/workers/${id}/schedule`,
-    { params },
+    { params }
   )
   return response.data.data ?? []
+}
+
+const getWorkerSuggestions = async (
+  id: string,
+  limit = 4
+): Promise<WorkerSuggestion[]> => {
+  const response = await api.get<ApiResponse<WorkerSuggestion[]>>(
+    `/workers/${id}/suggestions`,
+    { params: { limit } }
+  )
+  return response.data.data ?? []
+}
+
+const getFavoriteWorkerIds = async (): Promise<string[]> => {
+  const response =
+    await api.get<ApiResponse<string[]>>("/workers/favorite-ids")
+  return response.data.data ?? []
+}
+
+const getFavoriteWorkers = async (): Promise<WorkerFavorite[]> => {
+  const response = await api.get<ApiResponse<WorkerFavorite[]>>(
+    "/workers/favorites"
+  )
+  return response.data.data ?? []
+}
+
+const addFavoriteWorker = async (
+  workerId: string
+): Promise<WorkerFavoriteMutationResult> => {
+  const response = await api.post<ApiResponse<WorkerFavoriteMutationResult>>(
+    `/workers/${workerId}/favorite`
+  )
+  return response.data.data ?? { worker_id: workerId, is_favorite: true }
+}
+
+const removeFavoriteWorker = async (
+  workerId: string
+): Promise<WorkerFavoriteMutationResult> => {
+  const response = await api.delete<ApiResponse<WorkerFavoriteMutationResult>>(
+    `/workers/${workerId}/favorite`
+  )
+  return response.data.data ?? { worker_id: workerId, is_favorite: false }
 }
 
 export const workerService = {
   getWorkersGroupedByService,
   getWorkerById,
   getWorkerSchedule,
+  getWorkerSuggestions,
+  getFavoriteWorkerIds,
+  getFavoriteWorkers,
+  addFavoriteWorker,
+  removeFavoriteWorker,
   getFallbackName,
 }

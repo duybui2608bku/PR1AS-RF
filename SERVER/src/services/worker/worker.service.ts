@@ -1,19 +1,28 @@
 import { userRepository } from "../../repositories/auth/user.repository";
 import { AppError } from "../../utils/AppError";
-import { AUTH_MESSAGES } from "../../constants/messages";
+import { AUTH_MESSAGES, WORKER_MESSAGES } from "../../constants/messages";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
+import type { WorkerSuggestionCandidate } from "../../repositories/worker/worker-service.repository";
+import { workerFavoriteRepository } from "../../repositories/worker/worker-favorite.repository";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { reviewRepository } from "../../repositories/review/review.repository";
 import { IReviewDocument } from "../../types/review/review.types";
 import { ReviewType } from "../../constants/review";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 import { WorkerGroupedByServiceQuery } from "../../validations/worker/worker-grouped-query.validation";
+import { UserStatus } from "../../types/auth";
 import {
   WorkerDetailResponse,
   WorkerReviewItem,
   WorkerScheduleItem,
+  WorkerSuggestionItem,
   WorkersGroupedByServiceItem,
 } from "../../types/worker/worker.types";
+import type {
+  WorkerFavoriteItem,
+  WorkerFavoriteMutationResult,
+} from "../../types/worker/worker-favorite.types";
+import type { WorkerServicePricing } from "../../types/worker/worker-service";
 
 const parseLocation = (
   location?: string
@@ -43,12 +52,126 @@ const getDefaultScheduleRange = (
   return { startDate, endDate };
 };
 
+type CurrentWorkerService = {
+  serviceId: string;
+  pricing: WorkerServicePricing[];
+};
+
+type SuggestionPricingMatch = {
+  matchedService: WorkerSuggestionCandidate["matched_services"][number];
+  pricing: WorkerServicePricing | null;
+  priceDifferenceRatio: number | null;
+  priceProximityScore: number;
+};
+
+const getComparableCurrentPrices = (
+  candidatePricing: WorkerServicePricing,
+  currentPricing: WorkerServicePricing[]
+): WorkerServicePricing[] => {
+  const positivePrices = currentPricing.filter((price) => price.price > 0);
+  const exactMatches = positivePrices.filter(
+    (price) =>
+      price.currency === candidatePricing.currency &&
+      price.unit === candidatePricing.unit &&
+      price.duration === candidatePricing.duration
+  );
+  if (exactMatches.length) return exactMatches;
+
+  const sameUnitMatches = positivePrices.filter(
+    (price) =>
+      price.currency === candidatePricing.currency &&
+      price.unit === candidatePricing.unit
+  );
+  if (sameUnitMatches.length) return sameUnitMatches;
+
+  const sameCurrencyMatches = positivePrices.filter(
+    (price) => price.currency === candidatePricing.currency
+  );
+  if (sameCurrencyMatches.length) return sameCurrencyMatches;
+
+  return positivePrices;
+};
+
+const getBestPricingMatch = (
+  candidate: WorkerSuggestionCandidate,
+  currentServicesById: Map<string, CurrentWorkerService>
+): SuggestionPricingMatch | null => {
+  let bestMatch: SuggestionPricingMatch | null = null;
+
+  for (const matchedService of candidate.matched_services) {
+    const currentService = currentServicesById.get(matchedService.service_id);
+    if (!currentService) continue;
+
+    if (!matchedService.pricing.length && !bestMatch) {
+      bestMatch = {
+        matchedService,
+        pricing: null,
+        priceDifferenceRatio: null,
+        priceProximityScore: 0,
+      };
+      continue;
+    }
+
+    for (const candidatePricing of matchedService.pricing) {
+      const comparableCurrentPrices = getComparableCurrentPrices(
+        candidatePricing,
+        currentService.pricing
+      );
+      if (!comparableCurrentPrices.length) continue;
+
+      for (const currentPricing of comparableCurrentPrices) {
+        const differenceRatio =
+          Math.abs(candidatePricing.price - currentPricing.price) /
+          Math.max(currentPricing.price, 1);
+        const priceProximityScore = Math.max(
+          0,
+          1 - Math.min(differenceRatio, 1)
+        );
+
+        if (
+          !bestMatch ||
+          priceProximityScore > bestMatch.priceProximityScore ||
+          (priceProximityScore === bestMatch.priceProximityScore &&
+            (bestMatch.priceDifferenceRatio === null ||
+              differenceRatio < bestMatch.priceDifferenceRatio))
+        ) {
+          bestMatch = {
+            matchedService,
+            pricing: candidatePricing,
+            priceDifferenceRatio: differenceRatio,
+            priceProximityScore,
+          };
+        }
+      }
+    }
+  }
+
+  return bestMatch;
+};
+
+const calculateSuggestionScore = (
+  candidate: WorkerSuggestionCandidate,
+  match: SuggestionPricingMatch,
+  currentServiceCount: number
+): number => {
+  const serviceMatchScore =
+    Math.min(candidate.matched_services.length / currentServiceCount, 1) * 15;
+  const ratingScore =
+    (Math.min(Math.max(candidate.average_rating, 0), 5) / 5) * 35;
+  const completedBookingScore =
+    (Math.min(candidate.completed_bookings, 20) / 20) * 25;
+  const priceScore = match.priceProximityScore * 25;
+
+  return serviceMatchScore + ratingScore + completedBookingScore + priceScore;
+};
+
 export class WorkerService {
   async getWorkerById(workerId: string): Promise<WorkerDetailResponse> {
     const user = await userRepository.findById(workerId);
 
     if (!user) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
-    if (!user.worker_profile) throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+    if (!user.worker_profile)
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
 
     const workerProfile = {
       ...user.worker_profile,
@@ -95,7 +218,11 @@ export class WorkerService {
           id: review._id.toString(),
           rating: review.rating,
           comment: review.comment,
-          client: { id: clientId, full_name: client.full_name ?? null, avatar: client.avatar ?? null },
+          client: {
+            id: clientId,
+            full_name: client.full_name ?? null,
+            avatar: client.avatar ?? null,
+          },
           worker_reply: review.worker_reply ?? null,
           worker_replied_at: review.worker_replied_at ?? null,
           created_at: review.created_at,
@@ -117,21 +244,220 @@ export class WorkerService {
     };
   }
 
+  async getFavoriteWorkerIds(clientId: string): Promise<string[]> {
+    return workerFavoriteRepository.findWorkerIdsByClient(clientId);
+  }
+
+  async getFavoriteWorkers(clientId: string): Promise<WorkerFavoriteItem[]> {
+    const favorites = await workerFavoriteRepository.findByClient(clientId);
+    const workerIds = favorites.map((favorite) => favorite.worker_id.toString());
+
+    if (!workerIds.length) return [];
+
+    const [workers, workerServices] = await Promise.all([
+      userRepository.findManyByIds(workerIds),
+      workerServiceRepository.findActiveServicesForWorkers(workerIds),
+    ]);
+
+    const workersById = new Map(
+      workers.map((worker) => [worker._id.toString(), worker])
+    );
+    const favoriteDatesByWorkerId = new Map(
+      favorites.map((favorite) => [
+        favorite.worker_id.toString(),
+        favorite.created_at,
+      ])
+    );
+    const servicesByWorkerId = new Map<
+      string,
+      WorkerFavoriteItem["services"]
+    >();
+
+    for (const service of workerServices) {
+      const services = servicesByWorkerId.get(service.worker_id) ?? [];
+      services.push({
+        service_id: service.service_id,
+        service_code: service.service_code,
+        pricing: service.pricing,
+        service: service.service,
+      });
+      servicesByWorkerId.set(service.worker_id, services);
+    }
+
+    return workerIds.flatMap((workerId) => {
+      const worker = workersById.get(workerId);
+      const favoritedAt = favoriteDatesByWorkerId.get(workerId);
+
+      if (
+        !worker ||
+        worker.status !== UserStatus.ACTIVE ||
+        !worker.worker_profile ||
+        !favoritedAt
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          id: workerId,
+          favorited_at: favoritedAt,
+          full_name: worker.full_name ?? null,
+          avatar: worker.avatar ?? null,
+          worker_profile: {
+            title: worker.worker_profile.title ?? null,
+            introduction: worker.worker_profile.introduction ?? null,
+            gallery_urls: worker.worker_profile.gallery_urls ?? [],
+            work_locations: (worker.worker_profile.work_locations ?? []).map(
+              (location) => ({
+                province_code: location.province_code,
+                ward_code: location.ward_code ?? null,
+                label_snapshot: location.label_snapshot ?? null,
+              })
+            ),
+          },
+          services: servicesByWorkerId.get(workerId) ?? [],
+        } satisfies WorkerFavoriteItem,
+      ];
+    });
+  }
+
+  async addFavoriteWorker(
+    clientId: string,
+    workerId: string
+  ): Promise<WorkerFavoriteMutationResult> {
+    await this.ensureWorkerCanBeFavorited(clientId, workerId);
+    await workerFavoriteRepository.add(clientId, workerId);
+    return { worker_id: workerId, is_favorite: true };
+  }
+
+  async removeFavoriteWorker(
+    clientId: string,
+    workerId: string
+  ): Promise<WorkerFavoriteMutationResult> {
+    await workerFavoriteRepository.remove(clientId, workerId);
+    return { worker_id: workerId, is_favorite: false };
+  }
+
+  private async ensureWorkerCanBeFavorited(
+    clientId: string,
+    workerId: string
+  ): Promise<void> {
+    if (clientId === workerId) {
+      throw AppError.badRequest(WORKER_MESSAGES.CANNOT_FAVORITE_SELF);
+    }
+
+    const worker = await userRepository.findById(workerId);
+    if (!worker) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
+    if (worker.status !== UserStatus.ACTIVE || !worker.worker_profile) {
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+    }
+  }
+
+  async getWorkerSuggestions(
+    workerId: string,
+    limit = 4
+  ): Promise<WorkerSuggestionItem[]> {
+    const safeLimit = Math.max(1, Math.min(limit, 12));
+    const [user, workerServices] = await Promise.all([
+      userRepository.findById(workerId),
+      workerServiceRepository.findAllForWorker(workerId),
+    ]);
+
+    if (!user) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
+    if (!user.worker_profile)
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+
+    const currentServices = workerServices
+      .filter((service) => service.is_active)
+      .map<CurrentWorkerService>((service) => ({
+        serviceId: service.service_id.toString(),
+        pricing: service.pricing,
+      }));
+
+    if (!currentServices.length) return [];
+
+    const currentServicesById = new Map(
+      currentServices.map((service) => [service.serviceId, service])
+    );
+    const serviceIds = [...currentServicesById.keys()];
+    const candidateLimit = Math.max(safeLimit * 8, 24);
+    const candidates =
+      await workerServiceRepository.findSuggestionCandidatesForWorker(
+        workerId,
+        serviceIds,
+        candidateLimit
+      );
+
+    const scoredSuggestions = candidates.flatMap((candidate) => {
+      const match = getBestPricingMatch(candidate, currentServicesById);
+      if (!match) return [];
+
+      const score = calculateSuggestionScore(
+        candidate,
+        match,
+        currentServicesById.size
+      );
+
+      return [
+        {
+          score,
+          suggestion: {
+            id: candidate.id,
+            full_name: candidate.full_name,
+            avatar: candidate.avatar,
+            worker_profile: candidate.worker_profile,
+            matched_service: match.matchedService.service,
+            pricing: match.pricing,
+            review_stats: {
+              total: candidate.total_reviews,
+              average: candidate.average_rating,
+            },
+            completed_bookings: candidate.completed_bookings,
+            price_difference_percent:
+              match.priceDifferenceRatio === null
+                ? null
+                : Math.round(match.priceDifferenceRatio * 100),
+          } satisfies WorkerSuggestionItem,
+        },
+      ];
+    });
+
+    return scoredSuggestions
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (
+          b.suggestion.review_stats.average !==
+          a.suggestion.review_stats.average
+        ) {
+          return (
+            b.suggestion.review_stats.average -
+            a.suggestion.review_stats.average
+          );
+        }
+        return (
+          b.suggestion.completed_bookings - a.suggestion.completed_bookings
+        );
+      })
+      .slice(0, safeLimit)
+      .map((item) => item.suggestion);
+  }
+
   async getWorkersGroupedByService(
     query: WorkerGroupedByServiceQuery
   ): Promise<WorkersGroupedByServiceItem[]> {
-    const groupedWorkers = await workerServiceRepository.findWorkersGroupedByService({
-      categories: query.category,
-      location: parseLocation(query.location),
-      workLocation:
-        typeof query.province_code === "number"
-          ? {
-              provinceCode: query.province_code,
-              wardCode:
-                typeof query.ward_code === "number" ? query.ward_code : null,
-            }
-          : undefined,
-    });
+    const groupedWorkers =
+      await workerServiceRepository.findWorkersGroupedByService({
+        categories: query.category,
+        location: parseLocation(query.location),
+        workLocation:
+          typeof query.province_code === "number"
+            ? {
+                provinceCode: query.province_code,
+                wardCode:
+                  typeof query.ward_code === "number" ? query.ward_code : null,
+              }
+            : undefined,
+      });
 
     if (!query.schedule) return groupedWorkers;
 
@@ -152,20 +478,31 @@ export class WorkerService {
 
     // Single DB call instead of one per worker (N+1 fix)
     const allWorkerIds = [...workerDurationsMap.keys()];
-    const maxDurationOverall = Math.max(...[...workerDurationsMap.values()].flat());
-    const globalMaxEndTime = new Date(scheduleAt.getTime() + maxDurationOverall * 60 * 1000);
-
-    const allConflicts = await bookingRepository.findConflictsForWorkersInWindow(
-      allWorkerIds,
-      scheduleAt,
-      globalMaxEndTime
+    const maxDurationOverall = Math.max(
+      ...[...workerDurationsMap.values()].flat()
+    );
+    const globalMaxEndTime = new Date(
+      scheduleAt.getTime() + maxDurationOverall * 60 * 1000
     );
 
+    const allConflicts =
+      await bookingRepository.findConflictsForWorkersInWindow(
+        allWorkerIds,
+        scheduleAt,
+        globalMaxEndTime
+      );
+
     // Group conflicts by worker for O(1) lookup
-    const conflictsByWorker = new Map<string, Array<{ start_time: Date; end_time: Date }>>();
+    const conflictsByWorker = new Map<
+      string,
+      Array<{ start_time: Date; end_time: Date }>
+    >();
     for (const conflict of allConflicts) {
       const list = conflictsByWorker.get(conflict.worker_id) ?? [];
-      list.push({ start_time: conflict.start_time, end_time: conflict.end_time });
+      list.push({
+        start_time: conflict.start_time,
+        end_time: conflict.end_time,
+      });
       conflictsByWorker.set(conflict.worker_id, list);
     }
 
@@ -177,7 +514,9 @@ export class WorkerService {
 
         const workerConflicts = conflictsByWorker.get(worker.id) ?? [];
         return durations.some((durationMinutes) => {
-          const candidateEnd = new Date(scheduleAt.getTime() + durationMinutes * 60 * 1000);
+          const candidateEnd = new Date(
+            scheduleAt.getTime() + durationMinutes * 60 * 1000
+          );
           return !workerConflicts.some((c) =>
             hasTimeOverlap(scheduleAt, candidateEnd, c.start_time, c.end_time)
           );
@@ -200,15 +539,23 @@ export class WorkerService {
     const user = await userRepository.findById(workerId);
 
     if (!user) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
-    if (!user.worker_profile) throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+    if (!user.worker_profile)
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
 
-    const { startDate, endDate } = getDefaultScheduleRange(startDateRaw, endDateRaw);
+    const { startDate, endDate } = getDefaultScheduleRange(
+      startDateRaw,
+      endDateRaw
+    );
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       throw AppError.badRequest("Invalid date format");
     }
 
-    const schedules = await bookingRepository.findScheduleByWorkerId(workerId, startDate, endDate);
+    const schedules = await bookingRepository.findScheduleByWorkerId(
+      workerId,
+      startDate,
+      endDate
+    );
 
     return schedules.map((item) => ({
       booking_id: item._id.toString(),

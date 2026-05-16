@@ -77,6 +77,10 @@ export const queryKeys = {
   workers: {
     all: ["workers"] as const,
     detail: (id: string) => ["workers", "detail", id] as const,
+    favorites: ["workers", "favorites"] as const,
+    favoriteIds: ["workers", "favorite-ids"] as const,
+    suggestions: (id: string, limit: number) =>
+      ["workers", "suggestions", id, limit] as const,
     schedule: (id: string, params: Record<string, unknown>) =>
       ["workers", "schedule", id, params] as const,
     myServices: ["workers", "my-services"] as const,

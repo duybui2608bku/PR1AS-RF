@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 import { HomeHero } from "@/components/hero/home-hero"
 import {
@@ -14,6 +15,11 @@ import {
   homeStateToQueryString,
   type HomeSearchState,
 } from "@/lib/home/home-search-params"
+import {
+  useFavoriteWorkerIds,
+  useToggleFavoriteWorker,
+} from "@/lib/hooks/use-worker"
+import { useAuthStore } from "@/lib/store/auth-store"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
@@ -58,6 +64,8 @@ const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
 
 export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const [draft, setDraft] = React.useState<DraftState>(() =>
     draftFromState(initialState),
@@ -94,6 +102,12 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const groupedServices = workersQuery.data ?? []
   const showFetchError = workersQuery.isError
+  const favoriteIdsQuery = useFavoriteWorkerIds()
+  const toggleFavoriteMutation = useToggleFavoriteWorker()
+  const favoriteWorkerIds = React.useMemo(
+    () => new Set(favoriteIdsQuery.data ?? []),
+    [favoriteIdsQuery.data],
+  )
 
   const handleSearchSubmit = React.useCallback(() => {
     setApplied((prev) => ({
@@ -123,6 +137,26 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     setDraft({ selectedLocation: null, scheduledAt: undefined })
     setApplied({ activeCodes: [], selectedLocation: null, scheduledAt: undefined })
   }, [])
+
+  const handleToggleFavorite = React.useCallback(
+    (workerId: string, favorite: boolean) => {
+      if (!isAuthenticated) {
+        toast.info("Vui lÃ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ lÆ°u worker yÃªu thÃ­ch.")
+        router.push(`/login?from=${encodeURIComponent(pathname)}`)
+        return
+      }
+
+      toggleFavoriteMutation.mutate(
+        { workerId, favorite },
+        {
+          onError: () => {
+            toast.error("KhÃ´ng thá»ƒ cáº­p nháº­t danh sÃ¡ch yÃªu thÃ­ch.")
+          },
+        },
+      )
+    },
+    [isAuthenticated, pathname, router, toggleFavoriteMutation],
+  )
 
   const removeCategoryCode = React.useCallback((code: string) => {
     setApplied((prev) => ({
@@ -199,6 +233,13 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
           isFetching={workersQuery.isFetching}
           appliedFilters={appliedFilters}
           onClearAllFilters={handleClearAllFilters}
+          favoriteWorkerIds={favoriteWorkerIds}
+          favoritePendingWorkerId={
+            toggleFavoriteMutation.isPending
+              ? toggleFavoriteMutation.variables?.workerId
+              : null
+          }
+          onToggleFavorite={handleToggleFavorite}
         />
       </div>
     </>

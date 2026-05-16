@@ -126,7 +126,7 @@ function parseWorkerProfile(raw: unknown): WorkerProfilePublic | null {
 
 export default function WorkerSetupPage() {
   const router = useRouter()
-  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const userId = useAuthStore((s) => s.user?.id)
 
   const meQuery = useMe()
@@ -219,10 +219,10 @@ export default function WorkerSetupPage() {
   } | null>(null)
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       router.replace("/login?from=/worker/setup")
     }
-  }, [token, router])
+  }, [isAuthenticated, router])
 
   const catalog = catalogQuery.data ?? EMPTY_SERVICE_LIST
 
@@ -559,7 +559,7 @@ export default function WorkerSetupPage() {
   }
 
   const isLoadingPage =
-    !token ||
+    !isAuthenticated ||
     meQuery.isLoading ||
     catalogQuery.isLoading ||
     mineQuery.isLoading

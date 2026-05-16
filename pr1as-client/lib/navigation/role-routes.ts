@@ -1,6 +1,7 @@
 export type RoleRouteKey =
   | "booking"
   | "chat"
+  | "favorites"
   | "notifications"
   | "posts"
   | "pricing"
@@ -13,12 +14,14 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
   client: {
     booking: "/client/bookings",
     chat: "/client/chat",
+    favorites: "/client/favorites",
     profile: "/client/profile",
     wallet: "/wallet",
   },
   worker: {
     booking: "/worker/bookings",
     chat: "/chat",
+    favorites: "/client/favorites",
     posts: "/posts",
     profile: "/client/profile",
     wallet: "/wallet",

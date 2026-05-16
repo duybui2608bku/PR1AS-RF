@@ -24,4 +24,5 @@ export const modelsName = {
   POST_HASHTAG: "post_hashtags",
   COMMENT: "comments",
   REACTION: "reactions",
+  CLIENT_FAVORITE_WORKER: "client_favorite_workers",
 };

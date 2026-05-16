@@ -47,7 +47,12 @@ export interface WorkersGroupedByServiceItem {
     id: string;
     code: string;
     name: { en: string; vi: string; zh?: string | null; ko?: string | null };
-    description: { en: string; vi: string; zh?: string | null; ko?: string | null };
+    description: {
+      en: string;
+      vi: string;
+      zh?: string | null;
+      ko?: string | null;
+    };
     category: string;
   };
   workers: Array<{
@@ -66,4 +71,33 @@ export interface WorkersGroupedByServiceItem {
     } | null;
     pricing: WorkerServicePricing[];
   }>;
+}
+
+export interface WorkerSuggestionItem {
+  id: string;
+  full_name: string | null;
+  avatar: string | null;
+  worker_profile: {
+    title: string | null;
+    introduction: string | null;
+    gallery_urls: string[];
+    work_locations: Array<{
+      province_code: number;
+      ward_code: number | null;
+      label_snapshot: string | null;
+    }>;
+  } | null;
+  matched_service: {
+    id: string;
+    code: string;
+    name: { en: string; vi: string; zh?: string | null; ko?: string | null };
+    category: string;
+  };
+  pricing: WorkerServicePricing | null;
+  review_stats: {
+    total: number;
+    average: number;
+  };
+  completed_bookings: number;
+  price_difference_percent: number | null;
 }

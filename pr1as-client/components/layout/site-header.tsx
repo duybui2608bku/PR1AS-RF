@@ -5,6 +5,7 @@ import {
   CalendarCheck2,
   Crown,
   FileText,
+  Heart,
   Loader2,
   LogOut,
   Menu,
@@ -35,6 +36,12 @@ import { getPlanRingClass } from "@/lib/utils/plan"
 const USER_MENU_ITEMS = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
   { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
+  {
+    routeKey: "favorites",
+    href: "/client/favorites",
+    label: "Yeu thich",
+    icon: Heart,
+  },
   { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
   {
     routeKey: "notifications",
@@ -91,7 +98,6 @@ export function SiteHeader() {
   const activeRole = lastActiveRole ?? fallbackRole
   const isWorkerActive = activeRole?.toLowerCase() === "worker"
   const hasWorkerRole = userRoles.some((role) => role.toLowerCase() === "worker")
-  const canSwitchRole = isAuthenticated && (isWorkerActive || hasWorkerRole)
   const homeHref = getRoleDefaultRoute(activeRole)
 
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
@@ -120,13 +126,17 @@ export function SiteHeader() {
       return
     }
 
-    if (!canSwitchRole) {
-      toast.info("Tài khoản chưa có role Worker để chuyển đổi.")
-      return
-    }
-
     try {
       const nextRole = isWorkerActive ? "client" : "worker"
+
+      if (nextRole === "worker" && !hasWorkerRole) {
+        toast.info("Hoàn tất hồ sơ worker để bắt đầu nhận việc.")
+        setOpen(false)
+        setMenuOpen(false)
+        router.push("/worker/setup")
+        return
+      }
+
       await switchRoleMutation.mutateAsync({ last_active_role: nextRole })
       toast.success("Chuyển trạng thái tài khoản thành công.")
       router.replace(getRoleDefaultRoute(nextRole))
