@@ -39,7 +39,7 @@ const USER_MENU_ITEMS = [
   {
     routeKey: "favorites",
     href: "/client/favorites",
-    label: "Yeu thich",
+    label: "Yêu thích",
     icon: Heart,
   },
   { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
