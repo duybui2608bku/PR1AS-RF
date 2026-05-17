@@ -9,6 +9,7 @@ export const siteConfig = {
     github: "https://github.com/",
     twitter: "https://twitter.com/",
     zalo: "https://zalo.me/0909090909",
+    facebook: "https://www.facebook.com/pr1as",
   },
   contactEmail: "pr1as.connect@gmail.com",
 } as const

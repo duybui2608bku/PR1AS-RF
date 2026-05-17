@@ -5,6 +5,17 @@ import Link from "next/link"
 import { Heart, Loader2, MapPin, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -130,21 +141,42 @@ function FavoriteWorkerCard({
         </div>
       </Link>
 
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        className="absolute right-3 top-3 bg-background/85 backdrop-blur"
-        aria-label="Remove favorite worker"
-        disabled={isPending}
-        onClick={() => onRemove(worker.id)}
-      >
-        {isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Trash2 className="size-4" />
-        )}
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            className="absolute right-3 top-3 bg-background/85 backdrop-blur"
+            aria-label="Remove favorite worker"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Trash2 className="size-4" />
+            )}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa worker yêu thích?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Worker này sẽ bị xóa khỏi danh sách yêu thích của bạn. Bạn có
+              chắc chắn muốn tiếp tục?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => onRemove(worker.id)}
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   )
 }

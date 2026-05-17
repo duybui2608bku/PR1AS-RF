@@ -6,7 +6,11 @@ import { AlertCircle } from "lucide-react"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useFavoriteWorkerIds, useToggleFavoriteWorker, useWorkerDetail } from "@/lib/hooks/use-worker"
+import {
+  useFavoriteWorkerIds,
+  useToggleFavoriteWorker,
+  useWorkerDetail,
+} from "@/lib/hooks/use-worker"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { WorkerCalendar } from "@/components/worker/worker-calendar"
@@ -41,7 +45,7 @@ export default function WorkerProfilePage({
     }
     toggleFavoriteMutation.mutate(
       { workerId: id, favorite: !isFavorite },
-      { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") },
+      { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") }
     )
   }
 
@@ -72,7 +76,9 @@ export default function WorkerProfilePage({
                     toggleFavoriteMutation.isPending &&
                     toggleFavoriteMutation.variables?.workerId === id
                   }
-                  onToggleFavorite={isOwnProfile ? undefined : handleToggleFavorite}
+                  onToggleFavorite={
+                    isOwnProfile ? undefined : handleToggleFavorite
+                  }
                 />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
                   <div className="space-y-4">
@@ -95,7 +101,7 @@ export default function WorkerProfilePage({
               </div>
             ) : null}
           </div>
-          <aside className="hidden xl:block">
+          <aside className="min-w-0">
             <WorkerSuggestions workerId={id} />
           </aside>
         </div>

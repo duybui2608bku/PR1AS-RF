@@ -1,10 +1,18 @@
 "use client"
 
+import { useRef } from "react"
 import Link from "next/link"
-import { CheckCircle2, Star, UserRound } from "lucide-react"
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  UserRound,
+} from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkerSuggestions } from "@/lib/hooks/use-worker"
@@ -54,9 +62,12 @@ const getPriceGapLabel = (percent: number | null) => {
 
 function WorkerSuggestionSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 xl:mx-0 xl:flex-col xl:overflow-visible xl:px-0 xl:pb-0">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="flex gap-3 rounded-lg border p-3">
+        <div
+          key={index}
+          className="flex flex-none basis-[40%] snap-start flex-col gap-3 rounded-lg border p-3 xl:w-full xl:basis-auto xl:flex-row"
+        >
           <Skeleton className="size-10 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-4 w-2/3" />
@@ -70,16 +81,52 @@ function WorkerSuggestionSkeleton() {
 }
 
 export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
+  const carouselRef = useRef<HTMLDivElement>(null)
   const {
     data: suggestions = [],
     isLoading,
     isError,
   } = useWorkerSuggestions(workerId, limit)
+  const canNavigate = !isLoading && !isError && suggestions.length > 2
+
+  const scrollSuggestions = (direction: -1 | 1) => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    carousel.scrollBy({
+      left: direction * carousel.clientWidth * 0.8,
+      behavior: "smooth",
+    })
+  }
 
   return (
-    <Card className="sticky top-20">
-      <CardHeader className="p-4 pb-2">
+    <Card className="overflow-hidden xl:sticky xl:top-20">
+      <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-2">
         <CardTitle className="text-sm font-semibold">Worker tương tự</CardTitle>
+        {canNavigate ? (
+          <div className="flex items-center gap-1 xl:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8 rounded-full"
+              aria-label="Xem worker trước"
+              onClick={() => scrollSuggestions(-1)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8 rounded-full"
+              aria-label="Xem worker tiếp theo"
+              onClick={() => scrollSuggestions(1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-3 p-4 pt-2">
         {isLoading ? <WorkerSuggestionSkeleton /> : null}
@@ -96,8 +143,12 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
           </p>
         ) : null}
 
-        {!isLoading && !isError
-          ? suggestions.map((worker) => {
+        {!isLoading && !isError && suggestions.length > 0 ? (
+          <div
+            ref={carouselRef}
+            className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 xl:mx-0 xl:flex-col xl:overflow-visible xl:px-0 xl:pb-0"
+          >
+            {suggestions.map((worker) => {
               const serviceName = getServiceName(worker.matched_service)
               const priceGapLabel = getPriceGapLabel(
                 worker.price_difference_percent
@@ -109,10 +160,10 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                 <Link
                   key={worker.id}
                   href={`/worker/${worker.id}`}
-                  className="group block rounded-lg border p-3 transition-colors hover:border-primary/60 hover:bg-muted/40"
+                  className="group block flex-none basis-[40%] snap-start rounded-lg border p-3 transition-colors hover:border-primary/60 hover:bg-muted/40 xl:w-full xl:basis-auto"
                 >
-                  <div className="flex gap-3">
-                    <Avatar size="lg" className="size-11">
+                  <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:gap-3">
+                    <Avatar size="lg" className="size-11 shrink-0">
                       {worker.avatar ? (
                         <AvatarImage
                           src={worker.avatar}
@@ -148,7 +199,12 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                           <span className="truncate">{serviceName}</span>
                         </Badge>
                         {priceGapLabel ? (
-                          <Badge variant="outline">{priceGapLabel}</Badge>
+                          <Badge
+                            variant="outline"
+                            className="max-w-full truncate"
+                          >
+                            {priceGapLabel}
+                          </Badge>
                         ) : null}
                       </div>
 
@@ -183,8 +239,9 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                   </div>
                 </Link>
               )
-            })
-          : null}
+            })}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )

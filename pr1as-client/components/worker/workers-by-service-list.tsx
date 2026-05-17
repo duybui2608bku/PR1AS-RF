@@ -14,6 +14,17 @@ import {
 import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -142,33 +153,64 @@ const WorkerCard = ({
       </div>
       </Link>
       {onToggleFavorite ? (
-        <button
-          type="button"
-          aria-label={
-            isFavorite
-              ? "Bá» worker khá»i Yêu thích"
-              : "ThÃªm worker vÃ o Yêu thích"
-          }
-          aria-pressed={isFavorite}
-          title={isFavorite ? "Bá» Yêu thích" : "Yêu thích"}
-          disabled={isFavoritePending}
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            onToggleFavorite(worker.id, !isFavorite)
-          }}
-          className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
-        >
-          {isFavoritePending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Heart
-              className={
-                isFavorite ? "size-4 fill-red-500 text-red-500" : "size-4"
-              }
-            />
-          )}
-        </button>
+        isFavorite ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                aria-label="Bỏ worker khỏi Yêu thích"
+                aria-pressed={isFavorite}
+                title="Bỏ Yêu thích"
+                disabled={isFavoritePending}
+                className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
+              >
+                {isFavoritePending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Heart className="size-4 fill-red-500 text-red-500" />
+                )}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Xóa worker yêu thích?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Worker này sẽ bị xóa khỏi danh sách yêu thích của bạn. Bạn có
+                  chắc chắn muốn tiếp tục?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => onToggleFavorite(worker.id, false)}
+                >
+                  Xóa
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <button
+            type="button"
+            aria-label="Thêm worker vào Yêu thích"
+            aria-pressed={isFavorite}
+            title="Yêu thích"
+            disabled={isFavoritePending}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onToggleFavorite(worker.id, true)
+            }}
+            className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
+          >
+            {isFavoritePending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Heart className="size-4" />
+            )}
+          </button>
+        )
       ) : null}
     </article>
   )

@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { AnnouncementPopup } from "@/components/layout/announcement-popup"
 import { AdminSiteGate } from "@/components/layout/admin-site-gate"
+import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button"
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <ScrollToTopButton />
       </div>
     </AdminSiteGate>
   )
