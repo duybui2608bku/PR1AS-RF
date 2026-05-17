@@ -18,6 +18,7 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     worker_profile: user.worker_profile,
     client_profile: user.client_profile,
     created_at: user.created_at,
+    last_login: user.last_login,
     coords: user.coords,
     meta_data: {
       reputation_score: user.meta_data?.reputation_score ?? 100,

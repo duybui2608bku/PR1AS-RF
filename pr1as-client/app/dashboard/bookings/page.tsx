@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
@@ -535,25 +535,18 @@ export default function AdminBookingsPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
-              <DatePicker
-                value={parsedStartDate}
-                onChange={(date) => setStartDate(formatFilterDate(date))}
-                toDate={parsedEndDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
-            </div>
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
-              <DatePicker
-                value={parsedEndDate}
-                onChange={(date) => setEndDate(formatFilterDate(date))}
-                fromDate={parsedStartDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
-            </div>
+          <div className="flex w-full flex-col gap-1 sm:w-auto">
+            <Label className="text-xs text-muted-foreground">
+              Khoảng ngày
+            </Label>
+            <DateRangePicker
+              value={{ from: parsedStartDate, to: parsedEndDate }}
+              onChange={(range) => {
+                setStartDate(formatFilterDate(range?.from))
+                setEndDate(formatFilterDate(range?.to ?? range?.from))
+              }}
+              buttonClassName="h-9 w-full sm:w-72 data-[size=default]:h-9"
+            />
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -733,7 +726,91 @@ export default function AdminBookingsPage() {
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden md:hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Booking mới nhất
+          </CardTitle>
+        </CardHeader>
+        <div className="divide-y border-t">
+          {analyticsQuery.isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-5 w-20 rounded-md" />
+                </div>
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))
+          ) : recentBookings.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Không có booking trong khoảng ngày đã chọn.
+            </div>
+          ) : (
+            recentBookings.map((booking) => (
+              <div key={booking._id} className="space-y-2.5 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-mono text-xs text-muted-foreground">
+                      {shortId(booking.id ?? booking._id)}
+                    </div>
+                    <div className="mt-0.5 truncate text-sm font-medium">
+                      {getServiceLabel(booking.service_id)}
+                    </div>
+                    {booking.service_code ? (
+                      <div className="text-xs text-muted-foreground">
+                        {booking.service_code}
+                      </div>
+                    ) : null}
+                  </div>
+                  <StatusBadge status={booking.status} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Client</div>
+                    <div className="mt-0.5 truncate font-medium">
+                      {getUserLabel(booking.client_id)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Worker</div>
+                    <div className="mt-0.5 truncate font-medium">
+                      {getUserLabel(booking.worker_id)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Lịch hẹn</div>
+                    <div className="mt-0.5 truncate">
+                      {formatDate(booking.schedule.start_time)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Giá</div>
+                    <div className="mt-0.5 font-semibold tabular-nums">
+                      {getBookingPrice(booking)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  Tạo: {formatDate(booking.created_at)}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        {analyticsQuery.isFetching && !analyticsQuery.isLoading ? (
+          <div className="flex items-center justify-center gap-2 border-t py-2 text-xs text-muted-foreground">
+            <RefreshCw className="size-3.5 animate-spin" />
+            Đang tải...
+          </div>
+        ) : null}
+      </Card>
+
+      <Card className="hidden overflow-hidden md:block">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Booking mới nhất

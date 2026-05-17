@@ -126,6 +126,13 @@ export class ModerationRepository {
     if (query.target_type) filter.target_type = query.target_type;
     if (query.status) filter.status = query.status;
 
+    if (query.start_date || query.end_date) {
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (query.start_date) dateFilter.$gte = query.start_date;
+      if (query.end_date) dateFilter.$lte = query.end_date;
+      filter.created_at = dateFilter;
+    }
+
     const [reports, total] = await Promise.all([
       Report.find(filter)
         .populate("reporter_id", USER_PUBLIC_FIELDS)

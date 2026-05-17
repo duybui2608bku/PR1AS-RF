@@ -41,43 +41,36 @@ const adminNavItems = [
   {
     href: "/dashboard",
     label: "Tổng quan",
-    description: "Số liệu hệ thống",
     icon: LayoutDashboard,
   },
   {
     href: "/dashboard/users",
     label: "Người dùng",
-    description: "Tài khoản và vai trò",
     icon: Users,
   },
   {
     href: "/dashboard/bookings",
     label: "Bookings",
-    description: "Thống kê và trạng thái",
     icon: CalendarCheck,
   },
   {
     href: "/dashboard/transactions",
     label: "Giao dịch",
-    description: "Nạp tiền và trạng thái",
     icon: CreditCard,
   },
   {
     href: "/dashboard/pricing",
     label: "Pricing",
-    description: "Giá gói và quyền plan",
     icon: Gem,
   },
   {
     href: "/dashboard/disputes",
     label: "Tranh chấp",
-    description: "Chat xử lý booking",
     icon: MessageSquare,
   },
   {
     href: "/dashboard/reports",
     label: "Báo cáo",
-    description: "Bài viết và worker",
     icon: ShieldAlert,
   },
 ]
@@ -256,9 +249,6 @@ function AdminSidebar({
 
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className={cn(collapsed && "md:hidden")}>
-              Điều hướng
-            </SidebarGroupLabel>
             {adminNavItems.map((item) => {
               const Icon = item.icon
               const active = isActiveRoute(pathname, item.href)
@@ -283,14 +273,12 @@ function AdminSidebar({
                   >
                     <Icon className="size-4 shrink-0" />
                     <span
-                      className={cn("min-w-0 flex-1", collapsed && "md:hidden")}
+                      className={cn(
+                        "min-w-0 flex-1 truncate text-sm font-medium",
+                        collapsed && "md:hidden"
+                      )}
                     >
-                      <span className="block truncate text-sm font-medium">
-                        {item.label}
-                      </span>
-                      <span className="block truncate text-xs font-normal text-muted-foreground">
-                        {item.description}
-                      </span>
+                      {item.label}
                     </span>
                   </Link>
                 </Button>

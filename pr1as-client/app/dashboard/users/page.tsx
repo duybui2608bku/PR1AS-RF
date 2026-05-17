@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -17,7 +18,7 @@ import {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -254,13 +255,6 @@ export default function AdminUsersPage() {
     setFilters((prev) => ({ ...prev, page: 1, [key]: value }))
   }
 
-  const handleDateFilterChange = (
-    key: "startDate" | "endDate",
-    value?: Date
-  ) => {
-    handleFilterChange(key, formatFilterDate(value))
-  }
-
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }))
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -299,43 +293,51 @@ export default function AdminUsersPage() {
             khoản
           </p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => usersQuery.refetch()}
+          disabled={usersQuery.isFetching}
+          className="hidden sm:inline-flex"
+        >
+          <RefreshCw
+            className={usersQuery.isFetching ? "size-4 animate-spin" : "size-4"}
+          />
+          Làm mới
+        </Button>
       </div>
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Bộ lọc
-          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent>
           <form
             onSubmit={applySearch}
-            className="flex flex-col gap-2 sm:flex-row"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_160px_170px_240px_auto]"
           >
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pr-8 pl-9"
-                placeholder="Tìm theo tên, email, số điện thoại..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              {searchInput ? (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
-              ) : null}
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Tìm kiếm</Label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="h-9 pr-8 pl-9"
+                  placeholder="Tên, email, số điện thoại..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+                {searchInput ? (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Xoá tìm kiếm"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </div>
             </div>
-            <Button type="submit" size="sm" className="w-full sm:w-auto">
-              Tìm kiếm
-            </Button>
-          </form>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
+            <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">Vai trò</Label>
               <Select
                 value={filters.role || ALL_FILTER_VALUE}
@@ -346,8 +348,8 @@ export default function AdminUsersPage() {
                   )
                 }
               >
-                <SelectTrigger className="h-9 w-full data-[size=default]:h-9 sm:min-w-36">
-                  <SelectValue placeholder="Chọn vai trò" />
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9">
+                  <SelectValue placeholder="Tất cả vai trò" />
                 </SelectTrigger>
                 <SelectContent>
                   {ROLE_OPTIONS.map((opt) => (
@@ -359,7 +361,7 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
+            <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">
                 Trạng thái
               </Label>
@@ -372,8 +374,8 @@ export default function AdminUsersPage() {
                   )
                 }
               >
-                <SelectTrigger className="h-9 w-full data-[size=default]:h-9 sm:min-w-40">
-                  <SelectValue placeholder="Chọn trạng thái" />
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9">
+                  <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((opt) => (
@@ -385,58 +387,227 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
-              <DatePicker
-                value={startDate}
-                onChange={(date) => handleDateFilterChange("startDate", date)}
-                toDate={endDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
+            <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+              <Label className="text-xs text-muted-foreground">
+                Khoảng ngày tạo
+              </Label>
+              <DateRangePicker
+                value={{ from: startDate, to: endDate }}
+                onChange={(range) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: 1,
+                    startDate: formatFilterDate(range?.from),
+                    endDate: formatFilterDate(range?.to),
+                  }))
+                }}
+                buttonClassName="h-9 w-full data-[size=default]:h-9"
               />
             </div>
 
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
-              <DatePicker
-                value={endDate}
-                onChange={(date) => handleDateFilterChange("endDate", date)}
-                fromDate={startDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
+            <div className="flex gap-2 sm:col-span-2 lg:col-span-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 flex-1 sm:hidden"
+                onClick={() => usersQuery.refetch()}
+                disabled={usersQuery.isFetching}
+                aria-label="Làm mới"
+              >
+                <RefreshCw
+                  className={
+                    usersQuery.isFetching
+                      ? "size-4 animate-spin"
+                      : "size-4"
+                  }
+                />
+                <span>Làm mới</span>
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="h-9 flex-1 lg:w-full"
+                disabled={
+                  !filters.role &&
+                  !filters.status &&
+                  !filters.startDate &&
+                  !filters.endDate &&
+                  !filters.search
+                }
+                onClick={() => {
+                  setSearchInput("")
+                  setFilters({
+                    page: 1,
+                    limit: PAGE_SIZE,
+                    search: "",
+                    role: "",
+                    status: "",
+                    startDate: "",
+                    endDate: "",
+                  })
+                }}
+                aria-label="Xóa bộ lọc"
+              >
+                <X className="size-4" />
+                <span className="sm:hidden">Xóa bộ lọc</span>
+              </Button>
             </div>
-
-            {filters.role ||
-            filters.status ||
-            filters.startDate ||
-            filters.endDate ||
-            filters.search ? (
-              <div className="flex w-full items-end sm:w-auto">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchInput("")
-                    setFilters({
-                      page: 1,
-                      limit: PAGE_SIZE,
-                      search: "",
-                      role: "",
-                      status: "",
-                      startDate: "",
-                      endDate: "",
-                    })
-                  }}
-                >
-                  <X className="mr-1 size-4" />
-                  Xóa bộ lọc
-                </Button>
-              </div>
-            ) : null}
-          </div>
+          </form>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden md:hidden">
+        <div className="divide-y">
+          {usersQuery.isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-3 p-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))
+          ) : users.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Không tìm thấy người dùng nào.
+            </div>
+          ) : (
+            users.map((user) => (
+              <div key={user.id} className="space-y-3 p-4">
+                <div className="flex items-start gap-3">
+                  <UserAvatar user={user} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium">
+                          {user.full_name ?? "—"}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </div>
+                      </div>
+                      <StatusBadge status={user.status} />
+                    </div>
+                    {user.phone ? (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {user.phone}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(user.roles ?? [user.role].filter(Boolean)).map((r) => (
+                    <Badge key={r} variant="outline" className="capitalize">
+                      {r}
+                    </Badge>
+                  ))}
+                  <PlanBadge code={user.meta_data?.pricing_plan_code ?? undefined} />
+                  {user.verify_email ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                      <BadgeCheck className="size-3.5" />
+                      Đã XM
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Chưa XM
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      <span>Đăng nhập cuối</span>
+                    </div>
+                    <div className="mt-0.5 text-foreground">
+                      {formatDate(user.last_login)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      <span>Ngày đăng ký</span>
+                    </div>
+                    <div className="mt-0.5 text-foreground">
+                      {formatDate(user.created_at)}
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant={user.status === "active" ? "outline" : "default"}
+                  className={
+                    user.status === "active"
+                      ? "w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                      : "w-full"
+                  }
+                  onClick={() => openConfirm(user)}
+                  disabled={updateStatusMutation.isPending}
+                >
+                  {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {totalPages > 1 ? (
+          <div className="flex flex-col gap-2 border-t px-4 py-3">
+            <p className="text-center text-xs text-muted-foreground">
+              Trang {currentPage} / {totalPages} — {total} kết quả
+            </p>
+            <div className="flex items-center justify-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage <= 1 || usersQuery.isFetching}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const startPage = Math.max(
+                  1,
+                  Math.min(currentPage - 2, totalPages - 4)
+                )
+                const page = startPage + i
+                return (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    size="sm"
+                    className="w-9"
+                    onClick={() => handlePageChange(page)}
+                    disabled={usersQuery.isFetching}
+                  >
+                    {page}
+                  </Button>
+                )
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage >= totalPages || usersQuery.isFetching}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Card>
+
+      <Card className="hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <Table>
             <thead className="border-b bg-muted/50">

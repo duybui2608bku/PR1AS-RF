@@ -47,6 +47,8 @@ export const reportQuerySchema = z
   .object({
     target_type: z.nativeEnum(ReportTargetType).optional(),
     status: z.nativeEnum(ReportStatus).optional(),
+    start_date: z.coerce.date().optional(),
+    end_date: z.coerce.date().optional(),
     ...paginationQuerySchema,
   })
   .transform((query) => ({

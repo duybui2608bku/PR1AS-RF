@@ -56,6 +56,8 @@ export interface IUserRestrictionDocument extends IUserRestriction, Document {}
 export interface ReportQuery {
   target_type?: ReportTargetType;
   status?: ReportStatus;
+  start_date?: Date;
+  end_date?: Date;
   page: number;
   limit: number;
   skip: number;

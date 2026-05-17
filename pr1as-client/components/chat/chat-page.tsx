@@ -1751,26 +1751,26 @@ function ThreadAvatar({
 
   if (avatar) {
     return (
-      <div className={cn("relative shrink-0", className)}>
+      <div className={cn("relative size-10 shrink-0 overflow-hidden rounded-full", ringClass, className)}>
         <Image
           src={avatar}
           alt={title}
-          width={40}
-          height={40}
-          className={cn("size-10 rounded-full object-cover", ringClass)}
+          fill
+          sizes="40px"
+          className="object-cover"
         />
         {highlight === "admin" ? (
-          <BadgeCheck className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full fill-sky-500 text-white" />
+          <BadgeCheck className="absolute -right-0.5 -bottom-0.5 z-10 size-4 rounded-full fill-sky-500 text-white" />
         ) : null}
       </div>
     )
   }
 
   return (
-    <div className={cn("relative shrink-0", className)}>
+    <div className={cn("relative size-10 shrink-0", className)}>
       <div
         className={cn(
-          "flex size-10 items-center justify-center rounded-full text-sm font-semibold",
+          "flex size-full items-center justify-center rounded-full text-sm font-semibold",
           mode === "direct"
             ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200"
             : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
@@ -1805,22 +1805,26 @@ function GroupMemberAvatars({ members }: { members?: GroupChatMember[] }) {
         const name = getMemberName(member)
 
         return member.avatar ? (
-          <Image
+          <div
             key={member._id}
-            src={member.avatar}
-            alt={name}
-            width={32}
-            height={32}
             className={cn(
-              "size-8 rounded-full border-2 border-card object-cover",
+              "relative size-8 shrink-0 overflow-hidden rounded-full border-2 border-card",
               index > 0 && "-ml-4"
             )}
-          />
+          >
+            <Image
+              src={member.avatar}
+              alt={name}
+              fill
+              sizes="32px"
+              className="object-cover"
+            />
+          </div>
         ) : (
           <div
             key={member._id}
             className={cn(
-              "flex size-8 items-center justify-center rounded-full border-2 border-card bg-amber-100 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+              "flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-card bg-amber-100 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200",
               index > 0 && "-ml-4"
             )}
           >

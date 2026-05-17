@@ -102,6 +102,7 @@ export interface IUserPublic {
     longitude: number | null;
   };
   created_at: Date;
+  last_login?: Date | null;
   meta_data: {
     reputation_score: number;
     pricing_plan_code: PricingPlanCode;

@@ -19,7 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -507,13 +507,6 @@ export default function AdminTransactionsPage() {
     setFilters((prev) => ({ ...prev, page: 1, [key]: value }))
   }
 
-  const handleDateFilterChange = (
-    key: "startDate" | "endDate",
-    value?: Date
-  ) => {
-    handleFilterChange(key, formatFilterDate(value))
-  }
-
   const clearFilters = () => {
     setSearchInput("")
     setFilters({
@@ -726,22 +719,20 @@ export default function AdminTransactionsPage() {
             </div>
 
             <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
-              <DatePicker
-                value={startDate}
-                onChange={(date) => handleDateFilterChange("startDate", date)}
-                toDate={endDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
-            </div>
-
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
-              <DatePicker
-                value={endDate}
-                onChange={(date) => handleDateFilterChange("endDate", date)}
-                fromDate={startDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
+              <Label className="text-xs text-muted-foreground">
+                Khoảng ngày
+              </Label>
+              <DateRangePicker
+                value={{ from: startDate, to: endDate }}
+                onChange={(range) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: 1,
+                    startDate: formatFilterDate(range?.from),
+                    endDate: formatFilterDate(range?.to),
+                  }))
+                }}
+                buttonClassName="h-9 w-full sm:w-72 data-[size=default]:h-9"
               />
             </div>
 
@@ -757,8 +748,137 @@ export default function AdminTransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card className="overflow-hidden">
+      {/* Mobile card list */}
+      <Card className="overflow-hidden md:hidden">
+        <div className="divide-y">
+          {txQuery.isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ))
+          ) : transactions.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Không tìm thấy giao dịch nào.
+            </div>
+          ) : (
+            transactions.map((tx) => (
+              <div key={tx.id} className="space-y-2.5 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <TypeBadge type={tx.type} />
+                    <div className="mt-1 font-mono text-xs text-muted-foreground">
+                      {shortId(tx.id)}
+                    </div>
+                  </div>
+                  <StatusBadge status={tx.status} />
+                </div>
+
+                <div className="text-lg font-bold tabular-nums">
+                  {formatCurrency(tx.amount)}
+                </div>
+
+                <div className="space-y-0.5 text-sm">
+                  <div className="truncate font-medium">
+                    {tx.user?.full_name ?? "—"}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {tx.user?.email ?? tx.user_id}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Cổng TT</div>
+                    <div className="mt-0.5">{tx.gateway ?? "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Mã GD cổng</div>
+                    <div className="mt-0.5 truncate font-mono">
+                      {tx.gateway_transaction_id
+                        ? shortId(tx.gateway_transaction_id)
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 border-t pt-2.5">
+                  <div className="text-xs text-muted-foreground">
+                    {formatDate(tx.created_at)}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDetailTx(tx)}
+                  >
+                    Xem chi tiết
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {totalPages > 1 ? (
+          <div className="flex flex-col gap-2 border-t px-4 py-3">
+            <p className="text-center text-xs text-muted-foreground">
+              Trang {currentPage} / {totalPages} — {total} kết quả
+            </p>
+            <div className="flex items-center justify-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage <= 1 || txQuery.isFetching}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const startPage = Math.max(
+                  1,
+                  Math.min(currentPage - 2, totalPages - 4)
+                )
+                const page = startPage + i
+                return (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    size="sm"
+                    className="w-9"
+                    onClick={() => handlePageChange(page)}
+                    disabled={txQuery.isFetching}
+                  >
+                    {page}
+                  </Button>
+                )
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage >= totalPages || txQuery.isFetching}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {txQuery.isFetching && !txQuery.isLoading ? (
+          <div className="flex items-center justify-center gap-2 border-t py-2 text-xs text-muted-foreground">
+            <Loader2 className="size-3.5 animate-spin" />
+            Đang tải...
+          </div>
+        ) : null}
+      </Card>
+
+      {/* Desktop table */}
+      <Card className="hidden overflow-hidden md:block">
         <div className="overflow-x-auto">
           <Table>
             <thead className="border-b bg-muted/50">

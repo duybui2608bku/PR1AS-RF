@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -433,25 +433,18 @@ export default function DashboardPage() {
 
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Từ ngày</Label>
-              <DatePicker
-                value={parsedStartDate}
-                onChange={(date) => setStartDate(formatFilterDate(date))}
-                toDate={parsedEndDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
-            </div>
-            <div className="flex w-full flex-col gap-1 sm:w-auto">
-              <Label className="text-xs text-muted-foreground">Đến ngày</Label>
-              <DatePicker
-                value={parsedEndDate}
-                onChange={(date) => setEndDate(formatFilterDate(date))}
-                fromDate={parsedStartDate}
-                buttonClassName="h-9 w-full sm:w-44 data-[size=default]:h-9"
-              />
-            </div>
+          <div className="flex w-full flex-col gap-1 sm:w-auto">
+            <Label className="text-xs text-muted-foreground">
+              Khoảng ngày
+            </Label>
+            <DateRangePicker
+              value={{ from: parsedStartDate, to: parsedEndDate }}
+              onChange={(range) => {
+                setStartDate(formatFilterDate(range?.from))
+                setEndDate(formatFilterDate(range?.to ?? range?.from))
+              }}
+              buttonClassName="h-9 w-full sm:w-72 data-[size=default]:h-9"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => applyPreset(7)}>

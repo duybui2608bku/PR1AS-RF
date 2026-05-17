@@ -132,6 +132,8 @@ export const moderationService = {
     limit?: number
     target_type?: ReportTargetType
     status?: ReportStatus
+    start_date?: string
+    end_date?: string
   }) => {
     const response = await api.get<ApiResponse<PaginatedResult<ModerationReport>>>(
       "/moderation/admin/reports",

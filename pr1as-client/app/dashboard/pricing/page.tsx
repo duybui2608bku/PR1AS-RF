@@ -1,11 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
-  Check,
+  AlertCircle,
   Loader2,
+  Megaphone,
   MessageSquare,
+  PenSquare,
   RefreshCcw,
+  RotateCcw,
+  Rocket,
   Save,
   Sparkles,
   Star,
@@ -22,10 +26,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   useAdminPricingPackages,
   useUpdatePricingPackage,
@@ -67,24 +73,24 @@ const PLAN_META: Record<
   PricingPlanCode,
   {
     icon: React.ReactNode
-    color: string
-    bg: string
+    label: string
+    accent: string
   }
 > = {
   standard: {
     icon: <Zap className="size-4" />,
-    color: "text-foreground",
-    bg: "bg-muted",
+    label: "Standard",
+    accent: "text-foreground",
   },
   gold: {
     icon: <Star className="size-4 fill-amber-400 text-amber-400" />,
-    color: "text-amber-700 dark:text-amber-300",
-    bg: "bg-amber-100 dark:bg-amber-950/40",
+    label: "Gold",
+    accent: "text-amber-600 dark:text-amber-300",
   },
   diamond: {
     icon: <Sparkles className="size-4 text-violet-600 dark:text-violet-400" />,
-    color: "text-violet-700 dark:text-violet-300",
-    bg: "bg-violet-100 dark:bg-violet-950/40",
+    label: "Diamond",
+    accent: "text-violet-600 dark:text-violet-300",
   },
 }
 
@@ -154,6 +160,21 @@ function featuresFromDraft(draft: PlanDraft): PricingPlanFeatures {
   }
 }
 
+function isDraftEqual(a: PlanDraft, b: PlanDraft) {
+  return (
+    a.display_name === b.display_name &&
+    a.price === b.price &&
+    a.is_active === b.is_active &&
+    a.messaging_enabled === b.messaging_enabled &&
+    a.messaging_max_recipients === b.messaging_max_recipients &&
+    a.create_job_enabled === b.create_job_enabled &&
+    a.create_job_limit === b.create_job_limit &&
+    a.boost_profile_enabled === b.boost_profile_enabled &&
+    a.boost_profile_monthly_limit === b.boost_profile_monthly_limit &&
+    a.ads_enabled === b.ads_enabled
+  )
+}
+
 function validateDraft(draft: PlanDraft) {
   const price = parseVndInput(draft.price)
   if (!draft.display_name.trim()) {
@@ -166,21 +187,14 @@ function validateDraft(draft: PlanDraft) {
   const limits: Array<{ label: string; key: LimitKey; min: number }> = [
     { label: "Số người nhận tin nhắn", key: "messaging_max_recipients", min: 1 },
     { label: "Giới hạn đăng tin", key: "create_job_limit", min: 1 },
-    {
-      label: "Lượt boost hồ sơ",
-      key: "boost_profile_monthly_limit",
-      min: 0,
-    },
+    { label: "Lượt boost hồ sơ", key: "boost_profile_monthly_limit", min: 0 },
   ]
 
   for (const item of limits) {
     const value = draft[item.key].trim()
     if (!value) continue
     const numberValue = Number(value)
-    if (
-      !Number.isInteger(numberValue) ||
-      numberValue < item.min
-    ) {
+    if (!Number.isInteger(numberValue) || numberValue < item.min) {
       return `${item.label} phải là số nguyên từ ${item.min} trở lên.`
     }
   }
@@ -188,80 +202,85 @@ function validateDraft(draft: PlanDraft) {
   return null
 }
 
-function PackageSkeleton() {
+function PageHeaderSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-7 w-44" />
-        <Skeleton className="h-4 w-64" />
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-20 w-full" />
-        ))}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Skeleton className="h-9 w-72" />
+      <Skeleton className="h-10 w-full max-w-md" />
+      <Skeleton className="h-[420px] w-full" />
+    </div>
   )
 }
 
-function FeatureToggle({
-  checked,
-  label,
+function FeatureRow({
+  icon,
+  title,
   description,
-  onChange,
+  enabled,
+  onToggle,
+  limit,
 }: {
-  checked: boolean
-  label: string
-  description?: string
-  onChange: (value: boolean) => void
+  icon: React.ReactNode
+  title: string
+  description: string
+  enabled: boolean
+  onToggle: (value: boolean) => void
+  limit?: {
+    id: string
+    label: string
+    value: string
+    placeholder?: string
+    min: number
+    onChange: (value: string) => void
+  }
 }) {
   return (
-    <label className="flex min-h-20 cursor-pointer items-start gap-3 rounded-lg border bg-background p-4">
-      <Checkbox
-        checked={checked}
-        onCheckedChange={(value) => onChange(value === true)}
-        className="mt-0.5"
-      />
-      <span className="space-y-1">
-        <span className="block text-sm font-medium">{label}</span>
-        {description ? (
-          <span className="block text-xs leading-5 text-muted-foreground">
-            {description}
+    <div className="rounded-lg border bg-card">
+      <div className="flex items-start justify-between gap-4 p-4">
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              "mt-0.5 inline-flex size-8 items-center justify-center rounded-md border bg-muted text-muted-foreground",
+              enabled && "border-primary/30 bg-primary/10 text-primary"
+            )}
+          >
+            {icon}
           </span>
-        ) : null}
-      </span>
-    </label>
-  )
-}
-
-function LimitField({
-  id,
-  label,
-  value,
-  disabled,
-  min,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: string
-  disabled: boolean
-  min: number
-  onChange: (value: string) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        min={min}
-        step={1}
-        value={value}
-        disabled={disabled}
-        placeholder="Không giới hạn"
-        onChange={(event) => onChange(event.target.value)}
-      />
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium leading-none">{title}</p>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {description}
+            </p>
+          </div>
+        </div>
+        <Switch checked={enabled} onCheckedChange={onToggle} />
+      </div>
+      {limit ? (
+        <div
+          className={cn(
+            "flex flex-col gap-2 border-t bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+            !enabled && "opacity-60"
+          )}
+        >
+          <Label
+            htmlFor={limit.id}
+            className="text-xs font-normal text-muted-foreground"
+          >
+            {limit.label}
+          </Label>
+          <Input
+            id={limit.id}
+            type="number"
+            min={limit.min}
+            step={1}
+            value={limit.value}
+            disabled={!enabled}
+            placeholder={limit.placeholder ?? "Không giới hạn"}
+            onChange={(event) => limit.onChange(event.target.value)}
+            className="h-9 w-full bg-background sm:max-w-[200px]"
+          />
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -269,14 +288,18 @@ function LimitField({
 function PlanEditor({
   pkg,
   draft,
+  baseline,
   isSaving,
   onChange,
+  onReset,
   onSave,
 }: {
   pkg: PricingPackage
   draft: PlanDraft
+  baseline: PlanDraft
   isSaving: boolean
   onChange: (next: PlanDraft) => void
+  onReset: () => void
   onSave: () => void
 }) {
   const meta = PLAN_META[pkg.package_code]
@@ -286,131 +309,158 @@ function PlanEditor({
   const setField = (key: keyof PlanDraft, value: string) => {
     onChange({ ...draft, [key]: value })
   }
+  const isDirty = !isDraftEqual(draft, baseline)
 
   return (
     <Card>
-      <CardHeader className="gap-4 md:flex-row md:items-start md:justify-between md:space-y-0">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex size-9 items-center justify-center rounded-lg",
-                meta.bg,
-                meta.color
-              )}
-            >
-              {meta.icon}
-            </span>
-            <CardTitle className="text-xl">{pkg.display_name}</CardTitle>
-            <Badge variant={draft.is_active ? "default" : "outline"}>
-              {draft.is_active ? "Đang bật" : "Đã tắt"}
+      <CardHeader className="gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={cn("inline-flex items-center gap-2", meta.accent)}>
+            {meta.icon}
+            <CardTitle className="text-lg">Gói {meta.label}</CardTitle>
+          </span>
+          <Badge variant={draft.is_active ? "default" : "outline"}>
+            {draft.is_active ? "Đang bật" : "Đã tắt"}
+          </Badge>
+          {isDirty ? (
+            <Badge variant="outline" className="border-amber-400 text-amber-600 dark:text-amber-300">
+              <AlertCircle className="size-3" />
+              Chưa lưu
             </Badge>
-          </div>
-          <CardDescription>
-            Mã gói {pkg.package_code.toUpperCase()} · Giá hiện tại{" "}
-            {formatCurrency(Number(pkg.price ?? 0))}
-          </CardDescription>
+          ) : null}
         </div>
-        <Button onClick={onSave} disabled={isSaving}>
-          {isSaving ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Save className="size-4" />
-          )}
-          Lưu thay đổi
-        </Button>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
-          <div className="space-y-2">
-            <Label htmlFor={`${pkg.id}-name`}>Tên hiển thị</Label>
-            <Input
-              id={`${pkg.id}-name`}
-              value={draft.display_name}
-              onChange={(event) =>
-                setField("display_name", event.target.value)
-              }
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Thông tin gói</h3>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Hiển thị cho user</span>
+              <Switch
+                checked={draft.is_active}
+                onCheckedChange={(value) => setBoolean("is_active", value)}
+              />
+            </label>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={`${pkg.id}-name`}>Tên hiển thị</Label>
+              <Input
+                id={`${pkg.id}-name`}
+                value={draft.display_name}
+                placeholder={meta.label}
+                onChange={(event) =>
+                  setField("display_name", event.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${pkg.id}-price`}>Giá / tháng (VND)</Label>
+              <Input
+                id={`${pkg.id}-price`}
+                type="text"
+                inputMode="numeric"
+                value={draft.price}
+                placeholder="0"
+                onChange={(event) =>
+                  setField("price", formatVndInput(event.target.value))
+                }
+              />
+              {Number.isFinite(parseVndInput(draft.price)) ? (
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(parseVndInput(draft.price) || 0)}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold">Quyền sử dụng</h3>
+            <p className="text-xs text-muted-foreground">
+              Bật / tắt từng tính năng. Khi bật, có thể đặt giới hạn (để trống
+              = không giới hạn).
+            </p>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <FeatureRow
+              icon={<MessageSquare className="size-4" />}
+              title="Nhắn tin với khách hàng"
+              description="Cho phép worker chủ động nhắn tin tới khách."
+              enabled={draft.messaging_enabled}
+              onToggle={(value) => setBoolean("messaging_enabled", value)}
+              limit={{
+                id: `${pkg.id}-message-limit`,
+                label: "Số người nhận tối đa",
+                value: draft.messaging_max_recipients,
+                min: 1,
+                onChange: (value) =>
+                  setField("messaging_max_recipients", value),
+              }}
+            />
+
+            <FeatureRow
+              icon={<PenSquare className="size-4" />}
+              title="Đăng tin"
+              description="Cho phép tạo bài đăng / job theo giới hạn của gói."
+              enabled={draft.create_job_enabled}
+              onToggle={(value) => setBoolean("create_job_enabled", value)}
+              limit={{
+                id: `${pkg.id}-job-limit`,
+                label: "Số tin được đăng",
+                value: draft.create_job_limit,
+                min: 1,
+                onChange: (value) => setField("create_job_limit", value),
+              }}
+            />
+
+            <FeatureRow
+              icon={<Rocket className="size-4" />}
+              title="Boost hồ sơ"
+              description="Đẩy hồ sơ worker nổi bật trong tháng."
+              enabled={draft.boost_profile_enabled}
+              onToggle={(value) => setBoolean("boost_profile_enabled", value)}
+              limit={{
+                id: `${pkg.id}-boost-limit`,
+                label: "Lượt boost / tháng",
+                value: draft.boost_profile_monthly_limit,
+                min: 0,
+                onChange: (value) =>
+                  setField("boost_profile_monthly_limit", value),
+              }}
+            />
+
+            <FeatureRow
+              icon={<Megaphone className="size-4" />}
+              title="Hiển thị quảng cáo"
+              description="Tắt mục này nếu gói được trải nghiệm không quảng cáo."
+              enabled={draft.ads_enabled}
+              onToggle={(value) => setBoolean("ads_enabled", value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${pkg.id}-price`}>Giá mỗi tháng</Label>
-            <Input
-              id={`${pkg.id}-price`}
-              type="text"
-              inputMode="numeric"
-              value={draft.price}
-              placeholder="65,000"
-              onChange={(event) =>
-                setField("price", formatVndInput(event.target.value))
-              }
-            />
-          </div>
-          <label className="flex h-10 items-center gap-2 rounded-lg border px-3">
-            <Checkbox
-              checked={draft.is_active}
-              onCheckedChange={(value) =>
-                setBoolean("is_active", value === true)
-              }
-            />
-            <span className="text-sm font-medium">Bật gói</span>
-          </label>
-        </div>
+        </section>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <FeatureToggle
-            checked={draft.messaging_enabled}
-            label="Nhắn tin với khách hàng"
-            description="Cho phép worker chủ động nhắn tin theo giới hạn người nhận."
-            onChange={(value) => setBoolean("messaging_enabled", value)}
-          />
-          <LimitField
-            id={`${pkg.id}-message-limit`}
-            label="Số người nhận tin nhắn"
-            value={draft.messaging_max_recipients}
-            min={1}
-            disabled={!draft.messaging_enabled}
-            onChange={(value) => setField("messaging_max_recipients", value)}
-          />
-
-          <FeatureToggle
-            checked={draft.create_job_enabled}
-            label="Đăng tin"
-            description="Cho phép tạo bài đăng hoặc job theo giới hạn của gói."
-            onChange={(value) => setBoolean("create_job_enabled", value)}
-          />
-          <LimitField
-            id={`${pkg.id}-job-limit`}
-            label="Giới hạn đăng tin"
-            value={draft.create_job_limit}
-            min={1}
-            disabled={!draft.create_job_enabled}
-            onChange={(value) => setField("create_job_limit", value)}
-          />
-
-          <FeatureToggle
-            checked={draft.boost_profile_enabled}
-            label="Boost hồ sơ"
-            description="Cho phép đẩy hồ sơ worker nổi bật mỗi tháng."
-            onChange={(value) => setBoolean("boost_profile_enabled", value)}
-          />
-          <LimitField
-            id={`${pkg.id}-boost-limit`}
-            label="Lượt boost mỗi tháng"
-            value={draft.boost_profile_monthly_limit}
-            min={0}
-            disabled={!draft.boost_profile_enabled}
-            onChange={(value) =>
-              setField("boost_profile_monthly_limit", value)
-            }
-          />
-
-          <FeatureToggle
-            checked={draft.ads_enabled}
-            label="Hiển thị quảng cáo"
-            description="Tắt mục này nếu gói được hưởng trải nghiệm không quảng cáo."
-            onChange={(value) => setBoolean("ads_enabled", value)}
-          />
+        <div className="flex flex-col-reverse items-stretch justify-end gap-2 border-t pt-4 sm:flex-row sm:items-center">
+          <Button
+            variant="ghost"
+            disabled={!isDirty || isSaving}
+            onClick={onReset}
+          >
+            <RotateCcw className="size-4" />
+            Hoàn tác
+          </Button>
+          <Button onClick={onSave} disabled={!isDirty || isSaving}>
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            Lưu thay đổi
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -418,23 +468,13 @@ function PlanEditor({
 }
 
 export default function AdminPricingPage() {
-  const [drafts, setDrafts] = useState<Record<string, PlanDraft>>({})
+  const [draftOverrides, setDraftOverrides] = useState<
+    Record<string, PlanDraft>
+  >({})
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [tabSelection, setTabSelection] = useState<string>("")
   const packagesQuery = useAdminPricingPackages()
   const updateMutation = useUpdatePricingPackage()
-
-  useEffect(() => {
-    if (!packagesQuery.data) return
-    setDrafts((current) => {
-      const next = { ...current }
-      for (const pkg of packagesQuery.data) {
-        if (!next[pkg.id]) {
-          next[pkg.id] = draftFromPackage(pkg)
-        }
-      }
-      return next
-    })
-  }, [packagesQuery.data])
 
   const packages = useMemo(
     () =>
@@ -444,10 +484,33 @@ export default function AdminPricingPage() {
     [packagesQuery.data]
   )
 
-  const activeCount = packages.filter((pkg) => pkg.is_active).length
+  const baselines = useMemo<Record<string, PlanDraft>>(() => {
+    const next: Record<string, PlanDraft> = {}
+    for (const pkg of packages) {
+      next[pkg.id] = draftFromPackage(pkg)
+    }
+    return next
+  }, [packages])
+
+  const activeTab =
+    tabSelection && packages.some((p) => p.id === tabSelection)
+      ? tabSelection
+      : (packages[0]?.id ?? "")
+
+  const dirtyIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const pkg of packages) {
+      const override = draftOverrides[pkg.id]
+      const baseline = baselines[pkg.id]
+      if (override && baseline && !isDraftEqual(override, baseline)) {
+        ids.add(pkg.id)
+      }
+    }
+    return ids
+  }, [packages, draftOverrides, baselines])
 
   const handleSave = async (pkg: PricingPackage) => {
-    const draft = drafts[pkg.id]
+    const draft = draftOverrides[pkg.id] ?? baselines[pkg.id]
     if (!draft) return
 
     const validationError = validateDraft(draft)
@@ -467,6 +530,12 @@ export default function AdminPricingPage() {
           features: featuresFromDraft(draft),
         },
       })
+      setDraftOverrides((current) => {
+        if (!(pkg.id in current)) return current
+        const next = { ...current }
+        delete next[pkg.id]
+        return next
+      })
       toast.success(`Đã cập nhật gói ${draft.display_name.trim()}.`)
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể cập nhật gói."))
@@ -475,17 +544,32 @@ export default function AdminPricingPage() {
     }
   }
 
+  const handleReset = (pkg: PricingPackage) => {
+    setDraftOverrides((current) => {
+      if (!(pkg.id in current)) return current
+      const next = { ...current }
+      delete next[pkg.id]
+      return next
+    })
+  }
+
+  if (packagesQuery.isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeaderSkeleton />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý plan</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Chỉnh giá, trạng thái và quyền sử dụng của các gói pricing.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý gói đăng kí</h1>
         </div>
         <Button
           variant="outline"
+          size="sm"
           onClick={() => packagesQuery.refetch()}
           disabled={packagesQuery.isFetching}
         >
@@ -497,41 +581,6 @@ export default function AdminPricingPage() {
           Làm mới
         </Button>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Tổng số plan</CardDescription>
-            <CardTitle>{packages.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Plan đang bật</CardDescription>
-            <CardTitle>{activeCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Plan có nhắn tin</CardDescription>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="size-5 text-primary" />
-              {
-                packages.filter((pkg) => pkg.features.messaging_enabled)
-                  .length
-              }
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {packagesQuery.isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <PackageSkeleton key={index} />
-          ))}
-        </div>
-      ) : null}
 
       {packagesQuery.isError ? (
         <Card>
@@ -550,7 +599,7 @@ export default function AdminPricingPage() {
         </Card>
       ) : null}
 
-      {!packagesQuery.isLoading && !packagesQuery.isError && packages.length === 0 ? (
+      {!packagesQuery.isError && packages.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Chưa có plan</CardTitle>
@@ -561,31 +610,55 @@ export default function AdminPricingPage() {
         </Card>
       ) : null}
 
-      <div className="space-y-4">
-        {packages.map((pkg) => {
-          const draft = drafts[pkg.id]
-          if (!draft) return null
-          return (
-            <PlanEditor
-              key={pkg.id}
-              pkg={pkg}
-              draft={draft}
-              isSaving={savingId === pkg.id}
-              onChange={(next) =>
-                setDrafts((current) => ({ ...current, [pkg.id]: next }))
-              }
-              onSave={() => handleSave(pkg)}
-            />
-          )
-        })}
-      </div>
+      {packages.length > 0 ? (
+        <Tabs value={activeTab} onValueChange={setTabSelection} className="gap-4">
+          <TabsList className="h-auto w-full justify-start gap-1 bg-muted p-1 sm:w-fit">
+            {packages.map((pkg) => {
+              const meta = PLAN_META[pkg.package_code]
+              const isDirty = dirtyIds.has(pkg.id)
+              return (
+                <TabsTrigger
+                  key={pkg.id}
+                  value={pkg.id}
+                  className="h-9 gap-2 px-3"
+                >
+                  <span className={meta.accent}>{meta.icon}</span>
+                  <span>{meta.label}</span>
+                  {!pkg.is_active ? (
+                    <span className="size-1.5 rounded-full bg-muted-foreground/50" />
+                  ) : null}
+                  {isDirty ? (
+                    <span className="size-1.5 rounded-full bg-amber-500" />
+                  ) : null}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
 
-      {!packagesQuery.isLoading && packages.length > 0 ? (
-        <div className="flex items-center gap-2 rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-          <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
-          Giá trên trang pricing và số tiền trừ ví khi nâng cấp đều dùng giá từ
-          database.
-        </div>
+          {packages.map((pkg) => {
+            const baseline = baselines[pkg.id]
+            if (!baseline) return null
+            const draft = draftOverrides[pkg.id] ?? baseline
+            return (
+              <TabsContent key={pkg.id} value={pkg.id} className="mt-0">
+                <PlanEditor
+                  pkg={pkg}
+                  draft={draft}
+                  baseline={baseline}
+                  isSaving={savingId === pkg.id}
+                  onChange={(next) =>
+                    setDraftOverrides((current) => ({
+                      ...current,
+                      [pkg.id]: next,
+                    }))
+                  }
+                  onReset={() => handleReset(pkg)}
+                  onSave={() => handleSave(pkg)}
+                />
+              </TabsContent>
+            )
+          })}
+        </Tabs>
       ) : null}
     </div>
   )

@@ -13,7 +13,7 @@ import {
   updateUserStatusSchema,
   getUsersQuerySchema,
 } from "../../validations/user/user.validation";
-import { R, validateWithSchema, PaginationHelper, extractUserIdFromRequest } from "../../utils";
+import { R, validateWithSchema, PaginationHelper, extractUserIdFromRequest, toPublicUser } from "../../utils";
 
 export class UserController {
   async getMyPostStats(req: AuthRequest, res: Response): Promise<void> {
@@ -38,7 +38,11 @@ export class UserController {
       skip,
     } as GetUsersQuery & { skip: number });
 
-    const response = PaginationHelper.format(users, req.pagination!, total);
+    const response = PaginationHelper.format(
+      users.map(toPublicUser),
+      req.pagination!,
+      total
+    );
 
     R.success(res, response, USER_MESSAGES.USERS_FETCHED, req);
   }
