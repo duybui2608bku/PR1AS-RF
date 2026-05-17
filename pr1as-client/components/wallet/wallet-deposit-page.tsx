@@ -147,7 +147,9 @@ export function WalletDepositPage() {
                 <div className="flex min-h-5 items-center justify-between gap-2 text-xs">
                   <span
                     className={
-                      amountError ? "text-red-600" : "text-muted-foreground"
+                      amountError
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-muted-foreground"
                     }
                   >
                     {amountError || formatVnd(parsedAmount)}
@@ -267,7 +269,7 @@ function PaymentStatus({
 }) {
   if (isSuccess) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+      <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
         <CheckCircle2 className="size-4" />
         <span>Đã nhận tiền và cập nhật ví</span>
       </div>
@@ -276,7 +278,7 @@ function PaymentStatus({
 
   if (isFailed) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
         <XCircle className="size-4" />
         <span>Giao dịch thất bại hoặc sai số tiền</span>
       </div>
@@ -288,7 +290,7 @@ function PaymentStatus({
       {isChecking ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (
-        <CheckCircle2 className="size-4 text-amber-600" />
+        <CheckCircle2 className="size-4 text-amber-600 dark:text-amber-400" />
       )}
       <span>Đang chờ xác nhận giao dịch</span>
     </div>

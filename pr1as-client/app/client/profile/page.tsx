@@ -40,14 +40,17 @@ const toStatusColor = (status?: string): string => {
 }
 
 const toVerifyColor = (verifyEmail?: boolean): string => {
-  if (verifyEmail) return "bg-emerald-100 text-emerald-700"
-  return "bg-red-100 text-red-700"
+  if (verifyEmail)
+    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+  return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300"
 }
 
 const toPlanColor = (planCode?: string): string => {
   const code = planCode?.toLowerCase()
-  if (code === "gold") return "bg-yellow-100 text-yellow-700"
-  if (code === "diamond") return "bg-violet-100 text-violet-700"
+  if (code === "gold")
+    return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300"
+  if (code === "diamond")
+    return "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
   return "bg-muted text-foreground"
 }
 

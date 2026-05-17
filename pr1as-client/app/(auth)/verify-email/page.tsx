@@ -76,7 +76,7 @@ export default function VerifyEmailPage() {
     <Card>
       <CardHeader className="text-center">
         {status === "success" ? (
-          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600" />
+          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600 dark:text-emerald-400" />
         ) : status === "error" ? (
           <XCircle className="mx-auto mb-2 size-10 text-destructive" />
         ) : (

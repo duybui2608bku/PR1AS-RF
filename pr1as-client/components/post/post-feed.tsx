@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { Loader2, Newspaper } from "lucide-react"
 
+import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useListFeed } from "@/lib/hooks/use-posts"
 import type { PostFeedParams } from "@/types"
@@ -77,7 +78,9 @@ export function PostFeed({ params = {} }: Props) {
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <ErrorBoundary key={post.id} resetKeys={[post.id]}>
+          <PostCard post={post} />
+        </ErrorBoundary>
       ))}
 
       {/* Infinite scroll sentinel */}

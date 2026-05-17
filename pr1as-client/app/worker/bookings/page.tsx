@@ -536,7 +536,7 @@ export default function WorkerBookingsPage() {
                 </div>
               ) : bookingsQuery.isError ? (
                 <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
-                  <AlertCircle className="size-9 text-red-600" />
+                  <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
                   <p className="text-sm font-medium">
                     Không tải được danh sách booking worker
                   </p>

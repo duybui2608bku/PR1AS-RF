@@ -30,48 +30,55 @@ const STATUS_CONFIG: Record<
 > = {
   [BookingStatus.PENDING]: {
     label: "Chờ xác nhận",
-    className: "border-amber-200 bg-amber-50 text-amber-700",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
     barClassName: "bg-amber-400",
   },
   [BookingStatus.CONFIRMED]: {
     label: "Đã xác nhận",
-    className: "border-sky-200 bg-sky-50 text-sky-700",
+    className:
+      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
     barClassName: "bg-sky-500",
   },
   [BookingStatus.IN_PROGRESS]: {
     label: "Đang thực hiện",
-    className: "border-indigo-200 bg-indigo-50 text-indigo-700",
+    className:
+      "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300",
     barClassName: "bg-indigo-500",
   },
   [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: {
     label: "Chờ khách xác nhận",
-    className: "border-violet-200 bg-violet-50 text-violet-700",
+    className:
+      "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300",
     barClassName: "bg-violet-500",
   },
   [BookingStatus.COMPLETED]: {
     label: "Hoàn thành",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
     barClassName: "bg-emerald-500",
   },
   [BookingStatus.CANCELLED]: {
     label: "Đã hủy",
-    className: "border-zinc-200 bg-zinc-50 text-zinc-600",
-    barClassName: "bg-zinc-400",
+    className: "border-border bg-muted text-muted-foreground",
+    barClassName: "bg-muted-foreground/60",
   },
   [BookingStatus.REJECTED]: {
     label: "Từ chối",
-    className: "border-red-200 bg-red-50 text-red-700",
+    className:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300",
     barClassName: "bg-red-500",
   },
   [BookingStatus.DISPUTED]: {
     label: "Tranh chấp",
-    className: "border-orange-200 bg-orange-50 text-orange-700",
+    className:
+      "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300",
     barClassName: "bg-orange-500",
   },
   [BookingStatus.EXPIRED]: {
     label: "Hết hạn",
-    className: "border-slate-200 bg-slate-50 text-slate-600",
-    barClassName: "bg-slate-400",
+    className: "border-border bg-muted text-muted-foreground",
+    barClassName: "bg-muted-foreground/60",
   },
 }
 
@@ -599,7 +606,7 @@ export default function AdminBookingsPage() {
             analytics ? `${analytics.completion_rate}% tổng booking` : undefined
           }
           icon={<CheckCircle2 className="size-4" />}
-          iconClassName="bg-emerald-100 text-emerald-600"
+          iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
         />
         <StatCard
           title="Đang chờ"
@@ -614,7 +621,7 @@ export default function AdminBookingsPage() {
           }
           sub="Booking chưa được xác nhận"
           icon={<Clock className="size-4" />}
-          iconClassName="bg-amber-100 text-amber-600"
+          iconClassName="bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
         />
         <StatCard
           title="Hủy / tranh chấp"
@@ -631,7 +638,7 @@ export default function AdminBookingsPage() {
               : undefined
           }
           icon={<X className="size-4" />}
-          iconClassName="bg-red-100 text-red-600"
+          iconClassName="bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-300"
         />
       </div>
 

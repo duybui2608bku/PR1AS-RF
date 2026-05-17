@@ -493,7 +493,7 @@ export default function DashboardPage() {
           }
           sub="Theo ngày tạo tài khoản"
           icon={<UserPlus className="size-4" />}
-          iconClassName="bg-sky-100 text-sky-600"
+          iconClassName="bg-sky-100 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300"
         />
         <MetricCard
           title="Lượt đăng ký gói"
@@ -506,7 +506,7 @@ export default function DashboardPage() {
           }
           sub="Standard từ user mới, Gold/Diamond từ upgrade"
           icon={<PackageCheck className="size-4" />}
-          iconClassName="bg-emerald-100 text-emerald-600"
+          iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
         />
         <MetricCard
           href="/dashboard/transactions"
@@ -575,7 +575,7 @@ export default function DashboardPage() {
               value="Xem"
               sub="Thống kê booking và tỉ lệ hoàn thành"
               icon={<CalendarCheck className="size-4" />}
-              iconClassName="bg-indigo-100 text-indigo-600"
+              iconClassName="bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"
             />
             <MetricCard
               href="/dashboard/disputes"
@@ -583,7 +583,7 @@ export default function DashboardPage() {
               value="Xem"
               sub="Các cuộc hội thoại tranh chấp"
               icon={<MessageSquare className="size-4" />}
-              iconClassName="bg-orange-100 text-orange-600"
+              iconClassName="bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-300"
             />
             <MetricCard
               href="/dashboard/transactions"
@@ -591,7 +591,7 @@ export default function DashboardPage() {
               value="Xem"
               sub="Nạp tiền và trạng thái"
               icon={<CreditCard className="size-4" />}
-              iconClassName="bg-amber-100 text-amber-600"
+              iconClassName="bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
             />
           </CardContent>
         </Card>

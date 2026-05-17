@@ -1692,7 +1692,7 @@ function ConversationList({
                 <p
                   className={cn(
                     "flex min-w-0 items-center gap-1 truncate text-sm font-medium",
-                    needsResponse && "text-red-600",
+                    needsResponse && "text-red-600 dark:text-red-400",
                     isAdminDirect && "text-sky-700 dark:text-sky-300"
                   )}
                 >
@@ -1711,7 +1711,7 @@ function ConversationList({
               <p
                 className={cn(
                   "mt-1 truncate text-xs text-muted-foreground",
-                  needsResponse && "font-medium text-red-600"
+                  needsResponse && "font-medium text-red-600 dark:text-red-400"
                 )}
               >
                 {lastMessage}
@@ -2076,7 +2076,7 @@ function MessagePane({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 text-red-600"
+                  className="size-8 text-red-600 dark:text-red-400"
                   onClick={() => onDeleteDirect(message._id)}
                   disabled={deletingMessageId === message._id}
                   aria-label="Xóa tin nhắn"

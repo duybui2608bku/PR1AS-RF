@@ -22,6 +22,7 @@ import { toast } from "sonner"
 
 import { NotificationBell } from "@/components/layout/notification-bell"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
+import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
@@ -182,7 +183,11 @@ export function SiteHeader() {
             </Button>
           ) : null}
           <ThemeToggle />
-          {isAuthenticated ? <NotificationBell /> : null}
+          {isAuthenticated ? (
+            <ErrorBoundary fallback={null}>
+              <NotificationBell />
+            </ErrorBoundary>
+          ) : null}
           {isAuthenticated ? (
             <div ref={menuContainerRef} className="relative hidden md:block">
               <Button
@@ -223,7 +228,7 @@ export function SiteHeader() {
                   ))}
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent dark:text-red-400"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                   >
@@ -293,7 +298,7 @@ export function SiteHeader() {
                   ))}
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-accent"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-accent dark:text-red-400"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                   >

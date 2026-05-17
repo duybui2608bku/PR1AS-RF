@@ -258,7 +258,7 @@ export function WorkerProfileHeader({
         ) : null}
 
         {profile?.introduction ? (
-          <p className="text-sm leading-relaxed whitespace-pre-line text-rose-500">
+          <p className="text-sm leading-relaxed whitespace-pre-line text-rose-500 dark:text-rose-400">
             {profile.introduction}
           </p>
         ) : null}

@@ -90,14 +90,14 @@ function formatFilterDate(date?: Date) {
 function StatusBadge({ status }: { status?: string }) {
   if (status === "active") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
         <ShieldCheck className="size-3" />
         Hoạt động
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
       <ShieldAlert className="size-3" />
       Đã khóa
     </span>
@@ -109,9 +109,9 @@ function PlanBadge({ code }: { code?: string }) {
   const lower = label.toLowerCase()
   const color =
     lower === "gold"
-      ? "bg-yellow-100 text-yellow-700"
+      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300"
       : lower === "diamond"
-        ? "bg-violet-100 text-violet-700"
+        ? "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
         : "bg-muted text-muted-foreground"
   return (
     <span
@@ -156,7 +156,7 @@ function ConfirmDialog({
 }) {
   const isBanning = nextStatus === "banned"
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 dark:bg-background/70">
       <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl">
         <h2 className="mb-2 text-base font-semibold">
           {isBanning ? "Xác nhận khóa tài khoản" : "Xác nhận mở khóa tài khoản"}
@@ -180,7 +180,7 @@ function ConfirmDialog({
             variant={isBanning ? "outline" : "default"}
             className={
               isBanning
-                ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
                 : ""
             }
             onClick={onConfirm}
@@ -533,7 +533,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {user.verify_email ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600">
+                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                           <BadgeCheck className="size-4" />
                           <span className="text-xs">Đã XM</span>
                         </span>
@@ -560,7 +560,7 @@ export default function AdminUsersPage() {
                         }
                         className={
                           user.status === "active"
-                            ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
                             : ""
                         }
                         onClick={() => openConfirm(user)}

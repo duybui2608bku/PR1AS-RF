@@ -183,7 +183,7 @@ export function CreatePostForm() {
 
             <div className="flex items-center gap-2">
               {body.length > 0 ? (
-                <span className={`text-xs ${body.length > 4800 ? "text-red-500" : "text-muted-foreground"}`}>
+                <span className={`text-xs ${body.length > 4800 ? "text-red-500 dark:text-red-400" : "text-muted-foreground"}`}>
                   {body.length}/{MAX_BODY}
                 </span>
               ) : null}

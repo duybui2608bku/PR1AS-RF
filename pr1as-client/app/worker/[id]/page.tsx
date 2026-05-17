@@ -4,6 +4,7 @@ import { use, useState } from "react"
 import { AlertCircle, Flag, Loader2 } from "lucide-react"
 
 import { SiteLayout } from "@/components/layout/site-layout"
+import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -129,7 +130,9 @@ export default function WorkerProfilePage({
                     <WorkerReviews reviews={data.reviews ?? []} />
                   </div>
                   <aside className="space-y-4">
-                    <WorkerCalendar workerId={data.user.id} />
+                    <ErrorBoundary resetKeys={[data.user.id]}>
+                      <WorkerCalendar workerId={data.user.id} />
+                    </ErrorBoundary>
                     <WorkerServices
                       workerId={data.user.id}
                       workerName={data.user.full_name ?? "worker"}
@@ -144,7 +147,9 @@ export default function WorkerProfilePage({
             ) : null}
           </div>
           <aside className="min-w-0">
-            <WorkerSuggestions workerId={id} />
+            <ErrorBoundary resetKeys={[id]} fallback={null}>
+              <WorkerSuggestions workerId={id} />
+            </ErrorBoundary>
           </aside>
         </div>
       </div>

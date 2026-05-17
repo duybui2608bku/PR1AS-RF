@@ -549,7 +549,7 @@ export function PostCard({ post }: Props) {
                 : t("noComments")}
             </span>
             {post.comments_locked ? (
-              <span className="inline-flex items-center gap-1 text-amber-600">
+              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
                 <Lock className="size-3" />
                 {t("commentsLocked")}
               </span>

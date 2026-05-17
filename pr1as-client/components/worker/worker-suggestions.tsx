@@ -212,7 +212,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                         <span
                           className={cn(
                             "inline-flex items-center gap-1",
-                            rating > 0 && "text-amber-600"
+                            rating > 0 && "text-amber-600 dark:text-amber-400"
                           )}
                         >
                           <Star
@@ -227,7 +227,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                             : null}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                          <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                           {worker.completed_bookings}
                         </span>
                       </div>

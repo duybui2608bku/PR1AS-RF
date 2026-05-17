@@ -319,7 +319,7 @@ export function BookWorkerDialog({
                     modifiers={{ booked: bookedDays }}
                     modifiersClassNames={{
                       booked:
-                        "[&>button]:border [&>button]:border-rose-300 [&>button]:text-rose-500 [&>button]:cursor-not-allowed",
+                        "[&>button]:border [&>button]:border-rose-300 [&>button]:text-rose-500 dark:[&>button]:border-rose-800 dark:[&>button]:text-rose-400 [&>button]:cursor-not-allowed",
                     }}
                     initialFocus
                   />

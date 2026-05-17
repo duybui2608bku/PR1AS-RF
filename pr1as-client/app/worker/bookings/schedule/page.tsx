@@ -300,7 +300,7 @@ export default function WorkerBookingSchedulePage() {
               </div>
             ) : bookingsQuery.isError ? (
               <div className="flex min-h-[420px] flex-1 flex-col items-center justify-center gap-3 rounded-md border bg-background px-4 text-center">
-                <AlertCircle className="size-10 text-red-600" />
+                <AlertCircle className="size-10 text-red-600 dark:text-red-400" />
                 <div>
                   <p className="font-medium">Không tải được lịch booking</p>
                   <p className="mt-1 text-sm text-muted-foreground">

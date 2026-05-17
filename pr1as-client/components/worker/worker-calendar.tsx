@@ -73,7 +73,7 @@ export function WorkerCalendar({ workerId }: Props) {
         modifiers={{ booked: bookedDays }}
         modifiersClassNames={{
           booked:
-            "border border-rose-300 text-rose-500 rounded-md opacity-100",
+            "border border-rose-300 text-rose-500 dark:border-rose-800 dark:text-rose-400 rounded-md opacity-100",
         }}
         className="mx-auto"
       />

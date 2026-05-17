@@ -1,4 +1,5 @@
 import { ChatPage } from "@/components/chat/chat-page"
+import { ErrorBoundary } from "@/components/providers/error-boundary"
 
 type ChatSearchParams = Record<string, string | string[] | undefined>
 
@@ -27,12 +28,14 @@ export default async function ChatRoutePage({
         : "chat"
 
   return (
-    <ChatPage
-      key={chatPageKey}
-      initialMode={groupConversationId ? "group" : "direct"}
-      initialDirectConversationId={directConversationId ?? null}
-      initialGroupConversationId={groupConversationId ?? null}
-      initialReceiverId={receiverId ?? null}
-    />
+    <ErrorBoundary resetKeys={[chatPageKey]}>
+      <ChatPage
+        key={chatPageKey}
+        initialMode={groupConversationId ? "group" : "direct"}
+        initialDirectConversationId={directConversationId ?? null}
+        initialGroupConversationId={groupConversationId ?? null}
+        initialReceiverId={receiverId ?? null}
+      />
+    </ErrorBoundary>
   )
 }

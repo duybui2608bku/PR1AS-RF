@@ -82,22 +82,24 @@ const STATUS_CONFIG: Record<
 > = {
   pending: {
     label: "Chờ xử lý",
-    className: "bg-amber-100 text-amber-700",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
     icon: <Clock className="size-3" />,
   },
   success: {
     label: "Thành công",
-    className: "bg-emerald-100 text-emerald-700",
+    className:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
     icon: <CheckCircle2 className="size-3" />,
   },
   failed: {
     label: "Thất bại",
-    className: "bg-red-100 text-red-700",
+    className: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
     icon: <XCircle className="size-3" />,
   },
   cancelled: {
     label: "Đã hủy",
-    className: "bg-gray-100 text-gray-600",
+    className: "bg-muted text-muted-foreground",
     icon: <X className="size-3" />,
   },
 }
@@ -303,8 +305,8 @@ function StatusBreakdown({
     {
       label: "Đã hủy",
       count: cancelledCount,
-      barClass: "bg-gray-400",
-      dotClass: "bg-gray-400",
+      barClass: "bg-muted-foreground/60",
+      dotClass: "bg-muted-foreground/60",
     },
   ]
 
@@ -401,7 +403,7 @@ function TransactionDetailModal({
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 px-4 dark:bg-background/70">
       <div className="w-full max-w-lg rounded-xl border bg-background shadow-xl">
         <div className="flex items-center justify-between border-b px-5 py-4">
           <h2 className="font-semibold">Chi tiết giao dịch</h2>
@@ -558,7 +560,7 @@ export default function AdminTransactionsPage() {
           }
           sub={stats ? `${stats.successCount} giao dịch` : undefined}
           icon={<TrendingUp className="size-4" />}
-          iconClass="bg-emerald-100 text-emerald-600"
+          iconClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
         />
         <StatCard
           title="Tổng giao dịch"
@@ -570,7 +572,7 @@ export default function AdminTransactionsPage() {
           title="Đang chờ xử lý"
           value={stats ? stats.pendingCount : <Skeleton className="h-8 w-16" />}
           icon={<Clock className="size-4" />}
-          iconClass="bg-amber-100 text-amber-600"
+          iconClass="bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
         />
         <StatCard
           title="Thất bại / Đã hủy"
@@ -582,7 +584,7 @@ export default function AdminTransactionsPage() {
             )
           }
           icon={<AlertCircle className="size-4" />}
-          iconClass="bg-red-100 text-red-600"
+          iconClass="bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-300"
         />
       </div>
 

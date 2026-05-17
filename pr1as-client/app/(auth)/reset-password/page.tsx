@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
     <Card>
       <CardHeader className="text-center">
         {isSuccess ? (
-          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600" />
+          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600 dark:text-emerald-400" />
         ) : (
           <ShieldCheck className="mx-auto mb-2 size-10 text-primary" />
         )}

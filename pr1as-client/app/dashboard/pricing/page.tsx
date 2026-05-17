@@ -73,18 +73,18 @@ const PLAN_META: Record<
 > = {
   standard: {
     icon: <Zap className="size-4" />,
-    color: "text-slate-700",
-    bg: "bg-slate-100",
+    color: "text-foreground",
+    bg: "bg-muted",
   },
   gold: {
     icon: <Star className="size-4 fill-amber-400 text-amber-400" />,
-    color: "text-amber-700",
-    bg: "bg-amber-100",
+    color: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-100 dark:bg-amber-950/40",
   },
   diamond: {
-    icon: <Sparkles className="size-4 text-violet-600" />,
-    color: "text-violet-700",
-    bg: "bg-violet-100",
+    icon: <Sparkles className="size-4 text-violet-600 dark:text-violet-400" />,
+    color: "text-violet-700 dark:text-violet-300",
+    bg: "bg-violet-100 dark:bg-violet-950/40",
   },
 }
 
@@ -582,7 +582,7 @@ export default function AdminPricingPage() {
 
       {!packagesQuery.isLoading && packages.length > 0 ? (
         <div className="flex items-center gap-2 rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-          <Check className="size-4 text-emerald-600" />
+          <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
           Giá trên trang pricing và số tiền trừ ví khi nâng cấp đều dùng giá từ
           database.
         </div>
