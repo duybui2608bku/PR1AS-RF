@@ -38,6 +38,9 @@ export type ChatConversation = {
     full_name: string | null
     avatar: string | null
     email: string
+    is_blocked?: boolean
+    has_blocked_me?: boolean
+    block_profile?: boolean
     meta_data?: {
       pricing_plan_code?: string | null
     }

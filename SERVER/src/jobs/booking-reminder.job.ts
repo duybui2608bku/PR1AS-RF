@@ -1,0 +1,50 @@
+import cron from "node-cron";
+import { bookingRepository } from "../repositories/booking";
+import { notificationEventService } from "../services/notification";
+import { logger } from "../utils/logger";
+
+const BOOKING_REMINDER_CRON = "*/10 * * * *";
+
+let bookingReminderTask: ReturnType<typeof cron.schedule> | null = null;
+let isBookingReminderRunning = false;
+
+export function startBookingReminderJob(): void {
+  if (bookingReminderTask) return;
+
+  bookingReminderTask = cron.schedule(BOOKING_REMINDER_CRON, async () => {
+    if (isBookingReminderRunning) return;
+    isBookingReminderRunning = true;
+
+    try {
+      const now = new Date();
+      const [dayBookings, hourBookings] = await Promise.all([
+        bookingRepository.findUpcomingBookingsForReminder(now, 24),
+        bookingRepository.findUpcomingBookingsForReminder(now, 1),
+      ]);
+
+      await Promise.all([
+        ...dayBookings.map((booking) =>
+          notificationEventService.bookingReminder(booking, 24)
+        ),
+        ...hourBookings.map((booking) =>
+          notificationEventService.bookingReminder(booking, 1)
+        ),
+      ]);
+    } catch (error) {
+      logger.error("Booking reminder job failed:", error);
+    } finally {
+      isBookingReminderRunning = false;
+    }
+  });
+
+  logger.info(
+    `Booking reminder job scheduled with cron "${BOOKING_REMINDER_CRON}"`
+  );
+}
+
+export function stopBookingReminderJob(): void {
+  if (!bookingReminderTask) return;
+  bookingReminderTask.stop();
+  bookingReminderTask = null;
+  logger.info("Booking reminder job stopped");
+}

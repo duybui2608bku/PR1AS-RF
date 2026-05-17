@@ -25,4 +25,7 @@ export const modelsName = {
   COMMENT: "comments",
   REACTION: "reactions",
   CLIENT_FAVORITE_WORKER: "client_favorite_workers",
+  USER_BLOCK: "user_blocks",
+  REPORT: "reports",
+  USER_RESTRICTION: "user_restrictions",
 };

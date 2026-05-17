@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl"
 import {
   ChevronLeft,
   ChevronRight,
+  Flag,
   Globe,
   Lock,
   LockOpen,
@@ -22,6 +23,13 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
+import { useReportPost } from "@/lib/hooks/use-moderation"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -48,6 +57,7 @@ import type { PostPublic } from "@/types"
 import { EditPostDialog } from "./edit-post-dialog"
 import { PostComments } from "./post-comments"
 import { REACTION_META, ReactionPicker, topReactionTypes } from "./reaction-picker"
+import { Textarea } from "@/components/ui/textarea"
 
 type Props = {
   post: PostPublic
@@ -321,9 +331,12 @@ export function PostCard({ post }: Props) {
   const { user, isAuthenticated } = useAuthStore()
   const deleteMutation = useDeletePost()
   const lockMutation = useSetCommentsLock()
+  const reportMutation = useReportPost()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportDescription, setReportDescription] = useState("")
 
   const isOwner = user?.id === post.author.id
   const canManagePost = isOwner && !isWorkerRoleActive(user)
@@ -345,6 +358,16 @@ export function PostCard({ post }: Props) {
   const handleToggleCommentsLock = () => {
     if (lockMutation.isPending) return
     lockMutation.mutate({ id: post.id, locked: !post.comments_locked })
+  }
+
+  const handleReport = async () => {
+    await reportMutation.mutateAsync({
+      post_id: post.id,
+      reason: "scam",
+      description: reportDescription.trim() || "Bài viết có dấu hiệu lừa đảo hoặc không chất lượng.",
+    })
+    setReportDescription("")
+    setReportOpen(false)
   }
 
   return (
@@ -389,7 +412,7 @@ export function PostCard({ post }: Props) {
           </div>
         </div>
 
-        {canManagePost ? (
+        {isAuthenticated ? (
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -403,38 +426,52 @@ export function PostCard({ post }: Props) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                  <Pencil className="size-3.5" />
-                  {t("editPost")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={lockMutation.isPending}
-                  onSelect={(event) => {
-                    event.preventDefault()
-                    handleToggleCommentsLock()
-                  }}
-                >
-                  {post.comments_locked ? (
-                    <>
-                      <LockOpen className="size-3.5" />
-                      {t("unlockComments")}
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="size-3.5" />
-                      {t("lockComments")}
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={deleteMutation.isPending}
-                  onSelect={() => setDeleteOpen(true)}
-                >
-                  <Trash2 className="size-3.5" />
-                  {t("deletePost")}
-                </DropdownMenuItem>
+                {canManagePost ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                      <Pencil className="size-3.5" />
+                      {t("editPost")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={lockMutation.isPending}
+                      onSelect={(event) => {
+                        event.preventDefault()
+                        handleToggleCommentsLock()
+                      }}
+                    >
+                      {post.comments_locked ? (
+                        <>
+                          <LockOpen className="size-3.5" />
+                          {t("unlockComments")}
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="size-3.5" />
+                          {t("lockComments")}
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={deleteMutation.isPending}
+                      onSelect={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 className="size-3.5" />
+                      {t("deletePost")}
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      setReportOpen(true)
+                    }}
+                  >
+                    <Flag className="size-3.5" />
+                    Báo cáo bài viết
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -553,6 +590,36 @@ export function PostCard({ post }: Props) {
       {editOpen && canManagePost ? (
         <EditPostDialog post={post} onClose={() => setEditOpen(false)} />
       ) : null}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Báo cáo bài viết</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={reportDescription}
+            onChange={(event) => setReportDescription(event.target.value)}
+            placeholder="Mô tả lý do báo cáo..."
+            className="min-h-28"
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReportOpen(false)}
+              disabled={reportMutation.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleReport()}
+              disabled={reportMutation.isPending}
+            >
+              Báo cáo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </article>
   )
 }

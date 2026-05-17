@@ -14,6 +14,7 @@ import {
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
+  ShieldAlert,
   Users,
   X,
 } from "lucide-react"
@@ -72,6 +73,12 @@ const adminNavItems = [
     label: "Tranh chấp",
     description: "Chat xử lý booking",
     icon: MessageSquare,
+  },
+  {
+    href: "/dashboard/reports",
+    label: "Báo cáo",
+    description: "Bài viết và worker",
+    icon: ShieldAlert,
   },
 ]
 

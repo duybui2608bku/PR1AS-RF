@@ -16,6 +16,7 @@ import { postRoutes } from "./post";
 import { hashtagRoutes } from "./hashtag";
 import { commentRoutes } from "./comment";
 import { reactionRoutes } from "./reaction";
+import { moderationRoutes } from "./moderation";
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use("/posts", postRoutes);
 router.use("/comments", commentRoutes);
 router.use("/hashtags", hashtagRoutes);
 router.use("/reactions", reactionRoutes);
+router.use("/moderation", moderationRoutes);
 
 export default router;

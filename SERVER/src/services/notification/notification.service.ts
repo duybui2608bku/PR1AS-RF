@@ -70,6 +70,15 @@ const NOTIFICATION_TYPE_CONFIG: Partial<
       NotificationChannel.PUSH,
     ],
   },
+  [NotificationType.BOOKING_REMINDER]: {
+    category: NotificationCategory.BOOKING,
+    priority: NotificationPriority.HIGH,
+    channels: [
+      NotificationChannel.IN_APP,
+      NotificationChannel.EMAIL,
+      NotificationChannel.PUSH,
+    ],
+  },
   [NotificationType.DISPUTE_CREATED]: {
     category: NotificationCategory.DISPUTE,
     priority: NotificationPriority.URGENT,

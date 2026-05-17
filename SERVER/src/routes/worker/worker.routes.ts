@@ -2,7 +2,12 @@ import { Router } from "express";
 import { workerController } from "../../controllers/worker/worker.controller";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { validateObjectId } from "../../middleware";
-import { authenticate, clientOnly, AuthRequest } from "../../middleware/auth";
+import {
+  authenticate,
+  clientOnly,
+  AuthRequest,
+  optionalAuthenticate,
+} from "../../middleware/auth";
 
 const router = Router();
 
@@ -13,6 +18,7 @@ router.get(
 
 router.get(
   "/grouped-by-service",
+  optionalAuthenticate,
   asyncHandler(
     workerController.getWorkersGroupedByService.bind(workerController)
   )
@@ -70,7 +76,10 @@ router.get(
 
 router.get(
   "/:id",
+  optionalAuthenticate,
   validateObjectId("id"),
-  asyncHandler(workerController.getWorkerById.bind(workerController))
+  asyncHandler<AuthRequest>(
+    workerController.getWorkerById.bind(workerController)
+  )
 );
 export default router;

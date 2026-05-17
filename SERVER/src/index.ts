@@ -13,6 +13,10 @@ import {
   startReputationRecoveryJob,
   stopReputationRecoveryJob,
 } from "./jobs/reputation-recovery.job";
+import {
+  startBookingReminderJob,
+  stopBookingReminderJob,
+} from "./jobs/booking-reminder.job";
 
 const app = createApp();
 const httpServer = createServer(app);
@@ -23,6 +27,7 @@ const startServer = async () => {
   try {
     await connectDatabase();
     startBookingExpirationJob();
+    startBookingReminderJob();
     startReputationRecoveryJob();
 
     httpServer.listen(config.port, () => {
@@ -39,6 +44,7 @@ const startServer = async () => {
 process.on("SIGTERM", async () => {
   logger.info("SIGTERM signal received: closing HTTP server");
   stopBookingExpirationJob();
+  stopBookingReminderJob();
   stopReputationRecoveryJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
@@ -50,6 +56,7 @@ process.on("SIGTERM", async () => {
 process.on("SIGINT", async () => {
   logger.info("SIGINT signal received: closing HTTP server");
   stopBookingExpirationJob();
+  stopBookingReminderJob();
   stopReputationRecoveryJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");

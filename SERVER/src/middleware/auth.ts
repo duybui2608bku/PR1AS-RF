@@ -35,6 +35,25 @@ export const authenticate = (
   }
 };
 
+export const optionalAuthenticate = (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : req.cookies?.token;
+    if (token) {
+      req.user = verifyToken(token);
+    }
+  } catch {
+    req.user = undefined;
+  }
+  next();
+};
+
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: AuthRequest, _res: Response, next: NextFunction): void => {
     if (!req.user) {

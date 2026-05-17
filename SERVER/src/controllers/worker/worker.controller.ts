@@ -10,19 +10,25 @@ import { locationService } from "../../services/location/location.service";
 import { AuthRequest } from "../../middleware/auth";
 
 export class WorkerController {
-  async getWorkerById(req: Request, res: Response): Promise<void> {
+  async getWorkerById(req: AuthRequest, res: Response): Promise<void> {
     const { id } = req.params;
-    const worker = await workerService.getWorkerById(id);
+    const worker = await workerService.getWorkerById(id, req.user?.sub);
     R.success(res, worker, undefined, req);
   }
 
-  async getWorkersGroupedByService(req: Request, res: Response): Promise<void> {
+  async getWorkersGroupedByService(
+    req: AuthRequest,
+    res: Response
+  ): Promise<void> {
     const query = validateWithSchema(
       workerGroupedByServiceQuerySchema,
       req.query,
       COMMON_MESSAGES.BAD_REQUEST
     );
-    const result = await workerService.getWorkersGroupedByService(query);
+    const result = await workerService.getWorkersGroupedByService(
+      query,
+      req.user?.sub
+    );
     R.success(
       res,
       result,
@@ -34,23 +40,13 @@ export class WorkerController {
   async getFavoriteWorkerIds(req: AuthRequest, res: Response): Promise<void> {
     const clientId = extractUserIdFromRequest(req);
     const workerIds = await workerService.getFavoriteWorkerIds(clientId);
-    R.success(
-      res,
-      workerIds,
-      WORKER_MESSAGES.FAVORITE_WORKERS_FETCHED,
-      req
-    );
+    R.success(res, workerIds, WORKER_MESSAGES.FAVORITE_WORKERS_FETCHED, req);
   }
 
   async getFavoriteWorkers(req: AuthRequest, res: Response): Promise<void> {
     const clientId = extractUserIdFromRequest(req);
     const favorites = await workerService.getFavoriteWorkers(clientId);
-    R.success(
-      res,
-      favorites,
-      WORKER_MESSAGES.FAVORITE_WORKERS_FETCHED,
-      req
-    );
+    R.success(res, favorites, WORKER_MESSAGES.FAVORITE_WORKERS_FETCHED, req);
   }
 
   async addFavoriteWorker(req: AuthRequest, res: Response): Promise<void> {

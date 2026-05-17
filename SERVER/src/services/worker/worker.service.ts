@@ -23,6 +23,9 @@ import type {
   WorkerFavoriteMutationResult,
 } from "../../types/worker/worker-favorite.types";
 import type { WorkerServicePricing } from "../../types/worker/worker-service";
+import { moderationService } from "../moderation";
+import { moderationRepository } from "../../repositories/moderation";
+import { RestrictionFeature } from "../../constants/moderation";
 
 const parseLocation = (
   location?: string
@@ -166,7 +169,17 @@ const calculateSuggestionScore = (
 };
 
 export class WorkerService {
-  async getWorkerById(workerId: string): Promise<WorkerDetailResponse> {
+  async getWorkerById(
+    workerId: string,
+    viewerId?: string
+  ): Promise<WorkerDetailResponse> {
+    if (await moderationService.isProfileBlocked(viewerId, workerId)) {
+      throw AppError.notFound(AUTH_MESSAGES.WORKER_PROFILE_NOT_FOUND);
+    }
+    await moderationService.assertNoActiveRestriction(
+      workerId,
+      RestrictionFeature.WORKER_ACTIVITY
+    );
     const user = await userRepository.findById(workerId);
 
     if (!user) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
@@ -250,7 +263,9 @@ export class WorkerService {
 
   async getFavoriteWorkers(clientId: string): Promise<WorkerFavoriteItem[]> {
     const favorites = await workerFavoriteRepository.findByClient(clientId);
-    const workerIds = favorites.map((favorite) => favorite.worker_id.toString());
+    const workerIds = favorites.map((favorite) =>
+      favorite.worker_id.toString()
+    );
 
     if (!workerIds.length) return [];
 
@@ -258,6 +273,11 @@ export class WorkerService {
       userRepository.findManyByIds(workerIds),
       workerServiceRepository.findActiveServicesForWorkers(workerIds),
     ]);
+    const restrictedWorkerIds = new Set(
+      await moderationRepository.getActiveRestrictedUserIds(
+        RestrictionFeature.WORKER_ACTIVITY
+      )
+    );
 
     const workersById = new Map(
       workers.map((worker) => [worker._id.toString(), worker])
@@ -292,6 +312,7 @@ export class WorkerService {
         !worker ||
         worker.status !== UserStatus.ACTIVE ||
         !worker.worker_profile ||
+        restrictedWorkerIds.has(workerId) ||
         !favoritedAt
       ) {
         return [];
@@ -443,8 +464,15 @@ export class WorkerService {
   }
 
   async getWorkersGroupedByService(
-    query: WorkerGroupedByServiceQuery
+    query: WorkerGroupedByServiceQuery,
+    viewerId?: string
   ): Promise<WorkersGroupedByServiceItem[]> {
+    const [profileBlockedIds, restrictedWorkerIds] = await Promise.all([
+      moderationService.getProfileBlockedIds(viewerId),
+      moderationRepository.getActiveRestrictedUserIds(
+        RestrictionFeature.WORKER_ACTIVITY
+      ),
+    ]);
     const groupedWorkers =
       await workerServiceRepository.findWorkersGroupedByService({
         categories: query.category,
@@ -457,6 +485,9 @@ export class WorkerService {
                   typeof query.ward_code === "number" ? query.ward_code : null,
               }
             : undefined,
+        excludedWorkerIds: [
+          ...new Set([...profileBlockedIds, ...restrictedWorkerIds]),
+        ],
       });
 
     if (!query.schedule) return groupedWorkers;

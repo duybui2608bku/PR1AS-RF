@@ -1,16 +1,26 @@
 "use client"
 
-import { use } from "react"
-import { AlertCircle } from "lucide-react"
+import { use, useState } from "react"
+import { AlertCircle, Flag, Loader2 } from "lucide-react"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
 import {
   useFavoriteWorkerIds,
   useToggleFavoriteWorker,
   useWorkerDetail,
 } from "@/lib/hooks/use-worker"
+import { useReportWorker } from "@/lib/hooks/use-moderation"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { WorkerCalendar } from "@/components/worker/worker-calendar"
@@ -33,9 +43,12 @@ export default function WorkerProfilePage({
   const currentUserId = useAuthStore((s) => s.user?.id)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isOwnProfile = Boolean(currentUserId && currentUserId === id)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportDescription, setReportDescription] = useState("")
 
   const favoriteIdsQuery = useFavoriteWorkerIds()
   const toggleFavoriteMutation = useToggleFavoriteWorker()
+  const reportWorkerMutation = useReportWorker()
   const isFavorite = favoriteIdsQuery.data?.includes(id) ?? false
 
   const handleToggleFavorite = () => {
@@ -47,6 +60,22 @@ export default function WorkerProfilePage({
       { workerId: id, favorite: !isFavorite },
       { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") }
     )
+  }
+
+  const handleReportWorker = async () => {
+    if (!isAuthenticated) {
+      toast.info("Vui lòng đăng nhập để báo cáo worker.")
+      return
+    }
+    await reportWorkerMutation.mutateAsync({
+      worker_id: id,
+      reason: "low_quality",
+      description:
+        reportDescription.trim() ||
+        "Worker có dấu hiệu không chất lượng hoặc cần admin xem xét.",
+    })
+    setReportDescription("")
+    setReportOpen(false)
   }
 
   return (
@@ -80,6 +109,19 @@ export default function WorkerProfilePage({
                     isOwnProfile ? undefined : handleToggleFavorite
                   }
                 />
+                {!isOwnProfile ? (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReportOpen(true)}
+                    >
+                      <Flag className="size-4" />
+                      Báo cáo worker
+                    </Button>
+                  </div>
+                ) : null}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
                   <div className="space-y-4">
                     <WorkerStatCards profile={data.worker_profile} />
@@ -106,6 +148,39 @@ export default function WorkerProfilePage({
           </aside>
         </div>
       </div>
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Báo cáo worker</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={reportDescription}
+            onChange={(event) => setReportDescription(event.target.value)}
+            placeholder="Mô tả vấn đề bạn gặp với worker..."
+            className="min-h-28"
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReportOpen(false)}
+              disabled={reportWorkerMutation.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleReportWorker()}
+              disabled={reportWorkerMutation.isPending}
+            >
+              {reportWorkerMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Báo cáo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SiteLayout>
   )
 }

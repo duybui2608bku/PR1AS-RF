@@ -26,7 +26,11 @@ import { IHashtagDocument } from "../../types/hashtag/hashtag.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { POST_MESSAGES, PRICING_MESSAGES, REPUTATION_MESSAGES } from "../../constants/messages";
+import {
+  POST_MESSAGES,
+  PRICING_MESSAGES,
+  REPUTATION_MESSAGES,
+} from "../../constants/messages";
 import { POST_LIMITS, PostVisibility } from "../../constants/post";
 import {
   CursorPaginatedResponse,
@@ -35,14 +39,14 @@ import {
 } from "../../utils/cursorPagination";
 import { logger } from "../../utils/logger";
 import dayjs from "../../utils/date";
+import { moderationService } from "../moderation";
+import { RestrictionFeature } from "../../constants/moderation";
 
 type LeanPostWithAuthor = IPostDocument & {
-  author_id:
-    | Pick<
-        IUserDocument,
-        "_id" | "full_name" | "avatar" | "worker_profile" | "meta_data"
-      >
-    | null;
+  author_id: Pick<
+    IUserDocument,
+    "_id" | "full_name" | "avatar" | "worker_profile" | "meta_data"
+  > | null;
 };
 
 type PostCreateQuota = {
@@ -56,11 +60,7 @@ type PostCreateQuota = {
 const postAuthorIdToString = (authorId: unknown): string => {
   if (!authorId) return "";
   if (authorId instanceof Types.ObjectId) return authorId.toString();
-  if (
-    typeof authorId === "object" &&
-    authorId !== null &&
-    "_id" in authorId
-  ) {
+  if (typeof authorId === "object" && authorId !== null && "_id" in authorId) {
     const id = (authorId as { _id: Types.ObjectId | string })._id;
     return id instanceof Types.ObjectId ? id.toString() : String(id);
   }
@@ -174,8 +174,14 @@ export class PostService {
       throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
     }
 
+    await moderationService.assertNoActiveRestriction(
+      userId,
+      RestrictionFeature.POST_CREATE
+    );
+
     const pricingPackage = await PricingPackage.findOne({
-      package_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
+      package_code:
+        user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
       is_active: true,
     }).lean();
 
@@ -310,6 +316,17 @@ export class PostService {
         ErrorCode.POST_NOT_FOUND
       );
     }
+    const authorId = postAuthorIdToString(post.author_id);
+    const profileBlocked = viewerId
+      ? await moderationService.isProfileBlocked(viewerId, authorId)
+      : false;
+    if (profileBlocked) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
 
     const postObjectId = post._id as Types.ObjectId;
 
@@ -344,6 +361,12 @@ export class PostService {
     viewerId?: string
   ): Promise<CursorPaginatedResponse<PostPublic>> {
     const decodedCursor = query.cursor ? decodeCursor(query.cursor) : null;
+    const excludedAuthorIds =
+      await moderationService.getProfileBlockedIds(viewerId);
+
+    if (query.author_id && excludedAuthorIds.includes(query.author_id)) {
+      return { data: [], next_cursor: null, has_more: false };
+    }
 
     let hashtagPostIds: Types.ObjectId[] | null = null;
     if (query.hashtag) {
@@ -361,6 +384,7 @@ export class PostService {
       decodedCursor,
       hashtagPostIds,
       viewerId,
+      excludedAuthorIds,
     });
 
     if (items.length === 0) {
@@ -391,8 +415,7 @@ export class PostService {
       const media = mediaMap.get(id) ?? [];
       const hashtags = hashtagMap.get(id) ?? [];
       const counts =
-        reactionCountsMap.get(id) ??
-        ({} as Record<ReactionType, number>);
+        reactionCountsMap.get(id) ?? ({} as Record<ReactionType, number>);
       const myReaction = myReactionMap.get(id) ?? null;
       return buildPostPublic(
         post as unknown as LeanPostWithAuthor,
@@ -527,6 +550,17 @@ export class PostService {
       ]);
     } catch (error) {
       logger.error("Failed to cascade post soft-delete cleanup", error);
+    }
+  }
+
+  async softDeletePostAsAdmin(postId: string): Promise<void> {
+    const deleted = await postRepository.softDeleteAsAdmin(postId);
+    if (!deleted) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
     }
   }
 

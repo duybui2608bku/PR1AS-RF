@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
   BadgeCheck,
+  Ban,
   Check,
   CheckCheck,
   Headset,
@@ -27,7 +28,17 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
@@ -46,6 +57,7 @@ import {
   useSendDirectMessage,
   useSendGroupMessage,
 } from "@/lib/hooks/use-chat"
+import { useBlockUser, useUnblockUser } from "@/lib/hooks/use-moderation"
 import { useMarkNotificationsByConversation } from "@/lib/hooks/use-notifications"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -394,6 +406,8 @@ export function ChatPage({
     Record<string, string>
   >({})
   const [isUploadingImage, setIsUploadingImage] = React.useState(false)
+  const [blockDialogOpen, setBlockDialogOpen] = React.useState(false)
+  const [blockProfile, setBlockProfile] = React.useState(true)
   const messageScrollerRef = React.useRef<HTMLDivElement | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const typingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -502,6 +516,8 @@ export function ChatPage({
   const { mutate: markGroupMessagesReadMutation } = useMarkGroupMessagesRead()
   const { mutate: markNotificationsByConversation } = useMarkNotificationsByConversation()
   const deleteDirectMessageMutation = useDeleteDirectMessage()
+  const blockUserMutation = useBlockUser()
+  const unblockUserMutation = useUnblockUser()
 
   const filteredDirectConversations = React.useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -562,6 +578,8 @@ export function ChatPage({
       (selectedDirect?.other_user?._id === adminUserId ||
         directReceiverId === adminUserId)
   )
+  const selectedDirectBlocked = Boolean(selectedDirect?.other_user?.is_blocked)
+  const selectedDirectBlockedMe = Boolean(selectedDirect?.other_user?.has_blocked_me)
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -1067,6 +1085,20 @@ export function ChatPage({
     }
   }
 
+  const handleBlockUser = async () => {
+    if (!directReceiverId) return
+    await blockUserMutation.mutateAsync({
+      blocked_user_id: directReceiverId,
+      block_profile: blockProfile,
+    })
+    setBlockDialogOpen(false)
+  }
+
+  const handleUnblockUser = async () => {
+    if (!directReceiverId) return
+    await unblockUserMutation.mutateAsync(directReceiverId)
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -1311,6 +1343,39 @@ export function ChatPage({
           </div>
 
           <form onSubmit={handleSubmit} className="border-t p-3">
+            {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                <span className="min-w-0 truncate">
+                  {selectedDirectBlocked
+                    ? "Ban da chan nguoi nay."
+                    : selectedDirectBlockedMe
+                      ? "Nguoi nay dang chan ban."
+                      : "Quan ly an toan cho cuoc tro chuyen nay."}
+                </span>
+                {selectedDirectBlocked ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={unblockUserMutation.isPending}
+                    onClick={() => void handleUnblockUser()}
+                  >
+                    <Ban className="size-4" />
+                    Bo chan
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBlockDialogOpen(true)}
+                  >
+                    <Ban className="size-4" />
+                    Chan
+                  </Button>
+                )}
+              </div>
+            ) : null}
             {replyTarget ? (
               <div className="mb-2 flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <Reply className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1355,6 +1420,8 @@ export function ChatPage({
                 disabled={
                   isSending ||
                   isUploadingImage ||
+                  selectedDirectBlocked ||
+                  selectedDirectBlockedMe ||
                   (mode === "direct" && !directReceiverId) ||
                   (mode === "group" && !selectedGroup)
                 }
@@ -1379,6 +1446,8 @@ export function ChatPage({
                 rows={1}
                 disabled={
                   isSending ||
+                  selectedDirectBlocked ||
+                  selectedDirectBlockedMe ||
                   (mode === "direct" && !directReceiverId) ||
                   (mode === "group" && !selectedGroup)
                 }
@@ -1387,7 +1456,12 @@ export function ChatPage({
               <Button
                 type="submit"
                 size="icon"
-                disabled={isSending || (!canSubmitDirect && !canSubmitGroup)}
+                disabled={
+                  isSending ||
+                  selectedDirectBlocked ||
+                  selectedDirectBlockedMe ||
+                  (!canSubmitDirect && !canSubmitGroup)
+                }
               >
                 {isSending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -1399,6 +1473,47 @@ export function ChatPage({
           </form>
         </section>
       </div>
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chan nguoi dung nay?</DialogTitle>
+            <DialogDescription>
+              Ban se khong the gui hoac nhan tin nhan truc tiep voi nguoi nay.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start gap-3 rounded-md border p-3">
+            <Checkbox
+              id="block-profile"
+              checked={blockProfile}
+              onCheckedChange={(value) => setBlockProfile(Boolean(value))}
+            />
+            <Label htmlFor="block-profile" className="text-sm leading-5">
+              Chan luon profile va bai viet cua nguoi nay
+            </Label>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setBlockDialogOpen(false)}
+              disabled={blockUserMutation.isPending}
+            >
+              Huy
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleBlockUser()}
+              disabled={blockUserMutation.isPending}
+            >
+              {blockUserMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Chan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

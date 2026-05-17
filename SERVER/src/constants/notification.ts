@@ -29,6 +29,7 @@ export enum NotificationType {
   BOOKING_STATUS_UPDATED = "booking.status_updated",
   BOOKING_UPDATED = "booking.updated",
   BOOKING_CANCELLED = "booking.cancelled",
+  BOOKING_REMINDER = "booking.reminder",
   DISPUTE_CREATED = "dispute.created",
   DISPUTE_RESOLVED = "dispute.resolved",
   WALLET_DEPOSIT_SUCCESS = "wallet.deposit_success",

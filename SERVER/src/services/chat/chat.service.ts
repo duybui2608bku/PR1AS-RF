@@ -30,6 +30,8 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { SOCKET_EVENTS } from "../../constants/socket";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
+import { moderationService } from "../moderation";
+import { moderationRepository } from "../../repositories/moderation";
 
 export class ChatService {
   async sendMessage(
@@ -53,6 +55,8 @@ export class ChatService {
         ErrorCode.VALIDATION_ERROR
       );
     }
+
+    await moderationService.ensureChatAllowed(sender_id, input.receiver_id);
 
     // Admin support chat bypasses the booking requirement so any user can
     // contact admin (and admin can reach out to any user) at any time.
@@ -207,6 +211,17 @@ export class ChatService {
     const userMap = new Map(otherUsers.map((u) => [u._id.toString(), u]));
     const messageMap = new Map(lastMessages.map((m) => [m._id.toString(), m]));
 
+    const blockPairs = await Promise.all(
+      otherUserIds.map(async (otherUserId) => ({
+        otherUserId,
+        outgoing: await moderationRepository.findBlock(user_id, otherUserId),
+        incoming: await moderationRepository.findBlock(otherUserId, user_id),
+      }))
+    );
+    const blockMap = new Map(
+      blockPairs.map((item) => [item.otherUserId, item])
+    );
+
     const enrichedConversations = result.conversations.map(
       (conv: IConversation) => {
         const otherUserId = getOtherUserId(
@@ -215,12 +230,21 @@ export class ChatService {
           user_id
         );
         const otherUser = userMap.get(otherUserId) || null;
+        const formattedUser = formatOtherUser(otherUser);
+        const block = blockMap.get(otherUserId);
         return {
           ...conv,
           last_message_data: conv.last_message
             ? messageMap.get(conv.last_message)
             : undefined,
-          other_user: formatOtherUser(otherUser),
+          other_user: formattedUser
+            ? {
+                ...formattedUser,
+                is_blocked: Boolean(block?.outgoing),
+                has_blocked_me: Boolean(block?.incoming),
+                block_profile: Boolean(block?.outgoing?.block_profile),
+              }
+            : formattedUser,
           unread_count: unreadCountMap.get(conv._id) ?? 0,
         };
       }
@@ -254,11 +278,23 @@ export class ChatService {
     );
 
     const otherUser = await userRepository.findById(otherUserId);
+    const [outgoingBlock, incomingBlock] = await Promise.all([
+      moderationRepository.findBlock(user_id, otherUserId),
+      moderationRepository.findBlock(otherUserId, user_id),
+    ]);
+    const formattedUser = formatOtherUser(otherUser);
 
     return {
       ...result.conversation,
       last_message_data: result.last_message,
-      other_user: formatOtherUser(otherUser),
+      other_user: formattedUser
+        ? {
+            ...formattedUser,
+            is_blocked: Boolean(outgoingBlock),
+            has_blocked_me: Boolean(incomingBlock),
+            block_profile: Boolean(outgoingBlock?.block_profile),
+          }
+        : formattedUser,
       unread_count: result.unread_count,
     };
   }

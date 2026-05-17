@@ -33,6 +33,7 @@ export interface GroupedWorkersFilter {
     provinceCode: number;
     wardCode?: number | null;
   };
+  excludedWorkerIds?: string[];
 }
 
 type LocalizedText = {
@@ -180,7 +181,9 @@ class WorkerServiceRepository {
   ): Promise<Array<WorkerFavoriteServiceItem & { worker_id: string }>> {
     if (!workerIds.length) return [];
 
-    const workerObjectIds = workerIds.map((id) => new mongoose.Types.ObjectId(id));
+    const workerObjectIds = workerIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
 
     return WorkerService.aggregate<
       WorkerFavoriteServiceItem & { worker_id: string }
@@ -473,6 +476,15 @@ class WorkerServiceRepository {
       {
         $match: {
           is_active: true,
+          ...(filters?.excludedWorkerIds?.length
+            ? {
+                worker_id: {
+                  $nin: filters.excludedWorkerIds
+                    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+                    .map((id) => new mongoose.Types.ObjectId(id)),
+                },
+              }
+            : {}),
         },
       },
       {

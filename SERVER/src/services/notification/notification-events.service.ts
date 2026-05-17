@@ -228,6 +228,37 @@ export class NotificationEventService {
     });
   }
 
+  async bookingReminder(
+    booking: IBookingDocument,
+    hoursBeforeStart: 1 | 24
+  ): Promise<void> {
+    const bookingId = toId(booking._id);
+    const clientId = toId(booking.client_id);
+    const workerId = toId(booking.worker_id);
+    const startTime = booking.schedule.start_time;
+
+    await notificationService.notify({
+      recipient_ids: [clientId, workerId],
+      type: NotificationType.BOOKING_REMINDER,
+      category: NotificationCategory.BOOKING,
+      title: `Booking starts in ${hoursBeforeStart}h`,
+      body: `Your booking starts at ${startTime.toISOString()}.`,
+      data: {
+        booking_id: bookingId,
+        starts_at: startTime.toISOString(),
+        hours_before_start: hoursBeforeStart,
+      },
+      link: "/notifications",
+      channels: [
+        NotificationChannel.IN_APP,
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+      ],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `booking-reminder:${bookingId}:${hoursBeforeStart}h`,
+    });
+  }
+
   async disputeCreated(
     booking: IBookingDocument,
     actorId: string
@@ -311,7 +342,9 @@ export class NotificationEventService {
         : NotificationType.CHAT_MESSAGE,
       category: NotificationCategory.CHAT,
       title: input.isGroup ? "Tin nhắn nhóm mới" : "Tin nhắn mới",
-      body: input.isGroup ? "Bạn có tin nhắn mới trong nhóm." : "Bạn có tin nhắn mới.",
+      body: input.isGroup
+        ? "Bạn có tin nhắn mới trong nhóm."
+        : "Bạn có tin nhắn mới.",
       data: {
         message_id: input.messageId,
         conversation_id: input.conversationId,

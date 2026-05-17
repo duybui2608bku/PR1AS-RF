@@ -8,7 +8,8 @@ import {
 import { PostVisibility } from "../../constants/post";
 import { CursorValue, buildCursorFilter } from "../../utils/cursorPagination";
 
-const AUTHOR_PUBLIC_FIELDS = "full_name avatar worker_profile meta_data.pricing_plan_code";
+const AUTHOR_PUBLIC_FIELDS =
+  "full_name avatar worker_profile meta_data.pricing_plan_code";
 
 export class PostRepository {
   async create(
@@ -53,10 +54,24 @@ export class PostRepository {
     decodedCursor: CursorValue | null;
     hashtagPostIds?: Types.ObjectId[] | null;
     viewerId?: string;
+    excludedAuthorIds?: string[];
   }): Promise<IPostDocument[]> {
-    const { query, decodedCursor, hashtagPostIds, viewerId } = params;
+    const {
+      query,
+      decodedCursor,
+      hashtagPostIds,
+      viewerId,
+      excludedAuthorIds,
+    } = params;
 
     const filter: Record<string, unknown> = { deleted_at: null };
+    if (excludedAuthorIds?.length) {
+      filter.author_id = {
+        $nin: excludedAuthorIds
+          .filter((id) => Types.ObjectId.isValid(id))
+          .map((id) => new Types.ObjectId(id)),
+      };
+    }
 
     if (query.author_id && Types.ObjectId.isValid(query.author_id)) {
       filter.author_id = new Types.ObjectId(query.author_id);
@@ -139,12 +154,15 @@ export class PostRepository {
     });
   }
 
+  async softDeleteAsAdmin(id: string): Promise<IPostDocument | null> {
+    return this.softDelete(id);
+  }
+
   async incrementCommentsCount(
     postId: string | Types.ObjectId,
     delta: number
   ): Promise<void> {
-    const id =
-      typeof postId === "string" ? new Types.ObjectId(postId) : postId;
+    const id = typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Post.updateOne(
       { _id: id, deleted_at: null },
       { $inc: { comments_count: delta } }
@@ -155,8 +173,7 @@ export class PostRepository {
     postId: string | Types.ObjectId,
     delta: number
   ): Promise<void> {
-    const id =
-      typeof postId === "string" ? new Types.ObjectId(postId) : postId;
+    const id = typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Post.updateOne(
       { _id: id, deleted_at: null },
       { $inc: { reactions_count: delta } }

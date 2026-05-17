@@ -20,6 +20,8 @@ import { BookingBaseService, RoleInfo } from "./booking-helpers";
 import { UserRole } from "../../types/auth/user.types";
 import { BookingStatus } from "../../constants/booking";
 import { REPUTATION_MESSAGES } from "../../constants/messages";
+import { moderationService } from "../moderation";
+import { RestrictionFeature } from "../../constants/moderation";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -68,12 +70,21 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
+    await moderationService.assertNoActiveRestriction(
+      workerId,
+      RestrictionFeature.WORKER_ACTIVITY
+    );
+
     // All 4 run concurrently — validations throw on failure, first two capture data
     const [worker, service] = await Promise.all([
       userRepository.findById(workerId),
       serviceRepository.findById(input.service_id.toString()),
       this.validateWorkerService(input.worker_service_id.toString(), workerId),
-      this.validateScheduleConflict(workerId, input.schedule.start_time, input.schedule.end_time),
+      this.validateScheduleConflict(
+        workerId,
+        input.schedule.start_time,
+        input.schedule.end_time
+      ),
     ]);
 
     if (!worker) {
@@ -149,7 +160,10 @@ export class BookingCrudService extends BookingBaseService {
     const isWorker = this.isBookingWorker(booking, userId);
 
     if (updateData.schedule || updateData.pricing || updateData.client_notes) {
-      this.ensureAuthorized(isClient, BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING);
+      this.ensureAuthorized(
+        isClient,
+        BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING
+      );
 
       if (updateData.schedule) {
         await this.validateScheduleConflict(
@@ -162,13 +176,17 @@ export class BookingCrudService extends BookingBaseService {
     }
 
     if (updateData.worker_response) {
-      this.ensureAuthorized(isWorker, BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE);
+      this.ensureAuthorized(
+        isWorker,
+        BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE
+      );
     }
 
     const filteredUpdateData: Partial<IBookingDocument> = {};
 
     if (isClient) {
-      if (updateData.schedule) filteredUpdateData.schedule = updateData.schedule;
+      if (updateData.schedule)
+        filteredUpdateData.schedule = updateData.schedule;
       if (updateData.pricing) filteredUpdateData.pricing = updateData.pricing;
       if (updateData.client_notes !== undefined) {
         filteredUpdateData.client_notes = updateData.client_notes;
@@ -183,7 +201,10 @@ export class BookingCrudService extends BookingBaseService {
       Object.assign(filteredUpdateData, updateData);
     }
 
-    const updatedBooking = await bookingRepository.update(bookingId, filteredUpdateData);
+    const updatedBooking = await bookingRepository.update(
+      bookingId,
+      filteredUpdateData
+    );
 
     if (!updatedBooking) {
       throw new AppError(
@@ -195,7 +216,9 @@ export class BookingCrudService extends BookingBaseService {
 
     void notificationEventService
       .bookingUpdated(updatedBooking, userId)
-      .catch((error) => logger.error("Booking updated notification failed:", error));
+      .catch((error) =>
+        logger.error("Booking updated notification failed:", error)
+      );
 
     return updatedBooking;
   }
@@ -207,14 +230,20 @@ export class BookingCrudService extends BookingBaseService {
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
     const requestedRole = query.role || roleInfo.lastActiveRole;
 
-    if (requestedRole === UserRole.WORKER && roleInfo.roles.includes(UserRole.WORKER)) {
+    if (
+      requestedRole === UserRole.WORKER &&
+      roleInfo.roles.includes(UserRole.WORKER)
+    ) {
       return bookingRepository.findByWorkerId({
         ...query,
         worker_id: new Types.ObjectId(userId),
       });
     }
 
-    if (requestedRole === UserRole.CLIENT && roleInfo.roles.includes(UserRole.CLIENT)) {
+    if (
+      requestedRole === UserRole.CLIENT &&
+      roleInfo.roles.includes(UserRole.CLIENT)
+    ) {
       return bookingRepository.findByClientId({
         ...query,
         client_id: new Types.ObjectId(userId),
@@ -240,10 +269,8 @@ export class BookingCrudService extends BookingBaseService {
     const statusCountMap = new Map(
       raw.status_counts.map((item) => [item.status, item.count])
     );
-    const completedBookings =
-      statusCountMap.get(BookingStatus.COMPLETED) ?? 0;
-    const cancelledBookings =
-      statusCountMap.get(BookingStatus.CANCELLED) ?? 0;
+    const completedBookings = statusCountMap.get(BookingStatus.COMPLETED) ?? 0;
+    const cancelledBookings = statusCountMap.get(BookingStatus.CANCELLED) ?? 0;
     const disputedBookings = statusCountMap.get(BookingStatus.DISPUTED) ?? 0;
 
     const dateCountMap = new Map(

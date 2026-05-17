@@ -277,6 +277,26 @@ export class BookingRepository {
       .limit(limit);
   }
 
+  async findUpcomingBookingsForReminder(
+    now: Date,
+    thresholdHours: number,
+    limit = 200
+  ): Promise<IBookingDocument[]> {
+    const threshold = new Date(now.getTime() + thresholdHours * 60 * 60 * 1000);
+    return Booking.find({
+      status: {
+        $in: [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS],
+      },
+      "schedule.start_time": {
+        $gt: now,
+        $lte: threshold,
+      },
+    })
+      .populate(BOOKING_POPULATE)
+      .sort({ "schedule.start_time": 1 })
+      .limit(limit);
+  }
+
   async update(
     id: string,
     updateData: Partial<IBookingDocument>,
