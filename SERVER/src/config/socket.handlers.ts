@@ -13,6 +13,12 @@ import {
 
 const userSockets = new Map<string, Set<string>>();
 
+function parseCookieToken(cookieHeader: string | undefined): string | undefined {
+  if (!cookieHeader) return undefined;
+  const match = cookieHeader.split(";").find((c) => c.trim().startsWith("token="));
+  return match?.split("=").slice(1).join("=").trim();
+}
+
 export const authenticateSocket = (
   socket: Socket,
   next: (err?: ExtendedError) => void
@@ -20,7 +26,8 @@ export const authenticateSocket = (
   try {
     const token =
       socket.handshake.auth.token ||
-      socket.handshake.headers.authorization?.replace("Bearer ", "");
+      socket.handshake.headers.authorization?.replace("Bearer ", "") ||
+      parseCookieToken(socket.handshake.headers.cookie);
 
     if (!token) {
       logger.error(`No token provided for socket ${socket.id}`);

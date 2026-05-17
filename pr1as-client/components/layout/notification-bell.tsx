@@ -18,6 +18,7 @@ import {
   useUnreadNotificationCount,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
+  useNotificationSocket,
 } from "@/lib/hooks/use-notifications"
 import type { Notification } from "@/services/notification.service"
 
@@ -47,6 +48,8 @@ export function NotificationBell() {
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
   const switchRoleMutation = useSwitchRole()
+
+  useNotificationSocket()
 
   const { data: unreadData } = useUnreadNotificationCount()
   const { data: notifData, isLoading } = useNotifications({ page: 1, limit: 10 })

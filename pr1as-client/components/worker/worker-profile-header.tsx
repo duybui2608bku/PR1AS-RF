@@ -174,28 +174,33 @@ export function WorkerProfileHeader({
                   <Pencil className="size-3.5" />
                 </Button>
               ) : onToggleFavorite ? (
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
                   onClick={onToggleFavorite}
                   disabled={isFavoritePending}
                   aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
                   title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
+                    isFavorite
+                      ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60"
+                      : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500"
+                  )}
                 >
                   {isFavoritePending ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
                     <Heart
-                      className={
+                      className={cn(
+                        "size-3.5 transition-all",
                         isFavorite
-                          ? "size-4 fill-red-500 text-red-500"
-                          : "size-4"
-                      }
+                          ? "fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400"
+                          : "text-current"
+                      )}
                     />
                   )}
-                </Button>
+                  <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
+                </button>
               ) : null}
             </div>
           </div>

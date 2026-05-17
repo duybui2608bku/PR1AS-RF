@@ -23,6 +23,19 @@ export type GroupReadPayload = {
   read_at: string
 }
 
+type NotificationPayload = {
+  notification: {
+    id: string
+    title: string
+    body: string
+    type: string
+    is_read: boolean
+    link?: string
+    data?: Record<string, unknown>
+    created_at: string
+  }
+}
+
 export type ServerToClientEvents = {
   connected: (payload: { user_id: string }) => void
   conversation_joined: (payload: { conversation_id: string }) => void
@@ -56,6 +69,8 @@ export type ServerToClientEvents = {
     is_typing: boolean
   }) => void
   error: (payload: { message?: string } | Error) => void
+  "notification:new": (payload: NotificationPayload) => void
+  "notification:unread_count": (payload: { unread_count: number }) => void
 }
 
 export type ClientToServerEvents = {
@@ -97,7 +112,8 @@ const getSocketBaseUrl = () => {
   return "http://localhost:3001"
 }
 
-export const getChatSocket = (token: string): ChatSocket => {
+// token có thể là null khi chưa restore sau reload — server sẽ dùng httpOnly cookie làm fallback
+export const getChatSocket = (token: string | null): ChatSocket => {
   if (chatSocket && activeToken === token) {
     return chatSocket
   }
@@ -109,7 +125,7 @@ export const getChatSocket = (token: string): ChatSocket => {
   activeToken = token
   chatSocket = io(getSocketBaseUrl(), {
     autoConnect: false,
-    auth: { token },
+    auth: token ? { token } : {},
     transports: ["websocket", "polling"],
     withCredentials: true,
   })
