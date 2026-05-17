@@ -394,6 +394,9 @@ export function ChatPage({
     Record<string, string>
   >({})
   const [isUploadingImage, setIsUploadingImage] = React.useState(false)
+  const [imagePreviews, setImagePreviews] = React.useState<
+    { file: File; previewUrl: string }[]
+  >([])
   const messageScrollerRef = React.useRef<HTMLDivElement | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const typingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -535,10 +538,11 @@ export function ChatPage({
   const directReceiverId = selectedDirect
     ? getOtherUserId(selectedDirect, user?.id)
     : receiverParamTargetId
+  const hasContent = Boolean(draft.trim()) || imagePreviews.length > 0
   const canSubmitDirect =
-    mode === "direct" && Boolean(directReceiverId && draft.trim())
+    mode === "direct" && Boolean(directReceiverId) && hasContent
   const canSubmitGroup =
-    mode === "group" && Boolean(selectedGroup?.booking_id && draft.trim())
+    mode === "group" && Boolean(selectedGroup?.booking_id) && hasContent
   const isSending =
     sendDirectMessageMutation.isPending || sendGroupMessageMutation.isPending
   const activeTitle =
@@ -946,33 +950,34 @@ export function ChatPage({
     setReplyTarget(null)
   }
 
-  const handleImageSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0]
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
     event.target.value = ""
-    if (!file) return
+    const valid = files.filter((f) => f.type.startsWith("image/"))
+    if (valid.length < files.length) toast.error("Chỉ hỗ trợ tệp ảnh.")
+    if (!valid.length) return
+    const newPreviews = valid.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }))
+    setImagePreviews((prev) => [...prev, ...newPreviews])
+  }
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Chỉ hỗ trợ tệp ảnh.")
-      return
-    }
+  const handleRemoveImagePreview = (index: number) => {
+    setImagePreviews((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl)
+      return prev.filter((_, i) => i !== index)
+    })
+  }
 
-    try {
-      setIsUploadingImage(true)
-      const imageUrl = await uploadImage(file)
-      await sendImageMessage(imageUrl)
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể gửi ảnh."))
-    } finally {
-      setIsUploadingImage(false)
-    }
+  const clearImagePreviews = (list: { previewUrl: string }[]) => {
+    list.forEach((p) => URL.revokeObjectURL(p.previewUrl))
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const content = draft.trim()
-    if (!content) return
+    if (!content && !imagePreviews.length) return
 
     try {
       if (mode === "direct") {
@@ -981,17 +986,37 @@ export function ChatPage({
           return
         }
 
-        const result = await sendDirectMessageMutation.mutateAsync({
-          receiver_id: directReceiverId,
-          content,
-          type: getOutgoingMessageType(content),
-          reply_to_id: replyTarget?.id ?? null,
-        })
+        if (imagePreviews.length) {
+          const toSend = [...imagePreviews]
+          setIsUploadingImage(true)
+          for (const preview of toSend) {
+            const imageUrl = await uploadImage(preview.file)
+            const result = await sendDirectMessageMutation.mutateAsync({
+              receiver_id: directReceiverId,
+              content: imageUrl,
+              type: "image",
+              reply_to_id: replyTarget?.id ?? null,
+            })
+            setSelectedDirectId(result.conversation._id)
+          }
+          clearImagePreviews(toSend)
+          setImagePreviews([])
+          setIsUploadingImage(false)
+          setReplyTarget(null)
+        }
 
-        setSelectedDirectId(result.conversation._id)
-        setDraft("")
-        setReplyTarget(null)
-        emitTyping(false)
+        if (content) {
+          const result = await sendDirectMessageMutation.mutateAsync({
+            receiver_id: directReceiverId,
+            content,
+            type: getOutgoingMessageType(content),
+            reply_to_id: replyTarget?.id ?? null,
+          })
+          setSelectedDirectId(result.conversation._id)
+          setDraft("")
+          setReplyTarget(null)
+          emitTyping(false)
+        }
         return
       }
 
@@ -1000,18 +1025,39 @@ export function ChatPage({
         return
       }
 
-      const result = await sendGroupMessageMutation.mutateAsync({
-        booking_id: selectedGroup.booking_id,
-        content,
-        type: getOutgoingMessageType(content),
-        reply_to_id: replyTarget?.id ?? null,
-      })
+      if (imagePreviews.length) {
+        const toSend = [...imagePreviews]
+        setIsUploadingImage(true)
+        for (const preview of toSend) {
+          const imageUrl = await uploadImage(preview.file)
+          const result = await sendGroupMessageMutation.mutateAsync({
+            booking_id: selectedGroup.booking_id,
+            content: imageUrl,
+            type: "image",
+            reply_to_id: replyTarget?.id ?? null,
+          })
+          setSelectedGroupId(result.conversation._id)
+        }
+        clearImagePreviews(toSend)
+        setImagePreviews([])
+        setIsUploadingImage(false)
+        setReplyTarget(null)
+      }
 
-      setSelectedGroupId(result.conversation._id)
-      setDraft("")
-      setReplyTarget(null)
-      emitTyping(false)
+      if (content) {
+        const result = await sendGroupMessageMutation.mutateAsync({
+          booking_id: selectedGroup.booking_id,
+          content,
+          type: getOutgoingMessageType(content),
+          reply_to_id: replyTarget?.id ?? null,
+        })
+        setSelectedGroupId(result.conversation._id)
+        setDraft("")
+        setReplyTarget(null)
+        emitTyping(false)
+      }
     } catch (error) {
+      setIsUploadingImage(false)
       toast.error(getErrorMessage(error, "Không thể gửi tin nhắn."))
     }
   }
@@ -1339,11 +1385,45 @@ export function ChatPage({
                 </Button>
               </div>
             ) : null}
+            {imagePreviews.length > 0 ? (
+              <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
+                {imagePreviews.map((preview, index) => (
+                  <div
+                    key={preview.previewUrl}
+                    className="relative size-16 shrink-0 overflow-hidden rounded-md border"
+                  >
+                    <img
+                      src={preview.previewUrl}
+                      alt={`Ảnh ${index + 1}`}
+                      className="size-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImagePreview(index)}
+                      className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                      aria-label="Xóa ảnh"
+                    >
+                      <X className="size-2.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSending || isUploadingImage}
+                  className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+                  aria-label="Thêm ảnh"
+                >
+                  <ImagePlus className="size-5" />
+                </button>
+              </div>
+            ) : null}
             <div className="flex items-end gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={handleImageSelect}
               />
@@ -1358,13 +1438,9 @@ export function ChatPage({
                   (mode === "direct" && !directReceiverId) ||
                   (mode === "group" && !selectedGroup)
                 }
-                aria-label="Gửi ảnh"
+                aria-label="Chọn ảnh"
               >
-                {isUploadingImage ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <ImagePlus className="size-4" />
-                )}
+                <ImagePlus className="size-4" />
               </Button>
               <textarea
                 value={draft}
@@ -1387,9 +1463,13 @@ export function ChatPage({
               <Button
                 type="submit"
                 size="icon"
-                disabled={isSending || (!canSubmitDirect && !canSubmitGroup)}
+                disabled={
+                  isSending ||
+                  isUploadingImage ||
+                  (!canSubmitDirect && !canSubmitGroup)
+                }
               >
-                {isSending ? (
+                {isSending || isUploadingImage ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <Send className="size-4" />
