@@ -1,6 +1,8 @@
+import * as React from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { notificationService } from "@/services/notification.service"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { getChatSocket, disconnectChatSocket } from "@/lib/chat-socket"
 
 export const NOTIFICATION_KEYS = {
   all: ["notifications"] as const,
@@ -48,6 +50,44 @@ export function useMarkAllNotificationsAsRead() {
       queryClient.invalidateQueries({ queryKey: NOTIFICATION_KEYS.all })
     },
   })
+}
+
+export function useNotificationSocket() {
+  const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const queryClient = useQueryClient()
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      disconnectChatSocket()
+      return
+    }
+
+    // token có thể null sau reload — getChatSocket sẽ dùng cookie auth
+    const socket = getChatSocket(token)
+
+    if (!socket.connected) {
+      socket.connect()
+    }
+
+    const handleNew = (_payload: unknown) => {
+      queryClient.invalidateQueries({ queryKey: [...NOTIFICATION_KEYS.all, "list"] })
+    }
+
+    const handleUnreadCount = (payload: { unread_count: number }) => {
+      queryClient.setQueryData(NOTIFICATION_KEYS.unreadCount(), {
+        unread_count: payload.unread_count,
+      })
+    }
+
+    socket.on("notification:new", handleNew)
+    socket.on("notification:unread_count", handleUnreadCount)
+
+    return () => {
+      socket.off("notification:new", handleNew)
+      socket.off("notification:unread_count", handleUnreadCount)
+    }
+  }, [token, isAuthenticated, queryClient])
 }
 
 export function useMarkNotificationsByConversation() {

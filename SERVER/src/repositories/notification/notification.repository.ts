@@ -59,7 +59,7 @@ export class NotificationRepository {
     };
 
     if (data.dedupe_key) {
-      const { updated_at: _updatedAt, ...insertData } = notificationData;
+      const { updated_at: _updatedAt, link: _link, ...insertData } = notificationData;
       return Notification.findOneAndUpdate(
         {
           recipient_id: notificationData.recipient_id,
@@ -67,7 +67,8 @@ export class NotificationRepository {
         },
         {
           $setOnInsert: insertData,
-          $set: { updated_at: now },
+          // link luôn được cập nhật để phản ánh giá trị mới nhất từ server
+          $set: { updated_at: now, link: data.link || null },
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       ) as Promise<INotificationDocument>;
