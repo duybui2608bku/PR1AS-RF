@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { disconnectChatSocket, getChatSocket } from "@/lib/chat-socket"
+import { getChatSocket } from "@/lib/chat-socket"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { localizeServerMessage } from "@/lib/utils/error-handler"
 
@@ -15,18 +15,17 @@ export type ChatSocketStatus =
 
 export function useChatSocket() {
   const token = useAuthStore((s) => s.token)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [status, setStatus] = React.useState<ChatSocketStatus>("idle")
   const [error, setError] = React.useState<string | null>(null)
+  // Dùng isAuthenticated thay vì token: sau reload token = null nhưng cookie vẫn hợp lệ
   const socket = React.useMemo(
-    () => (token ? getChatSocket(token) : null),
-    [token]
+    () => (isAuthenticated ? getChatSocket(token) : null),
+    [token, isAuthenticated]
   )
 
   React.useEffect(() => {
-    if (!socket) {
-      disconnectChatSocket()
-      return
-    }
+    if (!socket) return
 
     const handleConnect = () => {
       setStatus("connected")
@@ -56,11 +55,12 @@ export function useChatSocket() {
       socket.off("connect", handleConnect)
       socket.off("disconnect", handleDisconnect)
       socket.off("connect_error", handleConnectError)
-      disconnectChatSocket()
+      // Không disconnect ở đây — useNotificationSocket (luôn mount trong header)
+      // quản lý vòng đời kết nối socket và ngắt khi user logout
     }
   }, [socket])
 
-  const effectiveStatus: ChatSocketStatus = !token
+  const effectiveStatus: ChatSocketStatus = !isAuthenticated
     ? "idle"
     : socket?.connected
       ? "connected"
@@ -71,7 +71,7 @@ export function useChatSocket() {
   return {
     socket,
     status: effectiveStatus,
-    error: token ? error : null,
+    error: isAuthenticated ? error : null,
     isConnected: effectiveStatus === "connected",
   }
 }
