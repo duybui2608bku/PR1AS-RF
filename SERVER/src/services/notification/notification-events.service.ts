@@ -127,18 +127,23 @@ export class NotificationEventService {
       return;
     }
 
-    await notificationService.notify({
-      recipient_ids: recipients,
-      actor_id: actorId,
-      type: NotificationType.BOOKING_STATUS_UPDATED,
-      category: NotificationCategory.BOOKING,
-      title,
-      body,
-      data: { booking_id: bookingId, status },
-      link: "/notifications",
-      priority: NotificationPriority.HIGH,
-      dedupe_key: `booking-status:${bookingId}:${status}`,
-    });
+    // Gửi per-recipient với link theo role: worker → /worker/bookings, client → /client/bookings
+    await Promise.all(
+      recipients.map((recipientId) =>
+        notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: actorId,
+          type: NotificationType.BOOKING_STATUS_UPDATED,
+          category: NotificationCategory.BOOKING,
+          title,
+          body,
+          data: { booking_id: bookingId, status },
+          link: getBookingDashboardLink(recipientId, booking),
+          priority: NotificationPriority.HIGH,
+          dedupe_key: `booking-status:${bookingId}:${status}:${recipientId}`,
+        })
+      )
+    );
   }
 
   async bookingCancelled(
@@ -156,18 +161,22 @@ export class NotificationEventService {
       recipients.push(toId(admin._id));
     }
 
-    await notificationService.notify({
-      recipient_ids: recipients,
-      actor_id: actorId,
-      type: NotificationType.BOOKING_CANCELLED,
-      category: NotificationCategory.BOOKING,
-      title: "Booking đã bị hủy",
-      body: `Một booking đã bị hủy bởi ${cancelledBy}.`,
-      data: { booking_id: bookingId, cancelled_by: cancelledBy },
-      link: "/notifications",
-      priority: NotificationPriority.HIGH,
-      dedupe_key: `booking-cancelled:${bookingId}`,
-    });
+    await Promise.all(
+      recipients.map((recipientId) =>
+        notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: actorId,
+          type: NotificationType.BOOKING_CANCELLED,
+          category: NotificationCategory.BOOKING,
+          title: "Booking đã bị hủy",
+          body: `Một booking đã bị hủy bởi ${cancelledBy}.`,
+          data: { booking_id: bookingId, cancelled_by: cancelledBy },
+          link: getBookingDashboardLink(recipientId, booking),
+          priority: NotificationPriority.HIGH,
+          dedupe_key: `booking-cancelled:${bookingId}:${recipientId}`,
+        })
+      )
+    );
   }
 
   async bookingAutoExpiredWarning(
@@ -214,18 +223,22 @@ export class NotificationEventService {
     const workerId = toId(booking.worker_id);
     const recipients = [clientId, workerId].filter((id) => id !== actorId);
 
-    await notificationService.notify({
-      recipient_ids: recipients,
-      actor_id: actorId,
-      type: NotificationType.BOOKING_UPDATED,
-      category: NotificationCategory.BOOKING,
-      title: "Booking đã được cập nhật",
-      body: "Thông tin booking đã được cập nhật.",
-      data: { booking_id: bookingId },
-      link: "/notifications",
-      priority: NotificationPriority.NORMAL,
-      dedupe_key: `booking-updated:${bookingId}:${Date.now()}`,
-    });
+    await Promise.all(
+      recipients.map((recipientId) =>
+        notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: actorId,
+          type: NotificationType.BOOKING_UPDATED,
+          category: NotificationCategory.BOOKING,
+          title: "Booking đã được cập nhật",
+          body: "Thông tin booking đã được cập nhật.",
+          data: { booking_id: bookingId },
+          link: getBookingDashboardLink(recipientId, booking),
+          priority: NotificationPriority.NORMAL,
+          dedupe_key: `booking-updated:${bookingId}:${recipientId}`,
+        })
+      )
+    );
   }
 
   async disputeCreated(
@@ -233,25 +246,30 @@ export class NotificationEventService {
     actorId: string
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const recipients = [toId(booking.worker_id)];
+    const workerId = toId(booking.worker_id);
+    const recipients = [workerId];
     const admin = await userRepository.findFirstAdmin();
 
     if (admin?._id) {
       recipients.push(toId(admin._id));
     }
 
-    await notificationService.notify({
-      recipient_ids: recipients,
-      actor_id: actorId,
-      type: NotificationType.DISPUTE_CREATED,
-      category: NotificationCategory.DISPUTE,
-      title: "Có khiếu nại booking mới",
-      body: "Một khiếu nại mới đã được tạo cho booking.",
-      data: { booking_id: bookingId },
-      link: "/notifications",
-      priority: NotificationPriority.URGENT,
-      dedupe_key: `dispute-created:${bookingId}`,
-    });
+    await Promise.all(
+      recipients.map((recipientId) =>
+        notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: actorId,
+          type: NotificationType.DISPUTE_CREATED,
+          category: NotificationCategory.DISPUTE,
+          title: "Có khiếu nại booking mới",
+          body: "Một khiếu nại mới đã được tạo cho booking.",
+          data: { booking_id: bookingId },
+          link: getBookingDashboardLink(recipientId, booking),
+          priority: NotificationPriority.URGENT,
+          dedupe_key: `dispute-created:${bookingId}:${recipientId}`,
+        })
+      )
+    );
   }
 
   async disputeResolved(
@@ -260,18 +278,24 @@ export class NotificationEventService {
     resolution: DisputeResolution
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    await notificationService.notify({
-      recipient_ids: [toId(booking.client_id), toId(booking.worker_id)],
-      actor_id: actorId,
-      type: NotificationType.DISPUTE_RESOLVED,
-      category: NotificationCategory.DISPUTE,
-      title: "Khiếu nại booking đã được xử lý",
-      body: `Khiếu nại booking đã được xử lý với kết quả: ${resolution}.`,
-      data: { booking_id: bookingId, resolution },
-      link: "/notifications",
-      priority: NotificationPriority.HIGH,
-      dedupe_key: `dispute-resolved:${bookingId}:${resolution}`,
-    });
+    const recipients = [toId(booking.client_id), toId(booking.worker_id)];
+
+    await Promise.all(
+      recipients.map((recipientId) =>
+        notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: actorId,
+          type: NotificationType.DISPUTE_RESOLVED,
+          category: NotificationCategory.DISPUTE,
+          title: "Khiếu nại booking đã được xử lý",
+          body: `Khiếu nại booking đã được xử lý với kết quả: ${resolution}.`,
+          data: { booking_id: bookingId, resolution },
+          link: getBookingDashboardLink(recipientId, booking),
+          priority: NotificationPriority.HIGH,
+          dedupe_key: `dispute-resolved:${bookingId}:${resolution}:${recipientId}`,
+        })
+      )
+    );
   }
 
   async walletEvent(input: {
@@ -332,6 +356,7 @@ export class NotificationEventService {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);
     const recipientId = actorId === clientId ? workerId : clientId;
+    const link = recipientId === workerId ? "/worker/bookings" : "/client/bookings";
 
     await notificationService.notify({
       recipient_ids: [recipientId],
@@ -344,7 +369,7 @@ export class NotificationEventService {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),
       },
-      link: "/client/bookings",
+      link,
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.NORMAL,
       dedupe_key: `review-created:${toId(review._id)}`,
@@ -364,7 +389,7 @@ export class NotificationEventService {
       title: "Cảnh báo điểm uy tín",
       body,
       data: { reputation_score: newScore },
-      link: "/notifications",
+      link: "/worker/bookings",
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.HIGH,
       dedupe_key: `reputation-warning:${userId}:${newScore}`,
@@ -375,6 +400,7 @@ export class NotificationEventService {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);
     const recipientId = actorId === clientId ? workerId : clientId;
+    const link = recipientId === workerId ? "/worker/bookings" : "/client/bookings";
 
     await notificationService.notify({
       recipient_ids: [recipientId],
@@ -387,7 +413,7 @@ export class NotificationEventService {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),
       },
-      link: "/client/bookings",
+      link,
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.NORMAL,
       dedupe_key: `review-updated:${toId(review._id)}:${Date.now()}`,
