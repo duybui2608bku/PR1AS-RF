@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
 import { privateRouteMetadata } from "@/lib/seo"
+import { ThemeToggle } from "@/components/layout/theme-toggle"
 
 export const metadata = {
   ...privateRouteMetadata,
@@ -12,10 +13,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="flex min-h-svh flex-col bg-muted/20">
       <header className="border-b">
-        <div className="container-page flex h-14 items-center">
+        <div className="container-page flex h-14 items-center justify-between">
           <Link href="/" className="font-semibold">
             {siteConfig.name}
           </Link>
+          <ThemeToggle />
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-10">
