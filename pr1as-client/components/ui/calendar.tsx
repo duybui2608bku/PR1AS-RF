@@ -17,7 +17,7 @@ function Calendar({ className, classNames, showOutsideDays = true, locale = vi, 
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        root: "w-full",
+        root: "min-w-[280px]",
         months: "flex flex-col gap-4 sm:flex-row",
         month: "w-full space-y-4",
         month_caption: "relative flex h-9 items-center justify-center",
