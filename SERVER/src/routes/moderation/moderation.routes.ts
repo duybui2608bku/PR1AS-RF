@@ -41,11 +41,27 @@ router.post(
   )
 );
 
+router.get(
+  "/reports/post/:post_id/open",
+  validateObjectId("post_id"),
+  asyncHandler<AuthRequest>(
+    moderationController.getOpenPostReport.bind(moderationController)
+  )
+);
+
 router.post(
   "/reports/worker",
   ...csrfProtection,
   asyncHandler<AuthRequest>(
     moderationController.reportWorker.bind(moderationController)
+  )
+);
+
+router.get(
+  "/reports/worker/:worker_id/open",
+  validateObjectId("worker_id"),
+  asyncHandler<AuthRequest>(
+    moderationController.getOpenWorkerReport.bind(moderationController)
   )
 );
 

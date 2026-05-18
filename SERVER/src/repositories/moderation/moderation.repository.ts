@@ -14,7 +14,7 @@ import type {
   RestrictionQuery,
 } from "../../types/moderation";
 
-const USER_PUBLIC_FIELDS = "email full_name avatar roles worker_profile";
+const USER_PUBLIC_FIELDS = "_id email full_name avatar roles worker_profile";
 
 export class ModerationRepository {
   async upsertBlock(input: {
@@ -100,6 +100,7 @@ export class ModerationRepository {
     workerId?: string | null;
     targetUserId?: string | null;
     bookingId?: string | null;
+    evidenceUrls?: string[];
   }): Promise<IReportDocument> {
     return new Report({
       reporter_id: new Types.ObjectId(data.reporterId),
@@ -109,13 +110,72 @@ export class ModerationRepository {
       post_id: data.postId ? new Types.ObjectId(data.postId) : null,
       worker_id: data.workerId ? new Types.ObjectId(data.workerId) : null,
       target_user_id: data.targetUserId
-        ? new Types.ObjectId(data.targetUserId)
+        ? { _id: new Types.ObjectId(data.targetUserId) }
         : null,
       booking_id: data.bookingId ? new Types.ObjectId(data.bookingId) : null,
+      evidence_urls: data.evidenceUrls ?? [],
       status: ReportStatus.OPEN,
       created_at: new Date(),
       updated_at: new Date(),
     }).save();
+  }
+
+  async markReportPostDeleted(reportId: string): Promise<void> {
+    await Report.findByIdAndUpdate(reportId, {
+      post_deleted_at: new Date(),
+      updated_at: new Date(),
+    });
+  }
+
+  async attachReportRestriction(
+    reportId: string,
+    feature: RestrictionFeature,
+    restrictionId: Types.ObjectId
+  ): Promise<void> {
+    const field =
+      feature === RestrictionFeature.POST_CREATE
+        ? "post_create_restriction_id"
+        : "worker_activity_restriction_id";
+    await Report.findByIdAndUpdate(reportId, {
+      [field]: restrictionId,
+      updated_at: new Date(),
+    });
+  }
+
+  async clearReportRestriction(restrictionId: string): Promise<void> {
+    const id = new Types.ObjectId(restrictionId);
+    await Report.updateMany(
+      { post_create_restriction_id: id },
+      { $set: { post_create_restriction_id: null, updated_at: new Date() } }
+    );
+    await Report.updateMany(
+      { worker_activity_restriction_id: id },
+      { $set: { worker_activity_restriction_id: null, updated_at: new Date() } }
+    );
+  }
+
+  async findOpenWorkerReport(
+    reporterId: string,
+    workerId: string
+  ): Promise<IReportDocument | null> {
+    return Report.findOne({
+      reporter_id: new Types.ObjectId(reporterId),
+      target_type: ReportTargetType.WORKER,
+      worker_id: new Types.ObjectId(workerId),
+      status: ReportStatus.OPEN,
+    }).sort({ created_at: -1 });
+  }
+
+  async findOpenPostReport(
+    reporterId: string,
+    postId: string
+  ): Promise<IReportDocument | null> {
+    return Report.findOne({
+      reporter_id: new Types.ObjectId(reporterId),
+      target_type: ReportTargetType.POST,
+      post_id: new Types.ObjectId(postId),
+      status: ReportStatus.OPEN,
+    }).sort({ created_at: -1 });
   }
 
   async listReports(query: ReportQuery): Promise<{
@@ -138,6 +198,8 @@ export class ModerationRepository {
         .populate("reporter_id", USER_PUBLIC_FIELDS)
         .populate("target_user_id", USER_PUBLIC_FIELDS)
         .populate("post_id", "body deleted_at created_at")
+        .populate("post_create_restriction_id", "status ends_at starts_at")
+        .populate("worker_activity_restriction_id", "status ends_at starts_at")
         .sort({ created_at: -1 })
         .skip(query.skip)
         .limit(query.limit),

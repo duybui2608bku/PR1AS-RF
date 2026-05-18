@@ -88,6 +88,10 @@ export const queryKeys = {
   moderation: {
     all: ["moderation"] as const,
     blocks: ["moderation", "blocks"] as const,
+    openPostReport: (postId: string) =>
+      ["moderation", "reports", "post", postId, "open"] as const,
+    openWorkerReport: (workerId: string) =>
+      ["moderation", "reports", "worker", workerId, "open"] as const,
     reports: (params?: Record<string, unknown>) =>
       ["moderation", "reports", params] as const,
     restrictions: (params?: Record<string, unknown>) =>

@@ -83,6 +83,12 @@ export class ModerationService {
   ) {
     const post = await postRepository.findActiveByIdLean(input.post_id);
     if (!post) throw AppError.notFound();
+    const existingReport = await moderationRepository.findOpenPostReport(
+      reporterId,
+      input.post_id
+    );
+    if (existingReport) return existingReport;
+
     const authorId = String(
       typeof post.author_id === "object" && "_id" in post.author_id
         ? (post.author_id as { _id: Types.ObjectId })._id
@@ -105,10 +111,17 @@ export class ModerationService {
       reason: ReportReason;
       description: string;
       booking_id?: string;
+      evidence_urls?: string[];
     }
   ) {
     const worker = await userRepository.findById(input.worker_id);
     if (!worker?.worker_profile) throw AppError.notFound();
+    const existingReport = await moderationRepository.findOpenWorkerReport(
+      reporterId,
+      input.worker_id
+    );
+    if (existingReport) return existingReport;
+
     return moderationRepository.createReport({
       reporterId,
       targetType: ReportTargetType.WORKER,
@@ -117,7 +130,16 @@ export class ModerationService {
       workerId: input.worker_id,
       targetUserId: input.worker_id,
       bookingId: input.booking_id ?? null,
+      evidenceUrls: input.evidence_urls ?? [],
     });
+  }
+
+  async getOpenWorkerReport(reporterId: string, workerId: string) {
+    return moderationRepository.findOpenWorkerReport(reporterId, workerId);
+  }
+
+  async getOpenPostReport(reporterId: string, postId: string) {
+    return moderationRepository.findOpenPostReport(reporterId, postId);
   }
 
   async listReports(query: ReportQuery) {
@@ -147,10 +169,23 @@ export class ModerationService {
     reason: string;
     endsAt?: Date | null;
     adminId: string;
+    reportId?: string | null;
   }) {
     const user = await userRepository.findById(input.userId);
     if (!user) throw AppError.notFound();
-    return moderationRepository.createRestriction(input);
+    const restriction = await moderationRepository.createRestriction(input);
+    if (input.reportId) {
+      await moderationRepository.attachReportRestriction(
+        input.reportId,
+        input.feature,
+        restriction._id as Types.ObjectId
+      );
+    }
+    return restriction;
+  }
+
+  async recordPostDeletedAction(reportId: string) {
+    await moderationRepository.markReportPostDeleted(reportId);
   }
 
   async listRestrictions(query: RestrictionQuery) {
@@ -172,6 +207,7 @@ export class ModerationService {
     if (!restriction) {
       throw AppError.notFound(MODERATION_MESSAGES.RESTRICTION_NOT_FOUND);
     }
+    await moderationRepository.clearReportRestriction(restrictionId);
     return restriction;
   }
 

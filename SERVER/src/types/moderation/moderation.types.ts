@@ -27,8 +27,12 @@ export interface IReport {
   worker_id?: Types.ObjectId | null;
   target_user_id?: Types.ObjectId | null;
   booking_id?: Types.ObjectId | null;
+  evidence_urls: string[];
   status: ReportStatus;
   admin_note?: string | null;
+  post_deleted_at?: Date | null;
+  post_create_restriction_id?: Types.ObjectId | null;
+  worker_activity_restriction_id?: Types.ObjectId | null;
   resolved_by?: Types.ObjectId | null;
   resolved_at?: Date | null;
   created_at: Date;
