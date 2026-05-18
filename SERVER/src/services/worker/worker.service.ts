@@ -486,7 +486,11 @@ export class WorkerService {
               }
             : undefined,
         excludedWorkerIds: [
-          ...new Set([...profileBlockedIds, ...restrictedWorkerIds]),
+          ...new Set([
+            ...profileBlockedIds,
+            ...restrictedWorkerIds,
+            ...(viewerId ? [viewerId] : []),
+          ]),
         ],
       });
 
