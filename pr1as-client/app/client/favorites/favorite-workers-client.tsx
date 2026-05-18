@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, Loader2, MapPin, Trash2 } from "lucide-react"
+import { Heart, Loader2, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -16,59 +16,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { WorkerTitleOverlayBadge } from "@/components/worker/worker-title-overlay-badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   useFavoriteWorkers,
   useToggleFavoriteWorker,
 } from "@/lib/hooks/use-worker"
-import { workerService } from "@/services/worker.service"
-import type { WorkerFavorite, WorkerServicePricing } from "@/types"
+import type { WorkerFavorite } from "@/types"
 
-const formatPricing = (pricing: WorkerServicePricing[]) => {
-  if (!pricing.length) return "Chưa có bảng giá"
-
-  const item = [...pricing].sort((a, b) => a.price - b.price)[0]
-  const currencyMap: Record<string, string> = { VND: "d", USD: "$" }
-  const symbol = currencyMap[item.currency] ?? item.currency
-  const value =
-    item.currency === "VND"
-      ? `${new Intl.NumberFormat("vi-VN").format(item.price)}${symbol}`
-      : `${symbol}${new Intl.NumberFormat("en-US").format(item.price)}`
-  const unit =
-    item.unit === "HOURLY"
-      ? "giờ"
-      : item.unit === "DAILY"
-        ? "ngày"
-        : "tháng"
-
-  return `${value} / ${unit}`
-}
-
-const formatLocations = (
-  locations: NonNullable<WorkerFavorite["worker_profile"]>["work_locations"] = [],
-) => {
-  const labels = locations
-    .map((location) => location.label_snapshot?.trim())
-    .filter((label): label is string => Boolean(label))
-  if (!labels.length) return null
-  if (labels.length <= 2) return labels.join(" - ")
-  return `${labels.slice(0, 2).join(" - ")} +${labels.length - 2}`
-}
-
-const getPrimaryService = (worker: WorkerFavorite) => worker.services[0] ?? null
+const workerCardGridClassName =
+  "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 md:grid-cols-4 lg:grid-cols-6 scrollbar-none"
 
 function FavoriteSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={workerCardGridClassName}>
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="overflow-hidden rounded-lg border bg-card">
-          <Skeleton className="aspect-[4/3] w-full rounded-none" />
-          <div className="space-y-3 p-4">
-            <Skeleton className="h-5 w-2/3" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-1/2" />
+        <div
+          key={index}
+          className="flex-none w-[44vw] snap-start overflow-hidden rounded-2xl border border-border bg-card sm:w-auto"
+        >
+          <Skeleton className="aspect-[3/4] w-full rounded-none" />
+          <div className="px-2.5 pt-2 pb-2.5">
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
       ))}
@@ -85,78 +55,52 @@ function FavoriteWorkerCard({
   isPending: boolean
   onRemove: (workerId: string) => void
 }) {
-  const primaryService = getPrimaryService(worker)
   const imageSrc =
     worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
-  const locationText = formatLocations(worker.worker_profile?.work_locations)
 
   return (
-    <article className="relative overflow-hidden rounded-lg border bg-card">
-      <Link href={`/worker/${worker.id}`} className="block">
-        <div className="relative aspect-[4/3] bg-muted">
+    <article className="group relative flex-none w-[44vw] snap-start overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto">
+      <Link href={`/worker/${worker.id}`} className="block cursor-pointer">
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
           {imageSrc ? (
             <Image
               src={imageSrc}
               alt={worker.full_name ?? "Worker"}
               fill
-              sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-              className="object-cover"
+              sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 44vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
               Chưa có ảnh
             </div>
           )}
+          {worker.worker_profile?.title ? (
+            <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
+          ) : null}
         </div>
-        <div className="space-y-3 p-4">
-          <div className="min-w-0">
-            <p className="line-clamp-1 font-semibold">
-              {worker.full_name ?? "Chưa cập nhật tên"}
-            </p>
-            {worker.worker_profile?.title ? (
-              <p className="line-clamp-1 text-sm text-muted-foreground">
-                {worker.worker_profile.title}
-              </p>
-            ) : null}
-          </div>
-
-          {primaryService?.service ? (
-            <Badge variant="secondary" className="max-w-full truncate">
-              <span className="truncate">
-                {workerService.getFallbackName(primaryService.service.name)}
-              </span>
-            </Badge>
-          ) : null}
-
-          {locationText ? (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="size-3.5 shrink-0" />
-              <span className="truncate">{locationText}</span>
-            </p>
-          ) : null}
-
-          <p className="text-sm font-semibold text-primary">
-            {formatPricing(primaryService?.pricing ?? [])}
+        <div className="px-2.5 pt-2 pb-2.5">
+          <p className="line-clamp-1 text-sm font-semibold leading-tight text-foreground">
+            {worker.full_name ?? "Chưa cập nhật tên"}
           </p>
         </div>
       </Link>
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button
+          <button
             type="button"
-            size="icon"
-            variant="outline"
-            className="absolute right-3 top-3 bg-background/85 backdrop-blur"
             aria-label="Remove favorite worker"
+            title="Xóa khỏi yêu thích"
             disabled={isPending}
+            className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <Trash2 className="size-4" />
             )}
-          </Button>
+          </button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -235,7 +179,7 @@ export function FavoriteWorkersClient() {
       ) : null}
 
       {!favoritesQuery.isLoading && favorites.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={workerCardGridClassName}>
           {favorites.map((worker) => (
             <FavoriteWorkerCard
               key={worker.id}

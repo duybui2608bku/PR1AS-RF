@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Image from "next/image"
 import Link from "next/link"
@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
+import { WorkerTitleOverlayBadge } from "@/components/worker/worker-title-overlay-badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -108,14 +109,7 @@ const WorkerCard = ({
           </div>
         )}
         {worker.worker_profile?.title ? (
-          <div className="absolute bottom-2 left-2 right-2">
-            <Badge
-              variant="secondary"
-              className="bg-white/20 text-white border-0 text-[11px] backdrop-blur-sm"
-            >
-              {worker.worker_profile.title}
-            </Badge>
-          </div>
+          <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
         ) : null}
       </div>
       <div className="px-2.5 pt-2 pb-0">
