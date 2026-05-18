@@ -45,7 +45,6 @@ export type AuthUser = {
 
 type AuthState = {
   user: AuthUser | null
-  /** In-memory only — NOT persisted to localStorage. Cleared on page refresh. */
   token: string | null
   isAuthenticated: boolean
   setAuth: (payload: { user: AuthUser; token: string }) => void
@@ -80,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        // token intentionally excluded — kept in memory only to avoid localStorage exposure
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

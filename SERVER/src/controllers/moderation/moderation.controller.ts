@@ -64,6 +64,24 @@ export class ModerationController {
     R.created(res, report, MODERATION_MESSAGES.REPORT_CREATED, req);
   }
 
+  async getOpenWorkerReport(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const report = await moderationService.getOpenWorkerReport(
+      userId,
+      req.params.worker_id
+    );
+    R.success(res, report, MODERATION_MESSAGES.REPORTS_FETCHED, req);
+  }
+
+  async getOpenPostReport(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const report = await moderationService.getOpenPostReport(
+      userId,
+      req.params.post_id
+    );
+    R.success(res, report, MODERATION_MESSAGES.REPORTS_FETCHED, req);
+  }
+
   async listReports(req: AuthRequest, res: Response): Promise<void> {
     const query = validateWithSchema(
       reportQuerySchema,
@@ -103,6 +121,7 @@ export class ModerationController {
       reason: input.reason,
       endsAt: input.ends_at,
       adminId,
+      reportId: input.report_id ?? null,
     });
     R.created(res, restriction, MODERATION_MESSAGES.RESTRICTION_CREATED, req);
   }
@@ -128,6 +147,10 @@ export class ModerationController {
 
   async deletePostAsAdmin(req: AuthRequest, res: Response): Promise<void> {
     await postService.softDeletePostAsAdmin(req.params.id);
+    const reportId =
+      (req.body?.report_id as string | undefined) ||
+      (req.query?.report_id as string | undefined);
+    if (reportId) await moderationService.recordPostDeletedAction(reportId);
     R.success(res, null, COMMON_MESSAGES.DELETED, req);
   }
 }

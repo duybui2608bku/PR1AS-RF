@@ -57,7 +57,7 @@ export default function LoginPage() {
   const safeRedirectTarget = isWorker && allowedSafeFrom === "/" ? null : allowedSafeFrom
   const redirectTarget =
     authenticatedUser && isAdminActive
-      ? "/dashboard"
+      ? (safeRedirectTarget ?? "/dashboard")
       : (safeRedirectTarget ?? defaultRedirectTarget)
 
   useEffect(() => {

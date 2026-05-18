@@ -18,6 +18,14 @@ export type ReportTargetType = "post" | "worker"
 export type RestrictionFeature = "post_create" | "worker_activity"
 export type RestrictionStatus = "active" | "revoked" | "expired"
 
+export type ReportRestrictionRef = {
+  _id?: string
+  id?: string
+  status: RestrictionStatus
+  starts_at?: string | null
+  ends_at?: string | null
+}
+
 export type UserBlock = {
   id: string
   blocked_id:
@@ -37,16 +45,30 @@ export type UserBlock = {
 export type ModerationReport = {
   id: string
   _id?: string
-  reporter_id: unknown
+  reporter_id: {
+    _id: string
+    full_name: string | null
+    email: string
+    avatar: string | null
+  }
   target_type: ReportTargetType
   reason: ReportReason
   description: string
   post_id?: unknown
   worker_id?: string | null
-  target_user_id?: unknown
+  target_user_id?: {
+    _id: string
+    full_name: string | null
+    email: string
+    avatar: string | null
+  }
   booking_id?: string | null
+  evidence_urls?: string[]
   status: ReportStatus
   admin_note?: string | null
+  post_deleted_at?: string | null
+  post_create_restriction_id?: ReportRestrictionRef | string | null
+  worker_activity_restriction_id?: ReportRestrictionRef | string | null
   created_at: string
   updated_at: string
 }
@@ -114,17 +136,32 @@ export const moderationService = {
     return response.data.data
   },
 
+  getOpenPostReport: async (postId: string) => {
+    const response = await api.get<ApiResponse<ModerationReport | null>>(
+      `/moderation/reports/post/${postId}/open`
+    )
+    return response.data.data ?? null
+  },
+
   reportWorker: async (payload: {
     worker_id: string
     reason: ReportReason
     description: string
     booking_id?: string
+    evidence_urls?: string[]
   }) => {
     const response = await api.post<ApiResponse<ModerationReport>>(
       "/moderation/reports/worker",
       payload
     )
     return response.data.data
+  },
+
+  getOpenWorkerReport: async (workerId: string) => {
+    const response = await api.get<ApiResponse<ModerationReport | null>>(
+      `/moderation/reports/worker/${workerId}/open`
+    )
+    return response.data.data ?? null
   },
 
   listReports: async (params: {
@@ -153,8 +190,10 @@ export const moderationService = {
     return response.data.data
   },
 
-  deletePostAsAdmin: async (id: string) => {
-    await api.delete(`/moderation/admin/posts/${id}`)
+  deletePostAsAdmin: async (id: string, reportId?: string | null) => {
+    await api.delete(`/moderation/admin/posts/${id}`, {
+      data: reportId ? { report_id: reportId } : undefined,
+    })
   },
 
   createRestriction: async (payload: {
@@ -162,6 +201,7 @@ export const moderationService = {
     feature: RestrictionFeature
     reason: string
     ends_at?: string | null
+    report_id?: string | null
   }) => {
     const response = await api.post<ApiResponse<UserRestriction>>(
       "/moderation/admin/restrictions",

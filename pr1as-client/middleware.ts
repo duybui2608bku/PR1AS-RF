@@ -90,8 +90,24 @@ export function middleware(req: NextRequest) {
 
   if (AUTH_PAGES.includes(pathname) && token) {
     const url = req.nextUrl.clone()
+    const fromParam = req.nextUrl.searchParams.get("from")
+    const safeFrom =
+      fromParam && fromParam.startsWith("/") && !fromParam.startsWith("//")
+        ? fromParam
+        : null
+    const allowedFrom =
+      safeFrom && safeFrom.startsWith("/dashboard") && activeRole !== "admin"
+        ? null
+        : safeFrom
+
+    url.search = ""
     url.pathname =
-      activeRole === "admin" ? "/dashboard" : activeRole === "worker" ? "/posts" : "/"
+      allowedFrom ??
+      (activeRole === "admin"
+        ? "/dashboard"
+        : activeRole === "worker"
+          ? "/posts"
+          : "/")
     return NextResponse.redirect(url)
   }
 

@@ -45,20 +45,52 @@ export function useUnblockUser() {
 }
 
 export function useReportPost() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: moderationService.reportPost,
-    onSuccess: () => toast.success("Đã gửi báo cáo bài viết."),
+    onSuccess: (report, variables) => {
+      toast.success("Đã gửi báo cáo bài viết.")
+      queryClient.setQueryData(
+        queryKeys.moderation.openPostReport(variables.post_id),
+        report ?? null
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
+    },
     onError: (error) =>
       toast.error(getErrorMessage(error, "Không thể gửi báo cáo.")),
   })
 }
 
+export function useOpenPostReport(postId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.moderation.openPostReport(postId),
+    queryFn: () => moderationService.getOpenPostReport(postId),
+    enabled,
+  })
+}
+
 export function useReportWorker() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: moderationService.reportWorker,
-    onSuccess: () => toast.success("Đã gửi báo cáo worker."),
+    onSuccess: (report, variables) => {
+      toast.success("Đã gửi báo cáo worker.")
+      queryClient.setQueryData(
+        queryKeys.moderation.openWorkerReport(variables.worker_id),
+        report ?? null
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
+    },
     onError: (error) =>
       toast.error(getErrorMessage(error, "Không thể gửi báo cáo.")),
+  })
+}
+
+export function useOpenWorkerReport(workerId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.moderation.openWorkerReport(workerId),
+    queryFn: () => moderationService.getOpenWorkerReport(workerId),
+    enabled,
   })
 }
 
@@ -99,10 +131,29 @@ export function useCreateRestriction() {
   })
 }
 
+export function useRevokeRestriction() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: moderationService.revokeRestriction,
+    onSuccess: () => {
+      toast.success("Đã gỡ lệnh cấm.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
+    },
+    onError: (error) =>
+      toast.error(getErrorMessage(error, "Không thể gỡ lệnh cấm.")),
+  })
+}
+
 export function useAdminDeletePost() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: moderationService.deletePostAsAdmin,
+    mutationFn: ({
+      postId,
+      reportId,
+    }: {
+      postId: string
+      reportId?: string | null
+    }) => moderationService.deletePostAsAdmin(postId, reportId ?? null),
     onSuccess: () => {
       toast.success("Đã xóa bài viết.")
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })

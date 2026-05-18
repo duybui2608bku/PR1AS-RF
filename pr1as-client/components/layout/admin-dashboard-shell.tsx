@@ -88,6 +88,7 @@ function isActiveRoute(pathname: string, href: string) {
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const meQuery = useMe()
@@ -103,12 +104,17 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const resolvedUser = meQuery.data?.data?.user ?? user
   const isLoading = !hydrated || (isAuthenticated && meQuery.isLoading)
 
+  const loginTarget = React.useMemo(
+    () => (pathname ? `/login?from=${encodeURIComponent(pathname)}` : "/login"),
+    [pathname]
+  )
+
   React.useEffect(() => {
     if (hydrated && !isAuthenticated) {
-      router.replace("/login")
+      router.replace(loginTarget)
       return
     }
-  }, [hydrated, isAuthenticated, router])
+  }, [hydrated, isAuthenticated, router, loginTarget])
 
   React.useEffect(() => {
     if (meQuery.isSuccess && resolvedUser) {
@@ -121,9 +127,9 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (meQuery.isError) {
-      router.replace("/login")
+      router.replace(loginTarget)
     }
-  }, [meQuery.isError, router])
+  }, [meQuery.isError, router, loginTarget])
 
   if (isLoading) {
     return (

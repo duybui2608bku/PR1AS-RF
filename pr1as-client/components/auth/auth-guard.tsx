@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -13,6 +13,7 @@ type AuthGuardProps = {
 
 export function AuthGuard({ children, redirectTo = "/login" }: AuthGuardProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const hydrated = React.useSyncExternalStore(
     React.useCallback((onStoreChange) => {
@@ -25,9 +26,13 @@ export function AuthGuard({ children, redirectTo = "/login" }: AuthGuardProps) {
 
   React.useEffect(() => {
     if (hydrated && !isAuthenticated) {
-      router.replace(redirectTo)
+      const target =
+        redirectTo === "/login" && pathname
+          ? `/login?from=${encodeURIComponent(pathname)}`
+          : redirectTo
+      router.replace(target)
     }
-  }, [hydrated, isAuthenticated, router, redirectTo])
+  }, [hydrated, isAuthenticated, router, redirectTo, pathname])
 
   if (!hydrated || !isAuthenticated) {
     return (

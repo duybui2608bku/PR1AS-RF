@@ -25,6 +25,7 @@ export const reportWorkerSchema = z.object({
   booking_id: z.string().min(1).optional(),
   reason: z.nativeEnum(ReportReason),
   description: z.string().trim().min(10).max(2000),
+  evidence_urls: z.array(z.string().url()).max(10).optional().default([]),
 });
 
 const paginationQuerySchema = {
@@ -66,6 +67,7 @@ export const createRestrictionSchema = z.object({
   feature: z.nativeEnum(RestrictionFeature),
   reason: z.string().trim().min(3).max(1000),
   ends_at: z.coerce.date().optional().nullable(),
+  report_id: z.string().min(1).optional().nullable(),
 });
 
 export const restrictionQuerySchema = z

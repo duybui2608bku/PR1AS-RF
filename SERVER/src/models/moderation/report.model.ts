@@ -4,8 +4,8 @@ import {
   ReportStatus,
   ReportTargetType,
 } from "../../constants/moderation";
-import { IReportDocument } from "../../types/moderation";
 import { modelsName } from "../models.name";
+import { IReportDocument } from "../../types/moderation";
 
 const reportSchema = new Schema<IReportDocument>(
   {
@@ -57,6 +57,7 @@ const reportSchema = new Schema<IReportDocument>(
       default: null,
       index: true,
     },
+    evidence_urls: { type: [String], default: [] },
     status: {
       type: String,
       enum: Object.values(ReportStatus),
@@ -64,6 +65,17 @@ const reportSchema = new Schema<IReportDocument>(
       index: true,
     },
     admin_note: { type: String, trim: true, maxlength: 2000, default: null },
+    post_deleted_at: { type: Date, default: null },
+    post_create_restriction_id: {
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER_RESTRICTION,
+      default: null,
+    },
+    worker_activity_restriction_id: {
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER_RESTRICTION,
+      default: null,
+    },
     resolved_by: {
       type: Schema.Types.ObjectId,
       ref: modelsName.USER,

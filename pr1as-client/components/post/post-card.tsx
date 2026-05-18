@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ChangeEvent } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
@@ -47,8 +47,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
-import { useReportPost } from "@/lib/hooks/use-moderation"
+import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -58,10 +65,19 @@ import { EditPostDialog } from "./edit-post-dialog"
 import { PostComments } from "./post-comments"
 import { REACTION_META, ReactionPicker, topReactionTypes } from "./reaction-picker"
 import { Textarea } from "@/components/ui/textarea"
+import type { ReportReason } from "@/services/moderation.service"
 
 type Props = {
   post: PostPublic
 }
+
+const reportReasonOptions: Array<{ value: ReportReason; label: string }> = [
+  { value: "scam", label: "Lừa đảo" },
+  { value: "low_quality", label: "Chất lượng thấp" },
+  { value: "harassment", label: "Quấy rối" },
+  { value: "fake_profile", label: "Hồ sơ giả mạo" },
+  { value: "other", label: "Khác" },
+]
 
 function AuthorAvatar({
   avatar,
@@ -336,10 +352,17 @@ export function PostCard({ post }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const [reportReason, setReportReason] = useState<ReportReason>("scam")
   const [reportDescription, setReportDescription] = useState("")
+  const [reportDescriptionError, setReportDescriptionError] = useState("")
 
   const isOwner = user?.id === post.author.id
   const canManagePost = isOwner && !isWorkerRoleActive(user)
+  const openPostReportQuery = useOpenPostReport(
+    post.id,
+    isAuthenticated && !canManagePost
+  )
+  const hasOpenPostReport = Boolean(openPostReportQuery.data)
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: true,
     locale: vi,
@@ -361,13 +384,33 @@ export function PostCard({ post }: Props) {
   }
 
   const handleReport = async () => {
+    const description = reportDescription.trim()
+    if (description.length < 10) {
+      setReportDescriptionError("Mô tả báo cáo phải có ít nhất 10 ký tự.")
+      return
+    }
+
     await reportMutation.mutateAsync({
       post_id: post.id,
-      reason: "scam",
-      description: reportDescription.trim() || "Bài viết có dấu hiệu lừa đảo hoặc không chất lượng.",
+      reason: reportReason,
+      description,
     })
+    setReportReason("scam")
     setReportDescription("")
+    setReportDescriptionError("")
     setReportOpen(false)
+  }
+
+  const handleReportDescriptionChange = (
+    event: ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const value = event.target.value
+    setReportDescription(value)
+    setReportDescriptionError(
+      value.trim().length > 0 && value.trim().length < 10
+        ? "Mô tả báo cáo phải có ít nhất 10 ký tự."
+        : ""
+    )
   }
 
   return (
@@ -463,13 +506,17 @@ export function PostCard({ post }: Props) {
                   </>
                 ) : (
                   <DropdownMenuItem
+                    disabled={hasOpenPostReport}
                     onSelect={(event) => {
                       event.preventDefault()
+                      if (hasOpenPostReport) return
                       setReportOpen(true)
                     }}
                   >
                     <Flag className="size-3.5" />
-                    Báo cáo bài viết
+                    {hasOpenPostReport
+                      ? "Báo cáo đang được xử lý"
+                      : "Báo cáo bài viết"}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -590,17 +637,49 @@ export function PostCard({ post }: Props) {
       {editOpen && canManagePost ? (
         <EditPostDialog post={post} onClose={() => setEditOpen(false)} />
       ) : null}
-      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+      <Dialog
+        open={reportOpen}
+        onOpenChange={(open) => {
+          setReportOpen(open)
+          if (!open) setReportDescriptionError("")
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Báo cáo bài viết</DialogTitle>
           </DialogHeader>
+          <Select
+            value={reportReason}
+            onValueChange={(value) => setReportReason(value as ReportReason)}
+            disabled={reportMutation.isPending}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn lý do báo cáo" />
+            </SelectTrigger>
+            <SelectContent>
+              {reportReasonOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Textarea
             value={reportDescription}
-            onChange={(event) => setReportDescription(event.target.value)}
+            onChange={handleReportDescriptionChange}
             placeholder="Mô tả lý do báo cáo..."
-            className="min-h-28"
+            aria-invalid={Boolean(reportDescriptionError)}
+            className={`min-h-28 ${
+              reportDescriptionError
+                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                : ""
+            }`}
           />
+          {reportDescriptionError ? (
+            <p className="text-sm text-destructive">
+              {reportDescriptionError}
+            </p>
+          ) : null}
           <DialogFooter>
             <Button
               type="button"
