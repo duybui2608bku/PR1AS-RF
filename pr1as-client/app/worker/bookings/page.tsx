@@ -466,7 +466,7 @@ export default function WorkerBookingsPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="worker-filter-service">Mã dịch vụ</Label>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <Input
                     id="worker-filter-service"
                     value={serviceCodeInput}

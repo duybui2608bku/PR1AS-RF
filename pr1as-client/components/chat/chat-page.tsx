@@ -1160,7 +1160,7 @@ export function ChatPage({
         variant === "embedded" ? "h-full min-h-0" : "h-svh md:p-4"
       )}
     >
-      <div className="flex shrink-0 flex-col gap-3 border-b px-4 py-3 md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex shrink-0 flex-row justify-between gap-3 border-b px-4 py-3 md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:items-end">
         <div className="flex items-center gap-2">
           {showHomeButton ? (
             <Button
