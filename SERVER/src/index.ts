@@ -17,6 +17,7 @@ import {
   startBookingReminderJob,
   stopBookingReminderJob,
 } from "./jobs/booking-reminder.job";
+import { reputationConfigService } from "./services/reputation/reputation-config.service";
 
 const app = createApp();
 const httpServer = createServer(app);
@@ -26,6 +27,7 @@ initializeSocket(httpServer);
 const startServer = async () => {
   try {
     await connectDatabase();
+    await reputationConfigService.seedDefaults();
     startBookingExpirationJob();
     startBookingReminderJob();
     startReputationRecoveryJob();

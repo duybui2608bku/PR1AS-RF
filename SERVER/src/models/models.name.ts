@@ -28,4 +28,5 @@ export const modelsName = {
   USER_BLOCK: "user_blocks",
   REPORT: "reports",
   USER_RESTRICTION: "user_restrictions",
+  REPUTATION_CONFIG: "reputation_configs",
 };

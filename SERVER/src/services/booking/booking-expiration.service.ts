@@ -2,6 +2,8 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { BOOKING_LIMITS, BookingStatus } from "../../constants/booking";
 import { notificationEventService } from "../notification";
 import { reputationService } from "../reputation/reputation.service";
+import { reputationConfigService } from "../reputation/reputation-config.service";
+import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
 import { logger } from "../../utils/logger";
 import type { IBookingDocument } from "../../types/booking";
 
@@ -83,10 +85,10 @@ export class BookingExpirationService {
           logger.error("Booking expiration notification failed:", error)
         );
 
-      // Expired booking = worker did not confirm → -10 reputation
       const workerId = expiredBooking.worker_id.toString();
-      void reputationService
-        .deductPoints(workerId, 10)
+      void reputationConfigService
+        .getValue(ReputationConfigKey.BOOKING_EXPIRY_DEDUCTION)
+        .then((points) => reputationService.deductPoints(workerId, points))
         .catch((err) => logger.error("Reputation deduction after booking expiry failed:", err));
     }
 

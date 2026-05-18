@@ -93,4 +93,7 @@ export const queryKeys = {
     restrictions: (params?: Record<string, unknown>) =>
       ["moderation", "restrictions", params] as const,
   },
+  reputationConfig: {
+    all: ["reputation-config"] as const,
+  },
 } as const

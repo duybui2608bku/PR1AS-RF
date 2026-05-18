@@ -19,7 +19,7 @@ export function startReputationRecoveryJob(): void {
     try {
       const count = await reputationService.bulkDailyRecovery();
       if (count > 0) {
-        logger.info(`Reputation recovery: +5 points applied to ${count} users`);
+        logger.info(`Reputation recovery: daily points applied to ${count} users`);
       }
     } catch (error) {
       logger.error("Reputation recovery job failed:", error);

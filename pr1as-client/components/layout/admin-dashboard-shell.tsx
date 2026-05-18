@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
+  ShieldCheck,
   Users,
   X,
 } from "lucide-react"
@@ -72,6 +73,11 @@ const adminNavItems = [
     href: "/dashboard/reports",
     label: "Báo cáo",
     icon: ShieldAlert,
+  },
+  {
+    href: "/dashboard/reputation-config",
+    label: "Cấu hình điểm",
+    icon: ShieldCheck,
   },
 ]
 

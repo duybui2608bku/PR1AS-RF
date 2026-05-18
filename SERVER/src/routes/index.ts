@@ -17,6 +17,7 @@ import { hashtagRoutes } from "./hashtag";
 import { commentRoutes } from "./comment";
 import { reactionRoutes } from "./reaction";
 import { moderationRoutes } from "./moderation";
+import reputationConfigRoutes from "./reputation/reputation-config.routes";
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use("/comments", commentRoutes);
 router.use("/hashtags", hashtagRoutes);
 router.use("/reactions", reactionRoutes);
 router.use("/moderation", moderationRoutes);
+router.use("/admin/reputation-config", reputationConfigRoutes);
 
 export default router;

@@ -18,6 +18,8 @@ import { IBookingDocument, UserRole } from "../../types";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 import { notificationEventService } from "../notification";
 import { reputationService } from "../reputation/reputation.service";
+import { reputationConfigService } from "../reputation/reputation-config.service";
+import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
 import { logger } from "../../utils/logger";
 
 const getRefId = (value: unknown): string => {
@@ -107,12 +109,16 @@ export class ReviewService {
       .reviewCreated(review, userId)
       .catch((error) => logger.error("Review notification failed:", error));
 
-    // Booking completed but low rating (1-2 stars) → -5 reputation for worker
-    if (input.rating <= 2) {
-      void reputationService
-        .deductPoints(bookingWorkerId, 5)
-        .catch((err) => logger.error("Reputation deduction after low review failed:", err));
-    }
+    void Promise.all([
+      reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_THRESHOLD),
+      reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_DEDUCTION),
+    ])
+      .then(([threshold, points]) => {
+        if (input.rating <= threshold) {
+          void reputationService.deductPoints(bookingWorkerId, points);
+        }
+      })
+      .catch((err) => logger.error("Reputation deduction after low review failed:", err));
 
     return review;
   }
