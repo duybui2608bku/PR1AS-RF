@@ -95,4 +95,11 @@ router.post(
   asyncHandler(authController.resendVerificationEmail.bind(authController))
 );
 
+router.post(
+  "/google",
+  authLimiter,
+  ...csrfProtection,
+  asyncHandler(authController.googleLogin.bind(authController))
+);
+
 export default router;

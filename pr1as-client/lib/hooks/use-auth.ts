@@ -89,6 +89,25 @@ export function useLogin() {
   })
 }
 
+export function useGoogleLogin() {
+  const setAuth = useAuthStore((s) => s.setAuth)
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (accessToken: string) => {
+      const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { access_token: accessToken })
+      return response.data
+    },
+    onSuccess: async (data) => {
+      if (!data.success || !data.data) return
+      const { user, token } = data.data
+      setAuth({ user, token })
+      await setSessionCookie(token)
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
+    },
+  })
+}
+
 export function useRegister() {
   return useMutation({
     mutationFn: async (payload: RegisterRequest) => {

@@ -54,7 +54,8 @@ export interface ClientProfile {
 
 export interface IUser {
   email: string;
-  password_hash: string;
+  password_hash?: string;
+  google_id?: string;
   avatar?: string;
   full_name?: string;
   phone?: string;
@@ -121,6 +122,10 @@ export interface RegisterInput {
 export interface LoginInput {
   email: string;
   password: string;
+}
+
+export interface GoogleLoginInput {
+  id_token: string;
 }
 
 export interface AuthResponse {
