@@ -110,7 +110,7 @@ export class GroupChatRepository {
         {
           $addToSet: { members: { $each: requiredMembers } },
           $set: {
-            name: `Complaint - ${bookingData.serviceCode}`,
+            name: `Khiếu nại - ${booking_id}`,
             updated_at: new Date(),
           },
         },
@@ -122,7 +122,7 @@ export class GroupChatRepository {
 
     const conversation = new ConversationGroup({
       booking_id: new Types.ObjectId(booking_id),
-      name: `Complaint - ${bookingData.serviceCode}`,
+      name: `Khiếu nại - ${booking_id}`,
       members: requiredMembers,
       last_message: null,
       created_at: new Date(),

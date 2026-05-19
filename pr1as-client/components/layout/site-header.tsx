@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  Bell,
   CalendarCheck2,
+  CalendarDays,
   Crown,
   FileText,
   Heart,
@@ -34,7 +34,15 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
 
-const USER_MENU_ITEMS = [
+type UserMenuItem = {
+  routeKey: RoleRouteKey
+  href: string
+  label: string
+  icon: LucideIcon
+  roles?: readonly string[]
+}
+
+const USER_MENU_ITEMS: readonly UserMenuItem[] = [
   { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
   { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
   {
@@ -42,13 +50,15 @@ const USER_MENU_ITEMS = [
     href: "/client/favorites",
     label: "Yêu thích",
     icon: Heart,
+    roles: ["client"],
   },
   { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
   {
-    routeKey: "notifications",
-    href: "/notifications",
-    label: "Thông báo",
-    icon: Bell,
+    routeKey: "schedule",
+    href: "/worker/bookings/schedule",
+    label: "Schedule",
+    icon: CalendarDays,
+    roles: ["worker"],
   },
   { routeKey: "wallet", href: "/wallet", label: "Ví", icon: Wallet },
   {
@@ -57,12 +67,7 @@ const USER_MENU_ITEMS = [
     label: "Booking",
     icon: CalendarCheck2,
   },
-] as const satisfies ReadonlyArray<{
-  routeKey: RoleRouteKey
-  href: string
-  label: string
-  icon: LucideIcon
-}>
+]
 
 const resolveMenuHref = (
   routeKey: RoleRouteKey,
@@ -104,7 +109,13 @@ export function SiteHeader() {
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
   const userMenuItems = React.useMemo(
     () => [
-      ...USER_MENU_ITEMS.map((item) => ({
+      ...USER_MENU_ITEMS.filter((item) => {
+        if (!item.roles) return true
+
+        return activeRole
+          ? item.roles.includes(activeRole.toLowerCase())
+          : false
+      }).map((item) => ({
         ...item,
         href: resolveMenuHref(item.routeKey, item.href, user, activeRole),
       })),

@@ -119,6 +119,21 @@ const UNIT_VI: Record<WorkerPricingUnit, string> = {
   MONTHLY: "Tháng",
 }
 
+function parseVndInput(value: string) {
+  const digits = value.replace(/[^\d]/g, "")
+  if (!digits) return undefined
+
+  const amount = Number(digits)
+  return Number.isFinite(amount) && amount > 0 ? amount : undefined
+}
+
+function formatVndInput(value: number | string | undefined) {
+  const digits = String(value ?? "").replace(/[^\d]/g, "")
+  if (!digits) return ""
+
+  return new Intl.NumberFormat("vi-VN").format(Number(digits))
+}
+
 function parseWorkerProfile(raw: unknown): WorkerProfilePublic | null {
   if (!raw || typeof raw !== "object") return null
   return raw as WorkerProfilePublic
@@ -414,9 +429,7 @@ export default function WorkerSetupPage() {
     unit: WorkerPricingUnit,
     raw: string,
   ) => {
-    const num = raw.trim() === "" ? undefined : Number(raw)
-    const value =
-      num !== undefined && !Number.isNaN(num) && num > 0 ? num : undefined
+    const value = parseVndInput(raw)
     setSelectedPricing((prev) => {
       const next = new Map(prev)
       const cur = normalizeWorkerPricingSlots(next.get(serviceId) ?? [])
@@ -614,19 +627,16 @@ export default function WorkerSetupPage() {
                   {UNIT_VI[unit]}
                 </Label>
                 <Input
-                  type="number"
-                  min={0}
-                  step="1000"
-                  placeholder="Giá"
-                  value={
-                    priceForUnit(pricing, unit) ?? ""
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0 VND"
+                  value={formatVndInput(priceForUnit(pricing, unit))}
                   onChange={(e) =>
                     setPriceForUnit(service.id, unit, e.target.value)
                   }
                 />
                 <span className="text-xs text-muted-foreground shrink-0">
-                  đ
+                  VND
                 </span>
               </div>
             ))}
