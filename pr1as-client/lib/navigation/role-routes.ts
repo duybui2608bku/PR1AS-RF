@@ -2,10 +2,10 @@ export type RoleRouteKey =
   | "booking"
   | "chat"
   | "favorites"
-  | "notifications"
   | "posts"
   | "pricing"
   | "profile"
+  | "schedule"
   | "wallet"
 
 type RoleRoutes = Partial<Record<RoleRouteKey, string>>
@@ -24,6 +24,7 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
     favorites: "/client/favorites",
     posts: "/posts",
     profile: "/client/profile",
+    schedule: "/worker/bookings/schedule",
     wallet: "/wallet",
   },
 }
