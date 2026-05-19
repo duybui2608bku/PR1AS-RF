@@ -1,17 +1,15 @@
 "use client"
 
-import { AlertTriangle, Heart, Loader2, Mars, Pencil, ShieldCheck, Star, Trophy, User as UserIcon, Venus, VenusAndMars } from "lucide-react"
+import { AlertTriangle, Heart, Loader2, Mars, Pencil, ShieldCheck, Star, Trophy, Venus, VenusAndMars } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getPlanRingClass } from "@/lib/utils/plan"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
@@ -34,15 +32,6 @@ const GenderIcon = ({ gender }: { gender?: WorkerGender }) => {
   if (gender === "FEMALE") return <Venus className="size-3.5 text-pink-500" />
   return <VenusAndMars className="size-3.5 text-muted-foreground" />
 }
-
-const HOBBY_COLORS = [
-  "bg-emerald-500 text-white",
-  "bg-amber-600 text-white",
-  "bg-orange-500 text-white",
-  "bg-violet-500 text-white",
-  "bg-rose-500 text-white",
-  "bg-cyan-500 text-white",
-]
 
 type Props = {
   worker: WorkerDetail
@@ -78,100 +67,91 @@ export function WorkerProfileHeader({
 
   const fullName = worker.user.full_name ?? "Chưa cập nhật"
   const title = profile?.title ?? null
-  const initials = (fullName || "?").trim().charAt(0).toUpperCase()
   const reputationScore = getReputationScore(worker.user.meta_data?.reputation_score)
   const isLowReputation = reputationScore < 30
 
   return (
-    <div className="space-y-4">
-    {isLowReputation ? (
-      <Alert className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
-        <AlertTriangle className="size-4 text-red-500" />
-        <AlertDescription className="font-medium">
-          Worker này có điểm uy tín thấp ({reputationScore}/100). Dịch vụ đặt lịch tạm thời bị hạn chế.
-        </AlertDescription>
-      </Alert>
-    ) : null}
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,600px)_1fr]">
-      <div className="space-y-3">
-        <AspectRatio
-          ratio={5 / 4}
-          className="overflow-hidden rounded-2xl bg-muted"
-        >
-          {activeImage ? (
-            <Image
-              src={activeImage}
-              alt={fullName}
-              fill
-              sizes="(min-width: 768px) 360px, 100vw"
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-              Chưa có ảnh
+    <div className="space-y-4 rounded-2xl border p-5">
+      {isLowReputation ? (
+        <Alert className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
+          <AlertTriangle className="size-4 text-red-500" />
+          <AlertDescription className="font-medium">
+            Worker này có điểm uy tín thấp ({reputationScore}/100). Dịch vụ đặt lịch tạm thời bị hạn chế.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
+        <div className="space-y-3">
+          <AspectRatio
+            ratio={5 / 4}
+            className="overflow-hidden rounded-2xl bg-muted"
+          >
+            {activeImage ? (
+              <Image
+                src={activeImage}
+                alt={fullName}
+                fill
+                sizes="(min-width: 1024px) 400px, 100vw"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                Chưa có ảnh
+              </div>
+            )}
+          </AspectRatio>
+
+          {gallery.length > 1 ? (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {gallery.map((url, index) => (
+                <button
+                  key={`${url}-${index}`}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={cn(
+                    "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors",
+                    index === activeIndex
+                      ? "border-primary"
+                      : "border-transparent opacity-70 hover:opacity-100",
+                  )}
+                  aria-label={`Ảnh ${index + 1}`}
+                >
+                  <Image
+                    src={url}
+                    alt=""
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </button>
+              ))}
             </div>
-          )}
-        </AspectRatio>
+          ) : null}
+        </div>
 
-        {gallery.length > 1 ? (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {gallery.map((url, index) => (
-              <button
-                key={`${url}-${index}`}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                className={cn(
-                  "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors",
-                  index === activeIndex
-                    ? "border-primary"
-                    : "border-transparent opacity-70 hover:opacity-100",
-                )}
-                aria-label={`Ảnh ${index + 1}`}
-              >
-                <Image
-                  src={url}
-                  alt=""
-                  fill
-                  sizes="64px"
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-start gap-3">
-          <Avatar size="lg" className={cn("size-12 shrink-0", getPlanRingClass(worker.user.meta_data?.pricing_plan_code))}>
-            {worker.user.avatar ? (
-              <AvatarImage src={worker.user.avatar} alt={fullName} />
-            ) : null}
-            <AvatarFallback>
-              {initials || <UserIcon className="size-4" />}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
-                <span>{fullName}</span>
-                {title ? (
-                  <span className="font-normal text-muted-foreground">
-                    {" "}
-                    - {title}
-                  </span>
-                ) : null}
+        <div className="space-y-5">
+          {/* Tên + nút hành động */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight leading-tight">
+                {fullName}
               </h1>
+              {title ? (
+                <p className="text-base text-muted-foreground">{title}</p>
+              ) : null}
+            </div>
+            <div className="shrink-0 pt-0.5">
               {isOwnProfile ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="shrink-0 gap-1.5"
+                  className="gap-1.5"
                   onClick={() => router.push("/worker/setup")}
                 >
                   <Pencil className="size-3.5" />
+                  <span>Chỉnh sửa</span>
                 </Button>
               ) : onToggleFavorite ? (
                 <button
@@ -204,66 +184,71 @@ export function WorkerProfileHeader({
               ) : null}
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={
-                  i < Math.round(ratingAverage)
-                    ? "size-4 fill-amber-400 text-amber-400"
-                    : "size-4 text-muted-foreground/40"
-                }
-              />
-            ))}
-          </div>
-          <span>({ratingCount} đánh giá)</span>
-          <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
-            <ShieldCheck className="size-3.5" />
-            Điểm uy tín {reputationScore}/100
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          {profile?.gender ? (
-            <span className="inline-flex items-center gap-1 text-foreground">
-              <GenderIcon gender={profile.gender} />
-              {GENDER_LABEL[profile.gender]}
+          {/* Rating + uy tín */}
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={
+                    i < Math.round(ratingAverage)
+                      ? "size-4 fill-amber-400 text-amber-400"
+                      : "size-4 text-muted-foreground/30"
+                  }
+                />
+              ))}
+            </div>
+            <span className="text-muted-foreground">
+              {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
             </span>
-          ) : null}
-          {profile?.experience ? (
-            <span className="inline-flex items-center gap-1 text-foreground">
-              <Trophy className="size-3.5 text-amber-500" />
-              {EXPERIENCE_LABEL[profile.experience]}
+            <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+              <ShieldCheck className="size-3.5" />
+              Uy tín {reputationScore}/100
             </span>
+          </div>
+
+          {/* Giới tính + kinh nghiệm */}
+          {(profile?.gender || profile?.experience) ? (
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              {profile.gender ? (
+                <span className="inline-flex items-center gap-1.5 text-foreground">
+                  <GenderIcon gender={profile.gender} />
+                  {GENDER_LABEL[profile.gender]}
+                </span>
+              ) : null}
+              {profile.experience ? (
+                <span className="inline-flex items-center gap-1.5 text-foreground">
+                  <Trophy className="size-3.5 text-amber-500" />
+                  {EXPERIENCE_LABEL[profile.experience]}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* Sở thích */}
+          {profile?.hobbies && profile.hobbies.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {profile.hobbies.map((hobby, i) => (
+                <Badge
+                  key={`${hobby}-${i}`}
+                  variant="secondary"
+                  className="rounded-full font-normal"
+                >
+                  {hobby}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Giới thiệu bản thân */}
+          {profile?.introduction ? (
+            <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+              {profile.introduction}
+            </p>
           ) : null}
         </div>
-
-        {profile?.hobbies && profile.hobbies.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {profile.hobbies.map((hobby, i) => (
-              <Badge
-                key={`${hobby}-${i}`}
-                className={cn(
-                  HOBBY_COLORS[i % HOBBY_COLORS.length],
-                  "border-0",
-                )}
-              >
-                {hobby}
-              </Badge>
-            ))}
-          </div>
-        ) : null}
-
-        {profile?.introduction ? (
-          <p className="text-sm leading-relaxed whitespace-pre-line text-rose-500 dark:text-rose-400">
-            {profile.introduction}
-          </p>
-        ) : null}
       </div>
-    </div>
     </div>
   )
 }
