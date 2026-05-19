@@ -1,10 +1,9 @@
-// Cookie name used by both Next.js middleware and Express (req.cookies?.token)
 export const TOKEN_COOKIE_NAME = "token"
 export const ACTIVE_ROLE_COOKIE_NAME = "active_role"
 
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
-/** Sets the httpOnly session cookie via the server-side Route Handler. */
+
 export async function setSessionCookie(token: string): Promise<void> {
   await fetch("/api/auth/session", {
     method: "POST",
@@ -13,7 +12,6 @@ export async function setSessionCookie(token: string): Promise<void> {
   })
 }
 
-/** Clears the httpOnly session cookie via the server-side Route Handler. */
 export async function clearSessionCookie(): Promise<void> {
   await fetch("/api/auth/session", { method: "DELETE" })
 }

@@ -9,11 +9,26 @@ import {
   ReportTargetType,
   RestrictionFeature,
 } from "../../constants/moderation";
+import { POST_MESSAGES } from "../../constants/messages";
 import type { ReportQuery, RestrictionQuery } from "../../types/moderation";
 import { AppError } from "../../utils/AppError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ErrorCode } from "../../types/common/error.types";
 import { PaginationHelper } from "../../utils";
+import { logger } from "../../utils/logger";
+import { notificationEventService } from "../notification/notification-events.service";
+
+const WORKER_REPORT_RESOLUTION_DEFER_MS = 60_000;
+
+const extractAuthorId = (authorId: unknown): string => {
+  if (!authorId) return "";
+  if (authorId instanceof Types.ObjectId) return authorId.toString();
+  if (typeof authorId === "object" && authorId !== null && "_id" in authorId) {
+    const id = (authorId as { _id: Types.ObjectId | string })._id;
+    return id instanceof Types.ObjectId ? id.toString() : String(id);
+  }
+  return String(authorId);
+};
 
 export class ModerationService {
   async blockUser(
@@ -152,6 +167,10 @@ export class ModerationService {
     );
   }
 
+  async listMyReports(reporterId: string, query: ReportQuery) {
+    return this.listReports({ ...query, reporter_id: reporterId });
+  }
+
   async updateReportStatus(input: {
     reportId: string;
     status: ReportStatus;
@@ -160,7 +179,76 @@ export class ModerationService {
   }) {
     const report = await moderationRepository.updateReportStatus(input);
     if (!report) throw AppError.notFound(MODERATION_MESSAGES.REPORT_NOT_FOUND);
+
+    if (
+      input.status === ReportStatus.RESOLVED &&
+      report.target_type === ReportTargetType.WORKER
+    ) {
+      const notifyAt = new Date(
+        Date.now() + WORKER_REPORT_RESOLUTION_DEFER_MS
+      );
+      try {
+        await moderationRepository.setPendingResolutionNotify(
+          String(report._id),
+          notifyAt
+        );
+      } catch (error) {
+        logger.error("Failed to set pending resolution notify", error);
+      }
+    }
+
     return report;
+  }
+
+  async dispatchPendingWorkerResolutions(now = new Date()): Promise<number> {
+    const due = await moderationRepository.findDueResolutionNotifications(now);
+    let dispatched = 0;
+    for (const candidate of due) {
+      const claimed = await moderationRepository.claimPendingResolutionNotify(
+        String(candidate._id)
+      );
+      if (!claimed) continue;
+      if (claimed.worker_activity_restriction_id) {
+        continue;
+      }
+
+      const workerId = extractAuthorId(
+        claimed.target_user_id ?? claimed.worker_id
+      );
+      if (!workerId) continue;
+
+      const restriction = await moderationRepository.findActiveRestriction(
+        workerId,
+        RestrictionFeature.WORKER_ACTIVITY
+      );
+
+      try {
+        await notificationEventService.workerReportResolved({
+          workerId,
+          reportId: String(claimed._id),
+          reportReason: claimed.reason,
+          reportDescription: claimed.description,
+          adminNote: claimed.admin_note ?? null,
+          restriction: restriction
+            ? {
+                feature: RestrictionFeature.WORKER_ACTIVITY,
+                endsAt: restriction.ends_at ?? null,
+                reason: restriction.reason,
+              }
+            : null,
+          adminId: claimed.resolved_by
+            ? extractAuthorId(claimed.resolved_by)
+            : "",
+        });
+        dispatched += 1;
+      } catch (error) {
+        logger.error(
+          "Failed to dispatch deferred worker resolution notification",
+          error
+        );
+      }
+    }
+    return dispatched;
   }
 
   async createRestriction(input: {
@@ -180,12 +268,90 @@ export class ModerationService {
         input.feature,
         restriction._id as Types.ObjectId
       );
+      if (input.feature === RestrictionFeature.WORKER_ACTIVITY) {
+        await moderationRepository.clearPendingResolutionNotify(input.reportId);
+      }
     }
+
+    try {
+      await notificationEventService.userRestrictionApplied({
+        userId: input.userId,
+        feature: input.feature,
+        reason: input.reason,
+        endsAt: input.endsAt ?? null,
+        reportId: input.reportId ?? null,
+        adminId: input.adminId,
+        restrictionId: String(restriction._id),
+      });
+    } catch (error) {
+      logger.error("Failed to notify user restriction applied", error);
+    }
+
     return restriction;
   }
 
   async recordPostDeletedAction(reportId: string) {
     await moderationRepository.markReportPostDeleted(reportId);
+  }
+
+  async deletePostByAdmin(input: {
+    postId: string;
+    reportId?: string | null;
+    adminId: string;
+  }) {
+    const post = await postRepository.findActiveByIdLean(input.postId);
+    if (!post) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+
+    const authorId = extractAuthorId(post.author_id);
+    const postBody = post.body || "";
+
+    const deleted = await postRepository.softDeleteAsAdmin(input.postId);
+    if (!deleted) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+
+    let report = null;
+    if (input.reportId) {
+      await this.recordPostDeletedAction(input.reportId);
+      report = await moderationRepository.findReportById(input.reportId);
+    }
+
+    if (!authorId) return;
+
+    const restriction = await moderationRepository.findActiveRestriction(
+      authorId,
+      RestrictionFeature.POST_CREATE
+    );
+
+    try {
+      await notificationEventService.postDeletedByAdmin({
+        authorId,
+        postId: input.postId,
+        postBodyPreview: postBody,
+        reportReason: report?.reason ?? null,
+        reportDescription: report?.description ?? null,
+        adminNote: report?.admin_note ?? null,
+        restriction: restriction
+          ? {
+              feature: RestrictionFeature.POST_CREATE,
+              endsAt: restriction.ends_at ?? null,
+            }
+          : null,
+        adminId: input.adminId,
+      });
+    } catch (error) {
+      logger.error("Failed to notify post deleted by admin", error);
+    }
   }
 
   async listRestrictions(query: RestrictionQuery) {

@@ -42,6 +42,13 @@ router.post(
 );
 
 router.get(
+  "/reports/mine",
+  asyncHandler<AuthRequest>(
+    moderationController.listMyReports.bind(moderationController)
+  )
+);
+
+router.get(
   "/reports/post/:post_id/open",
   validateObjectId("post_id"),
   asyncHandler<AuthRequest>(

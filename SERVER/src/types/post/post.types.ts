@@ -10,6 +10,7 @@ export interface IPost {
   comments_locked: boolean;
   created_at: Date;
   updated_at: Date;
+  deleted: boolean;
   deleted_at: Date | null;
 }
 

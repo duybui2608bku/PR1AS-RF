@@ -19,13 +19,13 @@ export function useBlockUser() {
   return useMutation({
     mutationFn: moderationService.blockUser,
     onSuccess: () => {
-      toast.success("Da chan nguoi dung.")
+      toast.success("Đã chặn người dùng.")
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all })
     },
-    onError: (error) => toast.error(getErrorMessage(error, "Khong the chan.")),
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể chặn.")),
   })
 }
 
@@ -34,13 +34,13 @@ export function useUnblockUser() {
   return useMutation({
     mutationFn: moderationService.unblockUser,
     onSuccess: () => {
-      toast.success("Da bo chan nguoi dung.")
+      toast.success("Đã bỏ chặn người dùng.")
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.all })
     },
-    onError: (error) => toast.error(getErrorMessage(error, "Khong the bo chan.")),
+    onError: (error) => toast.error(getErrorMessage(error, "Không thể bỏ chặn.")),
   })
 }
 
@@ -57,7 +57,7 @@ export function useReportPost() {
       queryClient.invalidateQueries({ queryKey: queryKeys.moderation.all })
     },
     onError: (error) =>
-      toast.error(getErrorMessage(error, "Không thể gửi báo cáo.")),
+      toast.error(getErrorMessage(error, "Không thể gửi báo cáo bài viết.")),
   })
 }
 
@@ -98,6 +98,15 @@ export function useAdminReports(params: Parameters<typeof moderationService.list
   return useQuery({
     queryKey: queryKeys.moderation.reports(params),
     queryFn: () => moderationService.listReports(params),
+  })
+}
+
+export function useMyReports(
+  params: Parameters<typeof moderationService.listMyReports>[0]
+) {
+  return useQuery({
+    queryKey: queryKeys.moderation.myReports(params),
+    queryFn: () => moderationService.listMyReports(params),
   })
 }
 

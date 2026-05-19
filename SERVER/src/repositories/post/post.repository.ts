@@ -21,6 +21,7 @@ export class PostRepository {
       visibility: input.visibility ?? PostVisibility.PUBLIC,
       created_at: new Date(),
       updated_at: new Date(),
+      deleted: false,
       deleted_at: null,
     });
     return post.save();
@@ -28,7 +29,7 @@ export class PostRepository {
 
   async findActiveById(id: string): Promise<IPostDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return Post.findOne({ _id: id, deleted_at: null }).populate(
+    return Post.findOne({ _id: id, deleted_at: null, deleted: { $ne: true } }).populate(
       "author_id",
       AUTHOR_PUBLIC_FIELDS
     );
@@ -36,7 +37,7 @@ export class PostRepository {
 
   async findActiveByIdLean(id: string): Promise<IPostDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return Post.findOne({ _id: id, deleted_at: null })
+    return Post.findOne({ _id: id, deleted_at: null, deleted: { $ne: true } })
       .populate("author_id", AUTHOR_PUBLIC_FIELDS)
       .lean<IPostDocument>();
   }
@@ -64,7 +65,10 @@ export class PostRepository {
       excludedAuthorIds,
     } = params;
 
-    const filter: Record<string, unknown> = { deleted_at: null };
+    const filter: Record<string, unknown> = {
+      deleted_at: null,
+      deleted: { $ne: true },
+    };
     if (excludedAuthorIds?.length) {
       filter.author_id = {
         $nin: excludedAuthorIds
@@ -119,7 +123,7 @@ export class PostRepository {
     updateData: Partial<Pick<IPostDocument, "body" | "visibility">>
   ): Promise<IPostDocument | null> {
     return Post.findOneAndUpdate(
-      { _id: id, deleted_at: null },
+      { _id: id, deleted_at: null, deleted: { $ne: true } },
       { ...updateData, updated_at: new Date() },
       { new: true }
     ).populate("author_id", AUTHOR_PUBLIC_FIELDS);
@@ -127,8 +131,8 @@ export class PostRepository {
 
   async softDelete(id: string): Promise<IPostDocument | null> {
     return Post.findOneAndUpdate(
-      { _id: id, deleted_at: null },
-      { deleted_at: new Date(), updated_at: new Date() },
+      { _id: id, deleted_at: null, deleted: { $ne: true } },
+      { deleted: true, deleted_at: new Date(), updated_at: new Date() },
       { new: true }
     );
   }
@@ -138,6 +142,7 @@ export class PostRepository {
     return Post.countDocuments({
       author_id: new Types.ObjectId(authorId),
       deleted_at: null,
+      deleted: { $ne: true },
     });
   }
 
@@ -150,6 +155,7 @@ export class PostRepository {
     return Post.countDocuments({
       author_id: new Types.ObjectId(authorId),
       deleted_at: null,
+      deleted: { $ne: true },
       created_at: { $gte: startDate, $lt: endDate },
     });
   }
@@ -164,7 +170,7 @@ export class PostRepository {
   ): Promise<void> {
     const id = typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Post.updateOne(
-      { _id: id, deleted_at: null },
+      { _id: id, deleted_at: null, deleted: { $ne: true } },
       { $inc: { comments_count: delta } }
     );
   }
@@ -175,7 +181,7 @@ export class PostRepository {
   ): Promise<void> {
     const id = typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Post.updateOne(
-      { _id: id, deleted_at: null },
+      { _id: id, deleted_at: null, deleted: { $ne: true } },
       { $inc: { reactions_count: delta } }
     );
   }
@@ -186,7 +192,7 @@ export class PostRepository {
   ): Promise<IPostDocument | null> {
     if (!Types.ObjectId.isValid(postId)) return null;
     return Post.findOneAndUpdate(
-      { _id: postId, deleted_at: null },
+      { _id: postId, deleted_at: null, deleted: { $ne: true } },
       { comments_locked: locked, updated_at: new Date() },
       { new: true }
     ).populate("author_id", AUTHOR_PUBLIC_FIELDS);

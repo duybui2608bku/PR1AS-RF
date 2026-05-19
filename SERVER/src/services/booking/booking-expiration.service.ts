@@ -4,6 +4,7 @@ import { notificationEventService } from "../notification";
 import { reputationService } from "../reputation/reputation.service";
 import { reputationConfigService } from "../reputation/reputation-config.service";
 import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 import { logger } from "../../utils/logger";
 import type { IBookingDocument } from "../../types/booking";
 
@@ -88,7 +89,13 @@ export class BookingExpirationService {
       const workerId = expiredBooking.worker_id.toString();
       void reputationConfigService
         .getValue(ReputationConfigKey.BOOKING_EXPIRY_DEDUCTION)
-        .then((points) => reputationService.deductPoints(workerId, points))
+        .then((points) =>
+          reputationService.deductPoints(
+            workerId,
+            points,
+            ReputationHistoryReason.BOOKING_EXPIRY
+          )
+        )
         .catch((err) => logger.error("Reputation deduction after booking expiry failed:", err));
     }
 

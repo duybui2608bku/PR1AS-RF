@@ -35,10 +35,11 @@ export class EmailNotificationAdapter implements NotificationDeliveryAdapter {
       };
     }
 
+    const htmlBody = escapeHtml(notification.body).replace(/\n/g, "<br>");
     await nodemailerUtils({
       email: recipient.email,
       subject: notification.title,
-      html: `<p>${escapeHtml(notification.body)}</p>`,
+      html: `<p>${htmlBody}</p>`,
     });
 
     return { status: NotificationDeliveryStatus.SENT };

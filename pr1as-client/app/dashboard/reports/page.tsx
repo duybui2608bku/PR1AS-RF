@@ -148,9 +148,14 @@ function getWorkerProfileSummary(value: unknown): string | null {
 
 function getPostPreview(value: unknown): string {
   if (!value || typeof value !== "object") return "-"
-  const post = value as { body?: string | null }
+  const post = value as {
+    body?: string | null
+    deleted?: boolean
+    deleted_at?: string | null
+  }
   const body = post.body ?? ""
-  return body.length > 80 ? `${body.slice(0, 80)}...` : body || "-"
+  const preview = body.length > 80 ? `${body.slice(0, 80)}...` : body || "-"
+  return post.deleted || post.deleted_at ? `${preview} (đã xóa)` : preview
 }
 
 function formatDateTime(value?: string | null): string {
@@ -203,6 +208,7 @@ type RestrictionDialogState = {
   userId: string
   feature: RestrictionFeature
   targetLabel: string
+  autoChained?: boolean
 }
 type RevokeDialogState = {
   restrictionId: string
@@ -611,16 +617,52 @@ export default function AdminReportsPage() {
 
   const confirmUpdateReportStatus = () => {
     if (!statusDialog) return
+    const dialog = statusDialog
     updateStatusMutation.mutate(
       {
-        id: statusDialog.id,
-        status: statusDialog.status,
+        id: dialog.id,
+        status: dialog.status,
         admin_note: adminNote.trim() || null,
       },
       {
         onSuccess: () => {
           setStatusDialog(null)
           setAdminNote("")
+
+          if (dialog.status !== "resolved") return
+
+          const report = reports.find((r) => (r.id ?? r._id) === dialog.id)
+          if (!report) return
+
+          const targetUserId = getObjectId(report.target_user_id)
+          if (!targetUserId) return
+          const targetLabel = getDisplayName(report.target_user_id)
+
+          const feature: RestrictionFeature | null =
+            report.target_type === "worker"
+              ? "worker_activity"
+              : report.target_type === "post"
+                ? "post_create"
+                : null
+          if (!feature) return
+
+          const ref = asRestrictionRef(
+            feature === "worker_activity"
+              ? report.worker_activity_restriction_id
+              : report.post_create_restriction_id
+          )
+          if (isRestrictionActive(ref)) return
+
+          setRestrictionReason("")
+          setBanDate(undefined)
+          setBanTime("23:59")
+          setRestrictionDialog({
+            reportId: dialog.id,
+            userId: targetUserId,
+            feature,
+            targetLabel,
+            autoChained: true,
+          })
         },
       }
     )
@@ -1171,6 +1213,11 @@ export default function AdminReportsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            {restrictionDialog?.autoChained ? (
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300">
+                Báo cáo vừa được đánh dấu đã xử lý. Chọn chế tài bên dưới, hoặc bấm Hủy nếu không cần áp dụng cấm.
+              </div>
+            ) : null}
             <div className="space-y-1.5">
               <Label htmlFor="restriction-reason">Lý do</Label>
               <Textarea

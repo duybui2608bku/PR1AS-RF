@@ -46,6 +46,11 @@ const postSchema = new Schema<IPostDocument>(
       type: Date,
       default: Date.now,
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     deleted_at: {
       type: Date,
       default: null,

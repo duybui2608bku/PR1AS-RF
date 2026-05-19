@@ -35,6 +35,7 @@ export interface IReport {
   worker_activity_restriction_id?: Types.ObjectId | null;
   resolved_by?: Types.ObjectId | null;
   resolved_at?: Date | null;
+  pending_resolution_notify_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -58,6 +59,7 @@ export interface IUserRestriction {
 export interface IUserRestrictionDocument extends IUserRestriction, Document {}
 
 export interface ReportQuery {
+  reporter_id?: string;
   target_type?: ReportTargetType;
   status?: ReportStatus;
   start_date?: Date;

@@ -44,6 +44,9 @@ export enum NotificationType {
   SECURITY_ALERT = "security.alert",
   SYSTEM_ANNOUNCEMENT = "system.announcement",
   REPUTATION_WARNING = "reputation.warning",
+  MODERATION_POST_DELETED = "moderation.post_deleted",
+  MODERATION_REPORT_RESOLVED = "moderation.report_resolved",
+  MODERATION_RESTRICTION_APPLIED = "moderation.restriction_applied",
 }
 
 export enum NotificationDeliveryStatus {

@@ -13,6 +13,7 @@ import { notificationEventService } from "../notification";
 import { reputationService } from "../reputation/reputation.service";
 import { reputationConfigService } from "../reputation/reputation-config.service";
 import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
 
@@ -148,7 +149,13 @@ export class BookingStatusService extends BookingBaseService {
       const workerId = updatedBooking.worker_id.toString();
       void reputationConfigService
         .getValue(ReputationConfigKey.WORKER_CANCEL_DEDUCTION)
-        .then((points) => reputationService.deductPoints(workerId, points))
+        .then((points) =>
+          reputationService.deductPoints(
+            workerId,
+            points,
+            ReputationHistoryReason.WORKER_CANCEL
+          )
+        )
         .catch((err) => logger.error("Reputation deduction after worker cancel failed:", err));
     }
 

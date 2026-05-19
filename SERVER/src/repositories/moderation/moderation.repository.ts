@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { UserBlock, Report, UserRestriction } from "../../models/moderation";
+import { postMediaRepository } from "../post/post-media.repository";
 import {
   ReportStatus,
   ReportTargetType,
@@ -120,6 +121,11 @@ export class ModerationRepository {
     }).save();
   }
 
+  async findReportById(reportId: string): Promise<IReportDocument | null> {
+    if (!Types.ObjectId.isValid(reportId)) return null;
+    return Report.findById(reportId).lean<IReportDocument>();
+  }
+
   async markReportPostDeleted(reportId: string): Promise<void> {
     await Report.findByIdAndUpdate(reportId, {
       post_deleted_at: new Date(),
@@ -140,6 +146,50 @@ export class ModerationRepository {
       [field]: restrictionId,
       updated_at: new Date(),
     });
+  }
+
+  async setPendingResolutionNotify(
+    reportId: string,
+    notifyAt: Date
+  ): Promise<void> {
+    await Report.findByIdAndUpdate(reportId, {
+      pending_resolution_notify_at: notifyAt,
+      updated_at: new Date(),
+    });
+  }
+
+  async clearPendingResolutionNotify(reportId: string): Promise<void> {
+    await Report.findByIdAndUpdate(reportId, {
+      pending_resolution_notify_at: null,
+      updated_at: new Date(),
+    });
+  }
+
+  async claimPendingResolutionNotify(
+    reportId: string
+  ): Promise<IReportDocument | null> {
+    return Report.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(reportId),
+        pending_resolution_notify_at: { $ne: null },
+      },
+      {
+        $set: { pending_resolution_notify_at: null, updated_at: new Date() },
+      },
+      { new: true }
+    ).lean<IReportDocument>();
+  }
+
+  async findDueResolutionNotifications(
+    now: Date,
+    limit = 50
+  ): Promise<IReportDocument[]> {
+    return Report.find({
+      pending_resolution_notify_at: { $ne: null, $lte: now },
+      target_type: ReportTargetType.WORKER,
+    })
+      .limit(limit)
+      .lean<IReportDocument[]>();
   }
 
   async clearReportRestriction(restrictionId: string): Promise<void> {
@@ -183,6 +233,9 @@ export class ModerationRepository {
     total: number;
   }> {
     const filter: Record<string, unknown> = {};
+    if (query.reporter_id && Types.ObjectId.isValid(query.reporter_id)) {
+      filter.reporter_id = new Types.ObjectId(query.reporter_id);
+    }
     if (query.target_type) filter.target_type = query.target_type;
     if (query.status) filter.status = query.status;
 
@@ -197,16 +250,38 @@ export class ModerationRepository {
       Report.find(filter)
         .populate("reporter_id", USER_PUBLIC_FIELDS)
         .populate("target_user_id", USER_PUBLIC_FIELDS)
-        .populate("post_id", "body deleted_at created_at")
+        .populate("post_id", "body deleted deleted_at created_at")
         .populate("post_create_restriction_id", "status ends_at starts_at")
         .populate("worker_activity_restriction_id", "status ends_at starts_at")
         .sort({ created_at: -1 })
         .skip(query.skip)
-        .limit(query.limit),
+        .limit(query.limit)
+        .lean(),
       Report.countDocuments(filter),
     ]);
 
-    return { reports, total };
+    const postIds = reports
+      .map((report) => {
+        const post = report.post_id as unknown;
+        if (!post || typeof post !== "object" || !("_id" in post)) return null;
+        return (post as { _id: Types.ObjectId })._id;
+      })
+      .filter((id): id is Types.ObjectId => Boolean(id));
+
+    if (postIds.length > 0) {
+      const mediaMap = await postMediaRepository.findByPostIds(postIds);
+      for (const report of reports) {
+        const post = report.post_id as unknown;
+        if (!post || typeof post !== "object" || !("_id" in post)) continue;
+        const postId = (post as { _id: Types.ObjectId })._id.toString();
+        report.post_id = ({
+          ...(post as Record<string, unknown>),
+          media: mediaMap.get(postId) ?? [],
+        } as unknown) as typeof report.post_id;
+      }
+    }
+
+    return { reports: reports as IReportDocument[], total };
   }
 
   async updateReportStatus(input: {

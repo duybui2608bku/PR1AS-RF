@@ -179,6 +179,21 @@ export const moderationService = {
     return response.data.data
   },
 
+  listMyReports: async (params: {
+    page?: number
+    limit?: number
+    target_type?: ReportTargetType
+    status?: ReportStatus
+    start_date?: string
+    end_date?: string
+  }) => {
+    const response = await api.get<ApiResponse<PaginatedResult<ModerationReport>>>(
+      "/moderation/reports/mine",
+      { params }
+    )
+    return response.data.data
+  },
+
   updateReportStatus: async (
     id: string,
     payload: { status: ReportStatus; admin_note?: string | null }

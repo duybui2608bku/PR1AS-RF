@@ -82,6 +82,7 @@ const reportSchema = new Schema<IReportDocument>(
       default: null,
     },
     resolved_at: { type: Date, default: null },
+    pending_resolution_notify_at: { type: Date, default: null, index: true },
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now },
   },

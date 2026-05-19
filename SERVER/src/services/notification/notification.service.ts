@@ -125,6 +125,21 @@ const NOTIFICATION_TYPE_CONFIG: Partial<
     priority: NotificationPriority.NORMAL,
     channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
   },
+  [NotificationType.MODERATION_POST_DELETED]: {
+    category: NotificationCategory.ADMIN,
+    priority: NotificationPriority.HIGH,
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+  },
+  [NotificationType.MODERATION_REPORT_RESOLVED]: {
+    category: NotificationCategory.ADMIN,
+    priority: NotificationPriority.HIGH,
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+  },
+  [NotificationType.MODERATION_RESTRICTION_APPLIED]: {
+    category: NotificationCategory.ADMIN,
+    priority: NotificationPriority.HIGH,
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+  },
 };
 
 export class NotificationService {

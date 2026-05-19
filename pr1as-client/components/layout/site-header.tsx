@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  Settings,
   User,
   Wallet,
   type LucideIcon,
@@ -53,6 +54,7 @@ const USER_MENU_ITEMS: readonly UserMenuItem[] = [
     roles: ["client"],
   },
   { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
+  { routeKey: "settings", href: "/settings", label: "Cài đặt", icon: Settings },
   {
     routeKey: "schedule",
     href: "/worker/bookings/schedule",

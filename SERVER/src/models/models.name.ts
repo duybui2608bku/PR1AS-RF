@@ -29,4 +29,5 @@ export const modelsName = {
   REPORT: "reports",
   USER_RESTRICTION: "user_restrictions",
   REPUTATION_CONFIG: "reputation_configs",
+  REPUTATION_HISTORY: "reputation_histories",
 };

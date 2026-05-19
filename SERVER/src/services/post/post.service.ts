@@ -543,7 +543,6 @@ export class PostService {
     // Cascade cleanup — best-effort, logged on failure
     try {
       await Promise.all([
-        postMediaRepository.deleteByPostId(postId),
         hashtagService.clearPostHashtags(postId),
         commentRepository.softDeleteByPostId(postId),
         reactionRepository.deleteByTarget(ReactionTargetType.POST, postId),

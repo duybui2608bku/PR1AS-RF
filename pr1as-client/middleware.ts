@@ -5,7 +5,7 @@ import {
   TOKEN_COOKIE_NAME,
 } from "@/lib/auth/auth-cookie"
 
-const PROTECTED_PREFIXES = ["/client", "/chat", "/posts", "/dashboard"]
+const PROTECTED_PREFIXES = ["/client", "/chat", "/posts", "/dashboard", "/settings"]
 const AUTH_PAGES = ["/login", "/register"]
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -120,6 +120,7 @@ export const config = {
     "/chat/:path*",
     "/posts/:path*",
     "/dashboard/:path*",
+    "/settings/:path*",
     "/",
     "/login",
     "/register",

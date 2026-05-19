@@ -6,6 +6,7 @@ export type RoleRouteKey =
   | "pricing"
   | "profile"
   | "schedule"
+  | "settings"
   | "wallet"
 
 type RoleRoutes = Partial<Record<RoleRouteKey, string>>

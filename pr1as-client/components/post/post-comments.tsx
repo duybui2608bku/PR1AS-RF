@@ -43,7 +43,6 @@ import type { CommentPublic, CommentThreadItem } from "@/types"
 
 const COMMENT_MAX_LENGTH = 2000
 
-// Stored format for worker mentions: @[Display Name](userId)
 const BODY_TOKEN_RE = /(@\[[^\]]+\]\([^)]+\)|#[\p{L}\p{N}_]{1,50})/gu
 
 type ReplyTarget = {
@@ -86,7 +85,6 @@ function CommentAvatar({
   )
 }
 
-// Renders comment body parsing @[Name](userId) mentions and #hashtags as interactive chips.
 function CommentBodyRenderer({ body }: { body: string }) {
   const parts = body.split(BODY_TOKEN_RE)
   return (
@@ -143,7 +141,6 @@ function CommentForm({
   const handleSubmit = async () => {
     if (!canSubmit || createComment.isPending) return
 
-    // For worker replies, prepend @[Name](userId) so the chip is rendered on display
     const finalBody = replyAuthor?.hasWorkerProfile
       ? `@[${displayName}](${replyAuthor.id}) ${trimmed}`
       : trimmed
@@ -156,7 +153,6 @@ function CommentForm({
       setBody("")
       onSuccess?.()
     } catch {
-      // Error toast is handled by the mutation.
     }
   }
 
@@ -171,7 +167,6 @@ function CommentForm({
   return (
     <div className={cn("space-y-2", compact ? "rounded-lg bg-muted/40 p-2" : "")}>
       {replyAuthor ? (
-        // Chip + textarea in one unified input container
         <div
           className={cn(
             "flex flex-wrap items-start gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm",
@@ -294,7 +289,7 @@ function CommentItem({
       })
       setIsEditing(false)
     } catch {
-      // Error toast is handled by the mutation.
+
     }
   }
 
@@ -303,8 +298,7 @@ function CommentItem({
     try {
       await deleteComment.mutateAsync(comment.id)
       setDeleteOpen(false)
-    } catch {
-      // Error toast is handled by the mutation.
+    } catch { 
     }
   }
 

@@ -48,7 +48,7 @@ export default function BlockedUsersPage() {
         ) : blocks.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
             <Ban className="size-8" />
-            <p>Ban chua chan nguoi dung nao.</p>
+            <p>Bạn chưa chặn người dùng nào.</p>
           </div>
         ) : (
           blocks.map((block) => {
@@ -62,8 +62,8 @@ export default function BlockedUsersPage() {
                   <p className="truncate font-medium">{user.name}</p>
                   <p className="truncate text-sm text-muted-foreground">
                     {block.block_profile
-                      ? "Dang an profile va bai viet"
-                      : "Chi chan chat"}
+                      ? "Đang chặn profile và bài viết"
+                      : "Chỉ chặn chat"}
                   </p>
                 </div>
                 <Button
@@ -73,7 +73,7 @@ export default function BlockedUsersPage() {
                   disabled={unblockMutation.isPending}
                   onClick={() => unblockMutation.mutate(user.id)}
                 >
-                  Bo chan
+                  Bỏ chặn
                 </Button>
               </div>
             )

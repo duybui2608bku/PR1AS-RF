@@ -20,6 +20,7 @@ import { notificationEventService } from "../notification";
 import { reputationService } from "../reputation/reputation.service";
 import { reputationConfigService } from "../reputation/reputation-config.service";
 import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 import { logger } from "../../utils/logger";
 
 const getRefId = (value: unknown): string => {
@@ -115,7 +116,11 @@ export class ReviewService {
     ])
       .then(([threshold, points]) => {
         if (input.rating <= threshold) {
-          void reputationService.deductPoints(bookingWorkerId, points);
+          void reputationService.deductPoints(
+            bookingWorkerId,
+            points,
+            ReputationHistoryReason.LOW_REVIEW
+          );
         }
       })
       .catch((err) => logger.error("Reputation deduction after low review failed:", err));

@@ -1334,6 +1334,47 @@ export function ChatPage({
                   {isActiveDirectAdmin ? (
                     <AdminVerifiedBadge withLabel />
                   ) : null}
+                  {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
+                    <Button
+                      type="button"
+                      variant={selectedDirectBlocked ? "outline" : "ghost"}
+                      size="icon"
+                      className={cn(
+                        "size-7 shrink-0",
+                        selectedDirectBlocked &&
+                          "text-destructive hover:text-destructive"
+                      )}
+                      disabled={
+                        blockUserMutation.isPending ||
+                        unblockUserMutation.isPending
+                      }
+                      onClick={() => {
+                        if (selectedDirectBlocked) {
+                          void handleUnblockUser()
+                          return
+                        }
+
+                        setBlockDialogOpen(true)
+                      }}
+                      aria-label={
+                        selectedDirectBlocked
+                          ? "Bỏ chặn tin nhắn"
+                          : "Chặn tin nhắn"
+                      }
+                      title={
+                        selectedDirectBlocked
+                          ? "Bỏ chặn tin nhắn"
+                          : "Chặn tin nhắn"
+                      }
+                    >
+                      {blockUserMutation.isPending ||
+                      unblockUserMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Ban className="size-4" />
+                      )}
+                    </Button>
+                  ) : null}
                 </h2>
                 <p className="truncate text-xs text-muted-foreground">
                   {activeSubtitle}
@@ -1389,39 +1430,6 @@ export function ChatPage({
           </div>
 
           <form onSubmit={handleSubmit} className="border-t p-3">
-            {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
-              <div className="mb-2 flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 text-sm">
-                <span className="min-w-0 truncate">
-                  {selectedDirectBlocked
-                    ? "Ban da chan nguoi nay."
-                    : selectedDirectBlockedMe
-                      ? "Nguoi nay dang chan ban."
-                      : "Quan ly an toan cho cuoc tro chuyen nay."}
-                </span>
-                {selectedDirectBlocked ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={unblockUserMutation.isPending}
-                    onClick={() => void handleUnblockUser()}
-                  >
-                    <Ban className="size-4" />
-                    Bo chan
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setBlockDialogOpen(true)}
-                  >
-                    <Ban className="size-4" />
-                    Chan
-                  </Button>
-                )}
-              </div>
-            ) : null}
             {replyTarget ? (
               <div className="mb-2 flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <Reply className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1553,9 +1561,9 @@ export function ChatPage({
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chan nguoi dung nay?</DialogTitle>
+            <DialogTitle>Chặn người dùng này?</DialogTitle>
             <DialogDescription>
-              Ban se khong the gui hoac nhan tin nhan truc tiep voi nguoi nay.
+              Bạn sẽ không thể gửi hoặc nhận tin nhắn trực tiếp với người này.
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-start gap-3 rounded-md border p-3">
@@ -1565,7 +1573,7 @@ export function ChatPage({
               onCheckedChange={(value) => setBlockProfile(Boolean(value))}
             />
             <Label htmlFor="block-profile" className="text-sm leading-5">
-              Chan luon profile va bai viet cua nguoi nay
+              Chặn luôn profile và bài viết của người này
             </Label>
           </div>
           <DialogFooter>
@@ -1575,7 +1583,7 @@ export function ChatPage({
               onClick={() => setBlockDialogOpen(false)}
               disabled={blockUserMutation.isPending}
             >
-              Huy
+              Hủy
             </Button>
             <Button
               type="button"
@@ -1586,7 +1594,7 @@ export function ChatPage({
               {blockUserMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Chan
+              Chặn
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1624,7 +1632,7 @@ function ConversationList({
     return (
       <div className="flex min-h-64 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
         <Inbox className="size-9" />
-        <p>Chưa có cuộc trò chuyện</p>
+        <p>Bạn chưa có cuộc trò chuyện</p>
       </div>
     )
   }

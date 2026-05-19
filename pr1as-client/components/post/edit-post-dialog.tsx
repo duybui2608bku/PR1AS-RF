@@ -33,7 +33,6 @@ export function EditPostDialog({ post, onClose }: Props) {
       await updateMutation.mutateAsync({ body: body.trim(), visibility })
       onClose()
     } catch {
-      // Error toast is handled by the mutation.
     }
   }
 

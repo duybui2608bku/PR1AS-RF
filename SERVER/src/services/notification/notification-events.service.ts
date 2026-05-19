@@ -10,9 +10,45 @@ import {
   NotificationPriority,
   NotificationType,
 } from "../../constants/notification";
+import {
+  ReportReason,
+  RestrictionFeature,
+} from "../../constants/moderation";
 import type { IBookingDocument } from "../../types/booking";
 import type { IReviewDocument } from "../../types/review";
 import { notificationService } from "./notification.service";
+
+const REPORT_REASON_LABELS_VI: Record<ReportReason, string> = {
+  [ReportReason.SCAM]: "Lừa đảo",
+  [ReportReason.LOW_QUALITY]: "Chất lượng thấp",
+  [ReportReason.HARASSMENT]: "Quấy rối",
+  [ReportReason.FAKE_PROFILE]: "Hồ sơ giả mạo",
+  [ReportReason.OTHER]: "Khác",
+};
+
+const RESTRICTION_FEATURE_LABELS_VI: Record<RestrictionFeature, string> = {
+  [RestrictionFeature.POST_CREATE]: "đăng bài",
+  [RestrictionFeature.WORKER_ACTIVITY]: "hoạt động worker",
+};
+
+const formatDateTimeVI = (date: Date): string =>
+  new Intl.DateTimeFormat("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(date);
+
+const buildRestrictionDescription = (
+  feature: RestrictionFeature,
+  endsAt: Date | null | undefined
+): string => {
+  const label = RESTRICTION_FEATURE_LABELS_VI[feature];
+  if (!endsAt) return `Bạn đang bị cấm ${label} vĩnh viễn.`;
+  return `Bạn đang bị cấm ${label} đến ${formatDateTimeVI(new Date(endsAt))}.`;
+};
+
+const truncate = (value: string, max: number): string =>
+  value.length > max ? `${value.slice(0, max)}…` : value;
 
 const toId = (value: unknown): string => {
   if (value && typeof value === "object" && "_id" in value) {
@@ -426,6 +462,168 @@ export class NotificationEventService {
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.HIGH,
       dedupe_key: `reputation-warning:${userId}:${newScore}`,
+    });
+  }
+
+  async postDeletedByAdmin(input: {
+    authorId: string;
+    postId: string;
+    postBodyPreview: string;
+    reportReason?: ReportReason | null;
+    reportDescription?: string | null;
+    adminNote?: string | null;
+    restriction?: {
+      feature: RestrictionFeature;
+      endsAt: Date | null;
+    } | null;
+    adminId: string;
+  }): Promise<void> {
+    const reasonLabel = input.reportReason
+      ? REPORT_REASON_LABELS_VI[input.reportReason]
+      : null;
+    const lines = [
+      "Một bài viết của bạn đã bị admin xóa do vi phạm quy định cộng đồng.",
+      `Trích đoạn bài viết: "${truncate(input.postBodyPreview || "", 160)}"`,
+    ];
+    if (reasonLabel) lines.push(`Lý do báo cáo: ${reasonLabel}`);
+    if (input.reportDescription) {
+      lines.push(`Mô tả báo cáo: ${truncate(input.reportDescription, 280)}`);
+    }
+    if (input.adminNote) {
+      lines.push(`Ghi chú admin: ${truncate(input.adminNote, 280)}`);
+    }
+    if (input.restriction) {
+      lines.push(
+        buildRestrictionDescription(
+          input.restriction.feature,
+          input.restriction.endsAt
+        )
+      );
+    } else {
+      lines.push("Hiện chưa áp dụng lệnh cấm đăng bài đối với tài khoản của bạn.");
+    }
+
+    await notificationService.notify({
+      recipient_ids: [input.authorId],
+      actor_id: input.adminId,
+      type: NotificationType.MODERATION_POST_DELETED,
+      category: NotificationCategory.ADMIN,
+      title: "Bài viết của bạn đã bị admin xóa",
+      body: lines.join("\n"),
+      data: {
+        post_id: input.postId,
+        report_reason: input.reportReason ?? null,
+        restriction_feature: input.restriction?.feature ?? null,
+        restriction_ends_at: input.restriction?.endsAt
+          ? input.restriction.endsAt.toISOString()
+          : null,
+      },
+      link: "/posts",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `moderation-post-deleted:${input.postId}`,
+    });
+  }
+
+  async workerReportResolved(input: {
+    workerId: string;
+    reportId: string;
+    reportReason: ReportReason;
+    reportDescription: string;
+    adminNote?: string | null;
+    restriction?: {
+      feature: RestrictionFeature;
+      endsAt: Date | null;
+      reason: string;
+    } | null;
+    adminId: string;
+  }): Promise<void> {
+    const reasonLabel = REPORT_REASON_LABELS_VI[input.reportReason];
+    const lines = [
+      "Báo cáo liên quan đến bạn đã được admin xem xét xong.",
+      `Lý do báo cáo: ${reasonLabel}`,
+      `Mô tả báo cáo: ${truncate(input.reportDescription, 280)}`,
+    ];
+    if (input.adminNote) {
+      lines.push(`Ghi chú admin: ${truncate(input.adminNote, 280)}`);
+    }
+    if (input.restriction) {
+      lines.push(
+        `Kết luận: ${buildRestrictionDescription(input.restriction.feature, input.restriction.endsAt)}`
+      );
+      if (input.restriction.reason) {
+        lines.push(`Lý do cấm: ${truncate(input.restriction.reason, 280)}`);
+      }
+    } else {
+      lines.push(
+        "Kết luận: Không có dấu hiệu vi phạm. Tài khoản của bạn không bị áp dụng chế tài."
+      );
+    }
+
+    await notificationService.notify({
+      recipient_ids: [input.workerId],
+      actor_id: input.adminId,
+      type: NotificationType.MODERATION_REPORT_RESOLVED,
+      category: NotificationCategory.ADMIN,
+      title: input.restriction
+        ? "Báo cáo về bạn đã xử lý — áp dụng chế tài"
+        : "Báo cáo về bạn đã xử lý — không vi phạm",
+      body: lines.join("\n"),
+      data: {
+        report_id: input.reportId,
+        report_reason: input.reportReason,
+        restriction_feature: input.restriction?.feature ?? null,
+        restriction_ends_at: input.restriction?.endsAt
+          ? input.restriction.endsAt.toISOString()
+          : null,
+      },
+      link: "/worker/bookings",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `moderation-report-resolved:${input.reportId}`,
+    });
+  }
+
+  async userRestrictionApplied(input: {
+    userId: string;
+    feature: RestrictionFeature;
+    reason: string;
+    endsAt: Date | null;
+    reportId?: string | null;
+    adminId: string;
+    restrictionId: string;
+  }): Promise<void> {
+    const lines = [
+      buildRestrictionDescription(input.feature, input.endsAt),
+      `Lý do: ${truncate(input.reason || "Vi phạm chính sách cộng đồng", 280)}`,
+    ];
+    if (input.reportId) {
+      lines.push(
+        "Lệnh cấm này được áp dụng sau khi admin xử lý báo cáo liên quan."
+      );
+    }
+    const featureLabel = RESTRICTION_FEATURE_LABELS_VI[input.feature];
+
+    await notificationService.notify({
+      recipient_ids: [input.userId],
+      actor_id: input.adminId,
+      type: NotificationType.MODERATION_RESTRICTION_APPLIED,
+      category: NotificationCategory.ADMIN,
+      title: `Bạn đã bị cấm ${featureLabel}`,
+      body: lines.join("\n"),
+      data: {
+        restriction_id: input.restrictionId,
+        feature: input.feature,
+        ends_at: input.endsAt ? input.endsAt.toISOString() : null,
+        report_id: input.reportId ?? null,
+      },
+      link:
+        input.feature === RestrictionFeature.WORKER_ACTIVITY
+          ? "/worker/bookings"
+          : "/posts",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `moderation-restriction-applied:${input.restrictionId}`,
     });
   }
 

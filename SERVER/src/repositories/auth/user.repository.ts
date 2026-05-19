@@ -252,6 +252,16 @@ export class UserRepository {
     return result.modifiedCount;
   }
 
+  async findReputationRecoveryCandidates(): Promise<
+    Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
+  > {
+    return User.find({ "meta_data.reputation_score": { $lt: 100 } })
+      .select("_id meta_data.reputation_score")
+      .lean() as Promise<
+      Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
+    >;
+  }
+
   async findFirstAdmin(): Promise<IUserDocument | null> {
     return User.findOne({ roles: UserRole.ADMIN, status: UserStatus.ACTIVE })
       .select("_id full_name email avatar roles")

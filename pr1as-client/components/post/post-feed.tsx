@@ -83,7 +83,6 @@ export function PostFeed({ params = {} }: Props) {
         </ErrorBoundary>
       ))}
 
-      {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} />
 
       {isFetchingNextPage ? (

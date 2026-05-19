@@ -1,6 +1,5 @@
 import { Response } from "express";
 import { moderationService } from "../../services/moderation";
-import { postService } from "../../services/post";
 import {
   blockUserSchema,
   createRestrictionSchema,
@@ -92,6 +91,17 @@ export class ModerationController {
     R.success(res, reports, MODERATION_MESSAGES.REPORTS_FETCHED, req);
   }
 
+  async listMyReports(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const query = validateWithSchema(
+      reportQuerySchema,
+      req.query,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const reports = await moderationService.listMyReports(userId, query);
+    R.success(res, reports, MODERATION_MESSAGES.REPORTS_FETCHED, req);
+  }
+
   async updateReportStatus(req: AuthRequest, res: Response): Promise<void> {
     const adminId = extractUserIdFromRequest(req);
     const input = validateWithSchema(
@@ -146,11 +156,15 @@ export class ModerationController {
   }
 
   async deletePostAsAdmin(req: AuthRequest, res: Response): Promise<void> {
-    await postService.softDeletePostAsAdmin(req.params.id);
+    const adminId = extractUserIdFromRequest(req);
     const reportId =
       (req.body?.report_id as string | undefined) ||
       (req.query?.report_id as string | undefined);
-    if (reportId) await moderationService.recordPostDeletedAction(reportId);
+    await moderationService.deletePostByAdmin({
+      postId: req.params.id,
+      reportId: reportId ?? null,
+      adminId,
+    });
     R.success(res, null, COMMON_MESSAGES.DELETED, req);
   }
 }

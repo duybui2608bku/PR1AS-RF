@@ -374,7 +374,6 @@ export function PostCard({ post }: Props) {
       await deleteMutation.mutateAsync(post.id)
       setDeleteOpen(false)
     } catch {
-      // Error toast is handled by the mutation.
     }
   }
 
@@ -415,7 +414,6 @@ export function PostCard({ post }: Props) {
 
   return (
     <article className="rounded-xl border bg-card p-4 shadow-sm">
-      {/* Header */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           {workerHref ? (
@@ -549,19 +547,16 @@ export function PostCard({ post }: Props) {
         ) : null}
       </div>
 
-      {/* Body */}
       <div className="mb-3">
         <PostBodyWithHashtags body={post.body} />
       </div>
 
-      {/* Media */}
       {post.media.length > 0 ? (
         <div className="mb-3">
           <PostMedia media={post.media} />
         </div>
       ) : null}
-
-      {/* Hashtags */}
+  
       {post.hashtags.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {post.hashtags.map((tag) => (

@@ -121,8 +121,6 @@ export function CreatePostForm() {
             maxLength={MAX_BODY}
             className="resize-none border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
           />
-
-          {/* Image Previews */}
           {previews.length > 0 ? (
             <div className={`grid gap-2 ${previews.length >= 3 ? "grid-cols-3" : previews.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
               {previews.map((p, i) => (
@@ -140,7 +138,6 @@ export function CreatePostForm() {
             </div>
           ) : null}
 
-          {/* Actions */}
           <div className="flex items-center justify-between border-t pt-2">
             <div className="flex items-center gap-2">
               <Button
@@ -189,7 +186,7 @@ export function CreatePostForm() {
               ) : null}
               <Button size="sm" onClick={handleSubmit} disabled={!canSubmit}>
                 {isPending ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-                {uploading ? "Đang tải ảnh..." : "Đăng bài"}
+                {uploading ? "Đang tải ảnh..." : "Đăng bài viết"}
               </Button>
             </div>
           </div>
