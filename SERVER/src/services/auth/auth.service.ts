@@ -79,6 +79,14 @@ export class AuthService {
       );
     }
 
+    if (!user.password_hash) {
+      throw new AppError(
+        AUTH_MESSAGES.INVALID_CREDENTIALS,
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_CREDENTIALS
+      );
+    }
+
     const isPasswordValid = await comparePassword(
       input.password,
       user.password_hash
@@ -333,6 +341,65 @@ export class AuthService {
 
     return {
       message: AUTH_MESSAGES.EMAIL_VERIFICATION_SENT,
+    };
+  }
+
+  async loginWithGoogle(accessToken: string): Promise<AuthResponse> {
+    let googleUser: { sub: string; email: string; name?: string; picture?: string };
+
+    try {
+      const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error("userinfo fetch failed");
+      googleUser = await res.json() as { sub: string; email: string; name?: string; picture?: string };
+    } catch {
+      throw new AppError(
+        "Google token không hợp lệ",
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    if (!googleUser.sub || !googleUser.email) {
+      throw new AppError(
+        "Google token không hợp lệ",
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+
+    let user = await userRepository.findByGoogleId(googleUser.sub);
+
+    if (!user) {
+      const existingByEmail = await userRepository.findByEmail(googleUser.email);
+      if (existingByEmail) {
+        await userRepository.linkGoogleId(existingByEmail._id.toString(), googleUser.sub);
+        user = existingByEmail;
+      } else {
+        user = await userRepository.createGoogleUser({
+          email: googleUser.email,
+          google_id: googleUser.sub,
+          full_name: googleUser.name,
+          avatar: googleUser.picture,
+        });
+      }
+    }
+
+    if (user.status === UserStatus.BANNED) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_BANNED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_BANNED
+      );
+    }
+
+    const { token, refreshToken } = await generateAuthTokens(user);
+
+    return {
+      user: toPublicUser(user),
+      token,
+      refreshToken,
     };
   }
 }

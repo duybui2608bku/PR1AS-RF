@@ -58,6 +58,7 @@ export const config = {
   jwtExpire: process.env.JWT_EXPIRE || "15m",
   jwtRefreshSecret,
   jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || "7d",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   mongodbUri: process.env.MONGODB_URI || "mongodb://localhost:27017",
   dbName: process.env.DB_NAME || "db_name",
   rateLimit: {

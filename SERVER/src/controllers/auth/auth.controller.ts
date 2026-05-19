@@ -119,6 +119,15 @@ export class AuthController {
     const result = await authService.resendVerificationEmail(data.email);
     R.success(res, result, result.message, req);
   }
+
+  async googleLogin(req: Request, res: Response): Promise<void> {
+    const { access_token } = req.body;
+    if (!access_token || typeof access_token !== "string") {
+      throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
+    }
+    const result = await authService.loginWithGoogle(access_token);
+    R.success(res, result, undefined, req);
+  }
 }
 
 export const authController = new AuthController();
