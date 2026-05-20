@@ -23,6 +23,7 @@ import {
   walletRepository,
 } from "../../repositories/wallet";
 import { TransactionStatus, TransactionType } from "../../constants/wallet";
+import mongoose from "mongoose";
 
 interface CreatePricingPlanInput {
   package_code: PricingPlanCode;
@@ -207,74 +208,78 @@ class PricingService {
     }
 
     const amount = targetPackage.price * payload.duration_months;
-    const currentBalance = await walletRepository.calculateUserBalance(userId);
-    if (currentBalance < amount) {
-      throw AppError.badRequest(PRICING_MESSAGES.PRICING_INSUFFICIENT_BALANCE);
-    }
-
     const startedAt = new Date();
     const expiresAt = this.addMonths(startedAt, payload.duration_months);
 
-    const previousPricing = {
-      pricing_plan_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
-      pricing_started_at: user.meta_data?.pricing_started_at ?? null,
-      pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
-    };
-
-    const paymentTransaction = await walletRepository.create({
-      user_id: userId,
-      type: TransactionType.PAYMENT,
-      amount,
-      status: TransactionStatus.SUCCESS,
-      description: `Upgrade plan to ${payload.target_plan_code} (${payload.duration_months} month(s))`,
-    });
-    await walletBalanceRepository.createOrUpdate(
-      userId,
-      currentBalance - amount
-    );
-
-    let userPricingUpdated = false;
+    // Run the four state changes (debit wallet balance, write payment record,
+    // update pricing fields, write subscription history) inside a single
+    // MongoDB session/transaction. Either all succeed or all roll back — we
+    // never persist a half-applied upgrade. The atomicDeduct conditional
+    // update also closes the race condition where two concurrent upgrades
+    // could both see a sufficient balance before either committed.
+    const session = await mongoose.startSession();
     try {
-      const updatedUser = await userRepository.updatePricingInfo(userId, {
-        pricing_plan_code: payload.target_plan_code,
-        pricing_started_at: startedAt,
-        pricing_expires_at: expiresAt,
-      });
+      await session.withTransaction(async () => {
+        const deducted = await walletBalanceRepository.atomicDeduct(
+          userId,
+          amount,
+          session
+        );
+        if (!deducted) {
+          throw AppError.badRequest(
+            PRICING_MESSAGES.PRICING_INSUFFICIENT_BALANCE
+          );
+        }
 
-      if (!updatedUser) {
-        throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
-      }
-      userPricingUpdated = true;
+        const paymentTransaction = await walletRepository.create(
+          {
+            user_id: userId,
+            type: TransactionType.PAYMENT,
+            amount,
+            status: TransactionStatus.SUCCESS,
+            description: `Upgrade plan to ${payload.target_plan_code} (${payload.duration_months} month(s))`,
+          },
+          session
+        );
 
-      await UserSubscriptionHistory.create({
-        user_id: userId,
-        from_plan_code: currentPlanCode,
-        to_plan_code: payload.target_plan_code,
-        event_type: SubscriptionEventType.UPGRADE,
-        status: SubscriptionEventStatus.SUCCESS,
-        source: SubscriptionSource.WALLET,
-        amount,
-        started_at: startedAt,
-        expires_at: expiresAt,
-        idempotency_key: payload.idempotency_key || null,
-        metadata: {
-          duration_months: payload.duration_months,
-          wallet_transaction_id: paymentTransaction._id.toString(),
-        },
+        const updatedUser = await userRepository.updatePricingInfo(
+          userId,
+          {
+            pricing_plan_code: payload.target_plan_code,
+            pricing_started_at: startedAt,
+            pricing_expires_at: expiresAt,
+          },
+          session
+        );
+
+        if (!updatedUser) {
+          throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
+        }
+
+        await UserSubscriptionHistory.create(
+          [
+            {
+              user_id: userId,
+              from_plan_code: currentPlanCode,
+              to_plan_code: payload.target_plan_code,
+              event_type: SubscriptionEventType.UPGRADE,
+              status: SubscriptionEventStatus.SUCCESS,
+              source: SubscriptionSource.WALLET,
+              amount,
+              started_at: startedAt,
+              expires_at: expiresAt,
+              idempotency_key: payload.idempotency_key || null,
+              metadata: {
+                duration_months: payload.duration_months,
+                wallet_transaction_id: paymentTransaction._id.toString(),
+              },
+            },
+          ],
+          { session }
+        );
       });
-    } catch (error) {
-      if (userPricingUpdated) {
-        await userRepository.updatePricingInfo(userId, previousPricing);
-      }
-      await walletRepository.create({
-        user_id: userId,
-        type: TransactionType.REFUND,
-        amount,
-        status: TransactionStatus.SUCCESS,
-        description: `Refund for failed pricing upgrade to ${payload.target_plan_code}`,
-      });
-      await walletBalanceRepository.createOrUpdate(userId, currentBalance);
-      throw error;
+    } finally {
+      await session.endSession();
     }
 
     return this.getMyPricing(userId);

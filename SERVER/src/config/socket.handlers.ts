@@ -2,14 +2,18 @@ import { ExtendedError, Socket } from "socket.io";
 import { verifyToken, JWTPayload } from "../utils/jwt";
 import { logger } from "../utils/logger";
 import { chatRepository, groupChatRepository } from "../repositories/chat";
+import { userRepository } from "../repositories/auth/user.repository";
+import { bookingRepository } from "../repositories/booking/booking.repository";
 import { getSocketIO } from "./socket";
 import { AUTH_MESSAGES, CHAT_MESSAGES } from "../constants/messages";
 import { SOCKET_EVENTS } from "../constants/socket";
 import {
+  getOtherUserId,
   getConversationRoom,
   getGroupConversationRoom,
   getUserRoom,
 } from "../utils/chat.helper";
+import { UserRole } from "../types/auth/user.types";
 
 const userSockets = new Map<string, Set<string>>();
 
@@ -82,7 +86,36 @@ const verifyConversationAccess = async (
     conversationId,
     userId
   );
-  return !!conversation;
+  if (!conversation) return false;
+
+  const currentUser = await userRepository.findById(userId);
+  if (!currentUser) return false;
+  if (currentUser.roles?.includes(UserRole.ADMIN)) return true;
+
+  const otherUserId = getOtherUserId(
+    conversation.sender_id.toString(),
+    conversation.receiver_id.toString(),
+    userId
+  );
+  const otherUser = await userRepository.findById(otherUserId);
+  if (!otherUser) return false;
+  if (otherUser.roles?.includes(UserRole.ADMIN)) return true;
+
+  if (currentUser.last_active_role === UserRole.CLIENT) {
+    return (
+      otherUser.roles.includes(UserRole.WORKER) &&
+      (await bookingRepository.hasConfirmedBookingForPair(userId, otherUserId))
+    );
+  }
+
+  if (currentUser.last_active_role === UserRole.WORKER) {
+    return (
+      otherUser.roles.includes(UserRole.CLIENT) &&
+      (await bookingRepository.hasConfirmedBookingForPair(otherUserId, userId))
+    );
+  }
+
+  return false;
 };
 
 const verifyGroupConversationAccess = async (
@@ -104,6 +137,25 @@ export const setupChatHandlers = (socket: Socket): void => {
   registerUserSocket(userId, socket.id);
   socket.join(getUserRoom(userId));
   socket.emit("connected", { user_id: userId });
+
+  // Re-verify the access token on every inbound packet. The JWT carries an
+  // `exp` claim (seconds). If the token expired mid-session we must stop
+  // honouring events from this socket — otherwise a user can keep chatting
+  // long after logout / password change. The check is O(1) and runs locally.
+  socket.use((_packet, next) => {
+    const currentUser = socket.data.user as JWTPayload | undefined;
+    if (!currentUser || typeof currentUser.exp !== "number") {
+      socket.emit("error", { message: AUTH_MESSAGES.TOKEN_INVALID });
+      socket.disconnect(true);
+      return next(new Error(AUTH_MESSAGES.TOKEN_INVALID));
+    }
+    if (Date.now() >= currentUser.exp * 1000) {
+      socket.emit("error", { message: AUTH_MESSAGES.TOKEN_EXPIRED });
+      socket.disconnect(true);
+      return next(new Error(AUTH_MESSAGES.TOKEN_EXPIRED));
+    }
+    return next();
+  });
 
   socket.on("join_conversation", async (data: { conversation_id: string }) => {
     try {
@@ -165,6 +217,25 @@ export const setupChatHandlers = (socket: Socket): void => {
     async (data: { message_ids?: string[]; conversation_id?: string }) => {
       try {
         const { message_ids, conversation_id } = data;
+        let verifiedConversationId = conversation_id;
+
+        if (!verifiedConversationId && message_ids && message_ids.length > 0) {
+          const [message] = await chatRepository.getMessagesByIds([
+            message_ids[0],
+          ]);
+          verifiedConversationId = message?.conversation_id;
+        }
+
+        if (
+          verifiedConversationId &&
+          !(await verifyConversationAccess(verifiedConversationId, userId))
+        ) {
+          socket.emit("error", {
+            message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+          });
+          return;
+        }
+
         const updatedCount = await chatRepository.markMessagesAsRead(
           userId,
           message_ids,
@@ -178,12 +249,10 @@ export const setupChatHandlers = (socket: Socket): void => {
             read_by: userId,
             read_at: new Date(),
           };
+          // Emit a single canonical event to avoid double-handling on the
+          // client. Listeners should subscribe to SOCKET_EVENTS.MESSAGE_READ.
           io.to(getConversationRoom(conversation_id)).emit(
             SOCKET_EVENTS.MESSAGE_READ,
-            payload
-          );
-          io.to(getConversationRoom(conversation_id)).emit(
-            "messages_read",
             payload
           );
         }
@@ -322,10 +391,6 @@ export const setupChatHandlers = (socket: Socket): void => {
           };
           io.to(getGroupConversationRoom(conversation_group_id)).emit(
             SOCKET_EVENTS.MESSAGE_READ,
-            payload
-          );
-          io.to(getGroupConversationRoom(conversation_group_id)).emit(
-            "group_messages_read",
             payload
           );
         }

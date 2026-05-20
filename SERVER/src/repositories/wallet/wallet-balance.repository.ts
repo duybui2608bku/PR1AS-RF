@@ -1,5 +1,6 @@
 import { Wallet } from "../../models/wallet";
 import { IWalletDocument } from "../../types/wallet";
+import { ClientSession } from "mongoose";
 
 export class WalletBalanceRepository {
   async findByUserId(userId: string): Promise<IWalletDocument | null> {
@@ -8,7 +9,8 @@ export class WalletBalanceRepository {
 
   async createOrUpdate(
     userId: string,
-    balance: number
+    balance: number,
+    session?: ClientSession
   ): Promise<IWalletDocument> {
     return Wallet.findOneAndUpdate(
       { user_id: userId },
@@ -17,7 +19,7 @@ export class WalletBalanceRepository {
         balance: Math.max(0, balance),
         updated_at: new Date(),
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, session }
     );
   }
 
@@ -32,6 +34,44 @@ export class WalletBalanceRepository {
         updated_at: new Date(),
       },
       { new: true }
+    );
+  }
+
+  /**
+   * Atomically decrement balance only if it is greater than or equal to amount.
+   * Returns null if insufficient balance — caller must treat as a failure.
+   */
+  async atomicDeduct(
+    userId: string,
+    amount: number,
+    session?: ClientSession
+  ): Promise<IWalletDocument | null> {
+    return Wallet.findOneAndUpdate(
+      { user_id: userId, balance: { $gte: amount } },
+      {
+        $inc: { balance: -amount },
+        $set: { updated_at: new Date() },
+      },
+      { new: true, session }
+    );
+  }
+
+  /**
+   * Atomically increment balance (upserts the wallet doc if missing).
+   */
+  async atomicCredit(
+    userId: string,
+    amount: number,
+    session?: ClientSession
+  ): Promise<IWalletDocument> {
+    return Wallet.findOneAndUpdate(
+      { user_id: userId },
+      {
+        $inc: { balance: amount },
+        $set: { updated_at: new Date() },
+        $setOnInsert: { user_id: userId },
+      },
+      { upsert: true, new: true, session }
     );
   }
 

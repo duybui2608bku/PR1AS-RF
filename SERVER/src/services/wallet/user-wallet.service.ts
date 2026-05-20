@@ -156,11 +156,6 @@ export class UserWalletService {
     }
 
     if (transaction.status === TransactionStatus.SUCCESS) {
-      await walletRepository.applySePayWebhook(
-        transaction._id.toString(),
-        TransactionStatus.SUCCESS,
-        webhook
-      );
       return {
         success: true,
         status: "already_processed",
@@ -199,15 +194,69 @@ export class UserWalletService {
       };
     }
 
-    await walletRepository.applySePayWebhook(
-      transaction._id.toString(),
-      TransactionStatus.SUCCESS,
-      webhook
-    );
-
+    // Idempotent finalize: atomic CAS from non-SUCCESS → SUCCESS in a single
+    // session, then credit the wallet balance atomically. If two webhook
+    // retries race, only one of them wins finalizeSePayDepositIfPending and
+    // only that one credits the balance. The partial unique index on
+    // sepay_transaction_id provides a defence-in-depth against any duplicate
+    // attempts to set the same SePay id on a different transaction record.
     const userId = String(transaction.user_id);
-    const currentBalance = await walletRepository.calculateUserBalance(userId);
-    await walletBalanceRepository.createOrUpdate(userId, currentBalance);
+    const session = await mongoose.startSession();
+    let creditedBalance: number | null = null;
+    try {
+      await session.withTransaction(async () => {
+        const finalized = await walletRepository.finalizeSePayDepositIfPending(
+          transaction._id.toString(),
+          webhook,
+          session
+        );
+
+        if (!finalized) {
+          // Another concurrent webhook call already transitioned to SUCCESS.
+          return;
+        }
+
+        const updatedWallet = await walletBalanceRepository.atomicCredit(
+          userId,
+          transaction.amount,
+          session
+        );
+        creditedBalance = updatedWallet.balance;
+      });
+    } catch (error) {
+      // Duplicate key on sepay_transaction_id_unique = another retry won.
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        (error as { code?: number }).code === 11000
+      ) {
+        logger.info("SePay webhook duplicate key — already processed", {
+          sepay_transaction_id: webhook.id,
+        });
+        return {
+          success: true,
+          status: "already_processed",
+          payment_code: paymentCode,
+          transaction_id: transaction._id.toString(),
+          message: "SePay transaction was already processed (duplicate).",
+        };
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+
+    if (creditedBalance === null) {
+      // Lost the race — re-read balance for response.
+      const wallet = await walletBalanceRepository.findByUserId(userId);
+      return {
+        success: true,
+        status: "already_processed",
+        payment_code: paymentCode,
+        transaction_id: transaction._id.toString(),
+        balance: wallet?.balance ?? 0,
+      };
+    }
 
     void notificationEventService
       .walletEvent({
@@ -218,7 +267,7 @@ export class UserWalletService {
         data: {
           transaction_id: transaction._id.toString(),
           amount: transaction.amount,
-          balance: currentBalance,
+          balance: creditedBalance,
         },
         dedupeKey: `wallet-deposit-success:${transaction._id.toString()}`,
       })
@@ -231,7 +280,7 @@ export class UserWalletService {
       status: "processed",
       payment_code: paymentCode,
       transaction_id: transaction._id.toString(),
-      balance: currentBalance,
+      balance: creditedBalance,
     };
   }
 
@@ -352,26 +401,47 @@ export class UserWalletService {
     bookingId: string,
     description?: string
   ): Promise<string> {
-    const currentBalance = await walletRepository.calculateUserBalance(userId);
-
-    if (currentBalance < amount) {
-      throw AppError.badRequest(WALLET_MESSAGES.INSUFFICIENT_BALANCE, []);
+    if (amount <= 0) {
+      throw AppError.badRequest(WALLET_MESSAGES.INVALID_AMOUNT, []);
     }
 
     const transactionDescription =
       description ||
       `${TRANSACTION_DESCRIPTIONS.HOLD_BALANCE_PREFIX} ${bookingId}`;
 
-    const transaction = await walletRepository.create({
-      user_id: userId,
-      type: TransactionType.PAYMENT,
-      amount,
-      status: TransactionStatus.SUCCESS,
-      description: transactionDescription,
-    });
+    const session = await mongoose.startSession();
+    let transactionId = "";
+    let updatedBalance = 0;
+    try {
+      await session.withTransaction(async () => {
+        const updatedWallet = await walletBalanceRepository.atomicDeduct(
+          userId,
+          amount,
+          session
+        );
 
-    const updatedBalance = currentBalance - amount;
-    await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+        if (!updatedWallet) {
+          throw AppError.badRequest(WALLET_MESSAGES.INSUFFICIENT_BALANCE, []);
+        }
+
+        updatedBalance = updatedWallet.balance;
+
+        const transaction = await walletRepository.create(
+          {
+            user_id: userId,
+            type: TransactionType.PAYMENT,
+            amount,
+            status: TransactionStatus.SUCCESS,
+            description: transactionDescription,
+          },
+          session
+        );
+
+        transactionId = transaction._id.toString();
+      });
+    } finally {
+      await session.endSession();
+    }
 
     void notificationEventService
       .walletEvent({
@@ -380,13 +450,13 @@ export class UserWalletService {
         title: "Tạm giữ số dư",
         body: `Số tiền ${amount} đã được tạm giữ cho booking của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
-        dedupeKey: `wallet-hold:${bookingId}:${transaction._id.toString()}`,
+        dedupeKey: `wallet-hold:${bookingId}:${transactionId}`,
       })
       .catch((error) =>
         logger.error("Wallet hold notification failed:", error)
       );
 
-    return transaction._id.toString();
+    return transactionId;
   }
 
   async refundBalanceToClient(
@@ -395,21 +465,41 @@ export class UserWalletService {
     bookingId: string,
     description?: string
   ): Promise<string> {
+    if (amount <= 0) {
+      throw AppError.badRequest(WALLET_MESSAGES.INVALID_AMOUNT, []);
+    }
+
     const transactionDescription =
       description ||
       `${TRANSACTION_DESCRIPTIONS.REFUND_PREFIX} ${bookingId}`;
 
-    const transaction = await walletRepository.create({
-      user_id: userId,
-      type: TransactionType.REFUND,
-      amount,
-      status: TransactionStatus.SUCCESS,
-      description: transactionDescription,
-    });
+    const session = await mongoose.startSession();
+    let transactionId = "";
+    let updatedBalance = 0;
+    try {
+      await session.withTransaction(async () => {
+        const transaction = await walletRepository.create(
+          {
+            user_id: userId,
+            type: TransactionType.REFUND,
+            amount,
+            status: TransactionStatus.SUCCESS,
+            description: transactionDescription,
+          },
+          session
+        );
+        transactionId = transaction._id.toString();
 
-    const currentBalance = await walletRepository.calculateUserBalance(userId);
-    const updatedBalance = currentBalance + amount;
-    await walletBalanceRepository.createOrUpdate(userId, updatedBalance);
+        const updatedWallet = await walletBalanceRepository.atomicCredit(
+          userId,
+          amount,
+          session
+        );
+        updatedBalance = updatedWallet.balance;
+      });
+    } finally {
+      await session.endSession();
+    }
 
     void notificationEventService
       .walletEvent({
@@ -418,13 +508,13 @@ export class UserWalletService {
         title: "Hoàn tiền",
         body: `Số tiền hoàn ${amount} đã được cộng vào ví của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
-        dedupeKey: `wallet-refund:${bookingId}:${transaction._id.toString()}`,
+        dedupeKey: `wallet-refund:${bookingId}:${transactionId}`,
       })
       .catch((error) =>
         logger.error("Wallet refund notification failed:", error)
       );
 
-    return transaction._id.toString();
+    return transactionId;
   }
 
   async releasePayoutToWorker(
@@ -433,22 +523,41 @@ export class UserWalletService {
     bookingId: string,
     description?: string
   ): Promise<string> {
+    if (amount <= 0) {
+      throw AppError.badRequest(WALLET_MESSAGES.INVALID_AMOUNT, []);
+    }
+
     const transactionDescription =
       description ||
       `${TRANSACTION_DESCRIPTIONS.PAYOUT_PREFIX} ${bookingId}`;
 
-    const transaction = await walletRepository.create({
-      user_id: workerId,
-      type: TransactionType.PAYOUT,
-      amount,
-      status: TransactionStatus.SUCCESS,
-      description: transactionDescription,
-    });
+    const session = await mongoose.startSession();
+    let transactionId = "";
+    let updatedBalance = 0;
+    try {
+      await session.withTransaction(async () => {
+        const transaction = await walletRepository.create(
+          {
+            user_id: workerId,
+            type: TransactionType.PAYOUT,
+            amount,
+            status: TransactionStatus.SUCCESS,
+            description: transactionDescription,
+          },
+          session
+        );
+        transactionId = transaction._id.toString();
 
-    const currentBalance =
-      await walletRepository.calculateUserBalance(workerId);
-    const updatedBalance = currentBalance + amount;
-    await walletBalanceRepository.createOrUpdate(workerId, updatedBalance);
+        const updatedWallet = await walletBalanceRepository.atomicCredit(
+          workerId,
+          amount,
+          session
+        );
+        updatedBalance = updatedWallet.balance;
+      });
+    } finally {
+      await session.endSession();
+    }
 
     void notificationEventService
       .walletEvent({
@@ -457,12 +566,12 @@ export class UserWalletService {
         title: "Thanh toán hoa hồng",
         body: `Số tiền ${amount} đã được cộng vào ví của bạn.`,
         data: { booking_id: bookingId, amount, balance: updatedBalance },
-        dedupeKey: `wallet-payout:${bookingId}:${transaction._id.toString()}`,
+        dedupeKey: `wallet-payout:${bookingId}:${transactionId}`,
       })
       .catch((error) =>
         logger.error("Wallet payout notification failed:", error)
       );
 
-    return transaction._id.toString();
+    return transactionId;
   }
 }

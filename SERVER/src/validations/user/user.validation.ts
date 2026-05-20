@@ -105,8 +105,16 @@ export const updateBasicProfileSchema = z
         VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
         AUTH_MESSAGES.PASSWORD_MIN_LENGTH
       )
+      .max(
+        VALIDATION_LIMITS.PASSWORD_MAX_LENGTH,
+        AUTH_MESSAGES.PASSWORD_MAX_LENGTH
+      )
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+        AUTH_MESSAGES.PASSWORD_COMPLEXITY
+      )
       .optional(),
-    old_password: z.string().optional(),
+    old_password: z.string().min(1).optional(),
     avatar: z
       .union([z.string().url("Avatar must be a valid URL"), z.null()])
       .optional(),
@@ -147,6 +155,18 @@ export const updateBasicProfileSchema = z
     {
       message: "Old password is required when changing password",
       path: ["old_password"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.password && data.old_password) {
+        return data.password !== data.old_password;
+      }
+      return true;
+    },
+    {
+      message: "New password must be different from the old password",
+      path: ["password"],
     }
   )
   .refine(

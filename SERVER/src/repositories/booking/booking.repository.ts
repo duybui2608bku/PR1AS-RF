@@ -38,6 +38,31 @@ export class BookingRepository {
     }).then(Boolean);
   }
 
+  async hasConfirmedBookingForPair(
+    clientId: string,
+    workerId: string
+  ): Promise<boolean> {
+    return Booking.exists({
+      client_id: new Types.ObjectId(clientId),
+      worker_id: new Types.ObjectId(workerId),
+      confirmed_at: { $ne: null },
+    }).then(Boolean);
+  }
+
+  async getConfirmedChatPeerIdsForRole(
+    userId: string,
+    role: "client" | "worker"
+  ): Promise<string[]> {
+    const field = role === "client" ? "worker_id" : "client_id";
+    const filter =
+      role === "client"
+        ? { client_id: new Types.ObjectId(userId), confirmed_at: { $ne: null } }
+        : { worker_id: new Types.ObjectId(userId), confirmed_at: { $ne: null } };
+
+    const peerIds = await Booking.distinct(field, filter);
+    return peerIds.map((id) => id.toString());
+  }
+
   private buildFilter(query: BookingQuery): Record<string, unknown> {
     const filter: Record<string, unknown> = {};
 

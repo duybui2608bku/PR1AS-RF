@@ -168,7 +168,8 @@ export class UserRepository {
       pricing_plan_code: PricingPlanCode;
       pricing_started_at: Date | null;
       pricing_expires_at: Date | null;
-    }
+    },
+    session?: import("mongoose").ClientSession
   ): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(
       id,
@@ -177,7 +178,7 @@ export class UserRepository {
         "meta_data.pricing_started_at": pricing.pricing_started_at,
         "meta_data.pricing_expires_at": pricing.pricing_expires_at,
       },
-      { new: true }
+      { new: true, session }
     );
   }
 

@@ -8,7 +8,6 @@ export const modelsName = {
   MESSAGE_GROUP: "messages_group",
   WALLET_TRANSACTION: "wallet_transactions",
   WALLET: "wallets",
-  ESCROW: "escrows",
   BOOKING: "bookings",
   REVIEW: "reviews",
   NOTIFICATION: "notifications",

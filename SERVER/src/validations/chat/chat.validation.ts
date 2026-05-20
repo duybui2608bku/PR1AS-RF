@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Types } from "mongoose";
 import { MessageType } from "../../types/chat/message.type";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 
@@ -27,6 +28,12 @@ export const getMessagesSchema = z.object({
     .max(VALIDATION_LIMITS.PAGINATION_MAX_LIMIT)
     .optional()
     .default(VALIDATION_LIMITS.PAGINATION_DEFAULT_LIMIT),
+  before_id: z
+    .string()
+    .refine((val) => Types.ObjectId.isValid(val), {
+      message: "Invalid cursor",
+    })
+    .optional(),
 });
 
 export const getConversationsSchema = z.object({

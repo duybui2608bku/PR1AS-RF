@@ -33,8 +33,11 @@ export class HashtagService {
     return hashtags;
   }
 
-  async clearPostHashtags(postId: string | Types.ObjectId): Promise<void> {
-    await hashtagRepository.deleteByPostId(postId);
+  async clearPostHashtags(
+    postId: string | Types.ObjectId,
+    session?: import("mongoose").ClientSession
+  ): Promise<void> {
+    await hashtagRepository.deleteByPostId(postId, session);
   }
 
   async getTrending(params: {

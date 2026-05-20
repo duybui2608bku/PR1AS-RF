@@ -8,10 +8,14 @@ import {
 import { getActiveRole } from "@/lib/auth/roles"
 
 const LEGACY_AUTH_TOKEN_KEY = "auth_token"
+const LEGACY_AUTH_STORAGE_KEY = "auth-storage"
 
 const removeLegacyAuthToken = () => {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY)
+    // Migrate users with the previous localStorage-persisted store off it —
+    // localStorage exposure outlives the tab and is XSS-prone.
+    window.localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY)
   }
 }
 
@@ -47,22 +51,31 @@ type AuthState = {
   user: AuthUser | null
   token: string | null
   isAuthenticated: boolean
+  /** Set while a logout-on-401 is in flight to avoid multiple cascading logouts. */
+  isLoggingOut: boolean
   setAuth: (payload: { user: AuthUser; token: string }) => void
   /** Updates user info without touching the token (e.g. after role switch or profile update). */
   setUser: (user: AuthUser) => void
   clearAuth: () => void
+  setLoggingOut: (value: boolean) => void
 }
 
+// Auth state is persisted to sessionStorage (cleared when the tab closes)
+// instead of localStorage. This narrows the XSS exposure window and prevents
+// other tabs / future browser sessions from inheriting a stolen access token.
+// Cross-tab login persistence is intentionally not supported here — users
+// who reopen the browser are expected to log in again.
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
       token: null,
       isAuthenticated: false,
+      isLoggingOut: false,
       setAuth: ({ user, token }) => {
         removeLegacyAuthToken()
         setActiveRoleCookie(getActiveRole(user))
-        set({ user, token, isAuthenticated: true })
+        set({ user, token, isAuthenticated: true, isLoggingOut: false })
       },
       setUser: (user) => {
         setActiveRoleCookie(getActiveRole(user))
@@ -71,12 +84,20 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => {
         removeLegacyAuthToken()
         clearActiveRoleCookie()
-        set({ user: null, token: null, isAuthenticated: false })
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoggingOut: false,
+        })
       },
+      setLoggingOut: (value) => set({ isLoggingOut: value }),
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? window.sessionStorage : (undefined as unknown as Storage)
+      ),
       partialize: (state) => ({
         user: state.user,
         token: state.token,

@@ -351,6 +351,7 @@ export function PostCard({ post }: Props) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState<ReportReason>("scam")
   const [reportDescription, setReportDescription] = useState("")
@@ -360,7 +361,7 @@ export function PostCard({ post }: Props) {
   const canManagePost = isOwner && !isWorkerRoleActive(user)
   const openPostReportQuery = useOpenPostReport(
     post.id,
-    isAuthenticated && !canManagePost
+    menuOpen && isAuthenticated && !canManagePost
   )
   const hasOpenPostReport = Boolean(openPostReportQuery.data)
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
@@ -455,7 +456,7 @@ export function PostCard({ post }: Props) {
 
         {isAuthenticated ? (
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -504,9 +505,10 @@ export function PostCard({ post }: Props) {
                   </>
                 ) : (
                   <DropdownMenuItem
-                    disabled={hasOpenPostReport}
+                    disabled={openPostReportQuery.isFetching || hasOpenPostReport}
                     onSelect={(event) => {
                       event.preventDefault()
+                      if (openPostReportQuery.isFetching) return
                       if (hasOpenPostReport) return
                       setReportOpen(true)
                     }}

@@ -156,7 +156,14 @@ const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
 walletTransactionSchema.index({ user_id: 1, created_at: -1 });
 walletTransactionSchema.index({ gateway_transaction_id: 1 });
 walletTransactionSchema.index({ payment_code: 1 });
-walletTransactionSchema.index({ sepay_transaction_id: 1 });
+walletTransactionSchema.index(
+  { sepay_transaction_id: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { sepay_transaction_id: { $type: "number" } },
+    name: "sepay_transaction_id_unique",
+  }
+);
 walletTransactionSchema.index({ sepay_reference_code: 1 });
 walletTransactionSchema.index({ status: 1, type: 1 });
 

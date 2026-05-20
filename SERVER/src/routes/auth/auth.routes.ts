@@ -7,6 +7,8 @@ import {
   authLimiter,
   refreshTokenLimiter,
   emailActionLimiter,
+  tokenActionLimiter,
+  tokenAttemptLimiter,
 } from "../../middleware/rateLimiter";
 import { csrfProtection } from "../../middleware/csrf";
 
@@ -78,12 +80,16 @@ router.post(
 
 router.post(
   "/reset-password",
+  tokenActionLimiter,
+  tokenAttemptLimiter,
   ...csrfProtection,
   asyncHandler(authController.resetPassword.bind(authController))
 );
 
 router.post(
   "/verify-email",
+  tokenActionLimiter,
+  tokenAttemptLimiter,
   ...csrfProtection,
   asyncHandler(authController.verifyEmail.bind(authController))
 );

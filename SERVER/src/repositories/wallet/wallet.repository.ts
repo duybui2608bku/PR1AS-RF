@@ -13,7 +13,7 @@ import {
   SePayTransferType,
 } from "../../constants/wallet";
 import { modelsName } from "../../models/models.name";
-import mongoose from "mongoose";
+import mongoose, { ClientSession } from "mongoose";
 
 export interface CreateTransactionInput {
   user_id: string;
@@ -53,7 +53,8 @@ export interface FindTransactionsResult {
 
 export class WalletRepository {
   async create(
-    data: CreateTransactionInput
+    data: CreateTransactionInput,
+    session?: ClientSession
   ): Promise<IWalletTransactionDocument> {
     const transaction = new WalletTransaction({
       ...data,
@@ -61,7 +62,7 @@ export class WalletRepository {
       updated_at: new Date(),
     });
 
-    return transaction.save();
+    return transaction.save({ session });
   }
 
   async findById(
@@ -138,7 +139,8 @@ export class WalletRepository {
   async applySePayWebhook(
     transactionId: string,
     status: TransactionStatus,
-    webhook: SePayTransactionUpdateInput
+    webhook: SePayTransactionUpdateInput,
+    session?: ClientSession
   ): Promise<IWalletTransactionDocument | null> {
     return WalletTransaction.findByIdAndUpdate(
       transactionId,
@@ -160,7 +162,46 @@ export class WalletRepository {
         sepay_description: webhook.description,
         updated_at: new Date(),
       },
-      { new: true }
+      { new: true, session }
+    );
+  }
+
+  /**
+   * Atomically transition a transaction from a non-SUCCESS state to SUCCESS,
+   * keyed on the SePay transaction id (idempotency key). Combined with the
+   * partial unique index on `sepay_transaction_id`, this prevents a webhook
+   * retry from being processed twice — concurrent callers either both observe
+   * SUCCESS (no-op) or one observes SUCCESS and the other observes null.
+   */
+  async finalizeSePayDepositIfPending(
+    transactionId: string,
+    webhook: SePayTransactionUpdateInput,
+    session?: ClientSession
+  ): Promise<IWalletTransactionDocument | null> {
+    return WalletTransaction.findOneAndUpdate(
+      {
+        _id: new mongoose.Types.ObjectId(transactionId),
+        status: { $ne: TransactionStatus.SUCCESS },
+      },
+      {
+        status: TransactionStatus.SUCCESS,
+        gateway_transaction_id: String(webhook.id),
+        gateway_response: webhook,
+        sepay_transaction_id: webhook.id,
+        sepay_gateway: webhook.gateway,
+        sepay_transaction_date: new Date(webhook.transactionDate),
+        sepay_account_number: webhook.accountNumber,
+        sepay_code: webhook.code,
+        sepay_content: webhook.content,
+        sepay_transfer_type: webhook.transferType,
+        sepay_transfer_amount: webhook.transferAmount,
+        sepay_accumulated: webhook.accumulated,
+        sepay_sub_account: webhook.subAccount,
+        sepay_reference_code: webhook.referenceCode,
+        sepay_description: webhook.description,
+        updated_at: new Date(),
+      },
+      { new: true, session }
     );
   }
 
@@ -182,12 +223,11 @@ export class WalletRepository {
       filter.status = status;
     }
 
-    if (start_date) {
-      filter.created_at = { $gte: new Date(start_date) } as { $gte: Date };
-    }
-
-    if (end_date) {
-      filter.created_at = { $lte: new Date(end_date) } as { $lte: Date };
+    if (start_date || end_date) {
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (start_date) dateFilter.$gte = new Date(start_date);
+      if (end_date) dateFilter.$lte = new Date(end_date);
+      filter.created_at = dateFilter;
     }
 
     const [transactions, total] = await Promise.all([

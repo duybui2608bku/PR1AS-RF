@@ -41,6 +41,8 @@
     "loginRequired": "Vui lòng đăng nhập để xem và bình luận.",
     "loadError": "Không tải được bình luận.",
     "empty": "Chưa có bình luận nào.",
-    "replyingTo": "Đang trả lời"
+    "replyingTo": "Đang trả lời",
+    "expandComment": "Xem thêm",
+    "collapseComment": "Thu gọn"
   }
 }

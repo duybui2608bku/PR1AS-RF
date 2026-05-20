@@ -41,6 +41,19 @@ export interface GetMessagesQuery {
   receiver_id?: string;
   page?: number;
   limit?: number;
+  // Cursor pagination: return messages strictly older than this message _id.
+  // Stable under concurrent writes — offset-based skip can lose or duplicate
+  // a message when new messages arrive between page fetches. When set, takes
+  // precedence over `page`.
+  before_id?: string;
+}
+
+export interface MessagePageResult {
+  messages: IMessage[];
+  total: number;
+  // Oldest message _id in the returned page; pass back as `before_id` to fetch
+  // the next older page. `null` when no more messages exist.
+  next_cursor: string | null;
 }
 
 export interface GetConversationsQuery {

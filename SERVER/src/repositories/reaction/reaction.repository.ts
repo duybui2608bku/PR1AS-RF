@@ -29,31 +29,43 @@ export class ReactionRepository {
     targetId: string,
     type: ReactionType
   ): Promise<{ created: boolean; previousType: ReactionType | null }> {
-    const existing = await this.findByUserAndTarget(
-      userId,
-      targetType,
-      targetId
-    );
-    if (existing) {
-      const previousType = existing.type;
-      if (previousType === type) {
-        return { created: false, previousType };
-      }
-      existing.type = type;
-      existing.updated_at = new Date();
-      await existing.save();
-      return { created: false, previousType };
+    if (!Types.ObjectId.isValid(targetId)) {
+      return { created: false, previousType: null };
     }
-
-    const reaction = new Reaction({
-      user_id: new Types.ObjectId(userId),
-      target_type: targetType,
-      target_id: new Types.ObjectId(targetId),
-      type,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-    await reaction.save();
+    // Atomic upsert — relies on the unique (user_id, target_type, target_id)
+    // index to coalesce double-clicks and concurrent requests. Mongo returns
+    // the pre-update document in `rawResult.value` so we can tell whether
+    // this call created a new reaction or updated an existing one, which
+    // drives the post.reactions_count increment downstream.
+    const userObjectId = new Types.ObjectId(userId);
+    const targetObjectId = new Types.ObjectId(targetId);
+    const now = new Date();
+    const result = await Reaction.findOneAndUpdate(
+      {
+        user_id: userObjectId,
+        target_type: targetType,
+        target_id: targetObjectId,
+      },
+      {
+        $set: { type, updated_at: now },
+        $setOnInsert: {
+          user_id: userObjectId,
+          target_type: targetType,
+          target_id: targetObjectId,
+          created_at: now,
+        },
+      },
+      {
+        upsert: true,
+        new: false,
+        includeResultMetadata: true,
+        setDefaultsOnInsert: true,
+      }
+    );
+    const before = result?.value as IReactionDocument | null;
+    if (before) {
+      return { created: false, previousType: before.type };
+    }
     return { created: true, previousType: null };
   }
 
@@ -173,14 +185,18 @@ export class ReactionRepository {
 
   async deleteByTarget(
     targetType: ReactionTargetType,
-    targetId: string | Types.ObjectId
+    targetId: string | Types.ObjectId,
+    session?: import("mongoose").ClientSession
   ): Promise<void> {
     const targetObjectId =
       typeof targetId === "string" ? new Types.ObjectId(targetId) : targetId;
-    await Reaction.deleteMany({
-      target_type: targetType,
-      target_id: targetObjectId,
-    });
+    await Reaction.deleteMany(
+      {
+        target_type: targetType,
+        target_id: targetObjectId,
+      },
+      { session }
+    );
   }
 }
 

@@ -122,6 +122,10 @@
   }
   html {
     @apply font-sans;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -130,6 +134,10 @@
   }
   body {
     @apply min-h-svh bg-background text-foreground;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
   ::selection {
     @apply bg-primary/20 text-foreground;

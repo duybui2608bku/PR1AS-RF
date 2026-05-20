@@ -55,10 +55,13 @@ export class HashtagRepository {
     await PostHashtag.insertMany(docs, { ordered: false });
   }
 
-  async deleteByPostId(postId: string | Types.ObjectId): Promise<void> {
+  async deleteByPostId(
+    postId: string | Types.ObjectId,
+    session?: import("mongoose").ClientSession
+  ): Promise<void> {
     const postObjectId =
       typeof postId === "string" ? new Types.ObjectId(postId) : postId;
-    await PostHashtag.deleteMany({ post_id: postObjectId });
+    await PostHashtag.deleteMany({ post_id: postObjectId }, { session });
   }
 
   async findByPostId(

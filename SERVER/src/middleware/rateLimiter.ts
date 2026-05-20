@@ -1,5 +1,6 @@
 import rateLimit from "express-rate-limit";
 import { Request, Response } from "express";
+import crypto from "crypto";
 import { AUTH_MESSAGES } from "../constants/messages";
 import { AppError } from "../utils/AppError";
 import { HTTP_STATUS } from "../constants/httpStatus";
@@ -97,6 +98,63 @@ export const emailActionLimiter = rateLimit({
     _req: Request, // eslint-disable-line @typescript-eslint/no-unused-vars
     _res: Response // eslint-disable-line @typescript-eslint/no-unused-vars
   ) => {
+    throw new AppError(
+      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+      HTTP_STATUS.TOO_MANY_REQUESTS,
+      ErrorCode.RATE_LIMIT_EXCEEDED
+    );
+  },
+});
+
+// Two-layer rate limit for token-consuming endpoints (reset-password,
+// verify-email). Both run on the same request and either can reject it.
+//
+// Layer 1 — per-IP: prevents an attacker on one host from sweeping many
+//   stolen/leaked tokens. Quota is generous (50/hour) so that NATed networks
+//   (offices, schools, mobile carriers) where many real users share an IP
+//   are not falsely throttled.
+//
+// Layer 2 — per-token: prevents brute-forcing the bits of a *specific* token
+//   even if the attacker rotates their IP via proxies. The key is the SHA-256
+//   hash of the token in req.body so the rate-limit store never holds raw
+//   secrets. Quota is tight (5/hour) — a real user only consumes 1.
+//
+// If the request has no token in the body (malformed), the per-token limiter
+// falls back to IP-keying so it still applies.
+export const tokenActionLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
+  max: 50,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  handler: (_req: Request, _res: Response) => {
+    throw new AppError(
+      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+      HTTP_STATUS.TOO_MANY_REQUESTS,
+      ErrorCode.RATE_LIMIT_EXCEEDED
+    );
+  },
+});
+
+const hashToken = (token: string): string =>
+  crypto.createHash("sha256").update(token).digest("hex").slice(0, 32);
+
+export const tokenAttemptLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
+  max: 5,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req: Request): string => {
+    const token = (req.body as { token?: unknown } | undefined)?.token;
+    if (typeof token === "string" && token.length > 0) {
+      return `token:${hashToken(token)}`;
+    }
+    return `ip:${req.ip ?? "unknown"}`;
+  },
+  handler: (_req: Request, _res: Response) => {
     throw new AppError(
       AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
       HTTP_STATUS.TOO_MANY_REQUESTS,

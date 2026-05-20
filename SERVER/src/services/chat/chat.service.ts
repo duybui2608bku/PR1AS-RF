@@ -32,15 +32,97 @@ import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { moderationService } from "../moderation";
 import { moderationRepository } from "../../repositories/moderation";
+import type { IUserDocument } from "../../types/auth/user.types";
+import { sanitizeMessageContent } from "../../utils/sanitize";
+import { MessageType } from "../../types/chat/message.type";
 
 export class ChatService {
+  private isAdmin(user: Pick<IUserDocument, "roles"> | null): boolean {
+    return Boolean(user?.roles?.includes(UserRole.ADMIN));
+  }
+
+  private async ensureDirectChatAllowed(
+    sender: IUserDocument,
+    receiver: IUserDocument
+  ): Promise<void> {
+    if (this.isAdmin(sender) || this.isAdmin(receiver)) {
+      return;
+    }
+
+    const senderRole = sender.last_active_role;
+    const senderId = sender._id.toString();
+    const receiverId = receiver._id.toString();
+
+    const isAllowed =
+      senderRole === UserRole.CLIENT
+        ? receiver.roles.includes(UserRole.WORKER) &&
+          (await bookingRepository.hasConfirmedBookingForPair(
+            senderId,
+            receiverId
+          ))
+        : senderRole === UserRole.WORKER
+          ? receiver.roles.includes(UserRole.CLIENT) &&
+            (await bookingRepository.hasConfirmedBookingForPair(
+              receiverId,
+              senderId
+            ))
+          : false;
+
+    if (!isAllowed) {
+      throw new AppError(
+        CHAT_MESSAGES.DIRECT_ROLE_NOT_ALLOWED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
+      );
+    }
+  }
+
+  private async ensureConversationAllowedForActiveRole(
+    user_id: string,
+    conversation: IConversation
+  ): Promise<void> {
+    const currentUser = await userRepository.findById(user_id);
+
+    if (!currentUser) {
+      throw new AppError(
+        CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    if (this.isAdmin(currentUser)) {
+      return;
+    }
+
+    const otherUserId = getOtherUserId(
+      conversation.sender_id.toString(),
+      conversation.receiver_id.toString(),
+      user_id
+    );
+    const otherUser = await userRepository.findById(otherUserId);
+
+    if (!otherUser) {
+      throw new AppError(
+        CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    await this.ensureDirectChatAllowed(currentUser, otherUser);
+  }
+
   async sendMessage(
     sender_id: string,
     input: CreateMessageInput
   ): Promise<SendMessageResponse> {
-    const receiver = await userRepository.findById(input.receiver_id);
+    const [sender, receiver] = await Promise.all([
+      userRepository.findById(sender_id),
+      userRepository.findById(input.receiver_id),
+    ]);
 
-    if (!receiver) {
+    if (!sender || !receiver) {
       throw new AppError(
         CHAT_MESSAGES.RECEIVER_NOT_FOUND,
         HTTP_STATUS.NOT_FOUND,
@@ -56,29 +138,23 @@ export class ChatService {
       );
     }
 
+    // Re-check block status at the moment of sending — caches/socket reconnects
+    // could otherwise let a sender keep messaging a user who just blocked them.
     await moderationService.ensureChatAllowed(sender_id, input.receiver_id);
+    await this.ensureDirectChatAllowed(sender, receiver);
 
-    // Admin support chat bypasses the booking requirement so any user can
-    // contact admin (and admin can reach out to any user) at any time.
-    const sender = await userRepository.findById(sender_id);
-    const isAdminConversation =
-      receiver.roles?.includes(UserRole.ADMIN) ||
-      sender?.roles?.includes(UserRole.ADMIN);
-
-    if (!isAdminConversation) {
-      const hasConfirmedBooking =
-        await bookingRepository.hasConfirmedBookingBetweenUsers(
-          sender_id,
-          input.receiver_id
-        );
-
-      if (!hasConfirmedBooking) {
+    // Sanitize text content. Media messages keep the raw URL/content but
+    // text messages must be HTML-stripped to defend against stored XSS.
+    if (input.type === MessageType.TEXT) {
+      const cleaned = sanitizeMessageContent(input.content ?? "");
+      if (!cleaned) {
         throw new AppError(
-          CHAT_MESSAGES.BOOKING_CONFIRMATION_REQUIRED,
-          HTTP_STATUS.FORBIDDEN,
-          ErrorCode.FORBIDDEN
+          CHAT_MESSAGES.CANNOT_SEND_MESSAGE,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.VALIDATION_ERROR
         );
       }
+      input = { ...input, content: cleaned };
     }
 
     if (input.reply_to_id) {
@@ -157,8 +233,44 @@ export class ChatService {
     total: number;
     page: number;
     limit: number;
+    next_cursor: string | null;
   }> {
     const { page = 1, limit = 50 } = query;
+
+    if (query.receiver_id) {
+      const [currentUser, receiver] = await Promise.all([
+        userRepository.findById(user_id),
+        userRepository.findById(query.receiver_id),
+      ]);
+
+      if (!currentUser || !receiver) {
+        throw new AppError(
+          CHAT_MESSAGES.RECEIVER_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+          ErrorCode.NOT_FOUND
+        );
+      }
+
+      await this.ensureDirectChatAllowed(currentUser, receiver);
+    }
+
+    if (query.conversation_id) {
+      const conversation = await chatRepository.findConversationById(
+        query.conversation_id,
+        user_id
+      );
+
+      if (!conversation) {
+        throw new AppError(
+          CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+          ErrorCode.NOT_FOUND
+        );
+      }
+
+      await this.ensureConversationAllowedForActiveRole(user_id, conversation);
+    }
+
     const result = await chatRepository.getMessages(user_id, {
       ...query,
       page,
@@ -210,19 +322,43 @@ export class ChatService {
 
     const userMap = new Map(otherUsers.map((u) => [u._id.toString(), u]));
     const messageMap = new Map(lastMessages.map((m) => [m._id.toString(), m]));
+    const currentUser = await userRepository.findById(user_id);
+    const allowedPeerIds =
+      currentUser &&
+      !this.isAdmin(currentUser) &&
+      (currentUser.last_active_role === UserRole.CLIENT ||
+        currentUser.last_active_role === UserRole.WORKER)
+        ? new Set(
+            await bookingRepository.getConfirmedChatPeerIdsForRole(
+              user_id,
+              currentUser.last_active_role
+            )
+          )
+        : null;
 
-    const blockPairs = await Promise.all(
-      otherUserIds.map(async (otherUserId) => ({
-        otherUserId,
-        outgoing: await moderationRepository.findBlock(user_id, otherUserId),
-        incoming: await moderationRepository.findBlock(otherUserId, user_id),
-      }))
-    );
-    const blockMap = new Map(
-      blockPairs.map((item) => [item.otherUserId, item])
+    // Single query for all block edges (both directions) — keeps the symmetric
+    // "chat block" semantics consistent with ensureChatAllowed without N×2 lookups.
+    const blockMap = await moderationRepository.findBlockPairs(
+      user_id,
+      otherUserIds
     );
 
-    const enrichedConversations = result.conversations.map(
+    const visibleConversations = result.conversations.filter(
+      (conv: IConversation) => {
+        if (!allowedPeerIds) return true;
+
+        const otherUserId = getOtherUserId(
+          conv.sender_id.toString(),
+          conv.receiver_id.toString(),
+          user_id
+        );
+        const otherUser = userMap.get(otherUserId);
+
+        return this.isAdmin(otherUser ?? null) || allowedPeerIds.has(otherUserId);
+      }
+    );
+
+    const enrichedConversations = visibleConversations.map(
       (conv: IConversation) => {
         const otherUserId = getOtherUserId(
           conv.sender_id.toString(),
@@ -252,7 +388,7 @@ export class ChatService {
 
     return {
       conversations: enrichedConversations,
-      total: result.total,
+      total: enrichedConversations.length,
       page,
       limit,
     };
@@ -270,6 +406,11 @@ export class ChatService {
     if (!result) {
       return null;
     }
+
+    await this.ensureConversationAllowedForActiveRole(
+      user_id,
+      result.conversation
+    );
 
     const otherUserId = getOtherUserId(
       result.conversation.sender_id.toString(),
@@ -303,6 +444,23 @@ export class ChatService {
     user_id: string,
     input: MarkAsReadInput
   ): Promise<{ updated_count: number }> {
+    if (input.conversation_id) {
+      const conversation = await chatRepository.findConversationById(
+        input.conversation_id,
+        user_id
+      );
+
+      if (!conversation) {
+        throw new AppError(
+          CHAT_MESSAGES.CONVERSATION_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+          ErrorCode.NOT_FOUND
+        );
+      }
+
+      await this.ensureConversationAllowedForActiveRole(user_id, conversation);
+    }
+
     const updatedCount = await chatRepository.markMessagesAsRead(
       user_id,
       input.message_ids,

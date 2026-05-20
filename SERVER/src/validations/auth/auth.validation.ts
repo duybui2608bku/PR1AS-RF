@@ -1,14 +1,22 @@
 import { z } from "zod";
 import { AUTH_MESSAGES } from "../../constants/messages";
+import { VALIDATION_LIMITS } from "../../constants/validation";
+
+const strongPassword = z
+  .string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED })
+  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, AUTH_MESSAGES.PASSWORD_MIN_LENGTH)
+  .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, AUTH_MESSAGES.PASSWORD_MAX_LENGTH)
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+    AUTH_MESSAGES.PASSWORD_COMPLEXITY
+  );
 
 export const registerSchema = z.object({
   email: z
     .string({ required_error: AUTH_MESSAGES.EMAIL_REQUIRED })
     .email(AUTH_MESSAGES.EMAIL_INVALID)
     .transform((val) => val.toLowerCase().trim()),
-  password: z
-    .string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED })
-    .min(8, AUTH_MESSAGES.PASSWORD_MIN_LENGTH),
+  password: strongPassword,
   full_name: z.string().trim().optional(),
   phone: z.string().trim().optional(),
 });
@@ -18,7 +26,9 @@ export const loginSchema = z.object({
     .string({ required_error: AUTH_MESSAGES.EMAIL_REQUIRED })
     .email(AUTH_MESSAGES.EMAIL_INVALID)
     .transform((val) => val.toLowerCase().trim()),
-  password: z.string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED }),
+  password: z
+    .string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED })
+    .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, AUTH_MESSAGES.PASSWORD_MAX_LENGTH),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -30,9 +40,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string({ required_error: AUTH_MESSAGES.RESET_TOKEN_REQUIRED }),
-  password: z
-    .string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED })
-    .min(8, AUTH_MESSAGES.PASSWORD_MIN_LENGTH),
+  password: strongPassword,
 });
 
 export const verifyEmailSchema = z.object({

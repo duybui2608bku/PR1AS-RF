@@ -60,6 +60,27 @@ commentSchema.index({ post_id: 1, created_at: -1, _id: -1 });
 commentSchema.index({ post_id: 1, parent_comment_id: 1, created_at: 1 });
 commentSchema.index({ deleted_at: 1 });
 
+// Schema-level guard: enforce single-level threading. The service layer is the
+// primary check, but this fires for any code path that bypasses the service
+// (scripts, jobs, future endpoints) — a reply may only point at a top-level
+// comment so the thread can never nest deeper than one level.
+commentSchema.pre("validate", async function (next) {
+  if (!this.parent_comment_id) return next();
+  try {
+    const parent = await mongoose
+      .model<ICommentDocument>(modelsName.COMMENT)
+      .findById(this.parent_comment_id)
+      .select("parent_comment_id")
+      .lean();
+    if (parent && parent.parent_comment_id) {
+      return next(new Error("Replies may not nest deeper than one level"));
+    }
+    return next();
+  } catch (error) {
+    return next(error as Error);
+  }
+});
+
 export const Comment = mongoose.model<ICommentDocument>(
   modelsName.COMMENT,
   commentSchema

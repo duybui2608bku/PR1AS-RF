@@ -22,6 +22,7 @@ import {
   decodeCursor,
   formatCursorResponse,
 } from "../../utils/cursorPagination";
+import { sanitizeMessageContent } from "../../utils/sanitize";
 
 type LeanCommentWithAuthor = ICommentDocument & {
   author_id:
@@ -156,11 +157,20 @@ export class CommentService {
       parentObjectId = parent._id as Types.ObjectId;
     }
 
+    const sanitizedBody = sanitizeMessageContent(input.body ?? "", 2000);
+    if (!sanitizedBody) {
+      throw new AppError(
+        COMMENT_MESSAGES.INVALID_BODY_LENGTH,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.VALIDATION_ERROR
+      );
+    }
+
     const created = await commentRepository.create({
       post_id: post._id as Types.ObjectId,
       author_id: new Types.ObjectId(userId),
       parent_comment_id: parentObjectId,
-      body: input.body,
+      body: sanitizedBody,
     });
 
     try {
@@ -255,7 +265,15 @@ export class CommentService {
       );
     }
 
-    const updated = await commentRepository.update(commentId, input.body);
+    const sanitizedBody = sanitizeMessageContent(input.body ?? "", 2000);
+    if (!sanitizedBody) {
+      throw new AppError(
+        COMMENT_MESSAGES.INVALID_BODY_LENGTH,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.VALIDATION_ERROR
+      );
+    }
+    const updated = await commentRepository.update(commentId, sanitizedBody);
     if (!updated) {
       throw new AppError(
         COMMENT_MESSAGES.COMMENT_NOT_FOUND,

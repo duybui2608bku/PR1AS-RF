@@ -1,4 +1,5 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
+import { sanitizeMessageContent } from "../../utils/sanitize";
 import { postRepository } from "../../repositories/post/post.repository";
 import { postMediaRepository } from "../../repositories/post/post-media.repository";
 import { commentRepository } from "../../repositories/comment/comment.repository";
@@ -284,8 +285,17 @@ export class PostService {
       );
     }
 
+    const sanitizedBody = sanitizeMessageContent(input.body ?? "", 5000);
+    if (!sanitizedBody) {
+      throw new AppError(
+        POST_MESSAGES.INVALID_BODY_LENGTH,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.VALIDATION_ERROR
+      );
+    }
+
     const post = await postRepository.create({
-      body: input.body,
+      body: sanitizedBody,
       visibility: input.visibility ?? PostVisibility.PUBLIC,
       author_id: new Types.ObjectId(userId),
     });
@@ -453,7 +463,17 @@ export class PostService {
     }
 
     const update: Partial<Pick<IPostDocument, "body" | "visibility">> = {};
-    if (input.body !== undefined) update.body = input.body.trim();
+    if (input.body !== undefined) {
+      const sanitizedBody = sanitizeMessageContent(input.body, 5000);
+      if (!sanitizedBody) {
+        throw new AppError(
+          POST_MESSAGES.INVALID_BODY_LENGTH,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.VALIDATION_ERROR
+        );
+      }
+      update.body = sanitizedBody;
+    }
     if (input.visibility !== undefined) update.visibility = input.visibility;
 
     const updatedPost = await postRepository.update(postId, update);
@@ -531,24 +551,36 @@ export class PostService {
       );
     }
 
-    const deleted = await postRepository.softDelete(postId);
-    if (!deleted) {
-      throw new AppError(
-        POST_MESSAGES.POST_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.POST_NOT_FOUND
-      );
-    }
-
-    // Cascade cleanup — best-effort, logged on failure
+    // Wrap soft-delete + cascade cleanup in a transaction so the post and its
+    // dependent rows (hashtags, comments, reactions) either all flip to
+    // deleted or none do — avoids orphan reactions/comments when one of the
+    // cascade writes fails mid-flight.
+    const session = await mongoose.startSession();
     try {
-      await Promise.all([
-        hashtagService.clearPostHashtags(postId),
-        commentRepository.softDeleteByPostId(postId),
-        reactionRepository.deleteByTarget(ReactionTargetType.POST, postId),
-      ]);
-    } catch (error) {
-      logger.error("Failed to cascade post soft-delete cleanup", error);
+      let deleted: unknown = null;
+      await session.withTransaction(async () => {
+        deleted = await postRepository.softDelete(postId, session);
+        if (!deleted) return;
+        await Promise.all([
+          hashtagService.clearPostHashtags(postId, session),
+          commentRepository.softDeleteByPostId(postId, session),
+          reactionRepository.deleteByTarget(
+            ReactionTargetType.POST,
+            postId,
+            session
+          ),
+        ]);
+      });
+
+      if (!deleted) {
+        throw new AppError(
+          POST_MESSAGES.POST_NOT_FOUND,
+          HTTP_STATUS.NOT_FOUND,
+          ErrorCode.POST_NOT_FOUND
+        );
+      }
+    } finally {
+      await session.endSession();
     }
   }
 

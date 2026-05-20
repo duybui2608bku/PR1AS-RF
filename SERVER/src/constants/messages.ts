@@ -5,6 +5,9 @@ export const AUTH_MESSAGES = {
   EMAIL_INVALID: "Invalid email",
   PASSWORD_REQUIRED: "Password is required",
   PASSWORD_MIN_LENGTH: "Password must be at least 8 characters",
+  PASSWORD_MAX_LENGTH: "Password must not exceed 128 characters",
+  PASSWORD_COMPLEXITY:
+    "Password must contain at least one uppercase letter, one lowercase letter and one digit",
   TOKEN_NOT_PROVIDED: "Token not provided",
   TOKEN_INVALID: "Invalid token",
   TOKEN_EXPIRED: "Token is invalid or expired",
@@ -98,8 +101,12 @@ export const PAGINATION_MESSAGES = {
 export const CHAT_MESSAGES = {
   RECEIVER_NOT_FOUND: "Receiver not found",
   CANNOT_SEND_TO_SELF: "Cannot send message to yourself",
+  CANNOT_SEND_MESSAGE: "Cannot send message.",
+  MESSAGE_CONTENT_EMPTY: "Message content cannot be empty",
   BOOKING_CONFIRMATION_REQUIRED:
     "Messaging is available only after booking is confirmed",
+  DIRECT_ROLE_NOT_ALLOWED:
+    "Direct messaging is only available between a client and the assigned worker",
   REPLY_MESSAGE_NOT_FOUND: "Reply message not found",
   MESSAGE_SENT_SUCCESS: "Message sent successfully",
   MESSAGE_NOT_FOUND: "Message not found",
@@ -184,7 +191,7 @@ export const BOOKING_MESSAGES = {
   ONLY_CLIENT_CAN_DISPUTE: "Only the client can open a dispute",
   ONLY_ADMIN_CAN_RESOLVE_DISPUTE: "Only admin can resolve disputes",
   DISPUTE_INVALID_REFUND_AMOUNT:
-    "Refund amount cannot exceed the escrow amount",
+    "Refund amount cannot exceed the booking amount",
 } as const;
 
 export const REVIEW_MESSAGES = {
@@ -209,17 +216,6 @@ export const REVIEW_MESSAGES = {
     "At least one field must be provided for update",
   RATING_MUST_BE_CONSISTENT_WITH_RATING_DETAILS:
     "Rating must be consistent with rating details",
-} as const;
-
-export const ESCROW_MESSAGES = {
-  ESCROW_NOT_FOUND: "Escrow transaction not found",
-  ESCROWS_FETCHED: "Escrow transactions fetched successfully",
-  ESCROW_FETCHED: "Escrow transaction fetched successfully",
-  UNAUTHORIZED_ACCESS:
-    "You do not have permission to access this escrow transaction",
-  ESCROW_RELEASED: "Escrow released successfully",
-  ESCROW_RELEASE_FAILED: "Failed to release escrow",
-  ESCROW_ALREADY_RELEASED: "Escrow has already been released",
 } as const;
 
 export const WORKER_MESSAGES = {

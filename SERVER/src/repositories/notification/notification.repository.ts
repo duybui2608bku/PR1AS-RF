@@ -60,18 +60,36 @@ export class NotificationRepository {
 
     if (data.dedupe_key) {
       const { updated_at: _updatedAt, link: _link, ...insertData } = notificationData;
-      return Notification.findOneAndUpdate(
-        {
-          recipient_id: notificationData.recipient_id,
-          dedupe_key: data.dedupe_key,
-        },
-        {
-          $setOnInsert: insertData,
-          // link luôn được cập nhật để phản ánh giá trị mới nhất từ server
-          $set: { updated_at: now, link: data.link || null },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      ) as Promise<INotificationDocument>;
+      // MongoDB upsert on a unique index can race when two writers arrive in
+      // the < 1ms window between read and insert — one wins, the other gets
+      // E11000. Retry once on duplicate-key: by then the row exists and the
+      // retry hits the update path. (Mongo SERVER-14322.)
+      const filter = {
+        recipient_id: notificationData.recipient_id,
+        dedupe_key: data.dedupe_key,
+      };
+      const update = {
+        $setOnInsert: insertData,
+        // link luôn được cập nhật để phản ánh giá trị mới nhất từ server
+        $set: { updated_at: now, link: data.link || null },
+      };
+      const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
+      try {
+        return (await Notification.findOneAndUpdate(
+          filter,
+          update,
+          opts
+        )) as INotificationDocument;
+      } catch (error) {
+        if ((error as { code?: number })?.code === 11000) {
+          return (await Notification.findOneAndUpdate(
+            filter,
+            update,
+            opts
+          )) as INotificationDocument;
+        }
+        throw error;
+      }
     }
 
     return new Notification(notificationData).save();

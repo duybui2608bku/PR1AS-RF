@@ -41,11 +41,17 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
-      useAuthStore.getState().clearAuth()
-      getQueryClient().clear()
-      // Fire-and-forget: clear the httpOnly session cookie so the middleware
-      // no longer sees it and doesn't gate-crash the unauthenticated state.
-      void clearSessionCookie()
+      // Guard against concurrent in-flight requests all triggering logout —
+      // only the first 401 should clear state and toast the user.
+      const state = useAuthStore.getState()
+      if (!state.isLoggingOut) {
+        state.setLoggingOut(true)
+        state.clearAuth()
+        getQueryClient().clear()
+        // Fire-and-forget: clear the httpOnly session cookie so the middleware
+        // no longer sees it and doesn't gate-crash the unauthenticated state.
+        void clearSessionCookie()
+      }
     }
 
     const apiError = toApiError(error)

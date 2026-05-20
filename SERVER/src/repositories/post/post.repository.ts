@@ -129,11 +129,14 @@ export class PostRepository {
     ).populate("author_id", AUTHOR_PUBLIC_FIELDS);
   }
 
-  async softDelete(id: string): Promise<IPostDocument | null> {
+  async softDelete(
+    id: string,
+    session?: import("mongoose").ClientSession
+  ): Promise<IPostDocument | null> {
     return Post.findOneAndUpdate(
       { _id: id, deleted_at: null, deleted: { $ne: true } },
       { deleted: true, deleted_at: new Date(), updated_at: new Date() },
-      { new: true }
+      { new: true, session }
     );
   }
 

@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
+import { getActiveRole } from "@/lib/auth/roles"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
   useAdminContact,
@@ -379,6 +380,7 @@ export function ChatPage({
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const activeRole = getActiveRole(user)
   const initialReceiverIdValue = initialReceiverId?.trim() ?? ""
   const shouldStartNewDirect = Boolean(
     initialReceiverIdValue &&
@@ -419,6 +421,7 @@ export function ChatPage({
   const typingClearTimersRef = React.useRef<
     Record<string, ReturnType<typeof setTimeout>>
   >({})
+  const previousActiveRoleRef = React.useRef(activeRole)
 
   const isAdminUser = Boolean(user?.roles?.includes("admin"))
 
@@ -584,12 +587,32 @@ export function ChatPage({
   )
   const selectedDirectBlocked = Boolean(selectedDirect?.other_user?.is_blocked)
   const selectedDirectBlockedMe = Boolean(selectedDirect?.other_user?.has_blocked_me)
+  const directRoleBlockedReason =
+    mode === "direct" &&
+    activeRole === "worker" &&
+    isDirectComposerOpen &&
+    directReceiverId !== adminUserId
+      ? "Worker không thể bắt đầu chat trực tiếp với worker khác. Vui lòng chuyển sang vai trò client hoặc chọn cuộc trò chuyện hợp lệ."
+      : null
 
   React.useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/login")
     }
   }, [isAuthenticated, router])
+
+  React.useEffect(() => {
+    if (previousActiveRoleRef.current === activeRole) return
+
+    previousActiveRoleRef.current = activeRole
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.chat.directConversationsRoot,
+    })
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.chat.directMessagesRoot,
+    })
+    setSelectedDirectId(null)
+  }, [activeRole, queryClient])
 
   React.useEffect(() => {
     if (!socket || mode !== "direct" || !activeDirectId || isDirectComposerOpen)
@@ -935,6 +958,11 @@ export function ChatPage({
 
   const sendImageMessage = async (imageUrl: string) => {
     if (mode === "direct") {
+      if (directRoleBlockedReason) {
+        toast.error(directRoleBlockedReason)
+        return
+      }
+
       if (!directReceiverId) {
         toast.error("Chọn cuộc trò chuyện trước khi gửi.")
         return
@@ -997,10 +1025,34 @@ export function ChatPage({
     const content = draft.trim()
     if (!content && !imagePreviews.length) return
 
+    // Snapshot the draft + reply target so we can roll back if the send fails.
+    // Optimistically clear the input now — feels snappier than waiting for the
+    // round-trip to complete before the textarea clears.
+    const previousDraft = draft
+    const previousReplyTarget = replyTarget
+    if (content) {
+      setDraft("")
+      setReplyTarget(null)
+      emitTyping(false)
+    }
+
     try {
       if (mode === "direct") {
+        if (directRoleBlockedReason) {
+          toast.error(directRoleBlockedReason)
+          if (content) {
+            setDraft(previousDraft)
+            setReplyTarget(previousReplyTarget)
+          }
+          return
+        }
+
         if (!directReceiverId) {
           toast.error("Chọn cuộc trò chuyện trước khi gửi.")
+          if (content) {
+            setDraft(previousDraft)
+            setReplyTarget(previousReplyTarget)
+          }
           return
         }
 
@@ -1013,14 +1065,13 @@ export function ChatPage({
               receiver_id: directReceiverId,
               content: imageUrl,
               type: "image",
-              reply_to_id: replyTarget?.id ?? null,
+              reply_to_id: previousReplyTarget?.id ?? null,
             })
             setSelectedDirectId(result.conversation._id)
           }
           clearImagePreviews(toSend)
           setImagePreviews([])
           setIsUploadingImage(false)
-          setReplyTarget(null)
         }
 
         if (content) {
@@ -1028,18 +1079,19 @@ export function ChatPage({
             receiver_id: directReceiverId,
             content,
             type: getOutgoingMessageType(content),
-            reply_to_id: replyTarget?.id ?? null,
+            reply_to_id: previousReplyTarget?.id ?? null,
           })
           setSelectedDirectId(result.conversation._id)
-          setDraft("")
-          setReplyTarget(null)
-          emitTyping(false)
         }
         return
       }
 
       if (!selectedGroup?.booking_id) {
         toast.error("Chọn nhóm trò chuyện trước khi gửi.")
+        if (content) {
+          setDraft(previousDraft)
+          setReplyTarget(previousReplyTarget)
+        }
         return
       }
 
@@ -1052,14 +1104,13 @@ export function ChatPage({
             booking_id: selectedGroup.booking_id,
             content: imageUrl,
             type: "image",
-            reply_to_id: replyTarget?.id ?? null,
+            reply_to_id: previousReplyTarget?.id ?? null,
           })
           setSelectedGroupId(result.conversation._id)
         }
         clearImagePreviews(toSend)
         setImagePreviews([])
         setIsUploadingImage(false)
-        setReplyTarget(null)
       }
 
       if (content) {
@@ -1067,15 +1118,18 @@ export function ChatPage({
           booking_id: selectedGroup.booking_id,
           content,
           type: getOutgoingMessageType(content),
-          reply_to_id: replyTarget?.id ?? null,
+          reply_to_id: previousReplyTarget?.id ?? null,
         })
         setSelectedGroupId(result.conversation._id)
-        setDraft("")
-        setReplyTarget(null)
-        emitTyping(false)
       }
     } catch (error) {
       setIsUploadingImage(false)
+      // Restore the draft so the user doesn't have to retype after a send
+      // failure (network drop, 4xx, blocked recipient, etc).
+      if (content) {
+        setDraft(previousDraft)
+        setReplyTarget(previousReplyTarget)
+      }
       toast.error(getErrorMessage(error, "Không thể gửi tin nhắn."))
     }
   }
@@ -1430,6 +1484,11 @@ export function ChatPage({
           </div>
 
           <form onSubmit={handleSubmit} className="border-t p-3">
+            {directRoleBlockedReason ? (
+              <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                {directRoleBlockedReason}
+              </div>
+            ) : null}
             {replyTarget ? (
               <div className="mb-2 flex items-start gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
                 <Reply className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1483,7 +1542,11 @@ export function ChatPage({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isSending || isUploadingImage}
+                  disabled={
+                    isSending ||
+                    isUploadingImage ||
+                    Boolean(directRoleBlockedReason)
+                  }
                   className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
                   aria-label="Thêm ảnh"
                 >
@@ -1508,6 +1571,7 @@ export function ChatPage({
                 disabled={
                   isSending ||
                   isUploadingImage ||
+                  Boolean(directRoleBlockedReason) ||
                   selectedDirectBlocked ||
                   selectedDirectBlockedMe ||
                   (mode === "direct" && !directReceiverId) ||
@@ -1530,6 +1594,7 @@ export function ChatPage({
                 rows={1}
                 disabled={
                   isSending ||
+                  Boolean(directRoleBlockedReason) ||
                   selectedDirectBlocked ||
                   selectedDirectBlockedMe ||
                   (mode === "direct" && !directReceiverId) ||
@@ -1542,6 +1607,7 @@ export function ChatPage({
                 size="icon"
                 disabled={
                   isSending ||
+                  Boolean(directRoleBlockedReason) ||
                   selectedDirectBlocked ||
                   selectedDirectBlockedMe ||
                   isUploadingImage ||

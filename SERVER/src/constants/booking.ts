@@ -52,9 +52,11 @@ export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> 
     BookingStatus.IN_PROGRESS,
     BookingStatus.CANCELLED,
   ],
+  // Khi đã IN_PROGRESS, không cho cancel đơn phương để tránh tranh chấp khó xử
+  // (worker đã làm dở, client phủi tay → ai chịu chi phí?). Mọi vấn đề
+  // phát sinh trong lúc thực hiện phải đi qua DISPUTED để admin phân xử.
   [BookingStatus.IN_PROGRESS]: [
     BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-    BookingStatus.CANCELLED,
     BookingStatus.DISPUTED,
   ],
   [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: [

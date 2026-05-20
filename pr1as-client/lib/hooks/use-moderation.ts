@@ -66,6 +66,8 @@ export function useOpenPostReport(postId: string, enabled: boolean) {
     queryKey: queryKeys.moderation.openPostReport(postId),
     queryFn: () => moderationService.getOpenPostReport(postId),
     enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -91,6 +93,8 @@ export function useOpenWorkerReport(workerId: string, enabled: boolean) {
     queryKey: queryKeys.moderation.openWorkerReport(workerId),
     queryFn: () => moderationService.getOpenWorkerReport(workerId),
     enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   })
 }
 

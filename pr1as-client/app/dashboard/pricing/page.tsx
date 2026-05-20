@@ -367,11 +367,6 @@ function PlanEditor({
                   setField("price", formatVndInput(event.target.value))
                 }
               />
-              {Number.isFinite(parseVndInput(draft.price)) ? (
-                <p className="text-xs text-muted-foreground">
-                  {formatCurrency(parseVndInput(draft.price) || 0)}
-                </p>
-              ) : null}
             </div>
           </div>
         </section>

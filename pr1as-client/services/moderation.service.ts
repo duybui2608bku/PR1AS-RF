@@ -31,7 +31,8 @@ export type UserBlock = {
   blocked_id:
     | string
     | {
-        _id: string
+        _id?: string
+        id?: string
         full_name: string | null
         email: string
         avatar: string | null
@@ -99,9 +100,8 @@ export type PaginatedResult<T> = {
 
 export const moderationService = {
   listBlocks: async () => {
-    const response = await api.get<ApiResponse<UserBlock[]>>(
-      "/moderation/blocks"
-    )
+    const response =
+      await api.get<ApiResponse<UserBlock[]>>("/moderation/blocks")
     return response.data.data ?? []
   },
 
@@ -172,10 +172,9 @@ export const moderationService = {
     start_date?: string
     end_date?: string
   }) => {
-    const response = await api.get<ApiResponse<PaginatedResult<ModerationReport>>>(
-      "/moderation/admin/reports",
-      { params }
-    )
+    const response = await api.get<
+      ApiResponse<PaginatedResult<ModerationReport>>
+    >("/moderation/admin/reports", { params })
     return response.data.data
   },
 
@@ -187,10 +186,9 @@ export const moderationService = {
     start_date?: string
     end_date?: string
   }) => {
-    const response = await api.get<ApiResponse<PaginatedResult<ModerationReport>>>(
-      "/moderation/reports/mine",
-      { params }
-    )
+    const response = await api.get<
+      ApiResponse<PaginatedResult<ModerationReport>>
+    >("/moderation/reports/mine", { params })
     return response.data.data
   },
 
@@ -232,10 +230,9 @@ export const moderationService = {
     feature?: RestrictionFeature
     status?: RestrictionStatus
   }) => {
-    const response = await api.get<ApiResponse<PaginatedResult<UserRestriction>>>(
-      "/moderation/admin/restrictions",
-      { params }
-    )
+    const response = await api.get<
+      ApiResponse<PaginatedResult<UserRestriction>>
+    >("/moderation/admin/restrictions", { params })
     return response.data.data
   },
 

@@ -58,9 +58,14 @@ export class MessageRepository {
   async getMessages(
     user_id: string,
     query: GetMessagesQuery
-  ): Promise<{ messages: IMessage[]; total: number }> {
-    const { conversation_id, receiver_id, page = 1, limit = 50 } = query;
-    const skip = (page - 1) * limit;
+  ): Promise<{ messages: IMessage[]; total: number; next_cursor: string | null }> {
+    const {
+      conversation_id,
+      receiver_id,
+      page = 1,
+      limit = 50,
+      before_id,
+    } = query;
     const filter: Record<string, unknown> = {
       is_deleted: false,
     };
@@ -70,7 +75,7 @@ export class MessageRepository {
         conversation_id,
         user_id
       );
-      if (!conversation) return { messages: [], total: 0 };
+      if (!conversation) return { messages: [], total: 0, next_cursor: null };
       filter.conversation_id = new Types.ObjectId(conversation_id);
     } else if (receiver_id) {
       const conversation =
@@ -78,24 +83,43 @@ export class MessageRepository {
           user_id,
           receiver_id
         );
-      if (!conversation) return { messages: [], total: 0 };
+      if (!conversation) return { messages: [], total: 0, next_cursor: null };
       filter.conversation_id = new Types.ObjectId(conversation._id);
     } else {
-      return { messages: [], total: 0 };
+      return { messages: [], total: 0, next_cursor: null };
+    }
+
+    // Cursor path: stable under concurrent inserts. `_id` is monotonically
+    // increasing per insert so `{ _id: { $lt: before } }` always means
+    // "strictly older" regardless of how many new messages arrived since the
+    // previous fetch.
+    const useCursor = typeof before_id === "string" && Types.ObjectId.isValid(before_id);
+    if (useCursor) {
+      filter._id = { $lt: new Types.ObjectId(before_id) };
+    }
+
+    const findQuery = Message.find(filter)
+      .populate({
+        path: "reply_to_id",
+        select: "_id content type created_at updated_at",
+      })
+      .sort({ _id: -1 })
+      .limit(limit);
+
+    // Skip-based path is preserved for backwards compatibility — only honoured
+    // when no cursor is supplied.
+    if (!useCursor) {
+      findQuery.skip((page - 1) * limit);
     }
 
     const [messages, total] = await Promise.all([
-      Message.find(filter)
-        .populate({
-          path: "reply_to_id",
-          select: "_id content type created_at updated_at",
-        })
-        .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      findQuery.lean(),
       Message.countDocuments(filter),
     ]);
+
+    const next_cursor = messages.length === limit
+      ? messages[messages.length - 1]._id.toString()
+      : null;
 
     return {
       messages: messages
@@ -119,6 +143,7 @@ export class MessageRepository {
         }))
         .reverse() as IMessage[],
       total,
+      next_cursor,
     };
   }
 

@@ -5,15 +5,52 @@ import { AppError } from "../../utils/AppError";
 import { USER_MESSAGES, AUTH_MESSAGES } from "../../constants/messages";
 import { IUserDocument } from "../../types/auth/user.types";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
-import { UpdateBasicProfileSchemaType, UpdateWorkerProfileSchemaType } from "../../validations/user/user.validation";
+import {
+  UpdateBasicProfileSchemaType,
+  UpdateWorkerProfileSchemaType,
+} from "../../validations/user/user.validation";
+import nodemailerUtils from "../../utils/nodemailer";
+import { accountBannedTemplate } from "../../utils/template-mail";
+import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
+import { logger } from "../../utils/logger";
 
 export class UserService {
   async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
+    const existingUser = await userRepository.findById(userId);
+    if (!existingUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
     const user = await userRepository.updateStatus(userId, status);
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    if (
+      status === UserStatus.BANNED &&
+      existingUser.status !== UserStatus.BANNED
+    ) {
+      await this.sendAccountBannedEmail(user).catch((error) => {
+        logger.error("Failed to send account banned email", {
+          error,
+          userId,
+          email: user.email,
+        });
+      });
+    }
   }
 
-  async updateLastActiveRole(userId: string, last_active_role: UserRole): Promise<IUserDocument> {
+  private async sendAccountBannedEmail(user: IUserDocument): Promise<void> {
+    await nodemailerUtils({
+      email: user.email,
+      html: accountBannedTemplate(
+        APP_CONSTANTS.ADMIN_CONTACT_EMAIL,
+        user.full_name
+      ),
+      subject: EMAIL_SUBJECTS.ACCOUNT_BANNED,
+    });
+  }
+
+  async updateLastActiveRole(
+    userId: string,
+    last_active_role: UserRole
+  ): Promise<IUserDocument> {
     // Only fetch roles — no need for the full document
     const roles = await userRepository.findRolesById(userId);
     if (!roles) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
@@ -24,7 +61,10 @@ export class UserService {
       );
     }
 
-    const user = await userRepository.updateLastActiveRole(userId, last_active_role);
+    const user = await userRepository.updateLastActiveRole(
+      userId,
+      last_active_role
+    );
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
     return user;
@@ -40,13 +80,14 @@ export class UserService {
     userId: string,
     input: UpdateWorkerProfileSchemaType["worker_profile"]
   ): Promise<IUserDocument> {
-    const currentUser = await userRepository.findById(userId);  // DB call 1
+    const currentUser = await userRepository.findById(userId); // DB call 1
     if (!currentUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
     // Extract coords — stored at root level, not inside worker_profile subdocument
     const { coords, ...profileFields } = input;
 
-    const user = await userRepository.updateWorkerProfile(  // DB call 2 (compound atomic)
+    const user = await userRepository.updateWorkerProfile(
+      // DB call 2 (compound atomic)
       userId,
       profileFields as Record<string, unknown>,
       {
@@ -54,7 +95,9 @@ export class UserService {
         addWorkerRole: !currentUser.roles.includes(UserRole.WORKER),
         // Only update last_active_role if it's not already WORKER
         setLastActiveRole:
-          currentUser.last_active_role !== UserRole.WORKER ? UserRole.WORKER : undefined,
+          currentUser.last_active_role !== UserRole.WORKER
+            ? UserRole.WORKER
+            : undefined,
       }
     );
 
@@ -70,7 +113,8 @@ export class UserService {
 
     if (data.password) {
       // Single DB call: get user with password_hash for verification
-      const userWithPassword = await userRepository.findByIdWithPassword(userId);
+      const userWithPassword =
+        await userRepository.findByIdWithPassword(userId);
       if (!userWithPassword || !userWithPassword.password_hash) {
         throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
       }
@@ -95,6 +139,13 @@ export class UserService {
     });
 
     if (!updatedUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    // Invalidate every active refresh token after a password change so that
+    // any stolen sessions can no longer mint new access tokens. The caller's
+    // current access token continues to work until it expires (≤15 min).
+    if (password_hash) {
+      await userRepository.clearRefreshToken(userId);
+    }
 
     return updatedUser;
   }

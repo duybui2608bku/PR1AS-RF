@@ -8,6 +8,8 @@ import { vi } from "date-fns/locale"
 import { useTranslations } from "next-intl"
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   Edit3,
   Loader2,
   Lock,
@@ -42,6 +44,8 @@ import { cn } from "@/lib/utils"
 import type { CommentPublic, CommentThreadItem } from "@/types"
 
 const COMMENT_MAX_LENGTH = 2000
+const COMMENT_COLLAPSE_LENGTH = 420
+const REPLIES_PREVIEW_LIMIT = 3
 
 const BODY_TOKEN_RE = /(@\[[^\]]+\]\([^)]+\)|#[\p{L}\p{N}_]{1,50})/gu
 
@@ -85,10 +89,21 @@ function CommentAvatar({
   )
 }
 
-function CommentBodyRenderer({ body }: { body: string }) {
+function CommentBodyRenderer({
+  body,
+  collapsed = false,
+}: {
+  body: string
+  collapsed?: boolean
+}) {
   const parts = body.split(BODY_TOKEN_RE)
   return (
-    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed">
+    <p
+      className={cn(
+        "mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed",
+        collapsed ? "max-h-24 overflow-hidden" : "",
+      )}
+    >
       {parts.map((part, i) => {
         const mentionMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/)
         if (mentionMatch) {
@@ -266,11 +281,14 @@ function CommentItem({
   const t = useTranslations("PostComments")
   const [isEditing, setIsEditing] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [draft, setDraft] = useState(comment.body)
   const updateComment = useUpdateComment(postId)
   const deleteComment = useDeleteComment(postId)
   const isAuthor = currentUserId === comment.author.id
   const canDelete = isAuthor || isPostOwner
+  const canCollapse = !nested && comment.body.length > COMMENT_COLLAPSE_LENGTH
+  const isBodyCollapsed = canCollapse && !isExpanded
   const displayName = comment.author.full_name?.trim() || t("defaultUser")
   const workerHref = comment.author.has_worker_profile ? `/worker/${comment.author.id}` : null
   const trimmedDraft = draft.trim()
@@ -366,8 +384,30 @@ function CommentItem({
               </div>
             </div>
           ) : (
-            <CommentBodyRenderer body={comment.body} />
+            <div className="relative">
+              <CommentBodyRenderer body={comment.body} collapsed={isBodyCollapsed} />
+              {isBodyCollapsed ? (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-muted/50 to-transparent" />
+              ) : null}
+            </div>
           )}
+          {!isEditing && canCollapse ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-1 h-7 px-0 text-xs font-medium text-primary hover:bg-transparent hover:text-primary/80"
+              aria-expanded={isExpanded}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+            >
+              {isExpanded ? (
+                <ChevronUp className="size-3.5" />
+              ) : (
+                <ChevronDown className="size-3.5" />
+              )}
+              {isExpanded ? t("collapseComment") : t("expandComment")}
+            </Button>
+          ) : null}
         </div>
 
           {!isEditing ? (
@@ -465,6 +505,118 @@ function CommentsLoading() {
   )
 }
 
+function CommentThread({
+  thread,
+  postId,
+  currentUserId,
+  canPostComment,
+  isPostOwner,
+  replyTarget,
+  onReply,
+  onClearReplyTarget,
+}: {
+  thread: CommentThreadItem
+  postId: string
+  currentUserId?: string
+  canPostComment: boolean
+  isPostOwner: boolean
+  replyTarget: ReplyTarget | null
+  onReply: (target: ReplyTarget) => void
+  onClearReplyTarget: () => void
+}) {
+  const t = useTranslations("PostComments")
+  const [repliesExpanded, setRepliesExpanded] = useState(false)
+  const shouldExposeReplyTarget =
+    replyTarget?.threadRootId === thread.id && replyTarget.anchorCommentId !== thread.id
+  const shouldShowAllReplies = repliesExpanded || shouldExposeReplyTarget
+  const hasHiddenReplies = thread.replies.length > REPLIES_PREVIEW_LIMIT
+  const visibleReplies = shouldShowAllReplies
+    ? thread.replies
+    : thread.replies.slice(0, REPLIES_PREVIEW_LIMIT)
+  const hiddenRepliesCount = thread.replies.length - visibleReplies.length
+
+  return (
+    <div className="space-y-2">
+      <CommentItem
+        comment={thread}
+        postId={postId}
+        threadRootId={thread.id}
+        currentUserId={currentUserId}
+        canReply={canPostComment}
+        isPostOwner={isPostOwner}
+        onReply={(threadRootId, anchorCommentId, author) =>
+          onReply({ threadRootId, anchorCommentId, author })
+        }
+      />
+      {canPostComment &&
+      replyTarget?.threadRootId === thread.id &&
+      replyTarget.anchorCommentId === thread.id ? (
+        <div className="ml-10">
+          <CommentForm
+            postId={postId}
+            parentCommentId={replyTarget.threadRootId}
+            replyAuthor={replyTarget.author}
+            compact
+            onCancel={onClearReplyTarget}
+            onSuccess={onClearReplyTarget}
+          />
+        </div>
+      ) : null}
+      {visibleReplies.map((reply) => (
+        <Fragment key={reply.id}>
+          <CommentItem
+            comment={reply}
+            postId={postId}
+            threadRootId={thread.id}
+            currentUserId={currentUserId}
+            nested
+            canReply={canPostComment}
+            isPostOwner={isPostOwner}
+            onReply={(threadRootId, anchorCommentId, author) =>
+              onReply({ threadRootId, anchorCommentId, author })
+            }
+          />
+          {canPostComment &&
+          replyTarget?.threadRootId === thread.id &&
+          replyTarget.anchorCommentId === reply.id ? (
+            <div className="ml-16">
+              <CommentForm
+                postId={postId}
+                parentCommentId={replyTarget.threadRootId}
+                replyAuthor={replyTarget.author}
+                compact
+                onCancel={onClearReplyTarget}
+                onSuccess={onClearReplyTarget}
+              />
+            </div>
+          ) : null}
+        </Fragment>
+      ))}
+      {hasHiddenReplies ? (
+        <div className="ml-10">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+            aria-expanded={shouldShowAllReplies}
+            onClick={() => setRepliesExpanded((expanded) => !expanded)}
+          >
+            {shouldShowAllReplies ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <ChevronDown className="size-3.5" />
+            )}
+            {shouldShowAllReplies
+              ? t("collapseComment")
+              : `${t("expandComment")} ${hiddenRepliesCount} ${t("replyButton").toLowerCase()}`}
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function PostComments({
   postId,
   enabled,
@@ -546,63 +698,17 @@ export function PostComments({
             </div>
           ) : (
             threads.map((thread) => (
-              <div key={thread.id} className="space-y-2">
-                <CommentItem
-                  comment={thread}
-                  postId={postId}
-                  threadRootId={thread.id}
-                  currentUserId={currentUserId}
-                  canReply={canPostComment}
-                  isPostOwner={isPostOwner}
-                  onReply={(threadRootId, anchorCommentId, author) =>
-                    setReplyTarget({ threadRootId, anchorCommentId, author })
-                  }
-                />
-                {canPostComment &&
-                replyTarget?.threadRootId === thread.id &&
-                replyTarget.anchorCommentId === thread.id ? (
-                  <div className="ml-10">
-                    <CommentForm
-                      postId={postId}
-                      parentCommentId={replyTarget.threadRootId}
-                      replyAuthor={replyTarget.author}
-                      compact
-                      onCancel={() => setReplyTarget(null)}
-                      onSuccess={() => setReplyTarget(null)}
-                    />
-                  </div>
-                ) : null}
-                {thread.replies.map((reply) => (
-                  <Fragment key={reply.id}>
-                    <CommentItem
-                      comment={reply}
-                      postId={postId}
-                      threadRootId={thread.id}
-                      currentUserId={currentUserId}
-                      nested
-                      canReply={canPostComment}
-                      isPostOwner={isPostOwner}
-                      onReply={(threadRootId, anchorCommentId, author) =>
-                        setReplyTarget({ threadRootId, anchorCommentId, author })
-                      }
-                    />
-                    {canPostComment &&
-                    replyTarget?.threadRootId === thread.id &&
-                    replyTarget.anchorCommentId === reply.id ? (
-                      <div className="ml-16">
-                        <CommentForm
-                          postId={postId}
-                          parentCommentId={replyTarget.threadRootId}
-                          replyAuthor={replyTarget.author}
-                          compact
-                          onCancel={() => setReplyTarget(null)}
-                          onSuccess={() => setReplyTarget(null)}
-                        />
-                      </div>
-                    ) : null}
-                  </Fragment>
-                ))}
-              </div>
+              <CommentThread
+                key={thread.id}
+                thread={thread}
+                postId={postId}
+                currentUserId={currentUserId}
+                canPostComment={canPostComment}
+                isPostOwner={isPostOwner}
+                replyTarget={replyTarget}
+                onReply={setReplyTarget}
+                onClearReplyTarget={() => setReplyTarget(null)}
+              />
             ))
           )}
 

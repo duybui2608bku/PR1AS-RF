@@ -7,7 +7,6 @@ export enum NotificationChannel {
 export enum NotificationCategory {
   BOOKING = "booking",
   WALLET = "wallet",
-  ESCROW = "escrow",
   CHAT = "chat",
   REVIEW = "review",
   DISPUTE = "dispute",

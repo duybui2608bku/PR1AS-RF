@@ -92,6 +92,49 @@ export class ModerationRepository {
     }).lean();
   }
 
+  // Fetch every block edge between a focal user and a list of others in ONE
+  // query. Returns a map keyed by the other user's id; both incoming
+  // (other→focal) and outgoing (focal→other) edges are surfaced so callers
+  // can render the symmetric "either side has blocked" UI without N×2 lookups.
+  async findBlockPairs(
+    focalUserId: string,
+    otherUserIds: string[]
+  ): Promise<
+    Map<string, { outgoing: IUserBlockDocument | null; incoming: IUserBlockDocument | null }>
+  > {
+    const result = new Map<
+      string,
+      { outgoing: IUserBlockDocument | null; incoming: IUserBlockDocument | null }
+    >();
+    if (otherUserIds.length === 0) return result;
+
+    const focal = new Types.ObjectId(focalUserId);
+    const others = otherUserIds.map((id) => new Types.ObjectId(id));
+
+    const rows = await UserBlock.find({
+      $or: [
+        { blocker_id: focal, blocked_id: { $in: others } },
+        { blocker_id: { $in: others }, blocked_id: focal },
+      ],
+    }).lean<IUserBlockDocument[]>();
+
+    for (const id of otherUserIds) {
+      result.set(id, { outgoing: null, incoming: null });
+    }
+    for (const row of rows) {
+      const blockerId = row.blocker_id.toString();
+      const blockedId = row.blocked_id.toString();
+      if (blockerId === focalUserId) {
+        const entry = result.get(blockedId);
+        if (entry) entry.outgoing = row;
+      } else {
+        const entry = result.get(blockerId);
+        if (entry) entry.incoming = row;
+      }
+    }
+    return result;
+  }
+
   async createReport(data: {
     reporterId: string;
     targetType: ReportTargetType;

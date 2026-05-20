@@ -100,12 +100,16 @@ export class CommentRepository {
     );
   }
 
-  async softDeleteByPostId(postId: string | Types.ObjectId): Promise<void> {
+  async softDeleteByPostId(
+    postId: string | Types.ObjectId,
+    session?: import("mongoose").ClientSession
+  ): Promise<void> {
     const postObjectId =
       typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Comment.updateMany(
       { post_id: postObjectId, deleted_at: null },
-      { deleted_at: new Date(), updated_at: new Date() }
+      { deleted_at: new Date(), updated_at: new Date() },
+      { session }
     );
   }
 }

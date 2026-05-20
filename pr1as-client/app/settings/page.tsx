@@ -18,6 +18,17 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -32,7 +43,10 @@ import {
 import { useReputationHistory } from "@/lib/hooks/use-reputation"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
-import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
+import {
+  getReputationBadgeClass,
+  getReputationScore,
+} from "@/lib/utils/reputation"
 import type {
   ModerationReport,
   ReportReason,
@@ -45,7 +59,11 @@ import type {
   ReputationHistoryReason,
 } from "@/services/reputation.service"
 
-type SettingsSection = "blocked" | "post-reports" | "worker-reports" | "reputation"
+type SettingsSection =
+  | "blocked"
+  | "post-reports"
+  | "worker-reports"
+  | "reputation"
 
 const sections: Array<{
   id: SettingsSection
@@ -102,9 +120,10 @@ function formatDateTime(value?: string | null) {
 function getBlockedUser(block: UserBlock) {
   const blocked = block.blocked_id
   if (typeof blocked === "object" && blocked) {
+    const id = blocked._id ?? blocked.id
     return {
-      id: blocked._id,
-      name: blocked.full_name || blocked.email || blocked._id,
+      id,
+      name: blocked.full_name || blocked.email || id || "Người dùng",
       email: blocked.email ?? "",
     }
   }
@@ -139,7 +158,11 @@ function getPostPreview(value: unknown) {
   }
   if (post.deleted || post.deleted_at) return "Bài viết đã bị xóa"
   const body = post.body?.trim()
-  return body ? (body.length > 96 ? `${body.slice(0, 96)}...` : body) : "Bài viết"
+  return body
+    ? body.length > 96
+      ? `${body.slice(0, 96)}...`
+      : body
+    : "Bài viết"
 }
 
 function getReportedPost(value: unknown) {
@@ -194,7 +217,9 @@ function ReportOutcome({ report }: { report: ModerationReport }) {
     return <Badge variant="outline">Đã áp dụng hạn chế</Badge>
   }
   if (report.status === "resolved") {
-    return <Badge variant="outline">Đã xử lý, chưa có hành động công khai</Badge>
+    return (
+      <Badge variant="outline">Đã xử lý, chưa có hành động công khai</Badge>
+    )
   }
   if (report.status === "rejected") {
     return <Badge variant="destructive">Không vi phạm</Badge>
@@ -232,25 +257,53 @@ function BlockedList() {
       {blocks.map((block) => {
         const user = getBlockedUser(block)
         return (
-          <div key={block.id} className="flex items-center justify-between gap-4 py-4">
+          <div
+            key={block.id}
+            className="flex items-center justify-between gap-4 py-4"
+          >
             <div className="min-w-0">
               <p className="truncate font-medium">{user.name}</p>
               <p className="truncate text-sm text-muted-foreground">
                 {user.email || "Không có email"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {block.block_profile ? "Đang chặn profile và bài viết" : "Chỉ chặn chat"}
+                {block.block_profile
+                  ? "Đang chặn profile và bài viết"
+                  : "Chỉ chặn chat"}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={unblockMutation.isPending}
-              onClick={() => unblockMutation.mutate(user.id)}
-            >
-              Bỏ chặn
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={unblockMutation.isPending || !user.id}
+                >
+                  Bỏ chặn
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Bỏ chặn người dùng?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn sẽ có thể nhắn tin và xem lại nội dung của {user.name}.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 sm:space-x-0">
+                  <AlertDialogCancel className="mt-0">Hủy</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={unblockMutation.isPending || !user.id}
+                    onClick={() => {
+                      if (!user.id) return
+                      unblockMutation.mutate(user.id)
+                    }}
+                  >
+                    Xác nhận bỏ chặn
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )
       })}
@@ -278,7 +331,7 @@ function ReportedPostDialog({
         <div className="space-y-4">
           <div className="rounded-md bg-muted/30 p-4">
             {post.body ? (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {post.body}
               </p>
             ) : (
@@ -327,7 +380,11 @@ function ReportedPostDialog({
 function ReportsList({ targetType }: { targetType: ReportTargetType }) {
   const [previewReport, setPreviewReport] =
     React.useState<ModerationReport | null>(null)
-  const reportsQuery = useMyReports({ page: 1, limit: 30, target_type: targetType })
+  const reportsQuery = useMyReports({
+    page: 1,
+    limit: 30,
+    target_type: targetType,
+  })
   const reports = reportsQuery.data?.data ?? []
 
   if (reportsQuery.isLoading) return <LoadingPanel />
@@ -347,58 +404,67 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
   return (
     <>
       <div className="space-y-3">
-      {reports.map((report) => {
-        const id = report.id ?? report._id ?? `${report.target_type}-${report.created_at}`
-        const workerId = getObjectId(report.target_user_id)
-        return (
-          <div key={id} className="rounded-md border bg-background p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={statusVariants[report.status]}>
-                    {statusLabels[report.status]}
-                  </Badge>
-                  <ReportOutcome report={report} />
-                </div>
-                <p className="font-medium">
-                  {targetType === "worker" && workerId ? (
-                    <Link href={`/worker/${workerId}`} className="text-primary hover:underline">
-                      {getDisplayName(report.target_user_id)}
-                    </Link>
-                  ) : (
-                    getPostPreview(report.post_id)
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Lý do: {reasonLabels[report.reason]} · {formatDateTime(report.created_at)}
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:items-end">
-                {targetType === "post" ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPreviewReport(report)}
-                  >
-                    <Eye className="size-4" />
-                    Xem bài viết
-                  </Button>
-                ) : null}
-                {report.admin_note ? (
-                  <div className="max-w-sm rounded-md bg-muted px-3 py-2 text-sm">
-                    <span className="font-medium">Phản hồi: </span>
-                    {report.admin_note}
+        {reports.map((report) => {
+          const id =
+            report.id ??
+            report._id ??
+            `${report.target_type}-${report.created_at}`
+          const workerId = getObjectId(report.target_user_id)
+          return (
+            <div key={id} className="rounded-md border bg-background p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={statusVariants[report.status]}>
+                      {statusLabels[report.status]}
+                    </Badge>
+                    <ReportOutcome report={report} />
                   </div>
-                ) : null}
+                  <p className="font-medium">
+                    {targetType === "worker" && workerId ? (
+                      <Link
+                        href={`/worker/${workerId}`}
+                        className="text-primary hover:underline"
+                      >
+                        {getDisplayName(report.target_user_id)}
+                      </Link>
+                    ) : (
+                      getPostPreview(report.post_id)
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Lý do: {reasonLabels[report.reason]} ·{" "}
+                    {formatDateTime(report.created_at)}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:items-end">
+                  {targetType === "post" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewReport(report)}
+                    >
+                      <Eye className="size-4" />
+                      Xem bài viết
+                    </Button>
+                  ) : null}
+                  {report.admin_note ? (
+                    <div className="max-w-sm rounded-md bg-muted px-3 py-2 text-sm">
+                      <span className="font-medium">Phản hồi: </span>
+                      {report.admin_note}
+                    </div>
+                  ) : null}
+                </div>
               </div>
+              {report.description ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {report.description}
+                </p>
+              ) : null}
             </div>
-            {report.description ? (
-              <p className="mt-3 text-sm text-muted-foreground">{report.description}</p>
-            ) : null}
-          </div>
-        )
-      })}
+          )
+        })}
       </div>
       <ReportedPostDialog
         report={previewReport}
@@ -425,7 +491,12 @@ function ReputationPanel() {
             <p className="text-sm text-muted-foreground">Điểm hiện tại</p>
             <p className="text-3xl font-semibold tracking-tight">{score}/100</p>
           </div>
-          <span className={cn("rounded-full px-3 py-1 text-sm font-medium", getReputationBadgeClass(score))}>
+          <span
+            className={cn(
+              "rounded-full px-3 py-1 text-sm font-medium",
+              getReputationBadgeClass(score)
+            )}
+          >
             {score < 30 ? "Cần cải thiện" : score < 70 ? "Ổn định" : "Tốt"}
           </span>
         </div>
@@ -437,15 +508,24 @@ function ReputationPanel() {
       {historyQuery.isLoading ? (
         <LoadingPanel />
       ) : histories.length === 0 ? (
-        <EmptyState icon={ShieldCheck} title="Chưa có lịch sử cộng hoặc trừ điểm." />
+        <EmptyState
+          icon={ShieldCheck}
+          title="Chưa có lịch sử cộng hoặc trừ điểm."
+        />
       ) : (
         <div className="divide-y rounded-md border bg-background">
           {histories.map((item: ReputationHistory) => (
-            <div key={item.id} className="flex items-center justify-between gap-4 p-4">
+            <div
+              key={item.id}
+              className="flex items-center justify-between gap-4 p-4"
+            >
               <div className="min-w-0">
-                <p className="font-medium">{reputationReasonLabels[item.reason]}</p>
+                <p className="font-medium">
+                  {reputationReasonLabels[item.reason]}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {item.previous_score} → {item.new_score} · {formatDateTime(item.created_at)}
+                  {item.previous_score} → {item.new_score} ·{" "}
+                  {formatDateTime(item.created_at)}
                 </p>
               </div>
               <Badge variant={item.delta >= 0 ? "outline" : "destructive"}>
@@ -478,25 +558,27 @@ function SectionContent({ section }: { section: SettingsSection }) {
 export default function SettingsPage() {
   const [activeSection, setActiveSection] =
     React.useState<SettingsSection>("blocked")
-  const active = sections.find((item) => item.id === activeSection) ?? sections[0]
+  const active =
+    sections.find((item) => item.id === activeSection) ?? sections[0]
 
   return (
-    <div className="container mx-auto px-4 py-16 lg:py-24">
+    <div className="container mx-auto px-4 py-4 lg:py-24">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <ShieldCheck className="size-5" />
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Cài đặt</h1>
-          <p className="text-sm text-muted-foreground">
-            Quản lý an toàn tài khoản, báo cáo và điểm uy tín của bạn.
-          </p>
         </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[17rem_1fr]">
-        <aside className="lg:sticky lg:top-20 lg:self-start">
-          <Card className="p-2">
+        <aside className="-mx-4 overflow-hidden border-y bg-background px-4 py-2 lg:sticky lg:top-20 lg:mx-0 lg:self-start lg:border-0 lg:bg-transparent lg:p-0">
+          <Card
+            className="flex gap-2 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] lg:flex-col lg:gap-1 lg:overflow-visible lg:rounded-md lg:border lg:bg-card lg:p-2 lg:shadow-sm [&::-webkit-scrollbar]:hidden"
+            role="tablist"
+            aria-label="Settings sections"
+          >
             {sections.map((item) => {
               const Icon = item.icon
               const isActive = item.id === activeSection
@@ -504,15 +586,17 @@ export default function SettingsPage() {
                 <button
                   key={item.id}
                   type="button"
+                  role="tab"
+                  aria-selected={isActive}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition",
+                    "flex h-10 shrink-0 items-center gap-2.5 rounded-md px-3 text-left text-sm font-medium whitespace-nowrap transition lg:w-full lg:justify-start",
                     isActive
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                   onClick={() => setActiveSection(item.id)}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
                 </button>
               )
