@@ -11,9 +11,16 @@ import { escapeRegExp } from "../../utils/string";
 
 export interface CreateUserInput {
   email: string;
-  password_hash: string;
+  password_hash?: string;
   full_name?: string;
   phone?: string;
+}
+
+export interface CreateGoogleUserInput {
+  email: string;
+  google_id: string;
+  full_name?: string;
+  avatar?: string;
 }
 
 export interface FindAllUsersResult {
@@ -82,7 +89,7 @@ export class UserRepository {
   async create(data: CreateUserInput): Promise<IUserDocument> {
     const user = new User({
       email: data.email.toLowerCase().trim(),
-      password_hash: data.password_hash,
+      password_hash: data.password_hash || null,
       full_name: data.full_name || null,
       phone: data.phone || null,
       roles: [UserRole.CLIENT],
@@ -93,6 +100,29 @@ export class UserRepository {
     });
 
     return user.save();
+  }
+
+  async findByGoogleId(googleId: string): Promise<IUserDocument | null> {
+    return User.findOne({ google_id: googleId }).select("+google_id");
+  }
+
+  async createGoogleUser(data: CreateGoogleUserInput): Promise<IUserDocument> {
+    const user = new User({
+      email: data.email.toLowerCase().trim(),
+      google_id: data.google_id,
+      full_name: data.full_name || null,
+      avatar: data.avatar || null,
+      roles: [UserRole.CLIENT],
+      status: UserStatus.ACTIVE,
+      verify_email: true,
+      created_at: new Date(),
+      last_login: null,
+    });
+    return user.save();
+  }
+
+  async linkGoogleId(id: string, googleId: string): Promise<void> {
+    await User.findByIdAndUpdate(id, { google_id: googleId });
   }
 
   async updateRoles(id: string, roles: UserRole[]): Promise<IUserDocument | null> {
