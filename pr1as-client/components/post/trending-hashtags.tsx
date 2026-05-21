@@ -4,7 +4,43 @@ import Link from "next/link"
 import { Hash, TrendingUp } from "lucide-react"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import { useGetTrendingHashtags } from "@/lib/hooks/use-hashtags"
+
+export function TrendingHashtagsStrip({ className }: { className?: string }) {
+  const { data: trending, isLoading } = useGetTrendingHashtags({ window: "24h", limit: 10 })
+
+  const isEmpty = !isLoading && (!trending || trending.length === 0)
+
+  return (
+    <div className={cn("rounded-xl border bg-card px-4 py-3 shadow-sm", className)}>
+      <div className="flex items-center gap-3 overflow-x-auto scrollbar-none">
+        <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <TrendingUp className="size-3.5 text-primary" />
+          Xu hướng
+        </span>
+        <div className="h-4 w-px shrink-0 bg-border" />
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-6 w-16 shrink-0 rounded-full" />
+          ))
+        ) : isEmpty ? (
+          <span className="text-xs text-muted-foreground">Chưa có hashtag nào.</span>
+        ) : (
+          (trending ?? []).map((tag) => (
+            <Link
+              key={tag.slug}
+              href={`/posts?hashtag=${tag.slug}`}
+              className="shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
+            >
+              #{tag.display}
+            </Link>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function TrendingHashtags() {
   const { data: trending, isLoading } = useGetTrendingHashtags({ window: "24h", limit: 10 })
