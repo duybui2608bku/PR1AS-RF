@@ -12,7 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
+import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useCreatePost } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -79,17 +81,21 @@ export function CreatePostForm() {
   const [previews, setPreviews] = useState<ImagePreview[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const postImageEditor = useImageEditorQueue()
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
+    if (fileInputRef.current) fileInputRef.current.value = ""
     const remaining = MAX_IMAGES - previews.length
     const selected = files.slice(0, remaining)
-    const newPreviews = selected.map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }))
-    setPreviews((prev) => [...prev, ...newPreviews])
-    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (!selected.length) return
+    postImageEditor.start(selected, (croppedFiles) => {
+      const newPreviews = croppedFiles.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }))
+      setPreviews((prev) => [...prev, ...newPreviews])
+    })
   }
 
   const removeImage = (index: number) => {
@@ -291,6 +297,13 @@ export function CreatePostForm() {
           </Button>
         </DialogContent>
       </Dialog>
+      <ImageEditorDialog
+        file={postImageEditor.currentFile}
+        queueInfo={postImageEditor.queuePosition}
+        onConfirm={postImageEditor.confirm}
+        onSkip={postImageEditor.skip}
+        onCancel={postImageEditor.cancel}
+      />
     </>
   )
 }

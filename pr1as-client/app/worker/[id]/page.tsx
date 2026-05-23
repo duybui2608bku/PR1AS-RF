@@ -6,6 +6,7 @@ import { AlertCircle, Flag, ImagePlus, Loader2, X } from "lucide-react"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -34,6 +35,7 @@ import {
   useToggleFavoriteWorker,
   useWorkerDetail,
 } from "@/lib/hooks/use-worker"
+import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useOpenWorkerReport, useReportWorker } from "@/lib/hooks/use-moderation"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
@@ -73,6 +75,7 @@ export default function WorkerProfilePage({
   const [reportDescriptionError, setReportDescriptionError] = useState("")
   const [reportEvidenceImages, setReportEvidenceImages] = useState<File[]>([])
   const [isReportSubmitting, setIsReportSubmitting] = useState(false)
+  const evidenceEditor = useImageEditorQueue()
 
   const favoriteIdsQuery = useFavoriteWorkerIds()
   const toggleFavoriteMutation = useToggleFavoriteWorker()
@@ -158,10 +161,14 @@ export default function WorkerProfilePage({
   }
 
   const handleReportEvidenceChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.startsWith("image/")
+    const files = Array.from(event.target.files ?? []).filter((f) =>
+      f.type.startsWith("image/")
     )
-    setReportEvidenceImages(files)
+    event.target.value = ""
+    if (!files.length) return
+    evidenceEditor.start(files, (croppedFiles) => {
+      setReportEvidenceImages(croppedFiles)
+    })
   }
 
   const removeReportEvidenceImage = (index: number) => {
@@ -363,6 +370,13 @@ export default function WorkerProfilePage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ImageEditorDialog
+        file={evidenceEditor.currentFile}
+        queueInfo={evidenceEditor.queuePosition}
+        onConfirm={evidenceEditor.confirm}
+        onSkip={evidenceEditor.skip}
+        onCancel={evidenceEditor.cancel}
+      />
     </SiteLayout>
   )
 }

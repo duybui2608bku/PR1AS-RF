@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -44,6 +45,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { useMe } from "@/lib/hooks/use-auth"
+import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import {
   useMyWorkerServices,
   useUpdateWorkerProfile,
@@ -300,6 +302,8 @@ export default function WorkerSetupPage() {
     }
   }
 
+  const galleryEditor = useImageEditorQueue()
+
   const [selectedPricing, setSelectedPricing] = useState<
     Map<string, WorkerPricingSlot[]>
   >(new Map())
@@ -514,39 +518,38 @@ export default function WorkerSetupPage() {
     })
   }
 
-  const handleGalleryFiles = async (files: FileList | null) => {
-    if (!files?.length) return
-    const arr = Array.from(files)
+  const handleGalleryFiles = (files: FileList | null) => {
+    const arr = Array.from(files ?? [])
+    if (galleryInputRef.current) galleryInputRef.current.value = ""
+    if (!arr.length) return
     const remaining = MAX_GALLERY - galleryUrls.length
     const slice = arr.slice(0, remaining)
-    for (const file of slice) {
-      if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) {
+    const valid = slice.filter((f) => {
+      if (!/^image\/(jpeg|png|webp)$/i.test(f.type)) {
         toast.error("Chỉ chấp nhận JPG, PNG hoặc WebP.")
-        continue
+        return false
       }
-      if (file.size > MAX_IMAGE_BYTES) {
+      if (f.size > MAX_IMAGE_BYTES) {
         toast.error("Ảnh vượt quá 5MB.")
-        continue
+        return false
       }
-    }
-    const valid = slice.filter(
-      (f) =>
-        /^image\/(jpeg|png|webp)$/i.test(f.type) && f.size <= MAX_IMAGE_BYTES,
-    )
+      return true
+    })
     if (!valid.length) return
-    setGalleryUploading(true)
-    try {
-      const urls: string[] = []
-      for (const file of valid) {
-        urls.push(await uploadImage(file))
+    galleryEditor.start(valid, async (croppedFiles) => {
+      setGalleryUploading(true)
+      try {
+        const urls: string[] = []
+        for (const file of croppedFiles) {
+          urls.push(await uploadImage(file))
+        }
+        setGalleryUrls((prev) => [...prev, ...urls].slice(-MAX_GALLERY))
+      } catch (e) {
+        toast.error(getErrorMessage(e, "Tải ảnh thất bại."))
+      } finally {
+        setGalleryUploading(false)
       }
-      setGalleryUrls((prev) => [...prev, ...urls].slice(-MAX_GALLERY))
-    } catch (e) {
-      toast.error(getErrorMessage(e, "Tải ảnh thất bại."))
-    } finally {
-      setGalleryUploading(false)
-      if (galleryInputRef.current) galleryInputRef.current.value = ""
-    }
+    })
   }
 
   const buildProfilePayload = (): WorkerProfileUpdateInput => {
@@ -1197,6 +1200,13 @@ export default function WorkerSetupPage() {
           </>
         )}
       </div>
+      <ImageEditorDialog
+        file={galleryEditor.currentFile}
+        queueInfo={galleryEditor.queuePosition}
+        onConfirm={galleryEditor.confirm}
+        onSkip={galleryEditor.skip}
+        onCancel={galleryEditor.cancel}
+      />
     </SiteLayout>
   )
 }
