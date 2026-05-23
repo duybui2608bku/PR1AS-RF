@@ -74,6 +74,17 @@ import {
   type ProvinceOption,
   type WardOption,
 } from "@/lib/vn-provinces/work-locations-api"
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import type {
   WorkerExperience,
@@ -125,6 +136,55 @@ function parseVndInput(value: string) {
 
   const amount = Number(digits)
   return Number.isFinite(amount) && amount > 0 ? amount : undefined
+}
+
+function SortableImage({
+  url,
+  index,
+  onRemove,
+}: {
+  url: string
+  index: number
+  onRemove: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: url })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group relative aspect-square overflow-hidden rounded-lg border cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
+      <Image src={url} alt="" fill className="object-cover" sizes="120px" />
+      {index === 0 && (
+        <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+          Chính
+        </span>
+      )}
+      <button
+        type="button"
+        className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+        aria-label="Xóa ảnh"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          onRemove()
+        }}
+      >
+        <X className="size-4" />
+      </button>
+    </div>
+  )
 }
 
 function formatVndInput(value: number | string | undefined) {
@@ -223,6 +283,22 @@ export default function WorkerSetupPage() {
   const [hobbyDraft, setHobbyDraft] = useState("")
   const [galleryUrls, setGalleryUrls] = useState<string[]>([])
   const [galleryUploading, setGalleryUploading] = useState(false)
+
+  const gallerySensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+  )
+
+  function handleGalleryDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setGalleryUrls((prev) => {
+        const oldIndex = prev.indexOf(active.id as string)
+        const newIndex = prev.indexOf(over.id as string)
+        return arrayMove(prev, oldIndex, newIndex)
+      })
+    }
+  }
 
   const [selectedPricing, setSelectedPricing] = useState<
     Map<string, WorkerPricingSlot[]>
@@ -1032,34 +1108,28 @@ export default function WorkerSetupPage() {
                   Tải ảnh
                 </Button>
                 {galleryUrls.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {galleryUrls.map((url, i) => (
-                      <div
-                        key={`${url}-${i}`}
-                        className="group relative aspect-square overflow-hidden rounded-lg border"
-                      >
-                        <Image
-                          src={url}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="120px"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                          aria-label="Xóa ảnh"
-                          onClick={() =>
-                            setGalleryUrls((prev) =>
-                              prev.filter((_, idx) => idx !== i),
-                            )
-                          }
-                        >
-                          <X className="size-4" />
-                        </button>
+                  <DndContext
+                    sensors={gallerySensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleGalleryDragEnd}
+                  >
+                    <SortableContext items={galleryUrls} strategy={rectSortingStrategy}>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {galleryUrls.map((url, i) => (
+                          <SortableImage
+                            key={url}
+                            url={url}
+                            index={i}
+                            onRemove={() =>
+                              setGalleryUrls((prev) =>
+                                prev.filter((_, idx) => idx !== i),
+                              )
+                            }
+                          />
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                 ) : null}
               </CardContent>
             </Card>
