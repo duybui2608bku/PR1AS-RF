@@ -1,3 +1,70 @@
+function readExifOrientation(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const view = new DataView(e.target!.result as ArrayBuffer)
+      if (view.getUint16(0, false) !== 0xffd8) return resolve(1)
+      let offset = 2
+      while (offset < view.byteLength) {
+        const marker = view.getUint16(offset, false)
+        offset += 2
+        if (marker === 0xffe1) {
+          if (view.getUint32(offset + 2, false) !== 0x45786966) break
+          const little = view.getUint16(offset + 8, false) === 0x4949
+          const ifdOffset = offset + 10 + view.getUint32(offset + 12, little)
+          const tags = view.getUint16(ifdOffset, little)
+          for (let i = 0; i < tags; i++) {
+            const tag = view.getUint16(ifdOffset + 2 + i * 12, little)
+            if (tag === 0x0112) {
+              return resolve(view.getUint16(ifdOffset + 2 + i * 12 + 8, little))
+            }
+          }
+          break
+        } else if ((marker & 0xff00) !== 0xff00) {
+          break
+        } else {
+          offset += view.getUint16(offset, false)
+        }
+      }
+      resolve(1)
+    }
+    reader.readAsArrayBuffer(file.slice(0, 64 * 1024))
+  })
+}
+
+async function fixImageOrientation(file: File): Promise<File> {
+  if (!file.type.startsWith("image/jpeg")) return file
+  const orientation = await readExifOrientation(file)
+  if (orientation <= 1) return file
+
+  const bitmap = await createImageBitmap(file)
+  const { width: bw, height: bh } = bitmap
+  const swapped = orientation >= 5
+  const canvas = document.createElement("canvas")
+  canvas.width = swapped ? bh : bw
+  canvas.height = swapped ? bw : bh
+  const ctx = canvas.getContext("2d")!
+  switch (orientation) {
+    case 2: ctx.transform(-1, 0, 0, 1, canvas.width, 0); break
+    case 3: ctx.transform(-1, 0, 0, -1, canvas.width, canvas.height); break
+    case 4: ctx.transform(1, 0, 0, -1, 0, canvas.height); break
+    case 5: ctx.transform(0, 1, 1, 0, 0, 0); break
+    case 6: ctx.transform(0, 1, -1, 0, canvas.height, 0); break
+    case 7: ctx.transform(0, -1, -1, 0, canvas.height, canvas.width); break
+    case 8: ctx.transform(0, -1, 1, 0, 0, canvas.width); break
+  }
+  ctx.drawImage(bitmap, 0, 0)
+  bitmap.close()
+
+  return new Promise<File>((resolve) => {
+    canvas.toBlob(
+      (blob) => resolve(blob ? new File([blob], file.name, { type: "image/jpeg" }) : file),
+      "image/jpeg",
+      0.92,
+    )
+  })
+}
+
 export enum UploadErrorCode {
     REQUEST_FAILED = "UPLOAD_REQUEST_FAILED",
     RESPONSE_INVALID = "UPLOAD_RESPONSE_INVALID",
@@ -44,7 +111,7 @@ export async function uploadImage(
   server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string> {
   const formData = new FormData();
-  formData.append(UploadFormField.Images, file);
+  formData.append(UploadFormField.Images, await fixImageOrientation(file));
   formData.append(UploadFormField.Server, server);
 
   const response = await fetch(UploadConfig.API_URL, {
@@ -80,9 +147,9 @@ export async function uploadMultipleImages(
   server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string[]> {
   const formData = new FormData();
-  files.forEach((file) => {
-    formData.append(UploadFormField.Images, file);
-  });
+  for (const file of files) {
+    formData.append(UploadFormField.Images, await fixImageOrientation(file));
+  }
   formData.append(UploadFormField.Server, server);
 
   const response = await fetch(UploadConfig.API_URL, {

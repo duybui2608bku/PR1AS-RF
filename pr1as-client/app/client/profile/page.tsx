@@ -19,7 +19,9 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
+import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { ProfileEditModal } from "@/app/client/profile/components/profile-edit-modal"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -60,6 +62,7 @@ export default function ClientProfilePage() {
   const updateProfileMutation = useUpdateBasicProfile()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const avatarEditor = useImageEditorQueue()
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
@@ -96,27 +99,26 @@ export default function ClientProfilePage() {
     }
   }
 
-  const handleAvatarSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ""
     if (!file) return
-
-    try {
-      setIsUploadingAvatar(true)
-      const avatarUrl = await uploadImage(file)
-      const response = await updateProfileMutation.mutateAsync({ avatar: avatarUrl })
-      if (!response.success) {
-        toast.error(
-          localizeServerMessage(response.message, "Không thể cập nhật ảnh đại diện.")
-        )
-        return
+    avatarEditor.start([file], async ([croppedFile]) => {
+      try {
+        setIsUploadingAvatar(true)
+        const avatarUrl = await uploadImage(croppedFile)
+        const response = await updateProfileMutation.mutateAsync({ avatar: avatarUrl })
+        if (!response.success) {
+          toast.error(localizeServerMessage(response.message, "Không thể cập nhật ảnh đại diện."))
+          return
+        }
+        toast.success("Cập nhật ảnh đại diện thành công.")
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Tải ảnh thất bại. Vui lòng thử lại."))
+      } finally {
+        setIsUploadingAvatar(false)
       }
-      toast.success("Cập nhật ảnh đại diện thành công.")
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Tải ảnh thất bại. Vui lòng thử lại."))
-    } finally {
-      setIsUploadingAvatar(false)
-      event.target.value = ""
-    }
+    })
   }
 
   if (meQuery.isLoading) {
@@ -291,6 +293,12 @@ export default function ClientProfilePage() {
         isSubmitting={updateProfileMutation.isPending}
         onClose={closeModal}
         onSubmit={handleUpdateProfile}
+      />
+      <ImageEditorDialog
+        file={avatarEditor.currentFile}
+        aspect={1}
+        onConfirm={avatarEditor.confirm}
+        onCancel={avatarEditor.cancel}
       />
     </div>
   )

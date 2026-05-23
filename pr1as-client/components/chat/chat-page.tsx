@@ -37,11 +37,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
+import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { getActiveRole } from "@/lib/auth/roles"
 import { uploadImage } from "@/lib/utils/upload-image"
 import {
@@ -413,6 +415,7 @@ export function ChatPage({
   const [imagePreviews, setImagePreviews] = React.useState<
     { file: File; previewUrl: string }[]
   >([])
+  const chatImageEditor = useImageEditorQueue()
   const messageScrollerRef = React.useRef<HTMLDivElement | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const typingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -1002,11 +1005,13 @@ export function ChatPage({
     const valid = files.filter((f) => f.type.startsWith("image/"))
     if (valid.length < files.length) toast.error("Chỉ hỗ trợ tệp ảnh.")
     if (!valid.length) return
-    const newPreviews = valid.map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }))
-    setImagePreviews((prev) => [...prev, ...newPreviews])
+    chatImageEditor.start(valid, (croppedFiles) => {
+      const newPreviews = croppedFiles.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }))
+      setImagePreviews((prev) => [...prev, ...newPreviews])
+    })
   }
 
   const handleRemoveImagePreview = (index: number) => {
@@ -1665,6 +1670,13 @@ export function ChatPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ImageEditorDialog
+        file={chatImageEditor.currentFile}
+        queueInfo={chatImageEditor.queuePosition}
+        onConfirm={chatImageEditor.confirm}
+        onSkip={chatImageEditor.skip}
+        onCancel={chatImageEditor.cancel}
+      />
     </div>
   )
 }

@@ -54,13 +54,7 @@ export function WorkerProfileHeader({
   const ratingAverage = stats?.average ?? 0
   const ratingCount = stats?.total ?? 0
 
-  const gallery: string[] = []
-  if (worker.user.avatar) gallery.push(worker.user.avatar)
-  if (profile?.gallery_urls) {
-    for (const url of profile.gallery_urls) {
-      if (!gallery.includes(url)) gallery.push(url)
-    }
-  }
+  const gallery: string[] = profile?.gallery_urls ?? []
 
   const [activeIndex, setActiveIndex] = useState(0)
   const activeImage = gallery[activeIndex] ?? gallery[0] ?? null
