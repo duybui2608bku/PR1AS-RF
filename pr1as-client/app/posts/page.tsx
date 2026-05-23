@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { CreatePostForm } from "@/components/post/create-post-form"
 import { PostFeed } from "@/components/post/post-feed"
-import { TrendingHashtags } from "@/components/post/trending-hashtags"
+import { TrendingHashtags, TrendingHashtagsStrip } from "@/components/post/trending-hashtags"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useAuthStore } from "@/lib/store/auth-store"
 
@@ -38,11 +38,12 @@ export default function PostsPage() {
           {/* Main Feed */}
           <div className="space-y-4">
             {canCreatePost ? <CreatePostForm /> : null}
+            <TrendingHashtagsStrip className="lg:hidden" />
             <PostFeed params={hashtag ? { hashtag } : {}} />
           </div>
 
-          {/* Sidebar */}
-          <aside className="space-y-4">
+          {/* Sidebar — desktop only */}
+          <aside className="hidden space-y-4 lg:block">
             <TrendingHashtags />
           </aside>
         </div>

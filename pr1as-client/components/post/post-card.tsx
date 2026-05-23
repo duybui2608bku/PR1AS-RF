@@ -117,7 +117,7 @@ function AuthorAvatar({
 function PostBodyWithHashtags({ body }: { body: string }) {
   const parts = body.split(/(#[\p{L}\p{N}_]{1,50})/gu)
   return (
-    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+    <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
       {parts.map((part, i) =>
         part.startsWith("#") ? (
           <span key={i} className="font-medium text-primary cursor-pointer hover:underline">
@@ -416,7 +416,7 @@ export function PostCard({ post }: Props) {
   return (
     <article className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           {workerHref ? (
             <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
               <AuthorAvatar
@@ -432,13 +432,13 @@ export function PostCard({ post }: Props) {
               planCode={post.author.meta_data?.pricing_plan_code}
             />
           )}
-          <div>
+          <div className="min-w-0">
             {workerHref ? (
-              <Link href={workerHref} className="text-sm font-semibold leading-tight hover:underline">
+              <Link href={workerHref} className="block truncate text-sm font-semibold leading-tight hover:underline">
                 {post.author.full_name ?? t("defaultUser")}
               </Link>
             ) : (
-              <p className="text-sm font-semibold leading-tight">
+              <p className="truncate text-sm font-semibold leading-tight">
                 {post.author.full_name ?? t("defaultUser")}
               </p>
             )}
