@@ -29,4 +29,5 @@ export const modelsName = {
   USER_RESTRICTION: "user_restrictions",
   REPUTATION_CONFIG: "reputation_configs",
   REPUTATION_HISTORY: "reputation_histories",
+  JOB_LOCK: "job_locks",
 };

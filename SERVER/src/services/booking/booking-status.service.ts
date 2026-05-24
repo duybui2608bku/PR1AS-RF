@@ -1,6 +1,7 @@
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { IBookingDocument } from "../../types/booking/booking.types";
 import {
+  BOOKING_LIMITS,
   BookingStatus,
   CancellationReason,
   CancelledBy,
@@ -146,7 +147,10 @@ export class BookingStatusService extends BookingBaseService {
       .catch((error) => logger.error("Booking cancellation notification failed:", error));
 
     if (cancelledBy === CancelledBy.WORKER) {
-      const workerId = updatedBooking.worker_id.toString();
+      const workerIdRaw = updatedBooking.worker_id as unknown as {
+        _id?: unknown;
+      };
+      const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
       void reputationConfigService
         .getValue(ReputationConfigKey.WORKER_CANCEL_DEDUCTION)
         .then((points) =>
@@ -157,6 +161,39 @@ export class BookingStatusService extends BookingBaseService {
           )
         )
         .catch((err) => logger.error("Reputation deduction after worker cancel failed:", err));
+    }
+
+    if (cancelledBy === CancelledBy.CLIENT) {
+      const startTime = updatedBooking.schedule.start_time;
+      const freeWindowMs =
+        BOOKING_LIMITS.CANCELLATION_FREE_HOURS * 60 * 60 * 1000;
+      const isLateCancel =
+        startTime.getTime() - Date.now() < freeWindowMs &&
+        // Only penalize if the worker had already agreed (i.e., slot was held).
+        // PENDING cancellations cost no one anything yet.
+        booking.status !== BookingStatus.PENDING;
+
+      if (isLateCancel) {
+        const clientIdRaw = updatedBooking.client_id as unknown as {
+          _id?: unknown;
+        };
+        const clientId = String(clientIdRaw?._id ?? updatedBooking.client_id);
+        void reputationConfigService
+          .getValue(ReputationConfigKey.CLIENT_LATE_CANCEL_DEDUCTION)
+          .then((points) =>
+            reputationService.deductPoints(
+              clientId,
+              points,
+              ReputationHistoryReason.CLIENT_LATE_CANCEL
+            )
+          )
+          .catch((err) =>
+            logger.error(
+              "Reputation deduction after client late cancel failed:",
+              err
+            )
+          );
+      }
     }
 
     return updatedBooking;

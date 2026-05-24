@@ -191,10 +191,16 @@ export const BOOKING_MESSAGES = {
   DISPUTE_RESOLVED: "Dispute resolved successfully",
   BOOKING_ALREADY_DISPUTED: "This booking already has an active dispute",
   BOOKING_NOT_DISPUTED: "This booking is not in disputed status",
+  ONLY_CLIENT_OR_WORKER_CAN_DISPUTE:
+    "Only the client or worker on this booking can open a dispute",
   ONLY_CLIENT_CAN_DISPUTE: "Only the client can open a dispute",
   ONLY_ADMIN_CAN_RESOLVE_DISPUTE: "Only admin can resolve disputes",
   DISPUTE_INVALID_REFUND_AMOUNT:
     "Refund amount cannot exceed the booking amount",
+  WORKER_INELIGIBLE: "Worker is not available to accept bookings",
+  CLIENT_CANNOT_UPDATE_CONFIRMED:
+    "Booking details can no longer be changed after worker confirmation",
+  SCHEDULE_CONFLICT: "This time slot conflicts with an existing booking",
 } as const;
 
 export const REVIEW_MESSAGES = {

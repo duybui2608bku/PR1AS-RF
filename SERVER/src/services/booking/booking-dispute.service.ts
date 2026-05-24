@@ -2,6 +2,8 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { IBookingDocument } from "../../types/booking/booking.types";
 import {
   BookingStatus,
+  CancellationReason,
+  CancelledBy,
   DisputeReason,
   DisputeResolution,
 } from "../../constants/booking";
@@ -23,9 +25,15 @@ export class BookingDisputeService extends BookingBaseService {
   ): Promise<IBookingDocument> {
     const booking = await this.getBookingOrThrow(bookingId);
 
+    // Either party on the booking may open a dispute. Previously only the
+    // client could, which left workers with no recourse if a client refused
+    // to mark the work COMPLETED.
+    const isParticipant =
+      this.isBookingClient(booking, userId) ||
+      this.isBookingWorker(booking, userId);
     this.ensureAuthorized(
-      this.isBookingClient(booking, userId),
-      BOOKING_MESSAGES.ONLY_CLIENT_CAN_DISPUTE
+      isParticipant,
+      BOOKING_MESSAGES.ONLY_CLIENT_OR_WORKER_CAN_DISPUTE
     );
 
     const canCreateDispute =
@@ -113,18 +121,29 @@ export class BookingDisputeService extends BookingBaseService {
         ? BookingStatus.CANCELLED
         : BookingStatus.COMPLETED;
 
+    const now = new Date();
     const updateData: Partial<IBookingDocument> = {
       dispute: {
         ...booking.dispute,
         resolution,
         resolution_notes: resolutionNotes,
         resolved_by: adminUserId,
-        resolved_at: new Date(),
+        resolved_at: now,
       } as IBookingDocument["dispute"],
     };
 
     if (finalStatus === BookingStatus.COMPLETED) {
-      updateData.completed_at = new Date();
+      updateData.completed_at = now;
+    } else {
+      // Resolving in favor of the client cancels the booking. Populate the
+      // cancellation block so reports/analytics see who cancelled and why,
+      // mirroring the shape produced by the normal cancel flow.
+      updateData.cancellation = {
+        cancelled_at: now,
+        cancelled_by: CancelledBy.ADMIN,
+        reason: CancellationReason.POLICY_VIOLATION,
+        notes: resolutionNotes,
+      };
     }
 
     const updatedBooking = await bookingRepository.updateStatus(
