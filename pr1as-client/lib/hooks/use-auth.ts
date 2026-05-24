@@ -34,6 +34,7 @@ export interface RegisterRequest {
 interface AuthResponse {
   user: AuthUser
   token: string
+  refreshToken?: string
 }
 
 interface SwitchRoleRequest {
@@ -78,8 +79,8 @@ export function useLogin() {
         return
       }
 
-      const { user, token } = data.data
-      setAuth({ user, token })
+      const { user, token, refreshToken } = data.data
+      setAuth({ user, token, refreshToken })
       // Set the httpOnly session cookie from the server side so it is
       // inaccessible to JavaScript (XSS-safe). Fire before invalidating
       // queries so the cookie is present for any subsequent SSR checks.
@@ -100,8 +101,8 @@ export function useGoogleLogin() {
     },
     onSuccess: async (data) => {
       if (!data.success || !data.data) return
-      const { user, token } = data.data
-      setAuth({ user, token })
+      const { user, token, refreshToken } = data.data
+      setAuth({ user, token, refreshToken })
       await setSessionCookie(token)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
@@ -230,6 +231,9 @@ export function useUpdateBasicProfile() {
 
   return useMutation({
     mutationFn: async (payload: UpdateBasicProfileRequest) => {
+      if (payload.password && !payload.old_password) {
+        throw new Error("Mật khẩu cũ là bắt buộc khi thay đổi mật khẩu.")
+      }
       const response = await api.patch<ApiResponse<{ user: AuthUser }>>("/auth/update-profile", payload)
       return response.data
     },
