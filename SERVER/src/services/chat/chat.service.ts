@@ -34,6 +34,7 @@ import { moderationService } from "../moderation";
 import { moderationRepository } from "../../repositories/moderation";
 import type { IUserDocument } from "../../types/auth/user.types";
 import { sanitizeMessageContent } from "../../utils/sanitize";
+import { isValidMediaUrl } from "../../utils/mediaUrl";
 import { MessageType } from "../../types/chat/message.type";
 
 export class ChatService {
@@ -155,6 +156,19 @@ export class ChatService {
         );
       }
       input = { ...input, content: cleaned };
+    } else {
+      // Media messages (image/video/audio/file): content is a URL. Without
+      // validation a malicious client could inject `javascript:` schemes,
+      // IDN homograph hosts, or oversized payloads — all of which the
+      // recipient's renderer would happily resolve. Validate here so the
+      // DB never holds an unsafe URL in the first place.
+      if (!isValidMediaUrl(input.content)) {
+        throw new AppError(
+          CHAT_MESSAGES.INVALID_MEDIA_URL,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.VALIDATION_ERROR
+        );
+      }
     }
 
     if (input.reply_to_id) {
@@ -172,10 +186,18 @@ export class ChatService {
       }
     }
 
-    const message = await chatRepository.createMessage(sender_id, input);
+    // Resolve the conversation first, then persist the message inside it.
+    // The reverse order ("create message, then locate conversation") used to
+    // work because the repository transparently created the conversation in
+    // its createMessage path — fragile and easy to break in a refactor.
     const conversation = await chatRepository.findOrCreateConversation(
       sender_id,
       input.receiver_id
+    );
+    const message = await chatRepository.createMessage(
+      sender_id,
+      conversation._id,
+      input
     );
 
     const io = getSocketIO();
@@ -236,6 +258,19 @@ export class ChatService {
     next_cursor: string | null;
   }> {
     const { page = 1, limit = 50 } = query;
+
+    // Require at least one filter. The repository silently returns an empty
+    // page when neither is provided, but the service must not allow the
+    // caller to bypass the access checks below by simply omitting both — it
+    // hides a footgun for any future code that uses the result for
+    // authorisation decisions.
+    if (!query.receiver_id && !query.conversation_id) {
+      throw new AppError(
+        CHAT_MESSAGES.CONVERSATION_OR_RECEIVER_REQUIRED,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.VALIDATION_ERROR
+      );
+    }
 
     if (query.receiver_id) {
       const [currentUser, receiver] = await Promise.all([

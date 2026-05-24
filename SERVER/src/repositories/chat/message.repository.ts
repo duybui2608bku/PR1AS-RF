@@ -8,17 +8,23 @@ import type {
 import { conversationRepository } from "./conversation.repository";
 
 export class MessageRepository {
+  /**
+   * Persist a chat message inside an existing conversation.
+   *
+   * The caller (service layer) is responsible for resolving / creating the
+   * conversation first via `conversationRepository.findOrCreateConversation`
+   * and passing the resulting `_id` here. Keeping that order explicit at the
+   * service layer matches the semantic order ("conversation exists, then
+   * message lives in it") and avoids the previous duplicate
+   * `findOrCreateConversation` call between service and repo.
+   */
   async createMessage(
     sender_id: string,
+    conversation_id: string,
     input: CreateMessageInput
   ): Promise<IMessage> {
-    const conversation = await conversationRepository.findOrCreateConversation(
-      sender_id,
-      input.receiver_id
-    );
-
     const message = new Message({
-      conversation_id: new Types.ObjectId(conversation._id),
+      conversation_id: new Types.ObjectId(conversation_id),
       sender_id: new Types.ObjectId(sender_id),
       receiver_id: new Types.ObjectId(input.receiver_id),
       type: input.type,
@@ -35,7 +41,7 @@ export class MessageRepository {
     const messageObj = savedMessage.toObject();
 
     await conversationRepository.updateConversationLastMessage(
-      conversation._id,
+      conversation_id,
       savedMessage._id.toString()
     );
 

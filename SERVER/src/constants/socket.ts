@@ -9,4 +9,7 @@ export const SOCKET_EVENTS = {
   NOTIFICATION_NEW: "notification:new",
   NOTIFICATION_READ: "notification:read",
   NOTIFICATION_UNREAD_COUNT: "notification:unread_count",
+  TOKEN_REFRESH_REQUIRED: "auth:token_refresh_required",
+  TOKEN_REFRESH: "auth:token_refresh",
+  TOKEN_REFRESHED: "auth:token_refreshed",
 } as const;

@@ -122,6 +122,9 @@ export const CHAT_MESSAGES = {
   GROUP_CONVERSATION_NOT_FOUND: "Group conversation not found",
   GROUP_MESSAGE_NOT_FOUND: "Group message not found",
   GROUP_CONVERSATION_ID_REQUIRED: "Group conversation ID is required",
+  CONVERSATION_OR_RECEIVER_REQUIRED:
+    "Either conversation_id or receiver_id must be provided",
+  INVALID_MEDIA_URL: "Media URL is invalid or from an unauthorized host",
 } as const;
 
 export const CSRF_MESSAGES = {
