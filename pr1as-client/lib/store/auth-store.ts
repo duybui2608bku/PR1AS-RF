@@ -50,10 +50,11 @@ export type AuthUser = {
 type AuthState = {
   user: AuthUser | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   /** Set while a logout-on-401 is in flight to avoid multiple cascading logouts. */
   isLoggingOut: boolean
-  setAuth: (payload: { user: AuthUser; token: string }) => void
+  setAuth: (payload: { user: AuthUser; token: string; refreshToken?: string | null }) => void
   /** Updates user info without touching the token (e.g. after role switch or profile update). */
   setUser: (user: AuthUser) => void
   clearAuth: () => void
@@ -70,12 +71,13 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoggingOut: false,
-      setAuth: ({ user, token }) => {
+      setAuth: ({ user, token, refreshToken = null }) => {
         removeLegacyAuthToken()
         setActiveRoleCookie(getActiveRole(user))
-        set({ user, token, isAuthenticated: true, isLoggingOut: false })
+        set({ user, token, refreshToken, isAuthenticated: true, isLoggingOut: false })
       },
       setUser: (user) => {
         setActiveRoleCookie(getActiveRole(user))
@@ -87,6 +89,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoggingOut: false,
         })
@@ -101,6 +104,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

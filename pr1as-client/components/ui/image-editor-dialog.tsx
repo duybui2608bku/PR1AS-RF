@@ -42,6 +42,7 @@ export function ImageEditorDialog({
 
   useEffect(() => {
     if (!file) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageSrc(null)
       return
     }
