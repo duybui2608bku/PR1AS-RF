@@ -24,6 +24,7 @@ import {
 } from "../../repositories/wallet";
 import { TransactionStatus, TransactionType } from "../../constants/wallet";
 import mongoose from "mongoose";
+import { User } from "../../models/auth/user.model";
 
 interface CreatePricingPlanInput {
   package_code: PricingPlanCode;
@@ -93,6 +94,58 @@ class PricingService {
     return next;
   }
 
+  /**
+   * Downgrades every user whose non-STANDARD plan has expired and records a
+   * history event for each. Designed to be called by a scheduled job — must
+   * never be invoked on a request-path call to keep reads side-effect-free.
+   */
+  async expireOverdueUserPlans(): Promise<number> {
+    const now = new Date();
+    const candidates = await User.find({
+      "meta_data.pricing_plan_code": { $ne: PricingPlanCode.STANDARD },
+      "meta_data.pricing_expires_at": { $lt: now, $ne: null },
+    })
+      .select("_id meta_data.pricing_plan_code meta_data.pricing_expires_at")
+      .lean();
+
+    let downgraded = 0;
+    for (const candidate of candidates) {
+      const userId = candidate._id.toString();
+      const fromPlan =
+        (candidate as { meta_data?: { pricing_plan_code?: PricingPlanCode } })
+          .meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+      const previousExpiresAt =
+        (candidate as { meta_data?: { pricing_expires_at?: Date | null } })
+          .meta_data?.pricing_expires_at ?? null;
+
+      await userRepository.updatePricingInfo(userId, {
+        pricing_plan_code: PricingPlanCode.STANDARD,
+        pricing_started_at: null,
+        pricing_expires_at: null,
+      });
+
+      await UserSubscriptionHistory.create({
+        user_id: userId,
+        from_plan_code: fromPlan,
+        to_plan_code: PricingPlanCode.STANDARD,
+        event_type: SubscriptionEventType.EXPIRED_DOWNGRADE,
+        status: SubscriptionEventStatus.SUCCESS,
+        source: SubscriptionSource.SYSTEM,
+        amount: 0,
+        started_at: null,
+        expires_at: null,
+        metadata: {
+          reason: "expired",
+          previous_expires_at: previousExpiresAt,
+        },
+      });
+
+      downgraded += 1;
+    }
+
+    return downgraded;
+  }
+
   async ensureUserPlanActive(userId: string): Promise<void> {
     const user = await userRepository.findById(userId);
     if (!user) {
@@ -100,7 +153,8 @@ class PricingService {
     }
 
     const now = new Date();
-    const planCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+    const planCode =
+      user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
     const expiresAt = user.meta_data?.pricing_expires_at ?? null;
     if (planCode !== PricingPlanCode.STANDARD && expiresAt && expiresAt < now) {
       await userRepository.updatePricingInfo(userId, {
@@ -135,7 +189,8 @@ class PricingService {
       throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
     }
 
-    const userPlanCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+    const userPlanCode =
+      user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
     const userStartedAt = user.meta_data?.pricing_started_at ?? null;
     const userExpiresAt = user.meta_data?.pricing_expires_at ?? null;
 
@@ -157,7 +212,8 @@ class PricingService {
       plan_code: userPlanCode,
       started_at: userStartedAt,
       expires_at: userExpiresAt,
-      is_expired: Boolean(userExpiresAt) && (userExpiresAt as Date) < new Date(),
+      is_expired:
+        Boolean(userExpiresAt) && (userExpiresAt as Date) < new Date(),
       package: fallbackPackage.toJSON(),
     };
   }
@@ -178,7 +234,8 @@ class PricingService {
       throw AppError.badRequest(PRICING_MESSAGES.PRICING_INVALID_TARGET_PLAN);
     }
 
-    const currentPlanCode = user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
+    const currentPlanCode =
+      user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
     if (
       hasMinPlan(currentPlanCode, payload.target_plan_code) &&
       currentPlanCode !== PricingPlanCode.STANDARD

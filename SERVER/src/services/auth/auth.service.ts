@@ -1,7 +1,7 @@
 import { userRepository } from "../../repositories/auth/user.repository";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
 import { verifyRefreshToken } from "../../utils/jwt";
-import { generateAuthTokens } from "../../utils/token";
+import { generateAuthTokens, hashOpaqueToken } from "../../utils/token";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -29,21 +29,36 @@ import {
   createEmailVerificationExpiry,
 } from "../../utils/date";
 import { toPublicUser } from "../../utils/user.helper";
-import { pricingService } from "../pricing";
+import { OAuth2Client } from "google-auth-library";
+
+const googleOAuthClient = new OAuth2Client(config.googleClientId);
 
 export class AuthService {
   private hashOpaqueToken(token: string): string {
-    return crypto.createHash("sha256").update(token).digest("hex");
+    return hashOpaqueToken(token);
   }
 
+  /**
+   * Same response shape regardless of whether email already exists, to prevent
+   * account enumeration. Mirrors the policy already used by forgotPassword.
+   */
   async register(input: RegisterInput): Promise<RegisterResponse> {
-    const emailExists = await userRepository.emailExists(input.email);
-    if (emailExists) {
-      throw new AppError(
-        AUTH_MESSAGES.EMAIL_EXISTS,
-        HTTP_STATUS.CONFLICT,
-        ErrorCode.EMAIL_EXISTS
-      );
+    const existing = await userRepository.findByEmail(input.email);
+
+    if (existing) {
+      if (!existing.verify_email) {
+        // Legit user retrying signup before verifying — resend the verification mail.
+        await this.sendVerificationEmailToUser(existing).catch((error) => {
+          logger.error(
+            "Failed to resend verification email on duplicate register",
+            {
+              userId: existing._id.toString(),
+              error: error instanceof Error ? error.message : String(error),
+            }
+          );
+        });
+      }
+      return { requires_email_verification: true };
     }
 
     const password_hash = await hashPassword(input.password);
@@ -149,10 +164,14 @@ export class AuthService {
       );
     }
 
-    const isValid = await comparePassword(
-      refreshToken,
-      user.refresh_token_hash
-    );
+    const presentedHash = hashOpaqueToken(refreshToken);
+    const expectedHash = user.refresh_token_hash;
+    const isValid =
+      presentedHash.length === expectedHash.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(presentedHash),
+        Buffer.from(expectedHash)
+      );
     if (!isValid) {
       await userRepository.clearRefreshToken(user._id.toString());
       throw new AppError(
@@ -171,7 +190,6 @@ export class AuthService {
   }
 
   async getMe(userId: string): Promise<IUserPublic> {
-    await pricingService.ensureUserPlanActive(userId);
     const user = await userRepository.findById(userId);
     if (!user) {
       throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
@@ -187,7 +205,7 @@ export class AuthService {
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await userRepository.findByEmail(email);
 
-    if (user) {
+    if (user && user.status !== UserStatus.BANNED) {
       const resetToken = crypto.randomBytes(32).toString("hex");
       const resetTokenHash = this.hashOpaqueToken(resetToken);
       const resetExpires = createPasswordResetExpiry();
@@ -260,7 +278,9 @@ export class AuthService {
     await this.sendVerificationEmailToUser(user);
   }
 
-  private async sendVerificationEmailToUser(user: IUserDocument): Promise<void> {
+  private async sendVerificationEmailToUser(
+    user: IUserDocument
+  ): Promise<void> {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationTokenHash = this.hashOpaqueToken(verificationToken);
     const verificationExpires = createEmailVerificationExpiry();
@@ -312,12 +332,9 @@ export class AuthService {
     }
 
     if (user.verify_email) {
+      // Idempotent: a duplicate click on a still-valid link should not error.
       await userRepository.clearEmailVerificationToken(user._id.toString());
-      throw new AppError(
-        AUTH_MESSAGES.EMAIL_ALREADY_VERIFIED,
-        HTTP_STATUS.BAD_REQUEST,
-        ErrorCode.INVALID_TOKEN
-      );
+      return { message: AUTH_MESSAGES.EMAIL_VERIFICATION_SUCCESS };
     }
 
     await userRepository.markEmailVerified(user._id.toString());
@@ -344,47 +361,57 @@ export class AuthService {
     };
   }
 
-  async loginWithGoogle(accessToken: string): Promise<AuthResponse> {
-    let googleUser: { sub: string; email: string; name?: string; picture?: string };
+  /**
+   * Accepts a Google ID token (JWT issued by Google to our client_id).
+   * Replaces the previous access-token + userinfo flow, which couldn't
+   * cryptographically verify token audience and didn't check email_verified.
+   */
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    if (!config.googleClientId) {
+      throw new AppError(
+        "Google login is not configured on this server",
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ErrorCode.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    let sub: string;
+    let email: string;
+    let emailVerified: boolean;
+    let name: string | undefined;
+    let picture: string | undefined;
 
     try {
-      const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken,
+        audience: config.googleClientId,
       });
-      if (!res.ok) throw new Error("userinfo fetch failed");
-      googleUser = await res.json() as { sub: string; email: string; name?: string; picture?: string };
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email) {
+        throw new Error("Missing required claims");
+      }
+      sub = payload.sub;
+      email = payload.email;
+      emailVerified = payload.email_verified === true;
+      name = payload.name;
+      picture = payload.picture;
     } catch {
       throw new AppError(
-        "Google token không hợp lệ",
+        AUTH_MESSAGES.TOKEN_INVALID,
         HTTP_STATUS.UNAUTHORIZED,
         ErrorCode.INVALID_TOKEN
       );
     }
 
-    if (!googleUser.sub || !googleUser.email) {
+    if (!emailVerified) {
       throw new AppError(
-        "Google token không hợp lệ",
-        HTTP_STATUS.UNAUTHORIZED,
-        ErrorCode.INVALID_TOKEN
+        AUTH_MESSAGES.EMAIL_NOT_VERIFIED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.EMAIL_NOT_VERIFIED
       );
     }
 
-    let user = await userRepository.findByGoogleId(googleUser.sub);
-
-    if (!user) {
-      const existingByEmail = await userRepository.findByEmail(googleUser.email);
-      if (existingByEmail) {
-        await userRepository.linkGoogleId(existingByEmail._id.toString(), googleUser.sub);
-        user = existingByEmail;
-      } else {
-        user = await userRepository.createGoogleUser({
-          email: googleUser.email,
-          google_id: googleUser.sub,
-          full_name: googleUser.name,
-          avatar: googleUser.picture,
-        });
-      }
-    }
+    const user = await this.resolveGoogleUser({ sub, email, name, picture });
 
     if (user.status === UserStatus.BANNED) {
       throw new AppError(
@@ -401,6 +428,57 @@ export class AuthService {
       token,
       refreshToken,
     };
+  }
+
+  /**
+   * Maps a verified Google identity to our user record. Handles the three
+   * cases (already linked / link onto existing email / fresh signup) and is
+   * race-safe: a unique sparse index on google_id means two concurrent calls
+   * can't both insert; the duplicate-key loser retries the lookup.
+   */
+  private async resolveGoogleUser(claims: {
+    sub: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }): Promise<IUserDocument> {
+    const existingByGoogleId = await userRepository.findByGoogleId(claims.sub);
+    if (existingByGoogleId) return existingByGoogleId;
+
+    const existingByEmail = await userRepository.findByEmail(claims.email);
+    if (existingByEmail) {
+      await userRepository.linkGoogleId(
+        existingByEmail._id.toString(),
+        claims.sub
+      );
+      return existingByEmail;
+    }
+
+    try {
+      return await userRepository.createGoogleUser({
+        email: claims.email,
+        google_id: claims.sub,
+        full_name: claims.name,
+        avatar: claims.picture,
+      });
+    } catch (err) {
+      // Concurrent request inserted first — re-fetch by either key.
+      if (this.isDuplicateKeyError(err)) {
+        const winner =
+          (await userRepository.findByGoogleId(claims.sub)) ??
+          (await userRepository.findByEmail(claims.email));
+        if (winner) return winner;
+      }
+      throw err;
+    }
+  }
+
+  private isDuplicateKeyError(err: unknown): boolean {
+    return (
+      typeof err === "object" &&
+      err !== null &&
+      (err as { code?: number }).code === 11000
+    );
   }
 }
 

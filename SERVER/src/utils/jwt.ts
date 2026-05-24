@@ -32,15 +32,37 @@ export const generateRefreshToken = (
 };
 
 export const verifyToken = (token: string): JWTPayload => {
-  return jwt.verify(token, config.jwtSecret) as JWTPayload;
+  try {
+    return jwt.verify(token, config.jwtSecret) as JWTPayload;
+  } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
+      throw new AppError(
+        AUTH_MESSAGES.TOKEN_EXPIRED,
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
+    throw new AppError(
+      AUTH_MESSAGES.TOKEN_INVALID,
+      HTTP_STATUS.UNAUTHORIZED,
+      ErrorCode.INVALID_TOKEN
+    );
+  }
 };
 
 export const verifyRefreshToken = (token: string): JWTPayload => {
   try {
     return jwt.verify(token, config.jwtRefreshSecret) as JWTPayload;
-  } catch {
+  } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
+      throw new AppError(
+        AUTH_MESSAGES.REFRESH_TOKEN_EXPIRED,
+        HTTP_STATUS.UNAUTHORIZED,
+        ErrorCode.INVALID_TOKEN
+      );
+    }
     throw new AppError(
-      AUTH_MESSAGES.REFRESH_TOKEN_EXPIRED,
+      AUTH_MESSAGES.REFRESH_TOKEN_INVALID,
       HTTP_STATUS.UNAUTHORIZED,
       ErrorCode.INVALID_TOKEN
     );

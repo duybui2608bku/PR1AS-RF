@@ -19,25 +19,40 @@ import {
   USER_MESSAGES,
 } from "../../constants/messages";
 import { AuthRequest } from "../../middleware/auth";
-import { AppError, R, validateWithSchema, extractUserIdFromRequest, toPublicUser } from "../../utils";
+import {
+  AppError,
+  R,
+  validateWithSchema,
+  extractUserIdFromRequest,
+  toPublicUser,
+} from "../../utils";
 import { userService } from "../../services/user/user.service";
 
 export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
-    const data = validateWithSchema(registerSchema, req.body, COMMON_MESSAGES.BAD_REQUEST);
+    const data = validateWithSchema(
+      registerSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
     const result = await authService.register(data);
     R.created(res, result, AUTH_MESSAGES.REGISTER_VERIFY_REQUIRED, req);
   }
 
   async login(req: Request, res: Response): Promise<void> {
-    const data = validateWithSchema(loginSchema, req.body, COMMON_MESSAGES.BAD_REQUEST);
+    const data = validateWithSchema(
+      loginSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
     const result = await authService.login(data);
     R.success(res, result, undefined, req);
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
     const { refreshToken } = req.body;
-    if (!refreshToken) throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
+    if (!refreshToken)
+      throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     const result = await authService.refreshToken(refreshToken);
     R.success(res, result, undefined, req);
   }
@@ -63,7 +78,12 @@ export class AuthController {
       extractUserIdFromRequest(req),
       body.last_active_role
     );
-    R.success(res, { user: toPublicUser(updatedUser) }, USER_MESSAGES.ROLE_UPDATED, req);
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      USER_MESSAGES.ROLE_UPDATED,
+      req
+    );
   }
 
   async updateProfile(req: AuthRequest, res: Response): Promise<void> {
@@ -74,9 +94,14 @@ export class AuthController {
     );
     const updatedUser = await userService.updateWorkerProfile(
       extractUserIdFromRequest(req),
-      body.worker_profile  // no cast: type matches UpdateWorkerProfileSchemaType["worker_profile"]
+      body.worker_profile // no cast: type matches UpdateWorkerProfileSchemaType["worker_profile"]
     );
-    R.success(res, { user: toPublicUser(updatedUser) }, AUTH_MESSAGES.PROFILE_UPDATED, req);
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.PROFILE_UPDATED,
+      req
+    );
   }
 
   async updateBasicProfile(req: AuthRequest, res: Response): Promise<void> {
@@ -89,23 +114,40 @@ export class AuthController {
       extractUserIdFromRequest(req),
       body
     );
-    R.success(res, { user: toPublicUser(updatedUser) }, AUTH_MESSAGES.PROFILE_UPDATED, req);
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.PROFILE_UPDATED,
+      req
+    );
   }
 
   async forgotPassword(req: Request, res: Response): Promise<void> {
-    const data = validateWithSchema(forgotPasswordSchema, req.body, COMMON_MESSAGES.BAD_REQUEST);
+    const data = validateWithSchema(
+      forgotPasswordSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
     const result = await authService.forgotPassword(data.email);
     R.success(res, result, result.message, req);
   }
 
   async resetPassword(req: Request, res: Response): Promise<void> {
-    const data = validateWithSchema(resetPasswordSchema, req.body, COMMON_MESSAGES.BAD_REQUEST);
+    const data = validateWithSchema(
+      resetPasswordSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
     const result = await authService.resetPassword(data.token, data.password);
     R.success(res, result, result.message, req);
   }
 
   async verifyEmail(req: Request, res: Response): Promise<void> {
-    const data = validateWithSchema(verifyEmailSchema, req.body, COMMON_MESSAGES.BAD_REQUEST);
+    const data = validateWithSchema(
+      verifyEmailSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
     const result = await authService.verifyEmail(data.token);
     R.success(res, result, result.message, req);
   }
@@ -121,11 +163,12 @@ export class AuthController {
   }
 
   async googleLogin(req: Request, res: Response): Promise<void> {
-    const { access_token } = req.body;
-    if (!access_token || typeof access_token !== "string") {
+    // Accept `id_token` (canonical) or `credential` (name used by Google Identity Services SDK).
+    const idToken: unknown = req.body?.id_token ?? req.body?.credential;
+    if (!idToken || typeof idToken !== "string") {
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
-    const result = await authService.loginWithGoogle(access_token);
+    const result = await authService.loginWithGoogle(idToken);
     R.success(res, result, undefined, req);
   }
 }
