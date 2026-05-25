@@ -106,7 +106,12 @@ class DashboardService {
       }>([
         {
           $match: {
-            event_type: SubscriptionEventType.UPGRADE,
+            event_type: {
+              $in: [
+                SubscriptionEventType.UPGRADE,
+                SubscriptionEventType.RENEWAL,
+              ],
+            },
             status: SubscriptionEventStatus.SUCCESS,
             created_at: createdAtFilter,
           },

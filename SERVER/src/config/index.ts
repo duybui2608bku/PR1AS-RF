@@ -22,7 +22,13 @@ const getCorsOrigin = () => {
       }
     };
   }
-  return "http://localhost:3000";
+  // Production with no CORS_ORIGIN configured: fail closed. A silent default
+  // of "http://localhost:3000" would either allow nothing useful or — worse —
+  // appear to work behind a misconfigured reverse proxy. Force operators to
+  // make an explicit choice.
+  throw new Error(
+    "CORS_ORIGIN must be configured in production. Set CORS_ORIGIN to your frontend URL(s), comma-separated."
+  );
 };
 
 const nodeEnv = process.env.NODE_ENV || "development";
@@ -120,6 +126,7 @@ export const config = {
     bankAccountNumber: process.env.SEPAY_BANK_ACCOUNT_NUMBER || "SEPBD36270",
     bankName: process.env.SEPAY_BANK_NAME || "OCB",
     webhookApiKey: process.env.SEPAY_WEBHOOK_API_KEY || "",
+    hmacSecret: process.env.SEPAY_HMAC_SHA256 || "",
     paymentCodePrefix: process.env.SEPAY_PAYMENT_CODE_PREFIX || "PRAS",
     qrBaseUrl: process.env.SEPAY_QR_BASE_URL || "https://qr.sepay.vn/img",
   },

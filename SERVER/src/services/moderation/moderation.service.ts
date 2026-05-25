@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { postRepository } from "../../repositories/post/post.repository";
+import { postMediaRepository } from "../../repositories/post/post-media.repository";
+import { postEditHistoryRepository } from "../../repositories/post/post-edit-history.repository";
 import { moderationRepository } from "../../repositories/moderation";
 import {
   MODERATION_MESSAGES,
@@ -109,7 +111,7 @@ export class ModerationService {
         ? (post.author_id as { _id: Types.ObjectId })._id
         : post.author_id
     );
-    return moderationRepository.createReport({
+    const report = await moderationRepository.createReport({
       reporterId,
       targetType: ReportTargetType.POST,
       reason: input.reason,
@@ -117,6 +119,33 @@ export class ModerationService {
       postId: input.post_id,
       targetUserId: authorId,
     });
+
+    // Snapshot the post state at the moment a report is filed so admins can
+    // see exactly what was reported even if the author edits afterwards. We
+    // keep at most one "report_filed" snapshot per post to avoid bloat: if a
+    // snapshot already exists we skip rather than duplicate.
+    try {
+      const hasSnapshot = await postEditHistoryRepository.hasSnapshotForPost(
+        input.post_id
+      );
+      if (!hasSnapshot) {
+        const media = await postMediaRepository.findByPostId(input.post_id);
+        await postEditHistoryRepository.snapshot({
+          post: {
+            _id: post._id,
+            author_id: post.author_id,
+            body: post.body,
+          },
+          media,
+          reason: "report_filed",
+          reportId: report._id as Types.ObjectId,
+        });
+      }
+    } catch (error) {
+      logger.error("Failed to snapshot post on report", error);
+    }
+
+    return report;
   }
 
   async reportWorker(
@@ -184,9 +213,7 @@ export class ModerationService {
       input.status === ReportStatus.RESOLVED &&
       report.target_type === ReportTargetType.WORKER
     ) {
-      const notifyAt = new Date(
-        Date.now() + WORKER_REPORT_RESOLUTION_DEFER_MS
-      );
+      const notifyAt = new Date(Date.now() + WORKER_REPORT_RESOLUTION_DEFER_MS);
       try {
         await moderationRepository.setPendingResolutionNotify(
           String(report._id),

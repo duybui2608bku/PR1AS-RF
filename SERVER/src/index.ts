@@ -21,6 +21,10 @@ import {
   startModerationResolutionJob,
   stopModerationResolutionJob,
 } from "./jobs/moderation-resolution-notify.job";
+import {
+  startPlanExpirationJob,
+  stopPlanExpirationJob,
+} from "./jobs/plan-expiration.job";
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
 
 const app = createApp();
@@ -36,6 +40,7 @@ const startServer = async () => {
     startBookingReminderJob();
     startReputationRecoveryJob();
     startModerationResolutionJob();
+    startPlanExpirationJob();
 
     httpServer.listen(config.port, () => {
       logger.info(
@@ -54,6 +59,7 @@ process.on("SIGTERM", async () => {
   stopBookingReminderJob();
   stopReputationRecoveryJob();
   stopModerationResolutionJob();
+  stopPlanExpirationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();
@@ -67,6 +73,7 @@ process.on("SIGINT", async () => {
   stopBookingReminderJob();
   stopReputationRecoveryJob();
   stopModerationResolutionJob();
+  stopPlanExpirationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();

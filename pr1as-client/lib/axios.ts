@@ -8,20 +8,26 @@ import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { toApiError } from "@/lib/utils/error-handler"
 import { getQueryClient } from "@/lib/query-client"
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL
-const fallbackURL = "http://localhost:3052/api" // Aligned with backend port 3052
+const ensureApiBasePath = (url: string) => {
+  const trimmedUrl = url.replace(/\/+$/, "")
+  return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`
+}
 
-if (!baseURL) {
+const configuredBaseURL = process.env.NEXT_PUBLIC_API_URL
+const fallbackURL = "http://localhost:3052/api"
+const apiBaseURL = ensureApiBasePath(configuredBaseURL ?? fallbackURL)
+
+if (!configuredBaseURL) {
   if (process.env.NODE_ENV === "production") {
     throw new Error("NEXT_PUBLIC_API_URL is required in production builds.")
   }
   console.warn(
-    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${fallbackURL}`
+    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${apiBaseURL}`
   )
 }
 
 export const api: AxiosInstance = axios.create({
-  baseURL: baseURL ?? fallbackURL,
+  baseURL: apiBaseURL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -103,7 +109,7 @@ api.interceptors.response.use(
 
       try {
         // Call backend API directly to refresh tokens
-        const response = await axios.post(`${baseURL ?? fallbackURL}/auth/refresh-token`, {
+        const response = await axios.post(`${apiBaseURL}/auth/refresh-token`, {
           refreshToken,
         }, {
           headers: {

@@ -17,7 +17,7 @@ import { PaginatedResponse } from "../../utils/pagination";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
-import { UserRole } from "../../types/auth/user.types";
+import { UserRole, UserStatus } from "../../types/auth/user.types";
 import { BookingStatus } from "../../constants/booking";
 import { REPUTATION_MESSAGES } from "../../constants/messages";
 import { moderationService } from "../moderation";
@@ -95,6 +95,19 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
+    const workerIneligible =
+      worker.status !== UserStatus.ACTIVE ||
+      !worker.verify_email ||
+      !worker.roles.includes(UserRole.WORKER);
+
+    if (workerIneligible) {
+      throw new AppError(
+        BOOKING_MESSAGES.WORKER_INELIGIBLE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
+    }
+
     if (!service) {
       throw new AppError(
         BOOKING_MESSAGES.SERVICE_NOT_FOUND,
@@ -103,11 +116,24 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    // create() now returns a populated document — no second fetch needed
-    const createdBooking = await bookingRepository.create({
+    // Atomic guard: re-check conflict immediately before insert. Two parallel
+    // requests both passing the earlier validation will race here, but the
+    // second insert will still see the first via this re-check inside the
+    // same tick. Combined with the create() that follows, this narrows the
+    // TOCTOU window dramatically. A unique compound index would be the full
+    // fix but requires data migration — tracked separately.
+    const createdBooking = await bookingRepository.createIfNoConflict({
       ...input,
       client_id: new Types.ObjectId(clientId),
     });
+
+    if (!createdBooking) {
+      throw new AppError(
+        BOOKING_MESSAGES.SCHEDULE_CONFLICT,
+        HTTP_STATUS.CONFLICT,
+        ErrorCode.BOOKING_INVALID_SCHEDULE
+      );
+    }
 
     void notificationEventService
       .bookingCreated(createdBooking)
@@ -159,15 +185,32 @@ export class BookingCrudService extends BookingBaseService {
     const isClient = this.isBookingClient(booking, userId);
     const isWorker = this.isBookingWorker(booking, userId);
 
-    if (updateData.schedule || updateData.pricing || updateData.client_notes) {
+    const wantsClientEditableFields =
+      updateData.schedule !== undefined ||
+      updateData.pricing !== undefined ||
+      updateData.client_notes !== undefined;
+
+    if (wantsClientEditableFields) {
       this.ensureAuthorized(
         isClient,
         BOOKING_MESSAGES.ONLY_CLIENT_CAN_UPDATE_BOOKING
       );
 
+      // Client may only edit schedule/pricing/notes while booking is still
+      // PENDING (worker has not yet confirmed). After confirmation the
+      // agreed-upon terms are locked to prevent bait-and-switch on price
+      // or surprise reschedules.
+      if (booking.status !== BookingStatus.PENDING) {
+        throw new AppError(
+          BOOKING_MESSAGES.CLIENT_CANNOT_UPDATE_CONFIRMED,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.BOOKING_CANNOT_UPDATE
+        );
+      }
+
       if (updateData.schedule) {
         await this.validateScheduleConflict(
-          booking.worker_id.toString(),
+          booking.worker_id._id.toString(),
           updateData.schedule.start_time,
           updateData.schedule.end_time,
           bookingId
@@ -175,7 +218,7 @@ export class BookingCrudService extends BookingBaseService {
       }
     }
 
-    if (updateData.worker_response) {
+    if (updateData.worker_response !== undefined) {
       this.ensureAuthorized(
         isWorker,
         BOOKING_MESSAGES.ONLY_WORKER_CAN_UPDATE_RESPONSE
@@ -198,7 +241,21 @@ export class BookingCrudService extends BookingBaseService {
     }
 
     if (roleInfo.isAdmin) {
-      Object.assign(filteredUpdateData, updateData);
+      // Whitelist admin-editable fields. Admin must NEVER be able to mutate
+      // identity (_id, client_id, worker_id), bypass validateStatusTransition
+      // by setting status directly, or rewrite immutable timestamps.
+      if (updateData.schedule !== undefined) {
+        filteredUpdateData.schedule = updateData.schedule;
+      }
+      if (updateData.pricing !== undefined) {
+        filteredUpdateData.pricing = updateData.pricing;
+      }
+      if (updateData.client_notes !== undefined) {
+        filteredUpdateData.client_notes = updateData.client_notes;
+      }
+      if (updateData.worker_response !== undefined) {
+        filteredUpdateData.worker_response = updateData.worker_response;
+      }
     }
 
     const updatedBooking = await bookingRepository.update(

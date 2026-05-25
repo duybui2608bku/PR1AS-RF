@@ -122,6 +122,9 @@ export const CHAT_MESSAGES = {
   GROUP_CONVERSATION_NOT_FOUND: "Group conversation not found",
   GROUP_MESSAGE_NOT_FOUND: "Group message not found",
   GROUP_CONVERSATION_ID_REQUIRED: "Group conversation ID is required",
+  CONVERSATION_OR_RECEIVER_REQUIRED:
+    "Either conversation_id or receiver_id must be provided",
+  INVALID_MEDIA_URL: "Media URL is invalid or from an unauthorized host",
 } as const;
 
 export const CSRF_MESSAGES = {
@@ -188,10 +191,16 @@ export const BOOKING_MESSAGES = {
   DISPUTE_RESOLVED: "Dispute resolved successfully",
   BOOKING_ALREADY_DISPUTED: "This booking already has an active dispute",
   BOOKING_NOT_DISPUTED: "This booking is not in disputed status",
+  ONLY_CLIENT_OR_WORKER_CAN_DISPUTE:
+    "Only the client or worker on this booking can open a dispute",
   ONLY_CLIENT_CAN_DISPUTE: "Only the client can open a dispute",
   ONLY_ADMIN_CAN_RESOLVE_DISPUTE: "Only admin can resolve disputes",
   DISPUTE_INVALID_REFUND_AMOUNT:
     "Refund amount cannot exceed the booking amount",
+  WORKER_INELIGIBLE: "Worker is not available to accept bookings",
+  CLIENT_CANNOT_UPDATE_CONFIRMED:
+    "Booking details can no longer be changed after worker confirmation",
+  SCHEDULE_CONFLICT: "This time slot conflicts with an existing booking",
 } as const;
 
 export const REVIEW_MESSAGES = {
@@ -292,7 +301,7 @@ export const PRICING_MESSAGES = {
   PRICING_INSUFFICIENT_BALANCE: "Insufficient wallet balance for upgrade",
   PRICING_INVALID_TARGET_PLAN: "Invalid target plan",
   PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER:
-    "Current plan is already equal or higher than target plan",
+    "Cannot downgrade to a lower plan; renewals must target the same or a higher plan",
   PRICING_PACKAGE_NOT_AVAILABLE: "Target pricing package is not available",
 } as const;
 

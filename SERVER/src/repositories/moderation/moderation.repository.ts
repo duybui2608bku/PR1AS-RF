@@ -100,11 +100,20 @@ export class ModerationRepository {
     focalUserId: string,
     otherUserIds: string[]
   ): Promise<
-    Map<string, { outgoing: IUserBlockDocument | null; incoming: IUserBlockDocument | null }>
+    Map<
+      string,
+      {
+        outgoing: IUserBlockDocument | null;
+        incoming: IUserBlockDocument | null;
+      }
+    >
   > {
     const result = new Map<
       string,
-      { outgoing: IUserBlockDocument | null; incoming: IUserBlockDocument | null }
+      {
+        outgoing: IUserBlockDocument | null;
+        incoming: IUserBlockDocument | null;
+      }
     >();
     if (otherUserIds.length === 0) return result;
 
@@ -247,6 +256,16 @@ export class ModerationRepository {
     );
   }
 
+  async hasOpenReportForPost(postId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(postId)) return false;
+    const existing = await Report.exists({
+      target_type: ReportTargetType.POST,
+      post_id: new Types.ObjectId(postId),
+      status: ReportStatus.OPEN,
+    });
+    return Boolean(existing);
+  }
+
   async findOpenWorkerReport(
     reporterId: string,
     workerId: string
@@ -317,10 +336,10 @@ export class ModerationRepository {
         const post = report.post_id as unknown;
         if (!post || typeof post !== "object" || !("_id" in post)) continue;
         const postId = (post as { _id: Types.ObjectId })._id.toString();
-        report.post_id = ({
+        report.post_id = {
           ...(post as Record<string, unknown>),
           media: mediaMap.get(postId) ?? [],
-        } as unknown) as typeof report.post_id;
+        } as unknown as typeof report.post_id;
       }
     }
 

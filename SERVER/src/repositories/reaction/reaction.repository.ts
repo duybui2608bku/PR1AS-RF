@@ -1,8 +1,6 @@
 import { Types } from "mongoose";
 import { Reaction } from "../../models/reaction/reaction.model";
-import {
-  IReactionDocument,
-} from "../../types/reaction/reaction.types";
+import { IReactionDocument } from "../../types/reaction/reaction.types";
 import {
   REACTION_TYPES,
   ReactionTargetType,
@@ -27,7 +25,8 @@ export class ReactionRepository {
     userId: string,
     targetType: ReactionTargetType,
     targetId: string,
-    type: ReactionType
+    type: ReactionType,
+    session?: import("mongoose").ClientSession
   ): Promise<{ created: boolean; previousType: ReactionType | null }> {
     if (!Types.ObjectId.isValid(targetId)) {
       return { created: false, previousType: null };
@@ -60,6 +59,7 @@ export class ReactionRepository {
         new: false,
         includeResultMetadata: true,
         setDefaultsOnInsert: true,
+        session,
       }
     );
     const before = result?.value as IReactionDocument | null;
@@ -72,16 +72,20 @@ export class ReactionRepository {
   async remove(
     userId: string,
     targetType: ReactionTargetType,
-    targetId: string
+    targetId: string,
+    session?: import("mongoose").ClientSession
   ): Promise<{ removed: boolean; previousType: ReactionType | null }> {
     if (!Types.ObjectId.isValid(targetId)) {
       return { removed: false, previousType: null };
     }
-    const existing = await Reaction.findOneAndDelete({
-      user_id: new Types.ObjectId(userId),
-      target_type: targetType,
-      target_id: new Types.ObjectId(targetId),
-    });
+    const existing = await Reaction.findOneAndDelete(
+      {
+        user_id: new Types.ObjectId(userId),
+        target_type: targetType,
+        target_id: new Types.ObjectId(targetId),
+      },
+      { session }
+    );
     if (!existing) return { removed: false, previousType: null };
     return { removed: true, previousType: existing.type };
   }
@@ -194,6 +198,24 @@ export class ReactionRepository {
       {
         target_type: targetType,
         target_id: targetObjectId,
+      },
+      { session }
+    );
+  }
+
+  async deleteByTargets(
+    targetType: ReactionTargetType,
+    targetIds: Array<string | Types.ObjectId>,
+    session?: import("mongoose").ClientSession
+  ): Promise<void> {
+    if (targetIds.length === 0) return;
+    const ids = targetIds.map((id) =>
+      typeof id === "string" ? new Types.ObjectId(id) : id
+    );
+    await Reaction.deleteMany(
+      {
+        target_type: targetType,
+        target_id: { $in: ids },
       },
       { session }
     );

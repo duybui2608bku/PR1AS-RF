@@ -14,8 +14,32 @@ import {
   getUserRoom,
 } from "../utils/chat.helper";
 import { UserRole } from "../types/auth/user.types";
+import { TTLCache } from "../utils/ttlCache";
 
 const userSockets = new Map<string, Set<string>>();
+
+// 60s TTL is short enough that revoked access (booking cancelled, user
+// blocked) becomes visible quickly, but long enough to absorb the typing
+// burst (5–10 events/sec) that previously hit Mongo on every keystroke.
+const ACCESS_CACHE_TTL_MS = 60_000;
+const ACCESS_CACHE_MAX = 10_000;
+const accessCache = new TTLCache<string, boolean>(
+  ACCESS_CACHE_MAX,
+  ACCESS_CACHE_TTL_MS
+);
+const groupAccessCache = new TTLCache<string, boolean>(
+  ACCESS_CACHE_MAX,
+  ACCESS_CACHE_TTL_MS
+);
+
+// Grace window after the access token expires during which the socket stays
+// open and we ask the client to send a fresh token. If the client doesn't
+// respond within the window we disconnect — but the user gets a chance to
+// silently refresh instead of dropping a live chat.
+const TOKEN_REFRESH_GRACE_MS = 30_000;
+
+const accessKey = (conversationId: string, userId: string) =>
+  `${conversationId}|${userId}`;
 
 function parseCookieToken(cookieHeader: string | undefined): string | undefined {
   if (!cookieHeader) return undefined;
@@ -78,7 +102,30 @@ export const getUserSocketIds = (userId: string): string[] => {
   return sockets ? Array.from(sockets) : [];
 };
 
-const verifyConversationAccess = async (
+/**
+ * Cache invalidation hook for upstream services. Call when an event would
+ * change access semantics — booking confirmed / cancelled, user blocked /
+ * unblocked, role flipped. Cheap no-op if the entry isn't cached.
+ */
+export const invalidateConversationAccessCache = (
+  conversationId: string,
+  userIds: string[]
+): void => {
+  for (const userId of userIds) {
+    accessCache.delete(accessKey(conversationId, userId));
+  }
+};
+
+export const invalidateGroupConversationAccessCache = (
+  conversationGroupId: string,
+  userIds: string[]
+): void => {
+  for (const userId of userIds) {
+    groupAccessCache.delete(accessKey(conversationGroupId, userId));
+  }
+};
+
+const verifyConversationAccessUncached = async (
   conversationId: string,
   userId: string
 ): Promise<boolean> => {
@@ -87,6 +134,13 @@ const verifyConversationAccess = async (
     userId
   );
   if (!conversation) return false;
+
+  // Defence-in-depth: a self-conversation should never exist (service rejects
+  // it on send) but if one slips into the DB via migration or future code we
+  // still refuse to honour socket events against it.
+  if (conversation.sender_id.toString() === conversation.receiver_id.toString()) {
+    return false;
+  }
 
   const currentUser = await userRepository.findById(userId);
   if (!currentUser) return false;
@@ -97,6 +151,10 @@ const verifyConversationAccess = async (
     conversation.receiver_id.toString(),
     userId
   );
+
+  // Explicit self-check on the participants — paranoia, but cheap.
+  if (otherUserId === userId) return false;
+
   const otherUser = await userRepository.findById(otherUserId);
   if (!otherUser) return false;
   if (otherUser.roles?.includes(UserRole.ADMIN)) return true;
@@ -118,16 +176,33 @@ const verifyConversationAccess = async (
   return false;
 };
 
+const verifyConversationAccess = async (
+  conversationId: string,
+  userId: string
+): Promise<boolean> => {
+  const key = accessKey(conversationId, userId);
+  const cached = accessCache.get(key);
+  if (cached !== undefined) return cached;
+  const allowed = await verifyConversationAccessUncached(conversationId, userId);
+  accessCache.set(key, allowed);
+  return allowed;
+};
+
 const verifyGroupConversationAccess = async (
   conversationGroupId: string,
   userId: string
 ): Promise<boolean> => {
+  const key = accessKey(conversationGroupId, userId);
+  const cached = groupAccessCache.get(key);
+  if (cached !== undefined) return cached;
   const conversation =
     await groupChatRepository.getConversationGroupForUserById(
       conversationGroupId,
       userId
     );
-  return !!conversation;
+  const allowed = !!conversation;
+  groupAccessCache.set(key, allowed);
+  return allowed;
 };
 
 export const setupChatHandlers = (socket: Socket): void => {
@@ -138,24 +213,87 @@ export const setupChatHandlers = (socket: Socket): void => {
   socket.join(getUserRoom(userId));
   socket.emit("connected", { user_id: userId });
 
-  // Re-verify the access token on every inbound packet. The JWT carries an
-  // `exp` claim (seconds). If the token expired mid-session we must stop
-  // honouring events from this socket — otherwise a user can keep chatting
-  // long after logout / password change. The check is O(1) and runs locally.
-  socket.use((_packet, next) => {
+  // Token-refresh state. When the JWT expires mid-session we don't hard
+  // disconnect — we ask the client to send a refreshed access token via the
+  // `TOKEN_REFRESH` event and only disconnect if the client fails to do so
+  // within `TOKEN_REFRESH_GRACE_MS`. This avoids dropping live chats at the
+  // 15-minute access-token boundary.
+  let refreshTimer: NodeJS.Timeout | null = null;
+  let refreshRequested = false;
+
+  const clearRefreshTimer = () => {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer);
+      refreshTimer = null;
+    }
+  };
+
+  const requestTokenRefresh = () => {
+    if (refreshRequested) return;
+    refreshRequested = true;
+    socket.emit(SOCKET_EVENTS.TOKEN_REFRESH_REQUIRED, {
+      message: AUTH_MESSAGES.TOKEN_EXPIRED,
+      grace_ms: TOKEN_REFRESH_GRACE_MS,
+    });
+    refreshTimer = setTimeout(() => {
+      socket.emit("error", { message: AUTH_MESSAGES.TOKEN_EXPIRED });
+      socket.disconnect(true);
+    }, TOKEN_REFRESH_GRACE_MS);
+  };
+
+  socket.use((packet, next) => {
     const currentUser = socket.data.user as JWTPayload | undefined;
     if (!currentUser || typeof currentUser.exp !== "number") {
       socket.emit("error", { message: AUTH_MESSAGES.TOKEN_INVALID });
       socket.disconnect(true);
       return next(new Error(AUTH_MESSAGES.TOKEN_INVALID));
     }
-    if (Date.now() >= currentUser.exp * 1000) {
-      socket.emit("error", { message: AUTH_MESSAGES.TOKEN_EXPIRED });
-      socket.disconnect(true);
+
+    const isExpired = Date.now() >= currentUser.exp * 1000;
+    // Always allow the refresh packet through so the client can recover
+    // even after the original token expired.
+    const eventName = packet[0];
+    if (eventName === SOCKET_EVENTS.TOKEN_REFRESH) {
+      return next();
+    }
+    if (isExpired) {
+      requestTokenRefresh();
+      // Drop this packet without disconnecting — the client will retry once
+      // it has refreshed. Returning an Error here is what skips the handler.
       return next(new Error(AUTH_MESSAGES.TOKEN_EXPIRED));
     }
     return next();
   });
+
+  socket.on(
+    SOCKET_EVENTS.TOKEN_REFRESH,
+    (data: { token?: string } | undefined) => {
+      const token = data?.token;
+      if (typeof token !== "string" || token.length === 0) {
+        socket.emit("error", { message: AUTH_MESSAGES.TOKEN_NOT_PROVIDED });
+        return;
+      }
+      try {
+        const decoded = verifyToken(token);
+        // Refusing to accept a token for a different account stops a hijack
+        // attempt (e.g. an attacker who stole someone else's access token
+        // can't piggy-back on this socket session to act as them).
+        if (decoded.sub !== userId) {
+          socket.emit("error", { message: AUTH_MESSAGES.TOKEN_INVALID });
+          socket.disconnect(true);
+          return;
+        }
+        socket.data.user = decoded;
+        clearRefreshTimer();
+        refreshRequested = false;
+        socket.emit(SOCKET_EVENTS.TOKEN_REFRESHED, { exp: decoded.exp });
+      } catch (error) {
+        logger.warn(`Token refresh failed for user ${userId}:`, error);
+        socket.emit("error", { message: AUTH_MESSAGES.TOKEN_INVALID });
+        socket.disconnect(true);
+      }
+    }
+  );
 
   socket.on("join_conversation", async (data: { conversation_id: string }) => {
     try {
@@ -408,6 +546,7 @@ export const setupChatHandlers = (socket: Socket): void => {
   );
 
   socket.on("disconnect", () => {
+    clearRefreshTimer();
     unregisterUserSocket(userId, socket.id);
     logger.info(`User ${userId} disconnected`);
   });

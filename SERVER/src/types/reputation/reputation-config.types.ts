@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 export enum ReputationConfigKey {
   BOOKING_EXPIRY_DEDUCTION = "booking_expiry_deduction",
   WORKER_CANCEL_DEDUCTION = "worker_cancel_deduction",
+  CLIENT_LATE_CANCEL_DEDUCTION = "client_late_cancel_deduction",
   LOW_REVIEW_DEDUCTION = "low_review_deduction",
   LOW_REVIEW_THRESHOLD = "low_review_threshold",
   DAILY_RECOVERY_POINTS = "daily_recovery_points",
@@ -29,6 +30,11 @@ export const REPUTATION_CONFIG_DEFAULTS: Record<
   [ReputationConfigKey.WORKER_CANCEL_DEDUCTION]: {
     value: 10,
     description: "Points deducted when a worker cancels a confirmed booking",
+  },
+  [ReputationConfigKey.CLIENT_LATE_CANCEL_DEDUCTION]: {
+    value: 5,
+    description:
+      "Points deducted when a client cancels within CANCELLATION_FREE_HOURS of the booking start time",
   },
   [ReputationConfigKey.LOW_REVIEW_DEDUCTION]: {
     value: 5,

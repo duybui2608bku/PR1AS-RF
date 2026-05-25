@@ -1,7 +1,10 @@
+import crypto from "crypto";
 import { IUserDocument } from "../types/auth/user.types";
 import { generateToken, generateRefreshToken } from "../utils/jwt";
-import { hashPassword } from "../utils/bcrypt";
 import { userRepository } from "../repositories/auth/user.repository";
+
+export const hashOpaqueToken = (token: string): string =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
 export const generateAuthTokens = async (
   user: IUserDocument
@@ -14,7 +17,7 @@ export const generateAuthTokens = async (
   };
   const token = generateToken(payload);
   const refreshToken = generateRefreshToken(payload);
-  const refreshTokenHash = await hashPassword(refreshToken);
+  const refreshTokenHash = hashOpaqueToken(refreshToken);
   await userRepository.setRefreshTokenHash(
     user._id.toString(),
     refreshTokenHash

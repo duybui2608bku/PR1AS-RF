@@ -8,8 +8,19 @@ import {
   BookingQuery,
 } from "../../types/booking/booking.types";
 import { PaginatedResponse } from "../../utils/pagination";
-import { BookingStatus } from "../../constants/booking";
+import {
+  BookingStatus,
+  CancellationReason,
+  CancelledBy,
+} from "../../constants/booking";
 import { PaginationHelper } from "../../utils";
+
+const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
+  BookingStatus.PENDING,
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+];
 
 const BOOKING_POPULATE: PopulateOptions[] = [
   { path: "client_id", select: "email full_name" },
@@ -35,6 +46,13 @@ export class BookingRepository {
         },
       ],
       confirmed_at: { $ne: null },
+      status: {
+        $nin: [
+          BookingStatus.CANCELLED,
+          BookingStatus.REJECTED,
+          BookingStatus.EXPIRED,
+        ],
+      },
     }).then(Boolean);
   }
 
@@ -46,6 +64,13 @@ export class BookingRepository {
       client_id: new Types.ObjectId(clientId),
       worker_id: new Types.ObjectId(workerId),
       confirmed_at: { $ne: null },
+      status: {
+        $nin: [
+          BookingStatus.CANCELLED,
+          BookingStatus.REJECTED,
+          BookingStatus.EXPIRED,
+        ],
+      },
     }).then(Boolean);
   }
 
@@ -135,6 +160,22 @@ export class BookingRepository {
     return Booking.findById(saved._id).populate(
       BOOKING_POPULATE
     ) as Promise<IBookingDocument>;
+  }
+
+  // Re-check conflict + insert as close together as possible to narrow the
+  // TOCTOU window between validation and insert. Returns null when a conflict
+  // is detected; service maps that to a 409 response.
+  async createIfNoConflict(
+    data: CreateBookingInput
+  ): Promise<IBookingDocument | null> {
+    const conflict = await this.checkScheduleConflict(
+      data.worker_id.toString(),
+      data.schedule.start_time,
+      data.schedule.end_time
+    );
+    if (conflict) return null;
+
+    return this.create(data);
   }
 
   async findById(id: string): Promise<IBookingDocument | null> {
@@ -264,6 +305,7 @@ export class BookingRepository {
   }
 
   async expirePendingBooking(id: string): Promise<IBookingDocument | null> {
+    const now = new Date();
     return Booking.findOneAndUpdate(
       {
         _id: new Types.ObjectId(id),
@@ -271,7 +313,13 @@ export class BookingRepository {
       },
       {
         status: BookingStatus.EXPIRED,
-        updated_at: new Date(),
+        updated_at: now,
+        cancellation: {
+          cancelled_at: now,
+          cancelled_by: CancelledBy.SYSTEM,
+          reason: CancellationReason.WORKER_UNAVAILABLE,
+          notes: "Worker did not confirm before the deadline",
+        },
       },
       { new: true }
     ).populate(BOOKING_POPULATE);
@@ -342,13 +390,11 @@ export class BookingRepository {
   ): Promise<boolean> {
     const filter: Record<string, unknown> = {
       worker_id: new Types.ObjectId(workerId),
-      status: {
-        $in: [
-          BookingStatus.CONFIRMED,
-          BookingStatus.IN_PROGRESS,
-          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-        ],
-      },
+      // PENDING counts as a conflict so two clients cannot race to book the
+      // same slot. A worker confirming the second booking later would
+      // otherwise look fine here and only fail at confirmation time, leaving
+      // the rejected client confused and the worker holding a useless slot.
+      status: { $in: ACTIVE_BOOKING_STATUSES },
       $or: [
         { "schedule.start_time": { $gte: startTime, $lt: endTime } },
         { "schedule.end_time": { $gt: startTime, $lte: endTime } },
@@ -373,13 +419,7 @@ export class BookingRepository {
   ): Promise<Array<{ start_time: Date; end_time: Date }>> {
     const conflicts = await Booking.find({
       worker_id: new Types.ObjectId(workerId),
-      status: {
-        $in: [
-          BookingStatus.CONFIRMED,
-          BookingStatus.IN_PROGRESS,
-          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-        ],
-      },
+      status: { $in: ACTIVE_BOOKING_STATUSES },
       "schedule.start_time": { $lt: endTime },
       "schedule.end_time": { $gt: startTime },
     })
@@ -401,13 +441,7 @@ export class BookingRepository {
 
     const conflicts = await Booking.find({
       worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
-      status: {
-        $in: [
-          BookingStatus.CONFIRMED,
-          BookingStatus.IN_PROGRESS,
-          BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-        ],
-      },
+      status: { $in: ACTIVE_BOOKING_STATUSES },
       "schedule.start_time": { $lt: endTime },
       "schedule.end_time": { $gt: startTime },
     })
@@ -436,6 +470,7 @@ export class BookingRepository {
       worker_id: new Types.ObjectId(workerId),
       status: {
         $in: [
+          BookingStatus.PENDING,
           BookingStatus.CONFIRMED,
           BookingStatus.IN_PROGRESS,
           BookingStatus.PENDING_CLIENT_ACCEPTANCE,

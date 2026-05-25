@@ -29,10 +29,11 @@ export class PostRepository {
 
   async findActiveById(id: string): Promise<IPostDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    return Post.findOne({ _id: id, deleted_at: null, deleted: { $ne: true } }).populate(
-      "author_id",
-      AUTHOR_PUBLIC_FIELDS
-    );
+    return Post.findOne({
+      _id: id,
+      deleted_at: null,
+      deleted: { $ne: true },
+    }).populate("author_id", AUTHOR_PUBLIC_FIELDS);
   }
 
   async findActiveByIdLean(id: string): Promise<IPostDocument | null> {
@@ -180,12 +181,14 @@ export class PostRepository {
 
   async incrementReactionsCount(
     postId: string | Types.ObjectId,
-    delta: number
+    delta: number,
+    session?: import("mongoose").ClientSession
   ): Promise<void> {
     const id = typeof postId === "string" ? new Types.ObjectId(postId) : postId;
     await Post.updateOne(
       { _id: id, deleted_at: null, deleted: { $ne: true } },
-      { $inc: { reactions_count: delta } }
+      { $inc: { reactions_count: delta } },
+      { session }
     );
   }
 

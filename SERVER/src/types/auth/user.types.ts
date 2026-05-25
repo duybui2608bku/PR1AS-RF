@@ -135,6 +135,6 @@ export interface AuthResponse {
 }
 
 export interface RegisterResponse {
-  user: IUserPublic;
+  user?: IUserPublic;
   requires_email_verification: boolean;
 }

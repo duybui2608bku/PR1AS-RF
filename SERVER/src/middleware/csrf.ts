@@ -153,6 +153,9 @@ export const validateOrigin = (
   next();
 };
 
-/** CSRF protection disabled — kept as empty spread for routes. */
-export const csrfProtection: RequestHandler[] = [];
-
+/**
+ * Origin/Referer validation on state-changing requests.
+ * Browsers always attach Origin/Referer, so this works without any client cookie/header
+ * coordination. Pairs with Bearer-token auth (no auth cookie set by this server).
+ */
+export const csrfProtection: RequestHandler[] = [validateOrigin];

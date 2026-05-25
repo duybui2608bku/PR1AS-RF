@@ -31,8 +31,11 @@ const getSocketCorsOrigin = () => {
       }
     };
   }
-
-  return "http://localhost:3000";
+  // Fail closed in production rather than silently defaulting to localhost —
+  // see equivalent guard in `config/index.ts` for rationale.
+  throw new Error(
+    "CORS_ORIGIN must be configured in production for Socket.IO. Set CORS_ORIGIN to your frontend URL(s), comma-separated."
+  );
 };
 
 export const initializeSocket = (httpServer: HttpServer): SocketServer => {

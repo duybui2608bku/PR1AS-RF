@@ -47,7 +47,13 @@ export const createApp = (): express.Application => {
     })
   );
 
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as express.Request).rawBody = buf.toString("utf8");
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
   app.use(sanitizeInput);

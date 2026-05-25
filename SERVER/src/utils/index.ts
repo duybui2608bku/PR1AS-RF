@@ -14,3 +14,5 @@ export { toPublicUser, extractUserIdFromRequest } from "./user.helper";
 export * from "./chat.helper";
 export * from "./pricing-plan.helper";
 export { escapeRegExp } from "./string";
+export { withJobLock } from "./job-lock";
+export type { JobLockOptions } from "./job-lock";

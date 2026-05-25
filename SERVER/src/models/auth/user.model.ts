@@ -198,7 +198,10 @@ const userSchema = new Schema<IUserDocument>(
 
 userSchema.index({ password_reset_token: 1 });
 userSchema.index({ email_verification_token: 1 });
-userSchema.index({ google_id: 1 }, { sparse: true });
-userSchema.index({ "meta_data.pricing_plan_code": 1, "meta_data.pricing_expires_at": 1 });
+userSchema.index({ google_id: 1 }, { sparse: true, unique: true });
+userSchema.index({
+  "meta_data.pricing_plan_code": 1,
+  "meta_data.pricing_expires_at": 1,
+});
 
 export const User = mongoose.model<IUserDocument>(modelsName.USER, userSchema);

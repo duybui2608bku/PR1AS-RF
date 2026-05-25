@@ -8,16 +8,18 @@ export interface AuthRequest extends Request {
   user?: JWTPayload;
 }
 
+const extractBearerToken = (req: Request): string | undefined => {
+  const authHeader = req.headers.authorization;
+  return authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+};
+
 export const authenticate = (
   req: AuthRequest,
   _res: Response,
   next: NextFunction
 ): void => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : req.cookies?.token;
+    const token = extractBearerToken(req);
     if (!token) {
       throw AppError.unauthorized(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
@@ -28,10 +30,7 @@ export const authenticate = (
     req.user = decoded;
     next();
   } catch (error) {
-    if (error instanceof AppError) {
-      return next(error);
-    }
-    next(AppError.unauthorized(AUTH_MESSAGES.TOKEN_EXPIRED));
+    next(error);
   }
 };
 
@@ -41,10 +40,7 @@ export const optionalAuthenticate = (
   next: NextFunction
 ): void => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : req.cookies?.token;
+    const token = extractBearerToken(req);
     if (token) {
       req.user = verifyToken(token);
     }
