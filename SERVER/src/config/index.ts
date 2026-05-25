@@ -126,6 +126,7 @@ export const config = {
     bankAccountNumber: process.env.SEPAY_BANK_ACCOUNT_NUMBER || "SEPBD36270",
     bankName: process.env.SEPAY_BANK_NAME || "OCB",
     webhookApiKey: process.env.SEPAY_WEBHOOK_API_KEY || "",
+    hmacSecret: process.env.SEPAY_HMAC_SHA256 || "",
     paymentCodePrefix: process.env.SEPAY_PAYMENT_CODE_PREFIX || "PRAS",
     qrBaseUrl: process.env.SEPAY_QR_BASE_URL || "https://qr.sepay.vn/img",
   },

@@ -112,6 +112,19 @@ export class CommentRepository {
       { session }
     );
   }
+
+  async findIdsByPostId(
+    postId: string | Types.ObjectId,
+    session?: import("mongoose").ClientSession
+  ): Promise<Types.ObjectId[]> {
+    const postObjectId =
+      typeof postId === "string" ? new Types.ObjectId(postId) : postId;
+    const rows = await Comment.find({ post_id: postObjectId })
+      .session(session ?? null)
+      .select("_id")
+      .lean<{ _id: Types.ObjectId }[]>();
+    return rows.map((row) => row._id);
+  }
 }
 
 export const commentRepository = new CommentRepository();

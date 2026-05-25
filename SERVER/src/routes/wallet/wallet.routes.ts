@@ -4,11 +4,13 @@ import { authenticate } from "../../middleware/auth";
 import { pagination } from "../../middleware/pagination";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { csrfProtection } from "../../middleware/csrf";
+import { verifySePayWebhookSignature } from "../../middleware/sepayWebhook";
 
 const router = Router();
 
 router.post(
   "/deposit/webhook",
+  verifySePayWebhookSignature,
   asyncHandler(walletController.handleSePayWebhook.bind(walletController))
 );
 

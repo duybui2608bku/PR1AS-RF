@@ -2,15 +2,18 @@ import mongoose, { Types } from "mongoose";
 import { sanitizeMessageContent } from "../../utils/sanitize";
 import { postRepository } from "../../repositories/post/post.repository";
 import { postMediaRepository } from "../../repositories/post/post-media.repository";
+import { postEditHistoryRepository } from "../../repositories/post/post-edit-history.repository";
 import { commentRepository } from "../../repositories/comment/comment.repository";
 import { hashtagRepository } from "../../repositories/hashtag/hashtag.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { reactionRepository } from "../../repositories/reaction/reaction.repository";
+import { moderationRepository } from "../../repositories/moderation";
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
 import { PricingPackage } from "../../models/pricing";
 import { PricingPlanCode } from "../../constants/pricing";
 import { ReactionTargetType, ReactionType } from "../../constants/reaction";
+import { UserRole } from "../../types/auth/user.types";
 import {
   CreatePostInput,
   IPostDocument,
@@ -159,7 +162,12 @@ const summarizeReactions = (
 
 export class PostService {
   private getCurrentMonthWindow(): { startDate: Date; endDate: Date } {
-    const startOfMonth = dayjs().tz().startOf("month");
+    // Anchor the month window to the product timezone (Asia/Ho_Chi_Minh) so
+    // the monthly post quota resets at local midnight on the 1st regardless
+    // of where the server runs. Relying on `dayjs()` (local time) or even
+    // `dayjs().tz()` without an explicit zone leaves the cut-off sensitive
+    // to server-host TZ and would shift the user's reset if the host moves.
+    const startOfMonth = dayjs().tz("Asia/Ho_Chi_Minh").startOf("month");
     return {
       startDate: startOfMonth.toDate(),
       endDate: startOfMonth.add(1, "month").toDate(),
@@ -248,6 +256,18 @@ export class PostService {
         REPUTATION_MESSAGES.TOO_LOW_FOR_POST,
         HTTP_STATUS.FORBIDDEN,
         ErrorCode.REPUTATION_SCORE_TOO_LOW
+      );
+    }
+
+    // Posts in this app are job listings — gated by the `create_job_*`
+    // pricing features. Only users currently acting as CLIENT (i.e. posting a
+    // job) may create them. A user with both roles must switch to CLIENT mode
+    // first; a worker-only account cannot post jobs at all.
+    if (user?.last_active_role !== UserRole.CLIENT) {
+      throw new AppError(
+        POST_MESSAGES.CREATE_JOB_FEATURE_DISABLED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.POST_CREATE_FEATURE_DISABLED
       );
     }
 
@@ -476,6 +496,37 @@ export class PostService {
     }
     if (input.visibility !== undefined) update.visibility = input.visibility;
 
+    // If the post is currently the subject of an open report, capture the
+    // pre-edit body+media before applying the update. This blocks the
+    // bait-and-switch pattern where a job poster edits a reported post to
+    // hide what the reporter (or applied worker) actually saw. We only
+    // snapshot when an open report exists to keep history-table volume small.
+    const bodyChanging =
+      update.body !== undefined && update.body !== existing.body;
+    const mediaChanging = input.media !== undefined;
+    if (bodyChanging || mediaChanging) {
+      try {
+        const hasOpenReport =
+          await moderationRepository.hasOpenReportForPost(postId);
+        if (hasOpenReport) {
+          const preEditMedia = await postMediaRepository.findByPostId(
+            existing._id as Types.ObjectId
+          );
+          await postEditHistoryRepository.snapshot({
+            post: {
+              _id: existing._id,
+              author_id: existing.author_id,
+              body: existing.body,
+            },
+            media: preEditMedia,
+            reason: "edited_after_report",
+          });
+        }
+      } catch (error) {
+        logger.error("Failed to snapshot post pre-edit state", error);
+      }
+    }
+
     const updatedPost = await postRepository.update(postId, update);
     if (!updatedPost) {
       throw new AppError(
@@ -552,21 +603,33 @@ export class PostService {
     }
 
     // Wrap soft-delete + cascade cleanup in a transaction so the post and its
-    // dependent rows (hashtags, comments, reactions) either all flip to
-    // deleted or none do — avoids orphan reactions/comments when one of the
-    // cascade writes fails mid-flight.
+    // dependent rows (hashtags, comments, post reactions, comment reactions)
+    // either all flip to deleted or none do — avoids orphan reactions/
+    // comments when one of the cascade writes fails mid-flight. Comment
+    // reactions need to be reaped explicitly: soft-deleting the comments
+    // leaves their reaction rows pointing at hidden targets, which would
+    // skew counts and break invariants on the next reconcile pass.
     const session = await mongoose.startSession();
     try {
       let deleted: unknown = null;
       await session.withTransaction(async () => {
         deleted = await postRepository.softDelete(postId, session);
         if (!deleted) return;
+        const commentIds = await commentRepository.findIdsByPostId(
+          postId,
+          session
+        );
         await Promise.all([
           hashtagService.clearPostHashtags(postId, session),
           commentRepository.softDeleteByPostId(postId, session),
           reactionRepository.deleteByTarget(
             ReactionTargetType.POST,
             postId,
+            session
+          ),
+          reactionRepository.deleteByTargets(
+            ReactionTargetType.COMMENT,
+            commentIds,
             session
           ),
         ]);

@@ -92,11 +92,8 @@ export class UserWalletService {
   }
 
   async handleSePayWebhook(
-    webhook: SePayWebhookRequest,
-    authorizationHeader?: string
+    webhook: SePayWebhookRequest
   ): Promise<SePayWebhookResponse> {
-    this.assertSePayWebhookAuthorized(authorizationHeader);
-
     if (webhook.transferType !== SePayTransferType.IN) {
       logger.info("Ignored non-incoming SePay webhook", {
         sepay_transaction_id: webhook.id,
@@ -339,17 +336,6 @@ export class UserWalletService {
     });
 
     return `${config.sepay.qrBaseUrl}?${params.toString()}`;
-  }
-
-  private assertSePayWebhookAuthorized(authorizationHeader?: string): void {
-    if (!config.sepay.webhookApiKey) {
-      return;
-    }
-
-    const expectedHeader = `Apikey ${config.sepay.webhookApiKey}`;
-    if (authorizationHeader?.trim() !== expectedHeader) {
-      throw AppError.unauthorized("Invalid SePay webhook API key");
-    }
   }
 
   async getWalletBalance(userId: string): Promise<WalletBalanceResponse> {

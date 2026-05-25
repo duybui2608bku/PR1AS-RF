@@ -30,6 +30,29 @@ export interface IPostMedia {
 
 export interface IPostMediaDocument extends IPostMedia, Document {}
 
+export interface IPostEditHistorySnapshotMedia {
+  type: PostMediaType;
+  url: string;
+  sort_order: number;
+  mime_type: string | null;
+  byte_size: number | null;
+  duration_seconds: number | null;
+}
+
+export type PostEditHistoryReason = "report_filed" | "edited_after_report";
+
+export interface IPostEditHistory {
+  post_id: Types.ObjectId;
+  author_id: Types.ObjectId;
+  body_snapshot: string;
+  media_snapshot: IPostEditHistorySnapshotMedia[];
+  reason: PostEditHistoryReason;
+  report_id: Types.ObjectId | null;
+  snapshot_at: Date;
+}
+
+export interface IPostEditHistoryDocument extends IPostEditHistory, Document {}
+
 export interface CreatePostMediaInput {
   type: PostMediaType;
   url: string;

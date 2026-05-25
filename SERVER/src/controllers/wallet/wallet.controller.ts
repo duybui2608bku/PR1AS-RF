@@ -28,10 +28,7 @@ export class WalletController {
   async handleSePayWebhook(req: Request, res: Response): Promise<void> {
     const body = validateWithSchema(sePayWebhookSchema, req.body);
 
-    const result = await walletService.handleSePayWebhook(
-      body,
-      req.get("authorization") || undefined
-    );
+    const result = await walletService.handleSePayWebhook(body);
 
     res.status(200).json(result);
   }
