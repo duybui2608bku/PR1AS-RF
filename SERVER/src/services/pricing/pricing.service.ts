@@ -24,7 +24,9 @@ import {
 } from "../../repositories/wallet";
 import { TransactionStatus, TransactionType } from "../../constants/wallet";
 import mongoose from "mongoose";
+import dayjs from "dayjs";
 import { User } from "../../models/auth/user.model";
+import { logger } from "../../utils/logger";
 
 interface CreatePricingPlanInput {
   package_code: PricingPlanCode;
@@ -89,9 +91,17 @@ class PricingService {
   }
 
   private addMonths(baseDate: Date, months: number): Date {
-    const next = new Date(baseDate);
-    next.setMonth(next.getMonth() + months);
-    return next;
+    // dayjs clamps overflow to the last day of the target month
+    // (e.g. Jan 31 + 1 month → Feb 28/29) instead of spilling into the
+    // next month like Date.setMonth would.
+    return dayjs(baseDate).add(months, "month").toDate();
+  }
+
+  private isIdempotencyKeyConflict(err: unknown): boolean {
+    if (typeof err !== "object" || err === null) return false;
+    const e = err as { code?: number; keyPattern?: Record<string, unknown> };
+    if (e.code !== 11000) return false;
+    return Boolean(e.keyPattern && "idempotency_key" in e.keyPattern);
   }
 
   /**
@@ -236,10 +246,20 @@ class PricingService {
 
     const currentPlanCode =
       user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD;
-    if (
+    const currentStartedAt = user.meta_data?.pricing_started_at ?? null;
+    const currentExpiresAt = user.meta_data?.pricing_expires_at ?? null;
+
+    // Renewal: same paid plan again. Upgrade: moving to a strictly higher
+    // plan. Downgrade attempts (target lower than current) are not allowed —
+    // users can only move down by letting the plan expire. target is already
+    // narrowed to GOLD|DIAMOND by the STANDARD guard above.
+    const isRenewal = currentPlanCode === payload.target_plan_code;
+    const isDowngradeAttempt =
       hasMinPlan(currentPlanCode, payload.target_plan_code) &&
-      currentPlanCode !== PricingPlanCode.STANDARD
-    ) {
+      currentPlanCode !== payload.target_plan_code &&
+      currentPlanCode !== PricingPlanCode.STANDARD;
+
+    if (isDowngradeAttempt) {
       throw AppError.badRequest(
         PRICING_MESSAGES.PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER
       );
@@ -265,8 +285,26 @@ class PricingService {
     }
 
     const amount = targetPackage.price * payload.duration_months;
-    const startedAt = new Date();
-    const expiresAt = this.addMonths(startedAt, payload.duration_months);
+    const now = new Date();
+
+    // Renewal of an active plan stacks the new duration on top of the
+    // existing expires_at and preserves started_at. Upgrades to a higher
+    // plan forfeit any remaining time on the old plan and start fresh.
+    let startedAt: Date;
+    let expiresAt: Date;
+    if (isRenewal && currentExpiresAt && currentExpiresAt > now) {
+      startedAt = currentStartedAt ?? now;
+      expiresAt = this.addMonths(currentExpiresAt, payload.duration_months);
+    } else {
+      startedAt = now;
+      expiresAt = this.addMonths(now, payload.duration_months);
+    }
+
+    const eventType = isRenewal
+      ? SubscriptionEventType.RENEWAL
+      : SubscriptionEventType.UPGRADE;
+    const eventLabel = isRenewal ? "Renew" : "Upgrade to";
+    const description = `${eventLabel} plan ${payload.target_plan_code} (${payload.duration_months} month(s))`;
 
     // Run the four state changes (debit wallet balance, write payment record,
     // update pricing fields, write subscription history) inside a single
@@ -294,7 +332,7 @@ class PricingService {
             type: TransactionType.PAYMENT,
             amount,
             status: TransactionStatus.SUCCESS,
-            description: `Upgrade plan to ${payload.target_plan_code} (${payload.duration_months} month(s))`,
+            description,
           },
           session
         );
@@ -319,7 +357,7 @@ class PricingService {
               user_id: userId,
               from_plan_code: currentPlanCode,
               to_plan_code: payload.target_plan_code,
-              event_type: SubscriptionEventType.UPGRADE,
+              event_type: eventType,
               status: SubscriptionEventStatus.SUCCESS,
               source: SubscriptionSource.WALLET,
               amount,
@@ -329,12 +367,27 @@ class PricingService {
               metadata: {
                 duration_months: payload.duration_months,
                 wallet_transaction_id: paymentTransaction._id.toString(),
+                ...(isRenewal && {
+                  previous_expires_at: currentExpiresAt,
+                }),
               },
             },
           ],
           { session }
         );
       });
+    } catch (error) {
+      // Concurrent request with the same idempotency_key already committed —
+      // the unique (user_id, idempotency_key) index trips on the second
+      // insert and the whole transaction rolls back. Treat it as a duplicate
+      // call and return the current state instead of surfacing 500.
+      if (this.isIdempotencyKeyConflict(error)) {
+        logger.warn(
+          `Idempotent upgrade conflict for user ${userId}, key ${payload.idempotency_key}`
+        );
+        return this.getMyPricing(userId);
+      }
+      throw error;
     } finally {
       await session.endSession();
     }

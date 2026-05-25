@@ -360,11 +360,15 @@ export class UserWalletService {
     const calculatedBalance =
       await walletRepository.calculateUserBalance(userId);
     const wallet = await walletBalanceRepository.findByUserId(userId);
-    if (!wallet || wallet.balance !== calculatedBalance) {
-      await walletBalanceRepository.createOrUpdate(userId, calculatedBalance);
-      return { balance: calculatedBalance, user_id: userId };
+    if (wallet && wallet.balance !== calculatedBalance) {
+      // Read path must stay side-effect free; surface the mismatch for ops
+      // to reconcile via a dedicated job. Writing here under race conditions
+      // can spin into a hot loop and mask the underlying inconsistency.
+      logger.warn(
+        `Wallet balance mismatch for user ${userId}: stored=${wallet.balance}, calculated=${calculatedBalance}`
+      );
     }
-    return { balance: wallet.balance, user_id: userId };
+    return { balance: calculatedBalance, user_id: userId };
   }
 
   async getTransactionHistory(

@@ -15,6 +15,7 @@ export interface IPricingPackageDocument extends IPricingPackage, Document {}
 
 export enum SubscriptionEventType {
   UPGRADE = "upgrade",
+  RENEWAL = "renewal",
   EXPIRED_DOWNGRADE = "expired_downgrade",
 }
 

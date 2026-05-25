@@ -301,7 +301,7 @@ export const PRICING_MESSAGES = {
   PRICING_INSUFFICIENT_BALANCE: "Insufficient wallet balance for upgrade",
   PRICING_INVALID_TARGET_PLAN: "Invalid target plan",
   PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER:
-    "Current plan is already equal or higher than target plan",
+    "Cannot downgrade to a lower plan; renewals must target the same or a higher plan",
   PRICING_PACKAGE_NOT_AVAILABLE: "Target pricing package is not available",
 } as const;
 
