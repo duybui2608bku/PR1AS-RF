@@ -64,20 +64,15 @@ commentSchema.index({ deleted_at: 1 });
 // primary check, but this fires for any code path that bypasses the service
 // (scripts, jobs, future endpoints) — a reply may only point at a top-level
 // comment so the thread can never nest deeper than one level.
-commentSchema.pre("validate", async function (next) {
-  if (!this.parent_comment_id) return next();
-  try {
-    const parent = await mongoose
-      .model<ICommentDocument>(modelsName.COMMENT)
-      .findById(this.parent_comment_id)
-      .select("parent_comment_id")
-      .lean();
-    if (parent && parent.parent_comment_id) {
-      return next(new Error("Replies may not nest deeper than one level"));
-    }
-    return next();
-  } catch (error) {
-    return next(error as Error);
+commentSchema.pre("validate", async function () {
+  if (!this.parent_comment_id) return;
+  const parent = await mongoose
+    .model<ICommentDocument>(modelsName.COMMENT)
+    .findById(this.parent_comment_id)
+    .select("parent_comment_id")
+    .lean();
+  if (parent && parent.parent_comment_id) {
+    throw new Error("Replies may not nest deeper than one level");
   }
 });
 
