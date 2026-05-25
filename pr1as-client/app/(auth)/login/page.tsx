@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useGoogleLogin as useGoogleOAuth } from "@react-oauth/google"
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
@@ -16,11 +15,10 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
-import { Separator } from "@/components/ui/separator"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
-import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
+import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
@@ -31,6 +29,8 @@ export default function LoginPage() {
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
+  // Google login is temporarily disabled until a valid OAuth client id is configured.
+  /*
   const googleLoginMutation = useGoogleLogin()
   const triggerGoogleOAuth = useGoogleOAuth({
     onSuccess: async (tokenResponse) => {
@@ -43,6 +43,7 @@ export default function LoginPage() {
     },
     onError: () => toast.error("Đăng nhập Google thất bại."),
   })
+  */
   const forgotPasswordMutation = useForgotPassword()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
@@ -270,6 +271,7 @@ export default function LoginPage() {
           </Button>
         ) : null}
 
+        {/* Google login is temporarily hidden to avoid OAuth client_id errors.
         <Separator />
 
         <Button
@@ -291,6 +293,7 @@ export default function LoginPage() {
           )}
           Đăng nhập bằng Google
         </Button>
+        */}
 
         <p className="text-center text-sm text-muted-foreground">
           Chưa có tài khoản?{" "}

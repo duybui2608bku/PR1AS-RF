@@ -9,7 +9,7 @@ import { toApiError } from "@/lib/utils/error-handler"
 import { getQueryClient } from "@/lib/query-client"
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL
-const fallbackURL = "http://localhost:3052/api" // Aligned with backend port 3052
+const fallbackURL = "http://localhost:3052/api" 
 
 if (!baseURL) {
   if (process.env.NODE_ENV === "production") {
