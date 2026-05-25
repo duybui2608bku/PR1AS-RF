@@ -27,6 +27,7 @@ import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
+import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
@@ -160,6 +161,15 @@ export function SiteHeader() {
     }
   }
 
+  const handleLoginClick = async () => {
+    try {
+      await clearSessionCookie()
+    } catch {
+      // ignore — proceed to login even if cookie clear fails
+    }
+    router.push("/login")
+  }
+
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
@@ -257,8 +267,8 @@ export function SiteHeader() {
             </div>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Đăng nhập</Link>
+              <Button variant="ghost" size="sm" onClick={handleLoginClick}>
+                Đăng nhập
               </Button>
               <Button size="sm" asChild>
                 <Link href="/register">Đăng ký</Link>
@@ -332,7 +342,7 @@ export function SiteHeader() {
                   className="w-full"
                   onClick={() => {
                     setOpen(false)
-                    router.push("/login")
+                    void handleLoginClick()
                   }}
                 >
                   Đăng nhập

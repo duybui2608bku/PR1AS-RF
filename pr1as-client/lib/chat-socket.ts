@@ -71,6 +71,7 @@ export type ServerToClientEvents = {
   error: (payload: { message?: string } | Error) => void
   "notification:new": (payload: NotificationPayload) => void
   "notification:unread_count": (payload: { unread_count: number }) => void
+  "account:banned": () => void
 }
 
 export type ClientToServerEvents = {
