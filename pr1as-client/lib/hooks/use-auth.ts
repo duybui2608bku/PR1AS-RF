@@ -144,10 +144,13 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post("/auth/logout")
-      // Clear the httpOnly cookie via the Route Handler. Must finish before
-      // clearAuth() so the middleware no longer sees a session cookie.
-      await clearSessionCookie()
+      try {
+        await api.post("/auth/logout")
+      } finally {
+        // Always clear the httpOnly cookie regardless of whether the API call
+        // succeeded — prevents a stale cookie from blocking navigation to /login.
+        await clearSessionCookie()
+      }
     },
     onSettled: () => {
       clearAuth()

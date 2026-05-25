@@ -129,13 +129,17 @@ api.interceptors.response.use(
       const state = useAuthStore.getState()
       const refreshToken = state.refreshToken
 
-      // If we don't have a refresh token, we cannot refresh. Force logout.
+      // If we don't have a refresh token, we cannot refresh.
+      // Only force-logout if the user was previously authenticated — a plain 401
+      // from a public endpoint (e.g. /auth/login with wrong credentials) should
+      // be passed through so the calling component can show an error message.
       if (!refreshToken) {
-        if (typeof window !== "undefined" && !state.isLoggingOut) {
+        if (typeof window !== "undefined" && state.isAuthenticated && !state.isLoggingOut) {
           state.setLoggingOut(true)
           state.clearAuth()
           getQueryClient().clear()
-          void clearSessionCookie()
+          await clearSessionCookie()
+          window.location.replace("/login")
         }
         const apiError = toApiError(error)
         return Promise.reject(apiError ?? error)
@@ -200,14 +204,15 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails (expired refresh token), clear auth and force logout
         processQueue(refreshError, null)
-        
+
         if (typeof window !== "undefined" && !state.isLoggingOut) {
           state.setLoggingOut(true)
           state.clearAuth()
           getQueryClient().clear()
-          void clearSessionCookie()
+          await clearSessionCookie()
+          window.location.replace("/login")
         }
-        
+
         const apiError = toApiError(error)
         return Promise.reject(apiError ?? error)
       } finally {

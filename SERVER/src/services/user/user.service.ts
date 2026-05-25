@@ -13,6 +13,9 @@ import nodemailerUtils from "../../utils/nodemailer";
 import { accountBannedTemplate } from "../../utils/template-mail";
 import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
 import { logger } from "../../utils/logger";
+import { getSocketIO } from "../../config/socket";
+import { getUserRoom } from "../../utils/chat.helper";
+import { SOCKET_EVENTS } from "../../constants/socket";
 
 export class UserService {
   async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
@@ -26,6 +29,14 @@ export class UserService {
       status === UserStatus.BANNED &&
       existingUser.status !== UserStatus.BANNED
     ) {
+      // Kick the user out immediately via socket if they are online
+      try {
+        const io = getSocketIO();
+        io.to(getUserRoom(userId)).emit(SOCKET_EVENTS.ACCOUNT_BANNED);
+      } catch (error) {
+        logger.warn("Could not emit account:banned — socket may not be initialized", { error, userId });
+      }
+
       await this.sendAccountBannedEmail(user).catch((error) => {
         logger.error("Failed to send account banned email", {
           error,

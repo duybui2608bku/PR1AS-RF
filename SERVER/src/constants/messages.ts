@@ -38,7 +38,7 @@ export const AUTH_MESSAGES = {
   EMAIL_VERIFICATION_FAILED: "Email verification failed",
   RATE_LIMIT_EXCEEDED: "Too many requests, please try again later",
   RATE_LIMIT_AUTH_EXCEEDED:
-    "Too many authentication attempts, please try again later",
+    "Too many failed login attempts. Please try again after 15 minutes",
   LOGOUT_SUCCESS: "Logout successful",
   REGISTER_SUCCESS: "Registration successful",
   REGISTER_VERIFY_REQUIRED:
