@@ -19,8 +19,19 @@ import { reactionRoutes } from "./reaction";
 import { moderationRoutes } from "./moderation";
 import reputationRoutes from "./reputation/reputation.routes";
 import reputationConfigRoutes from "./reputation/reputation-config.routes";
+import { csrfToken } from "../middleware/csrf";
+import { CSRF_CONSTANTS } from "../constants/csrf";
+import { R } from "../utils/response";
 
 const router = Router();
+
+router.get("/csrf-token", csrfToken, (_req, res) => {
+  R.success(
+    res,
+    { csrfToken: res.getHeader(CSRF_CONSTANTS.HEADER_NAME) },
+    "CSRF token issued"
+  );
+});
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);

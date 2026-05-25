@@ -92,7 +92,18 @@ export const validateOrigin = (
   }
 
   if (origin) {
-    const originUrl = new URL(origin);
+    let originUrl: URL;
+    try {
+      originUrl = new URL(origin);
+    } catch {
+      return next(
+        AppError.forbidden(
+          CSRF_MESSAGES.INVALID_ORIGIN,
+          ErrorCode.INVALID_ORIGIN
+        )
+      );
+    }
+
     const isAllowed = allowedOrigins.some((allowed) => {
       if (typeof allowed === "string") {
         const allowedUrl = new URL(allowed);
@@ -154,8 +165,8 @@ export const validateOrigin = (
 };
 
 /**
- * Origin/Referer validation on state-changing requests.
- * Browsers always attach Origin/Referer, so this works without any client cookie/header
- * coordination. Pairs with Bearer-token auth (no auth cookie set by this server).
+ * Origin/Referer validation plus double-submit token validation on
+ * state-changing requests. This keeps Bearer-token clients working while
+ * failing closed if a browser ever sends ambient cookies to the API.
  */
-export const csrfProtection: RequestHandler[] = [validateOrigin];
+export const csrfProtection: RequestHandler[] = [validateOrigin, validateCsrf];

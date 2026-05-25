@@ -16,6 +16,9 @@ const ensureApiBasePath = (url: string) => {
 const configuredBaseURL = process.env.NEXT_PUBLIC_API_URL
 const fallbackURL = "http://localhost:3052/api"
 const apiBaseURL = ensureApiBasePath(configuredBaseURL ?? fallbackURL)
+const csrfCookieName = "XSRF-TOKEN"
+const csrfHeaderName = "X-CSRF-Token"
+const unsafeMethods = new Set(["post", "put", "patch", "delete"])
 
 if (!configuredBaseURL) {
   if (process.env.NODE_ENV === "production") {
@@ -36,12 +39,65 @@ export const api: AxiosInstance = axios.create({
   timeout: 15_000,
 })
 
+const readCookie = (name: string) => {
+  if (typeof document === "undefined") return null
+  const prefix = `${encodeURIComponent(name)}=`
+  return (
+    document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(prefix))
+      ?.slice(prefix.length) ?? null
+  )
+}
+
+let csrfFetchPromise: Promise<string | null> | null = null
+
+const ensureCsrfToken = async () => {
+  if (typeof window === "undefined") return null
+
+  const existing = readCookie(csrfCookieName)
+  if (existing) return decodeURIComponent(existing)
+
+  if (!csrfFetchPromise) {
+    csrfFetchPromise = axios
+      .get(`${apiBaseURL}/csrf-token`, {
+        withCredentials: true,
+        headers: { "Accept-Language": "vi" },
+      })
+      .then((response) => {
+        const headerToken = response.headers["x-csrf-token"]
+        if (typeof headerToken === "string") return headerToken
+        const cookieToken = readCookie(csrfCookieName)
+        return cookieToken ? decodeURIComponent(cookieToken) : null
+      })
+      .finally(() => {
+        csrfFetchPromise = null
+      })
+  }
+
+  return csrfFetchPromise
+}
+
+const attachCsrfHeader = async (config: InternalAxiosRequestConfig) => {
+  const method = (config.method ?? "get").toLowerCase()
+  if (typeof window === "undefined" || !unsafeMethods.has(method)) {
+    return
+  }
+
+  const token = await ensureCsrfToken()
+  if (token) {
+    config.headers.set(csrfHeaderName, token)
+  }
+}
+
 // Request interceptor to dynamically inject the authorization header
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().token
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`)
   }
+  await attachCsrfHeader(config)
   return config
 })
 
@@ -104,13 +160,16 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
+        const csrfToken = await ensureCsrfToken()
         // Call backend API directly to refresh tokens
         const response = await axios.post(`${apiBaseURL}/auth/refresh-token`, {
           refreshToken,
         }, {
+          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
             "Accept-Language": "vi",
+            ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
           }
         })
 

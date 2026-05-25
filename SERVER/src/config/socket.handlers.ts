@@ -41,12 +41,6 @@ const TOKEN_REFRESH_GRACE_MS = 30_000;
 const accessKey = (conversationId: string, userId: string) =>
   `${conversationId}|${userId}`;
 
-function parseCookieToken(cookieHeader: string | undefined): string | undefined {
-  if (!cookieHeader) return undefined;
-  const match = cookieHeader.split(";").find((c) => c.trim().startsWith("token="));
-  return match?.split("=").slice(1).join("=").trim();
-}
-
 export const authenticateSocket = (
   socket: Socket,
   next: (err?: ExtendedError) => void
@@ -54,8 +48,7 @@ export const authenticateSocket = (
   try {
     const token =
       socket.handshake.auth.token ||
-      socket.handshake.headers.authorization?.replace("Bearer ", "") ||
-      parseCookieToken(socket.handshake.headers.cookie);
+      socket.handshake.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
       logger.error(`No token provided for socket ${socket.id}`);

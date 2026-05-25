@@ -445,12 +445,35 @@ export class AuthService {
     const existingByGoogleId = await userRepository.findByGoogleId(claims.sub);
     if (existingByGoogleId) return existingByGoogleId;
 
-    const existingByEmail = await userRepository.findByEmail(claims.email);
+    const existingByEmail = await userRepository.findByEmailWithGoogleId(
+      claims.email
+    );
     if (existingByEmail) {
-      await userRepository.linkGoogleId(
-        existingByEmail._id.toString(),
-        claims.sub
-      );
+      if (
+        existingByEmail.google_id &&
+        existingByEmail.google_id !== claims.sub
+      ) {
+        throw new AppError(
+          AUTH_MESSAGES.INVALID_CREDENTIALS,
+          HTTP_STATUS.UNAUTHORIZED,
+          ErrorCode.INVALID_CREDENTIALS
+        );
+      }
+
+      try {
+        await userRepository.linkGoogleId(
+          existingByEmail._id.toString(),
+          claims.sub
+        );
+      } catch (err) {
+        if (!this.isDuplicateKeyError(err)) {
+          throw err;
+        }
+
+        const winner = await userRepository.findByGoogleId(claims.sub);
+        if (winner) return winner;
+        throw err;
+      }
       return existingByEmail;
     }
 

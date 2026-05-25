@@ -48,6 +48,12 @@ export class UserRepository {
     return User.findOne({ email: email.toLowerCase().trim() }).select("+password_hash");
   }
 
+  async findByEmailWithGoogleId(email: string): Promise<IUserDocument | null> {
+    return User.findOne({ email: email.toLowerCase().trim() }).select(
+      "+password_hash +google_id"
+    );
+  }
+
   async findById(id: string): Promise<IUserDocument | null> {
     return User.findById(id).lean() as Promise<IUserDocument | null>;
   }
