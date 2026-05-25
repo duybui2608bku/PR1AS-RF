@@ -68,6 +68,7 @@ export interface ConversationWithLastMessage extends IConversation {
     full_name: string | null;
     avatar: string | null;
     email: string;
+    status?: string;
     is_blocked?: boolean;
     has_blocked_me?: boolean;
     block_profile?: boolean;

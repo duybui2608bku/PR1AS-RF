@@ -9,4 +9,5 @@ export const SOCKET_EVENTS = {
   NOTIFICATION_NEW: "notification:new",
   NOTIFICATION_READ: "notification:read",
   NOTIFICATION_UNREAD_COUNT: "notification:unread_count",
+  ACCOUNT_BANNED: "account:banned",
 } as const;

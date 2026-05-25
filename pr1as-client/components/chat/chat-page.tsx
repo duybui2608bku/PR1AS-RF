@@ -590,6 +590,7 @@ export function ChatPage({
   )
   const selectedDirectBlocked = Boolean(selectedDirect?.other_user?.is_blocked)
   const selectedDirectBlockedMe = Boolean(selectedDirect?.other_user?.has_blocked_me)
+  const selectedDirectUserBanned = selectedDirect?.other_user?.status === "banned"
   const directRoleBlockedReason =
     mode === "direct" &&
     activeRole === "worker" &&
@@ -1393,6 +1394,12 @@ export function ChatPage({
                   {isActiveDirectAdmin ? (
                     <AdminVerifiedBadge withLabel />
                   ) : null}
+                  {mode === "direct" && selectedDirectUserBanned ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
+                      <Ban className="size-3" />
+                      Đã bị khóa
+                    </span>
+                  ) : null}
                   {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
                     <Button
                       type="button"
@@ -1749,6 +1756,7 @@ function ConversationList({
             adminUserId &&
             directConversation?.other_user?._id === adminUserId
         )
+        const isOtherUserBanned = isDirect && directConversation?.other_user?.status === "banned"
 
         return (
           <button
@@ -1785,6 +1793,12 @@ function ConversationList({
                   <span className="truncate">{title}</span>
                   {isAdminDirect ? (
                     <AdminVerifiedBadge className="ml-0.5" />
+                  ) : null}
+                  {isOtherUserBanned ? (
+                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
+                      <Ban className="size-2.5" />
+                      Bị khóa
+                    </span>
                   ) : null}
                 </p>
                 <span className="shrink-0 text-[11px] text-muted-foreground">

@@ -15,6 +15,7 @@ export const formatOtherUser = (user: IUserDocument | null) => {
     full_name: user.full_name || null,
     avatar: user.avatar || null,
     email: user.email,
+    status: user.status,
   };
 };
 

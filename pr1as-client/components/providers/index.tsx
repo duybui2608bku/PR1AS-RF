@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
+import { BannedAccountModal } from "@/components/providers/banned-account-modal"
 import { Toaster } from "@/components/ui/sonner"
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TopProgressBar />
         <QueryProvider>
           {children}
+          <BannedAccountModal />
           <Toaster richColors position="top-right" />
         </QueryProvider>
       </ThemeProvider>
