@@ -280,7 +280,7 @@ const FilterChips = ({
                   <Info className="size-3" />
                 </button>
               </DialogTrigger>
-              <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0">
+              <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col gap-0 p-0">
                 <DialogHeader className="border-b px-6 py-4">
                   <DialogTitle>{chip.label}</DialogTitle>
                 </DialogHeader>
@@ -403,7 +403,7 @@ export const WorkersByServiceList = ({
                         <Info className="size-4" />
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0">
+                    <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col gap-0 p-0">
                       <DialogHeader className="border-b px-6 py-4">
                         <DialogTitle>
                           {workerService.getFallbackName(group.service.name)}
