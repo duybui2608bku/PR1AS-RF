@@ -16,6 +16,7 @@ import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useCreatePost } from "@/lib/hooks/use-posts"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -71,9 +72,10 @@ function UserAvatar({
 }
 
 export function CreatePostForm() {
-  const { user } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
   const createMutation = useCreatePost()
-  const isWorkerActive = isWorkerRoleActive(user)
+  const { requireAuth } = useAuthRequired()
+  const isWorkerActive = isAuthenticated && isWorkerRoleActive(user)
 
   const [open, setOpen] = useState(false)
   const [body, setBody] = useState("")
@@ -165,14 +167,14 @@ export function CreatePostForm() {
           />
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => requireAuth(() => setOpen(true))}
             className="flex-1 rounded-full border bg-muted/50 px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted"
           >
             Bạn đang nghĩ gì?
           </button>
           <button
             type="button"
-            onClick={() => { setOpen(true) }}
+            onClick={() => requireAuth(() => setOpen(true))}
             className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent"
             aria-label="Thêm ảnh"
           >

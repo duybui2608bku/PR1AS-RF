@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useMyPricing } from "@/lib/hooks/use-pricing"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { serviceService } from "@/services/service.service"
@@ -64,6 +65,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const [bookOpen, setBookOpen] = useState(false)
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
+  const { requireAuth } = useAuthRequired()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const user = useAuthStore((s) => s.user)
   const currentUserId = user?.id
@@ -122,43 +124,39 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   }, [selectedService, catalogByCode])
 
   const handleBook = () => {
-    if (!isAuthenticated) {
-      router.push("/login")
-      return
-    }
-    if (isOwnProfile) {
-      toast.info("Bạn không thể đặt lịch chính mình.")
-      return
-    }
-    if (isWorkerLowReputation) {
-      toast.error("Worker này hiện không thể nhận booking do điểm uy tín thấp.")
-      return
-    }
-    if (!selectedId) {
-      toast.warning("Vui lòng chọn một dịch vụ.")
-      return
-    }
-    setBookOpen(true)
+    requireAuth(() => {
+      if (isOwnProfile) {
+        toast.info("Bạn không thể đặt lịch chính mình.")
+        return
+      }
+      if (isWorkerLowReputation) {
+        toast.error("Worker này hiện không thể nhận booking do điểm uy tín thấp.")
+        return
+      }
+      if (!selectedId) {
+        toast.warning("Vui lòng chọn một dịch vụ.")
+        return
+      }
+      setBookOpen(true)
+    })
   }
 
   const handleMessage = () => {
-    if (!isAuthenticated) {
-      router.push("/login")
-      return
-    }
-    if (isOwnProfile) {
-      toast.info("Bạn không thể nhắn tin chính mình.")
-      return
-    }
-    if (isCheckingPricing) {
-      toast.info("Đang kiểm tra gói hiện tại của bạn.")
-      return
-    }
-    if (!canMessageWorker) {
-      setUpgradePlanOpen(true)
-      return
-    }
-    router.push(`/chat?receiver_id=${workerId}`)
+    requireAuth(() => {
+      if (isOwnProfile) {
+        toast.info("Bạn không thể nhắn tin chính mình.")
+        return
+      }
+      if (isCheckingPricing) {
+        toast.info("Đang kiểm tra gói hiện tại của bạn.")
+        return
+      }
+      if (!canMessageWorker) {
+        setUpgradePlanOpen(true)
+        return
+      }
+      router.push(`/chat?receiver_id=${workerId}`)
+    })
   }
 
   return (

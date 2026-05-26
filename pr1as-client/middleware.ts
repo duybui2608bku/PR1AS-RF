@@ -9,12 +9,12 @@ import {
 const PROTECTED_PREFIXES = [
   "/client",
   "/chat",
-  "/posts",
   "/dashboard",
   "/settings",
   "/wallet",
-  "/services",
-  "/worker"
+  "/worker/setup",
+  "/worker/bookings",
+  "/worker/schedule",
 ]
 const AUTH_PAGES = ["/login", "/register"]
 
@@ -131,12 +131,12 @@ export const config = {
   matcher: [
     "/client/:path*",
     "/chat/:path*",
-    "/posts/:path*",
     "/dashboard/:path*",
     "/settings/:path*",
     "/wallet/:path*",
-    "/services/:path*",
-    "/worker/:path*",
+    "/worker/setup/:path*",
+    "/worker/bookings/:path*",
+    "/worker/schedule/:path*",
     "/",
     "/login",
     "/register",
