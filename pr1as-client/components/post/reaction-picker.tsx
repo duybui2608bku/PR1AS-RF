@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/hover-card"
 import { cn } from "@/lib/utils"
 import { useTogglePostReaction } from "@/lib/hooks/use-reactions"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import type {
   PostPublic,
   ReactionSummaryPublic,
@@ -45,22 +46,36 @@ export function topReactionTypes(summary: ReactionSummaryPublic): ReactionType[]
 export function ReactionPicker({ post }: { post: PostPublic }) {
   const [open, setOpen] = useState(false)
   const toggleReaction = useTogglePostReaction(post.id)
+  const { requireAuth } = useAuthRequired()
   const summary = post.reactions
   const myReaction = summary.my_reaction
   const myMeta = myReaction ? REACTION_META[myReaction] : null
   const top = topReactionTypes(summary)
 
   const handleToggle = (type: ReactionType) => {
-    if (toggleReaction.isPending) return
-    toggleReaction.mutate({ type, currentReaction: myReaction })
-    setOpen(false)
+    requireAuth(() => {
+      if (toggleReaction.isPending) return
+      toggleReaction.mutate({ type, currentReaction: myReaction })
+      setOpen(false)
+    })
   }
 
   const triggerLabel = myMeta?.label ?? "Thích"
 
   return (
     <div className="flex flex-1 items-center gap-2">
-      <HoverCard open={open} onOpenChange={setOpen} openDelay={150} closeDelay={100}>
+      <HoverCard
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            requireAuth(() => setOpen(true))
+          } else {
+            setOpen(false)
+          }
+        }}
+        openDelay={150}
+        closeDelay={100}
+      >
         <HoverCardTrigger asChild>
           <Button
             type="button"

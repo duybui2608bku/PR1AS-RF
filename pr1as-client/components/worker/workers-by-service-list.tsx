@@ -90,7 +90,6 @@ const WorkerCard = ({
 }) => {
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
   const { label, prefix } = formatPricing(worker.pricing)
-
   return (
     <article className="group relative flex-none w-[44vw] overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto snap-start">
       <Link href={`/worker/${worker.id}`} className="block cursor-pointer">

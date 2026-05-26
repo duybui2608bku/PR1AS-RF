@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { useTranslations } from "next-intl"
@@ -40,6 +41,7 @@ import {
   usePostComments,
   useUpdateComment,
 } from "@/lib/hooks/use-comments"
+import { useAuthDialogStore } from "@/lib/store/auth-dialog-store"
 import { cn } from "@/lib/utils"
 import type { CommentPublic, CommentThreadItem } from "@/types"
 
@@ -635,6 +637,8 @@ export function PostComments({
   isPostOwner?: boolean
 }) {
   const t = useTranslations("PostComments")
+  const pathname = usePathname()
+  const openAuthDialog = useAuthDialogStore((state) => state.openAuthDialog)
   const canPostComment = isAuthenticated && (!commentsLocked || canBypassLock)
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -645,7 +649,7 @@ export function PostComments({
     isError,
     isFetchingNextPage,
     isLoading,
-  } = usePostComments(postId, enabled && isAuthenticated)
+  } = usePostComments(postId, enabled)
 
   const threads: CommentThreadItem[] = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -680,12 +684,7 @@ export function PostComments({
           {canBypassLock ? t("lockedByOwner") : t("lockedByAuthor")}
         </div>
       ) : null}
-      {!isAuthenticated ? (
-        <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
-          <MessageCircle className="size-4" />
-          {t("loginRequired")}
-        </div>
-      ) : isLoading ? (
+      {isLoading ? (
         <CommentsLoading />
       ) : isError ? (
         <p className="text-sm text-red-600 dark:text-red-400">{t("loadError")}</p>
@@ -721,6 +720,15 @@ export function PostComments({
 
           {canPostComment ? (
             <CommentForm postId={postId} parentCommentId={null} />
+          ) : !isAuthenticated ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/60"
+              onClick={() => openAuthDialog(pathname)}
+            >
+              <MessageCircle className="size-4" />
+              {t("loginRequired")}
+            </button>
           ) : null}
         </div>
       )}

@@ -57,6 +57,7 @@ import {
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -345,6 +346,7 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
 export function PostCard({ post }: Props) {
   const t = useTranslations("PostCard")
   const { user, isAuthenticated } = useAuthStore()
+  const { requireAuth } = useAuthRequired()
   const deleteMutation = useDeletePost()
   const lockMutation = useSetCommentsLock()
   const reportMutation = useReportPost()
@@ -454,74 +456,75 @@ export function PostCard({ post }: Props) {
           </div>
         </div>
 
-        {isAuthenticated ? (
-          <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 p-0"
-                  aria-label={t("menuLabel")}
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-8 p-0"
+              aria-label={t("menuLabel")}
+            >
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {canManagePost ? (
+              <>
+                <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                  <Pencil className="size-3.5" />
+                  {t("editPost")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={lockMutation.isPending}
+                  onSelect={(event) => {
+                    event.preventDefault()
+                    handleToggleCommentsLock()
+                  }}
                 >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canManagePost ? (
-                  <>
-                    <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                      <Pencil className="size-3.5" />
-                      {t("editPost")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={lockMutation.isPending}
-                      onSelect={(event) => {
-                        event.preventDefault()
-                        handleToggleCommentsLock()
-                      }}
-                    >
-                      {post.comments_locked ? (
-                        <>
-                          <LockOpen className="size-3.5" />
-                          {t("unlockComments")}
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="size-3.5" />
-                          {t("lockComments")}
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={deleteMutation.isPending}
-                      onSelect={() => setDeleteOpen(true)}
-                    >
-                      <Trash2 className="size-3.5" />
-                      {t("deletePost")}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem
-                    disabled={openPostReportQuery.isFetching || hasOpenPostReport}
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      if (openPostReportQuery.isFetching) return
-                      if (hasOpenPostReport) return
-                      setReportOpen(true)
-                    }}
-                  >
-                    <Flag className="size-3.5" />
-                    {hasOpenPostReport
-                      ? "Báo cáo đang được xử lý"
-                      : "Báo cáo bài viết"}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {post.comments_locked ? (
+                    <>
+                      <LockOpen className="size-3.5" />
+                      {t("unlockComments")}
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="size-3.5" />
+                      {t("lockComments")}
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={deleteMutation.isPending}
+                  onSelect={() => setDeleteOpen(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  {t("deletePost")}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem
+                disabled={isAuthenticated && (openPostReportQuery.isFetching || hasOpenPostReport)}
+                onSelect={(event) => {
+                  event.preventDefault()
+                  requireAuth(() => {
+                    if (openPostReportQuery.isFetching || hasOpenPostReport) return
+                    setReportOpen(true)
+                  })
+                }}
+              >
+                <Flag className="size-3.5" />
+                {isAuthenticated && hasOpenPostReport
+                  ? "Báo cáo đang được xử lý"
+                  : "Báo cáo bài viết"}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
+        {canManagePost ? (
+          <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>{t("deletePostTitle")}</AlertDialogTitle>
@@ -601,7 +604,7 @@ export function PostCard({ post }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <ReactionPicker post={post} />
+          {isAuthenticated ? <ReactionPicker post={post} /> : null}
           <Button
             type="button"
             variant="ghost"
