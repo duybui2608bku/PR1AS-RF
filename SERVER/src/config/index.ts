@@ -95,6 +95,9 @@ export const config = {
     combinedLogFile: process.env.COMBINED_LOG_FILE || "combined.log",
   },
   security: {
+    csrf: {
+      enabled: process.env.CSRF_ENABLED !== "false",
+    },
     csp: {
       enabled: process.env.CSP_ENABLED !== "false",
       upgradeInsecureRequests:

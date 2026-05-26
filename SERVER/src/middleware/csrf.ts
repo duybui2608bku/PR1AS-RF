@@ -38,6 +38,10 @@ export const validateCsrf = (
   _res: Response,
   next: NextFunction
 ): void => {
+  if (!config.security.csrf.enabled) {
+    return next();
+  }
+
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
   }
@@ -74,6 +78,10 @@ export const validateOrigin = (
   _res: Response,
   next: NextFunction
 ): void => {
+  if (!config.security.csrf.enabled) {
+    return next();
+  }
+
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
   }
