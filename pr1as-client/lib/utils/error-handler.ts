@@ -80,6 +80,11 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   REVIEW_UNAUTHORIZED_ACCESS: "Bạn không có quyền truy cập đánh giá này.",
   UNAUTHORIZED: "Vui lòng đăng nhập để tiếp tục.",
   USER_BANNED: "Tài khoản đã bị khóa.",
+  USER_PENDING_DELETE:
+    "Tài khoản đang chờ xoá. Đăng nhập lại để huỷ thao tác.",
+  USER_DELETED: "Tài khoản đã bị xoá.",
+  ACCOUNT_DELETE_BLOCKED:
+    "Vẫn còn nghĩa vụ chưa xử lý. Vui lòng kiểm tra ví, booking và khiếu nại trước khi xoá.",
   VALIDATION_ERROR: "Dữ liệu không hợp lệ.",
   WALLET_DEPOSIT_AMOUNT_TOO_HIGH: "Số tiền nạp quá cao.",
   WALLET_DEPOSIT_AMOUNT_TOO_LOW: "Số tiền nạp quá thấp.",
@@ -400,12 +405,24 @@ export const localizeServerMessage = (
 export class ApiError extends Error {
   readonly code: string | undefined
   readonly statusCode: number | undefined
+  readonly details: Array<{ field?: string; message?: string }> | undefined
 
-  constructor({ message, code, statusCode }: { message: string; code?: string; statusCode?: number }) {
+  constructor({
+    message,
+    code,
+    statusCode,
+    details,
+  }: {
+    message: string
+    code?: string
+    statusCode?: number
+    details?: Array<{ field?: string; message?: string }>
+  }) {
     super(message)
     this.name = "ApiError"
     this.code = code
     this.statusCode = statusCode
+    this.details = details
   }
 }
 
@@ -437,7 +454,47 @@ export const toApiError = (error: unknown): ApiError | null => {
     statusCode
   )
 
-  return new ApiError({ message, code, statusCode })
+  return new ApiError({
+    message,
+    code,
+    statusCode,
+    details: data?.error?.details,
+  })
+}
+
+/**
+ * For account-deletion 409s the server returns `error.details` as an array of
+ * { field: blocker-code, message: stringified-detail }. This unpacks it back
+ * into a typed list so the UI can render per-blocker guidance.
+ */
+export type AccountDeleteBlocker = {
+  code: "WALLET_BALANCE" | "ACTIVE_BOOKINGS" | "OPEN_DISPUTES"
+  detail: number
+}
+
+export const extractAccountDeleteBlockers = (
+  error: unknown
+): AccountDeleteBlocker[] => {
+  if (!(error instanceof ApiError)) return []
+  if (error.code !== "ACCOUNT_DELETE_BLOCKED") return []
+  const details = error.details ?? []
+  return details
+    .map((d) => {
+      if (!d.field || !d.message) return null
+      if (
+        d.field !== "WALLET_BALANCE" &&
+        d.field !== "ACTIVE_BOOKINGS" &&
+        d.field !== "OPEN_DISPUTES"
+      ) {
+        return null
+      }
+      const num = Number(d.message)
+      return {
+        code: d.field as AccountDeleteBlocker["code"],
+        detail: Number.isFinite(num) ? num : 0,
+      }
+    })
+    .filter((b): b is AccountDeleteBlocker => b !== null)
 }
 
 export const getErrorMessage = (error: unknown, fallback = DEFAULT_ERROR_MESSAGE): string => {

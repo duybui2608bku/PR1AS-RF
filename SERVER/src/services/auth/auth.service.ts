@@ -30,6 +30,7 @@ import {
 } from "../../utils/date";
 import { toPublicUser } from "../../utils/user.helper";
 import { OAuth2Client } from "google-auth-library";
+import { accountDeletionService } from "./account-deletion.service";
 
 const googleOAuthClient = new OAuth2Client(config.googleClientId);
 
@@ -122,6 +123,22 @@ export class AuthService {
       );
     }
 
+    if (user.status === UserStatus.DELETED) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_DELETED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_DELETED
+      );
+    }
+
+    // PENDING_DELETE users get auto-restored on successful login. The grace
+    // window exists exactly so users can change their mind by signing in.
+    if (user.status === UserStatus.PENDING_DELETE) {
+      await accountDeletionService.restoreOnLogin(user._id.toString());
+      user.status = UserStatus.ACTIVE;
+      user.deleted_at = null;
+    }
+
     if (!user.verify_email) {
       throw new AppError(
         AUTH_MESSAGES.EMAIL_NOT_VERIFIED,
@@ -154,6 +171,24 @@ export class AuthService {
 
     if (user.status === UserStatus.BANNED) {
       throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (
+      user.status === UserStatus.PENDING_DELETE ||
+      user.status === UserStatus.DELETED
+    ) {
+      // Refresh tokens are cleared on PENDING_DELETE; this branch only fires
+      // if the client somehow held on to a valid one. Reject so they have to
+      // go through /login (which can auto-restore on success).
+      throw new AppError(
+        user.status === UserStatus.DELETED
+          ? AUTH_MESSAGES.USER_DELETED
+          : AUTH_MESSAGES.USER_PENDING_DELETE,
+        HTTP_STATUS.FORBIDDEN,
+        user.status === UserStatus.DELETED
+          ? ErrorCode.USER_DELETED
+          : ErrorCode.USER_PENDING_DELETE
+      );
     }
 
     if (!user.verify_email) {
@@ -419,6 +454,20 @@ export class AuthService {
         HTTP_STATUS.FORBIDDEN,
         ErrorCode.USER_BANNED
       );
+    }
+
+    if (user.status === UserStatus.DELETED) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_DELETED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_DELETED
+      );
+    }
+
+    if (user.status === UserStatus.PENDING_DELETE) {
+      await accountDeletionService.restoreOnLogin(user._id.toString());
+      user.status = UserStatus.ACTIVE;
+      user.deleted_at = null;
     }
 
     const { token, refreshToken } = await generateAuthTokens(user);

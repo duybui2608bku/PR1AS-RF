@@ -7,7 +7,9 @@ import {
   resetPasswordSchema,
   verifyEmailSchema,
   resendVerificationSchema,
+  deleteAccountSchema,
 } from "../../validations/auth/auth.validation";
+import { accountDeletionService } from "../../services/auth/account-deletion.service";
 import {
   updateLastActiveRoleSchema,
   updateWorkerProfileSchema,
@@ -160,6 +162,27 @@ export class AuthController {
     );
     const result = await authService.resendVerificationEmail(data.email);
     R.success(res, result, result.message, req);
+  }
+
+  async getDeletionStatus(req: AuthRequest, res: Response): Promise<void> {
+    const result = await accountDeletionService.getDeletionStatus(
+      extractUserIdFromRequest(req)
+    );
+    R.success(res, result, undefined, req);
+  }
+
+  async deleteAccount(req: AuthRequest, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      deleteAccountSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await accountDeletionService.requestDeletion(
+      extractUserIdFromRequest(req),
+      data.password
+    );
+    res.clearCookie("token");
+    R.success(res, result, AUTH_MESSAGES.ACCOUNT_DELETE_REQUESTED, req);
   }
 
   async googleLogin(req: Request, res: Response): Promise<void> {

@@ -63,6 +63,11 @@ export class UserRepository {
     return user ? user.roles : null;
   }
 
+  async findStatusById(id: string): Promise<UserStatus | null> {
+    const user = await User.findById(id).select("status").lean();
+    return user ? user.status : null;
+  }
+
   async getLastActiveRoleById(userId: string): Promise<UserRole | null> {
     const user = await User.findById(userId).select("last_active_role").lean();
     return user?.last_active_role || null;
@@ -139,6 +144,65 @@ export class UserRepository {
     return User.findByIdAndUpdate(id, { status }, { new: true });
   }
 
+  async markPendingDelete(id: string): Promise<IUserDocument | null> {
+    return User.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), status: UserStatus.ACTIVE },
+      {
+        status: UserStatus.PENDING_DELETE,
+        deleted_at: new Date(),
+        refresh_token_hash: null,
+      },
+      { new: true }
+    );
+  }
+
+  async restoreFromPendingDelete(id: string): Promise<IUserDocument | null> {
+    return User.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), status: UserStatus.PENDING_DELETE },
+      {
+        status: UserStatus.ACTIVE,
+        deleted_at: null,
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Permanently anonymizes a user that has waited out the grace window. PII is
+   * replaced with deterministic sentinel values so historical joins (booking,
+   * review, wallet) keep working without leaking the original identity.
+   */
+  async scrubAndMarkDeleted(id: string): Promise<IUserDocument | null> {
+    const objectId = new Types.ObjectId(id);
+    return User.findOneAndUpdate(
+      { _id: objectId, status: UserStatus.PENDING_DELETE },
+      {
+        status: UserStatus.DELETED,
+        email: `deleted_${id}@pr1as.invalid`,
+        password_hash: null,
+        google_id: null,
+        full_name: "Người dùng đã rời",
+        phone: null,
+        avatar: null,
+        worker_profile: null,
+        client_profile: null,
+        refresh_token_hash: null,
+        password_reset_token: null,
+        password_reset_expires: null,
+        email_verification_token: null,
+        email_verification_expires: null,
+      },
+      { new: true }
+    );
+  }
+
+  async findPendingDeleteExpired(cutoff: Date): Promise<IUserDocument[]> {
+    return User.find({
+      status: UserStatus.PENDING_DELETE,
+      deleted_at: { $lte: cutoff },
+    }).lean() as Promise<IUserDocument[]>;
+  }
+
   async updateLastActiveRole(id: string, last_active_role: UserRole): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
   }
@@ -196,6 +260,19 @@ export class UserRepository {
 
   async findByIdWithPassword(id: string): Promise<IUserDocument | null> {
     return User.findById(id).select("+password_hash");
+  }
+
+  async getAuthMethodsById(
+    id: string
+  ): Promise<{ has_password: boolean; has_google: boolean } | null> {
+    const user = await User.findById(id)
+      .select("+password_hash +google_id")
+      .lean();
+    if (!user) return null;
+    return {
+      has_password: Boolean(user.password_hash),
+      has_google: Boolean(user.google_id),
+    };
   }
 
   async updatePricingInfo(

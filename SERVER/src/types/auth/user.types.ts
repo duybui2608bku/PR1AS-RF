@@ -10,6 +10,13 @@ export enum UserRole {
 export enum UserStatus {
   ACTIVE = "active",
   BANNED = "banned",
+  // User requested account deletion. Frozen for 30 days; logging in restores
+  // the account to ACTIVE. After the grace window a cron transitions to
+  // DELETED + scrubs PII.
+  PENDING_DELETE = "pending_delete",
+  // PII scrubbed. Account is unrecoverable but the row is kept so historical
+  // references (bookings, reviews, wallet transactions) still join cleanly.
+  DELETED = "deleted",
 }
 
 export enum gender {
@@ -64,6 +71,7 @@ export interface IUser {
   worker_profile: WorkerProfile | null;
   client_profile: ClientProfile | null;
   status: UserStatus;
+  deleted_at: Date | null;
   verify_email: boolean;
   created_at: Date;
   last_login: Date | null;

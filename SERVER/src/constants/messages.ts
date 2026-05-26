@@ -15,6 +15,14 @@ export const AUTH_MESSAGES = {
   REFRESH_TOKEN_REUSE_DETECTED: "Refresh token reuse detected",
   REFRESH_TOKEN_EXPIRED: "Invalid or expired refresh token",
   USER_BANNED: "Account has been banned",
+  USER_PENDING_DELETE:
+    "Account is scheduled for deletion. Log in to cancel the deletion.",
+  USER_DELETED: "Account has been deleted",
+  ACCOUNT_DELETE_BLOCKED:
+    "Account cannot be deleted while there is outstanding activity",
+  ACCOUNT_DELETE_REQUESTED:
+    "Deletion scheduled. Log in within 30 days to cancel.",
+  ACCOUNT_RESTORED: "Account restored",
   USER_NOT_FOUND: "User not found",
   EMAIL_EXISTS: "Email already registered",
   EMAIL_NOT_VERIFIED: "Please verify your email before logging in",

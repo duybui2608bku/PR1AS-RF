@@ -16,6 +16,8 @@ import { logger } from "../../utils/logger";
 import { getSocketIO } from "../../config/socket";
 import { getUserRoom } from "../../utils/chat.helper";
 import { SOCKET_EVENTS } from "../../constants/socket";
+import { getUserSocketIds } from "../../config/socket.handlers";
+import { invalidateUserStatusCache } from "../../utils/userStatusCache";
 
 export class UserService {
   async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
@@ -25,16 +27,31 @@ export class UserService {
     const user = await userRepository.updateStatus(userId, status);
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
+    // Drop the cached status so the next HTTP/socket auth check sees the
+    // new value within the same request, not after the 30s TTL.
+    invalidateUserStatusCache(userId);
+
     if (
       status === UserStatus.BANNED &&
       existingUser.status !== UserStatus.BANNED
     ) {
-      // Kick the user out immediately via socket if they are online
+      // Revoke the refresh token so the client cannot mint a new access
+      // token after their current one expires.
+      await userRepository.clearRefreshToken(userId).catch((error) => {
+        logger.warn("Failed to clear refresh token on ban", { error, userId });
+      });
+
+      // Kick the user off every live socket. Emitting the event first lets
+      // the client show a friendly "your account was banned" message before
+      // we force-close the connection.
       try {
         const io = getSocketIO();
         io.to(getUserRoom(userId)).emit(SOCKET_EVENTS.ACCOUNT_BANNED);
+        for (const socketId of getUserSocketIds(userId)) {
+          io.sockets.sockets.get(socketId)?.disconnect(true);
+        }
       } catch (error) {
-        logger.warn("Could not emit account:banned — socket may not be initialized", { error, userId });
+        logger.warn("Could not disconnect sockets on ban — socket may not be initialized", { error, userId });
       }
 
       await this.sendAccountBannedEmail(user).catch((error) => {

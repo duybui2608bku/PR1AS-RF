@@ -108,7 +108,8 @@ UI Update ← Components ← Hooks ← API Client ← Backend API
 - `phone`: String (optional)
 - `roles`: Array<UserRole> (default: [CLIENT])
 - `last_active_role`: UserRole (default: CLIENT)
-- `status`: UserStatus (ACTIVE, BANNED, INACTIVE, default: ACTIVE)
+- `status`: UserStatus (ACTIVE, BANNED, PENDING_DELETE, DELETED, default: ACTIVE)
+- `deleted_at`: Date (nullable; set when status transitions to PENDING_DELETE, cleared on restore)
 - `verify_email`: Boolean (default: false)
 - `worker_profile`: Object (optional)
   - `date_of_birth`: Date

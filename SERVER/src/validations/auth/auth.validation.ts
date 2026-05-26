@@ -54,9 +54,17 @@ export const resendVerificationSchema = z.object({
     .transform((val) => val.toLowerCase().trim()),
 });
 
+export const deleteAccountSchema = z.object({
+  password: z
+    .string({ required_error: AUTH_MESSAGES.PASSWORD_REQUIRED })
+    .min(1, AUTH_MESSAGES.PASSWORD_REQUIRED)
+    .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, AUTH_MESSAGES.PASSWORD_MAX_LENGTH),
+});
+
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 export type LoginSchemaType = z.infer<typeof loginSchema>;
 export type ForgotPasswordSchemaType = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailSchemaType = z.infer<typeof verifyEmailSchema>;
 export type ResendVerificationSchemaType = z.infer<typeof resendVerificationSchema>;
+export type DeleteAccountSchemaType = z.infer<typeof deleteAccountSchema>;
