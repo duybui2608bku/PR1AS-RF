@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { postController } from "../../controllers/post/post.controller";
-import { authenticate, AuthRequest } from "../../middleware/auth";
+import { authenticate, optionalAuthenticate, AuthRequest } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { csrfProtection } from "../../middleware/csrf";
 import { validateObjectId } from "../../middleware/validateObjectId";
@@ -19,13 +19,13 @@ router.post(
 
 router.get(
   "/",
-  authenticate,
+  optionalAuthenticate,
   asyncHandler<AuthRequest>(postController.listFeed.bind(postController))
 );
 
 router.get(
   "/:id",
-  authenticate,
+  optionalAuthenticate,
   validateObjectId("id"),
   asyncHandler<AuthRequest>(postController.getPostById.bind(postController))
 );

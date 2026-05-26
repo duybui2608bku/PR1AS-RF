@@ -37,6 +37,7 @@ import {
 } from "@/lib/hooks/use-worker"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useOpenWorkerReport, useReportWorker } from "@/lib/hooks/use-moderation"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
 import { toast } from "sonner"
@@ -68,6 +69,7 @@ export default function WorkerProfilePage({
   const { data, isLoading, error } = useWorkerDetail(id)
   const currentUserId = useAuthStore((s) => s.user?.id)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { requireAuth } = useAuthRequired()
   const isOwnProfile = Boolean(currentUserId && currentUserId === id)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState<ReportReason>("low_quality")
@@ -89,21 +91,15 @@ export default function WorkerProfilePage({
   const isReportBusy = isReportSubmitting || reportWorkerMutation.isPending
 
   const handleToggleFavorite = () => {
-    if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để lưu worker yêu thích.")
-      return
-    }
-    toggleFavoriteMutation.mutate(
-      { workerId: id, favorite: !isFavorite },
-      { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") }
-    )
+    requireAuth(() => {
+      toggleFavoriteMutation.mutate(
+        { workerId: id, favorite: !isFavorite },
+        { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") }
+      )
+    })
   }
 
   const handleReportWorker = async () => {
-    if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để báo cáo worker.")
-      return
-    }
     const description = reportDescription.trim()
     if (description.length < 10) {
       setReportDescriptionError("Mô tả báo cáo phải có ít nhất 10 ký tự.")
@@ -234,7 +230,7 @@ export default function WorkerProfilePage({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setReportOpen(true)}
+                        onClick={() => requireAuth(() => setReportOpen(true))}
                       >
                         <Flag className="size-4" />
                         Báo cáo worker

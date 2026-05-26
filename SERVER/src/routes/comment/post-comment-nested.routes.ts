@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { commentController } from "../../controllers/comment/comment.controller";
-import { authenticate, AuthRequest } from "../../middleware/auth";
+import { authenticate, optionalAuthenticate, AuthRequest } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { csrfProtection } from "../../middleware/csrf";
 import { validateObjectId } from "../../middleware/validateObjectId";
@@ -11,7 +11,7 @@ const router = Router({ mergeParams: true });
 
 router.get(
   "/",
-  authenticate,
+  optionalAuthenticate,
   validateObjectId("postId"),
   asyncHandler<AuthRequest>(
     commentController.listByPost.bind(commentController)

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -19,7 +19,7 @@ import {
   useFavoriteWorkerIds,
   useToggleFavoriteWorker,
 } from "@/lib/hooks/use-worker"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
@@ -64,8 +64,7 @@ const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
 
 export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
   const pathname = usePathname()
-  const router = useRouter()
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const { requireAuth } = useAuthRequired()
 
   const [draft, setDraft] = React.useState<DraftState>(() =>
     draftFromState(initialState),
@@ -140,22 +139,18 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const handleToggleFavorite = React.useCallback(
     (workerId: string, favorite: boolean) => {
-      if (!isAuthenticated) {
-        toast.info("Vui lòng đăng nhập để lưu worker yêu thích.")
-        router.push(`/login?from=${encodeURIComponent(pathname)}`)
-        return
-      }
-
-      toggleFavoriteMutation.mutate(
-        { workerId, favorite },
-        {
-          onError: () => {
-            toast.error("Không thể cập nhật danh sách yêu thích.")
+      requireAuth(() => {
+        toggleFavoriteMutation.mutate(
+          { workerId, favorite },
+          {
+            onError: () => {
+              toast.error("Không thể cập nhật danh sách yêu thích.")
+            },
           },
-        },
-      )
+        )
+      })
     },
-    [isAuthenticated, pathname, router, toggleFavoriteMutation],
+    [requireAuth, toggleFavoriteMutation],
   )
 
   const removeCategoryCode = React.useCallback((code: string) => {
