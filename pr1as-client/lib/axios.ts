@@ -66,6 +66,8 @@ const ensureCsrfToken = async () => {
         headers: { "Accept-Language": "vi" },
       })
       .then((response) => {
+        const bodyToken = response.data?.data?.csrfToken
+        if (typeof bodyToken === "string") return bodyToken
         const headerToken = response.headers["x-csrf-token"]
         if (typeof headerToken === "string") return headerToken
         const cookieToken = readCookie(csrfCookieName)

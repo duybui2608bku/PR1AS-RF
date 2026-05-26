@@ -43,6 +43,7 @@ export const createApp = (): express.Application => {
     cors({
       origin: config.corsOrigin,
       methods: config.corsMethods,
+      exposedHeaders: config.corsExposedHeaders,
       credentials: config.corsCredentials,
     })
   );

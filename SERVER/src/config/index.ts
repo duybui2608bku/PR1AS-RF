@@ -57,6 +57,9 @@ export const config = {
     "DELETE",
     "PATCH",
   ],
+  corsExposedHeaders: process.env.CORS_EXPOSED_HEADERS?.split(",") || [
+    "X-CSRF-Token",
+  ],
   corsCredentials: process.env.CORS_CREDENTIALS
     ? process.env.CORS_CREDENTIALS === "true"
     : true,
