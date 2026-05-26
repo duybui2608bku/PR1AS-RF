@@ -7,6 +7,13 @@ export type LoginResult = { user: AuthUser; token: string }
 export type SwitchRolePayload = { last_active_role: string }
 export type SwitchRoleResult = { user: AuthUser }
 
+export type DeleteAccountPayload = { password: string }
+export type DeleteAccountResult = {
+  status: string
+  deleted_at: string
+  restore_until: string
+}
+
 export const authService = {
   me: async () => {
     const { data } = await api.get<AuthUser>("/auth/me")
@@ -32,5 +39,12 @@ export const authService = {
       payload
     )
     return data
+  },
+  deleteAccount: async (payload: DeleteAccountPayload) => {
+    const response = await api.delete<{
+      success: boolean
+      data?: DeleteAccountResult
+    }>("/auth/me", { data: payload })
+    return response.data.data
   },
 }

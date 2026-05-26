@@ -30,6 +30,27 @@ const BOOKING_POPULATE: PopulateOptions[] = [
 ];
 
 export class BookingRepository {
+  async countActiveBookingsForUser(userId: string): Promise<number> {
+    return Booking.countDocuments({
+      $or: [
+        { client_id: new Types.ObjectId(userId) },
+        { worker_id: new Types.ObjectId(userId) },
+      ],
+      status: { $in: ACTIVE_BOOKING_STATUSES },
+    });
+  }
+
+  async countOpenDisputesForUser(userId: string): Promise<number> {
+    return Booking.countDocuments({
+      $or: [
+        { client_id: new Types.ObjectId(userId) },
+        { worker_id: new Types.ObjectId(userId) },
+      ],
+      status: BookingStatus.DISPUTED,
+      "dispute.resolution": null,
+    });
+  }
+
   async hasConfirmedBookingBetweenUsers(
     userAId: string,
     userBId: string

@@ -113,6 +113,15 @@ export class CommentRepository {
     );
   }
 
+  async softDeleteAllByAuthor(authorId: string): Promise<number> {
+    if (!Types.ObjectId.isValid(authorId)) return 0;
+    const result = await Comment.updateMany(
+      { author_id: new Types.ObjectId(authorId), deleted_at: null },
+      { deleted_at: new Date(), updated_at: new Date() }
+    );
+    return result.modifiedCount;
+  }
+
   async findIdsByPostId(
     postId: string | Types.ObjectId,
     session?: import("mongoose").ClientSession

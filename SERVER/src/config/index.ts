@@ -22,10 +22,6 @@ const getCorsOrigin = () => {
       }
     };
   }
-  // Production with no CORS_ORIGIN configured: fail closed. A silent default
-  // of "http://localhost:3000" would either allow nothing useful or — worse —
-  // appear to work behind a misconfigured reverse proxy. Force operators to
-  // make an explicit choice.
   throw new Error(
     "CORS_ORIGIN must be configured in production. Set CORS_ORIGIN to your frontend URL(s), comma-separated."
   );

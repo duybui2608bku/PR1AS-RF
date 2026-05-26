@@ -188,6 +188,75 @@ export function useVerifyEmail() {
   })
 }
 
+export interface DeleteAccountBlocker {
+  code: "WALLET_BALANCE" | "ACTIVE_BOOKINGS" | "OPEN_DISPUTES"
+  detail: number
+}
+
+export interface DeleteAccountResult {
+  status: string
+  deleted_at: string
+  restore_until: string
+}
+
+export interface DeletionStatusResult {
+  has_password: boolean
+  has_google: boolean
+  blockers: DeleteAccountBlocker[]
+}
+
+/**
+ * Pre-check for the delete-account section. Refreshes whenever the panel is
+ * opened so the user sees up-to-date wallet/booking state. Stays out of the
+ * cache once they navigate away — there is no reason to show stale blockers.
+ */
+export function useDeletionStatus(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.auth.deletionStatus,
+    enabled,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<DeletionStatusResult>>(
+        "/auth/me/deletion-status"
+      )
+      if (!response.data.success || !response.data.data) {
+        throw new Error(
+          response.data.error?.message ?? "Không thể tải trạng thái xoá."
+        )
+      }
+      return response.data.data
+    },
+  })
+}
+
+/**
+ * Self-service account deletion. On success the user enters a 30-day grace
+ * window (PENDING_DELETE) — logging back in cancels it; otherwise a cron
+ * scrubs PII after the window. The mutation clears local auth state and the
+ * caller is expected to redirect to /login.
+ */
+export function useDeleteAccount() {
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: { password: string }) => {
+      const response = await api.delete<ApiResponse<DeleteAccountResult>>(
+        "/auth/me",
+        { data: payload }
+      )
+      return response.data
+    },
+    onSettled: async (_data, error) => {
+      if (error) return
+      await clearSessionCookie()
+      clearAuth()
+      queryClient.clear()
+    },
+  })
+}
+
 export function useResendVerification() {
   return useMutation({
     mutationFn: async (payload: ResendVerificationRequest) => {

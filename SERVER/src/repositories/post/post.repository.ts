@@ -168,6 +168,19 @@ export class PostRepository {
     return this.softDelete(id);
   }
 
+  async softDeleteAllByAuthor(authorId: string): Promise<number> {
+    if (!Types.ObjectId.isValid(authorId)) return 0;
+    const result = await Post.updateMany(
+      {
+        author_id: new Types.ObjectId(authorId),
+        deleted_at: null,
+        deleted: { $ne: true },
+      },
+      { deleted: true, deleted_at: new Date(), updated_at: new Date() }
+    );
+    return result.modifiedCount;
+  }
+
   async incrementCommentsCount(
     postId: string | Types.ObjectId,
     delta: number

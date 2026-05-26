@@ -13,8 +13,9 @@ import {
   getGroupConversationRoom,
   getUserRoom,
 } from "../utils/chat.helper";
-import { UserRole } from "../types/auth/user.types";
+import { UserRole, UserStatus } from "../types/auth/user.types";
 import { TTLCache } from "../utils/ttlCache";
+import { getFreshUserStatus } from "../utils/userStatusCache";
 
 const userSockets = new Map<string, Set<string>>();
 
@@ -41,10 +42,10 @@ const TOKEN_REFRESH_GRACE_MS = 30_000;
 const accessKey = (conversationId: string, userId: string) =>
   `${conversationId}|${userId}`;
 
-export const authenticateSocket = (
+export const authenticateSocket = async (
   socket: Socket,
   next: (err?: ExtendedError) => void
-): void => {
+): Promise<void> => {
   try {
     const token =
       socket.handshake.auth.token ||
@@ -56,7 +57,23 @@ export const authenticateSocket = (
     }
 
     const decoded = verifyToken(token);
-    socket.data.user = decoded;
+    // The token's status field is a snapshot from login time. Re-check the
+    // DB so a user banned or self-deleted after issuing the JWT cannot open
+    // a new socket.
+    const freshStatus = await getFreshUserStatus(decoded.sub);
+    if (!freshStatus || freshStatus !== UserStatus.ACTIVE) {
+      const reason =
+        freshStatus === UserStatus.BANNED
+          ? AUTH_MESSAGES.USER_BANNED
+          : freshStatus === UserStatus.PENDING_DELETE
+            ? AUTH_MESSAGES.USER_PENDING_DELETE
+            : AUTH_MESSAGES.USER_DELETED;
+      logger.warn(
+        `Rejecting non-active user ${decoded.sub} on socket ${socket.id} (${freshStatus ?? "missing"})`
+      );
+      return next(new Error(reason));
+    }
+    socket.data.user = { ...decoded, status: freshStatus };
     next();
   } catch (error) {
     logger.error(`Socket authentication error for ${socket.id}:`, error);

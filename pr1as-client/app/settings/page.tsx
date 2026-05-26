@@ -2,8 +2,11 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import * as React from "react"
+import { toast } from "sonner"
 import {
+  AlertTriangle,
   Ban,
   CheckCircle2,
   Eye,
@@ -11,9 +14,11 @@ import {
   Loader2,
   ShieldCheck,
   Star,
+  Trash2,
   UserX,
 } from "lucide-react"
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -34,7 +39,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import {
+  useDeleteAccount,
+  useDeletionStatus,
+  useForgotPassword,
+} from "@/lib/hooks/use-auth"
 import {
   useBlockedUsers,
   useMyReports,
@@ -43,6 +55,11 @@ import {
 import { useReputationHistory } from "@/lib/hooks/use-reputation"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
+import {
+  extractAccountDeleteBlockers,
+  getErrorMessage,
+  type AccountDeleteBlocker,
+} from "@/lib/utils/error-handler"
 import {
   getReputationBadgeClass,
   getReputationScore,
@@ -64,6 +81,7 @@ type SettingsSection =
   | "post-reports"
   | "worker-reports"
   | "reputation"
+  | "delete-account"
 
 const sections: Array<{
   id: SettingsSection
@@ -74,6 +92,7 @@ const sections: Array<{
   { id: "post-reports", label: "Bài viết đã báo cáo", icon: FileWarning },
   { id: "worker-reports", label: "Worker đã báo cáo", icon: UserX },
   { id: "reputation", label: "Điểm uy tín", icon: Star },
+  { id: "delete-account", label: "Xoá tài khoản", icon: Trash2 },
 ]
 
 const statusLabels: Record<ReportStatus, string> = {
@@ -548,10 +567,246 @@ function LoadingPanel() {
   )
 }
 
+const formatVND = (value: number) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value)
+
+function blockerMessage(blocker: AccountDeleteBlocker): string {
+  switch (blocker.code) {
+    case "WALLET_BALANCE":
+      return `Số dư ví còn ${formatVND(blocker.detail)}. Vui lòng rút hết trước khi xoá.`
+    case "ACTIVE_BOOKINGS":
+      return `Bạn đang có ${blocker.detail} booking chưa kết thúc.`
+    case "OPEN_DISPUTES":
+      return `Bạn đang có ${blocker.detail} khiếu nại chưa được xử lý.`
+  }
+}
+
+function DeleteAccountPanel() {
+  const router = useRouter()
+  const user = useAuthStore((state) => state.user)
+  const statusQuery = useDeletionStatus(true)
+  const deleteMutation = useDeleteAccount()
+  const forgotPasswordMutation = useForgotPassword()
+  const [password, setPassword] = React.useState("")
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const [submitBlockers, setSubmitBlockers] = React.useState<
+    AccountDeleteBlocker[]
+  >([])
+
+  const handleSendResetEmail = async () => {
+    if (!user?.email) {
+      toast.error("Không tìm thấy email tài khoản.")
+      return
+    }
+    try {
+      const response = await forgotPasswordMutation.mutateAsync({
+        email: user.email,
+      })
+      if (response.success) {
+        toast.success(
+          "Đã gửi email đặt mật khẩu. Sau khi đặt xong, quay lại để xoá tài khoản."
+        )
+      } else {
+        toast.error(
+          getErrorMessage(
+            response.error,
+            "Không thể gửi email đặt mật khẩu."
+          )
+        )
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Không thể gửi email đặt mật khẩu."))
+    }
+  }
+
+  const handleSubmit = async () => {
+    setSubmitBlockers([])
+    try {
+      await deleteMutation.mutateAsync({ password })
+      toast.success(
+        "Đã yêu cầu xoá tài khoản. Đăng nhập lại trong 30 ngày để huỷ thao tác."
+      )
+      setConfirmOpen(false)
+      router.replace("/login")
+    } catch (error) {
+      const list = extractAccountDeleteBlockers(error)
+      if (list.length > 0) {
+        // Server gate fired between pre-check and submit (e.g. a new booking
+        // came in). Surface the fresh blockers and close the dialog.
+        setSubmitBlockers(list)
+        setConfirmOpen(false)
+        statusQuery.refetch()
+        return
+      }
+      toast.error(getErrorMessage(error, "Không thể xoá tài khoản."))
+    }
+  }
+
+  if (statusQuery.isLoading) return <LoadingPanel />
+
+  if (statusQuery.isError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="size-4" />
+        <AlertTitle>Không thể tải trạng thái</AlertTitle>
+        <AlertDescription>
+          {getErrorMessage(statusQuery.error, "Vui lòng thử lại sau.")}
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  const status = statusQuery.data
+  const blockers = submitBlockers.length > 0 ? submitBlockers : status?.blockers ?? []
+  const canSubmit = status?.has_password && blockers.length === 0
+
+  return (
+    <div className="space-y-5">
+      <Alert variant="destructive">
+        <AlertTriangle className="size-4" />
+        <AlertTitle>Hành động này có thời gian khôi phục 30 ngày</AlertTitle>
+        <AlertDescription className="space-y-2">
+          <p>
+            Sau khi xoá, tài khoản sẽ bị khoá ngay lập tức. Trong vòng 30 ngày,
+            đăng nhập lại bằng email và mật khẩu hiện tại để khôi phục.
+          </p>
+          <p>
+            Sau 30 ngày, thông tin cá nhân (tên, ảnh đại diện, số điện thoại,
+            hồ sơ) sẽ bị xoá vĩnh viễn. Bài viết và bình luận của bạn sẽ bị ẩn
+            khỏi cộng đồng. Lịch sử booking, đánh giá và ví được giữ lại theo
+            quy định để phục vụ đối chiếu.
+          </p>
+        </AlertDescription>
+      </Alert>
+
+      <div className="rounded-md border bg-background p-4">
+        <h3 className="font-medium">Trước khi xoá, vui lòng đảm bảo:</h3>
+        <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <span>Số dư ví đã được rút về tài khoản ngân hàng.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <span>Không còn booking nào đang chờ xác nhận hoặc đang thực hiện.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            <span>Không còn khiếu nại nào chưa được xử lý.</span>
+          </li>
+        </ul>
+      </div>
+
+      {blockers.length > 0 ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertTitle>Chưa thể xoá tài khoản</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {blockers.map((blocker) => (
+                <li key={blocker.code}>{blockerMessage(blocker)}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {status && !status.has_password ? (
+        <Alert>
+          <AlertTriangle className="size-4" />
+          <AlertTitle>Cần đặt mật khẩu trước khi xoá</AlertTitle>
+          <AlertDescription className="space-y-3">
+            <p>
+              Tài khoản của bạn đang đăng nhập bằng Google nên chưa có mật khẩu.
+              Vui lòng đặt mật khẩu để xác nhận quyền sở hữu trước khi xoá.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSendResetEmail}
+              disabled={forgotPasswordMutation.isPending || !user?.email}
+            >
+              {forgotPasswordMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Gửi email đặt mật khẩu
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <AlertDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          setConfirmOpen(open)
+          if (!open) {
+            setPassword("")
+          }
+        }}
+      >
+        <AlertDialogTrigger asChild>
+          <Button type="button" variant="destructive" disabled={!canSubmit}>
+            <Trash2 className="size-4" />
+            Xoá tài khoản của tôi
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xoá tài khoản</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nhập mật khẩu hiện tại để xác nhận. Bạn sẽ bị đăng xuất khỏi mọi
+              thiết bị ngay sau khi xác nhận.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="delete-account-password">Mật khẩu hiện tại</Label>
+            <Input
+              id="delete-account-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={deleteMutation.isPending}
+              placeholder="Nhập mật khẩu để xác nhận"
+            />
+          </div>
+          <AlertDialogFooter className="gap-2 sm:space-x-0">
+            <AlertDialogCancel
+              className="mt-0"
+              disabled={deleteMutation.isPending}
+            >
+              Huỷ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMutation.isPending || password.length === 0}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleSubmit()
+              }}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              Xác nhận xoá
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
 function SectionContent({ section }: { section: SettingsSection }) {
   if (section === "blocked") return <BlockedList />
   if (section === "post-reports") return <ReportsList targetType="post" />
   if (section === "worker-reports") return <ReportsList targetType="worker" />
+  if (section === "delete-account") return <DeleteAccountPanel />
   return <ReputationPanel />
 }
 
@@ -615,7 +870,9 @@ export default function SettingsPage() {
                     ? "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo."
                     : activeSection === "worker-reports"
                       ? "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo."
-                      : "Xem điểm hiện tại và lịch sử cộng trừ điểm của bạn."}
+                      : activeSection === "reputation"
+                        ? "Xem điểm hiện tại và lịch sử cộng trừ điểm của bạn."
+                        : "Yêu cầu xoá vĩnh viễn tài khoản của bạn."}
               </p>
             </div>
             <CheckCircle2 className="hidden size-5 text-muted-foreground sm:block" />

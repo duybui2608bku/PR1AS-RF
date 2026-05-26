@@ -108,6 +108,11 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       enum: Object.values(UserStatus),
       default: UserStatus.ACTIVE,
+      index: true,
+    },
+    deleted_at: {
+      type: Date,
+      default: null,
     },
     verify_email: {
       type: Boolean,

@@ -48,6 +48,21 @@ router.post(
   asyncHandler(authController.logout.bind(authController))
 );
 
+router.get(
+  "/me/deletion-status",
+  authenticate,
+  asyncHandler<AuthRequest>(
+    authController.getDeletionStatus.bind(authController)
+  )
+);
+
+router.delete(
+  "/me",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(authController.deleteAccount.bind(authController))
+);
+
 router.patch(
   "/switch-role",
   authenticate,
