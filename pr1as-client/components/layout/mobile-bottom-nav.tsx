@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarCheck2, FileText, Home, MessageCircle, MoreHorizontal } from "lucide-react"
+import { CalendarCheck2, FileText, Home, LogIn, MessageCircle, MoreHorizontal } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
@@ -18,7 +18,44 @@ export function MobileBottomNav() {
   const hideBottomNav = useUIStore((s) => s.hideBottomNav)
   const [moreOpen, setMoreOpen] = React.useState(false)
 
-  if (!isAuthenticated || hideBottomNav) return null
+  if (hideBottomNav) return null
+
+  // Admin dashboard có sidebar riêng — bottom nav dư thừa
+  if (pathname.startsWith("/dashboard")) return null
+
+  // Bottom nav tối giản cho guest user (chưa đăng nhập)
+  if (!isAuthenticated) {
+    const guestTabs = [
+      { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
+      { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+      { href: "/login", label: "Đăng nhập", icon: LogIn, isActive: pathname === "/login" },
+    ] as const
+
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <div className="flex items-center justify-around px-2 pb-safe">
+          {guestTabs.map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors",
+                tab.isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <tab.icon
+                className={cn(
+                  "size-6",
+                  tab.isActive && "fill-foreground stroke-background",
+                )}
+              />
+              <span className="text-[10px] leading-none">{tab.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+    )
+  }
 
   const lastActiveRole = user?.last_active_role
   const fallbackRole =

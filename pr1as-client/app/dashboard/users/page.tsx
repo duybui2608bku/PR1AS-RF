@@ -33,6 +33,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
 import { useGetUsers, useUpdateUserStatus } from "@/lib/hooks/use-users"
+import { isAdminUser } from "@/lib/auth/roles"
+import { useAuthStore } from "@/lib/store/auth-store"
 import type {
   GetUsersParams,
   UserListItem,
@@ -213,6 +215,9 @@ function UserTableSkeleton() {
 }
 
 export default function AdminUsersPage() {
+  const currentUser = useAuthStore((s) => s.user)
+  const isAdmin = isAdminUser(currentUser)
+
   const [filters, setFilters] = useState<GetUsersParams>({
     page: 1,
     limit: PAGE_SIZE,
@@ -543,19 +548,21 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant={user.status === "active" ? "outline" : "default"}
-                  className={
-                    user.status === "active"
-                      ? "w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
-                      : "w-full"
-                  }
-                  onClick={() => openConfirm(user)}
-                  disabled={updateStatusMutation.isPending}
-                >
-                  {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
-                </Button>
+                {isAdmin ? (
+                  <Button
+                    size="sm"
+                    variant={user.status === "active" ? "outline" : "default"}
+                    className={
+                      user.status === "active"
+                        ? "w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                        : "w-full"
+                    }
+                    onClick={() => openConfirm(user)}
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+                  </Button>
+                ) : null}
               </div>
             ))
           )}
@@ -724,21 +731,23 @@ export default function AdminUsersPage() {
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button
-                        size="sm"
-                        variant={
-                          user.status === "active" ? "outline" : "default"
-                        }
-                        className={
-                          user.status === "active"
-                            ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
-                            : ""
-                        }
-                        onClick={() => openConfirm(user)}
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        {user.status === "active" ? "Khóa" : "Mở khóa"}
-                      </Button>
+                      {isAdmin ? (
+                        <Button
+                          size="sm"
+                          variant={
+                            user.status === "active" ? "outline" : "default"
+                          }
+                          className={
+                            user.status === "active"
+                              ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                              : ""
+                          }
+                          onClick={() => openConfirm(user)}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          {user.status === "active" ? "Khóa" : "Mở khóa"}
+                        </Button>
+                      ) : null}
                     </td>
                   </tr>
                 ))

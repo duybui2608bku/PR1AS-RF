@@ -66,9 +66,17 @@ type AuthState = {
 // other tabs / future browser sessions from inheriting a stolen access token.
 // Cross-tab login persistence is intentionally not supported here — users
 // who reopen the browser are expected to log in again.
+// BroadcastChannel to sync logout across tabs. Each tab posts when it logs out;
+// other tabs listen and respond via the AuthBroadcastListener component.
+// Only broadcast if the user was authenticated to break the potential broadcast loop.
+const logoutChannel =
+  typeof window !== "undefined" && "BroadcastChannel" in window
+    ? new BroadcastChannel("auth_logout")
+    : null
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       refreshToken: null,
@@ -86,6 +94,10 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => {
         removeLegacyAuthToken()
         clearActiveRoleCookie()
+        // Only broadcast if authenticated — prevents cascade loop between tabs
+        if (get().isAuthenticated) {
+          logoutChannel?.postMessage("logout")
+        }
         set({
           user: null,
           token: null,

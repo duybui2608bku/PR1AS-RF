@@ -287,7 +287,7 @@ export function SiteHeader() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleLoginClick}>
+              <Button variant="ghost" size="sm" onClick={handleLoginClick} className="hidden md:inline-flex">
                 Đăng nhập
               </Button>
               <Button size="sm" asChild className="hidden md:inline-flex">

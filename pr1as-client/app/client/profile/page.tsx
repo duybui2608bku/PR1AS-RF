@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import { uploadImage } from "@/lib/utils/upload-image"
+import { validateImageFile } from "@/lib/utils/validate-upload"
 
 const formatDateTime = (value?: string | null): string => {
   if (!value) return "—"
@@ -103,6 +104,11 @@ export default function ClientProfilePage() {
     const file = event.target.files?.[0]
     event.target.value = ""
     if (!file) return
+    const validationError = validateImageFile(file)
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
     avatarEditor.start([file], async ([croppedFile]) => {
       try {
         setIsUploadingAvatar(true)

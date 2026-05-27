@@ -4,19 +4,23 @@ import { FormEvent, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
+import { toast } from "sonner"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useResetPassword } from "@/lib/hooks/use-auth"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const resetPasswordMutation = useResetPassword()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
 
   // Capture the token from the URL on first render, then immediately clean the
   // URL so the token is not stored in browser history or leaked via Referer headers.
@@ -61,6 +65,9 @@ export default function ResetPasswordPage() {
         return
       }
 
+      toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.")
+      clearAuth()
+      await clearSessionCookie()
       setIsSuccess(true)
       window.setTimeout(() => router.push("/login"), 1800)
     } catch (error) {
