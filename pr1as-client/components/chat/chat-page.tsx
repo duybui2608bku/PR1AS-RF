@@ -7,6 +7,7 @@ import {
   Ban,
   Check,
   CheckCheck,
+  Copy,
   Headset,
   Home,
   ImagePlus,
@@ -24,6 +25,7 @@ import Image from "next/image"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { useRouter } from "next/navigation"
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -2001,6 +2003,42 @@ function MessagePane({
     ])
   )
 
+  // Mobile: Messenger-style context menu on long press
+  type MessageSelection = {
+    message: ChatMessage | GroupChatMessage
+    rect: DOMRect
+    mine: boolean
+  }
+  const [messageSelection, setMessageSelection] = React.useState<MessageSelection | null>(null)
+  const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Long press handlers — capture rect at fire time for accurate positioning
+  const createLongPressHandlers = (
+    msg: ChatMessage | GroupChatMessage,
+    isMine: boolean
+  ) => ({
+    onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => {
+      const target = e.currentTarget
+      longPressTimerRef.current = setTimeout(() => {
+        const rect = target.getBoundingClientRect()
+        setMessageSelection({ message: msg, rect, mine: isMine })
+      }, 500)
+    },
+    onTouchEnd: () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
+    },
+    onTouchMove: () => {
+      // Cancel if user is scrolling
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
+    },
+  })
+
   if (!selectedConversationId) {
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
@@ -2028,6 +2066,7 @@ function MessagePane({
   }
 
   return (
+    <>
     <div className="flex flex-col gap-3">
       {messages.map((message) => {
         const mine = message.sender_id === currentUserId
@@ -2061,6 +2100,7 @@ function MessagePane({
         return (
           <div
             key={message._id}
+            {...createLongPressHandlers(message, mine)}
             className={cn(
               "group/message flex items-end gap-2",
               mine ? "justify-end" : "justify-start"
@@ -2161,7 +2201,10 @@ function MessagePane({
                 ) : null}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover/message:opacity-100">
+            {/* Action buttons — desktop hover only; mobile uses context overlay */}
+            <div
+              className="hidden shrink-0 items-center gap-1 opacity-0 transition-opacity md:flex md:group-hover/message:opacity-100"
+            >
               <Button
                 type="button"
                 variant="ghost"
@@ -2194,6 +2237,27 @@ function MessagePane({
         )
       })}
     </div>
+    {/* Messenger-style context overlay (mobile only, rendered in portal) */}
+    {messageSelection && typeof document !== "undefined"
+      ? createPortal(
+          <MessageContextOverlay
+            selection={messageSelection}
+            mode={mode}
+            onReply={() => {
+              onReply(messageSelection.message)
+              setMessageSelection(null)
+            }}
+            onDeleteDirect={() => {
+              onDeleteDirect(messageSelection.message._id)
+              setMessageSelection(null)
+            }}
+            onClose={() => setMessageSelection(null)}
+            deletingMessageId={deletingMessageId}
+          />,
+          document.body
+        )
+      : null}
+  </>
   )
 }
 
@@ -2240,5 +2304,143 @@ function MessageContent({
     <p className="text-sm leading-6 break-words whitespace-pre-wrap">
       {message.content}
     </p>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Messenger-style context overlay (mobile only, rendered via portal)
+// ---------------------------------------------------------------------------
+function MessageContextOverlay({
+  selection,
+  mode,
+  onReply,
+  onDeleteDirect,
+  onClose,
+  deletingMessageId,
+}: {
+  selection: {
+    message: ChatMessage | GroupChatMessage
+    rect: DOMRect
+    mine: boolean
+  }
+  mode: ChatMode
+  onReply: () => void
+  onDeleteDirect: () => void
+  onClose: () => void
+  deletingMessageId: string | null
+}) {
+  const { message, rect, mine } = selection
+  const isDeleting = deletingMessageId === message._id
+  const canDelete = mode === "direct" && mine
+  const isTextMessage = message.type === "text" && !message.is_deleted
+
+  // Calculate menu height to decide above/below placement
+  const menuItemCount = 1 + (isTextMessage ? 1 : 0) + (canDelete ? 1 : 0) // Reply [+ Copy] [+ Delete]
+  const ITEM_H = 52
+  const menuHeight = menuItemCount * ITEM_H + 16
+  const GAP = 10
+  const screenH = typeof window !== "undefined" ? window.innerHeight : 800
+
+  // Prefer below; fall back to above if not enough space
+  const spaceBelow = screenH - rect.bottom
+  const menuTop =
+    spaceBelow >= menuHeight + GAP
+      ? rect.bottom + GAP
+      : Math.max(8, rect.top - GAP - menuHeight)
+
+  const handleCopy = () => {
+    if (isTextMessage) {
+      navigator.clipboard.writeText(message.content).catch(() => {})
+      toast.success("Đã sao chép tin nhắn")
+    }
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 md:hidden">
+      {/* Blurred dark backdrop */}
+      <div
+        className="absolute inset-0 animate-in fade-in-0 duration-200 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Message bubble — "floating" copy at original position */}
+      <div
+        className="pointer-events-none absolute left-0 right-0 animate-in fade-in-0 zoom-in-95 duration-150"
+        style={{ top: rect.top }}
+      >
+        <div
+          className={cn(
+            "flex items-end gap-2 px-3",
+            mine ? "justify-end" : "justify-start"
+          )}
+        >
+          <div
+            className={cn(
+              "max-w-[min(78%,40rem)] rounded-lg px-3 py-2 shadow-2xl ring-2 ring-white/10",
+              mine
+                ? "bg-primary text-primary-foreground"
+                : "border bg-background"
+            )}
+          >
+            <MessageContent message={message} mine={mine} />
+          </div>
+        </div>
+      </div>
+
+      {/* Context action menu */}
+      <div
+        className={cn(
+          "absolute z-10 min-w-[220px] overflow-hidden rounded-2xl shadow-2xl",
+          "bg-zinc-800 dark:bg-zinc-900",
+          "animate-in fade-in-0 slide-in-from-bottom-3 duration-200",
+          mine ? "right-4" : "left-4"
+        )}
+        style={{ top: menuTop }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Reply */}
+        <button
+          type="button"
+          className="flex w-full items-center justify-between border-b border-zinc-700 px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80"
+          onClick={onReply}
+        >
+          <span>Trả lời</span>
+          <Reply className="size-5 text-white/60" />
+        </button>
+
+        {/* Copy (text only) */}
+        {isTextMessage ? (
+          <button
+            type="button"
+            className={cn(
+              "flex w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80",
+              canDelete && "border-b border-zinc-700"
+            )}
+            onClick={handleCopy}
+          >
+            <span>Sao chép</span>
+            <Copy className="size-5 text-white/60" />
+          </button>
+        ) : null}
+
+        {/* Delete (own messages in direct mode) */}
+        {canDelete ? (
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-red-400 active:bg-zinc-700/80 disabled:opacity-50"
+            onClick={onDeleteDirect}
+            disabled={isDeleting}
+          >
+            <span>Xóa tin nhắn</span>
+            {isDeleting ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <Trash2 className="size-5" />
+            )}
+          </button>
+        ) : null}
+      </div>
+    </div>
   )
 }
