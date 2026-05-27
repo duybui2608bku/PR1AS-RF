@@ -35,6 +35,21 @@ export function BannedAccountModal() {
     }
   }, [isAuthenticated, token])
 
+  // Listen for user:banned custom event dispatched by the HTTP 403 interceptor
+  React.useEffect(() => {
+    if (!isAuthenticated) return
+
+    const handleHttpBanned = () => {
+      setVisible(true)
+      setCountdown(COUNTDOWN_SECONDS)
+    }
+
+    window.addEventListener("user:banned", handleHttpBanned)
+    return () => {
+      window.removeEventListener("user:banned", handleHttpBanned)
+    }
+  }, [isAuthenticated])
+
   // Countdown timer — starts when modal becomes visible
   React.useEffect(() => {
     if (!visible) return

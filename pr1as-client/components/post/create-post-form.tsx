@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import Image from "next/image"
 import { Globe, ImagePlus, Loader2, Lock, User, X } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
+import { filterValidImageFiles } from "@/lib/utils/validate-upload"
 import type { PostVisibility } from "@/types"
 
 const MAX_IMAGES = 10
@@ -91,7 +93,9 @@ export function CreatePostForm() {
     const remaining = MAX_IMAGES - previews.length
     const selected = files.slice(0, remaining)
     if (!selected.length) return
-    postImageEditor.start(selected, (croppedFiles) => {
+    const valid = filterValidImageFiles(selected, (msg) => toast.error(msg))
+    if (!valid.length) return
+    postImageEditor.start(valid, (croppedFiles) => {
       const newPreviews = croppedFiles.map((file) => ({
         file,
         previewUrl: URL.createObjectURL(file),

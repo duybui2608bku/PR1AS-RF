@@ -30,6 +30,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUIStore } from "@/lib/store/ui-store"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -47,6 +48,7 @@ import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handle
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { getActiveRole } from "@/lib/auth/roles"
 import { uploadImage } from "@/lib/utils/upload-image"
+import { filterValidImageFiles } from "@/lib/utils/validate-upload"
 import {
   useAdminContact,
   useDirectConversation,
@@ -1011,8 +1013,8 @@ export function ChatPage({
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? [])
     event.target.value = ""
-    const valid = files.filter((f) => f.type.startsWith("image/"))
-    if (valid.length < files.length) toast.error("Chỉ hỗ trợ tệp ảnh.")
+    if (!files.length) return
+    const valid = filterValidImageFiles(files, (msg) => toast.error(msg))
     if (!valid.length) return
     const newPreviews = valid.map((file) => ({
       file,
@@ -1572,73 +1574,97 @@ export function ChatPage({
                 </button>
               </div>
             ) : null}
-            <div className="flex items-end gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleImageSelect}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={
-                  isSending ||
-                  isUploadingImage ||
-                  Boolean(directRoleBlockedReason) ||
-                  selectedDirectBlocked ||
-                  selectedDirectBlockedMe ||
-                  (mode === "direct" && !directReceiverId) ||
-                  (mode === "group" && !selectedGroup)
-                }
-                aria-label="Chọn ảnh"
-              >
-                <ImagePlus className="size-4" />
-              </Button>
-              <textarea
-                value={draft}
-                onChange={handleDraftChange}
-                onKeyDown={handleDraftKeyDown}
-                placeholder={
-                  activeConversationId ||
-                  (mode === "direct" && directReceiverId)
-                    ? "Nhập tin nhắn"
-                    : "Chọn cuộc trò chuyện"
-                }
-                rows={1}
-                disabled={
-                  isSending ||
-                  Boolean(directRoleBlockedReason) ||
-                  selectedDirectBlocked ||
-                  selectedDirectBlockedMe ||
-                  (mode === "direct" && !directReceiverId) ||
-                  (mode === "group" && !selectedGroup)
-                }
-                className="max-h-32 min-h-10 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={
-                  isSending ||
-                  Boolean(directRoleBlockedReason) ||
-                  selectedDirectBlocked ||
-                  selectedDirectBlockedMe ||
-                  isUploadingImage ||
-                  (!canSubmitDirect && !canSubmitGroup)
-                }
-              >
-                {isSending || isUploadingImage ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Send className="size-4" />
-                )}
-              </Button>
-            </div>
+            {(selectedDirectBlocked || selectedDirectBlockedMe) ? (
+              <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs text-muted-foreground">
+                {selectedDirectBlocked
+                  ? "Bạn đã chặn người dùng này. Gỡ chặn để có thể nhắn tin."
+                  : "Bạn đã bị chặn bởi người dùng này."}
+              </div>
+            ) : null}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-end gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleImageSelect}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={
+                        isSending ||
+                        isUploadingImage ||
+                        Boolean(directRoleBlockedReason) ||
+                        selectedDirectBlocked ||
+                        selectedDirectBlockedMe ||
+                        (mode === "direct" && !directReceiverId) ||
+                        (mode === "group" && !selectedGroup)
+                      }
+                      aria-label="Chọn ảnh"
+                    >
+                      <ImagePlus className="size-4" />
+                    </Button>
+                    <textarea
+                      value={draft}
+                      onChange={handleDraftChange}
+                      onKeyDown={handleDraftKeyDown}
+                      placeholder={
+                        selectedDirectBlocked || selectedDirectBlockedMe
+                          ? selectedDirectBlocked
+                            ? "Đã chặn người dùng này"
+                            : "Đã bị chặn"
+                          : activeConversationId ||
+                              (mode === "direct" && directReceiverId)
+                            ? "Nhập tin nhắn"
+                            : "Chọn cuộc trò chuyện"
+                      }
+                      rows={1}
+                      disabled={
+                        isSending ||
+                        Boolean(directRoleBlockedReason) ||
+                        selectedDirectBlocked ||
+                        selectedDirectBlockedMe ||
+                        (mode === "direct" && !directReceiverId) ||
+                        (mode === "group" && !selectedGroup)
+                      }
+                      className="max-h-32 min-h-10 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={
+                        isSending ||
+                        Boolean(directRoleBlockedReason) ||
+                        selectedDirectBlocked ||
+                        selectedDirectBlockedMe ||
+                        isUploadingImage ||
+                        (!canSubmitDirect && !canSubmitGroup)
+                      }
+                    >
+                      {isSending || isUploadingImage ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {(selectedDirectBlocked || selectedDirectBlockedMe) ? (
+                  <TooltipContent side="top">
+                    {selectedDirectBlocked
+                      ? "Bạn đã chặn người dùng này"
+                      : "Bạn đã bị chặn bởi người dùng này"}
+                  </TooltipContent>
+                ) : null}
+              </Tooltip>
+            </TooltipProvider>
           </form>
         </section>
       </div>

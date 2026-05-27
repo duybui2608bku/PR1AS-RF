@@ -222,6 +222,16 @@ api.interceptors.response.use(
       }
     }
 
+    // Handle 403 USER_BANNED — trigger the banned modal via custom window event
+    if (error.response?.status === 403) {
+      const data = error.response.data as Record<string, unknown> | undefined
+      const errorCode = data?.error_code ?? data?.message
+      if (typeof window !== "undefined" && errorCode === "USER_BANNED") {
+        window.dispatchEvent(new CustomEvent("user:banned"))
+        return Promise.reject(toApiError(error) ?? error)
+      }
+    }
+
     const apiError = toApiError(error)
     return Promise.reject(apiError ?? error)
   }
