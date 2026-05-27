@@ -1,0 +1,108 @@
+"use client"
+
+import { FileText, Home, MessageCircle, MoreHorizontal } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import * as React from "react"
+
+import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
+import { getRoleDefaultRoute, getRoleRoute } from "@/lib/navigation/role-routes"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { useUIStore } from "@/lib/store/ui-store"
+import { cn } from "@/lib/utils"
+
+export function MobileBottomNav() {
+  const pathname = usePathname()
+  const user = useAuthStore((s) => s.user)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hideBottomNav = useUIStore((s) => s.hideBottomNav)
+  const [moreOpen, setMoreOpen] = React.useState(false)
+
+  if (!isAuthenticated || hideBottomNav) return null
+
+  const lastActiveRole = user?.last_active_role
+  const fallbackRole =
+    user?.role && ((user.roles?.length ?? 0) === 0 || user.roles?.includes(user.role))
+      ? user.role
+      : (user?.roles?.[0] ?? user?.role)
+  const activeRole = lastActiveRole ?? fallbackRole
+
+  const homeHref = getRoleDefaultRoute(activeRole)
+  const chatHref = getRoleRoute("chat", activeRole, "/client/chat")
+
+  const isHomeActive = pathname === homeHref
+  const isPostsActive = pathname === "/posts" || pathname.startsWith("/posts/")
+  const isChatActive = pathname === chatHref || pathname.startsWith(chatHref + "/")
+
+  const navTabs = [
+    {
+      type: "link" as const,
+      href: homeHref,
+      label: "Trang chủ",
+      icon: Home,
+      isActive: isHomeActive,
+    },
+    {
+      type: "link" as const,
+      href: "/posts",
+      label: "Bài viết",
+      icon: FileText,
+      isActive: isPostsActive,
+    },
+    {
+      type: "link" as const,
+      href: chatHref,
+      label: "Chat",
+      icon: MessageCircle,
+      isActive: isChatActive,
+    },
+    {
+      type: "button" as const,
+      label: "Thêm",
+      icon: MoreHorizontal,
+      isActive: moreOpen,
+    },
+  ]
+
+  return (
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <div className="flex items-center justify-around px-2 pb-safe">
+          {navTabs.map((tab) => {
+            const iconClass = cn(
+              "size-6",
+              tab.isActive && tab.type === "link" && "fill-foreground stroke-background",
+            )
+            const itemClass = cn(
+              "flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors",
+              tab.isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+            )
+
+            if (tab.type === "button") {
+              return (
+                <button
+                  key={tab.label}
+                  type="button"
+                  className={itemClass}
+                  onClick={() => setMoreOpen(true)}
+                >
+                  <tab.icon className={iconClass} />
+                  <span className="text-[10px] leading-none">{tab.label}</span>
+                </button>
+              )
+            }
+
+            return (
+              <Link key={tab.href} href={tab.href} className={itemClass}>
+                <tab.icon className={iconClass} />
+                <span className="text-[10px] leading-none">{tab.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+
+      <MobileMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+    </>
+  )
+}
