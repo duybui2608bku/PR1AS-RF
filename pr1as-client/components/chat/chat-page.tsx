@@ -28,6 +28,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useUIStore } from "@/lib/store/ui-store"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -403,6 +404,14 @@ export function ChatPage({
       shouldStartNewDirect
     )
   )
+
+  // Ẩn bottom nav khi đang trong 1 đoạn chat trên mobile
+  const setHideBottomNav = useUIStore((s) => s.setHideBottomNav)
+  React.useEffect(() => {
+    setHideBottomNav(mobileThreadOpen)
+    return () => setHideBottomNav(false) // reset khi rời trang chat
+  }, [mobileThreadOpen, setHideBottomNav])
+
   const [replyTarget, setReplyTarget] = React.useState<ReplyTarget | null>(null)
   const [typingByRoom, setTypingByRoom] = React.useState<
     Record<string, string>
@@ -1215,7 +1224,7 @@ export function ChatPage({
         variant === "embedded" ? "h-full min-h-0" : "h-svh md:p-4"
       )}
     >
-      <div className="flex shrink-0 flex-row justify-between gap-3 border-b px-4 py-3 md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:items-end">
+      <div className="hidden shrink-0 flex-row justify-between gap-3 border-b px-4 py-3 md:flex md:border-b-0 md:px-0 md:pt-0 md:pb-4 lg:items-end">
         <div className="flex items-center gap-2">
           {showHomeButton ? (
             <Button
