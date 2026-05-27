@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Home, MessageCircle, MoreHorizontal } from "lucide-react"
+import { CalendarCheck2, FileText, Home, MessageCircle, MoreHorizontal } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
@@ -27,42 +27,77 @@ export function MobileBottomNav() {
       : (user?.roles?.[0] ?? user?.role)
   const activeRole = lastActiveRole ?? fallbackRole
 
-  const homeHref = getRoleDefaultRoute(activeRole)
   const chatHref = getRoleRoute("chat", activeRole, "/client/chat")
+  const isWorker = activeRole?.toLowerCase() === "worker"
 
-  const isHomeActive = pathname === homeHref
   const isPostsActive = pathname === "/posts" || pathname.startsWith("/posts/")
   const isChatActive = pathname === chatHref || pathname.startsWith(chatHref + "/")
+  const isHomeActive = pathname === "/"
+  const isBookingsActive =
+    pathname === "/worker/bookings" || pathname.startsWith("/worker/bookings/")
 
-  const navTabs = [
-    {
-      type: "link" as const,
-      href: homeHref,
-      label: "Trang chủ",
-      icon: Home,
-      isActive: isHomeActive,
-    },
-    {
-      type: "link" as const,
-      href: "/posts",
-      label: "Bài viết",
-      icon: FileText,
-      isActive: isPostsActive,
-    },
-    {
-      type: "link" as const,
-      href: chatHref,
-      label: "Chat",
-      icon: MessageCircle,
-      isActive: isChatActive,
-    },
-    {
-      type: "button" as const,
-      label: "Thêm",
-      icon: MoreHorizontal,
-      isActive: moreOpen,
-    },
-  ]
+  // CLIENT: Trang chủ (/) | Bài viết | Chat | Thêm
+  // WORKER: Bài viết     | Chat      | Bookings | Thêm
+  // → tránh trùng tab vì homeHref của Worker = "/posts"
+  const navTabs = isWorker
+    ? [
+        {
+          type: "link" as const,
+          href: "/posts",
+          label: "Bài viết",
+          icon: FileText,
+          isActive: isPostsActive,
+        },
+        {
+          type: "link" as const,
+          href: chatHref,
+          label: "Chat",
+          icon: MessageCircle,
+          isActive: isChatActive,
+        },
+        {
+          type: "link" as const,
+          href: "/worker/bookings",
+          label: "Bookings",
+          icon: CalendarCheck2,
+          isActive: isBookingsActive,
+        },
+        {
+          type: "button" as const,
+          label: "Thêm",
+          icon: MoreHorizontal,
+          isActive: moreOpen,
+        },
+      ]
+    : [
+        {
+          type: "link" as const,
+          href: "/",
+          label: "Trang chủ",
+          icon: Home,
+          isActive: isHomeActive,
+        },
+        {
+          type: "link" as const,
+          href: "/posts",
+          label: "Bài viết",
+          icon: FileText,
+          isActive: isPostsActive,
+        },
+        {
+          type: "link" as const,
+          href: chatHref,
+          label: "Chat",
+          icon: MessageCircle,
+          isActive: isChatActive,
+        },
+        {
+          type: "button" as const,
+          label: "Thêm",
+          icon: MoreHorizontal,
+          isActive: moreOpen,
+        },
+      ]
 
   return (
     <>
