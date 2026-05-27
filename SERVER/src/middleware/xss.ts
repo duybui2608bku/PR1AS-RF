@@ -65,6 +65,18 @@ const sanitizeObject = (obj: unknown): unknown => {
   return obj;
 };
 
+const setSanitizedQuery = (req: Request, query: unknown): void => {
+  // Express 5 exposes req.query via a getter without a setter. Defining an
+  // own property keeps downstream handlers seeing the sanitized value without
+  // assigning to the accessor.
+  Object.defineProperty(req, "query", {
+    value: query,
+    configurable: true,
+    enumerable: true,
+    writable: true,
+  });
+};
+
 export const sanitizeInput = (
   req: Request,
   _res: Response,
@@ -76,7 +88,7 @@ export const sanitizeInput = (
     }
 
     if (req.query && typeof req.query === "object") {
-      req.query = sanitizeObject(req.query) as typeof req.query;
+      setSanitizedQuery(req, sanitizeObject(req.query));
     }
 
     if (req.params && typeof req.params === "object") {

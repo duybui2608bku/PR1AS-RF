@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/query-keys"
 import { workerProfileService } from "@/services/worker-profile.service"
 import { useAuthStore } from "@/lib/store/auth-store"
-import type { WorkerProfileUpdateInput, WorkerServiceUpsertPayload } from "@/types"
+import type {
+  WorkerProfileUpdateInput,
+  WorkerServiceUpsertPayload,
+} from "@/types"
 
 export function useMyWorkerServices() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -28,18 +31,25 @@ export function useMyWorkerServices() {
 export function useUpdateWorkerProfile() {
   const queryClient = useQueryClient()
   const setUser = useAuthStore((s) => s.setUser)
+  const roles = useAuthStore((s) => s.user?.roles)
   const userId = useAuthStore((s) => s.user?.id)
 
   return useMutation({
-    mutationFn: (payload: WorkerProfileUpdateInput) =>
-      workerProfileService.updateWorkerProfile(payload),
+    mutationFn: (payload: WorkerProfileUpdateInput) => {
+      const hasWorkerRole = roles?.includes("worker") ?? false
+      return hasWorkerRole
+        ? workerProfileService.updateWorkerProfile(payload)
+        : workerProfileService.becomeWorker(payload)
+    },
     onSuccess: (data) => {
       if (!data?.user) return
       setUser(data.user)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       const id = data.user.id ?? userId
       if (id) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.workers.detail(id) })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.workers.detail(id),
+        })
       }
     },
   })
@@ -55,7 +65,9 @@ export function useUpsertWorkerServices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workers.myServices })
       if (userId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.workers.detail(userId) })
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.workers.detail(userId),
+        })
       }
     },
   })

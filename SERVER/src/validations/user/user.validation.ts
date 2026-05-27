@@ -7,6 +7,7 @@ import {
 } from "../../types/auth/user.types";
 import { USER_MESSAGES, AUTH_MESSAGES } from "../../constants/messages";
 import { VALIDATION_LIMITS } from "../../constants/validation";
+import { normalizeAvatarUrl } from "../../utils/avatar-url";
 
 export const updateUserStatusSchema = z.object({
   status: z.nativeEnum(UserStatus, {
@@ -30,6 +31,18 @@ const isoDateString = z
     message: "Must be a valid date string",
   })
   .optional();
+
+const avatarUrlSchema = z.string().transform((value, ctx) => {
+  const normalized = normalizeAvatarUrl(value);
+  if (!normalized) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: USER_MESSAGES.INVALID_AVATAR_URL,
+    });
+    return z.NEVER;
+  }
+  return normalized;
+});
 
 export const getUsersQuerySchema = z.object({
   search: z.string().trim().optional(),
@@ -97,6 +110,19 @@ export type UpdateWorkerProfileSchemaType = z.infer<
   typeof updateWorkerProfileSchema
 >;
 
+export const becomeWorkerSchema = updateWorkerProfileSchema.extend({
+  confirm: z
+    .boolean({
+      required_error: AUTH_MESSAGES.BECOME_WORKER_CONFIRM_REQUIRED,
+      invalid_type_error: AUTH_MESSAGES.BECOME_WORKER_CONFIRM_REQUIRED,
+    })
+    .refine((value) => value === true, {
+      message: AUTH_MESSAGES.BECOME_WORKER_CONFIRM_REQUIRED,
+    }),
+});
+
+export type BecomeWorkerSchemaType = z.infer<typeof becomeWorkerSchema>;
+
 export const updateBasicProfileSchema = z
   .object({
     password: z
@@ -115,9 +141,7 @@ export const updateBasicProfileSchema = z
       )
       .optional(),
     old_password: z.string().min(1).optional(),
-    avatar: z
-      .union([z.string().url("Avatar must be a valid URL"), z.null()])
-      .optional(),
+    avatar: z.union([avatarUrlSchema, z.null()]).optional(),
     full_name: z
       .union([
         z

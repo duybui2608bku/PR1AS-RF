@@ -15,27 +15,57 @@ interface ApiResponse<T> {
 
 export const workerProfileService = {
   updateWorkerProfile: async (
-    worker_profile: WorkerProfileUpdateInput,
+    worker_profile: WorkerProfileUpdateInput
   ): Promise<{ user: AuthUser }> => {
-    const response = await api.patch<ApiResponse<{ user: AuthUser }>>("/auth/profile", {
-      worker_profile,
-    })
+    const response = await api.patch<ApiResponse<{ user: AuthUser }>>(
+      "/auth/profile",
+      {
+        worker_profile,
+      }
+    )
     if (!response.data.success || !response.data.data?.user) {
       throw new Error(
-        localizeServerMessage(response.data.message, "Không thể cập nhật hồ sơ worker")
+        localizeServerMessage(
+          response.data.message,
+          "Không thể cập nhật hồ sơ worker"
+        )
+      )
+    }
+    return response.data.data
+  },
+
+  becomeWorker: async (
+    worker_profile: WorkerProfileUpdateInput
+  ): Promise<{ user: AuthUser }> => {
+    const response = await api.post<ApiResponse<{ user: AuthUser }>>(
+      "/auth/become-worker",
+      {
+        confirm: true,
+        worker_profile,
+      }
+    )
+    if (!response.data.success || !response.data.data?.user) {
+      throw new Error(
+        localizeServerMessage(
+          response.data.message,
+          "Không thể kích hoạt vai trò worker"
+        )
       )
     }
     return response.data.data
   },
 
   getMyWorkerServices: async (): Promise<WorkerServiceItem[]> => {
-    const response = await api.get<ApiResponse<{ services: WorkerServiceItem[] }>>(
-      "/worker/services",
-    )
+    const response =
+      await api.get<ApiResponse<{ services: WorkerServiceItem[] }>>(
+        "/worker/services"
+      )
     return response.data.data?.services ?? []
   },
 
-  upsertWorkerServices: async (payload: WorkerServiceUpsertPayload): Promise<void> => {
+  upsertWorkerServices: async (
+    payload: WorkerServiceUpsertPayload
+  ): Promise<void> => {
     const body = {
       services: payload.services.map((s) => ({
         service_id: s.service_id,
@@ -47,7 +77,10 @@ export const workerProfileService = {
         })),
       })),
     }
-    const response = await api.post<ApiResponse<unknown>>("/worker/services", body)
+    const response = await api.post<ApiResponse<unknown>>(
+      "/worker/services",
+      body
+    )
     if (!response.data.success) {
       throw new Error(
         localizeServerMessage(response.data.message, "Không thể lưu dịch vụ")

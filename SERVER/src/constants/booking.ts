@@ -10,6 +10,13 @@ export enum BookingStatus {
   EXPIRED = "expired",
 }
 
+export const BOOKING_SCHEDULE_BLOCKING_STATUSES: BookingStatus[] = [
+  BookingStatus.PENDING,
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+];
+
 export enum CancellationReason {
   CLIENT_REQUEST = "client_request",
   WORKER_UNAVAILABLE = "worker_unavailable",
@@ -41,7 +48,10 @@ export enum DisputeResolution {
   FAVOR_WORKER = "favor_worker",
 }
 
-export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+export const BOOKING_STATUS_TRANSITIONS: Record<
+  BookingStatus,
+  BookingStatus[]
+> = {
   [BookingStatus.PENDING]: [
     BookingStatus.CONFIRMED,
     BookingStatus.REJECTED,
@@ -66,10 +76,7 @@ export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> 
   [BookingStatus.COMPLETED]: [],
   [BookingStatus.CANCELLED]: [],
   [BookingStatus.REJECTED]: [],
-  [BookingStatus.DISPUTED]: [
-    BookingStatus.COMPLETED,
-    BookingStatus.CANCELLED,
-  ],
+  [BookingStatus.DISPUTED]: [BookingStatus.COMPLETED, BookingStatus.CANCELLED],
   [BookingStatus.EXPIRED]: [],
 };
 

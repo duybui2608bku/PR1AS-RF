@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import {
   BookingStatus,
+  BOOKING_SCHEDULE_BLOCKING_STATUSES,
   CancellationReason,
   CancelledBy,
   DisputeReason,
@@ -30,8 +31,16 @@ const pricingSchema = new Schema(
 const cancellationSchema = new Schema(
   {
     cancelled_at: { type: Date, required: true },
-    cancelled_by: { type: String, enum: Object.values(CancelledBy), required: true },
-    reason: { type: String, enum: Object.values(CancellationReason), required: true },
+    cancelled_by: {
+      type: String,
+      enum: Object.values(CancelledBy),
+      required: true,
+    },
+    reason: {
+      type: String,
+      enum: Object.values(CancellationReason),
+      required: true,
+    },
     notes: { type: String, default: "", trim: true },
   },
   { _id: false }
@@ -39,13 +48,26 @@ const cancellationSchema = new Schema(
 
 const disputeSchema = new Schema(
   {
-    reason: { type: String, enum: Object.values(DisputeReason), required: true },
+    reason: {
+      type: String,
+      enum: Object.values(DisputeReason),
+      required: true,
+    },
     description: { type: String, required: true, trim: true, maxlength: 2000 },
     evidence_urls: { type: [String], default: [] },
     disputed_by: { type: Schema.Types.ObjectId, ref: "users", required: true },
     disputed_at: { type: Date, required: true },
-    resolution: { type: String, enum: Object.values(DisputeResolution), default: null },
-    resolution_notes: { type: String, default: "", trim: true, maxlength: 2000 },
+    resolution: {
+      type: String,
+      enum: Object.values(DisputeResolution),
+      default: null,
+    },
+    resolution_notes: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 2000,
+    },
     resolved_by: { type: Schema.Types.ObjectId, ref: "users", default: null },
     resolved_at: { type: Date, default: null },
   },
@@ -118,6 +140,16 @@ bookingSchema.index({ status: 1 });
 bookingSchema.index({ worker_id: 1, status: 1, "schedule.start_time": 1 });
 bookingSchema.index({ "schedule.start_time": 1, "schedule.end_time": 1 });
 bookingSchema.index({ service_code: 1 });
+bookingSchema.index(
+  { worker_id: 1, "schedule.start_time": 1 },
+  {
+    unique: true,
+    name: "uniq_active_booking_worker_start_time",
+    partialFilterExpression: {
+      status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
+    },
+  }
+);
 
 export const Booking = mongoose.model<IBookingDocument>(
   modelsName.BOOKING,

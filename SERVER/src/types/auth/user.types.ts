@@ -71,6 +71,7 @@ export interface IUser {
   worker_profile: WorkerProfile | null;
   client_profile: ClientProfile | null;
   status: UserStatus;
+  booking_lock_version?: number;
   deleted_at: Date | null;
   verify_email: boolean;
   created_at: Date;

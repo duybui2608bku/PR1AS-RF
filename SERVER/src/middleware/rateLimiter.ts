@@ -1,11 +1,22 @@
 import rateLimit from "express-rate-limit";
-import { Request, Response } from "express";
+import { Request } from "express";
 import crypto from "crypto";
 import { AUTH_MESSAGES } from "../constants/messages";
 import { AppError } from "../utils/AppError";
 import { HTTP_STATUS } from "../constants/httpStatus";
 import { ErrorCode } from "../types/common/error.types";
 import { TIME_IN_MS, RATE_LIMIT_WINDOWS } from "../constants/time";
+
+const createRateLimitHandler = (message: string) => (): never => {
+  throw new AppError(
+    message,
+    HTTP_STATUS.TOO_MANY_REQUESTS,
+    ErrorCode.RATE_LIMIT_EXCEEDED
+  );
+};
+
+const userOrIpKey = (req: Request): string =>
+  (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown";
 
 export const authLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOWS.AUTH_MINUTES * TIME_IN_MS.MINUTE,
@@ -14,16 +25,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  handler: (
-    _req: Request, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _res: Response // eslint-disable-line @typescript-eslint/no-unused-vars
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_AUTH_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_AUTH_EXCEEDED),
 });
 
 export const refreshTokenLimiter = rateLimit({
@@ -32,16 +34,7 @@ export const refreshTokenLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (
-    _req: Request, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _res: Response // eslint-disable-line @typescript-eslint/no-unused-vars
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 export const postCreateLimiter = rateLimit({
@@ -50,21 +43,8 @@ export const postCreateLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    return (
-      (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown"
-    );
-  },
-  handler: (
-    _req: Request,
-    _res: Response
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 // `getAdminContact` returns the admin user that a regular user can DM. Without
@@ -77,21 +57,20 @@ export const adminContactLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    return (
-      (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown"
-    );
-  },
-  handler: (
-    _req: Request,
-    _res: Response
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
+});
+
+// Complaint group creation opens an admin-facing conversation. Keep this much
+// stricter than read/chat endpoints so one account cannot flood admin queues.
+export const groupComplaintLimiter = rateLimit({
+  windowMs: 60 * TIME_IN_MS.MINUTE,
+  max: 5,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 export const bookingCreateLimiter = rateLimit({
@@ -100,19 +79,8 @@ export const bookingCreateLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req: Request) => {
-    return (req as { user?: { sub?: string } }).user?.sub || req.ip || "unknown";
-  },
-  handler: (
-    _req: Request,
-    _res: Response
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 export const emailActionLimiter = rateLimit({
@@ -121,16 +89,7 @@ export const emailActionLimiter = rateLimit({
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (
-    _req: Request, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _res: Response // eslint-disable-line @typescript-eslint/no-unused-vars
-  ) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 // Two-layer rate limit for token-consuming endpoints (reset-password,
@@ -155,13 +114,7 @@ export const tokenActionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  handler: (_req: Request, _res: Response) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
 const hashToken = (token: string): string =>
@@ -181,11 +134,5 @@ export const tokenAttemptLimiter = rateLimit({
     }
     return `ip:${req.ip ?? "unknown"}`;
   },
-  handler: (_req: Request, _res: Response) => {
-    throw new AppError(
-      AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
-      HTTP_STATUS.TOO_MANY_REQUESTS,
-      ErrorCode.RATE_LIMIT_EXCEEDED
-    );
-  },
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });

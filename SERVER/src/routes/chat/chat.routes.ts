@@ -3,7 +3,10 @@ import { chatController } from "../../controllers/chat/chat.controller";
 import { authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
-import { adminContactLimiter } from "../../middleware/rateLimiter";
+import {
+  adminContactLimiter,
+  groupComplaintLimiter,
+} from "../../middleware/rateLimiter";
 
 const router = Router();
 
@@ -91,13 +94,12 @@ router.get(
 router.get(
   "/admin-contact",
   adminContactLimiter,
-  asyncHandler<AuthRequest>(
-    chatController.getAdminContact.bind(chatController)
-  )
+  asyncHandler<AuthRequest>(chatController.getAdminContact.bind(chatController))
 );
 
 router.post(
   "/group/complaint",
+  groupComplaintLimiter,
   asyncHandler<AuthRequest>(
     chatController.createComplaintConversation.bind(chatController)
   )

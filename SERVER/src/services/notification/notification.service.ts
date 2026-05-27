@@ -12,6 +12,7 @@ import { PaginationHelper } from "../../utils/pagination";
 import { getUserRoom } from "../../utils/chat.helper";
 import { logger } from "../../utils/logger";
 import { notificationRepository } from "../../repositories/notification";
+import { userRepository } from "../../repositories/auth/user.repository";
 import {
   emailNotificationAdapter,
   inAppNotificationAdapter,
@@ -27,6 +28,7 @@ import type {
   PushSubscriptionInput,
 } from "../../types/notification";
 import { NOTIFICATION_MESSAGES } from "../../constants/notification";
+import { UserStatus } from "../../types/auth/user.types";
 
 interface NotificationTypeConfig {
   category: NotificationCategory;
@@ -161,13 +163,20 @@ export class NotificationService {
       return [];
     }
 
+    const activeRecipientIds =
+      await this.filterActiveRecipients(uniqueRecipientIds);
+
+    if (activeRecipientIds.length === 0) {
+      return [];
+    }
+
     const typeConfig = NOTIFICATION_TYPE_CONFIG[input.type] || {
       ...DEFAULT_TYPE_CONFIG,
       category: input.category,
     };
 
     const notifications = await Promise.all(
-      uniqueRecipientIds.map(async (recipientId) => {
+      activeRecipientIds.map(async (recipientId) => {
         const preference =
           await notificationRepository.getOrCreatePreference(recipientId);
         const channels = this.resolveChannels(input, typeConfig, preference);
@@ -277,6 +286,19 @@ export class NotificationService {
     input: NotificationPreferenceInput
   ): Promise<INotificationPreferenceDocument> {
     return notificationRepository.updatePreference(userId, input);
+  }
+
+  private async filterActiveRecipients(
+    recipientIds: string[]
+  ): Promise<string[]> {
+    const users = await userRepository.findManyByIds(recipientIds);
+    const activeUserIds = new Set(
+      users
+        .filter((user) => user.status === UserStatus.ACTIVE)
+        .map((user) => user._id.toString())
+    );
+
+    return recipientIds.filter((recipientId) => activeUserIds.has(recipientId));
   }
 
   async savePushSubscription(userId: string, input: PushSubscriptionInput) {

@@ -3,8 +3,13 @@ import { IWalletDocument } from "../../types/wallet";
 import { ClientSession } from "mongoose";
 
 export class WalletBalanceRepository {
-  async findByUserId(userId: string): Promise<IWalletDocument | null> {
-    return Wallet.findOne({ user_id: userId });
+  async findByUserId(
+    userId: string,
+    session?: ClientSession
+  ): Promise<IWalletDocument | null> {
+    const query = Wallet.findOne({ user_id: userId });
+    if (session) query.session(session);
+    return query;
   }
 
   async createOrUpdate(

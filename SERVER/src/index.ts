@@ -29,6 +29,10 @@ import {
   startAccountDeletionJob,
   stopAccountDeletionJob,
 } from "./jobs/account-deletion.job";
+import {
+  startWalletReconciliationJob,
+  stopWalletReconciliationJob,
+} from "./jobs/wallet-reconciliation.job";
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
 
 const app = createApp();
@@ -46,6 +50,7 @@ const startServer = async () => {
     startModerationResolutionJob();
     startPlanExpirationJob();
     startAccountDeletionJob();
+    startWalletReconciliationJob();
 
     httpServer.listen(config.port, () => {
       logger.info(
@@ -66,6 +71,7 @@ process.on("SIGTERM", async () => {
   stopModerationResolutionJob();
   stopPlanExpirationJob();
   stopAccountDeletionJob();
+  stopWalletReconciliationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();
@@ -81,6 +87,7 @@ process.on("SIGINT", async () => {
   stopModerationResolutionJob();
   stopPlanExpirationJob();
   stopAccountDeletionJob();
+  stopWalletReconciliationJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
     await closeDatabase();

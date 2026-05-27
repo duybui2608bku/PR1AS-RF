@@ -45,7 +45,9 @@ export class UserRepository {
   }
 
   async findByEmail(email: string): Promise<IUserDocument | null> {
-    return User.findOne({ email: email.toLowerCase().trim() }).select("+password_hash");
+    return User.findOne({ email: email.toLowerCase().trim() }).select(
+      "+password_hash"
+    );
   }
 
   async findByEmailWithGoogleId(email: string): Promise<IUserDocument | null> {
@@ -81,16 +83,20 @@ export class UserRepository {
   async getUserRoleInfoById(userId: string): Promise<{
     lastActiveRole: UserRole | null;
     roles: UserRole[];
+    status: UserStatus | null;
     isWorker: boolean;
     isClient: boolean;
     isAdmin: boolean;
   }> {
-    const user = await User.findById(userId).select("last_active_role roles").lean();
+    const user = await User.findById(userId)
+      .select("last_active_role roles status")
+      .lean();
     const lastActiveRole = user?.last_active_role ?? null;
     const roles = user?.roles ?? [];
     return {
       lastActiveRole,
       roles,
+      status: user?.status ?? null,
       isWorker: lastActiveRole === UserRole.WORKER,
       isClient: lastActiveRole === UserRole.CLIENT,
       isAdmin: roles.includes(UserRole.ADMIN),
@@ -136,11 +142,17 @@ export class UserRepository {
     await User.findByIdAndUpdate(id, { google_id: googleId });
   }
 
-  async updateRoles(id: string, roles: UserRole[]): Promise<IUserDocument | null> {
+  async updateRoles(
+    id: string,
+    roles: UserRole[]
+  ): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { roles }, { new: true });
   }
 
-  async updateStatus(id: string, status: UserStatus): Promise<IUserDocument | null> {
+  async updateStatus(
+    id: string,
+    status: UserStatus
+  ): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { status }, { new: true });
   }
 
@@ -203,7 +215,10 @@ export class UserRepository {
     }).lean() as Promise<IUserDocument[]>;
   }
 
-  async updateLastActiveRole(id: string, last_active_role: UserRole): Promise<IUserDocument | null> {
+  async updateLastActiveRole(
+    id: string,
+    last_active_role: UserRole
+  ): Promise<IUserDocument | null> {
     return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
   }
 
@@ -251,9 +266,12 @@ export class UserRepository {
     const updateData: Record<string, unknown> = {};
 
     if (updates.avatar !== undefined) updateData.avatar = updates.avatar;
-    if (updates.full_name !== undefined) updateData.full_name = updates.full_name?.trim() || null;
-    if (updates.phone !== undefined) updateData.phone = updates.phone?.trim() || null;
-    if (updates.password_hash !== undefined) updateData.password_hash = updates.password_hash;
+    if (updates.full_name !== undefined)
+      updateData.full_name = updates.full_name?.trim() || null;
+    if (updates.phone !== undefined)
+      updateData.phone = updates.phone?.trim() || null;
+    if (updates.password_hash !== undefined)
+      updateData.password_hash = updates.password_hash;
 
     return User.findByIdAndUpdate(id, updateData, { new: true });
   }
@@ -302,7 +320,15 @@ export class UserRepository {
   async findAllWithFilters(
     query: GetUsersQuery & { skip: number }
   ): Promise<FindAllUsersResult> {
-    const { skip, limit = 10, search, role, status, startDate, endDate } = query;
+    const {
+      skip,
+      limit = 10,
+      search,
+      role,
+      status,
+      startDate,
+      endDate,
+    } = query;
 
     const filter: Record<string, unknown> = {};
 
@@ -342,26 +368,32 @@ export class UserRepository {
     id: string,
     delta: number
   ): Promise<{ newScore: number; previousScore: number } | null> {
-    const doc = await User.findById(id).select("meta_data.reputation_score").lean();
+    const doc = await User.findById(id)
+      .select("meta_data.reputation_score")
+      .lean();
     if (!doc) return null;
     const previousScore =
       (doc as unknown as { meta_data?: { reputation_score?: number } })
         ?.meta_data?.reputation_score ?? 100;
     const newScore = Math.max(0, Math.min(100, previousScore + delta));
-    await User.findByIdAndUpdate(id, { "meta_data.reputation_score": newScore });
+    await User.findByIdAndUpdate(id, {
+      "meta_data.reputation_score": newScore,
+    });
     return { newScore, previousScore };
   }
 
   async incrementReputationScoreForAll(delta: number): Promise<number> {
     const result = await User.updateMany(
       { "meta_data.reputation_score": { $lt: 100 } },
-      [{
-        $set: {
-          "meta_data.reputation_score": {
-            $min: [100, { $add: ["$meta_data.reputation_score", delta] }],
+      [
+        {
+          $set: {
+            "meta_data.reputation_score": {
+              $min: [100, { $add: ["$meta_data.reputation_score", delta] }],
+            },
           },
         },
-      }]
+      ]
     );
     return result.modifiedCount;
   }
@@ -386,7 +418,10 @@ export class UserRepository {
     return User.findById(id).select("+refresh_token_hash");
   }
 
-  async setRefreshTokenHash(id: string, refresh_token_hash: string | null): Promise<void> {
+  async setRefreshTokenHash(
+    id: string,
+    refresh_token_hash: string | null
+  ): Promise<void> {
     await User.findByIdAndUpdate(id, {
       refresh_token_hash,
       ...(refresh_token_hash !== null && { last_login: new Date() }),
@@ -397,14 +432,20 @@ export class UserRepository {
     await User.findByIdAndUpdate(id, { refresh_token_hash: null });
   }
 
-  async setPasswordResetToken(id: string, tokenHash: string, expires: Date): Promise<void> {
+  async setPasswordResetToken(
+    id: string,
+    tokenHash: string,
+    expires: Date
+  ): Promise<void> {
     await User.findByIdAndUpdate(id, {
       password_reset_token: tokenHash,
       password_reset_expires: expires,
     });
   }
 
-  async findByPasswordResetToken(tokenHash: string): Promise<IUserDocument | null> {
+  async findByPasswordResetToken(
+    tokenHash: string
+  ): Promise<IUserDocument | null> {
     return User.findOne({ password_reset_token: tokenHash }).select(
       "+password_reset_token +password_reset_expires"
     );
@@ -426,14 +467,20 @@ export class UserRepository {
     });
   }
 
-  async setEmailVerificationToken(id: string, tokenHash: string, expires: Date): Promise<void> {
+  async setEmailVerificationToken(
+    id: string,
+    tokenHash: string,
+    expires: Date
+  ): Promise<void> {
     await User.findByIdAndUpdate(id, {
       email_verification_token: tokenHash,
       email_verification_expires: expires,
     });
   }
 
-  async findByEmailVerificationToken(tokenHash: string): Promise<IUserDocument | null> {
+  async findByEmailVerificationToken(
+    tokenHash: string
+  ): Promise<IUserDocument | null> {
     return User.findOne({ email_verification_token: tokenHash }).select(
       "+email_verification_token +email_verification_expires"
     );

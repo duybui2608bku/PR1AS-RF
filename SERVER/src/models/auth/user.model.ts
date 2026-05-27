@@ -110,6 +110,12 @@ const userSchema = new Schema<IUserDocument>(
       default: UserStatus.ACTIVE,
       index: true,
     },
+    // Internal write-lock counter for serializing booking creation per worker.
+    booking_lock_version: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
     deleted_at: {
       type: Date,
       default: null,

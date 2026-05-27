@@ -1,5 +1,6 @@
-import { Types, PopulateOptions, ClientSession } from "mongoose";
+import mongoose, { Types, PopulateOptions, ClientSession } from "mongoose";
 import { Booking } from "../../models/booking/booking.model";
+import { User } from "../../models/auth/user.model";
 import {
   AdminBookingAnalyticsQuery,
   AdminBookingAnalyticsRaw,
@@ -10,17 +11,12 @@ import {
 import { PaginatedResponse } from "../../utils/pagination";
 import {
   BookingStatus,
+  BOOKING_SCHEDULE_BLOCKING_STATUSES,
   CancellationReason,
   CancelledBy,
 } from "../../constants/booking";
 import { PaginationHelper } from "../../utils";
-
-const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
-  BookingStatus.PENDING,
-  BookingStatus.CONFIRMED,
-  BookingStatus.IN_PROGRESS,
-  BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-];
+import { UserRole, UserStatus } from "../../types/auth/user.types";
 
 const BOOKING_POPULATE: PopulateOptions[] = [
   { path: "client_id", select: "email full_name" },
@@ -29,14 +25,43 @@ const BOOKING_POPULATE: PopulateOptions[] = [
   { path: "service_id" },
 ];
 
+export enum CreateBookingFailureReason {
+  SCHEDULE_CONFLICT = "SCHEDULE_CONFLICT",
+  WORKER_INELIGIBLE = "WORKER_INELIGIBLE",
+}
+
+export type CreateBookingIfNoConflictResult =
+  | { booking: IBookingDocument; failureReason: null }
+  | { booking: null; failureReason: CreateBookingFailureReason };
+
 export class BookingRepository {
+  private isDuplicateActiveStartTimeError(error: unknown): boolean {
+    if (typeof error !== "object" || error === null) return false;
+
+    const mongoError = error as {
+      code?: number;
+      keyPattern?: Record<string, unknown>;
+      message?: string;
+    };
+
+    if (mongoError.code !== 11000) return false;
+    if (mongoError.message?.includes("uniq_active_booking_worker_start_time")) {
+      return true;
+    }
+
+    return Boolean(
+      mongoError.keyPattern?.worker_id &&
+      mongoError.keyPattern?.["schedule.start_time"]
+    );
+  }
+
   async countActiveBookingsForUser(userId: string): Promise<number> {
     return Booking.countDocuments({
       $or: [
         { client_id: new Types.ObjectId(userId) },
         { worker_id: new Types.ObjectId(userId) },
       ],
-      status: { $in: ACTIVE_BOOKING_STATUSES },
+      status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
     });
   }
 
@@ -103,7 +128,10 @@ export class BookingRepository {
     const filter =
       role === "client"
         ? { client_id: new Types.ObjectId(userId), confirmed_at: { $ne: null } }
-        : { worker_id: new Types.ObjectId(userId), confirmed_at: { $ne: null } };
+        : {
+            worker_id: new Types.ObjectId(userId),
+            confirmed_at: { $ne: null },
+          };
 
     const peerIds = await Booking.distinct(field, filter);
     return peerIds.map((id) => id.toString());
@@ -178,25 +206,80 @@ export class BookingRepository {
       updated_at: new Date(),
     });
     const saved = await booking.save({ session });
-    return Booking.findById(saved._id).populate(
-      BOOKING_POPULATE
-    ) as Promise<IBookingDocument>;
+    const query = Booking.findById(saved._id).populate(BOOKING_POPULATE);
+    if (session) query.session(session);
+    return query as Promise<IBookingDocument>;
   }
 
-  // Re-check conflict + insert as close together as possible to narrow the
-  // TOCTOU window between validation and insert. Returns null when a conflict
-  // is detected; service maps that to a 409 response.
+  // Serialize per-worker booking creation by taking a write lock on the worker
+  // document, then re-check availability and insert in the same transaction.
   async createIfNoConflict(
     data: CreateBookingInput
-  ): Promise<IBookingDocument | null> {
-    const conflict = await this.checkScheduleConflict(
-      data.worker_id.toString(),
-      data.schedule.start_time,
-      data.schedule.end_time
-    );
-    if (conflict) return null;
+  ): Promise<CreateBookingIfNoConflictResult> {
+    const session = await mongoose.startSession();
 
-    return this.create(data);
+    try {
+      let result: CreateBookingIfNoConflictResult = {
+        booking: null,
+        failureReason: CreateBookingFailureReason.SCHEDULE_CONFLICT,
+      };
+
+      await session.withTransaction(async () => {
+        const worker = await User.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(data.worker_id.toString()),
+            status: UserStatus.ACTIVE,
+            verify_email: true,
+            roles: UserRole.WORKER,
+          },
+          { $inc: { booking_lock_version: 1 } },
+          { new: true, session }
+        )
+          .select("_id")
+          .lean();
+
+        if (!worker) {
+          result = {
+            booking: null,
+            failureReason: CreateBookingFailureReason.WORKER_INELIGIBLE,
+          };
+          return;
+        }
+
+        const conflict = await this.checkScheduleConflict(
+          data.worker_id.toString(),
+          data.schedule.start_time,
+          data.schedule.end_time,
+          undefined,
+          session
+        );
+
+        if (conflict) {
+          result = {
+            booking: null,
+            failureReason: CreateBookingFailureReason.SCHEDULE_CONFLICT,
+          };
+          return;
+        }
+
+        result = {
+          booking: await this.create(data, session),
+          failureReason: null,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      if (this.isDuplicateActiveStartTimeError(error)) {
+        return {
+          booking: null,
+          failureReason: CreateBookingFailureReason.SCHEDULE_CONFLICT,
+        };
+      }
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
   async findById(id: string): Promise<IBookingDocument | null> {
@@ -407,7 +490,8 @@ export class BookingRepository {
     workerId: string,
     startTime: Date,
     endTime: Date,
-    excludeBookingId?: string
+    excludeBookingId?: string,
+    session?: ClientSession
   ): Promise<boolean> {
     const filter: Record<string, unknown> = {
       worker_id: new Types.ObjectId(workerId),
@@ -415,7 +499,7 @@ export class BookingRepository {
       // same slot. A worker confirming the second booking later would
       // otherwise look fine here and only fail at confirmation time, leaving
       // the rejected client confused and the worker holding a useless slot.
-      status: { $in: ACTIVE_BOOKING_STATUSES },
+      status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
       $or: [
         { "schedule.start_time": { $gte: startTime, $lt: endTime } },
         { "schedule.end_time": { $gt: startTime, $lte: endTime } },
@@ -430,7 +514,9 @@ export class BookingRepository {
       filter._id = { $ne: new Types.ObjectId(excludeBookingId) };
     }
 
-    return Booking.exists(filter).then(Boolean);
+    const query = Booking.exists(filter);
+    if (session) query.session(session);
+    return query.then(Boolean);
   }
 
   async findConflictsForWorkerInWindow(
@@ -440,7 +526,7 @@ export class BookingRepository {
   ): Promise<Array<{ start_time: Date; end_time: Date }>> {
     const conflicts = await Booking.find({
       worker_id: new Types.ObjectId(workerId),
-      status: { $in: ACTIVE_BOOKING_STATUSES },
+      status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
       "schedule.start_time": { $lt: endTime },
       "schedule.end_time": { $gt: startTime },
     })
@@ -462,7 +548,7 @@ export class BookingRepository {
 
     const conflicts = await Booking.find({
       worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
-      status: { $in: ACTIVE_BOOKING_STATUSES },
+      status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
       "schedule.start_time": { $lt: endTime },
       "schedule.end_time": { $gt: startTime },
     })

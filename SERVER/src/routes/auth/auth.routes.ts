@@ -77,6 +77,13 @@ router.patch(
   asyncHandler<AuthRequest>(authController.updateProfile.bind(authController))
 );
 
+router.post(
+  "/become-worker",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(authController.becomeWorker.bind(authController))
+);
+
 router.patch(
   "/update-profile",
   authenticate,

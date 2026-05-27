@@ -1,5 +1,8 @@
 import { Types } from "mongoose";
-import { bookingRepository } from "../../repositories/booking/booking.repository";
+import {
+  bookingRepository,
+  CreateBookingFailureReason,
+} from "../../repositories/booking/booking.repository";
 import { serviceRepository } from "../../repositories/service/service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import {
@@ -12,14 +15,17 @@ import {
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { BOOKING_MESSAGES } from "../../constants/messages";
+import {
+  AUTH_MESSAGES,
+  BOOKING_MESSAGES,
+  REPUTATION_MESSAGES,
+} from "../../constants/messages";
 import { PaginatedResponse } from "../../utils/pagination";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
 import { UserRole, UserStatus } from "../../types/auth/user.types";
 import { BookingStatus } from "../../constants/booking";
-import { REPUTATION_MESSAGES } from "../../constants/messages";
 import { moderationService } from "../moderation";
 import { RestrictionFeature } from "../../constants/moderation";
 
@@ -75,16 +81,12 @@ export class BookingCrudService extends BookingBaseService {
       RestrictionFeature.WORKER_ACTIVITY
     );
 
-    // All 4 run concurrently — validations throw on failure, first two capture data
+    // Load independent dependencies concurrently. The final worker eligibility
+    // and schedule conflict checks happen again inside the atomic create path.
     const [worker, service] = await Promise.all([
       userRepository.findById(workerId),
       serviceRepository.findById(input.service_id.toString()),
       this.validateWorkerService(input.worker_service_id.toString(), workerId),
-      this.validateScheduleConflict(
-        workerId,
-        input.schedule.start_time,
-        input.schedule.end_time
-      ),
     ]);
 
     if (!worker) {
@@ -116,24 +118,31 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    // Atomic guard: re-check conflict immediately before insert. Two parallel
-    // requests both passing the earlier validation will race here, but the
-    // second insert will still see the first via this re-check inside the
-    // same tick. Combined with the create() that follows, this narrows the
-    // TOCTOU window dramatically. A unique compound index would be the full
-    // fix but requires data migration — tracked separately.
-    const createdBooking = await bookingRepository.createIfNoConflict({
+    const createResult = await bookingRepository.createIfNoConflict({
       ...input,
       client_id: new Types.ObjectId(clientId),
     });
 
-    if (!createdBooking) {
+    if (!createResult.booking) {
+      if (
+        createResult.failureReason ===
+        CreateBookingFailureReason.WORKER_INELIGIBLE
+      ) {
+        throw new AppError(
+          BOOKING_MESSAGES.WORKER_INELIGIBLE,
+          HTTP_STATUS.FORBIDDEN,
+          ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+        );
+      }
+
       throw new AppError(
         BOOKING_MESSAGES.SCHEDULE_CONFLICT,
         HTTP_STATUS.CONFLICT,
         ErrorCode.BOOKING_INVALID_SCHEDULE
       );
     }
+
+    const createdBooking = createResult.booking;
 
     void notificationEventService
       .bookingCreated(createdBooking)
@@ -285,6 +294,16 @@ export class BookingCrudService extends BookingBaseService {
     query: BookingQuery
   ): Promise<PaginatedResponse<IBookingDocument>> {
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
+    if (roleInfo.status !== UserStatus.ACTIVE) {
+      if (roleInfo.status === UserStatus.BANNED) {
+        throw AppError.forbidden(AUTH_MESSAGES.USER_BANNED);
+      }
+      if (roleInfo.status === UserStatus.PENDING_DELETE) {
+        throw AppError.forbidden(AUTH_MESSAGES.USER_PENDING_DELETE);
+      }
+      throw AppError.forbidden(AUTH_MESSAGES.USER_DELETED);
+    }
+
     const requestedRole = query.role || roleInfo.lastActiveRole;
 
     if (

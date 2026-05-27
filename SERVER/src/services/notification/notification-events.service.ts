@@ -10,10 +10,7 @@ import {
   NotificationPriority,
   NotificationType,
 } from "../../constants/notification";
-import {
-  ReportReason,
-  RestrictionFeature,
-} from "../../constants/moderation";
+import { ReportReason, RestrictionFeature } from "../../constants/moderation";
 import type { IBookingDocument } from "../../types/booking";
 import type { IReviewDocument } from "../../types/review";
 import { notificationService } from "./notification.service";
@@ -386,6 +383,55 @@ export class NotificationEventService {
     });
   }
 
+  async walletBalanceReconciliationAlert(input: {
+    scanned_count: number;
+    reconciled_count: number;
+    failed_count: number;
+    mismatches: Array<{
+      user_id: string;
+      stored_balance: number | null;
+      calculated_balance: number | null;
+      error?: string;
+    }>;
+  }): Promise<void> {
+    const admin = await userRepository.findFirstAdmin();
+    if (!admin?._id) return;
+
+    const preview = input.mismatches
+      .slice(0, 10)
+      .map((item) =>
+        item.error
+          ? `${item.user_id}: ${item.error}`
+          : `${item.user_id}: ${item.stored_balance} -> ${item.calculated_balance}`
+      )
+      .join("\n");
+
+    await notificationService.notify({
+      recipient_ids: [toId(admin._id)],
+      type: NotificationType.SECURITY_ALERT,
+      category: NotificationCategory.SECURITY,
+      title: "Wallet balance reconciliation alert",
+      body: [
+        `Scanned: ${input.scanned_count}`,
+        `Reconciled: ${input.reconciled_count}`,
+        `Failed: ${input.failed_count}`,
+        preview ? `Details:\n${preview}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      data: {
+        scanned_count: input.scanned_count,
+        reconciled_count: input.reconciled_count,
+        failed_count: input.failed_count,
+        mismatches: input.mismatches.slice(0, 20),
+      },
+      link: "/admin/wallet",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.URGENT,
+      dedupe_key: `wallet-reconciliation:${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
+
   async chatMessage(input: {
     recipientIds: string[];
     actorId: string;
@@ -425,7 +471,8 @@ export class NotificationEventService {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);
     const recipientId = actorId === clientId ? workerId : clientId;
-    const link = recipientId === workerId ? "/worker/bookings" : "/client/bookings";
+    const link =
+      recipientId === workerId ? "/worker/bookings" : "/client/bookings";
 
     await notificationService.notify({
       recipient_ids: [recipientId],
@@ -500,7 +547,9 @@ export class NotificationEventService {
         )
       );
     } else {
-      lines.push("Hiện chưa áp dụng lệnh cấm đăng bài đối với tài khoản của bạn.");
+      lines.push(
+        "Hiện chưa áp dụng lệnh cấm đăng bài đối với tài khoản của bạn."
+      );
     }
 
     await notificationService.notify({
@@ -631,7 +680,8 @@ export class NotificationEventService {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);
     const recipientId = actorId === clientId ? workerId : clientId;
-    const link = recipientId === workerId ? "/worker/bookings" : "/client/bookings";
+    const link =
+      recipientId === workerId ? "/worker/bookings" : "/client/bookings";
 
     await notificationService.notify({
       recipient_ids: [recipientId],

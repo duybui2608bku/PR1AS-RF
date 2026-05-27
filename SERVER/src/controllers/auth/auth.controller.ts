@@ -14,6 +14,7 @@ import {
   updateLastActiveRoleSchema,
   updateWorkerProfileSchema,
   updateBasicProfileSchema,
+  becomeWorkerSchema,
 } from "../../validations/user/user.validation";
 import {
   AUTH_MESSAGES,
@@ -102,6 +103,28 @@ export class AuthController {
       res,
       { user: toPublicUser(updatedUser) },
       AUTH_MESSAGES.PROFILE_UPDATED,
+      req
+    );
+  }
+
+  async becomeWorker(req: AuthRequest, res: Response): Promise<void> {
+    const body = validateWithSchema(
+      becomeWorkerSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const updatedUser = await userService.becomeWorker(
+      extractUserIdFromRequest(req),
+      body.worker_profile,
+      {
+        ip: req.ip,
+        userAgent: req.get("user-agent"),
+      }
+    );
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.WORKER_ROLE_ENABLED,
       req
     );
   }

@@ -18,6 +18,12 @@ import { getUserRoom } from "../../utils/chat.helper";
 import { SOCKET_EVENTS } from "../../constants/socket";
 import { getUserSocketIds } from "../../config/socket.handlers";
 import { invalidateUserStatusCache } from "../../utils/userStatusCache";
+import { normalizeAvatarUrl } from "../../utils/avatar-url";
+
+interface BecomeWorkerAuditContext {
+  ip?: string;
+  userAgent?: string;
+}
 
 export class UserService {
   async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
@@ -51,7 +57,10 @@ export class UserService {
           io.sockets.sockets.get(socketId)?.disconnect(true);
         }
       } catch (error) {
-        logger.warn("Could not disconnect sockets on ban — socket may not be initialized", { error, userId });
+        logger.warn(
+          "Could not disconnect sockets on ban — socket may not be initialized",
+          { error, userId }
+        );
       }
 
       await this.sendAccountBannedEmail(user).catch((error) => {
@@ -104,6 +113,20 @@ export class UserService {
     return userRepository.findAllWithFilters(query);
   }
 
+  private splitWorkerProfileInput(
+    input: UpdateWorkerProfileSchemaType["worker_profile"]
+  ): {
+    coords?: { latitude: number | null; longitude: number | null };
+    profileFields: Record<string, unknown>;
+  } {
+    // coords are stored at root level, not inside worker_profile subdocument.
+    const { coords, ...profileFields } = input;
+    return {
+      coords: coords ?? undefined,
+      profileFields: profileFields as Record<string, unknown>,
+    };
+  }
+
   async updateWorkerProfile(
     userId: string,
     input: UpdateWorkerProfileSchemaType["worker_profile"]
@@ -111,25 +134,56 @@ export class UserService {
     const currentUser = await userRepository.findById(userId); // DB call 1
     if (!currentUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
-    // Extract coords — stored at root level, not inside worker_profile subdocument
-    const { coords, ...profileFields } = input;
+    if (!currentUser.roles.includes(UserRole.WORKER)) {
+      throw AppError.forbidden(USER_MESSAGES.WORKER_ROLE_REQUIRED);
+    }
+
+    const { coords, profileFields } = this.splitWorkerProfileInput(input);
 
     const user = await userRepository.updateWorkerProfile(
       // DB call 2 (compound atomic)
       userId,
-      profileFields as Record<string, unknown>,
+      profileFields,
+      { coords }
+    );
+
+    if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    return user;
+  }
+
+  async becomeWorker(
+    userId: string,
+    input: UpdateWorkerProfileSchemaType["worker_profile"],
+    auditContext: BecomeWorkerAuditContext = {}
+  ): Promise<IUserDocument> {
+    const currentUser = await userRepository.findById(userId);
+    if (!currentUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    const alreadyWorker = currentUser.roles.includes(UserRole.WORKER);
+    const { coords, profileFields } = this.splitWorkerProfileInput(input);
+
+    const user = await userRepository.updateWorkerProfile(
+      userId,
+      profileFields,
       {
-        coords: coords ?? undefined,
-        addWorkerRole: !currentUser.roles.includes(UserRole.WORKER),
-        // Only update last_active_role if it's not already WORKER
-        setLastActiveRole:
-          currentUser.last_active_role !== UserRole.WORKER
-            ? UserRole.WORKER
-            : undefined,
+        coords,
+        addWorkerRole: !alreadyWorker,
+        setLastActiveRole: UserRole.WORKER,
       }
     );
 
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    logger.info("AUDIT user become worker confirmed", {
+      event: "USER_BECOME_WORKER_CONFIRMED",
+      userId,
+      alreadyWorker,
+      previousRoles: currentUser.roles,
+      previousLastActiveRole: currentUser.last_active_role,
+      ip: auditContext.ip,
+      userAgent: auditContext.userAgent,
+    });
+
     return user;
   }
 
@@ -138,6 +192,16 @@ export class UserService {
     data: UpdateBasicProfileSchemaType
   ): Promise<IUserDocument> {
     let password_hash: string | undefined;
+    let avatar: string | null | undefined;
+
+    if (data.avatar !== undefined) {
+      avatar = data.avatar === null ? null : normalizeAvatarUrl(data.avatar);
+      if (data.avatar !== null && !avatar) {
+        throw AppError.badRequest(USER_MESSAGES.INVALID_AVATAR_URL, [
+          { field: "avatar", message: USER_MESSAGES.INVALID_AVATAR_URL },
+        ]);
+      }
+    }
 
     if (data.password) {
       // Single DB call: get user with password_hash for verification
@@ -161,7 +225,7 @@ export class UserService {
 
     const updatedUser = await userRepository.updateBasicProfile(userId, {
       password_hash,
-      avatar: data.avatar,
+      avatar,
       full_name: data.full_name,
       phone: data.phone,
     });

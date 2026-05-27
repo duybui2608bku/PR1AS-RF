@@ -53,6 +53,8 @@ export const AUTH_MESSAGES = {
     "Registration successful. Please check your email to verify your account",
   LOGIN_SUCCESS: "Login successful",
   PROFILE_UPDATED: "Profile updated successfully",
+  WORKER_ROLE_ENABLED: "Worker role enabled successfully",
+  BECOME_WORKER_CONFIRM_REQUIRED: "Confirmation is required to become a worker",
 } as const;
 
 export const AUTHZ_MESSAGES = {
@@ -94,6 +96,9 @@ export const USER_MESSAGES = {
   ROLE_UPDATED: "Active role updated successfully",
   USERS_FETCHED: "Users fetched successfully",
   PROFILE_UPDATED: "Profile updated successfully",
+  INVALID_AVATAR_URL: "Avatar URL must use http or https",
+  WORKER_ROLE_REQUIRED:
+    "Worker role is required to update worker profile. Use the become-worker endpoint first.",
 } as const;
 
 export const PAGINATION_MESSAGES = {

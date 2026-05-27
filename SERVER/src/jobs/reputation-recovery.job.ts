@@ -2,7 +2,6 @@ import cron from "node-cron";
 import { reputationService } from "../services/reputation/reputation.service";
 import { logger } from "../utils/logger";
 
-// Run at 00:00 every day
 const REPUTATION_RECOVERY_CRON = "0 0 * * *";
 
 let reputationRecoveryTask: ReturnType<typeof cron.schedule> | null = null;

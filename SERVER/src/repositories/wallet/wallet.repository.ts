@@ -295,8 +295,18 @@ export class WalletRepository {
     };
   }
 
-  async calculateUserBalance(userId: string): Promise<number> {
-    const result = await WalletTransaction.aggregate([
+  async findUserIdsWithSuccessfulTransactions(): Promise<string[]> {
+    const userIds = await WalletTransaction.distinct("user_id", {
+      status: TransactionStatus.SUCCESS,
+    });
+    return userIds.map((userId) => String(userId));
+  }
+
+  async calculateUserBalance(
+    userId: string,
+    session?: ClientSession
+  ): Promise<number> {
+    const aggregation = WalletTransaction.aggregate([
       {
         $match: {
           user_id: new mongoose.Types.ObjectId(userId),
@@ -327,6 +337,9 @@ export class WalletRepository {
         },
       },
     ]);
+    if (session) aggregation.session(session);
+
+    const result = await aggregation;
     const balance = result.reduce((sum, item) => sum + (item.total || 0), 0);
     return Math.max(0, balance);
   }
