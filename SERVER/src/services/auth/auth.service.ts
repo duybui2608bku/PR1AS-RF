@@ -34,6 +34,19 @@ import { accountDeletionService } from "./account-deletion.service";
 
 const googleOAuthClient = new OAuth2Client(config.googleClientId);
 
+// Equalises bcrypt cost between "user exists" and "user missing" paths in login
+// so response time can't be used as an account-existence oracle. Hashed once on
+// first use against a random secret; the value is never compared in practice.
+let dummyPasswordHashPromise: Promise<string> | null = null;
+const getDummyPasswordHash = (): Promise<string> => {
+  if (!dummyPasswordHashPromise) {
+    dummyPasswordHashPromise = hashPassword(
+      crypto.randomBytes(32).toString("hex")
+    );
+  }
+  return dummyPasswordHashPromise;
+};
+
 export class AuthService {
   private hashOpaqueToken(token: string): string {
     return hashOpaqueToken(token);
@@ -87,27 +100,19 @@ export class AuthService {
 
   async login(input: LoginInput): Promise<AuthResponse> {
     const user = await userRepository.findByEmail(input.email);
-    if (!user) {
-      throw new AppError(
-        AUTH_MESSAGES.INVALID_CREDENTIALS,
-        HTTP_STATUS.UNAUTHORIZED,
-        ErrorCode.INVALID_CREDENTIALS
-      );
-    }
 
-    if (!user.password_hash) {
-      throw new AppError(
-        AUTH_MESSAGES.INVALID_CREDENTIALS,
-        HTTP_STATUS.UNAUTHORIZED,
-        ErrorCode.INVALID_CREDENTIALS
-      );
-    }
-
+    // Always run bcrypt — even when the user is missing or has no password —
+    // so response time doesn't leak account existence. The dummy hash is a
+    // random secret hashed once at startup; comparePassword against it will
+    // always return false but pays the same CPU cost as a real comparison.
+    const hashToCompare =
+      user?.password_hash ?? (await getDummyPasswordHash());
     const isPasswordValid = await comparePassword(
       input.password,
-      user.password_hash
+      hashToCompare
     );
-    if (!isPasswordValid) {
+
+    if (!user || !user.password_hash || !isPasswordValid) {
       throw new AppError(
         AUTH_MESSAGES.INVALID_CREDENTIALS,
         HTTP_STATUS.UNAUTHORIZED,
@@ -238,37 +243,52 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const user = await userRepository.findByEmail(email);
-
-    if (user && user.status !== UserStatus.BANNED) {
-      const resetToken = crypto.randomBytes(32).toString("hex");
-      const resetTokenHash = this.hashOpaqueToken(resetToken);
-      const resetExpires = createPasswordResetExpiry();
-
-      await userRepository.setPasswordResetToken(
-        user._id.toString(),
-        resetTokenHash,
-        resetExpires
-      );
-
-      const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
-
-      await nodemailerUtils({
-        email: user.email,
-        html: passwordResetTemplate(resetLink, user.full_name || undefined),
-        subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.PASSWORD_RESET}`,
-      }).catch((error) => {
-        logger.error("Failed to send password reset email", {
-          userId: user._id.toString(),
-          email: user.email,
+    // Dispatch in the background so response latency is constant regardless
+    // of whether the email exists. The DB lookup, token write, and SMTP
+    // roundtrip were previously inside the request path and leaked existence
+    // via timing even though the message itself is generic.
+    setImmediate(() => {
+      void this.dispatchPasswordResetEmail(email).catch((error) => {
+        logger.error("Background password reset dispatch failed", {
           error: error instanceof Error ? error.message : String(error),
         });
       });
-    }
+    });
 
     return {
       message: AUTH_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
     };
+  }
+
+  private async dispatchPasswordResetEmail(email: string): Promise<void> {
+    const user = await userRepository.findByEmail(email);
+    if (!user || user.status === UserStatus.BANNED) {
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = this.hashOpaqueToken(resetToken);
+    const resetExpires = createPasswordResetExpiry();
+
+    await userRepository.setPasswordResetToken(
+      user._id.toString(),
+      resetTokenHash,
+      resetExpires
+    );
+
+    const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
+
+    await nodemailerUtils({
+      email: user.email,
+      html: passwordResetTemplate(resetLink, user.full_name || undefined),
+      subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.PASSWORD_RESET}`,
+    }).catch((error) => {
+      logger.error("Failed to send password reset email", {
+        userId: user._id.toString(),
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
   }
 
   async resetPassword(

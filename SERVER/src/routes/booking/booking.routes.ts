@@ -4,12 +4,14 @@ import { adminOnly, authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
 import { pagination } from "../../middleware";
+import { bookingCreateLimiter } from "../../middleware/rateLimiter";
 
 const router = Router();
 
 router.post(
   "/",
   authenticate,
+  bookingCreateLimiter,
   asyncHandler<AuthRequest>(
     bookingController.createBooking.bind(bookingController)
   )

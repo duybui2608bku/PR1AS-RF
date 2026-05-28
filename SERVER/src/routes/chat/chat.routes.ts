@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
 import {
   adminContactLimiter,
+  chatSendLimiter,
   groupComplaintLimiter,
 } from "../../middleware/rateLimiter";
 
@@ -14,6 +15,7 @@ router.use(authenticate);
 
 router.post(
   "/messages",
+  chatSendLimiter,
   asyncHandler<AuthRequest>(chatController.sendMessage.bind(chatController))
 );
 
@@ -51,6 +53,7 @@ router.delete(
 
 router.post(
   "/group/messages",
+  chatSendLimiter,
   asyncHandler<AuthRequest>(
     chatController.sendGroupMessage.bind(chatController)
   )

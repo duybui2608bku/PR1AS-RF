@@ -1,36 +1,21 @@
 import { Request, Response, NextFunction } from "express";
+import DOMPurify from "isomorphic-dompurify";
 import { AppError } from "../utils/AppError";
 
+// Parser-based sanitisation. DOMPurify decodes entities, normalises mutation-
+// XSS payloads, strips dangerous tags/attrs (script, iframe, object, embed,
+// on*, javascript:, data:text/html, css expressions, svg/math vectors) and
+// closes broken markup — things the previous regex chain missed and which
+// would otherwise round-trip into rendered HTML on any client that trusts
+// backend output. Default config strips no benign tags; pass field-specific
+// configs at the call site for richer text fields.
 const sanitizeString = (input: string): string => {
   if (typeof input !== "string") {
     return input;
   }
 
-  let sanitized = input.replace(/\0/g, "");
-
-  sanitized = sanitized.replace(
-    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-    ""
-  );
-  sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "");
-  sanitized = sanitized.replace(/on\w+\s*=\s*[^\s>]*/gi, "");
-  sanitized = sanitized.replace(/javascript:/gi, "");
-  sanitized = sanitized.replace(/data:text\/html/gi, "");
-  sanitized = sanitized.replace(/vbscript:/gi, "");
-  sanitized = sanitized.replace(
-    /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
-    ""
-  );
-  sanitized = sanitized.replace(
-    /<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi,
-    ""
-  );
-  sanitized = sanitized.replace(
-    /<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi,
-    ""
-  );
-
-  return sanitized;
+  const withoutNulls = input.replace(/\0/g, "");
+  return DOMPurify.sanitize(withoutNulls, { USE_PROFILES: { html: true } });
 };
 
 const sanitizeObject = (obj: unknown): unknown => {

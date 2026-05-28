@@ -4,6 +4,8 @@ import { config } from "../config";
 import { AppError } from "../utils/AppError";
 import { logger } from "../utils/logger";
 
+const isProduction = (): boolean => config.nodeEnv === "production";
+
 const SIGNATURE_HEADER = "x-sepay-signature";
 const TIMESTAMP_HEADER = "x-sepay-timestamp";
 const SIGNATURE_PREFIX = "sha256=";
@@ -72,8 +74,16 @@ export const verifySePayWebhookSignature = (
     } else if (config.sepay.webhookApiKey) {
       verifyApiKey(req);
     } else {
+      // Fail-closed in production: an unauthenticated webhook can credit any
+      // wallet with arbitrary amounts. Only the dev/test path is allowed
+      // through without a configured secret, and even then we log loudly.
+      if (isProduction()) {
+        throw AppError.unauthorized(
+          "SePay webhook authentication is not configured"
+        );
+      }
       logger.warn(
-        "SePay webhook received without authentication configured (SEPAY_HMAC_SHA256 / SEPAY_WEBHOOK_API_KEY are empty)"
+        "SePay webhook received without authentication configured (SEPAY_HMAC_SHA256 / SEPAY_WEBHOOK_API_KEY are empty) — allowing because NODE_ENV is not production"
       );
     }
     next();

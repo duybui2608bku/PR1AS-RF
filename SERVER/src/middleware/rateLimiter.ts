@@ -83,6 +83,19 @@ export const bookingCreateLimiter = rateLimit({
   handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
+// Chat send endpoints (1:1 and group). Per-user ceiling that comfortably
+// covers a fast human conversation but blocks scripted flooding. 60/minute =
+// average 1 message/second, more than enough for real chat bursts.
+export const chatSendLimiter = rateLimit({
+  windowMs: TIME_IN_MS.MINUTE,
+  max: 60,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
+});
+
 export const emailActionLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
   max: 3,
