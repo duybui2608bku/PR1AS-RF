@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { workerService } from "@/services/worker.service"
-import type { WorkerFavorite } from "@/types"
+import type { WorkerBlackoutItem, WorkerFavorite } from "@/types"
 
 export function useWorkerDetail(id?: string) {
   return useQuery({
@@ -56,6 +56,43 @@ export function useFavoriteWorkers() {
     queryFn: workerService.getFavoriteWorkers,
     enabled: isAuthenticated,
     staleTime: 60_000,
+  })
+}
+
+export function useMyBlackouts(params?: {
+  start_date?: string
+  end_date?: string
+}) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  return useQuery({
+    queryKey: ["worker", "me", "blackouts", params ?? {}],
+    queryFn: () => workerService.listMyBlackouts(params),
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  })
+}
+
+export function useCreateBlackout() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      start_time: string
+      end_time: string
+      reason?: string
+    }) => workerService.createMyBlackout(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["worker", "me", "blackouts"] })
+    },
+  })
+}
+
+export function useDeleteBlackout() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, string, { previous?: WorkerBlackoutItem[] }>({
+    mutationFn: (id: string) => workerService.deleteMyBlackout(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["worker", "me", "blackouts"] })
+    },
   })
 }
 

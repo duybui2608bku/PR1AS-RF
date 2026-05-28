@@ -1,6 +1,7 @@
 import mongoose, { Types, PopulateOptions, ClientSession } from "mongoose";
 import { Booking } from "../../models/booking/booking.model";
 import { User } from "../../models/auth/user.model";
+import { WorkerBlackout } from "../../models/worker/worker-blackout.model";
 import {
   AdminBookingAnalyticsQuery,
   AdminBookingAnalyticsRaw,
@@ -514,9 +515,20 @@ export class BookingRepository {
       filter._id = { $ne: new Types.ObjectId(excludeBookingId) };
     }
 
-    const query = Booking.exists(filter);
-    if (session) query.session(session);
-    return query.then(Boolean);
+    const bookingQuery = Booking.exists(filter);
+    if (session) bookingQuery.session(session);
+    const hasBookingConflict = await bookingQuery.then(Boolean);
+    if (hasBookingConflict) return true;
+
+    // Half-open overlap on the worker's declared off-days. start < end ∧
+    // end > start covers every overlap variant in one shot.
+    const blackoutQuery = WorkerBlackout.exists({
+      worker_id: new Types.ObjectId(workerId),
+      start_time: { $lt: endTime },
+      end_time: { $gt: startTime },
+    });
+    if (session) blackoutQuery.session(session);
+    return blackoutQuery.then(Boolean);
   }
 
   async findConflictsForWorkerInWindow(

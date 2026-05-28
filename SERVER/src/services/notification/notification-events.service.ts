@@ -676,6 +676,52 @@ export class NotificationEventService {
     });
   }
 
+  async accountBanned(input: {
+    userId: string;
+    adminId: string;
+    reason?: string;
+  }): Promise<void> {
+    const reasonLine = input.reason
+      ? `Lý do: ${truncate(input.reason, 280)}`
+      : "Lý do: Vi phạm chính sách của hệ thống.";
+    await notificationService.notify({
+      recipient_ids: [input.userId],
+      actor_id: input.adminId,
+      type: NotificationType.ACCOUNT_BANNED,
+      category: NotificationCategory.SECURITY,
+      title: "Tài khoản của bạn đã bị khóa",
+      body: [
+        "Bạn không thể tiếp tục sử dụng tài khoản này.",
+        reasonLine,
+        "Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ bộ phận hỗ trợ.",
+      ].join("\n"),
+      data: { reason: input.reason ?? null },
+      link: "/",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.URGENT,
+      dedupe_key: `account-banned:${input.userId}:${Date.now()}`,
+    });
+  }
+
+  async accountUnbanned(input: {
+    userId: string;
+    adminId: string;
+  }): Promise<void> {
+    await notificationService.notify({
+      recipient_ids: [input.userId],
+      actor_id: input.adminId,
+      type: NotificationType.ACCOUNT_UNBANNED,
+      category: NotificationCategory.SECURITY,
+      title: "Tài khoản của bạn đã được mở khóa",
+      body: "Bạn có thể đăng nhập và sử dụng hệ thống bình thường trở lại.",
+      data: {},
+      link: "/",
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `account-unbanned:${input.userId}:${Date.now()}`,
+    });
+  }
+
   async reviewUpdated(review: IReviewDocument, actorId: string): Promise<void> {
     const clientId = toId(review.client_id);
     const workerId = toId(review.worker_id);

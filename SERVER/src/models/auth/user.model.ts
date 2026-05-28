@@ -137,6 +137,16 @@ const userSchema = new Schema<IUserDocument>(
       select: false,
       default: null,
     },
+    failed_login_attempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    locked_until: {
+      type: Date,
+      default: null,
+      select: false,
+    },
     password_reset_token: {
       type: String,
       select: false,

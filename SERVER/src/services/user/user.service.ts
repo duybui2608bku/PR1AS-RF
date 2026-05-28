@@ -19,6 +19,7 @@ import { SOCKET_EVENTS } from "../../constants/socket";
 import { getUserSocketIds } from "../../config/socket.handlers";
 import { invalidateUserStatusCache } from "../../utils/userStatusCache";
 import { normalizeAvatarUrl } from "../../utils/avatar-url";
+import { notificationEventService } from "../notification";
 
 interface BecomeWorkerAuditContext {
   ip?: string;
@@ -26,7 +27,11 @@ interface BecomeWorkerAuditContext {
 }
 
 export class UserService {
-  async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
+  async updateUserStatus(
+    userId: string,
+    status: UserStatus,
+    audit: { adminId?: string; reason?: string } = {}
+  ): Promise<void> {
     const existingUser = await userRepository.findById(userId);
     if (!existingUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
@@ -37,10 +42,22 @@ export class UserService {
     // new value within the same request, not after the 30s TTL.
     invalidateUserStatusCache(userId);
 
-    if (
+    const becameBanned =
       status === UserStatus.BANNED &&
-      existingUser.status !== UserStatus.BANNED
-    ) {
+      existingUser.status !== UserStatus.BANNED;
+    const wasUnbanned =
+      existingUser.status === UserStatus.BANNED &&
+      status === UserStatus.ACTIVE;
+
+    if (becameBanned) {
+      logger.info("AUDIT user banned", {
+        event: "USER_BANNED",
+        userId,
+        adminId: audit.adminId,
+        reason: audit.reason,
+        previousStatus: existingUser.status,
+      });
+
       // Revoke the refresh token so the client cannot mint a new access
       // token after their current one expires.
       await userRepository.clearRefreshToken(userId).catch((error) => {
@@ -63,6 +80,24 @@ export class UserService {
         );
       }
 
+      // In-app notification — durable record the user can see when they next
+      // sign in (e.g. via a different device or after unban). Email is best-
+      // effort and may be filtered to spam.
+      if (audit.adminId) {
+        void notificationEventService
+          .accountBanned({
+            userId,
+            adminId: audit.adminId,
+            reason: audit.reason,
+          })
+          .catch((error) => {
+            logger.error("Failed to create account-banned notification", {
+              error,
+              userId,
+            });
+          });
+      }
+
       await this.sendAccountBannedEmail(user).catch((error) => {
         logger.error("Failed to send account banned email", {
           error,
@@ -70,6 +105,24 @@ export class UserService {
           email: user.email,
         });
       });
+    }
+
+    if (wasUnbanned) {
+      logger.info("AUDIT user unbanned", {
+        event: "USER_UNBANNED",
+        userId,
+        adminId: audit.adminId,
+      });
+      if (audit.adminId) {
+        void notificationEventService
+          .accountUnbanned({ userId, adminId: audit.adminId })
+          .catch((error) => {
+            logger.error("Failed to create account-unbanned notification", {
+              error,
+              userId,
+            });
+          });
+      }
     }
   }
 

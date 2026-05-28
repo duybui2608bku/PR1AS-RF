@@ -4,6 +4,7 @@ import { AUTH_MESSAGES, WORKER_MESSAGES } from "../../constants/messages";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
 import type { WorkerSuggestionCandidate } from "../../repositories/worker/worker-service.repository";
 import { workerFavoriteRepository } from "../../repositories/worker/worker-favorite.repository";
+import { workerBlackoutRepository } from "../../repositories/worker/worker-blackout.repository";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { reviewRepository } from "../../repositories/review/review.repository";
 import { IReviewDocument } from "../../types/review/review.types";
@@ -15,9 +16,14 @@ import {
   WorkerDetailResponse,
   WorkerReviewItem,
   WorkerScheduleItem,
+  WorkerScheduleResponse,
   WorkerSuggestionItem,
   WorkersGroupedByServiceItem,
 } from "../../types/worker/worker.types";
+import {
+  CreateWorkerBlackoutInput,
+  WorkerBlackoutItem,
+} from "../../types/worker/worker-blackout.types";
 import type {
   WorkerFavoriteItem,
   WorkerFavoriteMutationResult,
@@ -570,7 +576,7 @@ export class WorkerService {
     workerId: string,
     startDateRaw?: string,
     endDateRaw?: string
-  ): Promise<WorkerScheduleItem[]> {
+  ): Promise<WorkerScheduleResponse> {
     const user = await userRepository.findById(workerId);
 
     if (!user) throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
@@ -586,18 +592,90 @@ export class WorkerService {
       throw AppError.badRequest("Invalid date format");
     }
 
-    const schedules = await bookingRepository.findScheduleByWorkerId(
-      workerId,
-      startDate,
-      endDate
-    );
+    const [schedules, blackouts] = await Promise.all([
+      bookingRepository.findScheduleByWorkerId(workerId, startDate, endDate),
+      workerBlackoutRepository.findByWorkerInWindow(
+        workerId,
+        startDate,
+        endDate
+      ),
+    ]);
 
-    return schedules.map((item) => ({
+    const bookings: WorkerScheduleItem[] = schedules.map((item) => ({
       booking_id: item._id.toString(),
       start_time: item.schedule.start_time,
       end_time: item.schedule.end_time,
       status: item.status,
     }));
+
+    return {
+      bookings,
+      blackouts: blackouts.map((item) => ({
+        blackout_id: item._id.toString(),
+        start_time: item.start_time,
+        end_time: item.end_time,
+        reason: item.reason ?? null,
+      })),
+    };
+  }
+
+  async createBlackout(
+    workerId: string,
+    input: CreateWorkerBlackoutInput
+  ): Promise<WorkerBlackoutItem> {
+    if (input.end_time.getTime() <= input.start_time.getTime()) {
+      throw AppError.badRequest("end_time must be after start_time");
+    }
+
+    // Reject blackouts that would orphan already-confirmed work. Worker must
+    // cancel/reschedule those bookings first — silently swallowing the
+    // conflict would let them strand a client.
+    const overlaps = await bookingRepository.findConflictsForWorkerInWindow(
+      workerId,
+      input.start_time,
+      input.end_time
+    );
+    if (overlaps.length > 0) {
+      throw AppError.badRequest(
+        "There are existing bookings in this period. Cancel or reschedule them before marking the time off."
+      );
+    }
+
+    const created = await workerBlackoutRepository.create(workerId, input);
+    return {
+      id: created._id.toString(),
+      start_time: created.start_time,
+      end_time: created.end_time,
+      reason: created.reason ?? null,
+    };
+  }
+
+  async listMyBlackouts(
+    workerId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<WorkerBlackoutItem[]> {
+    const items = await workerBlackoutRepository.findByWorkerInWindow(
+      workerId,
+      startDate,
+      endDate
+    );
+    return items.map((item) => ({
+      id: item._id.toString(),
+      start_time: item.start_time,
+      end_time: item.end_time,
+      reason: item.reason ?? null,
+    }));
+  }
+
+  async deleteBlackout(workerId: string, blackoutId: string): Promise<void> {
+    const removed = await workerBlackoutRepository.deleteByIdForWorker(
+      workerId,
+      blackoutId
+    );
+    if (!removed) {
+      throw AppError.notFound("Blackout not found");
+    }
   }
 }
 

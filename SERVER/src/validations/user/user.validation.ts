@@ -15,6 +15,7 @@ export const updateUserStatusSchema = z.object({
       message: USER_MESSAGES.INVALID_STATUS,
     }),
   }),
+  reason: z.string().trim().max(500).optional(),
 });
 
 export const updateLastActiveRoleSchema = z.object({

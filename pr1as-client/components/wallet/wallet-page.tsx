@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import {
+  AlertTriangle,
   ArrowRight,
   Loader2,
   Plus,
@@ -167,6 +168,22 @@ export function WalletPage() {
               Nạp tiền
             </Link>
           </Button>
+        </div>
+      </div>
+
+      <div
+        role="note"
+        className="mb-4 flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+      >
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <div className="space-y-1">
+          <p className="font-semibold">
+            Chỉ nạp đủ tiền cho gói cước bạn dự định mua
+          </p>
+          <p className="text-xs">
+            Hệ thống <strong>chưa hỗ trợ rút tiền</strong>. Số dư chỉ dùng để
+            thanh toán gói cước và dịch vụ trong nền tảng.
+          </p>
         </div>
       </div>
 

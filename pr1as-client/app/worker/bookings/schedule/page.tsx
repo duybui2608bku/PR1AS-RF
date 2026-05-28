@@ -33,6 +33,13 @@ import { AuthGuard } from "@/components/auth/auth-guard"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import { WorkerBlackoutManager } from "@/components/worker/worker-blackout-manager"
 import { useWorkerBookingSchedule } from "@/lib/hooks/use-bookings"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
@@ -208,26 +215,43 @@ export default function WorkerBookingSchedulePage() {
   return (
     <SiteLayout>
       <AuthGuard>
-        <div className="flex min-h-[calc(100svh-3.5rem)] flex-col bg-muted/20">
+        <Tabs
+          defaultValue="bookings"
+          className="flex min-h-[calc(100svh-3.5rem)] flex-col bg-muted/20"
+        >
           <div className="border-b bg-background">
-            <div className="container mx-auto flex flex-col gap-4 px-4 py-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
-                  <CalendarDays className="size-7" />
-                  Lịch booking worker
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {format(month, "MMMM yyyy", { locale: vi })} ·{" "}
-                  {range.start_date} đến {range.end_date}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
+            <div className="container mx-auto flex flex-col gap-4 px-4 py-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
+                    <CalendarDays className="size-7" />
+                    Lịch làm việc
+                  </h1>
+                </div>
+                <Button variant="outline" size="sm" asChild className="self-start lg:self-auto">
                   <Link href="/worker/bookings">
                     <List className="size-4" />
-                    Danh sách
+                    Danh sách booking
                   </Link>
                 </Button>
+              </div>
+              <TabsList>
+                <TabsTrigger value="bookings">Lịch booking</TabsTrigger>
+                <TabsTrigger value="blackouts">Ngày nghỉ</TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
+
+          <TabsContent
+            value="bookings"
+            className="flex flex-1 flex-col focus-visible:outline-none"
+          >
+            <div className="container mx-auto flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <p className="text-sm text-muted-foreground">
+                {format(month, "MMMM yyyy", { locale: vi })} ·{" "}
+                {range.start_date} đến {range.end_date}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -266,9 +290,8 @@ export default function WorkerBookingSchedulePage() {
                 </Button>
               </div>
             </div>
-          </div>
 
-          <div className="container mx-auto grid gap-4 px-4 py-4 md:grid-cols-3">
+            <div className="container mx-auto grid gap-4 px-4 pb-4 md:grid-cols-3">
             <div className="rounded-md border bg-background px-4 py-3">
               <div className="text-sm text-muted-foreground">
                 Booking trong tháng
@@ -460,8 +483,18 @@ export default function WorkerBookingSchedulePage() {
                 </div>
               </>
             )}
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent
+            value="blackouts"
+            className="flex flex-1 flex-col focus-visible:outline-none"
+          >
+            <div className="container mx-auto px-4 py-4 pb-6">
+              <WorkerBlackoutManager />
+            </div>
+          </TabsContent>
+        </Tabs>
       </AuthGuard>
     </SiteLayout>
   )

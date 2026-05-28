@@ -23,6 +23,18 @@ export interface WorkerScheduleItem {
   status: string;
 }
 
+export interface WorkerScheduleBlackoutItem {
+  blackout_id: string;
+  start_time: Date;
+  end_time: Date;
+  reason: string | null;
+}
+
+export interface WorkerScheduleResponse {
+  bookings: WorkerScheduleItem[];
+  blackouts: WorkerScheduleBlackoutItem[];
+}
+
 export interface WorkerDetailResponse {
   user: {
     id: string;

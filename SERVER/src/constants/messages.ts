@@ -47,6 +47,8 @@ export const AUTH_MESSAGES = {
   RATE_LIMIT_EXCEEDED: "Too many requests, please try again later",
   RATE_LIMIT_AUTH_EXCEEDED:
     "Too many failed login attempts. Please try again after 15 minutes",
+  ACCOUNT_LOCKED:
+    "Account temporarily locked due to repeated failed login attempts. Please try again later or reset your password.",
   LOGOUT_SUCCESS: "Logout successful",
   REGISTER_SUCCESS: "Registration successful",
   REGISTER_VERIFY_REQUIRED:

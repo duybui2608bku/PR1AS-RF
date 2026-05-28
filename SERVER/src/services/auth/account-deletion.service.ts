@@ -9,6 +9,7 @@ import { WorkerFavorite } from "../../models/worker/worker-favorite.model";
 import { PushSubscription } from "../../models/notification/push-subscription.model";
 import { NotificationPreference } from "../../models/notification/notification-preference.model";
 import { WorkerService } from "../../models/worker/worker-service";
+import { WorkerBlackout } from "../../models/worker/worker-blackout.model";
 import { comparePassword } from "../../utils/bcrypt";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
@@ -216,6 +217,7 @@ export class AccountDeletionService {
         { worker_id: userObjectId },
         { is_active: false }
       ),
+      WorkerBlackout.deleteMany({ worker_id: userObjectId }),
     ]);
 
     results.forEach((r, idx) => {

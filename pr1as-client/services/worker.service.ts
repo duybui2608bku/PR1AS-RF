@@ -3,12 +3,13 @@ import { cache } from "react"
 
 import { api } from "@/lib/axios"
 import type {
+  WorkerBlackoutItem,
   WorkerDetail,
   WorkerFavorite,
   WorkerFavoriteMutationResult,
   WorkerReviewItem,
   WorkerReviewStats,
-  WorkerScheduleItem,
+  WorkerScheduleResponse,
   WorkerSuggestion,
 } from "@/types"
 
@@ -181,12 +182,42 @@ const getWorkerById = async (id: string): Promise<WorkerDetail> => {
 const getWorkerSchedule = async (
   id: string,
   params: { start_date: string; end_date: string }
-): Promise<WorkerScheduleItem[]> => {
-  const response = await api.get<ApiResponse<WorkerScheduleItem[]>>(
+): Promise<WorkerScheduleResponse> => {
+  const response = await api.get<ApiResponse<WorkerScheduleResponse>>(
     `/workers/${id}/schedule`,
     { params }
   )
+  return response.data.data ?? { bookings: [], blackouts: [] }
+}
+
+const listMyBlackouts = async (params?: {
+  start_date?: string
+  end_date?: string
+}): Promise<WorkerBlackoutItem[]> => {
+  const response = await api.get<ApiResponse<WorkerBlackoutItem[]>>(
+    "/workers/me/blackouts",
+    { params }
+  )
   return response.data.data ?? []
+}
+
+const createMyBlackout = async (input: {
+  start_time: string
+  end_time: string
+  reason?: string
+}): Promise<WorkerBlackoutItem> => {
+  const response = await api.post<ApiResponse<WorkerBlackoutItem>>(
+    "/workers/me/blackouts",
+    input
+  )
+  if (!response.data.data) {
+    throw new Error(response.data.message ?? "Không thể tạo lịch nghỉ")
+  }
+  return response.data.data
+}
+
+const deleteMyBlackout = async (id: string): Promise<void> => {
+  await api.delete(`/workers/me/blackouts/${id}`)
 }
 
 const getWorkerSuggestions = async (
@@ -240,5 +271,8 @@ export const workerService = {
   getFavoriteWorkers,
   addFavoriteWorker,
   removeFavoriteWorker,
+  listMyBlackouts,
+  createMyBlackout,
+  deleteMyBlackout,
   getFallbackName,
 }

@@ -171,8 +171,16 @@ export function WalletDepositPage() {
                 ))}
               </div>
 
-              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
-                <strong>Lưu ý:</strong> Số tiền nạp vào ví không hoàn lại và chỉ dùng để thanh toán dịch vụ, gói nâng cấp trong hệ thống. Hiện chưa hỗ trợ rút tiền.
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+                <p className="mb-1 font-semibold">
+                  ⚠️ Chỉ nạp đủ tiền cho gói cước bạn dự định mua
+                </p>
+                <p>
+                  Hệ thống hiện <strong>chưa hỗ trợ rút tiền</strong>. Số dư
+                  trong ví chỉ dùng để thanh toán gói cước và dịch vụ trong nền
+                  tảng — tiền nạp dư sẽ bị giữ lại cho đến khi có flow rút
+                  tiền.
+                </p>
               </div>
 
               <Button

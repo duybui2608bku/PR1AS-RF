@@ -358,6 +358,25 @@ export type WorkerScheduleItem = {
   status: string
 }
 
+export type WorkerScheduleBlackoutItem = {
+  blackout_id: string
+  start_time: string
+  end_time: string
+  reason: string | null
+}
+
+export type WorkerScheduleResponse = {
+  bookings: WorkerScheduleItem[]
+  blackouts: WorkerScheduleBlackoutItem[]
+}
+
+export type WorkerBlackoutItem = {
+  id: string
+  start_time: string
+  end_time: string
+  reason: string | null
+}
+
 // ─── Group Chat ───────────────────────────────────────────────────────────────
 export type MessageType = "text" | "image" | "file"
 

@@ -58,10 +58,13 @@ export function WorkerCalendar({ workerId }: Props) {
 
   const { data: schedule, isLoading } = useWorkerSchedule(workerId, range)
 
-  const bookedDays = useMemo(
-    () => computeBookedDays(schedule ?? []),
-    [schedule],
-  )
+  const bookedDays = useMemo(() => {
+    const items: Array<{ start_time: string; end_time: string }> = [
+      ...(schedule?.bookings ?? []),
+      ...(schedule?.blackouts ?? []),
+    ]
+    return computeBookedDays(items)
+  }, [schedule])
 
   return (
     <div className="rounded-2xl border bg-card shadow-sm">

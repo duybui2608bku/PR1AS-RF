@@ -46,7 +46,7 @@ export class UserRepository {
 
   async findByEmail(email: string): Promise<IUserDocument | null> {
     return User.findOne({ email: email.toLowerCase().trim() }).select(
-      "+password_hash"
+      "+password_hash +failed_login_attempts +locked_until"
     );
   }
 
@@ -432,6 +432,58 @@ export class UserRepository {
     await User.findByIdAndUpdate(id, { refresh_token_hash: null });
   }
 
+  /**
+   * Atomically bump the failed-attempt counter and return the new value plus
+   * the user's current lock state. Done in a single update so two concurrent
+   * failed logins can't race past the threshold.
+   */
+  async incrementFailedLoginAttempts(
+    id: string,
+    lockIfAt: { threshold: number; lockUntil: Date }
+  ): Promise<{ attempts: number; lockedUntil: Date | null } | null> {
+    const updated = await User.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      [
+        {
+          $set: {
+            failed_login_attempts: {
+              $add: [{ $ifNull: ["$failed_login_attempts", 0] }, 1],
+            },
+          },
+        },
+        {
+          $set: {
+            locked_until: {
+              $cond: [
+                {
+                  $gte: [
+                    "$failed_login_attempts",
+                    lockIfAt.threshold,
+                  ],
+                },
+                lockIfAt.lockUntil,
+                "$locked_until",
+              ],
+            },
+          },
+        },
+      ],
+      { new: true, projection: { failed_login_attempts: 1, locked_until: 1 } }
+    );
+    if (!updated) return null;
+    return {
+      attempts: updated.failed_login_attempts ?? 0,
+      lockedUntil: updated.locked_until ?? null,
+    };
+  }
+
+  async resetFailedLoginAttempts(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      failed_login_attempts: 0,
+      locked_until: null,
+    });
+  }
+
   async setPasswordResetToken(
     id: string,
     tokenHash: string,
@@ -464,6 +516,8 @@ export class UserRepository {
       password_reset_token: null,
       password_reset_expires: null,
       refresh_token_hash: null,
+      failed_login_attempts: 0,
+      locked_until: null,
     });
   }
 

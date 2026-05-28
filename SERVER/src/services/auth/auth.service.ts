@@ -23,7 +23,12 @@ import {
 } from "../../utils/template-mail";
 import { config } from "../../config";
 import { logger } from "../../utils/logger";
-import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
+import {
+  APP_CONSTANTS,
+  EMAIL_SUBJECTS,
+  LOGIN_LOCKOUT,
+} from "../../constants/app";
+import { TIME_IN_MS } from "../../constants/time";
 import {
   createPasswordResetExpiry,
   createEmailVerificationExpiry,
@@ -101,6 +106,22 @@ export class AuthService {
   async login(input: LoginInput): Promise<AuthResponse> {
     const user = await userRepository.findByEmail(input.email);
 
+    // Account-level lockout BEFORE bcrypt — once the user is locked, even
+    // valid credentials are rejected until the window passes. This is the
+    // defense against IP-rotated brute force where per-IP rate limits don't
+    // bite (one attempt per stolen IP can still sweep a password list).
+    if (
+      user &&
+      user.locked_until &&
+      user.locked_until.getTime() > Date.now()
+    ) {
+      throw new AppError(
+        AUTH_MESSAGES.ACCOUNT_LOCKED,
+        HTTP_STATUS.TOO_MANY_REQUESTS,
+        ErrorCode.ACCOUNT_LOCKED
+      );
+    }
+
     // Always run bcrypt — even when the user is missing or has no password —
     // so response time doesn't leak account existence. The dummy hash is a
     // random secret hashed once at startup; comparePassword against it will
@@ -113,6 +134,33 @@ export class AuthService {
     );
 
     if (!user || !user.password_hash || !isPasswordValid) {
+      if (user) {
+        const lockUntil = new Date(
+          Date.now() + LOGIN_LOCKOUT.LOCK_DURATION_MINUTES * TIME_IN_MS.MINUTE
+        );
+        const result = await userRepository
+          .incrementFailedLoginAttempts(user._id.toString(), {
+            threshold: LOGIN_LOCKOUT.MAX_FAILED_ATTEMPTS,
+            lockUntil,
+          })
+          .catch((error) => {
+            logger.warn("Failed to increment login attempts", {
+              error,
+              userId: user._id.toString(),
+            });
+            return null;
+          });
+        if (
+          result?.lockedUntil &&
+          result.lockedUntil.getTime() > Date.now()
+        ) {
+          throw new AppError(
+            AUTH_MESSAGES.ACCOUNT_LOCKED,
+            HTTP_STATUS.TOO_MANY_REQUESTS,
+            ErrorCode.ACCOUNT_LOCKED
+          );
+        }
+      }
       throw new AppError(
         AUTH_MESSAGES.INVALID_CREDENTIALS,
         HTTP_STATUS.UNAUTHORIZED,
@@ -150,6 +198,19 @@ export class AuthService {
         HTTP_STATUS.FORBIDDEN,
         ErrorCode.EMAIL_NOT_VERIFIED
       );
+    }
+
+    // Successful auth — clear the failed-attempt counter so a future bad
+    // session doesn't ride on top of an already-elevated counter.
+    if ((user.failed_login_attempts ?? 0) > 0 || user.locked_until) {
+      await userRepository
+        .resetFailedLoginAttempts(user._id.toString())
+        .catch((error) => {
+          logger.warn("Failed to reset login attempt counter", {
+            error,
+            userId: user._id.toString(),
+          });
+        });
     }
 
     const { token, refreshToken } = await generateAuthTokens(user);

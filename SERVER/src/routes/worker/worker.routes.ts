@@ -5,9 +5,11 @@ import { validateObjectId } from "../../middleware";
 import {
   authenticate,
   clientOnly,
+  workerOnly,
   AuthRequest,
   optionalAuthenticate,
 } from "../../middleware/auth";
+import { csrfProtection } from "../../middleware/csrf";
 
 const router = Router();
 
@@ -59,6 +61,36 @@ router.delete(
   validateObjectId("id"),
   asyncHandler<AuthRequest>(
     workerController.removeFavoriteWorker.bind(workerController)
+  )
+);
+
+router.get(
+  "/me/blackouts",
+  authenticate,
+  workerOnly,
+  asyncHandler<AuthRequest>(
+    workerController.listMyBlackouts.bind(workerController)
+  )
+);
+
+router.post(
+  "/me/blackouts",
+  authenticate,
+  workerOnly,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(
+    workerController.createMyBlackout.bind(workerController)
+  )
+);
+
+router.delete(
+  "/me/blackouts/:id",
+  authenticate,
+  workerOnly,
+  validateObjectId("id"),
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(
+    workerController.deleteMyBlackout.bind(workerController)
   )
 );
 

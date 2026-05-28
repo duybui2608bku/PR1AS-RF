@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { userService } from "../../services/user/user.service";
 import { postService } from "../../services/post/post.service";
 import { GetUsersQuery } from "../../types/user/user.dto";
@@ -47,11 +47,15 @@ export class UserController {
     R.success(res, response, USER_MESSAGES.USERS_FETCHED, req);
   }
 
-  async updateUserStatus(req: Request, res: Response): Promise<void> {
+  async updateUserStatus(req: AuthRequest, res: Response): Promise<void> {
     const { id } = req.params;
     const body = validateWithSchema(updateUserStatusSchema, req.body);
+    const adminId = extractUserIdFromRequest(req);
 
-    await userService.updateUserStatus(id, body.status);
+    await userService.updateUserStatus(id, body.status, {
+      adminId,
+      reason: body.reason,
+    });
 
     R.success(res, null, USER_MESSAGES.STATUS_UPDATED, req);
   }

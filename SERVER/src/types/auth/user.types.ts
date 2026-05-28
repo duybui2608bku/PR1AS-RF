@@ -77,6 +77,8 @@ export interface IUser {
   created_at: Date;
   last_login: Date | null;
   refresh_token_hash?: string | null;
+  failed_login_attempts?: number;
+  locked_until?: Date | null;
   password_reset_token?: string | null;
   password_reset_expires?: Date | null;
   email_verification_token?: string | null;

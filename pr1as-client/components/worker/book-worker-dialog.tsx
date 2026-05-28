@@ -177,10 +177,13 @@ export function BookWorkerDialog({
     fetchRange,
   )
 
-  const bookedDays = useMemo(
-    () => computeBookedDays(schedule ?? []),
-    [schedule],
-  )
+  const bookedDays = useMemo(() => {
+    const items: Array<{ start_time: string; end_time: string }> = [
+      ...(schedule?.bookings ?? []),
+      ...(schedule?.blackouts ?? []),
+    ]
+    return computeBookedDays(items)
+  }, [schedule])
 
   const maxDate = useMemo(() => {
     const d = startOfDay(new Date())

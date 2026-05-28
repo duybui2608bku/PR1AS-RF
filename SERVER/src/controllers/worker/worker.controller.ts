@@ -6,6 +6,10 @@ import { validateWithSchema } from "../../utils/validator";
 import { workerGroupedByServiceQuerySchema } from "../../validations/worker/worker-grouped-query.validation";
 import { locationSuggestionsQuerySchema } from "../../validations/worker/location-suggestion.validation";
 import { workerSuggestionQuerySchema } from "../../validations/worker/worker-suggestion.validation";
+import {
+  createWorkerBlackoutSchema,
+  listWorkerBlackoutQuerySchema,
+} from "../../validations/worker/worker-blackout.validation";
 import { locationService } from "../../services/location/location.service";
 import { AuthRequest } from "../../middleware/auth";
 
@@ -90,6 +94,39 @@ export class WorkerController {
       req.query.end_date ? String(req.query.end_date) : undefined
     );
     R.success(res, schedule, undefined, req);
+  }
+
+  async createMyBlackout(req: AuthRequest, res: Response): Promise<void> {
+    const workerId = extractUserIdFromRequest(req);
+    const body = validateWithSchema(createWorkerBlackoutSchema, req.body);
+    const result = await workerService.createBlackout(workerId, body);
+    R.success(res, result, undefined, req);
+  }
+
+  async listMyBlackouts(req: AuthRequest, res: Response): Promise<void> {
+    const workerId = extractUserIdFromRequest(req);
+    const query = validateWithSchema(
+      listWorkerBlackoutQuerySchema,
+      req.query
+    );
+    const now = new Date();
+    const startDate =
+      query.start_date ?? new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate =
+      query.end_date ?? new Date(now.getFullYear(), now.getMonth() + 2, 1);
+    const result = await workerService.listMyBlackouts(
+      workerId,
+      startDate,
+      endDate
+    );
+    R.success(res, result, undefined, req);
+  }
+
+  async deleteMyBlackout(req: AuthRequest, res: Response): Promise<void> {
+    const workerId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    await workerService.deleteBlackout(workerId, id);
+    R.success(res, null, undefined, req);
   }
 
   async getLocationSuggestions(req: Request, res: Response): Promise<void> {

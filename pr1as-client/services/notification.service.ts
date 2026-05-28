@@ -87,10 +87,6 @@ const NOTIFICATION_FALLBACKS: Record<string, { title: string; body: string }> = 
     title: "Tạm giữ số dư",
     body: "Một khoản tiền đã được tạm giữ cho booking của bạn.",
   },
-  "wallet.payout_created": {
-    title: "Thanh toán hoa hồng",
-    body: "Ví của bạn đã được cộng tiền.",
-  },
   "wallet.refund_created": {
     title: "Hoàn tiền",
     body: "Số tiền hoàn đã được cộng vào ví của bạn.",
