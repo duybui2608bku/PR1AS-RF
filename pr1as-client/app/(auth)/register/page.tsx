@@ -3,9 +3,10 @@
 import { FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, Eye, EyeOff, Loader2, MailCheck, X } from "lucide-react"
+import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react"
 import { toast } from "sonner"
 
+import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -16,12 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
   InputGroup,
@@ -30,9 +26,12 @@ import {
 } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { isPasswordStrong, passwordRules } from "@/lib/auth/password.utils"
+import { isPasswordStrong } from "@/lib/auth/password.utils"
 import { useRegister } from "@/lib/hooks/use-auth"
-import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import {
+  getErrorMessage,
+  localizeServerMessage,
+} from "@/lib/utils/error-handler"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -79,7 +78,9 @@ export default function RegisterPage() {
       })
 
       if (!response.success) {
-        toast.error(localizeServerMessage(response.message, "Đăng ký thất bại."))
+        toast.error(
+          localizeServerMessage(response.message, "Đăng ký thất bại.")
+        )
         return
       }
 
@@ -229,29 +230,7 @@ export default function RegisterPage() {
                 </InputGroup>
               </Field>
               <Field>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <FieldDescription className="mb-2 font-medium text-foreground">
-                    Yêu cầu mật khẩu
-                  </FieldDescription>
-                  <ul className="grid grid-cols-1 gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-                    {passwordRules.map((rule) => {
-                      const isMet = rule.test(password)
-                      return (
-                        <li
-                          key={rule.label}
-                          className="flex items-center gap-2"
-                        >
-                          {isMet ? (
-                            <Check className="size-4 text-primary" />
-                          ) : (
-                            <X className="size-4" />
-                          )}
-                          <span>{rule.label}</span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
+                <PasswordStrengthChecklist password={password} />
               </Field>
             </FieldGroup>
             <Button

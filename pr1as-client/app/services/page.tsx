@@ -34,7 +34,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   })
 
   return (
-    <SiteLayout>
+    <SiteLayout showFooterOnMobile>
       <HomeRoleGate>
         <HydrationBoundary state={dehydrate(queryClient)}>
           <HomeSearchExperience initialState={initialState} />

@@ -1,20 +1,31 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 
+import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
+import { isPasswordStrong } from "@/lib/auth/password.utils"
 import { useResetPassword } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import {
+  getErrorMessage,
+  localizeServerMessage,
+} from "@/lib/utils/error-handler"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -33,6 +44,10 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
+  const passwordMeetsAllRules = useMemo(
+    () => isPasswordStrong(password),
+    [password]
+  )
 
   useEffect(() => {
     if (tokenFromQuery) {
@@ -44,8 +59,8 @@ export default function ResetPasswordPage() {
     event.preventDefault()
     setErrorMessage(null)
 
-    if (password.length < 8) {
-      setErrorMessage("Mật khẩu cần tối thiểu 8 ký tự.")
+    if (!passwordMeetsAllRules) {
+      setErrorMessage("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
       return
     }
 
@@ -57,7 +72,10 @@ export default function ResetPasswordPage() {
     const token = tokenFromQuery || tokenInput
 
     try {
-      const response = await resetPasswordMutation.mutateAsync({ token, password })
+      const response = await resetPasswordMutation.mutateAsync({
+        token,
+        password,
+      })
       if (!response.success) {
         setErrorMessage(
           localizeServerMessage(response.message, "Đặt lại mật khẩu thất bại.")
@@ -71,7 +89,9 @@ export default function ResetPasswordPage() {
       setIsSuccess(true)
       window.setTimeout(() => router.push("/login"), 1800)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Không thể đặt lại mật khẩu. Vui lòng thử lại."))
+      setErrorMessage(
+        getErrorMessage(error, "Không thể đặt lại mật khẩu. Vui lòng thử lại.")
+      )
     }
   }
 
@@ -85,7 +105,9 @@ export default function ResetPasswordPage() {
         )}
         <CardTitle>Đặt lại mật khẩu</CardTitle>
         <CardDescription>
-          {isSuccess ? "Thành công! Đang chuyển về trang đăng nhập..." : "Nhập mã đặt lại và mật khẩu mới để hoàn tất."}
+          {isSuccess
+            ? "Thành công! Đang chuyển về trang đăng nhập..."
+            : "Nhập mã đặt lại và mật khẩu mới để hoàn tất."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -110,6 +132,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   minLength={8}
+                  maxLength={128}
                   required
                   className="pr-10"
                 />
@@ -117,9 +140,11 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
                   onClick={() => setShowPassword((previous) => !previous)}
-                  aria-label={showPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+                  aria-label={
+                    showPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"
+                  }
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </Button>
@@ -134,6 +159,7 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   minLength={8}
+                  maxLength={128}
                   required
                   className="pr-10"
                 />
@@ -141,17 +167,30 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
-                  onClick={() => setShowConfirmPassword((previous) => !previous)}
-                  aria-label={showConfirmPassword ? "Ẩn mật khẩu xác nhận" : "Hiện mật khẩu xác nhận"}
+                  className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2"
+                  onClick={() =>
+                    setShowConfirmPassword((previous) => !previous)
+                  }
+                  aria-label={
+                    showConfirmPassword
+                      ? "Ẩn mật khẩu xác nhận"
+                      : "Hiện mật khẩu xác nhận"
+                  }
                 >
                   {showConfirmPassword ? <EyeOff /> : <Eye />}
                 </Button>
               </div>
             </div>
+            <PasswordStrengthChecklist password={password} />
 
-            <Button type="submit" className="w-full" disabled={resetPasswordMutation.isPending}>
-              {resetPasswordMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={resetPasswordMutation.isPending}
+            >
+              {resetPasswordMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Đặt lại mật khẩu
             </Button>
           </form>
@@ -160,7 +199,9 @@ export default function ResetPasswordPage() {
         {!tokenFromQuery && !tokenInput && !isSuccess ? (
           <Alert>
             <AlertTitle>Lưu ý</AlertTitle>
-            <AlertDescription>Bạn có thể dán mã đặt lại được gửi qua email vào ô phía trên.</AlertDescription>
+            <AlertDescription>
+              Bạn có thể dán mã đặt lại được gửi qua email vào ô phía trên.
+            </AlertDescription>
           </Alert>
         ) : null}
 
@@ -172,7 +213,10 @@ export default function ResetPasswordPage() {
         ) : null}
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href="/login"
+            className="font-medium text-primary hover:underline"
+          >
             Quay lại đăng nhập
           </Link>
         </p>

@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
 import { footerNav } from "@/config/nav"
+import { cn } from "@/lib/utils"
 
 const socialLinks = [
   {
@@ -33,9 +34,9 @@ const socialLinks = [
   },
 ] as const
 
-export function SiteFooter() {
+export function SiteFooter({ className }: { className?: string }) {
   return (
-    <footer className="border-t">
+    <footer className={cn("border-t", className)}>
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">

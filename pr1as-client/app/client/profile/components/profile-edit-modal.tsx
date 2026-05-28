@@ -1,8 +1,10 @@
 "use client"
 
-import { FormEvent, useState } from "react"
+import { FormEvent, useMemo, useState } from "react"
 import { Eye, EyeOff, Loader2, Phone, User } from "lucide-react"
+import { toast } from "sonner"
 
+import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,6 +20,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
+import { isPasswordStrong } from "@/lib/auth/password.utils"
 
 type ProfileEditModalProps = {
   open: boolean
@@ -75,9 +78,19 @@ function ProfileEditModalContent({
   const [newPassword, setNewPassword] = useState("")
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+  const newPasswordMeetsAllRules = useMemo(
+    () => isPasswordStrong(newPassword),
+    [newPassword]
+  )
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (newPassword && !newPasswordMeetsAllRules) {
+      toast.error("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
+      return
+    }
+
     await onSubmit({
       full_name: fullName.trim() || null,
       phone: phone.trim() || null,
@@ -137,6 +150,8 @@ function ProfileEditModalContent({
                   value={oldPassword}
                   onChange={(event) => setOldPassword(event.target.value)}
                   placeholder="••••••••"
+                  maxLength={128}
+                  autoComplete="current-password"
                 />
                 <InputGroupAddon>
                   <Button
@@ -165,6 +180,8 @@ function ProfileEditModalContent({
                   onChange={(event) => setNewPassword(event.target.value)}
                   placeholder="••••••••"
                   minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
                 />
                 <InputGroupAddon>
                   <Button
@@ -183,6 +200,13 @@ function ProfileEditModalContent({
               </InputGroup>
             </Field>
           </div>
+
+          <Field>
+            <PasswordStrengthChecklist
+              password={newPassword}
+              title="Yêu cầu mật khẩu mới"
+            />
+          </Field>
         </FieldGroup>
 
         <DialogFooter>
