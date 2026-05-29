@@ -78,6 +78,9 @@ export function WorkerCalendar({ workerId }: Props) {
           booked:
             "border border-rose-300 text-rose-500 dark:border-rose-800 dark:text-rose-400 rounded-md opacity-100",
         }}
+        classNames={{
+          week: "mt-2 flex w-full gap-1",
+        }}
         className="mx-auto"
       />
       {isLoading ? (

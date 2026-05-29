@@ -7,6 +7,8 @@ import {
   Ban,
   Check,
   CheckCheck,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   Headset,
   Home,
@@ -20,6 +22,8 @@ import {
   Trash2,
   Users,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -2029,6 +2033,26 @@ function MessagePane({
     ])
   )
 
+  // Lightbox state
+  const imageMessages = React.useMemo(
+    () => messages.filter((m) => m.type === "image" && !m.is_deleted),
+    [messages]
+  )
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null)
+  const lightboxIndex = lightboxUrl
+    ? imageMessages.findIndex((m) => m.content === lightboxUrl)
+    : -1
+
+  const openLightbox = React.useCallback((url: string) => setLightboxUrl(url), [])
+  const closeLightbox = React.useCallback(() => setLightboxUrl(null), [])
+  const gotoPrev = React.useCallback(() => {
+    if (lightboxIndex > 0) setLightboxUrl(imageMessages[lightboxIndex - 1].content)
+  }, [lightboxIndex, imageMessages])
+  const gotoNext = React.useCallback(() => {
+    if (lightboxIndex < imageMessages.length - 1)
+      setLightboxUrl(imageMessages[lightboxIndex + 1].content)
+  }, [lightboxIndex, imageMessages])
+
   // Mobile: Messenger-style context menu on long press
   type MessageSelection = {
     message: ChatMessage | GroupChatMessage
@@ -2090,6 +2114,18 @@ function MessagePane({
       </div>
     )
   }
+
+  // Keyboard navigation for lightbox
+  React.useEffect(() => {
+    if (!lightboxUrl) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox()
+      if (e.key === "ArrowLeft") gotoPrev()
+      if (e.key === "ArrowRight") gotoNext()
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [lightboxUrl, closeLightbox, gotoPrev, gotoNext])
 
   return (
     <>
@@ -2201,7 +2237,7 @@ function MessagePane({
                   </p>
                 </div>
               ) : null}
-              <MessageContent message={message} mine={mine} />
+              <MessageContent message={message} mine={mine} onImageClick={openLightbox} />
               <div
                 className={cn(
                   "mt-1 flex items-center justify-end gap-2 text-[11px]",
@@ -2283,6 +2319,20 @@ function MessagePane({
           document.body
         )
       : null}
+    {/* Image lightbox */}
+    {lightboxUrl && typeof document !== "undefined"
+      ? createPortal(
+          <ImageLightbox
+            url={lightboxUrl}
+            index={lightboxIndex}
+            total={imageMessages.length}
+            onClose={closeLightbox}
+            onPrev={lightboxIndex > 0 ? gotoPrev : undefined}
+            onNext={lightboxIndex < imageMessages.length - 1 ? gotoNext : undefined}
+          />,
+          document.body
+        )
+      : null}
   </>
   )
 }
@@ -2290,9 +2340,11 @@ function MessagePane({
 function MessageContent({
   message,
   mine,
+  onImageClick,
 }: {
   message: ChatMessage | GroupChatMessage
   mine: boolean
+  onImageClick?: (url: string) => void
 }) {
   if (message.is_deleted) {
     return (
@@ -2309,20 +2361,20 @@ function MessageContent({
 
   if (message.type === "image") {
     return (
-      <a
-        href={message.content}
-        target="_blank"
-        rel="noreferrer"
-        className="block overflow-hidden rounded-md"
+      <button
+        type="button"
+        className="block overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => onImageClick?.(message.content)}
+        aria-label="Xem ảnh"
       >
         <Image
           src={message.content}
           width={640}
           height={480}
           alt="Ảnh trong tin nhắn"
-          className="max-h-80 max-w-full rounded-md object-contain"
+          className="max-h-80 max-w-full rounded-md object-contain transition-opacity hover:opacity-90"
         />
-      </a>
+      </button>
     )
   }
 
@@ -2466,6 +2518,139 @@ function MessageContextOverlay({
             )}
           </button>
         ) : null}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Image lightbox popup
+// ---------------------------------------------------------------------------
+function ImageLightbox({
+  url,
+  index,
+  total,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  url: string
+  index: number
+  total: number
+  onClose: () => void
+  onPrev?: () => void
+  onNext?: () => void
+}) {
+  const [scale, setScale] = React.useState(1)
+
+  // Reset zoom when image changes
+  React.useEffect(() => {
+    setScale(1)
+  }, [url])
+
+  const zoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setScale((s) => Math.min(s + 0.5, 4))
+  }
+  const zoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setScale((s) => Math.max(s - 0.5, 0.5))
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 animate-in fade-in-0 duration-200"
+      onClick={onClose}
+    >
+      {/* Header */}
+      <div
+        className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 text-white/80"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="text-sm">
+          {total > 1 ? `${index + 1} / ${total}` : "Xem ảnh"}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={zoomOut}
+            disabled={scale <= 0.5}
+            className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 disabled:opacity-30"
+            aria-label="Thu nhỏ"
+          >
+            <ZoomOut className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={zoomIn}
+            disabled={scale >= 4}
+            className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 disabled:opacity-30"
+            aria-label="Phóng to"
+          >
+            <ZoomIn className="size-5" />
+          </button>
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm text-white/70 hover:bg-white/10"
+            aria-label="Mở ảnh gốc"
+          >
+            Mở gốc
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10"
+            aria-label="Đóng"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Prev / Next */}
+      {onPrev ? (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPrev() }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 flex size-10 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
+          aria-label="Ảnh trước"
+        >
+          <ChevronLeft className="size-6" />
+        </button>
+      ) : null}
+      {onNext ? (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onNext() }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 flex size-10 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
+          aria-label="Ảnh tiếp theo"
+        >
+          <ChevronRight className="size-6" />
+        </button>
+      ) : null}
+
+      {/* Image */}
+      <div
+        className="flex max-h-[85dvh] max-w-[90vw] items-center justify-center overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+        style={{ cursor: scale > 1 ? "grab" : "default" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt="Xem ảnh"
+          className="rounded-md object-contain transition-transform duration-200"
+          style={{
+            maxHeight: "85dvh",
+            maxWidth: "90vw",
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+          }}
+          draggable={false}
+        />
       </div>
     </div>
   )

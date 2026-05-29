@@ -1,14 +1,16 @@
 "use client"
 
-import { CalendarCheck2, FileText, Home, LogIn, MessageCircle, MoreHorizontal } from "lucide-react"
+import { CalendarCheck2, FileText, Home, LogIn, MessageCircle, User } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import * as React from "react"
 
 import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
-import { getRoleDefaultRoute, getRoleRoute } from "@/lib/navigation/role-routes"
+import { getRoleRoute } from "@/lib/navigation/role-routes"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useUIStore } from "@/lib/store/ui-store"
+import { getPlanRingClass } from "@/lib/utils/plan"
 import { cn } from "@/lib/utils"
 
 export function MobileBottomNav() {
@@ -101,8 +103,7 @@ export function MobileBottomNav() {
         },
         {
           type: "button" as const,
-          label: "Thêm",
-          icon: MoreHorizontal,
+          label: "Tôi",
           isActive: moreOpen,
         },
       ]
@@ -130,8 +131,7 @@ export function MobileBottomNav() {
         },
         {
           type: "button" as const,
-          label: "Thêm",
-          icon: MoreHorizontal,
+          label: "Tôi",
           isActive: moreOpen,
         },
       ]
@@ -158,7 +158,29 @@ export function MobileBottomNav() {
                   className={itemClass}
                   onClick={() => setMoreOpen(true)}
                 >
-                  <tab.icon className={iconClass} />
+                  {user?.avatar ? (
+                    <Image
+                      src={user.avatar}
+                      alt={user.full_name ?? user.email ?? "avatar"}
+                      width={24}
+                      height={24}
+                      className={cn(
+                        "size-6 rounded-full object-cover ring-2 ring-offset-1 ring-offset-background",
+                        moreOpen ? "ring-foreground" : "ring-border",
+                        getPlanRingClass(user?.meta_data?.pricing_plan_code),
+                      )}
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        "flex size-6 items-center justify-center rounded-full bg-muted ring-2 ring-offset-1 ring-offset-background",
+                        moreOpen ? "ring-foreground" : "ring-border",
+                        getPlanRingClass(user?.meta_data?.pricing_plan_code),
+                      )}
+                    >
+                      <User className="size-3.5" />
+                    </div>
+                  )}
                   <span className="text-[10px] leading-none">{tab.label}</span>
                 </button>
               )

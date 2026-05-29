@@ -1,21 +1,27 @@
 import { Request, Response, NextFunction } from "express";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { AppError } from "../utils/AppError";
 
-// Parser-based sanitisation. DOMPurify decodes entities, normalises mutation-
-// XSS payloads, strips dangerous tags/attrs (script, iframe, object, embed,
-// on*, javascript:, data:text/html, css expressions, svg/math vectors) and
-// closes broken markup — things the previous regex chain missed and which
-// would otherwise round-trip into rendered HTML on any client that trusts
-// backend output. Default config strips no benign tags; pass field-specific
-// configs at the call site for richer text fields.
+// Parser-based sanitisation. sanitize-html strips dangerous tags/attrs
+// (script, iframe, object, embed, on*, javascript:, data:text/html, etc.)
+// while allowing safe HTML — equivalent to DOMPurify USE_PROFILES: html.
+// Pure CJS package: no jsdom/ESM dependency issues with ts-node-dev.
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    "*": ["class", "id"],
+  },
+  disallowedTagsMode: "discard",
+};
+
 const sanitizeString = (input: string): string => {
   if (typeof input !== "string") {
     return input;
   }
 
   const withoutNulls = input.replace(/\0/g, "");
-  return DOMPurify.sanitize(withoutNulls, { USE_PROFILES: { html: true } });
+  return sanitizeHtml(withoutNulls, SANITIZE_OPTIONS);
 };
 
 const sanitizeObject = (obj: unknown): unknown => {

@@ -6,21 +6,22 @@ import {
   AlertCircle,
   CalendarCheck2,
   CheckCircle2,
+  FilterX,
   Loader2,
   MessageSquare,
   PlayCircle,
-  RefreshCw,
   Search,
   XCircle,
 } from "lucide-react"
 import { toast } from "sonner"
+import type { DateRange } from "react-day-picker"
 
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -31,6 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Table } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   useCancelBooking,
   useMyBookings,
@@ -222,13 +229,22 @@ function getActionValue(action: WorkerBookingAction) {
 export default function WorkerBookingsPage() {
   const router = useRouter()
   const [page, setPage] = React.useState(1)
-  const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>(
+  // UI state (chưa apply)
+  const [statusInput, setStatusInput] = React.useState<"all" | BookingStatus>(
     "all"
   )
   const [serviceCodeInput, setServiceCodeInput] = React.useState("")
+  const [dateRangeInput, setDateRangeInput] = React.useState<
+    DateRange | undefined
+  >(undefined)
+  // Applied state (dùng trong query)
+  const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>(
+    "all"
+  )
   const [serviceCodeFilter, setServiceCodeFilter] = React.useState("")
-  const [startDate, setStartDate] = React.useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = React.useState<Date | undefined>(undefined)
+  const [dateRangeFilter, setDateRangeFilter] = React.useState<
+    DateRange | undefined
+  >(undefined)
   const [actionTarget, setActionTarget] = React.useState<{
     booking: Booking
     action: WorkerBookingAction
@@ -244,10 +260,14 @@ export default function WorkerBookingsPage() {
       role: "worker",
       status: statusFilter === "all" ? undefined : statusFilter,
       service_code: serviceCodeFilter || undefined,
-      start_date: startDate ? startDate.toISOString() : undefined,
-      end_date: endDate ? endDate.toISOString() : undefined,
+      start_date: dateRangeFilter?.from
+        ? dateRangeFilter.from.toISOString()
+        : undefined,
+      end_date: dateRangeFilter?.to
+        ? dateRangeFilter.to.toISOString()
+        : undefined,
     }),
-    [page, statusFilter, serviceCodeFilter, startDate, endDate]
+    [page, statusFilter, serviceCodeFilter, dateRangeFilter]
   )
 
   const bookingsQuery = useMyBookings(query)
@@ -263,17 +283,20 @@ export default function WorkerBookingsPage() {
   const canGoBack = page > 1
   const canGoNext = totalPages ? page < totalPages : false
 
-  const applyServiceCodeFilter = () => {
+  const handleApplyFilters = () => {
+    setStatusFilter(statusInput)
     setServiceCodeFilter(serviceCodeInput.trim().toUpperCase())
+    setDateRangeFilter(dateRangeInput)
     setPage(1)
   }
 
   const handleResetFilters = () => {
+    setStatusInput("all")
     setStatusFilter("all")
     setServiceCodeInput("")
     setServiceCodeFilter("")
-    setStartDate(undefined)
-    setEndDate(undefined)
+    setDateRangeInput(undefined)
+    setDateRangeFilter(undefined)
     setPage(1)
   }
 
@@ -414,39 +437,24 @@ export default function WorkerBookingsPage() {
     <SiteLayout>
       <AuthGuard>
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-                <CalendarCheck2 className="size-7" />
-                Booking nhận việc
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Quản lý booking khách hàng đã đặt với vai trò worker
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => bookingsQuery.refetch()}
-              disabled={bookingsQuery.isFetching}
-            >
-              {bookingsQuery.isFetching ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <RefreshCw className="size-4" />
-              )}
-              Làm mới
-            </Button>
+          <div className="mb-6">
+            <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+              <CalendarCheck2 className="size-7" />
+              Booking nhận việc
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Quản lý booking khách hàng đã đặt với vai trò worker
+            </p>
           </div>
 
           <Card className="mb-5">
-            <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1fr_1fr_auto]">
+            <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1.5fr_auto]">
               <div className="grid gap-2">
                 <Label htmlFor="worker-filter-status">Trạng thái</Label>
                 <Select
-                  value={statusFilter}
+                  value={statusInput}
                   onValueChange={(value) => {
-                    setStatusFilter(value as "all" | BookingStatus)
-                    setPage(1)
+                    setStatusInput(value as "all" | BookingStatus)
                   }}
                 >
                   <SelectTrigger
@@ -466,59 +474,45 @@ export default function WorkerBookingsPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="worker-filter-service">Mã dịch vụ</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="worker-filter-service"
-                    value={serviceCodeInput}
-                    maxLength={40}
-                    placeholder="VD: CLEANING"
-                    onChange={(event) =>
-                      setServiceCodeInput(event.target.value)
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") applyServiceCodeFilter()
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    aria-label="Lọc theo mã dịch vụ"
-                    onClick={applyServiceCodeFilter}
-                  >
-                    <Search className="size-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Từ ngày</Label>
-                <DatePicker
-                  value={startDate}
-                  onChange={(date) => {
-                    setStartDate(date)
-                    setPage(1)
+                <Input
+                  id="worker-filter-service"
+                  value={serviceCodeInput}
+                  maxLength={40}
+                  placeholder="VD: CLEANING"
+                  onChange={(event) => setServiceCodeInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") handleApplyFilters()
                   }}
-                  toDate={endDate}
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Đến ngày</Label>
-                <DatePicker
-                  value={endDate}
-                  onChange={(date) => {
-                    setEndDate(date)
-                    setPage(1)
-                  }}
-                  fromDate={startDate}
+                <Label>Khoảng ngày</Label>
+                <DateRangePicker
+                  value={dateRangeInput}
+                  onChange={setDateRangeInput}
+                  numberOfMonths={2}
+                  align="start"
                 />
               </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleResetFilters}
-                >
-                  Đặt lại
+              <div className="flex items-end gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleResetFilters}
+                        aria-label="Xoá bộ lọc"
+                      >
+                        <FilterX className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Xoá bộ lọc</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button className="flex-1" onClick={handleApplyFilters}>
+                  <Search className="size-4" />
+                  Tìm kiếm
                 </Button>
               </div>
             </CardContent>

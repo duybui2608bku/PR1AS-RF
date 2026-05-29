@@ -221,17 +221,15 @@ export default function WorkerBookingSchedulePage() {
         >
           <div className="border-b bg-background">
             <div className="container mx-auto flex flex-col gap-4 px-4 py-5">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
-                    <CalendarDays className="size-7" />
-                    Lịch làm việc
-                  </h1>
-                </div>
-                <Button variant="outline" size="sm" asChild className="self-start lg:self-auto">
+              <div className="flex flex-row items-center justify-between gap-3">
+                <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
+                  <CalendarDays className="size-7" />
+                  Lịch làm việc
+                </h1>
+                <Button variant="outline" size="sm" asChild className="shrink-0">
                   <Link href="/worker/bookings">
                     <List className="size-4" />
-                    Danh sách booking
+                    <span className="hidden sm:inline">Danh sách booking</span>
                   </Link>
                 </Button>
               </div>
@@ -291,30 +289,38 @@ export default function WorkerBookingSchedulePage() {
               </div>
             </div>
 
-            <div className="container mx-auto grid gap-4 px-4 pb-4 md:grid-cols-3">
-            <div className="rounded-md border bg-background px-4 py-3">
-              <div className="text-sm text-muted-foreground">
-                Booking trong tháng
-              </div>
-              <div className="mt-1 text-2xl font-semibold">
-                {monthBookings.length}
-              </div>
-            </div>
-            <div className="rounded-md border bg-background px-4 py-3">
-              <div className="text-sm text-muted-foreground">
-                Đang cần xử lý
-              </div>
-              <div className="mt-1 text-2xl font-semibold">
-                {activeBookings.length}
-              </div>
-            </div>
-            <div className="rounded-md border bg-background px-4 py-3">
-              <div className="text-sm text-muted-foreground">Hôm nay</div>
-              <div className="mt-1 text-2xl font-semibold">
-                {todayBookings.length}
+            {/* Mobile: inline stat bar */}
+            <div className="container mx-auto px-4 pb-4 md:hidden">
+              <div className="flex divide-x divide-border rounded-md border bg-background">
+                <div className="flex flex-1 flex-col items-center py-2.5">
+                  <span className="text-2xl font-bold tabular-nums">{monthBookings.length}</span>
+                  <span className="mt-0.5 text-[11px] text-muted-foreground">Tháng này</span>
+                </div>
+                <div className="flex flex-1 flex-col items-center py-2.5">
+                  <span className="text-2xl font-bold tabular-nums">{activeBookings.length}</span>
+                  <span className="mt-0.5 text-[11px] text-muted-foreground">Cần xử lý</span>
+                </div>
+                <div className="flex flex-1 flex-col items-center py-2.5">
+                  <span className="text-2xl font-bold tabular-nums">{todayBookings.length}</span>
+                  <span className="mt-0.5 text-[11px] text-muted-foreground">Hôm nay</span>
+                </div>
               </div>
             </div>
-          </div>
+            {/* Desktop: 3-card grid */}
+            <div className="container mx-auto hidden grid-cols-3 gap-4 px-4 pb-4 md:grid">
+              <div className="rounded-md border bg-background px-4 py-3">
+                <div className="text-sm text-muted-foreground">Booking trong tháng</div>
+                <div className="mt-1 text-2xl font-semibold">{monthBookings.length}</div>
+              </div>
+              <div className="rounded-md border bg-background px-4 py-3">
+                <div className="text-sm text-muted-foreground">Đang cần xử lý</div>
+                <div className="mt-1 text-2xl font-semibold">{activeBookings.length}</div>
+              </div>
+              <div className="rounded-md border bg-background px-4 py-3">
+                <div className="text-sm text-muted-foreground">Hôm nay</div>
+                <div className="mt-1 text-2xl font-semibold">{todayBookings.length}</div>
+              </div>
+            </div>
 
           <div className="container mx-auto flex flex-1 flex-col px-4 pb-6">
             {bookingsQuery.isLoading ? (
