@@ -103,6 +103,14 @@ const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   return { value: label, label }
 })
 
+const formatPrice = (price: number, currency: string): string => {
+  const formatted =
+    currency === "VND"
+      ? new Intl.NumberFormat("vi-VN").format(price)
+      : new Intl.NumberFormat("en-US").format(price)
+  return currency === "USD" ? `$${formatted}` : `${formatted}đ`
+}
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -205,6 +213,20 @@ export function BookWorkerDialog({
     return new Date(startDateTime.getTime() + hours * 60 * 60 * 1000)
   }, [startDateTime, unit, quantity])
 
+  const unitPricing = useMemo(() => {
+    if (!service || !unit) return null
+    return service.pricing.find((p) => p.unit === unit) ?? null
+  }, [service, unit])
+
+  const totalPrice = useMemo(() => {
+    if (!unitPricing) return null
+    return {
+      amount: unitPricing.price * quantity,
+      currency: unitPricing.currency,
+      unitAmount: unitPricing.price,
+    }
+  }, [unitPricing, quantity])
+
   const validationError = useMemo(() => {
     if (!open) return null
     if (!service) return "Vui lòng chọn dịch vụ"
@@ -283,7 +305,7 @@ export function BookWorkerDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="book-date">Ngày</Label>
               <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
@@ -391,20 +413,41 @@ export function BookWorkerDialog({
             />
           </div>
 
+          {totalPrice ? (
+            <div className="rounded-lg border bg-muted/50 px-4 py-3 text-sm">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Đơn giá ({UNIT_LABEL[unit as WorkerPricingUnit]})</span>
+                <span>{formatPrice(totalPrice.unitAmount, totalPrice.currency)}</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-muted-foreground">
+                <span>Số lượng</span>
+                <span>× {quantity}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between border-t pt-2 font-semibold text-foreground">
+                <span>Tổng cộng</span>
+                <span className="text-primary">
+                  {formatPrice(totalPrice.amount, totalPrice.currency)}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
           {validationError ? (
             <p className="text-sm text-destructive">{validationError}</p>
           ) : null}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="w-full flex-row gap-2 sm:space-x-0">
           <Button
             variant="outline"
+            className="flex-1"
             onClick={() => handleOpenChange(false)}
             disabled={createBooking.isPending}
           >
             Hủy
           </Button>
           <Button
+            className="flex-1"
             onClick={handleSubmit}
             disabled={!!validationError || createBooking.isPending}
           >
