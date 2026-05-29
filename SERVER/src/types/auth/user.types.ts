@@ -9,6 +9,15 @@ export enum UserRole {
 
 export enum UserStatus {
   ACTIVE = "active",
+  // Email/password signup that hasn't completed email verification yet. Cannot
+  // authenticate any request until verified (→ ACTIVE). Google signups skip
+  // this state because the provider already vouches for the address.
+  PENDING_VERIFY = "pending_verify",
+  // Soft-disabled account — admin deactivation or (future) self-deactivation.
+  // Unlike BANNED it is not punitive and unlike PENDING_DELETE it has no grace
+  // timer: the data is kept intact and an admin can flip it back to ACTIVE. The
+  // user cannot act while inactive.
+  INACTIVE = "inactive",
   BANNED = "banned",
   // User requested account deletion. Frozen for 30 days; logging in restores
   // the account to ACTIVE. After the grace window a cron transitions to

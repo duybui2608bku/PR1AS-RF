@@ -16,10 +16,10 @@ import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import {
-  AUTH_MESSAGES,
   BOOKING_MESSAGES,
   REPUTATION_MESSAGES,
 } from "../../constants/messages";
+import { accountStatusError } from "../../utils/user-status";
 import { PaginatedResponse } from "../../utils/pagination";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
@@ -294,14 +294,9 @@ export class BookingCrudService extends BookingBaseService {
     query: BookingQuery
   ): Promise<PaginatedResponse<IBookingDocument>> {
     const roleInfo = await userRepository.getUserRoleInfoById(userId);
-    if (roleInfo.status !== UserStatus.ACTIVE) {
-      if (roleInfo.status === UserStatus.BANNED) {
-        throw AppError.forbidden(AUTH_MESSAGES.USER_BANNED);
-      }
-      if (roleInfo.status === UserStatus.PENDING_DELETE) {
-        throw AppError.forbidden(AUTH_MESSAGES.USER_PENDING_DELETE);
-      }
-      throw AppError.forbidden(AUTH_MESSAGES.USER_DELETED);
+    const statusError = accountStatusError(roleInfo.status);
+    if (statusError) {
+      throw statusError;
     }
 
     const requestedRole = query.role || roleInfo.lastActiveRole;

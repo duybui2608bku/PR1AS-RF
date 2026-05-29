@@ -35,6 +35,20 @@ export class UserService {
     const existingUser = await userRepository.findById(userId);
     if (!existingUser) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
+    // PENDING_VERIFY / PENDING_DELETE / DELETED are lifecycle states owned by
+    // the email-verification and account-deletion flows. Setting them straight
+    // from the admin endpoint would skip the invariants those flows maintain
+    // (e.g. a manual PENDING_DELETE never gets the `deleted_at` stamp the
+    // cleanup cron keys off, stranding the row forever), so only allow the
+    // statuses an admin legitimately toggles.
+    if (
+      ![UserStatus.ACTIVE, UserStatus.BANNED, UserStatus.INACTIVE].includes(
+        status
+      )
+    ) {
+      throw AppError.badRequest(USER_MESSAGES.INVALID_STATUS);
+    }
+
     const user = await userRepository.updateStatus(userId, status);
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
 
@@ -45,9 +59,54 @@ export class UserService {
     const becameBanned =
       status === UserStatus.BANNED &&
       existingUser.status !== UserStatus.BANNED;
+    const becameInactive =
+      status === UserStatus.INACTIVE &&
+      existingUser.status !== UserStatus.INACTIVE;
     const wasUnbanned =
       existingUser.status === UserStatus.BANNED &&
       status === UserStatus.ACTIVE;
+
+    // Both a ban and a deactivation must cut off live access: revoke the
+    // refresh token (so no new access token can be minted) and drop every open
+    // socket. Otherwise the current 15-minute access token would keep working.
+    if (becameBanned || becameInactive) {
+      // Revoke the refresh token so the client cannot mint a new access
+      // token after their current one expires.
+      await userRepository.clearRefreshToken(userId).catch((error) => {
+        logger.warn("Failed to clear refresh token on status change", {
+          error,
+          userId,
+          status,
+        });
+      });
+
+      // Kick the user off every live socket. For a ban we emit the event first
+      // so the client can show a friendly message before we force-close.
+      try {
+        const io = getSocketIO();
+        if (becameBanned) {
+          io.to(getUserRoom(userId)).emit(SOCKET_EVENTS.ACCOUNT_BANNED);
+        }
+        for (const socketId of getUserSocketIds(userId)) {
+          io.sockets.sockets.get(socketId)?.disconnect(true);
+        }
+      } catch (error) {
+        logger.warn(
+          "Could not disconnect sockets on status change — socket may not be initialized",
+          { error, userId, status }
+        );
+      }
+    }
+
+    if (becameInactive) {
+      logger.info("AUDIT user deactivated", {
+        event: "USER_DEACTIVATED",
+        userId,
+        adminId: audit.adminId,
+        reason: audit.reason,
+        previousStatus: existingUser.status,
+      });
+    }
 
     if (becameBanned) {
       logger.info("AUDIT user banned", {
@@ -57,28 +116,6 @@ export class UserService {
         reason: audit.reason,
         previousStatus: existingUser.status,
       });
-
-      // Revoke the refresh token so the client cannot mint a new access
-      // token after their current one expires.
-      await userRepository.clearRefreshToken(userId).catch((error) => {
-        logger.warn("Failed to clear refresh token on ban", { error, userId });
-      });
-
-      // Kick the user off every live socket. Emitting the event first lets
-      // the client show a friendly "your account was banned" message before
-      // we force-close the connection.
-      try {
-        const io = getSocketIO();
-        io.to(getUserRoom(userId)).emit(SOCKET_EVENTS.ACCOUNT_BANNED);
-        for (const socketId of getUserSocketIds(userId)) {
-          io.sockets.sockets.get(socketId)?.disconnect(true);
-        }
-      } catch (error) {
-        logger.warn(
-          "Could not disconnect sockets on ban — socket may not be initialized",
-          { error, userId }
-        );
-      }
 
       // In-app notification — durable record the user can see when they next
       // sign in (e.g. via a different device or after unban). Email is best-

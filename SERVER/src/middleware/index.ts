@@ -1,5 +1,6 @@
 export {
   authenticate,
+  enforceFreshStatus,
   authorize,
   adminOnly,
   workerOnly,

@@ -20,7 +20,6 @@ export function SiteLayout({
         <SiteFooter
           className={showFooterOnMobile ? undefined : "hidden md:block"}
         />
-        {/* Spacer đẩy content lên khỏi bottom nav trên mobile (tính cả iOS safe area) */}
         <div className="h-bottomnav shrink-0 md:hidden" aria-hidden="true" />
         <ScrollToTopButton />
       </div>

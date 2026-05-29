@@ -184,6 +184,14 @@ export class AuthService {
       );
     }
 
+    if (user.status === UserStatus.INACTIVE) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_INACTIVE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_INACTIVE
+      );
+    }
+
     // PENDING_DELETE users get auto-restored on successful login. The grace
     // window exists exactly so users can change their mind by signing in.
     if (user.status === UserStatus.PENDING_DELETE) {
@@ -237,6 +245,14 @@ export class AuthService {
 
     if (user.status === UserStatus.BANNED) {
       throw new AppError(AUTH_MESSAGES.USER_BANNED, HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_INACTIVE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_INACTIVE
+      );
     }
 
     if (
@@ -542,6 +558,14 @@ export class AuthService {
         AUTH_MESSAGES.USER_DELETED,
         HTTP_STATUS.FORBIDDEN,
         ErrorCode.USER_DELETED
+      );
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_INACTIVE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.USER_INACTIVE
       );
     }
 

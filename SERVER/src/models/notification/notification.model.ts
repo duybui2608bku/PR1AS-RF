@@ -116,7 +116,8 @@ const notificationSchema = new Schema<INotificationDocument>(
     created_at: {
       type: Date,
       default: Date.now,
-      index: true,
+      // Indexed via the TTL index declared below (also used by the
+      // recipient_id compound indexes).
     },
     updated_at: {
       type: Date,
@@ -146,6 +147,14 @@ notificationSchema.index(
     unique: true,
     partialFilterExpression: { dedupe_key: { $type: "string" } },
   }
+);
+
+// TTL: notifications are purged 90 days after creation so the collection
+// (and its dedupe_key entries) cannot grow unbounded.
+const NOTIFICATION_RETENTION_SECONDS = 90 * 24 * 60 * 60;
+notificationSchema.index(
+  { created_at: 1 },
+  { expireAfterSeconds: NOTIFICATION_RETENTION_SECONDS }
 );
 
 export const Notification = mongoose.model<INotificationDocument>(

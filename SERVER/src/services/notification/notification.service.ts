@@ -288,6 +288,17 @@ export class NotificationService {
     return notificationRepository.updatePreference(userId, input);
   }
 
+  /**
+   * Single chokepoint that enforces "notifications respect account status": only
+   * ACTIVE recipients are delivered to. This deliberately uses an allowlist
+   * (=== ACTIVE) rather than a denylist of blocked states, so it skips not just
+   * BANNED / INACTIVE / DELETED (a banned/disabled/gone user must not be
+   * notified) but also PENDING_DELETE and PENDING_VERIFY — we don't push to a
+   * user who asked to be deleted (incl. email) or who hasn't verified yet. Keep
+   * it as an allowlist: do NOT relax to "skip only the blocked states", or
+   * those two states would start receiving notifications again. See the
+   * UserStatus enum for the full status taxonomy.
+   */
   private async filterActiveRecipients(
     recipientIds: string[]
   ): Promise<string[]> {

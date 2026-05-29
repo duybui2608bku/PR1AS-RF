@@ -39,7 +39,6 @@ const reviewSchema = new Schema<IReviewDocument>(
       type: Schema.Types.ObjectId,
       ref: modelsName.BOOKING,
       required: true,
-      index: true,
     },
     client_id: {
       type: Schema.Types.ObjectId,
