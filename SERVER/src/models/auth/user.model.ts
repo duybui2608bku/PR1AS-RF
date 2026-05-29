@@ -46,16 +46,12 @@ const userSchema = new Schema<IUserDocument>(
     },
     roles: {
       type: [String],
-
       enum: Object.values(UserRole),
-
       default: [UserRole.CLIENT],
     },
     last_active_role: {
       type: String,
-
       enum: Object.values(UserRole),
-
       default: UserRole.CLIENT,
     },
     worker_profile: {
@@ -110,7 +106,6 @@ const userSchema = new Schema<IUserDocument>(
       default: UserStatus.ACTIVE,
       index: true,
     },
-    // Internal write-lock counter for serializing booking creation per worker.
     booking_lock_version: {
       type: Number,
       default: 0,

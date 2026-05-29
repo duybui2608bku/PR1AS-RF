@@ -8,7 +8,7 @@ const userBlockSchema = new Schema<IUserBlockDocument>(
       type: Schema.Types.ObjectId,
       ref: modelsName.USER,
       required: true,
-      index: true,
+      // Indexed via the compound { blocker_id, blocked_id } unique index below.
     },
     blocked_id: {
       type: Schema.Types.ObjectId,

@@ -35,7 +35,6 @@ const conversationGroupSchema = new Schema({
   },
 });
 
-conversationGroupSchema.index({ booking_id: 1 });
 conversationGroupSchema.index({ members: 1 });
 
 const ConversationGroup = model(

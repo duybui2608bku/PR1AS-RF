@@ -2,7 +2,11 @@ import "dotenv/config";
 import { createServer } from "http";
 import { config } from "./config";
 import { logger } from "./utils/logger";
-import { connectDatabase, closeDatabase } from "./config/database";
+import {
+  connectDatabase,
+  closeDatabase,
+  syncAllIndexes,
+} from "./config/database";
 import { initializeSocket } from "./config/socket";
 import { createApp } from "./app";
 import {
@@ -43,6 +47,7 @@ initializeSocket(httpServer);
 const startServer = async () => {
   try {
     await connectDatabase();
+    await syncAllIndexes();
     await reputationConfigService.seedDefaults();
     startBookingExpirationJob();
     startBookingReminderJob();
