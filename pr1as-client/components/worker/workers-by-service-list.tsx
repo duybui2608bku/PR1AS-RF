@@ -341,7 +341,7 @@ export const WorkersByServiceList = ({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Không thể tải danh sách worker</AlertTitle>
           <AlertDescription>
-            Vui lòng kiểm tra API <code>/worker/grouped-by-service</code> và thử lại.
+            Đã xảy ra sự cố khi tải dữ liệu. Vui lòng thử lại sau giây lát.
           </AlertDescription>
         </Alert>
       </section>

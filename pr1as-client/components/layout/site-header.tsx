@@ -138,6 +138,38 @@ export function SiteHeader() {
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
 
+  // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
+  // Chỉ áp dụng < md (mobile); desktop header luôn hiện.
+  const [hidden, setHidden] = React.useState(false)
+  React.useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+    const update = () => {
+      const y = window.scrollY
+      const diff = y - lastY
+      if (y < 64) {
+        setHidden(false) // gần đỉnh trang → luôn hiện
+      } else if (Math.abs(diff) > 6) {
+        setHidden(diff > 0) // xuống → ẩn, lên → hiện
+      }
+      lastY = y
+      ticking = false
+    }
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update)
+        ticking = true
+      }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  // Đóng menu user khi header bị ẩn để tránh dropdown lơ lửng
+  React.useEffect(() => {
+    if (hidden) setMenuOpen(false)
+  }, [hidden])
+
   const handleSwitchRole = async () => {
     if (!isAuthenticated) {
       toast.info("Vui lòng đăng nhập để chuyển role.")
@@ -185,7 +217,12 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        "pt-safe px-safe sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
+        hidden && "max-md:-translate-y-full",
+      )}
+    >
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href={homeHref} className="font-semibold">

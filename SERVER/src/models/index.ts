@@ -6,3 +6,4 @@ export * from "./review";
 export * from "./notification";
 export * from "./location";
 export * from "./job-lock";
+export * from "./feedback";

@@ -8,13 +8,20 @@ import { toast } from "sonner"
 import {
   AlertTriangle,
   Ban,
+  Bug,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   FileWarning,
+  Lightbulb,
   Loader2,
+  MessageSquarePlus,
+  Send,
   ShieldCheck,
   Star,
   Trash2,
+  User,
   UserX,
 } from "lucide-react"
 
@@ -41,12 +48,21 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import {
   useDeleteAccount,
   useDeletionStatus,
   useForgotPassword,
 } from "@/lib/hooks/use-auth"
+import { useCreateFeedback, useMyFeedback } from "@/lib/hooks/use-feedback"
 import {
   useBlockedUsers,
   useMyReports,
@@ -75,25 +91,107 @@ import type {
   ReputationHistory,
   ReputationHistoryReason,
 } from "@/services/reputation.service"
+import type {
+  Feedback,
+  FeedbackStatus,
+  FeedbackType,
+} from "@/services/feedback.service"
 
 type SettingsSection =
   | "blocked"
   | "post-reports"
   | "worker-reports"
   | "reputation"
+  | "feedback"
   | "delete-account"
 
-const sections: Array<{
-  id: SettingsSection
+const sectionMeta: Record<
+  SettingsSection,
+  {
+    label: string
+    description: string
+    icon: React.ComponentType<{ className?: string }>
+    danger?: boolean
+  }
+> = {
+  blocked: {
+    label: "Danh sách chặn",
+    description: "Xem và bỏ chặn những người dùng bạn đã chặn.",
+    icon: Ban,
+  },
+  "post-reports": {
+    label: "Bài viết đã báo cáo",
+    description: "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo.",
+    icon: FileWarning,
+  },
+  "worker-reports": {
+    label: "Worker đã báo cáo",
+    description: "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo.",
+    icon: UserX,
+  },
+  reputation: {
+    label: "Điểm uy tín",
+    description: "Xem điểm hiện tại và lịch sử cộng trừ điểm của bạn.",
+    icon: Star,
+  },
+  feedback: {
+    label: "Gửi phản hồi",
+    description: "Gửi báo lỗi hoặc đề xuất tính năng tới đội ngũ quản trị.",
+    icon: MessageSquarePlus,
+  },
+  "delete-account": {
+    label: "Xoá tài khoản",
+    description: "Yêu cầu xoá vĩnh viễn tài khoản của bạn.",
+    icon: Trash2,
+    danger: true,
+  },
+}
+
+const sectionGroups: Array<{ title: string; items: SettingsSection[] }> = [
+  {
+    title: "An toàn & kiểm duyệt",
+    items: ["blocked", "post-reports", "worker-reports"],
+  },
+  { title: "Tài khoản", items: ["reputation", "feedback"] },
+  { title: "Vùng nguy hiểm", items: ["delete-account"] },
+]
+
+// Các hàng điều hướng tới trang riêng (không phải panel trong settings).
+const navLinks: Array<{
+  href: string
   label: string
+  description: string
   icon: React.ComponentType<{ className?: string }>
 }> = [
-  { id: "blocked", label: "Danh sách chặn", icon: Ban },
-  { id: "post-reports", label: "Bài viết đã báo cáo", icon: FileWarning },
-  { id: "worker-reports", label: "Worker đã báo cáo", icon: UserX },
-  { id: "reputation", label: "Điểm uy tín", icon: Star },
-  { id: "delete-account", label: "Xoá tài khoản", icon: Trash2 },
+  {
+    href: "/client/profile",
+    label: "Thông tin cá nhân",
+    description: "Họ tên, email, ảnh đại diện, gói thành viên.",
+    icon: User,
+  },
 ]
+
+const feedbackStatusLabels: Record<FeedbackStatus, string> = {
+  open: "Đã gửi",
+  in_progress: "Đang xử lý",
+  resolved: "Đã xử lý",
+  rejected: "Đã từ chối",
+}
+
+const feedbackStatusVariants: Record<
+  FeedbackStatus,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  open: "secondary",
+  in_progress: "default",
+  resolved: "outline",
+  rejected: "destructive",
+}
+
+const feedbackTypeLabels: Record<FeedbackType, string> = {
+  bug: "Báo lỗi",
+  feature: "Đề xuất tính năng",
+}
 
 const statusLabels: Record<ReportStatus, string> = {
   open: "Đang mở",
@@ -559,6 +657,170 @@ function ReputationPanel() {
   )
 }
 
+function FeedbackPanel() {
+  const createMutation = useCreateFeedback()
+  const feedbackQuery = useMyFeedback({ page: 1, limit: 30 })
+  const feedbacks = feedbackQuery.data?.data ?? []
+
+  const [type, setType] = React.useState<FeedbackType>("bug")
+  const [title, setTitle] = React.useState("")
+  const [description, setDescription] = React.useState("")
+
+  const canSubmit =
+    title.trim().length >= 3 &&
+    description.trim().length >= 10 &&
+    !createMutation.isPending
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!canSubmit) return
+    createMutation.mutate(
+      {
+        type,
+        title: title.trim(),
+        description: description.trim(),
+      },
+      {
+        onSuccess: () => {
+          setTitle("")
+          setDescription("")
+          setType("bug")
+        },
+      }
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border bg-background p-4"
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="feedback-type">Loại phản hồi</Label>
+          <Select
+            value={type}
+            onValueChange={(value) => setType(value as FeedbackType)}
+            disabled={createMutation.isPending}
+          >
+            <SelectTrigger id="feedback-type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bug">
+                <Bug className="size-4" />
+                Báo lỗi (bug)
+              </SelectItem>
+              <SelectItem value="feature">
+                <Lightbulb className="size-4" />
+                Đề xuất tính năng
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="feedback-title">Tiêu đề</Label>
+          <Input
+            id="feedback-title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={
+              type === "bug"
+                ? "Tóm tắt ngắn gọn lỗi bạn gặp phải"
+                : "Tóm tắt ngắn gọn tính năng bạn đề xuất"
+            }
+            maxLength={200}
+            disabled={createMutation.isPending}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="feedback-description">Mô tả chi tiết</Label>
+          <Textarea
+            id="feedback-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder={
+              type === "bug"
+                ? "Mô tả các bước tái hiện lỗi, thiết bị/trình duyệt bạn dùng, kết quả mong đợi..."
+                : "Mô tả tính năng bạn mong muốn và lý do nó hữu ích..."
+            }
+            maxLength={5000}
+            className="min-h-32"
+            disabled={createMutation.isPending}
+          />
+          <p className="text-xs text-muted-foreground">
+            Tối thiểu 10 ký tự.
+          </p>
+        </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={!canSubmit}>
+            {createMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            Gửi phản hồi
+          </Button>
+        </div>
+      </form>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium">Phản hồi đã gửi</h3>
+        {feedbackQuery.isLoading ? (
+          <LoadingPanel />
+        ) : feedbacks.length === 0 ? (
+          <EmptyState
+            icon={MessageSquarePlus}
+            title="Bạn chưa gửi phản hồi nào."
+          />
+        ) : (
+          <div className="space-y-3">
+            {feedbacks.map((feedback: Feedback) => {
+              const id = feedback.id ?? feedback._id ?? feedback.created_at
+              return (
+                <div
+                  key={id}
+                  className="rounded-md border bg-background p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">
+                      {feedback.type === "bug" ? (
+                        <Bug className="size-3.5" />
+                      ) : (
+                        <Lightbulb className="size-3.5" />
+                      )}
+                      {feedbackTypeLabels[feedback.type]}
+                    </Badge>
+                    <Badge variant={feedbackStatusVariants[feedback.status]}>
+                      {feedbackStatusLabels[feedback.status]}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(feedback.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-medium">{feedback.title}</p>
+                  <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
+                    {feedback.description}
+                  </p>
+                  {feedback.admin_note ? (
+                    <div className="mt-3 rounded-md bg-muted px-3 py-2 text-sm">
+                      <span className="font-medium">Phản hồi từ admin: </span>
+                      {feedback.admin_note}
+                    </div>
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function LoadingPanel() {
   return (
     <div className="flex min-h-52 items-center justify-center">
@@ -750,7 +1012,12 @@ function DeleteAccountPanel() {
         }}
       >
         <AlertDialogTrigger asChild>
-          <Button type="button" variant="destructive" disabled={!canSubmit}>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={!canSubmit}
+            className="h-11 w-full"
+          >
             <Trash2 className="size-4" />
             Xoá tài khoản của tôi
           </Button>
@@ -806,80 +1073,155 @@ function SectionContent({ section }: { section: SettingsSection }) {
   if (section === "blocked") return <BlockedList />
   if (section === "post-reports") return <ReportsList targetType="post" />
   if (section === "worker-reports") return <ReportsList targetType="worker" />
+  if (section === "feedback") return <FeedbackPanel />
   if (section === "delete-account") return <DeleteAccountPanel />
   return <ReputationPanel />
 }
 
 export default function SettingsPage() {
+  // null = đang ở màn danh sách (mobile). Desktop luôn hiển thị 2 cột.
   const [activeSection, setActiveSection] =
-    React.useState<SettingsSection>("blocked")
-  const active =
-    sections.find((item) => item.id === activeSection) ?? sections[0]
+    React.useState<SettingsSection | null>(null)
+  const desktopActive: SettingsSection = activeSection ?? "blocked"
+  const activeMeta = sectionMeta[desktopActive]
+  const ActiveIcon = activeMeta.icon
 
   return (
-    <div className="container mx-auto px-4 py-4 lg:py-24">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
+    <div className="mx-auto w-full max-w-5xl pb-10 sm:px-4 sm:py-8">
+      {/* Tiêu đề trang — ẩn khi đang ở màn chi tiết trên mobile */}
+      <div
+        className={cn(
+          "mb-6 flex items-center gap-3 px-4 pt-4 sm:px-0 sm:pt-0",
+          activeSection !== null && "max-lg:hidden",
+        )}
+      >
+        <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <ShieldCheck className="size-5" />
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cài đặt</h1>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Cài đặt</h1>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[17rem_1fr]">
-        <aside className="-mx-4 overflow-hidden border-y bg-background px-4 py-2 lg:sticky lg:top-20 lg:mx-0 lg:self-start lg:border-0 lg:bg-transparent lg:p-0">
-          <Card
-            className="flex gap-2 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] lg:flex-col lg:gap-1 lg:overflow-visible lg:rounded-md lg:border lg:bg-card lg:p-2 lg:shadow-sm [&::-webkit-scrollbar]:hidden"
-            role="tablist"
-            aria-label="Settings sections"
-          >
-            {sections.map((item) => {
-              const Icon = item.icon
-              const isActive = item.id === activeSection
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={cn(
-                    "flex h-10 shrink-0 items-center gap-2.5 rounded-md px-3 text-left text-sm font-medium whitespace-nowrap transition lg:w-full lg:justify-start",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )}
-                  onClick={() => setActiveSection(item.id)}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              )
-            })}
-          </Card>
+      <div className="lg:grid lg:grid-cols-[19rem_1fr] lg:gap-6">
+        {/* DANH SÁCH MỤC — list trên mobile, sidebar trên desktop */}
+        <aside className={cn(activeSection !== null && "max-lg:hidden")}>
+          <nav className="space-y-6 lg:sticky lg:top-20 lg:space-y-5">
+            <div>
+              <p className="px-4 pb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:px-1">
+                Hồ sơ
+              </p>
+              <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
+                {navLinks.map((link) => {
+                  const Icon = link.icon
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent"
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {link.label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground lg:hidden">
+                          {link.description}
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+            {sectionGroups.map((group) => (
+              <div key={group.title}>
+                <p className="px-4 pb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:px-1">
+                  {group.title}
+                </p>
+                <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
+                  {group.items.map((id) => {
+                    const meta = sectionMeta[id]
+                    const Icon = meta.icon
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setActiveSection(id)}
+                        className={cn(
+                          "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent",
+                          desktopActive === id && "lg:bg-accent",
+                          meta.danger && "text-destructive",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex size-9 shrink-0 items-center justify-center rounded-full",
+                            meta.danger
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-muted text-foreground",
+                          )}
+                        >
+                          <Icon className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
+                            {meta.label}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground lg:hidden">
+                            {meta.description}
+                          </span>
+                        </span>
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
         </aside>
 
-        <Card className="p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">{active.label}</h2>
-              <p className="text-sm text-muted-foreground">
-                {activeSection === "blocked"
-                  ? "Xem và bỏ chặn những người dùng bạn đã chặn."
-                  : activeSection === "post-reports"
-                    ? "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo."
-                    : activeSection === "worker-reports"
-                      ? "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo."
-                      : activeSection === "reputation"
-                        ? "Xem điểm hiện tại và lịch sử cộng trừ điểm của bạn."
-                        : "Yêu cầu xoá vĩnh viễn tài khoản của bạn."}
-              </p>
-            </div>
-            <CheckCircle2 className="hidden size-5 text-muted-foreground sm:block" />
+        {/* CHI TIẾT */}
+        <section className={cn(activeSection === null && "max-lg:hidden")}>
+          {/* Header quay lại — chỉ mobile */}
+          <div
+            className="sticky z-30 mb-4 flex h-12 items-center gap-1 border-b bg-background/80 px-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden"
+            style={{ top: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveSection(null)}
+              aria-label="Quay lại"
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-transform active:scale-90"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <h2 className="truncate text-base font-semibold tracking-tight">
+              {activeMeta.label}
+            </h2>
           </div>
-          <Separator className="my-5" />
-          <SectionContent section={activeSection} />
-        </Card>
+
+          <Card className="border-0 bg-transparent p-4 shadow-none sm:border sm:bg-card sm:p-5 lg:p-6">
+            {/* Header mục — chỉ desktop */}
+            <div className="hidden lg:block">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-full bg-muted">
+                  <ActiveIcon className="size-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-semibold">{activeMeta.label}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {activeMeta.description}
+                  </p>
+                </div>
+              </div>
+              <Separator className="my-5" />
+            </div>
+            <SectionContent section={desktopActive} />
+          </Card>
+        </section>
       </div>
     </div>
   )

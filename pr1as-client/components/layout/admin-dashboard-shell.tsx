@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  MessagesSquare,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldAlert,
@@ -73,6 +74,11 @@ const adminNavItems = [
     href: "/dashboard/reports",
     label: "Báo cáo",
     icon: ShieldAlert,
+  },
+  {
+    href: "/dashboard/feedback",
+    label: "Phản hồi",
+    icon: MessagesSquare,
   },
   {
     href: "/dashboard/reputation-config",

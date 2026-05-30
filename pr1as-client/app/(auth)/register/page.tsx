@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react"
 import { toast } from "sonner"
 
+import { AuthHeader } from "@/components/auth/auth-header"
 import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,6 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
-import { Separator } from "@/components/ui/separator"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { isPasswordStrong } from "@/lib/auth/password.utils"
 import { useRegister } from "@/lib/hooks/use-auth"
@@ -121,143 +120,145 @@ export default function RegisterPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Đăng ký tài khoản</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  inputMode="email"
-                  maxLength={254}
+      <div className="flex flex-1 flex-col">
+        <AuthHeader
+          title="Tạo tài khoản"
+          subtitle="Đăng ký để bắt đầu sử dụng PR1AS"
+          className="pb-8 pt-6 sm:pt-2"
+        />
+
+        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+          <FieldGroup className="gap-5">
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                maxLength={254}
+                required
+                className="h-11 text-base"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="full-name">Họ và tên</FieldLabel>
+              <Input
+                id="full-name"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                autoComplete="name"
+                maxLength={120}
+                className="h-11 text-base"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="phone">Số điện thoại</FieldLabel>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                autoComplete="tel"
+                inputMode="tel"
+                maxLength={32}
+                className="h-11 text-base"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+              <InputGroup className="h-11">
+                <InputGroupInput
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
                   required
+                  className="text-base"
                 />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="full-name">Họ và tên</FieldLabel>
-                <Input
-                  id="full-name"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  autoComplete="name"
-                  maxLength={120}
+                <InputGroupAddon>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={() => setShowPassword((previous) => !previous)}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="confirm-password">
+                Xác nhận mật khẩu
+              </FieldLabel>
+              <InputGroup className="h-11">
+                <InputGroupInput
+                  id="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
+                  required
+                  className="text-base"
                 />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="phone">Số điện thoại</FieldLabel>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  autoComplete="tel"
-                  inputMode="tel"
-                  maxLength={32}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-                <InputGroup>
-                  <InputGroupInput
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    minLength={8}
-                    maxLength={128}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <InputGroupAddon>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={() => setShowPassword((previous) => !previous)}
-                      aria-label={
-                        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-                      }
-                    >
-                      {showPassword ? <EyeOff /> : <Eye />}
-                    </Button>
-                  </InputGroupAddon>
-                </InputGroup>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="confirm-password">
-                  Xác nhận mật khẩu
-                </FieldLabel>
-                <InputGroup>
-                  <InputGroupInput
-                    id="confirm-password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    minLength={8}
-                    maxLength={128}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <InputGroupAddon>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      onClick={() =>
-                        setShowConfirmPassword((previous) => !previous)
-                      }
-                      aria-label={
-                        showConfirmPassword
-                          ? "Ẩn mật khẩu xác nhận"
-                          : "Hiện mật khẩu xác nhận"
-                      }
-                    >
-                      {showConfirmPassword ? <EyeOff /> : <Eye />}
-                    </Button>
-                  </InputGroupAddon>
-                </InputGroup>
-              </Field>
-              <Field>
-                <PasswordStrengthChecklist password={password} />
-              </Field>
-            </FieldGroup>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={registerMutation.isPending}
-            >
-              {registerMutation.isPending ? (
-                <Loader2 className="animate-spin" />
-              ) : null}
-              Đăng ký
-            </Button>
-          </form>
+                <InputGroupAddon>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={() =>
+                      setShowConfirmPassword((previous) => !previous)
+                    }
+                    aria-label={
+                      showConfirmPassword
+                        ? "Ẩn mật khẩu xác nhận"
+                        : "Hiện mật khẩu xác nhận"
+                    }
+                  >
+                    {showConfirmPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+            <Field>
+              <PasswordStrengthChecklist password={password} />
+            </Field>
+          </FieldGroup>
+          <Button
+            type="submit"
+            className="h-11 w-full text-base"
+            disabled={registerMutation.isPending}
+          >
+            {registerMutation.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : null}
+            Đăng ký
+          </Button>
+        </form>
 
-          <Separator />
-
-          <p className="text-center text-sm text-muted-foreground">
-            Đã có tài khoản?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
-              Đăng nhập
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
+          Đã có tài khoản?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-primary hover:underline"
+          >
+            Đăng nhập
+          </Link>
+        </p>
+      </div>
     </>
   )
 }

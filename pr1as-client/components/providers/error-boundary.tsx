@@ -57,11 +57,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return this.props.fallback
     }
     return (
-      <DefaultFallback
-        error={error}
-        reset={this.reset}
-        className={this.props.className}
-      />
+      <DefaultFallback reset={this.reset} className={this.props.className} />
     )
   }
 }
@@ -80,10 +76,9 @@ function keysEqual(
 }
 
 function DefaultFallback({
-  error,
   reset,
   className,
-}: FallbackArgs & { className?: string }) {
+}: Omit<FallbackArgs, "error"> & { className?: string }) {
   return (
     <div
       role="alert"
@@ -96,7 +91,7 @@ function DefaultFallback({
       <div className="space-y-1">
         <p className="text-sm font-medium">Không hiển thị được phần này</p>
         <p className="text-xs text-muted-foreground">
-          {error.message || "Đã có lỗi không mong muốn xảy ra."}
+          Đã có lỗi không mong muốn xảy ra. Vui lòng thử lại.
         </p>
       </div>
       <Button size="sm" variant="outline" onClick={reset}>

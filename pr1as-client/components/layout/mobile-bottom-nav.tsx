@@ -25,6 +25,12 @@ export function MobileBottomNav() {
   // Admin dashboard có sidebar riêng — bottom nav dư thừa
   if (pathname.startsWith("/dashboard")) return null
 
+  // Trang auth (full-screen app style) — bottom nav gây rối, ẩn đi
+  const AUTH_ROUTES = ["/login", "/register", "/reset-password", "/verify-email"]
+  if (AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"))) {
+    return null
+  }
+
   // Bottom nav tối giản cho guest user (chưa đăng nhập)
   if (!isAuthenticated) {
     const guestTabs = [
@@ -35,13 +41,13 @@ export function MobileBottomNav() {
 
     return (
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
-        <div className="flex items-center justify-around px-2 pb-safe">
+        <div className="px-safe flex items-center justify-around px-2 pb-safe">
           {guestTabs.map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors",
+                "flex flex-1 flex-col items-center gap-0.5 py-2 transition-transform active:scale-90 touch-manipulation",
                 tab.isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -139,14 +145,14 @@ export function MobileBottomNav() {
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
-        <div className="flex items-center justify-around px-2 pb-safe">
+        <div className="px-safe flex items-center justify-around px-2 pb-safe">
           {navTabs.map((tab) => {
             const iconClass = cn(
               "size-6",
               tab.isActive && tab.type === "link" && "fill-foreground stroke-background",
             )
             const itemClass = cn(
-              "flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors",
+              "flex flex-1 flex-col items-center gap-0.5 py-2 transition-transform active:scale-90 touch-manipulation",
               tab.isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )
 

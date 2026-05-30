@@ -3,11 +3,11 @@
 import { FormEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { AuthHeader } from "@/components/auth/auth-header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
@@ -178,102 +178,105 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="items-center text-center">
-        <ShieldCheck className="size-10 text-primary" />
-        <CardTitle>Đăng nhập</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                ref={emailInputRef}
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="name@example.com"
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                inputMode="email"
-                maxLength={254}
+    <div className="flex flex-1 flex-col">
+      <AuthHeader
+        title="Chào mừng trở lại"
+        subtitle="Đăng nhập để tiếp tục với PR1AS"
+        className="pb-8 pt-6 sm:pt-2"
+      />
+
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+        <FieldGroup className="gap-5">
+          <Field>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              ref={emailInputRef}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@example.com"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              inputMode="email"
+              maxLength={254}
+              required
+              className="h-11 text-base"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+            <InputGroup className="h-11">
+              <InputGroupInput
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
                 required
+                minLength={8}
+                maxLength={128}
+                className="text-base"
               />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-              <InputGroup>
-                <InputGroupInput
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  minLength={8}
-                  maxLength={128}
-                />
-                <InputGroupAddon>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    onClick={() => setShowPassword((previous) => !previous)}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showPassword ? <EyeOff /> : <Eye />}
-                  </Button>
-                </InputGroupAddon>
-              </InputGroup>
-              <div className="flex justify-end">
+              <InputGroupAddon>
                 <Button
                   type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto px-0 py-0"
-                  onClick={handleForgotPassword}
-                  disabled={forgotPasswordMutation.isPending}
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => setShowPassword((previous) => !previous)}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
-                  {forgotPasswordMutation.isPending ? (
-                    <Loader2 className="animate-spin" />
-                  ) : null}
-                  Quên mật khẩu?
+                  {showPassword ? <EyeOff /> : <Eye />}
                 </Button>
-              </div>
-            </Field>
-          </FieldGroup>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loginMutation.isPending}
-          >
-            {loginMutation.isPending ? (
-              <Loader2 className="animate-spin" />
-            ) : null}
-            Đăng nhập
-          </Button>
-        </form>
+              </InputGroupAddon>
+            </InputGroup>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto px-0 py-0"
+                onClick={handleForgotPassword}
+                disabled={forgotPasswordMutation.isPending}
+              >
+                {forgotPasswordMutation.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : null}
+                Quên mật khẩu?
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
+        <Button
+          type="submit"
+          className="h-11 w-full text-base"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? (
+            <Loader2 className="animate-spin" />
+          ) : null}
+          Đăng nhập
+        </Button>
+      </form>
 
-        {pendingVerificationEmail ? (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleResendVerification}
-            disabled={resendVerificationMutation.isPending}
-          >
-            {resendVerificationMutation.isPending ? (
-              <Loader2 className="animate-spin" />
-            ) : null}
-            Gửi lại email xác minh
-          </Button>
-        ) : null}
+      {pendingVerificationEmail ? (
+        <Button
+          variant="outline"
+          className="mt-4 h-11 w-full text-base"
+          onClick={handleResendVerification}
+          disabled={resendVerificationMutation.isPending}
+        >
+          {resendVerificationMutation.isPending ? (
+            <Loader2 className="animate-spin" />
+          ) : null}
+          Gửi lại email xác minh
+        </Button>
+      ) : null}
 
-        {/* Google login is temporarily hidden to avoid OAuth client_id errors.
+      {/* Google login is temporarily hidden to avoid OAuth client_id errors.
         <Separator />
 
         <Button
@@ -297,16 +300,15 @@ export default function LoginPage() {
         </Button>
         */}
 
-        <p className="text-center text-sm text-muted-foreground">
-          Chưa có tài khoản?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-primary hover:underline"
-          >
-            Đăng ký
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
+        Chưa có tài khoản?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:underline"
+        >
+          Đăng ký
+        </Link>
+      </p>
+    </div>
   )
 }

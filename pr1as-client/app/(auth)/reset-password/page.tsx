@@ -3,19 +3,13 @@
 import { FormEvent, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react"
+import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { AuthHeader } from "@/components/auth/auth-header"
 import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
@@ -96,21 +90,25 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        {isSuccess ? (
-          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600 dark:text-emerald-400" />
-        ) : (
-          <ShieldCheck className="mx-auto mb-2 size-10 text-primary" />
-        )}
-        <CardTitle>Đặt lại mật khẩu</CardTitle>
-        <CardDescription>
-          {isSuccess
+    <div className="flex flex-1 flex-col">
+      <AuthHeader
+        title="Đặt lại mật khẩu"
+        subtitle={
+          isSuccess
             ? "Thành công! Đang chuyển về trang đăng nhập..."
-            : "Nhập mã đặt lại và mật khẩu mới để hoàn tất."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+            : "Nhập mã đặt lại và mật khẩu mới để hoàn tất."
+        }
+        mark={
+          isSuccess ? (
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="size-7" />
+            </div>
+          ) : undefined
+        }
+        className="pb-8 pt-6 sm:pt-2"
+      />
+
+      <div className="flex flex-1 flex-col gap-4">
         {!isSuccess ? (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
@@ -121,6 +119,7 @@ export default function ResetPasswordPage() {
                 onChange={(event) => setTokenInput(event.target.value)}
                 disabled={Boolean(tokenFromQuery)}
                 required
+                className="h-11 text-base"
               />
             </div>
             <div className="space-y-2">
@@ -134,7 +133,7 @@ export default function ResetPasswordPage() {
                   minLength={8}
                   maxLength={128}
                   required
-                  className="pr-10"
+                  className="h-11 pr-10 text-base"
                 />
                 <Button
                   type="button"
@@ -161,7 +160,7 @@ export default function ResetPasswordPage() {
                   minLength={8}
                   maxLength={128}
                   required
-                  className="pr-10"
+                  className="h-11 pr-10 text-base"
                 />
                 <Button
                   type="button"
@@ -185,7 +184,7 @@ export default function ResetPasswordPage() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="h-11 w-full text-base"
               disabled={resetPasswordMutation.isPending}
             >
               {resetPasswordMutation.isPending ? (
@@ -212,7 +211,7 @@ export default function ResetPasswordPage() {
           </Alert>
         ) : null}
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
           <Link
             href="/login"
             className="font-medium text-primary hover:underline"
@@ -220,7 +219,7 @@ export default function ResetPasswordPage() {
             Quay lại đăng nhập
           </Link>
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

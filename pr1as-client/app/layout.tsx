@@ -25,6 +25,12 @@ export const metadata: Metadata = {
   publisher: siteConfig.name,
   category: "service marketplace",
   metadataBase: new URL(siteConfig.url),
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: siteConfig.name,
+    statusBarStyle: "default",
+  },
   openGraph: {
     title: siteConfig.name,
     description: siteConfig.description,
@@ -52,6 +58,11 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // Cho phép env(safe-area-inset-*) hoạt động trên iPhone có notch / home indicator
+  viewportFit: "cover",
+  // Chặn auto-zoom khi focus input + double-tap zoom → cảm giác như app native.
+  // Lưu ý a11y: người dùng vẫn pinch-zoom được trên trình duyệt hiện đại.
+  maximumScale: 1,
 }
 
 export default async function RootLayout({

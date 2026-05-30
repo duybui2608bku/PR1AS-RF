@@ -582,7 +582,7 @@ export default function AdminPricingPage() {
           <CardHeader>
             <CardTitle>Không thể tải danh sách plan</CardTitle>
             <CardDescription>
-              Vui lòng kiểm tra quyền admin hoặc thử làm mới dữ liệu.
+              Đã xảy ra sự cố khi tải dữ liệu. Vui lòng thử lại.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -599,7 +599,8 @@ export default function AdminPricingPage() {
           <CardHeader>
             <CardTitle>Chưa có plan</CardTitle>
             <CardDescription>
-              Backend sẽ tự tạo các gói mặc định khi API pricing được gọi.
+              Hệ thống sẽ tự tạo các gói mặc định khi cần. Vui lòng làm mới sau
+              giây lát.
             </CardDescription>
           </CardHeader>
         </Card>

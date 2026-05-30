@@ -4,8 +4,6 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
 import { useTranslations } from "next-intl"
 import {
   Check,
@@ -43,6 +41,7 @@ import {
 } from "@/lib/hooks/use-comments"
 import { useAuthDialogStore } from "@/lib/store/auth-dialog-store"
 import { cn } from "@/lib/utils"
+import { formatRelativeOrDate } from "@/lib/utils/time"
 import type { CommentPublic, CommentThreadItem } from "@/types"
 
 const COMMENT_MAX_LENGTH = 2000
@@ -121,10 +120,16 @@ function CommentBodyRenderer({
           )
         }
         if (part.startsWith("#")) {
+          // Best-effort: comment không kèm slug nên dùng phần text thường hoá.
+          const slug = part.slice(1).toLowerCase()
           return (
-            <span key={i} className="cursor-pointer font-medium text-primary hover:underline">
+            <Link
+              key={i}
+              href={`/posts?hashtag=${encodeURIComponent(slug)}`}
+              className="font-medium text-primary hover:underline"
+            >
               {part}
-            </span>
+            </Link>
           )
         }
         return part
@@ -343,7 +348,7 @@ function CommentItem({
               <span className="text-sm font-semibold">{displayName}</span>
             )}
             <span className="text-xs text-muted-foreground">
-              {format(new Date(comment.created_at), "HH:mm dd/MM/yyyy", { locale: vi })}
+              {formatRelativeOrDate(comment.created_at)}
             </span>
           </div>
 
@@ -677,61 +682,70 @@ export function PostComments({
   if (!enabled) return null
 
   return (
-    <div className="mt-3 border-t pt-3">
+    <div className="flex min-h-0 flex-1 flex-col">
       {commentsLocked ? (
-        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+        <div className="mx-4 mt-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
           <Lock className="size-4" />
           {canBypassLock ? t("lockedByOwner") : t("lockedByAuthor")}
         </div>
       ) : null}
-      {isLoading ? (
-        <CommentsLoading />
-      ) : isError ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{t("loadError")}</p>
-      ) : (
-        <div className="space-y-4">
-          {threads.length === 0 ? (
-            <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
-              <MessageCircle className="size-4" />
-              {t("empty")}
-            </div>
-          ) : (
-            threads.map((thread) => (
-              <CommentThread
-                key={thread.id}
-                thread={thread}
-                postId={postId}
-                currentUserId={currentUserId}
-                canPostComment={canPostComment}
-                isPostOwner={isPostOwner}
-                replyTarget={replyTarget}
-                onReply={setReplyTarget}
-                onClearReplyTarget={() => setReplyTarget(null)}
-              />
-            ))
-          )}
 
-          <div ref={loadMoreRef} className="h-px" aria-hidden />
-          {isFetchingNextPage ? (
-            <div className="flex justify-center py-2">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : null}
+      {/* Danh sách bình luận — vùng cuộn */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        {isLoading ? (
+          <CommentsLoading />
+        ) : isError ? (
+          <p className="text-sm text-red-600 dark:text-red-400">{t("loadError")}</p>
+        ) : (
+          <div className="space-y-4">
+            {threads.length === 0 ? (
+              <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
+                <MessageCircle className="size-4" />
+                {t("empty")}
+              </div>
+            ) : (
+              threads.map((thread) => (
+                <CommentThread
+                  key={thread.id}
+                  thread={thread}
+                  postId={postId}
+                  currentUserId={currentUserId}
+                  canPostComment={canPostComment}
+                  isPostOwner={isPostOwner}
+                  replyTarget={replyTarget}
+                  onReply={setReplyTarget}
+                  onClearReplyTarget={() => setReplyTarget(null)}
+                />
+              ))
+            )}
 
-          {canPostComment ? (
-            <CommentForm postId={postId} parentCommentId={null} />
-          ) : !isAuthenticated ? (
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/60"
-              onClick={() => openAuthDialog(pathname)}
-            >
-              <MessageCircle className="size-4" />
-              {t("loginRequired")}
-            </button>
-          ) : null}
+            <div ref={loadMoreRef} className="h-px" aria-hidden />
+            {isFetchingNextPage ? (
+              <div className="flex justify-center py-2">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {/* Composer — ghim đáy sheet */}
+      {canPostComment ? (
+        <div className="border-t p-3 pb-safe">
+          <CommentForm postId={postId} parentCommentId={null} />
         </div>
-      )}
+      ) : !isAuthenticated ? (
+        <div className="border-t p-3 pb-safe">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/60"
+            onClick={() => openAuthDialog(pathname)}
+          >
+            <MessageCircle className="size-4" />
+            {t("loginRequired")}
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

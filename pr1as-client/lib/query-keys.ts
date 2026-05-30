@@ -104,6 +104,13 @@ export const queryKeys = {
     history: (params?: Record<string, unknown>) =>
       ["reputation", "history", params] as const,
   },
+  feedback: {
+    all: ["feedback"] as const,
+    mine: (params?: Record<string, unknown>) =>
+      ["feedback", "mine", params] as const,
+    admin: (params?: Record<string, unknown>) =>
+      ["feedback", "admin", params] as const,
+  },
   reputationConfig: {
     all: ["reputation-config"] as const,
   },

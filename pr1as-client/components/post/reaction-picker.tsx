@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ThumbsUp } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -50,7 +50,41 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
   const summary = post.reactions
   const myReaction = summary.my_reaction
   const myMeta = myReaction ? REACTION_META[myReaction] : null
-  const top = topReactionTypes(summary)
+
+  // Hỗ trợ cảm ứng: chạm = thích nhanh, giữ lâu = mở bảng cảm xúc.
+  const isTouch = useRef(false)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressed = useRef(false)
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
+  // Khi palette mở bằng cảm ứng, chạm ra ngoài để đóng (HoverCard không tự đóng khi không có hover).
+  useEffect(() => {
+    if (!open || !isTouch.current) return
+    const handler = (event: TouchEvent) => {
+      const target = event.target as HTMLElement | null
+      if (
+        target?.closest("[data-reaction-palette]") ||
+        target?.closest("[data-reaction-trigger]")
+      ) {
+        return
+      }
+      setOpen(false)
+    }
+    const id = window.setTimeout(
+      () => document.addEventListener("touchstart", handler),
+      0,
+    )
+    return () => {
+      window.clearTimeout(id)
+      document.removeEventListener("touchstart", handler)
+    }
+  }, [open])
 
   const handleToggle = (type: ReactionType) => {
     requireAuth(() => {
@@ -67,6 +101,8 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
       <HoverCard
         open={open}
         onOpenChange={(nextOpen) => {
+          // Trên cảm ứng, việc mở/đóng do long-press + tap-outside điều khiển.
+          if (isTouch.current) return
           if (nextOpen) {
             requireAuth(() => setOpen(true))
           } else {
@@ -81,12 +117,31 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
             type="button"
             variant="ghost"
             size="sm"
+            data-reaction-trigger
             className={cn(
-              "flex-1 gap-1.5 text-muted-foreground",
+              "h-10 flex-1 gap-1.5 text-muted-foreground",
               myMeta && myMeta.color,
               myMeta && "font-semibold",
             )}
-            onClick={() => handleToggle(myReaction ?? "like")}
+            onClick={() => {
+              if (isTouch.current) return // cảm ứng xử lý ở touch handlers
+              handleToggle(myReaction ?? "like")
+            }}
+            onTouchStart={() => {
+              isTouch.current = true
+              longPressed.current = false
+              cancelLongPress()
+              longPressTimer.current = setTimeout(() => {
+                longPressed.current = true
+                requireAuth(() => setOpen(true))
+              }, 400)
+            }}
+            onTouchMove={cancelLongPress}
+            onTouchEnd={(event) => {
+              cancelLongPress()
+              event.preventDefault() // chặn click tổng hợp
+              if (!longPressed.current) handleToggle(myReaction ?? "like")
+            }}
             disabled={toggleReaction.isPending}
           >
             {myMeta ? (
@@ -100,6 +155,7 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
         <HoverCardContent
           side="top"
           align="start"
+          data-reaction-palette
           className="flex w-auto items-center gap-1 rounded-full border bg-popover p-1.5 shadow-lg"
         >
           {REACTION_TYPES.map((type) => {
@@ -114,7 +170,7 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
                 disabled={toggleReaction.isPending}
                 onClick={() => handleToggle(type)}
                 className={cn(
-                  "rounded-full p-1 text-2xl leading-none transition-transform hover:-translate-y-0.5 hover:scale-125",
+                  "flex size-11 items-center justify-center rounded-full text-2xl leading-none transition-transform hover:-translate-y-0.5 hover:scale-125 active:scale-110 sm:size-9",
                   isActive && "ring-2 ring-primary",
                 )}
               >

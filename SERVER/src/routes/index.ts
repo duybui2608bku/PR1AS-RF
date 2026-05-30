@@ -19,6 +19,7 @@ import { reactionRoutes } from "./reaction";
 import { moderationRoutes } from "./moderation";
 import reputationRoutes from "./reputation/reputation.routes";
 import reputationConfigRoutes from "./reputation/reputation-config.routes";
+import feedbackRoutes from "./feedback";
 import { csrfToken } from "../middleware/csrf";
 import { CSRF_CONSTANTS } from "../constants/csrf";
 import { R } from "../utils/response";
@@ -53,5 +54,6 @@ router.use("/reactions", reactionRoutes);
 router.use("/moderation", moderationRoutes);
 router.use("/reputation", reputationRoutes);
 router.use("/admin/reputation-config", reputationConfigRoutes);
+router.use("/feedback", feedbackRoutes);
 
 export default router;

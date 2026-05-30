@@ -5,9 +5,9 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { CheckCircle2, Loader2, Mail, XCircle } from "lucide-react"
 
+import { AuthHeader } from "@/components/auth/auth-header"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
@@ -73,27 +73,37 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        {status === "success" ? (
-          <CheckCircle2 className="mx-auto mb-2 size-10 text-emerald-600 dark:text-emerald-400" />
-        ) : status === "error" ? (
-          <XCircle className="mx-auto mb-2 size-10 text-destructive" />
-        ) : (
-          <Mail className="mx-auto mb-2 size-10 text-primary" />
-        )}
-        <CardTitle>Xác minh email</CardTitle>
-        <CardDescription>
-          {status === "loading"
+    <div className="flex flex-1 flex-col">
+      <AuthHeader
+        title="Xác minh email"
+        subtitle={
+          status === "loading"
             ? "Đang xác minh tài khoản..."
             : status === "success"
               ? "Xác minh thành công."
               : status === "error"
                 ? "Xác minh thất bại hoặc link đã hết hạn."
-                : "Không tìm thấy token xác minh. Bạn có thể gửi lại email."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+                : "Không tìm thấy token xác minh. Bạn có thể gửi lại email."
+        }
+        mark={
+          status === "success" ? (
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="size-7" />
+            </div>
+          ) : status === "error" ? (
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+              <XCircle className="size-7" />
+            </div>
+          ) : (
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Mail className="size-7" />
+            </div>
+          )
+        }
+        className="pb-8 pt-6 sm:pt-2"
+      />
+
+      <div className="flex flex-1 flex-col gap-4">
         {status === "loading" ? (
           <div className="flex justify-center py-4">
             <Loader2 className="size-6 animate-spin text-primary" />
@@ -101,7 +111,10 @@ export default function VerifyEmailPage() {
         ) : null}
 
         {status === "success" ? (
-          <Button className="w-full" onClick={() => router.push("/login")}>
+          <Button
+            className="h-11 w-full text-base"
+            onClick={() => router.push("/login")}
+          >
             Đi đến đăng nhập
           </Button>
         ) : (
@@ -114,11 +127,18 @@ export default function VerifyEmailPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
+                className="h-11 text-base"
               />
             </div>
 
-            <Button className="w-full" type="submit" disabled={resendVerificationMutation.isPending}>
-              {resendVerificationMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            <Button
+              className="h-11 w-full text-base"
+              type="submit"
+              disabled={resendVerificationMutation.isPending}
+            >
+              {resendVerificationMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Gửi lại email xác minh
             </Button>
           </form>
@@ -131,12 +151,12 @@ export default function VerifyEmailPage() {
           </Alert>
         ) : null}
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
           <Link href="/login" className="font-medium text-primary hover:underline">
             Quay lại đăng nhập
           </Link>
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

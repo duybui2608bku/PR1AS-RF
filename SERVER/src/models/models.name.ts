@@ -31,4 +31,5 @@ export const modelsName = {
   REPUTATION_HISTORY: "reputation_histories",
   JOB_LOCK: "job_locks",
   WORKER_BLACKOUT: "worker_blackouts",
+  FEEDBACK: "feedbacks",
 };

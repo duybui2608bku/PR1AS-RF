@@ -248,7 +248,7 @@ export default function ReputationConfigPage() {
           <CardHeader>
             <CardTitle>Không thể tải cấu hình</CardTitle>
             <CardDescription>
-              Vui lòng kiểm tra quyền admin hoặc thử làm mới dữ liệu.
+              Đã xảy ra sự cố khi tải dữ liệu. Vui lòng thử lại.
             </CardDescription>
           </CardHeader>
           <CardContent>

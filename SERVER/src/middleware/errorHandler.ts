@@ -89,11 +89,11 @@ export const errorHandler = (
 };
 
 export const notFoundHandler = (
-  req: Request,
+  _req: Request,
   _res: Response,
   next: NextFunction
 ): void => {
-  next(AppError.notFound(`${ERROR_MESSAGES.NOT_FOUND}: ${req.originalUrl}`));
+  next(AppError.notFound(ERROR_MESSAGES.NOT_FOUND));
 };
 
 export { AppError } from "../utils/AppError";

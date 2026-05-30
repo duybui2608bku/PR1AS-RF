@@ -118,8 +118,7 @@ export default async function PricingPage() {
           <Alert variant="destructive" className="mx-auto mt-10 max-w-2xl">
             <AlertTitle>Không thể tải bảng giá</AlertTitle>
             <AlertDescription>
-              Không lấy được dữ liệu từ API. Vui lòng kiểm tra backend và thử
-              lại.
+              Đã xảy ra sự cố khi tải bảng giá. Vui lòng thử lại sau giây lát.
             </AlertDescription>
           </Alert>
         ) : (

@@ -1,10 +1,8 @@
 "use client"
 
-import { useEffect, useState, type ChangeEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
 import { useTranslations } from "next-intl"
 import {
   ChevronLeft,
@@ -61,9 +59,10 @@ import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
+import { formatRelativeOrDate } from "@/lib/utils/time"
 import type { PostPublic } from "@/types"
+import { CommentsSheet } from "./comments-sheet"
 import { EditPostDialog } from "./edit-post-dialog"
-import { PostComments } from "./post-comments"
 import { REACTION_META, ReactionPicker, topReactionTypes } from "./reaction-picker"
 import { Textarea } from "@/components/ui/textarea"
 import type { ReportReason } from "@/services/moderation.service"
@@ -115,19 +114,33 @@ function AuthorAvatar({
   )
 }
 
-function PostBodyWithHashtags({ body }: { body: string }) {
+function PostBodyWithHashtags({
+  body,
+  hashtags,
+}: {
+  body: string
+  hashtags: PostPublic["hashtags"]
+}) {
+  // Map "#display" (thường hoá) → slug để link chính xác về trang lọc hashtag.
+  const slugByDisplay = new Map(
+    hashtags.map((h) => [`#${h.display.toLowerCase()}`, h.slug]),
+  )
   const parts = body.split(/(#[\p{L}\p{N}_]{1,50})/gu)
   return (
     <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
-      {parts.map((part, i) =>
-        part.startsWith("#") ? (
-          <span key={i} className="font-medium text-primary cursor-pointer hover:underline">
+      {parts.map((part, i) => {
+        if (!part.startsWith("#")) return part
+        const slug = slugByDisplay.get(part.toLowerCase()) ?? part.slice(1).toLowerCase()
+        return (
+          <Link
+            key={i}
+            href={`/posts?hashtag=${encodeURIComponent(slug)}`}
+            className="font-medium text-primary hover:underline"
+          >
             {part}
-          </span>
-        ) : (
-          part
-        ),
-      )}
+          </Link>
+        )
+      })}
     </p>
   )
 }
@@ -177,6 +190,10 @@ function MediaSlider({
   const t = useTranslations("PostCard")
   const item = items[currentIndex]
   const hasMultiple = items.length > 1
+  const touchStartX = useRef<number | null>(null)
+
+  const goNext = () => onChange((currentIndex + 1) % items.length)
+  const goPrev = () => onChange((currentIndex - 1 + items.length) % items.length)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -238,7 +255,21 @@ function MediaSlider({
         </>
       ) : null}
 
-      <div className="flex h-full items-center justify-center p-4 sm:p-8">
+      <div
+        className="flex h-full items-center justify-center p-4 sm:p-8"
+        onTouchStart={(event) => {
+          touchStartX.current = event.touches[0]?.clientX ?? null
+        }}
+        onTouchEnd={(event) => {
+          if (touchStartX.current === null || !hasMultiple) return
+          const dx = (event.changedTouches[0]?.clientX ?? 0) - touchStartX.current
+          if (Math.abs(dx) > 50) {
+            if (dx < 0) goNext()
+            else goPrev()
+          }
+          touchStartX.current = null
+        }}
+      >
         {item.type === "video" ? (
           <video
             src={item.url}
@@ -366,10 +397,7 @@ export function PostCard({ post }: Props) {
     menuOpen && isAuthenticated && !canManagePost
   )
   const hasOpenPostReport = Boolean(openPostReportQuery.data)
-  const timeAgo = formatDistanceToNow(new Date(post.created_at), {
-    addSuffix: true,
-    locale: vi,
-  })
+  const timeAgo = formatRelativeOrDate(post.created_at)
   const workerHref = post.author.has_worker_profile ? `/worker/${post.author.id}` : null
 
   const handleDelete = async () => {
@@ -416,7 +444,7 @@ export function PostCard({ post }: Props) {
   }
 
   return (
-    <article className="rounded-xl border bg-card p-4 shadow-sm">
+    <article className="border-b bg-card p-4 sm:rounded-xl sm:border sm:shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {workerHref ? (
@@ -460,11 +488,11 @@ export function PostCard({ post }: Props) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="size-8 p-0"
+              size="icon"
+              className="-mr-1 size-9 shrink-0 text-muted-foreground active:scale-90"
               aria-label={t("menuLabel")}
             >
-              <MoreHorizontal className="size-4" />
+              <MoreHorizontal className="size-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -553,7 +581,7 @@ export function PostCard({ post }: Props) {
       </div>
 
       <div className="mb-3">
-        <PostBodyWithHashtags body={post.body} />
+        <PostBodyWithHashtags body={post.body} hashtags={post.hashtags} />
       </div>
 
       {post.media.length > 0 ? (
@@ -565,8 +593,10 @@ export function PostCard({ post }: Props) {
       {post.hashtags.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {post.hashtags.map((tag) => (
-            <Badge key={tag.slug} variant="secondary" className="cursor-pointer text-xs">
-              #{tag.display}
+            <Badge key={tag.slug} asChild variant="secondary" className="text-xs">
+              <Link href={`/posts?hashtag=${encodeURIComponent(tag.slug)}`}>
+                #{tag.display}
+              </Link>
             </Badge>
           ))}
         </div>
@@ -624,9 +654,11 @@ export function PostCard({ post }: Props) {
         </div>
       </div>
 
-      <PostComments
+      <CommentsSheet
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
         postId={post.id}
-        enabled={commentsOpen}
+        commentsCount={post.comments_count}
         currentUserId={user?.id}
         isAuthenticated={isAuthenticated}
         commentsLocked={post.comments_locked}

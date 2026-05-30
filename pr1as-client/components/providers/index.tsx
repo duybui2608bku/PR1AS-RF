@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 
 import { QueryProvider } from "@/components/providers/query-provider"
+import { ServiceWorkerRegister } from "@/components/providers/service-worker-register"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { BannedAccountModal } from "@/components/providers/banned-account-modal"
@@ -55,6 +56,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthBroadcastListener />
         {/* Global mobile bottom nav — hiển thị trên mọi trang, kể cả /chat */}
         <MobileBottomNav />
+        {/* Đăng ký service worker (production) để bật PWA */}
+        <ServiceWorkerRegister />
       </QueryProvider>
     </ThemeProvider>
   )

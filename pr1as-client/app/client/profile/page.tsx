@@ -7,6 +7,10 @@ import {
   Building2,
   Camera,
   CalendarDays,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
   Loader2,
   Mail,
   PencilLine,
@@ -14,15 +18,23 @@ import {
   ShieldCheck,
   User,
   UserCog,
+  X,
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
+import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { isPasswordStrong } from "@/lib/auth/password.utils"
 import { useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
-import { ProfileEditModal } from "@/app/client/profile/components/profile-edit-modal"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
@@ -65,38 +77,52 @@ export default function ClientProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const avatarEditor = useImageEditorQueue()
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
   const profileData = meQuery.data?.data?.user ?? user
   const userRoles = profileData?.roles ?? []
   const displayName = profileData?.full_name ?? "Người dùng"
   const reputationScore = getReputationScore(profileData?.meta_data?.reputation_score)
 
-  const closeModal = () => setIsEditModalOpen(false)
-
-  const handleUpdateProfile = async (payload: {
-    full_name: string | null
-    phone: string | null
-    old_password?: string
-    password?: string
-  }) => {
-    if (!profileData) return
-    if ((payload.old_password && !payload.password) || (!payload.old_password && payload.password)) {
-      toast.warning("Nhập đủ mật khẩu cũ và mật khẩu mới nếu bạn muốn đổi mật khẩu.")
-      return
-    }
-
+  // Lưu một field cơ bản (tên / sđt). API cập nhật từng phần nên chỉ gửi field đổi.
+  const saveBasic = async (payload: {
+    full_name?: string | null
+    phone?: string | null
+  }): Promise<boolean> => {
     try {
       const response = await updateProfileMutation.mutateAsync(payload)
       if (!response.success) {
         toast.error(localizeServerMessage(response.message, "Cập nhật thất bại."))
-        return
+        return false
       }
-
       toast.success("Cập nhật hồ sơ thành công.")
-      closeModal()
+      return true
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể cập nhật hồ sơ."))
+      return false
+    }
+  }
+
+  const savePassword = async (
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<boolean> => {
+    if (!isPasswordStrong(newPassword)) {
+      toast.error("Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.")
+      return false
+    }
+    try {
+      const response = await updateProfileMutation.mutateAsync({
+        old_password: oldPassword,
+        password: newPassword,
+      })
+      if (!response.success) {
+        toast.error(localizeServerMessage(response.message, "Đổi mật khẩu thất bại."))
+        return false
+      }
+      toast.success("Đổi mật khẩu thành công.")
+      return true
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Không thể đổi mật khẩu."))
+      return false
     }
   }
 
@@ -136,85 +162,94 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <div className="space-y-5">
-        <Card className="overflow-hidden border-border/70">
-         
-          <CardContent className="flex flex-col gap-5 p-6 md:flex-row md:items-end md:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {profileData?.avatar ? (
-                  <Image
-                    src={profileData.avatar}
-                    alt={displayName}
-                    width={96}
-                    height={96}
-                    className="size-24 rounded-full border-4 border-background object-cover shadow-sm"
-                  />
-                ) : (
-                  <div className="flex size-24 items-center justify-center rounded-full border-4 border-background bg-muted shadow-sm">
-                    <User className="size-8 text-muted-foreground" />
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarSelect}
+    <div className="mx-auto w-full max-w-4xl pb-10 sm:px-4 sm:py-8">
+      <div className="space-y-4 sm:space-y-5">
+        <Card className="overflow-hidden border-border/70 max-sm:rounded-none max-sm:border-x-0">
+          <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
+            <div className="relative">
+              {profileData?.avatar ? (
+                <Image
+                  src={profileData.avatar}
+                  alt={displayName}
+                  width={96}
+                  height={96}
+                  className="size-24 rounded-full border-4 border-background object-cover shadow-sm"
                 />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingAvatar}
-                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-                  aria-label="Cập nhật ảnh đại diện"
-                >
-                  {isUploadingAvatar ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-                </button>
+              ) : (
+                <div className="flex size-24 items-center justify-center rounded-full border-4 border-background bg-muted shadow-sm">
+                  <User className="size-8 text-muted-foreground" />
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarSelect}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border bg-background shadow transition hover:bg-muted active:scale-90 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Cập nhật ảnh đại diện"
+              >
+                {isUploadingAvatar ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+              </button>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+                <BadgeCheck className="size-5 text-foreground" />
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
-                  <BadgeCheck className="size-5 text-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground">{profileData?.email ?? "—"}</p>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
-                    <ShieldCheck className="size-3.5" />
-                    Điểm uy tín {reputationScore}/100
+              <p className="text-sm text-muted-foreground">{profileData?.email ?? "—"}</p>
+              <div className="flex flex-wrap justify-center gap-2 pt-1">
+                <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+                  <ShieldCheck className="size-3.5" />
+                  Điểm uy tín {reputationScore}/100
+                </span>
+                {userRoles.map((role) => (
+                  <span key={role} className="rounded-full bg-muted px-3 py-1 text-xs capitalize text-muted-foreground">
+                    {role}
                   </span>
-                  {userRoles.map((role) => (
-                    <span key={role} className="rounded-full bg-muted px-3 py-1 text-xs capitalize text-muted-foreground">
-                      {role}
-                    </span>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
-            <Button className="gap-2" onClick={() => setIsEditModalOpen(true)}>
-              <PencilLine className="size-4" />
-            </Button>
           </CardContent>
         </Card>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <Card>
+        <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
+          <Card className="max-sm:rounded-none max-sm:border-x-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <UserCog className="size-5 text-foreground" />
                 Chi tiết tài khoản
               </CardTitle>
-              <CardDescription>Họ và tên · Email · Số điện thoại</CardDescription>
+              <CardDescription>Chạm biểu tượng bút để sửa từng mục</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <InfoRow icon={<User className="size-4" />} label="Họ và tên" value={profileData?.full_name ?? "—"} />
+              <EditableField
+                icon={<User className="size-4" />}
+                label="Họ và tên"
+                value={profileData?.full_name}
+                placeholder="Nhập họ và tên"
+                disabled={updateProfileMutation.isPending}
+                onSave={(next) => saveBasic({ full_name: next })}
+              />
               <InfoRow icon={<Mail className="size-4" />} label="Email" value={profileData?.email ?? "—"} />
-              <InfoRow icon={<Phone className="size-4" />} label="Số điện thoại" value={profileData?.phone ?? "—"} />
+              <EditableField
+                icon={<Phone className="size-4" />}
+                label="Số điện thoại"
+                value={profileData?.phone}
+                placeholder="Nhập số điện thoại"
+                inputType="tel"
+                disabled={updateProfileMutation.isPending}
+                onSave={(next) => saveBasic({ phone: next })}
+              />
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="max-sm:rounded-none max-sm:border-x-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ShieldCheck className="size-5 text-foreground" />
@@ -260,7 +295,23 @@ export default function ClientProfilePage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="max-sm:rounded-none max-sm:border-x-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <KeyRound className="size-5 text-foreground" />
+              Bảo mật
+            </CardTitle>
+            <CardDescription>Đổi mật khẩu đăng nhập của bạn</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm">
+            <PasswordEditRow
+              disabled={updateProfileMutation.isPending}
+              onSave={savePassword}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="max-sm:rounded-none max-sm:border-x-0">
           <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -292,14 +343,6 @@ export default function ClientProfilePage() {
         </Card>
       </div>
 
-      <ProfileEditModal
-        open={isEditModalOpen}
-        initialFullName={profileData?.full_name}
-        initialPhone={profileData?.phone}
-        isSubmitting={updateProfileMutation.isPending}
-        onClose={closeModal}
-        onSubmit={handleUpdateProfile}
-      />
       <ImageEditorDialog
         file={avatarEditor.currentFile}
         aspect={1}
@@ -321,11 +364,260 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b pb-2 last:border-b-0 last:pb-0">
-      <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-right font-medium">{value}</div>
+      <div className="min-w-0 break-all text-right font-medium">{value}</div>
+    </div>
+  )
+}
+
+/** Một field sửa được tại chỗ: hiển thị giá trị + nút bút; bấm vào để sửa ngay. */
+function EditableField({
+  icon,
+  label,
+  value,
+  placeholder,
+  inputType = "text",
+  onSave,
+  disabled,
+}: {
+  icon: ReactNode
+  label: string
+  value: string | null | undefined
+  placeholder?: string
+  inputType?: string
+  onSave: (next: string | null) => Promise<boolean>
+  disabled?: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value ?? "")
+  const [saving, setSaving] = useState(false)
+
+  const cancel = () => {
+    setEditing(false)
+    setDraft(value ?? "")
+  }
+
+  const save = async () => {
+    if (saving) return
+    const trimmed = draft.trim()
+    if (trimmed === (value ?? "").trim()) {
+      setEditing(false)
+      return
+    }
+    setSaving(true)
+    const ok = await onSave(trimmed ? trimmed : null)
+    setSaving(false)
+    if (ok) setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="border-b pb-3 last:border-b-0 last:pb-0">
+        <div className="mb-1.5 flex items-center gap-2 text-muted-foreground">
+          {icon}
+          <span>{label}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            value={draft}
+            type={inputType}
+            placeholder={placeholder}
+            autoFocus
+            disabled={saving}
+            className="h-10 text-base"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                void save()
+              } else if (event.key === "Escape") {
+                cancel()
+              }
+            }}
+          />
+          <Button
+            type="button"
+            size="icon"
+            className="size-10 shrink-0"
+            onClick={() => void save()}
+            disabled={saving}
+            aria-label="Lưu"
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="size-10 shrink-0"
+            onClick={cancel}
+            disabled={saving}
+            aria-label="Hủy"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b pb-2 last:border-b-0 last:pb-0">
+      <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate font-medium">{value || "—"}</span>
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(value ?? "")
+            setEditing(true)
+          }}
+          disabled={disabled}
+          aria-label={`Sửa ${label}`}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground active:scale-90 disabled:opacity-50"
+        >
+          <PencilLine className="size-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Đổi mật khẩu tại chỗ — mở rộng inline thay vì mở modal. */
+function PasswordEditRow({
+  onSave,
+  disabled,
+}: {
+  onSave: (oldPassword: string, newPassword: string) => Promise<boolean>
+  disabled?: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [oldPassword, setOldPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [showOld, setShowOld] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const reset = () => {
+    setOldPassword("")
+    setNewPassword("")
+    setShowOld(false)
+    setShowNew(false)
+  }
+  const cancel = () => {
+    setEditing(false)
+    reset()
+  }
+  const canSave = oldPassword.length > 0 && newPassword.length >= 8 && !saving
+
+  const save = async () => {
+    if (!canSave) return
+    setSaving(true)
+    const ok = await onSave(oldPassword, newPassword)
+    setSaving(false)
+    if (ok) {
+      setEditing(false)
+      reset()
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
+          <KeyRound className="size-4" />
+          <span>Mật khẩu</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium tracking-widest">••••••••</span>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            disabled={disabled}
+            aria-label="Đổi mật khẩu"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground active:scale-90 disabled:opacity-50"
+          >
+            <PencilLine className="size-4" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <span className="text-muted-foreground">Mật khẩu hiện tại</span>
+        <InputGroup className="h-10">
+          <InputGroupInput
+            type={showOld ? "text" : "password"}
+            value={oldPassword}
+            onChange={(event) => setOldPassword(event.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            maxLength={128}
+            className="text-base"
+          />
+          <InputGroupAddon>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => setShowOld((prev) => !prev)}
+              aria-label={showOld ? "Ẩn mật khẩu cũ" : "Hiện mật khẩu cũ"}
+            >
+              {showOld ? <EyeOff /> : <Eye />}
+            </Button>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+
+      <div className="space-y-1.5">
+        <span className="text-muted-foreground">Mật khẩu mới</span>
+        <InputGroup className="h-10">
+          <InputGroupInput
+            type={showNew ? "text" : "password"}
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={128}
+            className="text-base"
+          />
+          <InputGroupAddon>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => setShowNew((prev) => !prev)}
+              aria-label={showNew ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+            >
+              {showNew ? <EyeOff /> : <Eye />}
+            </Button>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+
+      <PasswordStrengthChecklist password={newPassword} title="Yêu cầu mật khẩu mới" />
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={cancel} disabled={saving}>
+          Hủy
+        </Button>
+        <Button type="button" onClick={() => void save()} disabled={!canSave}>
+          {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+          Lưu mật khẩu
+        </Button>
+      </div>
     </div>
   )
 }

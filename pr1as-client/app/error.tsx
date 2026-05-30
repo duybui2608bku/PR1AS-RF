@@ -3,7 +3,6 @@
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
-import { localizeServerMessage } from "@/lib/utils/error-handler"
 
 export default function RouteError({
   error,
@@ -23,10 +22,7 @@ export default function RouteError({
         Ứng dụng gặp lỗi ngoài ý muốn
       </h1>
       <p className="text-muted-foreground max-w-md text-sm">
-        {localizeServerMessage(
-          error.message,
-          "Vui lòng thử lại. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ."
-        )}
+        Vui lòng thử lại. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ.
       </p>
       {error.digest ? (
         <p className="text-muted-foreground/80 font-mono text-xs">
