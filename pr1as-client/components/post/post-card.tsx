@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import { createPortal } from "react-dom"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -329,14 +330,17 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
             />
           </button>
         )}
-        {viewerIndex !== null ? (
-          <MediaSlider
-            items={sorted}
-            currentIndex={viewerIndex}
-            onChange={setViewerIndex}
-            onClose={() => setViewerIndex(null)}
-          />
-        ) : null}
+        {viewerIndex !== null
+          ? createPortal(
+              <MediaSlider
+                items={sorted}
+                currentIndex={viewerIndex}
+                onChange={setViewerIndex}
+                onClose={() => setViewerIndex(null)}
+              />,
+              document.body
+            )
+          : null}
       </div>
     )
   }
@@ -362,14 +366,17 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
         ))}
       </div>
 
-      {viewerIndex !== null ? (
-        <MediaSlider
-          items={sorted}
-          currentIndex={viewerIndex}
-          onChange={setViewerIndex}
-          onClose={() => setViewerIndex(null)}
-        />
-      ) : null}
+      {viewerIndex !== null
+        ? createPortal(
+            <MediaSlider
+              items={sorted}
+              currentIndex={viewerIndex}
+              onChange={setViewerIndex}
+              onClose={() => setViewerIndex(null)}
+            />,
+            document.body
+          )
+        : null}
     </>
   )
 }
