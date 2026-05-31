@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { getChatSocket } from "@/lib/chat-socket"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 import { localizeServerMessage } from "@/lib/utils/error-handler"
 
 export type ChatSocketStatus =
@@ -16,12 +16,15 @@ export type ChatSocketStatus =
 export function useChatSocket() {
   const token = useAuthStore((s) => s.token)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hasHydrated = useHasHydrated()
   const [status, setStatus] = React.useState<ChatSocketStatus>("idle")
   const [error, setError] = React.useState<string | null>(null)
-  // Dùng isAuthenticated thay vì token: sau reload token = null nhưng cookie vẫn hợp lệ
+  // Chờ Zustand hydrate từ sessionStorage trước khi tạo socket.
+  // Nếu tạo socket trước khi biết auth state thật, useNotificationSocket có thể
+  // disconnect socket singleton trong cùng render cycle → socket phải tạo lại.
   const socket = React.useMemo(
-    () => (isAuthenticated ? getChatSocket(token) : null),
-    [token, isAuthenticated]
+    () => (hasHydrated && isAuthenticated ? getChatSocket(token) : null),
+    [hasHydrated, token, isAuthenticated]
   )
 
   React.useEffect(() => {

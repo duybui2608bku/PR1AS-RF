@@ -54,11 +54,18 @@ type AuthState = {
   isAuthenticated: boolean
   /** Set while a logout-on-401 is in flight to avoid multiple cascading logouts. */
   isLoggingOut: boolean
+  /**
+   * True after Zustand has rehydrated from sessionStorage.
+   * Use this to guard effects/redirects that must not fire before auth state is known.
+   * Intentionally NOT persisted — resets to false on every page load.
+   */
+  _hasHydrated: boolean
   setAuth: (payload: { user: AuthUser; token: string; refreshToken?: string | null }) => void
   /** Updates user info without touching the token (e.g. after role switch or profile update). */
   setUser: (user: AuthUser) => void
   clearAuth: () => void
   setLoggingOut: (value: boolean) => void
+  _setHasHydrated: () => void
 }
 
 // Auth state is persisted to sessionStorage (cleared when the tab closes)
@@ -82,6 +89,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoggingOut: false,
+      _hasHydrated: false,
       setAuth: ({ user, token, refreshToken = null }) => {
         removeLegacyAuthToken()
         setActiveRoleCookie(getActiveRole(user))
@@ -107,6 +115,7 @@ export const useAuthStore = create<AuthState>()(
         })
       },
       setLoggingOut: (value) => set({ isLoggingOut: value }),
+      _setHasHydrated: () => set({ _hasHydrated: true }),
     }),
     {
       name: "auth-storage",
@@ -118,7 +127,14 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        // _hasHydrated intentionally excluded — must reset to false on every page load
       }),
+      onRehydrateStorage: () => (state) => {
+        state?._setHasHydrated()
+      },
     }
   )
 )
+
+/** True once Zustand has finished reading from sessionStorage. */
+export const useHasHydrated = () => useAuthStore((s) => s._hasHydrated)

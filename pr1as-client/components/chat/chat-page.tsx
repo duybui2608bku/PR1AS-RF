@@ -70,7 +70,7 @@ import {
 import { useBlockUser, useUnblockUser } from "@/lib/hooks/use-moderation"
 import { useMarkNotificationsByConversation } from "@/lib/hooks/use-notifications"
 import { queryKeys } from "@/lib/query-keys"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import type {
   ChatConversation,
@@ -389,6 +389,7 @@ export function ChatPage({
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hasHydrated = useHasHydrated()
   const activeRole = getActiveRole(user)
   const initialReceiverIdValue = initialReceiverId?.trim() ?? ""
   const shouldStartNewDirect = Boolean(
@@ -440,6 +441,12 @@ export function ChatPage({
   >({})
   const previousActiveRoleRef = React.useRef(activeRole)
 
+  // Refs để socket event handlers luôn đọc giá trị mới nhất mà không cần
+  // thêm vào dependency array → tránh detach/re-attach listeners khi conversation thay đổi
+  const activeDirectIdRef = React.useRef<string | null>(null)
+  const activeGroupIdRef = React.useRef<string | null>(null)
+  const userIdRef = React.useRef<string | undefined>(undefined)
+
   const isAdminUser = Boolean(user?.roles?.includes("admin"))
 
   const { socket } = useChatSocket()
@@ -488,6 +495,11 @@ export function ChatPage({
   const activeGroupId =
     selectedGroupId ??
     (mode === "group" ? (groupConversations[0]?._id ?? null) : null)
+
+  // Cập nhật refs mỗi render để socket handlers luôn dùng giá trị hiện tại
+  activeDirectIdRef.current = activeDirectId
+  activeGroupIdRef.current = activeGroupId
+  userIdRef.current = user?.id
 
   const selectedDirectFromList = isDirectComposerOpen
     ? undefined
@@ -614,10 +626,13 @@ export function ChatPage({
       : null
 
   React.useEffect(() => {
+    // Chờ Zustand hydrate từ sessionStorage trước khi redirect.
+    // Trước hydration, isAuthenticated=false ngay cả với user đã đăng nhập → tránh redirect loop.
+    if (!hasHydrated) return
     if (!isAuthenticated) {
       router.replace("/login")
     }
-  }, [isAuthenticated, router])
+  }, [hasHydrated, isAuthenticated, router])
 
   React.useEffect(() => {
     if (previousActiveRoleRef.current === activeRole) return
@@ -702,8 +717,8 @@ export function ChatPage({
         })
 
         if (
-          message.conversation_group_id === activeGroupId &&
-          message.sender_id !== user?.id
+          message.conversation_group_id === activeGroupIdRef.current &&
+          message.sender_id !== userIdRef.current
         ) {
           socket.emit("mark_group_read", {
             conversation_group_id: message.conversation_group_id,
@@ -721,8 +736,8 @@ export function ChatPage({
       })
 
       if (
-        message.conversation_id === activeDirectId &&
-        message.receiver_id === user?.id
+        message.conversation_id === activeDirectIdRef.current &&
+        message.receiver_id === userIdRef.current
       ) {
         socket.emit("mark_read", { conversation_id: message.conversation_id })
       }
@@ -777,7 +792,7 @@ export function ChatPage({
       user_id: string
       is_typing: boolean
     }) => {
-      if (payload.user_id === user?.id) return
+      if (payload.user_id === userIdRef.current) return
       setTyping(
         `direct:${payload.conversation_id}`,
         payload.user_id,
@@ -790,7 +805,7 @@ export function ChatPage({
       user_id: string
       is_typing: boolean
     }) => {
-      if (payload.user_id === user?.id) return
+      if (payload.user_id === userIdRef.current) return
       setTyping(
         `group:${payload.conversation_group_id}`,
         payload.user_id,
@@ -823,7 +838,9 @@ export function ChatPage({
       socket.off("group_user_typing", handleGroupTyping)
       socket.off("error", handleSocketError)
     }
-  }, [activeDirectId, activeGroupId, queryClient, setTyping, socket, user?.id])
+  // activeDirectId, activeGroupId, user?.id đọc qua refs → không cần trong deps
+  // Chỉ re-register listeners khi socket instance thay đổi
+  }, [queryClient, setTyping, socket])
 
   React.useEffect(() => {
     const typingClearTimers = typingClearTimersRef.current
@@ -1222,7 +1239,9 @@ export function ChatPage({
     await unblockUserMutation.mutateAsync(directReceiverId)
   }
 
-  if (!isAuthenticated) {
+  // Hiện spinner trong lúc Zustand đang hydrate từ sessionStorage.
+  // Tránh redirect/render sai khi isAuthenticated vẫn còn là initial false.
+  if (!hasHydrated || !isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -2088,6 +2107,18 @@ function MessagePane({
   const [messageSelection, setMessageSelection] = React.useState<MessageSelection | null>(null)
   const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Keyboard navigation for lightbox — phải ở đây (trước early returns) để không vi phạm Rules of Hooks
+  React.useEffect(() => {
+    if (!lightboxUrl) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox()
+      if (e.key === "ArrowLeft") gotoPrev()
+      if (e.key === "ArrowRight") gotoNext()
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [lightboxUrl, closeLightbox, gotoPrev, gotoNext])
+
   // Long press handlers — capture rect at fire time for accurate positioning
   const createLongPressHandlers = (
     msg: ChatMessage | GroupChatMessage,
@@ -2140,18 +2171,6 @@ function MessagePane({
       </div>
     )
   }
-
-  // Keyboard navigation for lightbox
-  React.useEffect(() => {
-    if (!lightboxUrl) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLightbox()
-      if (e.key === "ArrowLeft") gotoPrev()
-      if (e.key === "ArrowRight") gotoNext()
-    }
-    window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
-  }, [lightboxUrl, closeLightbox, gotoPrev, gotoNext])
 
   return (
     <>
