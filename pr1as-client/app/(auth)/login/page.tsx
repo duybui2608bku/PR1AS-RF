@@ -30,7 +30,10 @@ export default function LoginPage() {
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
-  // Google login is temporarily disabled until a valid OAuth client id is configured.
+  // TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
+  // import { useGoogleLogin as useGoogleOAuth } from "@react-oauth/google"
+  // import { Separator } from "@/components/ui/separator"
+  // import { useGoogleLogin } from "@/lib/hooks/use-auth"
   /*
   const googleLoginMutation = useGoogleLogin()
   const triggerGoogleOAuth = useGoogleOAuth({
@@ -276,13 +279,12 @@ export default function LoginPage() {
         </Button>
       ) : null}
 
-      {/* Google login is temporarily hidden to avoid OAuth client_id errors.
+      {/* TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
         <Separator />
-
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="h-11 w-full text-base"
           onClick={() => triggerGoogleOAuth()}
           disabled={googleLoginMutation.isPending}
         >
@@ -298,7 +300,7 @@ export default function LoginPage() {
           )}
           Đăng nhập bằng Google
         </Button>
-        */}
+      */}
 
       <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
         Chưa có tài khoản?{" "}

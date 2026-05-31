@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useAuthStore } from "@/lib/store/auth-store"
 
+
 /** Syncs logout across browser tabs via BroadcastChannel. */
 function AuthBroadcastListener() {
   const router = useRouter()
@@ -42,9 +43,11 @@ function AuthBroadcastListener() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // TODO: Khi enable Google login:
+  // 1. import { GoogleOAuthProvider } from "@react-oauth/google"
+  // 2. Bọc ThemeProvider bằng <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
   return (
     <ThemeProvider>
-      {/* Google OAuthProvider is temporarily disabled to avoid missing client_id errors. */}
       <TopProgressBar />
       <QueryProvider>
         {children}

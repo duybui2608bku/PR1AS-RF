@@ -21,8 +21,11 @@ const AUTH_PAGES = ["/login", "/register"]
 // Signature and Expiration Verification at Next.js Edge Layer using jose
 async function verifyAndDecodeJwt(token: string): Promise<Record<string, unknown> | null> {
   try {
-    const jwtSecret = process.env.JWT_SECRET || "pr1as"
-    const secret = new TextEncoder().encode(jwtSecret)
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret && process.env.NODE_ENV === "production") {
+      console.error("[middleware] CRITICAL: JWT_SECRET env var is not set in production. All token verifications will fail.")
+    }
+    const secret = new TextEncoder().encode(jwtSecret ?? "pr1as-dev-only-not-for-production")
     const { payload } = await jwtVerify(token, secret)
     return payload as Record<string, unknown>
   } catch {
