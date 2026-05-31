@@ -12,24 +12,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const jwtSecret = process.env.JWT_SECRET || "pr1as"
+    const jwtSecret = process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production"
     const secret = new TextEncoder().encode(jwtSecret)
-    const { payload } = await jwtVerify(token, secret)
-
-    // Calculate dynamic maxAge based on exp claim to synchronize Cookie and Token TTL
-    const exp = payload.exp
-    let maxAge = 60 * 60 * 24 * 7 // Default fallback to 7 days
-    if (exp && typeof exp === "number") {
-      const nowInSeconds = Math.floor(Date.now() / 1000)
-      maxAge = Math.max(0, exp - nowInSeconds)
-    }
+    await jwtVerify(token, secret)
 
     const res = NextResponse.json({ ok: true })
     res.cookies.set(TOKEN_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: maxAge,
+      // Session cookie (no maxAge) — clears when browser closes,
+      // matching the sessionStorage lifecycle of the Zustand auth store.
       path: "/",
     })
     return res
@@ -49,6 +42,21 @@ export async function DELETE(req: NextRequest) {
   }
   if (!origin && referer && !referer.includes(host)) {
     return NextResponse.json({ error: "Yêu cầu không hợp lệ (CSRF)." }, { status: 403 })
+  }
+
+  // Smart delete: skip if token is still valid (another tab may be using it).
+  // Only clear if the token is expired or invalid (stale cookie case).
+  const currentToken = req.cookies.get(TOKEN_COOKIE_NAME)?.value
+  if (currentToken) {
+    try {
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production",
+      )
+      await jwtVerify(currentToken, secret)
+      return NextResponse.json({ ok: true, skipped: true })
+    } catch {
+      // Expired or invalid — proceed to clear
+    }
   }
 
   const res = NextResponse.json({ ok: true })

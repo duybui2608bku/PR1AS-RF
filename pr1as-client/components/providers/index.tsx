@@ -12,12 +12,25 @@ import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 
 
 /** Syncs logout across browser tabs via BroadcastChannel. */
 function AuthBroadcastListener() {
   const router = useRouter()
+  const hasHydrated = useHasHydrated()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  // After hydration, if sessionStorage has no auth state, clear any stale httpOnly
+  // cookie left over from a previous browser session. The DELETE endpoint is smart:
+  // it only clears the cookie when the JWT is already expired or invalid, so active
+  // tabs that still hold a valid token are not affected.
+  React.useEffect(() => {
+    if (!hasHydrated) return
+    if (!isAuthenticated) {
+      fetch("/api/auth/session", { method: "DELETE" }).catch(() => {})
+    }
+  }, [hasHydrated, isAuthenticated])
 
   React.useEffect(() => {
     if (typeof window === "undefined" || !("BroadcastChannel" in window)) return
