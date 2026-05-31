@@ -78,7 +78,18 @@ export async function middleware(req: NextRequest) {
 
   const cookieRole = req.cookies.get(ACTIVE_ROLE_COOKIE_NAME)?.value?.toLowerCase()
   const tokenRole = getTokenRole(payload)
-  const activeRole = tokenRole === "admin" ? tokenRole : (cookieRole ?? tokenRole)
+
+  // Validate cookieRole against JWT's roles array to prevent stale cookies from
+  // overriding the correct role (e.g. old "worker" cookie when user is now "client")
+  const tokenPayloadRoles = (Array.isArray(payload?.roles) ? payload.roles : [])
+    .filter((r): r is string => typeof r === "string")
+    .map((r) => r.toLowerCase())
+  if (typeof payload?.role === "string" && !tokenPayloadRoles.includes(payload.role.toLowerCase())) {
+    tokenPayloadRoles.push(payload.role.toLowerCase())
+  }
+  const isCookieRoleValid =
+    !!cookieRole && (tokenPayloadRoles.length === 0 || tokenPayloadRoles.includes(cookieRole))
+  const activeRole = tokenRole === "admin" ? tokenRole : (isCookieRoleValid ? cookieRole : tokenRole)
 
   if (isTokenValid && activeRole === "admin" && pathname === "/") {
     const url = req.nextUrl.clone()
@@ -89,6 +100,12 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/" && isTokenValid && activeRole === "worker") {
     const url = req.nextUrl.clone()
     url.pathname = "/posts"
+    return NextResponse.redirect(url)
+  }
+
+  if (pathname === "/" && isTokenValid && activeRole === "client") {
+    const url = req.nextUrl.clone()
+    url.pathname = "/services"
     return NextResponse.redirect(url)
   }
 

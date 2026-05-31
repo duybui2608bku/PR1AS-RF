@@ -1,7 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
 
 import { SiteLayout } from "@/components/layout/site-layout"
-import { HomeRoleGate } from "@/components/layout/home-role-gate"
 import { HomeSearchExperience } from "@/components/home/home-search-experience"
 import {
   parseHomeSearchParams,
@@ -35,11 +34,9 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
   return (
     <SiteLayout showFooterOnMobile>
-      <HomeRoleGate>
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <HomeSearchExperience initialState={initialState} />
-        </HydrationBoundary>
-      </HomeRoleGate>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <HomeSearchExperience initialState={initialState} />
+      </HydrationBoundary>
     </SiteLayout>
   )
 }
