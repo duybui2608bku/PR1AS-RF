@@ -32,7 +32,7 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
 
 const DEFAULT_ROLE_ROUTES: Record<string, string> = {
   admin: "/dashboard",
-  client: "/",
+  client: "/services",
   worker: "/posts",
 }
 
