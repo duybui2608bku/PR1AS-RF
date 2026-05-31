@@ -318,6 +318,10 @@ export class BookingRepository {
     return this.findWithPagination(filter, query);
   }
 
+  // Maximum number of daily buckets returned by date-group aggregations.
+  // 366 covers one full leap-year without memory pressure.
+  private static readonly MAX_DATE_BUCKETS = 366;
+
   async getAdminAnalytics(
     query: AdminBookingAnalyticsQuery
   ): Promise<AdminBookingAnalyticsRaw> {
@@ -348,6 +352,7 @@ export class BookingRepository {
           },
         },
         { $sort: { _id: 1 } },
+        { $limit: BookingRepository.MAX_DATE_BUCKETS },
       ]),
       Booking.aggregate<{ _id: string; total: number; completed: number }>([
         { $match: filter },
@@ -368,6 +373,7 @@ export class BookingRepository {
           },
         },
         { $sort: { _id: 1 } },
+        { $limit: BookingRepository.MAX_DATE_BUCKETS },
       ]),
       Booking.find(filter)
         .populate(BOOKING_POPULATE)

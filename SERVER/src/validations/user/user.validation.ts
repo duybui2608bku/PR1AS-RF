@@ -79,10 +79,10 @@ export const updateWorkerProfileSchema = z.object({
     weight_kg: z.number().positive().optional().nullable(),
     star_sign: z.string().optional().nullable(),
     lifestyle: z.string().optional().nullable(),
-    hobbies: z.array(z.string()).optional().default([]),
+    hobbies: z.array(z.string()).max(30).optional().default([]),
     quote: z.string().optional().nullable(),
     introduction: z.string().optional().nullable(),
-    gallery_urls: z.array(z.string()).optional().default([]),
+    gallery_urls: z.array(z.string()).max(20).optional().default([]),
     experience: z.nativeEnum(Experience).optional().nullable(),
     title: z.string().trim().max(100).optional().nullable(),
     work_locations: z

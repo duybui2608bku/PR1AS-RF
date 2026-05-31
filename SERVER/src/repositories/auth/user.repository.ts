@@ -34,6 +34,24 @@ export interface UpdateWorkerProfileOptions {
   setLastActiveRole?: UserRole;
 }
 
+const DELETED_USER_FULL_NAME = "Người dùng đã rời";
+
+const WORKER_PROFILE_ALLOWED_FIELDS = new Set([
+  "date_of_birth",
+  "gender",
+  "height_cm",
+  "weight_kg",
+  "star_sign",
+  "lifestyle",
+  "hobbies",
+  "quote",
+  "introduction",
+  "gallery_urls",
+  "experience",
+  "title",
+  "work_locations",
+]);
+
 export class UserRepository {
   async findManyByIds(ids: string[]): Promise<IUserDocument[]> {
     if (ids.length === 0) return [];
@@ -193,7 +211,7 @@ export class UserRepository {
         email: `deleted_${id}@pr1as.invalid`,
         password_hash: null,
         google_id: null,
-        full_name: "Người dùng đã rời",
+        full_name: DELETED_USER_FULL_NAME,
         phone: null,
         avatar: null,
         worker_profile: null,
@@ -229,9 +247,10 @@ export class UserRepository {
   ): Promise<IUserDocument | null> {
     const $set: Record<string, unknown> = {};
 
-    // Dot-notation: update only provided fields, never wipe existing subdoc data
+    // Dot-notation: update only provided fields, never wipe existing subdoc data.
+    // Whitelist guards against arbitrary-key injection from internal callers.
     for (const [key, val] of Object.entries(profileFields)) {
-      if (val !== undefined) {
+      if (val !== undefined && WORKER_PROFILE_ALLOWED_FIELDS.has(key)) {
         $set[`worker_profile.${key}`] = val;
       }
     }
@@ -368,17 +387,40 @@ export class UserRepository {
     id: string,
     delta: number
   ): Promise<{ newScore: number; previousScore: number } | null> {
-    const doc = await User.findById(id)
-      .select("meta_data.reputation_score")
-      .lean();
-    if (!doc) return null;
+    // Atomic read-modify-write: new:false returns the document as it was
+    // *before* the update, letting us reconstruct both scores without a
+    // second round-trip and without a read→write race condition.
+    const before = await User.findByIdAndUpdate(
+      id,
+      [
+        {
+          $set: {
+            "meta_data.reputation_score": {
+              $max: [
+                0,
+                {
+                  $min: [
+                    100,
+                    {
+                      $add: [
+                        { $ifNull: ["$meta_data.reputation_score", 100] },
+                        delta,
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      { new: false, projection: { "meta_data.reputation_score": 1 } }
+    ).lean();
+    if (!before) return null;
     const previousScore =
-      (doc as unknown as { meta_data?: { reputation_score?: number } })
+      (before as unknown as { meta_data?: { reputation_score?: number } })
         ?.meta_data?.reputation_score ?? 100;
     const newScore = Math.max(0, Math.min(100, previousScore + delta));
-    await User.findByIdAndUpdate(id, {
-      "meta_data.reputation_score": newScore,
-    });
     return { newScore, previousScore };
   }
 
@@ -403,6 +445,7 @@ export class UserRepository {
   > {
     return User.find({ "meta_data.reputation_score": { $lt: 100 } })
       .select("_id meta_data.reputation_score")
+      .limit(500)
       .lean() as Promise<
       Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
     >;

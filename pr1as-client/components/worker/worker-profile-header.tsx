@@ -1,12 +1,22 @@
 "use client"
 
-import { AlertTriangle, Heart, Loader2, Mars, Pencil, ShieldCheck, Star, Trophy, Venus, VenusAndMars } from "lucide-react"
+import {
+  AlertTriangle,
+  Heart,
+  Loader2,
+  Mars,
+  Pencil,
+  ShieldCheck,
+  Star,
+  Trophy,
+  Venus,
+  VenusAndMars,
+} from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -55,7 +65,6 @@ export function WorkerProfileHeader({
   const ratingCount = stats?.total ?? 0
 
   const gallery: string[] = profile?.gallery_urls ?? []
-
   const [activeIndex, setActiveIndex] = useState(0)
   const activeImage = gallery[activeIndex] ?? gallery[0] ?? null
 
@@ -65,7 +74,7 @@ export function WorkerProfileHeader({
   const isLowReputation = reputationScore < 30
 
   return (
-    <div className="space-y-4 rounded-2xl border p-5">
+    <div className="space-y-4">
       {isLowReputation ? (
         <Alert className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
           <AlertTriangle className="size-4 text-red-500" />
@@ -74,153 +83,148 @@ export function WorkerProfileHeader({
           </AlertDescription>
         </Alert>
       ) : null}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
-        <div className="space-y-3">
-          <AspectRatio
-            ratio={5 / 4}
-            className="overflow-hidden rounded-2xl bg-muted"
-          >
-            {activeImage ? (
-              <Image
-                src={activeImage}
-                alt={fullName}
-                fill
-                sizes="(min-width: 1024px) 400px, 100vw"
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                Chưa có ảnh
-              </div>
-            )}
-          </AspectRatio>
 
-          {gallery.length > 1 ? (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {gallery.map((url, index) => (
-                <button
-                  key={`${url}-${index}`}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  className={cn(
-                    "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors",
-                    index === activeIndex
-                      ? "border-primary"
-                      : "border-transparent opacity-70 hover:opacity-100",
-                  )}
-                  aria-label={`Ảnh ${index + 1}`}
-                >
-                  <Image
-                    src={url}
-                    alt=""
-                    fill
-                    sizes="64px"
-                    className="object-cover"
+      {/* ─── MOBILE HERO (hidden on lg+) ─── */}
+      <div className="lg:hidden space-y-3">
+        {/* Hero image with gradient overlay */}
+        <div className="relative overflow-hidden rounded-2xl bg-muted aspect-[4/5] sm:aspect-[3/2]">
+          {activeImage ? (
+            <Image
+              src={activeImage}
+              alt={fullName}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Chưa có ảnh
+            </div>
+          )}
+
+          {/* Gradient for text readability */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+
+          {/* Top-right action */}
+          <div className="absolute right-3 top-3">
+            {isOwnProfile ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white"
+                onClick={() => router.push("/worker/setup")}
+              >
+                <Pencil className="size-3.5" />
+                Chỉnh sửa
+              </Button>
+            ) : onToggleFavorite ? (
+              <button
+                type="button"
+                onClick={onToggleFavorite}
+                disabled={isFavoritePending}
+                aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50",
+                  isFavorite
+                    ? "bg-rose-500/90 text-white"
+                    : "border border-white/40 bg-white/20 text-white hover:bg-white/30",
+                )}
+              >
+                {isFavoritePending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Heart
+                    className={cn(
+                      "size-3.5 transition-all",
+                      isFavorite && "fill-white",
+                    )}
                   />
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="space-y-5">
-          {/* Tên + nút hành động */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight leading-tight">
-                {fullName}
-              </h1>
-              {title ? (
-                <p className="text-base text-muted-foreground">{title}</p>
-              ) : null}
-            </div>
-            <div className="shrink-0 pt-0.5">
-              {isOwnProfile ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => router.push("/worker/setup")}
-                >
-                  <Pencil className="size-3.5" />
-                  <span>Chỉnh sửa</span>
-                </Button>
-              ) : onToggleFavorite ? (
-                <button
-                  type="button"
-                  onClick={onToggleFavorite}
-                  disabled={isFavoritePending}
-                  aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-                  title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
-                    isFavorite
-                      ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60"
-                      : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500"
-                  )}
-                >
-                  {isFavoritePending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Heart
-                      className={cn(
-                        "size-3.5 transition-all",
-                        isFavorite
-                          ? "fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400"
-                          : "text-current"
-                      )}
-                    />
-                  )}
-                  <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
-                </button>
-              ) : null}
-            </div>
+                )}
+                <span>{isFavorite ? "Đã thích" : "Yêu thích"}</span>
+              </button>
+            ) : null}
           </div>
 
-          {/* Rating + uy tín */}
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={
-                    i < Math.round(ratingAverage)
-                      ? "size-4 fill-amber-400 text-amber-400"
-                      : "size-4 text-muted-foreground/30"
-                  }
-                />
-              ))}
+          {/* Bottom overlay: name + rating */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-white">
+              {fullName}
+            </h1>
+            {title ? (
+              <p className="mt-0.5 text-sm text-white/80">{title}</p>
+            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={
+                      i < Math.round(ratingAverage)
+                        ? "size-4 fill-amber-400 text-amber-400"
+                        : "size-4 fill-white/25 text-transparent"
+                    }
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-white/80">
+                {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
+              </span>
             </div>
-            <span className="text-muted-foreground">
-              {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
-            </span>
-            <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
+          </div>
+        </div>
+
+        {/* Gallery thumbnails */}
+        {gallery.length > 1 ? (
+          <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+            {gallery.map((url, index) => (
+              <button
+                key={`${url}-${index}`}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className={cn(
+                  "relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition-all",
+                  index === activeIndex
+                    ? "border-primary shadow-sm"
+                    : "border-transparent opacity-55 hover:opacity-90",
+                )}
+                aria-label={`Ảnh ${index + 1}`}
+              >
+                <Image src={url} alt="" fill sizes="56px" className="object-cover" />
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Meta: reputation + gender + experience */}
+        <div className="space-y-2.5 px-0.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                getReputationBadgeClass(reputationScore),
+              )}
+            >
               <ShieldCheck className="size-3.5" />
               Uy tín {reputationScore}/100
             </span>
+
+            {profile?.gender ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">
+                <GenderIcon gender={profile.gender} />
+                {GENDER_LABEL[profile.gender]}
+              </span>
+            ) : null}
+
+            {profile?.experience ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">
+                <Trophy className="size-3 text-amber-500" />
+                {EXPERIENCE_LABEL[profile.experience]}
+              </span>
+            ) : null}
           </div>
 
-          {/* Giới tính + kinh nghiệm */}
-          {(profile?.gender || profile?.experience) ? (
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              {profile.gender ? (
-                <span className="inline-flex items-center gap-1.5 text-foreground">
-                  <GenderIcon gender={profile.gender} />
-                  {GENDER_LABEL[profile.gender]}
-                </span>
-              ) : null}
-              {profile.experience ? (
-                <span className="inline-flex items-center gap-1.5 text-foreground">
-                  <Trophy className="size-3.5 text-amber-500" />
-                  {EXPERIENCE_LABEL[profile.experience]}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Sở thích */}
           {profile?.hobbies && profile.hobbies.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {profile.hobbies.map((hobby, i) => (
@@ -235,12 +239,182 @@ export function WorkerProfileHeader({
             </div>
           ) : null}
 
-          {/* Giới thiệu bản thân */}
           {profile?.introduction ? (
             <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
               {profile.introduction}
             </p>
           ) : null}
+        </div>
+      </div>
+
+      {/* ─── DESKTOP LAYOUT (hidden below lg) ─── */}
+      <div className="hidden lg:block space-y-4 rounded-2xl border p-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
+          {/* Image + gallery */}
+          <div className="space-y-3">
+            <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-muted">
+              {activeImage ? (
+                <Image
+                  src={activeImage}
+                  alt={fullName}
+                  fill
+                  sizes="(min-width: 1024px) 400px, 100vw"
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                  Chưa có ảnh
+                </div>
+              )}
+            </div>
+
+            {gallery.length > 1 ? (
+              <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                {gallery.map((url, index) => (
+                  <button
+                    key={`${url}-${index}`}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className={cn(
+                      "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-colors",
+                      index === activeIndex
+                        ? "border-primary"
+                        : "border-transparent opacity-70 hover:opacity-100",
+                    )}
+                    aria-label={`Ảnh ${index + 1}`}
+                  >
+                    <Image src={url} alt="" fill sizes="64px" className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Info */}
+          <div className="space-y-5">
+            {/* Name + action */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <h1 className="text-2xl font-bold leading-tight tracking-tight">
+                  {fullName}
+                </h1>
+                {title ? (
+                  <p className="text-base text-muted-foreground">{title}</p>
+                ) : null}
+              </div>
+              <div className="shrink-0 pt-0.5">
+                {isOwnProfile ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => router.push("/worker/setup")}
+                  >
+                    <Pencil className="size-3.5" />
+                    Chỉnh sửa
+                  </Button>
+                ) : onToggleFavorite ? (
+                  <button
+                    type="button"
+                    onClick={onToggleFavorite}
+                    disabled={isFavoritePending}
+                    aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                    title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
+                      isFavorite
+                        ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60"
+                        : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500",
+                    )}
+                  >
+                    {isFavoritePending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Heart
+                        className={cn(
+                          "size-3.5 transition-all",
+                          isFavorite
+                            ? "fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400"
+                            : "text-current",
+                        )}
+                      />
+                    )}
+                    <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Rating + reputation */}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={
+                      i < Math.round(ratingAverage)
+                        ? "size-4 fill-amber-400 text-amber-400"
+                        : "size-4 text-muted-foreground/30"
+                    }
+                  />
+                ))}
+              </div>
+              <span>
+                {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  getReputationBadgeClass(reputationScore),
+                )}
+              >
+                <ShieldCheck className="size-3.5" />
+                Uy tín {reputationScore}/100
+              </span>
+            </div>
+
+            {/* Gender + experience */}
+            {profile?.gender || profile?.experience ? (
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                {profile.gender ? (
+                  <span className="inline-flex items-center gap-1.5 text-foreground">
+                    <GenderIcon gender={profile.gender} />
+                    {GENDER_LABEL[profile.gender]}
+                  </span>
+                ) : null}
+                {profile.experience ? (
+                  <span className="inline-flex items-center gap-1.5 text-foreground">
+                    <Trophy className="size-3.5 text-amber-500" />
+                    {EXPERIENCE_LABEL[profile.experience]}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Hobbies */}
+            {profile?.hobbies && profile.hobbies.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.hobbies.map((hobby, i) => (
+                  <Badge
+                    key={`${hobby}-${i}`}
+                    variant="secondary"
+                    className="rounded-full font-normal"
+                  >
+                    {hobby}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Introduction */}
+            {profile?.introduction ? (
+              <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                {profile.introduction}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

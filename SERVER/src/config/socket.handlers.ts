@@ -1,4 +1,5 @@
 import { ExtendedError, Socket } from "socket.io";
+import mongoose from "mongoose";
 import { verifyToken, JWTPayload } from "../utils/jwt";
 import { logger } from "../utils/logger";
 import { chatRepository, groupChatRepository } from "../repositories/chat";
@@ -42,6 +43,11 @@ const TOKEN_REFRESH_GRACE_MS = 30_000;
 
 const accessKey = (conversationId: string, userId: string) =>
   `${conversationId}|${userId}`;
+
+const isValidObjectId = (id: unknown): id is string =>
+  typeof id === "string" && mongoose.isValidObjectId(id);
+
+const MAX_MARK_READ_IDS = 100;
 
 export const authenticateSocket = async (
   socket: Socket,
@@ -148,10 +154,6 @@ const verifyConversationAccessUncached = async (
     return false;
   }
 
-  const currentUser = await userRepository.findById(userId);
-  if (!currentUser) return false;
-  if (currentUser.roles?.includes(UserRole.ADMIN)) return true;
-
   const otherUserId = getOtherUserId(
     conversation.sender_id.toString(),
     conversation.receiver_id.toString(),
@@ -161,7 +163,13 @@ const verifyConversationAccessUncached = async (
   // Explicit self-check on the participants — paranoia, but cheap.
   if (otherUserId === userId) return false;
 
-  const otherUser = await userRepository.findById(otherUserId);
+  // Single $in query for both users instead of two sequential round-trips.
+  const users = await userRepository.findManyByIds([userId, otherUserId]);
+  const currentUser = users.find((u) => u._id.toString() === userId);
+  const otherUser = users.find((u) => u._id.toString() === otherUserId);
+
+  if (!currentUser) return false;
+  if (currentUser.roles?.includes(UserRole.ADMIN)) return true;
   if (!otherUser) return false;
   if (otherUser.roles?.includes(UserRole.ADMIN)) return true;
 
@@ -304,6 +312,10 @@ export const setupChatHandlers = (socket: Socket): void => {
   socket.on("join_conversation", async (data: { conversation_id: string }) => {
     try {
       const { conversation_id } = data;
+      if (!isValidObjectId(conversation_id)) {
+        socket.emit("error", { message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND });
+        return;
+      }
       const hasAccess = await verifyConversationAccess(conversation_id, userId);
 
       if (!hasAccess) {
@@ -326,6 +338,7 @@ export const setupChatHandlers = (socket: Socket): void => {
 
   socket.on("leave_conversation", (data: { conversation_id: string }) => {
     const { conversation_id } = data;
+    if (!isValidObjectId(conversation_id)) return;
     socket.leave(getConversationRoom(conversation_id));
     logger.info(`User ${userId} left conversation ${conversation_id}`);
     socket.emit("conversation_left", { conversation_id });
@@ -336,6 +349,7 @@ export const setupChatHandlers = (socket: Socket): void => {
     async (data: { conversation_id: string; is_typing: boolean }) => {
       try {
         const { conversation_id, is_typing } = data;
+        if (!isValidObjectId(conversation_id)) return;
         const hasAccess = await verifyConversationAccess(
           conversation_id,
           userId
@@ -361,6 +375,22 @@ export const setupChatHandlers = (socket: Socket): void => {
     async (data: { message_ids?: string[]; conversation_id?: string }) => {
       try {
         const { message_ids, conversation_id } = data;
+
+        if (conversation_id && !isValidObjectId(conversation_id)) {
+          socket.emit("error", { message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND });
+          return;
+        }
+        if (message_ids !== undefined) {
+          if (message_ids.length > MAX_MARK_READ_IDS) {
+            socket.emit("error", { message: CHAT_MESSAGES.FAILED_MARK_READ });
+            return;
+          }
+          if (!message_ids.every(isValidObjectId)) {
+            socket.emit("error", { message: CHAT_MESSAGES.FAILED_MARK_READ });
+            return;
+          }
+        }
+
         let verifiedConversationId = conversation_id;
 
         if (!verifiedConversationId && message_ids && message_ids.length > 0) {
@@ -418,6 +448,10 @@ export const setupChatHandlers = (socket: Socket): void => {
     async (data: { conversation_group_id: string }) => {
       try {
         const { conversation_group_id } = data;
+        if (!isValidObjectId(conversation_group_id)) {
+          socket.emit("error", { message: CHAT_MESSAGES.CONVERSATION_NOT_FOUND });
+          return;
+        }
         const hasAccess = await verifyGroupConversationAccess(
           conversation_group_id,
           userId
@@ -448,6 +482,7 @@ export const setupChatHandlers = (socket: Socket): void => {
     "leave_group_conversation",
     (data: { conversation_group_id: string }) => {
       const { conversation_group_id } = data;
+      if (!isValidObjectId(conversation_group_id)) return;
       socket.leave(getGroupConversationRoom(conversation_group_id));
       logger.info(
         `User ${userId} left group conversation ${conversation_group_id}`
@@ -461,6 +496,7 @@ export const setupChatHandlers = (socket: Socket): void => {
     async (data: { conversation_group_id: string; is_typing: boolean }) => {
       try {
         const { conversation_group_id, is_typing } = data;
+        if (!isValidObjectId(conversation_group_id)) return;
         const hasAccess = await verifyGroupConversationAccess(
           conversation_group_id,
           userId
@@ -492,6 +528,21 @@ export const setupChatHandlers = (socket: Socket): void => {
       try {
         const { message_ids } = data;
         let { conversation_group_id } = data;
+
+        if (conversation_group_id && !isValidObjectId(conversation_group_id)) {
+          socket.emit("error", { message: CHAT_MESSAGES.FAILED_MARK_READ });
+          return;
+        }
+        if (message_ids !== undefined) {
+          if (message_ids.length > MAX_MARK_READ_IDS) {
+            socket.emit("error", { message: CHAT_MESSAGES.FAILED_MARK_READ });
+            return;
+          }
+          if (!message_ids.every(isValidObjectId)) {
+            socket.emit("error", { message: CHAT_MESSAGES.FAILED_MARK_READ });
+            return;
+          }
+        }
 
         if (!conversation_group_id && message_ids && message_ids.length > 0) {
           const message = await groupChatRepository.getMessageGroupByIdForUser(

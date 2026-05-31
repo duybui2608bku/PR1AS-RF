@@ -189,7 +189,7 @@ export default function WorkerProfilePage({
             ) : null}
 
             {data ? (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <WorkerProfileHeader
                   worker={data}
                   isOwnProfile={isOwnProfile}
@@ -202,52 +202,61 @@ export default function WorkerProfilePage({
                     isOwnProfile ? undefined : handleToggleFavorite
                   }
                 />
-                {!isOwnProfile ? (
-                  <div className="flex justify-end">
-                    {hasOpenWorkerReport ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <span className="inline-flex">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
-                              disabled
-                            >
-                              <Flag className="size-4" />
-                              Báo cáo worker
-                            </Button>
-                          </span>
-                        </PopoverTrigger>
-                        <PopoverContent align="end" className="text-sm">
-                          Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo
-                          mới sau khi admin hoàn tất báo cáo hiện tại.
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => requireAuth(() => setReportOpen(true))}
-                      >
-                        <Flag className="size-4" />
-                        Báo cáo worker
-                      </Button>
-                    )}
-                  </div>
-                ) : null}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px]">
-                  <div className="space-y-4">
-                    <WorkerStatCards profile={data.worker_profile} />
+
+                <WorkerStatCards profile={data.worker_profile} />
+
+                {/* On mobile: aside (services + calendar) appears first via order-1,
+                    then main content (info + reviews) via order-2.
+                    On lg+: standard side-by-side grid. */}
+                <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1fr_460px] lg:gap-6">
+                  {/* Main content — order-2 on mobile, first column on lg */}
+                  <div className="order-2 space-y-4 lg:order-1">
                     <WorkerInfoCards profile={data.worker_profile} />
                     <WorkerReviews reviews={data.reviews ?? []} />
+
+                    {/* Report button — bottom of content on mobile, only for other profiles */}
+                    {!isOwnProfile ? (
+                      <div className="flex justify-end lg:hidden">
+                        {hasOpenWorkerReport ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <span className="inline-flex">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
+                                  disabled
+                                >
+                                  <Flag className="size-4" />
+                                  Báo cáo worker
+                                </Button>
+                              </span>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="text-sm">
+                              Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo
+                              mới sau khi admin hoàn tất báo cáo hiện tại.
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground"
+                            onClick={() => requireAuth(() => setReportOpen(true))}
+                          >
+                            <Flag className="size-4" />
+                            Báo cáo worker
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
-                  <aside className="space-y-4">
-                    <ErrorBoundary resetKeys={[data.user.id]}>
-                      <WorkerCalendar workerId={data.user.id} />
-                    </ErrorBoundary>
+
+                  {/* Aside — order-1 on mobile (Services + Calendar shown first),
+                      second column on lg */}
+                  <aside className="order-1 space-y-4 lg:order-2">
                     <WorkerServices
                       workerId={data.user.id}
                       workerName={data.user.full_name ?? "worker"}
@@ -256,6 +265,47 @@ export default function WorkerProfilePage({
                         data.user.meta_data?.reputation_score
                       }
                     />
+                    <ErrorBoundary resetKeys={[data.user.id]}>
+                      <WorkerCalendar workerId={data.user.id} />
+                    </ErrorBoundary>
+
+                    {/* Report button — in aside on desktop */}
+                    {!isOwnProfile ? (
+                      <div className="hidden justify-end lg:flex">
+                        {hasOpenWorkerReport ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <span className="inline-flex">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+                                  disabled
+                                >
+                                  <Flag className="size-4" />
+                                  Báo cáo worker
+                                </Button>
+                              </span>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="text-sm">
+                              Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo
+                              mới sau khi admin hoàn tất báo cáo hiện tại.
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => requireAuth(() => setReportOpen(true))}
+                          >
+                            <Flag className="size-4" />
+                            Báo cáo worker
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
                   </aside>
                 </div>
               </div>
@@ -379,9 +429,12 @@ export default function WorkerProfilePage({
 
 function WorkerProfileSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,320px)_1fr]">
-        <Skeleton className="aspect-[3/4] w-full rounded-2xl" />
+    <div className="space-y-5">
+      {/* Hero image skeleton */}
+      <Skeleton className="aspect-[4/5] w-full rounded-2xl sm:aspect-[3/2] lg:hidden" />
+      {/* Desktop header skeleton */}
+      <div className="hidden lg:grid lg:grid-cols-[minmax(0,400px)_1fr] gap-6 rounded-2xl border p-5">
+        <Skeleton className="aspect-[5/4] w-full rounded-2xl" />
         <div className="space-y-3">
           <Skeleton className="h-7 w-2/3" />
           <Skeleton className="h-4 w-32" />
@@ -389,17 +442,22 @@ function WorkerProfileSkeleton() {
           <Skeleton className="h-16 w-full" />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-2xl" />
-            ))}
-          </div>
-          <Skeleton className="h-32 w-full rounded-2xl" />
+      {/* Stat cards skeleton */}
+      <div className="flex gap-3 sm:grid sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-32 shrink-0 rounded-2xl sm:w-auto" />
+        ))}
+      </div>
+      {/* Content skeleton */}
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1fr_460px]">
+        <div className="order-2 space-y-4 lg:order-1">
+          <Skeleton className="h-28 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
-        <Skeleton className="h-80 w-full rounded-2xl" />
+        <div className="order-1 space-y-4 lg:order-2">
+          <Skeleton className="h-44 w-full rounded-2xl" />
+          <Skeleton className="h-72 w-full rounded-2xl" />
+        </div>
       </div>
     </div>
   )

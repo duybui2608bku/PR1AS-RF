@@ -339,21 +339,24 @@ export class UserWalletService {
   }
 
   async getWalletBalance(userId: string): Promise<WalletBalanceResponse> {
-    const user = await userRepository.findById(userId);
+    // Parallel-fetch: user existence check and cached wallet balance in one
+    // round-trip. Use the denormalized wallet.balance (maintained atomically
+    // by atomicCredit/atomicDebit) to avoid a full transaction-sum aggregation
+    // on every request.
+    const [user, wallet] = await Promise.all([
+      userRepository.findById(userId),
+      walletBalanceRepository.findByUserId(userId),
+    ]);
     if (!user) {
       throw AppError.notFound(WALLET_MESSAGES.WALLET_NOT_FOUND);
     }
+    if (wallet) {
+      return { balance: wallet.balance, user_id: userId };
+    }
+    // No wallet record yet (new user who has never deposited) — derive from
+    // transaction history as a safe fallback.
     const calculatedBalance =
       await walletRepository.calculateUserBalance(userId);
-    const wallet = await walletBalanceRepository.findByUserId(userId);
-    if (wallet && wallet.balance !== calculatedBalance) {
-      // Read path must stay side-effect free; surface the mismatch for ops
-      // to reconcile via a dedicated job. Writing here under race conditions
-      // can spin into a hot loop and mask the underlying inconsistency.
-      logger.warn(
-        `Wallet balance mismatch for user ${userId}: stored=${wallet.balance}, calculated=${calculatedBalance}`
-      );
-    }
     return { balance: calculatedBalance, user_id: userId };
   }
 

@@ -840,7 +840,12 @@ export function ChatPage({
   React.useEffect(() => {
     const scroller = messageScrollerRef.current
     if (!scroller) return
-    scroller.scrollTo({ top: scroller.scrollHeight })
+    // rAF gives the browser one extra layout pass so scrollHeight is accurate
+    // after messages render (avoids premature scroll before DOM settles).
+    const id = requestAnimationFrame(() => {
+      scroller.scrollTop = scroller.scrollHeight
+    })
+    return () => cancelAnimationFrame(id)
   }, [activeMessages.length, activeDirectId, activeGroupId, mode])
 
   const notifSyncedDirectRef = React.useRef<string | null>(null)
@@ -1252,19 +1257,38 @@ export function ChatPage({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden md:gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 overflow-hidden md:gap-4 md:grid-cols-[300px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)]">
         <aside
           className={cn(
-            "min-h-0 flex-1 flex-col overflow-hidden border bg-card md:flex md:rounded-lg",
+            "min-h-0 flex-1 flex-col overflow-hidden border bg-card md:flex md:rounded-2xl",
             mobileThreadOpen ? "hidden md:flex" : "flex"
           )}
         >
+          {/* Mobile-only header — visible when conversation list is shown */}
+          <div className="flex shrink-0 items-center justify-between px-4 pt-safe pb-2 md:hidden">
+            <div className="flex items-center gap-1">
+              {showHomeButton ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-ml-2"
+                  onClick={() => router.push("/")}
+                  aria-label="Về trang chủ"
+                >
+                  <ChevronLeft className="size-5" />
+                </Button>
+              ) : null}
+              <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+            </div>
+            <ThemeToggle />
+          </div>
           <div className="border-b p-3">
-            <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-1">
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
               <button
                 type="button"
                 className={cn(
-                  "flex h-9 items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors",
+                  "flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
                   mode === "direct"
                     ? "bg-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -1281,7 +1305,7 @@ export function ChatPage({
               <button
                 type="button"
                 className={cn(
-                  "flex h-9 items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors",
+                  "flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
                   mode === "group"
                     ? "bg-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -1327,8 +1351,8 @@ export function ChatPage({
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="pl-9"
-                placeholder="Tìm cuộc trò chuyện"
+                className="h-10 rounded-xl bg-muted/60 pl-9 focus-visible:bg-background md:h-9 md:rounded-md md:bg-background"
+                placeholder="Tìm cuộc trò chuyện..."
               />
             </div>
           </div>
@@ -1368,21 +1392,21 @@ export function ChatPage({
 
         <section
           className={cn(
-            "min-h-0 flex-1 flex-col overflow-hidden border bg-card md:flex md:rounded-lg",
+            "min-h-0 flex-1 flex-col overflow-hidden border bg-card md:flex md:rounded-2xl",
             mobileThreadOpen ? "flex" : "hidden md:flex"
           )}
         >
-          <div className="flex min-h-16 items-center justify-between gap-3 border-b px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-h-14 items-center justify-between gap-2 border-b px-3 py-2 md:min-h-16 md:px-4 md:py-3">
+            <div className="flex min-w-0 items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="shrink-0 md:hidden"
+                className="size-10 shrink-0 md:hidden"
                 onClick={() => setMobileThreadOpen(false)}
                 aria-label="Quay lại danh sách"
               >
-                <ArrowLeft className="size-4" />
+                <ArrowLeft className="size-5" />
               </Button>
               {mode === "direct" ? (
                 <ThreadAvatar
@@ -1468,7 +1492,7 @@ export function ChatPage({
 
           <div
             ref={messageScrollerRef}
-            className="flex-1 overflow-y-auto bg-muted/20 px-4 py-4"
+            className="scrollbar-none flex-1 overflow-y-auto bg-muted/20 px-3 py-4 md:px-4"
           >
             {mode === "group" && selectedGroup?.booking_data ? (
               <GroupBookingSummary conversation={selectedGroup} />
@@ -1507,7 +1531,7 @@ export function ChatPage({
               : null}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t p-3">
+          <form onSubmit={handleSubmit} className="border-t p-3 pb-safe">
             {directRoleBlockedReason ? (
               <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                 {directRoleBlockedReason}
@@ -1626,7 +1650,7 @@ export function ChatPage({
                             : "Đã bị chặn"
                           : activeConversationId ||
                               (mode === "direct" && directReceiverId)
-                            ? "Nhập tin nhắn"
+                            ? "Nhập tin nhắn..."
                             : "Chọn cuộc trò chuyện"
                       }
                       rows={1}
@@ -1638,7 +1662,7 @@ export function ChatPage({
                         (mode === "direct" && !directReceiverId) ||
                         (mode === "group" && !selectedGroup)
                       }
-                      className="max-h-32 min-h-10 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      className="max-h-32 min-h-[42px] flex-1 resize-none rounded-2xl border border-input bg-muted/50 px-4 py-2.5 text-sm shadow-none transition-colors outline-none placeholder:text-muted-foreground focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:min-h-10 md:rounded-md md:bg-background"
                     />
                     <Button
                       type="submit"
@@ -1744,9 +1768,11 @@ function ConversationList({
 
   if (conversations.length === 0) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
-        <Inbox className="size-9" />
-        <p>Bạn chưa có cuộc trò chuyện</p>
+      <div className="flex min-h-64 flex-col items-center justify-center gap-3 px-4 text-center text-sm text-muted-foreground">
+        <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+          <Inbox className="size-7" />
+        </div>
+        <p>Chưa có cuộc trò chuyện nào</p>
       </div>
     )
   }
@@ -1792,7 +1818,7 @@ function ConversationList({
             key={conversation._id}
             type="button"
             className={cn(
-              "flex w-full items-start gap-3 border-b px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-accent",
+              "flex w-full items-start gap-3 border-b px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-accent active:bg-accent/80 md:px-3 md:py-3",
               selectedId === conversation._id && "bg-accent",
               isAdminDirect &&
                 "border-l-2 border-l-sky-500 bg-sky-50/60 dark:bg-sky-950/30"
@@ -2277,6 +2303,21 @@ function MessagePane({
               >
                 <Reply className="size-4" />
               </Button>
+              {!message.is_deleted && message.type === "text" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => {
+                    navigator.clipboard.writeText(message.content).catch(() => {})
+                    toast.success("Đã sao chép tin nhắn")
+                  }}
+                  aria-label="Sao chép"
+                >
+                  <Copy className="size-4" />
+                </Button>
+              ) : null}
               {mode === "direct" && mine ? (
                 <Button
                   type="button"
@@ -2413,7 +2454,7 @@ function MessageContextOverlay({
   const isTextMessage = message.type === "text" && !message.is_deleted
 
   // Calculate menu height to decide above/below placement
-  const menuItemCount = 1 + (isTextMessage ? 1 : 0) + (canDelete ? 1 : 0) // Reply [+ Copy] [+ Delete]
+  const menuItemCount = 1 + (canDelete ? 1 : 0) // Reply [+ Delete]
   const ITEM_H = 52
   const menuHeight = menuItemCount * ITEM_H + 16
   const GAP = 10
@@ -2425,14 +2466,6 @@ function MessageContextOverlay({
     spaceBelow >= menuHeight + GAP
       ? rect.bottom + GAP
       : Math.max(8, rect.top - GAP - menuHeight)
-
-  const handleCopy = () => {
-    if (isTextMessage) {
-      navigator.clipboard.writeText(message.content).catch(() => {})
-      toast.success("Đã sao chép tin nhắn")
-    }
-    onClose()
-  }
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
@@ -2486,21 +2519,6 @@ function MessageContextOverlay({
           <span>Trả lời</span>
           <Reply className="size-5 text-white/60" />
         </button>
-
-        {/* Copy (text only) */}
-        {isTextMessage ? (
-          <button
-            type="button"
-            className={cn(
-              "flex w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80",
-              canDelete && "border-b border-zinc-700"
-            )}
-            onClick={handleCopy}
-          >
-            <span>Sao chép</span>
-            <Copy className="size-5 text-white/60" />
-          </button>
-        ) : null}
 
         {/* Delete (own messages in direct mode) */}
         {canDelete ? (

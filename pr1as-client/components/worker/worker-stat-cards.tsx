@@ -21,16 +21,6 @@ type StatItem = {
   value: string
 }
 
-const StatCard = ({ icon: Icon, label, value }: StatItem) => (
-  <Card>
-    <CardContent className="p-4">
-      <Icon className="size-5 text-rose-400" />
-      <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </CardContent>
-  </Card>
-)
-
 type Props = {
   profile: WorkerProfilePublic | null
 }
@@ -62,10 +52,39 @@ export function WorkerStatCards({ profile }: Props) {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {stats.map((s) => (
-        <StatCard key={s.label} {...s} />
-      ))}
-    </div>
+    <>
+      {/* Mobile: horizontal scroll row */}
+      <div className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:hidden">
+        {stats.map((s) => {
+          const Icon = s.icon
+          return (
+            <div
+              key={s.label}
+              className="w-32 shrink-0 snap-start rounded-2xl border bg-card p-4"
+            >
+              <Icon className="size-5 text-rose-400" />
+              <p className="mt-2 text-base font-semibold text-foreground">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* sm+: 4-column grid */}
+      <div className="hidden grid-cols-2 gap-3 sm:grid sm:grid-cols-4">
+        {stats.map((s) => {
+          const Icon = s.icon
+          return (
+            <Card key={s.label}>
+              <CardContent className="p-4">
+                <Icon className="size-5 text-rose-400" />
+                <p className="mt-2 text-base font-semibold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </>
   )
 }
