@@ -9,6 +9,30 @@ const BottomSheet = DialogPrimitive.Root
 const BottomSheetTrigger = DialogPrimitive.Trigger
 const BottomSheetClose = DialogPrimitive.Close
 
+function BottomSheetTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      className={cn("text-base font-semibold", className)}
+      {...props}
+    />
+  )
+}
+
+function BottomSheetDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
 function BottomSheetOverlay({
   className,
   ...props
@@ -54,4 +78,11 @@ function BottomSheetContent({
   )
 }
 
-export { BottomSheet, BottomSheetClose, BottomSheetContent, BottomSheetTrigger }
+export {
+  BottomSheet,
+  BottomSheetClose,
+  BottomSheetContent,
+  BottomSheetDescription,
+  BottomSheetTitle,
+  BottomSheetTrigger,
+}

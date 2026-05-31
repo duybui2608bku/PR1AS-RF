@@ -7,7 +7,7 @@ type Props = {
 
 export function WorkerInfoCards({ profile }: Props) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid">
       <Card>
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-sm font-semibold">Lifestyle</CardTitle>

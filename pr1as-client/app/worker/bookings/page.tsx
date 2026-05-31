@@ -62,6 +62,12 @@ import {
   type WorkerBookingAction,
 } from "./components/worker-booking-action-dialog"
 import {
+  WorkerBookingActionSheet,
+  type WorkerBookingSheetItem,
+} from "./components/worker-booking-action-sheet"
+import { WorkerBookingCard } from "./components/worker-booking-card"
+import { WorkerBookingsMobileFilters } from "./components/worker-bookings-mobile-filters"
+import {
   bookingStatusBadgeClass,
   bookingStatusLabel,
   formatDateTime,
@@ -250,6 +256,7 @@ export default function WorkerBookingsPage() {
     booking: Booking
     action: WorkerBookingAction
   } | null>(null)
+  const [sheetBooking, setSheetBooking] = React.useState<Booking | null>(null)
   const [complaintLoadingId, setComplaintLoadingId] = React.useState<
     string | null
   >(null)
@@ -300,6 +307,16 @@ export default function WorkerBookingsPage() {
     setDateRangeFilter(undefined)
     setPage(1)
   }
+
+  // Mobile: chip áp dụng ngay trạng thái
+  const handleMobileStatusChange = (value: "all" | BookingStatus) => {
+    setStatusInput(value)
+    setStatusFilter(value)
+    setPage(1)
+  }
+
+  const advancedFilterCount =
+    (serviceCodeFilter ? 1 : 0) + (dateRangeFilter?.from ? 1 : 0)
 
   const handleStatusSubmit = async (values: UpdateBookingStatusPayload) => {
     if (!actionTarget) return
@@ -434,21 +451,53 @@ export default function WorkerBookingsPage() {
     )
   }
 
+  const sheetItems: WorkerBookingSheetItem[] = []
+  if (sheetBooking) {
+    const booking = sheetBooking
+    const bookingId = getBookingId(booking)
+    const expired = isBookingExpired(
+      booking.schedule,
+      booking.status,
+      booking.created_at
+    )
+    if (booking.status === BookingStatus.DISPUTED) {
+      sheetItems.push({
+        key: "complaint",
+        label: "Mở nhóm khiếu nại",
+        icon: MessageSquare,
+        loading: complaintLoadingId === bookingId,
+        onSelect: () => {
+          setSheetBooking(null)
+          handleOpenComplaintGroup(booking)
+        },
+      })
+    }
+    getAvailableActions(booking, expired).forEach((action) => {
+      sheetItems.push({
+        key: getActionValue(action),
+        label: action.confirmLabel,
+        icon: getActionIcon(action),
+        destructive: action.destructive,
+        onSelect: () => {
+          setSheetBooking(null)
+          setActionTarget({ booking, action })
+        },
+      })
+    })
+  }
+
   return (
     <SiteLayout>
       <AuthGuard>
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-              <CalendarCheck2 className="size-7" />
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          <div className="mb-5 md:mb-6">
+            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight md:text-3xl">
+              <CalendarCheck2 className="size-6 md:size-7" />
               Booking nhận việc
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Quản lý booking khách hàng đã đặt với vai trò worker
-            </p>
           </div>
 
-          <Card className="mb-5">
+          <Card className="mb-5 hidden md:block">
             <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1.5fr_auto]">
               <div className="grid gap-2">
                 <Label htmlFor="worker-filter-status">Trạng thái</Label>
@@ -519,7 +568,94 @@ export default function WorkerBookingsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Mobile: bộ lọc nhanh + danh sách dạng card */}
+          <div className="md:hidden">
+            <WorkerBookingsMobileFilters
+              statusOptions={STATUS_OPTIONS}
+              statusValue={statusFilter}
+              onStatusChange={handleMobileStatusChange}
+              serviceCode={serviceCodeInput}
+              onServiceCodeChange={setServiceCodeInput}
+              dateRange={dateRangeInput}
+              onDateRangeChange={setDateRangeInput}
+              advancedFilterCount={advancedFilterCount}
+              onApply={handleApplyFilters}
+              onReset={handleResetFilters}
+            />
+
+            <div className="mt-4 mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">Danh sách booking</span>
+                <Badge variant="outline">{total}</Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => bookingsQuery.refetch()}
+                disabled={bookingsQuery.isFetching}
+                aria-label="Làm mới danh sách"
+              >
+                <RefreshCw
+                  className={cn(
+                    "size-4",
+                    bookingsQuery.isFetching && "animate-spin"
+                  )}
+                />
+              </Button>
+            </div>
+
+            {bookingsQuery.isLoading ? (
+              <div className="flex min-h-48 items-center justify-center">
+                <Loader2 className="size-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : bookingsQuery.isError ? (
+              <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
+                <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
+                <p className="text-sm font-medium">
+                  Không tải được danh sách booking worker
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => bookingsQuery.refetch()}
+                >
+                  Thử lại
+                </Button>
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
+                <CalendarCheck2 className="size-9 text-muted-foreground" />
+                <p className="text-sm font-medium">Chưa có booking nào</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {bookings.map((booking) => {
+                  const bookingId = getBookingId(booking)
+                  const expired = isBookingExpired(
+                    booking.schedule,
+                    booking.status,
+                    booking.created_at
+                  )
+                  const actions = getAvailableActions(booking, expired)
+                  const hasActions =
+                    booking.status === BookingStatus.DISPUTED ||
+                    actions.length > 0
+                  return (
+                    <WorkerBookingCard
+                      key={bookingId}
+                      booking={booking}
+                      hasActions={hasActions}
+                      actionLoading={complaintLoadingId === bookingId}
+                      onOpenActions={setSheetBooking}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <Card className="hidden md:block">
             <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-base">Danh sách booking</CardTitle>
@@ -573,91 +709,8 @@ export default function WorkerBookingsPage() {
                   <p className="text-sm font-medium">Chưa có booking nào</p>
                 </div>
               ) : (
-                <>
-                  <div className="md:hidden">
-                    {bookings.map((booking) => {
-                      const expired = isBookingExpired(
-                        booking.schedule,
-                        booking.status,
-                        booking.created_at
-                      )
-                      const displayStatus = expired
-                        ? BookingStatus.EXPIRED
-                        : booking.status
-                      return (
-                        <div
-                          key={getBookingId(booking)}
-                          className="border-b p-4 last:border-b-0"
-                        >
-                          <div className="mb-3 flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate leading-tight font-semibold">
-                                {getServiceLabel(booking)}
-                              </div>
-                              <div className="text-xs text-muted-foreground uppercase">
-                                {booking.service_code}
-                              </div>
-                            </div>
-                            <span
-                              className={cn(
-                                "inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium",
-                                bookingStatusBadgeClass[displayStatus]
-                              )}
-                            >
-                              {bookingStatusLabel[displayStatus]}
-                            </span>
-                          </div>
-                          <dl className="grid gap-2 text-sm">
-                            <div>
-                              <dt className="text-xs text-muted-foreground">
-                                Khách hàng
-                              </dt>
-                              <dd className="font-medium">
-                                {getClientName(booking.client_id)}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs text-muted-foreground">
-                                Lịch hẹn
-                              </dt>
-                              <dd className="font-medium">
-                                {formatDateTime(booking.schedule.start_time)}
-                              </dd>
-                              <dd className="text-xs text-muted-foreground">
-                                Thời lượng: {booking.schedule.duration_hours}{" "}
-                                giờ
-                              </dd>
-                            </div>
-                            {booking.client_notes ? (
-                              <div>
-                                <dt className="text-xs text-muted-foreground">
-                                  Ghi chú khách hàng
-                                </dt>
-                                <dd className="whitespace-pre-wrap">
-                                  {booking.client_notes}
-                                </dd>
-                              </div>
-                            ) : null}
-                            {booking.worker_response ? (
-                              <div>
-                                <dt className="text-xs text-muted-foreground">
-                                  Phản hồi của bạn
-                                </dt>
-                                <dd className="whitespace-pre-wrap">
-                                  {booking.worker_response}
-                                </dd>
-                              </div>
-                            ) : null}
-                          </dl>
-                          <div className="mt-3 border-t pt-3">
-                            {renderActionSelect(booking)}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="hidden overflow-x-auto md:block">
-                    <Table className="min-w-[980px]">
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[980px]">
                       <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                         <tr>
                           <th className="px-4 py-3 font-medium">Dịch vụ</th>
@@ -739,8 +792,7 @@ export default function WorkerBookingsPage() {
                         })}
                       </tbody>
                     </Table>
-                  </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -782,6 +834,15 @@ export default function WorkerBookingsPage() {
             onStatusSubmit={handleStatusSubmit}
             onResponseSubmit={handleResponseSubmit}
             onCancelSubmit={handleCancelSubmit}
+          />
+
+          <WorkerBookingActionSheet
+            open={Boolean(sheetBooking)}
+            title={sheetBooking ? getServiceLabel(sheetBooking) : ""}
+            items={sheetItems}
+            onOpenChange={(open) => {
+              if (!open) setSheetBooking(null)
+            }}
           />
         </div>
       </AuthGuard>

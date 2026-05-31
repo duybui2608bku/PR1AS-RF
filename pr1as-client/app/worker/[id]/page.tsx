@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useState, type ChangeEvent } from "react"
-import { AlertCircle, Flag, ImagePlus, Loader2, X } from "lucide-react"
+import { AlertCircle, ImagePlus, Loader2, X } from "lucide-react"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
@@ -16,11 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -41,6 +36,7 @@ import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
 import { toast } from "sonner"
+import { WorkerAboutTabs } from "@/components/worker/worker-about-tabs"
 import { WorkerCalendar } from "@/components/worker/worker-calendar"
 import { WorkerInfoCards } from "@/components/worker/worker-info-cards"
 import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
@@ -201,8 +197,17 @@ export default function WorkerProfilePage({
                   onToggleFavorite={
                     isOwnProfile ? undefined : handleToggleFavorite
                   }
+                  hasOpenReport={hasOpenWorkerReport}
+                  onReport={
+                    isOwnProfile
+                      ? undefined
+                      : () => requireAuth(() => setReportOpen(true))
+                  }
                 />
 
+                {/* Mobile: tabbed about section directly below the intro.
+                    Desktop: stat cards grid (info/lifestyle/quote shown below). */}
+                <WorkerAboutTabs profile={data.worker_profile} />
                 <WorkerStatCards profile={data.worker_profile} />
 
                 {/* On mobile: aside (services + calendar) appears first via order-1,
@@ -213,45 +218,6 @@ export default function WorkerProfilePage({
                   <div className="order-2 space-y-4 lg:order-1">
                     <WorkerInfoCards profile={data.worker_profile} />
                     <WorkerReviews reviews={data.reviews ?? []} />
-
-                    {/* Report button — bottom of content on mobile, only for other profiles */}
-                    {!isOwnProfile ? (
-                      <div className="flex justify-end lg:hidden">
-                        {hasOpenWorkerReport ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <span className="inline-flex">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-muted-foreground opacity-60 disabled:cursor-not-allowed disabled:opacity-40"
-                                  disabled
-                                >
-                                  <Flag className="size-4" />
-                                  Báo cáo worker
-                                </Button>
-                              </span>
-                            </PopoverTrigger>
-                            <PopoverContent align="end" className="text-sm">
-                              Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo
-                              mới sau khi admin hoàn tất báo cáo hiện tại.
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground"
-                            onClick={() => requireAuth(() => setReportOpen(true))}
-                          >
-                            <Flag className="size-4" />
-                            Báo cáo worker
-                          </Button>
-                        )}
-                      </div>
-                    ) : null}
                   </div>
 
                   {/* Aside — order-1 on mobile (Services + Calendar shown first),
@@ -268,44 +234,6 @@ export default function WorkerProfilePage({
                     <ErrorBoundary resetKeys={[data.user.id]}>
                       <WorkerCalendar workerId={data.user.id} />
                     </ErrorBoundary>
-
-                    {/* Report button — in aside on desktop */}
-                    {!isOwnProfile ? (
-                      <div className="hidden justify-end lg:flex">
-                        {hasOpenWorkerReport ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <span className="inline-flex">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
-                                  disabled
-                                >
-                                  <Flag className="size-4" />
-                                  Báo cáo worker
-                                </Button>
-                              </span>
-                            </PopoverTrigger>
-                            <PopoverContent align="end" className="text-sm">
-                              Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo
-                              mới sau khi admin hoàn tất báo cáo hiện tại.
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => requireAuth(() => setReportOpen(true))}
-                          >
-                            <Flag className="size-4" />
-                            Báo cáo worker
-                          </Button>
-                        )}
-                      </div>
-                    ) : null}
                   </aside>
                 </div>
               </div>

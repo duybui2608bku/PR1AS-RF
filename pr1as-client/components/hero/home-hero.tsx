@@ -7,8 +7,10 @@ const DotLottieReact = dynamic(
   () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
   {
     ssr: false,
-    loading: () => <div className="size-full rounded-2xl bg-muted/30 animate-pulse" />,
-  },
+    loading: () => (
+      <div className="size-full animate-pulse rounded-2xl bg-muted/30" />
+    ),
+  }
 )
 import {
   Briefcase,
@@ -30,7 +32,11 @@ import { LocationSearchField } from "@/components/hero/location-search-field"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
@@ -87,21 +93,22 @@ export function HomeHero({
 
   return (
     <section>
-      <div className="container mx-auto px-4 py-16 lg:py-24">
+      <div className="container mx-auto px-4 py-10 sm:py-14 lg:py-24">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-10 lg:gap-8">
           <div className="lg:col-span-7">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Tìm người đồng hành cho mọi khoảnh khắc
             </h1>
-            <p className="mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-              Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển chọn và xác minh.
+            <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
+              Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển chọn
+              và xác minh.
             </p>
             <form
               onSubmit={handleSearch}
               className={cn(
-                "mt-8 w-full max-w-3xl bg-background",
+                "mt-6 w-full max-w-3xl bg-background sm:mt-8",
                 "flex flex-col divide-y divide-border rounded-2xl border border-border shadow-sm",
-                "sm:flex-row sm:divide-x sm:divide-y-0 sm:items-stretch sm:rounded-full sm:p-2 sm:divide-none sm:gap-0",
+                "sm:flex-row sm:items-stretch sm:gap-0 sm:divide-x sm:divide-y-0 sm:divide-none sm:rounded-full sm:p-2"
               )}
             >
               <ServicePickerField
@@ -111,17 +118,25 @@ export function HomeHero({
                 onToggle={onToggleCode}
               />
 
-              <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
+              <Separator
+                orientation="vertical"
+                className="mx-0 hidden h-auto self-stretch sm:block"
+              />
 
               <LocationSearchField
                 label="Địa điểm"
                 placeholder="Hà Nội hoặc Phường Cầu Giấy..."
                 value={selectedLocation}
                 onChange={onSelectedLocationChange}
-                icon={<MapPin className="size-4 shrink-0 text-muted-foreground" />}
+                icon={
+                  <MapPin className="size-4 shrink-0 text-muted-foreground" />
+                }
               />
 
-              <Separator orientation="vertical" className="hidden sm:block self-stretch h-auto mx-0" />
+              <Separator
+                orientation="vertical"
+                className="mx-0 hidden h-auto self-stretch sm:block"
+              />
 
               <SearchDateField
                 label="Thời gian"
@@ -130,11 +145,11 @@ export function HomeHero({
                 onChange={onScheduledAtChange}
               />
 
-              <div className="flex justify-center items-center p-2 sm:p-0 sm:flex sm:items-stretch">
+              <div className="flex items-center justify-center p-2 sm:flex sm:items-stretch sm:p-0">
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-[50%] h-[50px] rounded-[50px] sm:w-full sm:h-full sm:rounded-xl md:w-auto md:rounded-full md:px-6"
+                  className="h-12 w-full rounded-xl sm:h-full sm:rounded-xl md:w-auto md:rounded-full md:px-6"
                 >
                   <Search className="size-4" />
                   Tìm kiếm
@@ -167,7 +182,12 @@ type ServicePickerFieldProps = {
   onToggle: (code: string) => void
 }
 
-function ServicePickerField({ services, isLoading, activeCodes, onToggle }: ServicePickerFieldProps) {
+function ServicePickerField({
+  services,
+  isLoading,
+  activeCodes,
+  onToggle,
+}: ServicePickerFieldProps) {
   const displayValue = React.useMemo(() => {
     if (activeCodes.length === 0) return null
     if (activeCodes.length === 1) {
@@ -183,15 +203,20 @@ function ServicePickerField({ services, isLoading, activeCodes, onToggle }: Serv
         <button
           type="button"
           className={cn(
-            "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5 text-left",
-            "hover:bg-accent/50 transition-colors cursor-pointer",
-            "sm:py-2 sm:rounded-full",
+            "flex min-h-[76px] flex-1 flex-col justify-center gap-1 px-4 py-3 text-left",
+            "cursor-pointer transition-colors hover:bg-accent/50",
+            "sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2"
           )}
         >
           <span className="text-xs font-semibold text-foreground">Dịch vụ</span>
           <div className="flex items-center gap-2">
             <LayoutGrid className="size-4 shrink-0 text-muted-foreground" />
-            <span className={cn("text-sm truncate", displayValue ? "text-foreground" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "truncate text-base sm:text-sm",
+                displayValue ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
               {displayValue ?? "Chọn dịch vụ"}
             </span>
           </div>
@@ -238,18 +263,27 @@ type SearchDateFieldProps = {
   icon?: React.ReactNode
 }
 
-function SearchDateField({ label, placeholder, value, onChange, icon }: SearchDateFieldProps) {
+function SearchDateField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  icon,
+}: SearchDateFieldProps) {
   const id = React.useId()
 
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col justify-center px-5 py-3 gap-0.5",
-        "hover:bg-accent/50 transition-colors",
-        "sm:py-2 sm:rounded-full",
+        "flex min-h-[76px] flex-1 flex-col justify-center gap-1 px-4 py-3",
+        "transition-colors hover:bg-accent/50",
+        "sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2"
       )}
     >
-      <Label htmlFor={id} className="text-xs font-semibold text-foreground cursor-pointer">
+      <Label
+        htmlFor={id}
+        className="cursor-pointer text-xs font-semibold text-foreground"
+      >
         {label}
       </Label>
       <div className="flex items-center gap-2">
@@ -258,7 +292,7 @@ function SearchDateField({ label, placeholder, value, onChange, icon }: SearchDa
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          buttonClassName="h-auto border-none bg-transparent p-0 text-sm shadow-none hover:bg-transparent focus-visible:ring-0"
+          buttonClassName="h-auto border-none bg-transparent p-0 text-base shadow-none hover:bg-transparent focus-visible:ring-0 sm:text-sm"
         />
       </div>
     </div>
@@ -274,7 +308,12 @@ type ServicePillProps = {
   onClick: () => void
 }
 
-function ServicePill({ icon: Icon, label, isActive, onClick }: ServicePillProps) {
+function ServicePill({
+  icon: Icon,
+  label,
+  isActive,
+  onClick,
+}: ServicePillProps) {
   return (
     <Toggle
       pressed={isActive}
@@ -282,8 +321,8 @@ function ServicePill({ icon: Icon, label, isActive, onClick }: ServicePillProps)
       variant="outline"
       size="sm"
       className={cn(
-        "w-full justify-start rounded-full px-4 h-9 gap-2 font-medium",
-        "data-[state=on]:bg-foreground data-[state=on]:text-background data-[state=on]:border-foreground",
+        "h-9 w-full justify-start gap-2 rounded-full px-4 font-medium",
+        "data-[state=on]:border-foreground data-[state=on]:bg-foreground data-[state=on]:text-background"
       )}
     >
       <Icon className="size-4" />

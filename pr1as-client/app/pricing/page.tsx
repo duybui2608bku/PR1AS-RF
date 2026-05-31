@@ -100,7 +100,7 @@ export default async function PricingPage() {
   return (
     <SiteLayout>
       {/* ── Hero ── */}
-      <section className="container mx-auto px-4 py-14 md:py-20">
+      <section className="container mx-auto px-4 py-10 md:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-block rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold tracking-widest text-primary uppercase">
             Bảng giá
@@ -126,13 +126,13 @@ export default async function PricingPage() {
             <PricingPlans packages={packages} />
 
             {/* ── Comparison table ── */}
-            <div className="mt-16">
-              <h2 className="mb-6 text-center text-2xl font-bold tracking-tight">
+            <div className="mt-12 md:mt-16">
+              <h2 className="mb-5 text-center text-xl font-bold tracking-tight md:mb-6 md:text-2xl">
                 SO SÁNH CHI TIẾT
               </h2>
 
-              {/* Mobile: stacked cards per feature */}
-              <div className="space-y-4 md:hidden">
+              {/* Mobile: nhóm thẻ theo tính năng (iOS) */}
+              <div className="space-y-3 md:hidden">
                 {[
                   {
                     label: "Giá / tháng",
@@ -148,21 +148,26 @@ export default async function PricingPage() {
                 ].map((row) => (
                   <div
                     key={row.label}
-                    className="rounded-xl border bg-card p-4 shadow-sm"
+                    className="overflow-hidden rounded-2xl border bg-card shadow-sm"
                   >
-                    <p className="mb-3 text-sm font-semibold">{row.label}</p>
-                    <ul className="divide-y divide-border">
-                      {packages.map((pkg) => {
+                    <p className="border-b bg-muted/30 px-4 py-2.5 text-sm font-semibold">
+                      {row.label}
+                    </p>
+                    <ul>
+                      {packages.map((pkg, index) => {
                         const meta = PLAN_META[pkg.package_code]
                         const { enabled, text } = row.get(pkg)
                         return (
                           <li
                             key={pkg.id}
-                            className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                            className={cn(
+                              "flex items-center justify-between gap-3 px-4 py-3 text-sm",
+                              index < packages.length - 1 && "border-b"
+                            )}
                           >
                             <span
                               className={cn(
-                                "flex items-center gap-1.5 font-medium",
+                                "flex items-center gap-2 font-medium",
                                 meta.color
                               )}
                             >
@@ -171,7 +176,9 @@ export default async function PricingPage() {
                             </span>
                             {enabled ? (
                               <span className="flex items-center gap-1.5 text-right">
-                                <Check className="size-4 shrink-0 text-green-500" />
+                                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                                  <Check className="size-3.5" />
+                                </span>
                                 <span className="text-muted-foreground">
                                   {text}
                                 </span>

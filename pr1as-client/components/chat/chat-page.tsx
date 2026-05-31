@@ -1416,7 +1416,7 @@ export function ChatPage({
           )}
         >
           <div className="flex min-h-14 items-center justify-between gap-2 border-b px-3 py-2 md:min-h-16 md:px-4 md:py-3">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
@@ -1433,7 +1433,9 @@ export function ChatPage({
                   title={activeTitle}
                   avatar={selectedDirect?.other_user?.avatar}
                   highlight={isActiveDirectAdmin ? "admin" : undefined}
-                  planCode={selectedDirect?.other_user?.meta_data?.pricing_plan_code}
+                  planCode={
+                    selectedDirect?.other_user?.meta_data?.pricing_plan_code
+                  }
                 />
               ) : (
                 <GroupMemberAvatars members={selectedGroup?.members_data} />
@@ -1455,58 +1457,53 @@ export function ChatPage({
                       Đã bị khóa
                     </span>
                   ) : null}
-                  {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
-                    <Button
-                      type="button"
-                      variant={selectedDirectBlocked ? "outline" : "ghost"}
-                      size="icon"
-                      className={cn(
-                        "size-7 shrink-0",
-                        selectedDirectBlocked &&
-                          "text-destructive hover:text-destructive"
-                      )}
-                      disabled={
-                        blockUserMutation.isPending ||
-                        unblockUserMutation.isPending
-                      }
-                      onClick={() => {
-                        if (selectedDirectBlocked) {
-                          void handleUnblockUser()
-                          return
-                        }
-
-                        setBlockDialogOpen(true)
-                      }}
-                      aria-label={
-                        selectedDirectBlocked
-                          ? "Bỏ chặn tin nhắn"
-                          : "Chặn tin nhắn"
-                      }
-                      title={
-                        selectedDirectBlocked
-                          ? "Bỏ chặn tin nhắn"
-                          : "Chặn tin nhắn"
-                      }
-                    >
-                      {blockUserMutation.isPending ||
-                      unblockUserMutation.isPending ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Ban className="size-4" />
-                      )}
-                    </Button>
-                  ) : null}
                 </h2>
                 <p className="truncate text-xs text-muted-foreground">
                   {activeSubtitle}
                 </p>
               </div>
             </div>
-            {activeConversationId ? (
-              <Badge variant="outline">{activeMessages.length} tin nhắn</Badge>
-            ) : (
-              <Badge variant="outline">Chưa chọn</Badge>
-            )}
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              {mode === "direct" && directReceiverId && !isActiveDirectAdmin ? (
+                <Button
+                  type="button"
+                  variant={selectedDirectBlocked ? "outline" : "ghost"}
+                  size="icon"
+                  className={cn(
+                    "size-9 shrink-0",
+                    selectedDirectBlocked &&
+                      "text-destructive hover:text-destructive"
+                  )}
+                  disabled={
+                    blockUserMutation.isPending || unblockUserMutation.isPending
+                  }
+                  onClick={() => {
+                    if (selectedDirectBlocked) {
+                      void handleUnblockUser()
+                      return
+                    }
+
+                    setBlockDialogOpen(true)
+                  }}
+                  aria-label={
+                    selectedDirectBlocked ? "Bỏ chặn tin nhắn" : "Chặn tin nhắn"
+                  }
+                  title={
+                    selectedDirectBlocked ? "Bỏ chặn tin nhắn" : "Chặn tin nhắn"
+                  }
+                >
+                  {blockUserMutation.isPending ||
+                  unblockUserMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Ban className="size-4" />
+                  )}
+                </Button>
+              ) : null}
+              {!activeConversationId ? (
+                <Badge variant="outline">Chưa chọn</Badge>
+              ) : null}
+            </div>
           </div>
 
           <div

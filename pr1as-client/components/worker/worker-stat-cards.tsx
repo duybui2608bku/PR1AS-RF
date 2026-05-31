@@ -52,39 +52,20 @@ export function WorkerStatCards({ profile }: Props) {
   ]
 
   return (
-    <>
-      {/* Mobile: horizontal scroll row */}
-      <div className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:hidden">
-        {stats.map((s) => {
-          const Icon = s.icon
-          return (
-            <div
-              key={s.label}
-              className="w-32 shrink-0 snap-start rounded-2xl border bg-card p-4"
-            >
+    // Desktop only — on mobile these stats live inside WorkerAboutTabs.
+    <div className="hidden grid-cols-4 gap-3 lg:grid">
+      {stats.map((s) => {
+        const Icon = s.icon
+        return (
+          <Card key={s.label}>
+            <CardContent className="p-4">
               <Icon className="size-5 text-rose-400" />
               <p className="mt-2 text-base font-semibold text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* sm+: 4-column grid */}
-      <div className="hidden grid-cols-2 gap-3 sm:grid sm:grid-cols-4">
-        {stats.map((s) => {
-          const Icon = s.icon
-          return (
-            <Card key={s.label}>
-              <CardContent className="p-4">
-                <Icon className="size-5 text-rose-400" />
-                <p className="mt-2 text-base font-semibold text-foreground">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-    </>
+            </CardContent>
+          </Card>
+        )
+      })}
+    </div>
   )
 }

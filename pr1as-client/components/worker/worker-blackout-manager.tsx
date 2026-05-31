@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ import {
   useDeleteBlackout,
   useMyBlackouts,
 } from "@/lib/hooks/use-worker"
+import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type { WorkerBlackoutItem } from "@/types"
 
@@ -59,7 +61,9 @@ const formatRange = (item: WorkerBlackoutItem) => {
   const start = parseBlackoutDate(item.start_time)
   const end = parseBlackoutDate(item.end_time)
   const startsAtMidnight =
-    start.getHours() === 0 && start.getMinutes() === 0 && start.getSeconds() === 0
+    start.getHours() === 0 &&
+    start.getMinutes() === 0 &&
+    start.getSeconds() === 0
   const endsAtMidnight =
     end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0
 
@@ -98,8 +102,8 @@ const formatRange = (item: WorkerBlackoutItem) => {
 }
 
 type FormState = {
-  startDate: string
-  endDate: string
+  startDate: Date | undefined
+  endDate: Date | undefined
   allDay: boolean
   startTime: string
   endTime: string
@@ -107,7 +111,7 @@ type FormState = {
 }
 
 const emptyForm = (): FormState => {
-  const today = toDateInputValue(new Date())
+  const today = startOfDay(new Date())
   return {
     startDate: today,
     endDate: today,
@@ -124,16 +128,26 @@ type AddDialogProps = {
 }
 
 function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
-  const [form, setForm] = React.useState<FormState>(() => emptyForm())
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Thêm ngày nghỉ</DialogTitle>
+          <DialogDescription>
+            Khoảng thời gian này sẽ chặn khách đặt lịch với bạn.
+          </DialogDescription>
+        </DialogHeader>
+        {/* Mount mới mỗi lần mở để form luôn reset (tránh setState trong effect) */}
+        {open ? <AddBlackoutForm onClose={() => onOpenChange(false)} /> : null}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AddBlackoutForm({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = React.useState<FormState>(emptyForm)
   const [error, setError] = React.useState<string | null>(null)
   const createMutation = useCreateBlackout()
-
-  React.useEffect(() => {
-    if (open) {
-      setForm(emptyForm())
-      setError(null)
-    }
-  }, [open])
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -148,26 +162,26 @@ function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
       return
     }
 
+    const startKey = toDateInputValue(form.startDate)
+    const endKey = toDateInputValue(form.endDate)
+
     let startDate: Date
     let endDate: Date
 
     if (form.allDay) {
-      startDate = new Date(`${form.startDate}T00:00:00`)
-      const inclusiveEnd = new Date(`${form.endDate}T00:00:00`)
+      startDate = new Date(`${startKey}T00:00:00`)
+      const inclusiveEnd = new Date(`${endKey}T00:00:00`)
       endDate = new Date(inclusiveEnd.getTime() + 24 * 60 * 60 * 1000)
     } else {
       if (!form.startTime || !form.endTime) {
         setError("Vui lòng chọn giờ bắt đầu và giờ kết thúc.")
         return
       }
-      startDate = new Date(`${form.startDate}T${form.startTime}:00`)
-      endDate = new Date(`${form.endDate}T${form.endTime}:00`)
+      startDate = new Date(`${startKey}T${form.startTime}:00`)
+      endDate = new Date(`${endKey}T${form.endTime}:00`)
     }
 
-    if (
-      Number.isNaN(startDate.getTime()) ||
-      Number.isNaN(endDate.getTime())
-    ) {
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       setError("Thời gian không hợp lệ.")
       return
     }
@@ -195,7 +209,7 @@ function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
         reason: reason || undefined,
       })
       toast.success("Đã thêm ngày nghỉ.")
-      onOpenChange(false)
+      onClose()
     } catch (err) {
       const message = getErrorMessage(err, "Không thể thêm ngày nghỉ.")
       setError(message)
@@ -204,121 +218,103 @@ function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Thêm ngày nghỉ</DialogTitle>
-          <DialogDescription>
-            Khoảng thời gian này sẽ chặn khách đặt lịch với bạn.
-          </DialogDescription>
-        </DialogHeader>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Từ ngày</Label>
+          <DatePicker
+            value={form.startDate}
+            fromDate={startOfDay(new Date())}
+            onChange={(date) => {
+              update("startDate", date)
+              if (date && form.endDate && form.endDate < date) {
+                update("endDate", date)
+              }
+            }}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Đến ngày</Label>
+          <DatePicker
+            value={form.endDate}
+            fromDate={form.startDate ?? startOfDay(new Date())}
+            onChange={(date) => update("endDate", date)}
+          />
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="blackout-start-date">Từ ngày</Label>
-              <Input
-                id="blackout-start-date"
-                type="date"
-                value={form.startDate}
-                min={toDateInputValue(new Date())}
-                onChange={(e) => {
-                  const value = e.target.value
-                  update("startDate", value)
-                  if (form.endDate && form.endDate < value) {
-                    update("endDate", value)
-                  }
-                }}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="blackout-end-date">Đến ngày</Label>
-              <Input
-                id="blackout-end-date"
-                type="date"
-                value={form.endDate}
-                min={form.startDate || toDateInputValue(new Date())}
-                onChange={(e) => update("endDate", e.target.value)}
-                required
-              />
-            </div>
-          </div>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox
+          checked={form.allDay}
+          onCheckedChange={(value) => update("allDay", value === true)}
+        />
+        Nghỉ cả ngày
+      </label>
 
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={form.allDay}
-              onCheckedChange={(value) => update("allDay", value === true)}
-            />
-            Nghỉ cả ngày
-          </label>
-
-          {form.allDay ? null : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="blackout-start-time">Giờ bắt đầu</Label>
-                <Input
-                  id="blackout-start-time"
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => update("startTime", e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="blackout-end-time">Giờ kết thúc</Label>
-                <Input
-                  id="blackout-end-time"
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) => update("endTime", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          )}
-
+      {form.allDay ? null : (
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="blackout-reason">Lý do (tuỳ chọn)</Label>
-            <Textarea
-              id="blackout-reason"
-              value={form.reason}
-              onChange={(e) => update("reason", e.target.value)}
-              placeholder="Ví dụ: nghỉ phép, đi công tác..."
-              maxLength={REASON_MAX}
-              rows={3}
+            <Label htmlFor="blackout-start-time">Giờ bắt đầu</Label>
+            <Input
+              id="blackout-start-time"
+              type="time"
+              value={form.startTime}
+              onChange={(e) => update("startTime", e.target.value)}
+              required
             />
-            <p className="text-right text-xs text-muted-foreground">
-              {form.reason.length}/{REASON_MAX}
-            </p>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="blackout-end-time">Giờ kết thúc</Label>
+            <Input
+              id="blackout-end-time"
+              type="time"
+              value={form.endTime}
+              onChange={(e) => update("endTime", e.target.value)}
+              required
+            />
+          </div>
+        </div>
+      )}
 
-          {error ? (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <span>{error}</span>
-            </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="blackout-reason">Lý do (tuỳ chọn)</Label>
+        <Textarea
+          id="blackout-reason"
+          value={form.reason}
+          onChange={(e) => update("reason", e.target.value)}
+          placeholder="Ví dụ: nghỉ phép, đi công tác..."
+          maxLength={REASON_MAX}
+          rows={3}
+        />
+        <p className="text-right text-xs text-muted-foreground">
+          {form.reason.length}/{REASON_MAX}
+        </p>
+      </div>
+
+      {error ? (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={createMutation.isPending}
+        >
+          Huỷ
+        </Button>
+        <Button type="submit" disabled={createMutation.isPending}>
+          {createMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
           ) : null}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={createMutation.isPending}
-            >
-              Huỷ
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              Lưu
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          Lưu
+        </Button>
+      </DialogFooter>
+    </form>
   )
 }
 
@@ -371,7 +367,7 @@ export function WorkerBlackoutManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-md border bg-background px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border bg-card px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <CalendarOff className="size-5" />
@@ -386,6 +382,7 @@ export function WorkerBlackoutManager() {
           <Button
             variant="outline"
             size="sm"
+            className="flex-1 sm:flex-none"
             onClick={() => blackoutsQuery.refetch()}
             disabled={blackoutsQuery.isFetching}
           >
@@ -396,7 +393,11 @@ export function WorkerBlackoutManager() {
             )}
             Làm mới
           </Button>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
+          <Button
+            size="sm"
+            className="flex-1 sm:flex-none"
+            onClick={() => setAddOpen(true)}
+          >
             <Plus className="size-4" />
             Thêm ngày nghỉ
           </Button>
@@ -404,11 +405,11 @@ export function WorkerBlackoutManager() {
       </div>
 
       {blackoutsQuery.isLoading ? (
-        <div className="flex min-h-[200px] items-center justify-center rounded-md border bg-background">
+        <div className="flex min-h-[200px] items-center justify-center rounded-2xl border bg-card shadow-sm">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : blackoutsQuery.isError ? (
-        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-md border bg-background px-4 text-center">
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-2xl border bg-card px-4 text-center shadow-sm">
           <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
           <div>
             <p className="font-medium">Không tải được danh sách ngày nghỉ</p>
@@ -421,7 +422,7 @@ export function WorkerBlackoutManager() {
           </Button>
         </div>
       ) : items.length === 0 ? (
-        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-md border bg-background px-4 text-center">
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border bg-card px-4 text-center shadow-sm">
           <CalendarOff className="size-9 text-muted-foreground" />
           <p className="font-medium">Chưa có ngày nghỉ nào</p>
           <p className="text-sm text-muted-foreground">
@@ -481,7 +482,7 @@ export function WorkerBlackoutManager() {
                 void handleConfirmDelete()
               }}
               disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
             >
               {deleteMutation.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -514,28 +515,44 @@ function BlackoutSection({
 }: SectionProps) {
   return (
     <section className="space-y-2">
-      <h3 className="text-sm font-medium text-muted-foreground uppercase">
+      <h3 className="px-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {title} · {items.length}
       </h3>
       {items.length === 0 && emptyText ? (
-        <p className="rounded-md border border-dashed bg-background px-3 py-3 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed bg-card px-4 py-4 text-center text-sm text-muted-foreground">
           {emptyText}
         </p>
       ) : (
-        <ul className="space-y-2">
-          {items.map((item) => (
+        <ul
+          className={cn(
+            "overflow-hidden rounded-2xl border bg-card shadow-sm",
+            muted && "opacity-70"
+          )}
+        >
+          {items.map((item, index) => (
             <li
               key={item.id}
-              className={
-                muted
-                  ? "flex items-start justify-between gap-3 rounded-md border bg-muted/30 px-3 py-3"
-                  : "flex items-start justify-between gap-3 rounded-md border bg-background px-3 py-3"
-              }
+              className={cn(
+                "flex items-center gap-3 px-4 py-3",
+                index < items.length - 1 && "border-b"
+              )}
             >
-              <div className="min-w-0">
-                <div className="truncate font-medium">{formatRange(item)}</div>
+              <span
+                className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-full",
+                  muted
+                    ? "bg-muted text-muted-foreground"
+                    : "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                )}
+              >
+                <CalendarOff className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">
+                  {formatRange(item)}
+                </div>
                 {item.reason ? (
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {item.reason}
                   </p>
                 ) : null}
@@ -543,17 +560,17 @@ function BlackoutSection({
               {!muted ? (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  aria-label="Xoá ngày nghỉ"
                   onClick={() => onDelete(item)}
                   disabled={deletingId === item.id}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  className="size-9 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
                   {deletingId === item.id ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <Trash2 className="size-4" />
                   )}
-                  Xoá
                 </Button>
               ) : null}
             </li>

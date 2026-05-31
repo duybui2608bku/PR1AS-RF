@@ -13,9 +13,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  FileText,
   FileWarning,
   Lightbulb,
   Loader2,
+  Lock,
+  Mail,
   MessageSquarePlus,
   Send,
   ShieldCheck,
@@ -69,6 +72,7 @@ import {
   useUnblockUser,
 } from "@/lib/hooks/use-moderation"
 import { useReputationHistory } from "@/lib/hooks/use-reputation"
+import { siteConfig } from "@/config/site"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import {
@@ -121,12 +125,14 @@ const sectionMeta: Record<
   },
   "post-reports": {
     label: "Bài viết đã báo cáo",
-    description: "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo.",
+    description:
+      "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo.",
     icon: FileWarning,
   },
   "worker-reports": {
     label: "Worker đã báo cáo",
-    description: "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo.",
+    description:
+      "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo.",
     icon: UserX,
   },
   reputation: {
@@ -168,6 +174,35 @@ const navLinks: Array<{
     label: "Thông tin cá nhân",
     description: "Họ tên, email, ảnh đại diện, gói thành viên.",
     icon: User,
+  },
+]
+
+// Trang thông tin, pháp lý và liên hệ — trước đây nằm ở footer (đã ẩn trên mobile).
+const infoLinks: Array<{
+  href: string
+  label: string
+  description: string
+  icon: React.ComponentType<{ className?: string }>
+  external?: boolean
+}> = [
+  {
+    href: "/privacy",
+    label: "Chính sách bảo mật",
+    description: "Cách chúng tôi thu thập và bảo vệ dữ liệu của bạn.",
+    icon: Lock,
+  },
+  {
+    href: "/terms",
+    label: "Điều khoản sử dụng",
+    description: "Quy định khi sử dụng nền tảng PR1AS.",
+    icon: FileText,
+  },
+  {
+    href: `mailto:${siteConfig.contactEmail}`,
+    label: "Liên hệ",
+    description: siteConfig.contactEmail,
+    icon: Mail,
+    external: true,
   },
 ]
 
@@ -750,9 +785,7 @@ function FeedbackPanel() {
             className="min-h-32"
             disabled={createMutation.isPending}
           />
-          <p className="text-xs text-muted-foreground">
-            Tối thiểu 10 ký tự.
-          </p>
+          <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự.</p>
         </div>
 
         <div className="flex justify-end">
@@ -781,10 +814,7 @@ function FeedbackPanel() {
             {feedbacks.map((feedback: Feedback) => {
               const id = feedback.id ?? feedback._id ?? feedback.created_at
               return (
-                <div
-                  key={id}
-                  className="rounded-md border bg-background p-4"
-                >
+                <div key={id} className="rounded-md border bg-background p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">
                       {feedback.type === "bug" ? (
@@ -874,10 +904,7 @@ function DeleteAccountPanel() {
         )
       } else {
         toast.error(
-          getErrorMessage(
-            response.error,
-            "Không thể gửi email đặt mật khẩu."
-          )
+          getErrorMessage(response.error, "Không thể gửi email đặt mật khẩu.")
         )
       }
     } catch (error) {
@@ -923,7 +950,8 @@ function DeleteAccountPanel() {
   }
 
   const status = statusQuery.data
-  const blockers = submitBlockers.length > 0 ? submitBlockers : status?.blockers ?? []
+  const blockers =
+    submitBlockers.length > 0 ? submitBlockers : (status?.blockers ?? [])
   const canSubmit = status?.has_password && blockers.length === 0
 
   return (
@@ -937,10 +965,10 @@ function DeleteAccountPanel() {
             đăng nhập lại bằng email và mật khẩu hiện tại để khôi phục.
           </p>
           <p>
-            Sau 30 ngày, thông tin cá nhân (tên, ảnh đại diện, số điện thoại,
-            hồ sơ) sẽ bị xoá vĩnh viễn. Bài viết và bình luận của bạn sẽ bị ẩn
-            khỏi cộng đồng. Lịch sử booking, đánh giá và ví được giữ lại theo
-            quy định để phục vụ đối chiếu.
+            Sau 30 ngày, thông tin cá nhân (tên, ảnh đại diện, số điện thoại, hồ
+            sơ) sẽ bị xoá vĩnh viễn. Bài viết và bình luận của bạn sẽ bị ẩn khỏi
+            cộng đồng. Lịch sử booking, đánh giá và ví được giữ lại theo quy
+            định để phục vụ đối chiếu.
           </p>
         </AlertDescription>
       </Alert>
@@ -954,7 +982,9 @@ function DeleteAccountPanel() {
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <span>Không còn booking nào đang chờ xác nhận hoặc đang thực hiện.</span>
+            <span>
+              Không còn booking nào đang chờ xác nhận hoặc đang thực hiện.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1092,7 +1122,7 @@ export default function SettingsPage() {
       <div
         className={cn(
           "mb-6 flex items-center gap-3 px-4 pt-4 sm:px-0 sm:pt-0",
-          activeSection !== null && "max-lg:hidden",
+          activeSection !== null && "max-lg:hidden"
         )}
       >
         <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -1106,7 +1136,7 @@ export default function SettingsPage() {
         <aside className={cn(activeSection !== null && "max-lg:hidden")}>
           <nav className="space-y-6 lg:sticky lg:top-20 lg:space-y-5">
             <div>
-              <p className="px-4 pb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:px-1">
+              <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
                 Hồ sơ
               </p>
               <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
@@ -1137,7 +1167,7 @@ export default function SettingsPage() {
             </div>
             {sectionGroups.map((group) => (
               <div key={group.title}>
-                <p className="px-4 pb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:px-1">
+                <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
                   {group.title}
                 </p>
                 <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
@@ -1152,7 +1182,7 @@ export default function SettingsPage() {
                         className={cn(
                           "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent",
                           desktopActive === id && "lg:bg-accent",
-                          meta.danger && "text-destructive",
+                          meta.danger && "text-destructive"
                         )}
                       >
                         <span
@@ -1160,7 +1190,7 @@ export default function SettingsPage() {
                             "flex size-9 shrink-0 items-center justify-center rounded-full",
                             meta.danger
                               ? "bg-destructive/10 text-destructive"
-                              : "bg-muted text-foreground",
+                              : "bg-muted text-foreground"
                           )}
                         >
                           <Icon className="size-4" />
@@ -1180,6 +1210,44 @@ export default function SettingsPage() {
                 </div>
               </div>
             ))}
+
+            <div>
+              <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
+                Thông tin & pháp lý
+              </p>
+              <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
+                {infoLinks.map((link) => {
+                  const Icon = link.icon
+                  const rowClass =
+                    "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent"
+                  const inner = (
+                    <>
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {link.label}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground lg:hidden">
+                          {link.description}
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
+                    </>
+                  )
+                  return link.external ? (
+                    <a key={link.href} href={link.href} className={rowClass}>
+                      {inner}
+                    </a>
+                  ) : (
+                    <Link key={link.href} href={link.href} className={rowClass}>
+                      {inner}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           </nav>
         </aside>
 

@@ -244,12 +244,8 @@ export default function WorkerBookingSchedulePage() {
             value="bookings"
             className="flex flex-1 flex-col focus-visible:outline-none"
           >
-            <div className="container mx-auto flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-              <p className="text-sm text-muted-foreground">
-                {format(month, "MMMM yyyy", { locale: vi })} ·{" "}
-                {range.start_date} đến {range.end_date}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="container mx-auto flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
                   size="icon"
@@ -258,13 +254,9 @@ export default function WorkerBookingSchedulePage() {
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMonth(startOfMonth(new Date()))}
-                >
-                  Hôm nay
-                </Button>
+                <span className="flex-1 text-center text-base font-semibold capitalize lg:flex-none lg:px-2 lg:text-lg">
+                  {format(month, "MMMM yyyy", { locale: vi })}
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
@@ -273,9 +265,20 @@ export default function WorkerBookingSchedulePage() {
                 >
                   <ChevronRight className="size-4" />
                 </Button>
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="flex-1 lg:flex-none"
+                  onClick={() => setMonth(startOfMonth(new Date()))}
+                >
+                  Hôm nay
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 lg:flex-none"
                   onClick={() => bookingsQuery.refetch()}
                   disabled={bookingsQuery.isFetching}
                 >
@@ -291,18 +294,30 @@ export default function WorkerBookingSchedulePage() {
 
             {/* Mobile: inline stat bar */}
             <div className="container mx-auto px-4 pb-4 md:hidden">
-              <div className="flex divide-x divide-border rounded-md border bg-background">
-                <div className="flex flex-1 flex-col items-center py-2.5">
-                  <span className="text-2xl font-bold tabular-nums">{monthBookings.length}</span>
-                  <span className="mt-0.5 text-[11px] text-muted-foreground">Tháng này</span>
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="rounded-2xl border bg-card px-3 py-3 text-center shadow-sm">
+                  <span className="block text-2xl font-bold tabular-nums">
+                    {monthBookings.length}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Tháng này
+                  </span>
                 </div>
-                <div className="flex flex-1 flex-col items-center py-2.5">
-                  <span className="text-2xl font-bold tabular-nums">{activeBookings.length}</span>
-                  <span className="mt-0.5 text-[11px] text-muted-foreground">Cần xử lý</span>
+                <div className="rounded-2xl border bg-card px-3 py-3 text-center shadow-sm">
+                  <span className="block text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                    {activeBookings.length}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Cần xử lý
+                  </span>
                 </div>
-                <div className="flex flex-1 flex-col items-center py-2.5">
-                  <span className="text-2xl font-bold tabular-nums">{todayBookings.length}</span>
-                  <span className="mt-0.5 text-[11px] text-muted-foreground">Hôm nay</span>
+                <div className="rounded-2xl border bg-card px-3 py-3 text-center shadow-sm">
+                  <span className="block text-2xl font-bold tabular-nums text-primary">
+                    {todayBookings.length}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    Hôm nay
+                  </span>
                 </div>
               </div>
             </div>
@@ -408,9 +423,9 @@ export default function WorkerBookingSchedulePage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 lg:hidden">
+                <div className="space-y-4 lg:hidden">
                   {monthBookings.length === 0 ? (
-                    <div className="flex min-h-64 flex-col items-center justify-center rounded-md border bg-background px-4 text-center">
+                    <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border bg-card px-4 text-center shadow-sm">
                       <CalendarDays className="size-10 text-muted-foreground" />
                       <p className="mt-3 text-sm font-medium">
                         Chưa có booking trong tháng này
@@ -424,62 +439,67 @@ export default function WorkerBookingSchedulePage() {
                       if (dayBookings.length === 0) return null
 
                       return (
-                        <section
-                          key={key}
-                          className="rounded-md border bg-background p-3"
-                        >
-                          <div className="mb-3 flex items-center justify-between">
-                            <div>
-                              <h2 className="font-medium">
-                                {format(day, "EEEE, dd/MM", { locale: vi })}
-                              </h2>
-                              <p className="text-xs text-muted-foreground">
+                        <section key={key}>
+                          <div className="mb-2 flex items-center justify-between px-1">
+                            <h2 className="text-sm font-semibold capitalize">
+                              {format(day, "EEEE, dd/MM", { locale: vi })}
+                            </h2>
+                            {isToday(day) ? (
+                              <Badge>Hôm nay</Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
                                 {dayBookings.length} booking
-                              </p>
-                            </div>
-                            {isToday(day) ? <Badge>Hôm nay</Badge> : null}
+                              </span>
+                            )}
                           </div>
-                          <div className="space-y-2">
-                            {dayBookings.map((booking) => (
-                              <div
+                          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                            {dayBookings.map((booking, index) => (
+                              <Link
                                 key={getBookingId(booking)}
-                                className="rounded-md border p-3"
+                                href="/worker/bookings"
+                                className={cn(
+                                  "flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-accent active:bg-accent/70",
+                                  index < dayBookings.length - 1 && "border-b"
+                                )}
                               >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <div className="truncate font-medium">
-                                      {getServiceLabel(booking)}
-                                    </div>
-                                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Clock3 className="size-4" />
-                                      {formatTime(
-                                        booking.schedule.start_time
-                                      )}{" "}
-                                      - {formatTime(booking.schedule.end_time)}
-                                    </div>
+                                <div className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-muted py-1.5">
+                                  <span className="text-sm font-semibold tabular-nums">
+                                    {formatTime(booking.schedule.start_time)}
+                                  </span>
+                                  <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                    <Clock3 className="size-2.5" />
+                                    {formatDuration(booking)}
+                                  </span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-sm font-medium">
+                                    {getServiceLabel(booking)}
                                   </div>
-                                  <span
-                                    className={cn(
-                                      "shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium",
-                                      bookingStatusBadgeClass[
-                                        getDisplayStatus(booking)
-                                      ]
-                                    )}
-                                  >
-                                    {
-                                      bookingStatusLabel[
-                                        getDisplayStatus(booking)
-                                      ]
-                                    }
-                                  </span>
+                                  <div className="mt-1 flex items-center gap-2">
+                                    <span
+                                      className={cn(
+                                        "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                                        bookingStatusBadgeClass[
+                                          getDisplayStatus(booking)
+                                        ]
+                                      )}
+                                    >
+                                      {
+                                        bookingStatusLabel[
+                                          getDisplayStatus(booking)
+                                        ]
+                                      }
+                                    </span>
+                                    <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                                      <User className="size-3 shrink-0" />
+                                      <span className="truncate">
+                                        {getClientName(booking.client_id)}
+                                      </span>
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                  <User className="size-4" />
-                                  <span className="truncate">
-                                    {getClientName(booking.client_id)}
-                                  </span>
-                                </div>
-                              </div>
+                                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                              </Link>
                             ))}
                           </div>
                         </section>

@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
+import { WorkerReportButton } from "@/components/worker/worker-report-button"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
 const EXPERIENCE_LABEL: Record<WorkerExperience, string> = {
@@ -49,6 +50,8 @@ type Props = {
   isFavorite?: boolean
   isFavoritePending?: boolean
   onToggleFavorite?: () => void
+  hasOpenReport?: boolean
+  onReport?: () => void
 }
 
 export function WorkerProfileHeader({
@@ -57,6 +60,8 @@ export function WorkerProfileHeader({
   isFavorite = false,
   isFavoritePending = false,
   onToggleFavorite,
+  hasOpenReport = false,
+  onReport,
 }: Props) {
   const router = useRouter()
   const profile = worker.worker_profile
@@ -107,7 +112,7 @@ export function WorkerProfileHeader({
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
 
           {/* Top-right action */}
-          <div className="absolute right-3 top-3">
+          <div className="absolute right-3 top-3 flex items-center gap-2">
             {isOwnProfile ? (
               <Button
                 type="button"
@@ -119,32 +124,43 @@ export function WorkerProfileHeader({
                 <Pencil className="size-3.5" />
                 Chỉnh sửa
               </Button>
-            ) : onToggleFavorite ? (
-              <button
-                type="button"
-                onClick={onToggleFavorite}
-                disabled={isFavoritePending}
-                aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50",
-                  isFavorite
-                    ? "bg-rose-500/90 text-white"
-                    : "border border-white/40 bg-white/20 text-white hover:bg-white/30",
-                )}
-              >
-                {isFavoritePending ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Heart
+            ) : (
+              <>
+                {onToggleFavorite ? (
+                  <button
+                    type="button"
+                    onClick={onToggleFavorite}
+                    disabled={isFavoritePending}
+                    aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
                     className={cn(
-                      "size-3.5 transition-all",
-                      isFavorite && "fill-white",
+                      "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50",
+                      isFavorite
+                        ? "bg-rose-500/90 text-white"
+                        : "border border-white/40 bg-white/20 text-white hover:bg-white/30",
                     )}
+                  >
+                    {isFavoritePending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Heart
+                        className={cn(
+                          "size-3.5 transition-all",
+                          isFavorite && "fill-white",
+                        )}
+                      />
+                    )}
+                    {/* <span>{isFavorite ? "Đã thích" : "Yêu thích"}</span> */}
+                  </button>
+                ) : null}
+                {onReport ? (
+                  <WorkerReportButton
+                    variant="overlay"
+                    hasOpenReport={hasOpenReport}
+                    onReport={onReport}
                   />
-                )}
-                <span>{isFavorite ? "Đã thích" : "Yêu thích"}</span>
-              </button>
-            ) : null}
+                ) : null}
+              </>
+            )}
           </div>
 
           {/* Bottom overlay: name + rating */}
@@ -303,7 +319,7 @@ export function WorkerProfileHeader({
                   <p className="text-base text-muted-foreground">{title}</p>
                 ) : null}
               </div>
-              <div className="shrink-0 pt-0.5">
+              <div className="flex shrink-0 items-center gap-2 pt-0.5">
                 {isOwnProfile ? (
                   <Button
                     type="button"
@@ -315,35 +331,44 @@ export function WorkerProfileHeader({
                     <Pencil className="size-3.5" />
                     Chỉnh sửa
                   </Button>
-                ) : onToggleFavorite ? (
-                  <button
-                    type="button"
-                    onClick={onToggleFavorite}
-                    disabled={isFavoritePending}
-                    aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-                    title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
-                    className={cn(
-                      "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
-                      isFavorite
-                        ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60"
-                        : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500",
-                    )}
-                  >
-                    {isFavoritePending ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Heart
+                ) : (
+                  <>
+                    {onToggleFavorite ? (
+                      <button
+                        type="button"
+                        onClick={onToggleFavorite}
+                        disabled={isFavoritePending}
+                        aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                        title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
                         className={cn(
-                          "size-3.5 transition-all",
+                          "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
                           isFavorite
-                            ? "fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400"
-                            : "text-current",
+                            ? "border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60"
+                            : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500",
                         )}
+                      >
+                        {isFavoritePending ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Heart
+                            className={cn(
+                              "size-3.5 transition-all",
+                              isFavorite
+                                ? "fill-rose-500 text-rose-500 dark:fill-rose-400 dark:text-rose-400"
+                                : "text-current",
+                            )}
+                          />
+                        )}
+                      </button>
+                    ) : null}
+                    {onReport ? (
+                      <WorkerReportButton
+                        hasOpenReport={hasOpenReport}
+                        onReport={onReport}
                       />
-                    )}
-                    <span>{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
-                  </button>
-                ) : null}
+                    ) : null}
+                  </>
+                )}
               </div>
             </div>
 

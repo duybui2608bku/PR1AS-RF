@@ -21,7 +21,9 @@ type ServicesPageProps = {
   searchParams: Promise<HomeSearchParams>
 }
 
-export default async function ServicesPage({ searchParams }: ServicesPageProps) {
+export default async function ServicesPage({
+  searchParams,
+}: ServicesPageProps) {
   const rawParams = await searchParams
   const initialState = parseHomeSearchParams(rawParams)
 
@@ -33,7 +35,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   })
 
   return (
-    <SiteLayout showFooterOnMobile>
+    <SiteLayout>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <HomeSearchExperience initialState={initialState} />
       </HydrationBoundary>
