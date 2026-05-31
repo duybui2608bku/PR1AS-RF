@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import * as React from "react"
 
 import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
+import { useVisualViewportBottom } from "@/lib/hooks/use-visual-viewport"
 import { getRoleRoute } from "@/lib/navigation/role-routes"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useUIStore } from "@/lib/store/ui-store"
@@ -19,6 +20,8 @@ export function MobileBottomNav() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const hideBottomNav = useUIStore((s) => s.hideBottomNav)
   const [moreOpen, setMoreOpen] = React.useState(false)
+
+  useVisualViewportBottom()
 
   if (hideBottomNav) return null
 
@@ -40,7 +43,10 @@ export function MobileBottomNav() {
     ] as const
 
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+      <nav
+        className="fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+        style={{ bottom: "var(--bottom-toolbar-offset, 0px)" }}
+      >
         <div className="px-safe flex items-center justify-around px-2 pb-safe">
           {guestTabs.map((tab) => (
             <Link
@@ -144,7 +150,10 @@ export function MobileBottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+      <nav
+        className="fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+        style={{ bottom: "var(--bottom-toolbar-offset, 0px)" }}
+      >
         <div className="px-safe flex items-center justify-around px-2 pb-safe">
           {navTabs.map((tab) => {
             const iconClass = cn(

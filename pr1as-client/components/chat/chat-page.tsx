@@ -2122,6 +2122,7 @@ function MessagePane({
     isMine: boolean
   ) => ({
     onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => {
+      e.preventDefault()
       const target = e.currentTarget
       longPressTimerRef.current = setTimeout(() => {
         const rect = target.getBoundingClientRect()
@@ -2206,7 +2207,7 @@ function MessagePane({
             key={message._id}
             {...createLongPressHandlers(message, mine)}
             className={cn(
-              "group/message flex items-end gap-2",
+              "group/message flex items-end gap-2 select-none",
               mine ? "justify-end" : "justify-start"
             )}
           >
@@ -2366,6 +2367,11 @@ function MessagePane({
               onReply(messageSelection.message)
               setMessageSelection(null)
             }}
+            onCopy={() => {
+              navigator.clipboard.writeText(messageSelection.message.content).catch(() => {})
+              toast.success("Đã sao chép tin nhắn")
+              setMessageSelection(null)
+            }}
             onDeleteDirect={() => {
               onDeleteDirect(messageSelection.message._id)
               setMessageSelection(null)
@@ -2449,6 +2455,7 @@ function MessageContextOverlay({
   selection,
   mode,
   onReply,
+  onCopy,
   onDeleteDirect,
   onClose,
   deletingMessageId,
@@ -2460,6 +2467,7 @@ function MessageContextOverlay({
   }
   mode: ChatMode
   onReply: () => void
+  onCopy: () => void
   onDeleteDirect: () => void
   onClose: () => void
   deletingMessageId: string | null
@@ -2470,7 +2478,7 @@ function MessageContextOverlay({
   const isTextMessage = message.type === "text" && !message.is_deleted
 
   // Calculate menu height to decide above/below placement
-  const menuItemCount = 1 + (canDelete ? 1 : 0) // Reply [+ Delete]
+  const menuItemCount = 1 + (isTextMessage ? 1 : 0) + (canDelete ? 1 : 0) // Reply [+ Copy] [+ Delete]
   const ITEM_H = 52
   const menuHeight = menuItemCount * ITEM_H + 16
   const GAP = 10
@@ -2535,6 +2543,21 @@ function MessageContextOverlay({
           <span>Trả lời</span>
           <Reply className="size-5 text-white/60" />
         </button>
+
+        {/* Copy (text messages only) */}
+        {isTextMessage ? (
+          <button
+            type="button"
+            className={cn(
+              "flex w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80",
+              canDelete && "border-b border-zinc-700"
+            )}
+            onClick={onCopy}
+          >
+            <span>Sao chép</span>
+            <Copy className="size-5 text-white/60" />
+          </button>
+        ) : null}
 
         {/* Delete (own messages in direct mode) */}
         {canDelete ? (

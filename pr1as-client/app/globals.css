@@ -20,9 +20,9 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* Spacer height = bottom nav content height + iOS safe area */
+/* Spacer height = bottom nav height + safe area + browser toolbar offset */
 @utility h-bottomnav {
-  height: calc(4rem + env(safe-area-inset-bottom, 0px));
+  height: calc(4rem + env(safe-area-inset-bottom, 0px) + var(--bottom-toolbar-offset, 0px));
 }
 
 @theme inline {
