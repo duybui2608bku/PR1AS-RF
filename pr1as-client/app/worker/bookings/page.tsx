@@ -10,6 +10,7 @@ import {
   Loader2,
   MessageSquare,
   PlayCircle,
+  RefreshCw,
   Search,
   XCircle,
 } from "lucide-react"
@@ -520,8 +521,32 @@ export default function WorkerBookingsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
-              <CardTitle className="text-base">Danh sách booking</CardTitle>
-              <Badge variant="outline">{total}</Badge>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">Danh sách booking</CardTitle>
+                <Badge variant="outline">{total}</Badge>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => bookingsQuery.refetch()}
+                      disabled={bookingsQuery.isFetching}
+                      aria-label="Làm mới danh sách"
+                    >
+                      <RefreshCw
+                        className={cn(
+                          "size-4",
+                          bookingsQuery.isFetching && "animate-spin"
+                        )}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Làm mới</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardHeader>
             <CardContent className="p-0">
               {bookingsQuery.isLoading ? (

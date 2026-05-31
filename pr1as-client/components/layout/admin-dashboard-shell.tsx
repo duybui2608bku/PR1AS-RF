@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   ShieldAlert,
   ShieldCheck,
   Users,
@@ -84,6 +85,11 @@ const adminNavItems = [
     href: "/dashboard/reputation-config",
     label: "Cấu hình điểm",
     icon: ShieldCheck,
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Cài đặt",
+    icon: Settings,
   },
 ]
 

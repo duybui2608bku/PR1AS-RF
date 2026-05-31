@@ -32,4 +32,5 @@ export const modelsName = {
   JOB_LOCK: "job_locks",
   WORKER_BLACKOUT: "worker_blackouts",
   FEEDBACK: "feedbacks",
+  SITE_SETTINGS: "site_settings",
 };

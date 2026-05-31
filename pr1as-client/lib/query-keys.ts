@@ -114,4 +114,7 @@ export const queryKeys = {
   reputationConfig: {
     all: ["reputation-config"] as const,
   },
+  siteSettings: {
+    all: ["site-settings"] as const,
+  },
 } as const

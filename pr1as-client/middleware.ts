@@ -77,7 +77,7 @@ export async function middleware(req: NextRequest) {
   const tokenRole = getTokenRole(payload)
   const activeRole = tokenRole === "admin" ? tokenRole : (cookieRole ?? tokenRole)
 
-  if (isTokenValid && activeRole === "admin" && !pathname.startsWith("/dashboard")) {
+  if (isTokenValid && activeRole === "admin" && pathname === "/") {
     const url = req.nextUrl.clone()
     url.pathname = "/dashboard"
     return NextResponse.redirect(url)

@@ -12,7 +12,9 @@ export default function RouteError({
   reset: () => void
 }) {
   React.useEffect(() => {
-    console.error("[route-error]", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[route-error]", error)
+    }
   }, [error])
 
   return (
