@@ -5,6 +5,7 @@ import { Bell, CheckCheck, Loader2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
 import { toast } from "sonner"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -95,7 +96,23 @@ export function NotificationBell() {
   }
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <>
+      {/* Mobile: navigates to full notifications page */}
+      <Link href="/notifications" className="relative md:hidden" aria-label="Thông báo">
+        <Button variant="ghost" size="icon" className="relative" asChild>
+          <span>
+            <Bell className="size-4" />
+            {unreadCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+          </span>
+        </Button>
+      </Link>
+
+      {/* Desktop: dropdown */}
+    <div ref={dropdownRef} className="relative hidden md:block">
       <Button
         variant="ghost"
         size="icon"
@@ -156,6 +173,7 @@ export function NotificationBell() {
         </div>
       ) : null}
     </div>
+    </>
   )
 }
 

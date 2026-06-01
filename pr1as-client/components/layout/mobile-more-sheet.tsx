@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  Bell,
   CalendarCheck2,
   CalendarDays,
   Crown,
@@ -20,6 +21,7 @@ import {
   BottomSheetContent,
 } from "@/components/ui/bottom-sheet"
 import { useLogout } from "@/lib/hooks/use-auth"
+import { useUnreadNotificationCount } from "@/lib/hooks/use-notifications"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -37,6 +39,8 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const logoutMutation = useLogout()
+  const { data: unreadData } = useUnreadNotificationCount()
+  const unreadCount = unreadData?.unread_count ?? 0
 
   const lastActiveRole = user?.last_active_role
   const fallbackRole =
@@ -68,6 +72,8 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const menuItems = [
     // Hồ sơ
     { href: profileHref, label: "Hồ sơ", icon: User },
+    // Thông báo
+    { href: "/notifications", label: "Thông báo", icon: Bell, badge: unreadCount },
     // Yêu thích — client only
     ...(activeRole === "client"
       ? [{ href: "/client/favorites", label: "Yêu thích", icon: Heart }]
@@ -141,7 +147,12 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
               onClick={() => handleNavigate(item.href)}
             >
               <item.icon className="size-5 shrink-0 text-muted-foreground" />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {"badge" in item && (item.badge as number) > 0 && (
+                <span className="flex size-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-semibold text-white">
+                  {(item.badge as number) > 99 ? "99+" : (item.badge as number)}
+                </span>
+              )}
             </button>
           ))}
 

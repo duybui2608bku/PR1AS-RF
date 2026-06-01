@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 import { notificationService } from "@/services/notification.service"
 import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 import { getChatSocket, disconnectChatSocket } from "@/lib/chat-socket"
@@ -77,7 +77,7 @@ export function useNotificationSocket() {
     }
 
     const handleNew = (_payload: unknown) => {
-      queryClient.invalidateQueries({ queryKey: [...NOTIFICATION_KEYS.all, "list"] })
+      queryClient.invalidateQueries({ queryKey: NOTIFICATION_KEYS.all })
     }
 
     const handleUnreadCount = (payload: { unread_count: number }) => {
@@ -94,6 +94,20 @@ export function useNotificationSocket() {
       socket.off("notification:unread_count", handleUnreadCount)
     }
   }, [hasHydrated, token, isAuthenticated, queryClient])
+}
+
+export function useNotificationsInfinite() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  return useInfiniteQuery({
+    queryKey: [...NOTIFICATION_KEYS.all, "infinite"] as const,
+    queryFn: ({ pageParam }) =>
+      notificationService.list({ page: pageParam as number, limit: 20 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined,
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  })
 }
 
 export function useMarkNotificationsByConversation() {

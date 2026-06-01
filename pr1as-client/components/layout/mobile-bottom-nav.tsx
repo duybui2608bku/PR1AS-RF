@@ -20,8 +20,39 @@ export function MobileBottomNav() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const hideBottomNav = useUIStore((s) => s.hideBottomNav)
   const [moreOpen, setMoreOpen] = React.useState(false)
+  const [hidden, setHidden] = React.useState(false)
 
   useVisualViewportBottom()
+
+  // Auto-hide bottom nav kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
+  React.useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+    const update = () => {
+      const y = window.scrollY
+      const diff = y - lastY
+      if (y < 64) {
+        setHidden(false)
+      } else if (Math.abs(diff) > 6) {
+        setHidden(diff > 0)
+      }
+      lastY = y
+      ticking = false
+    }
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update)
+        ticking = true
+      }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  // Khi sheet đang mở, luôn hiện bottom nav
+  React.useEffect(() => {
+    if (moreOpen) setHidden(false)
+  }, [moreOpen])
 
   if (hideBottomNav) return null
 
@@ -44,7 +75,10 @@ export function MobileBottomNav() {
 
     return (
       <nav
-        className="fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+        className={cn(
+          "fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60 md:hidden",
+          hidden && "translate-y-full",
+        )}
         style={{ bottom: "var(--bottom-toolbar-offset, 0px)" }}
       >
         <div className="px-safe flex items-center justify-around px-2 pb-safe">
@@ -151,7 +185,10 @@ export function MobileBottomNav() {
   return (
     <>
       <nav
-        className="fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+        className={cn(
+          "fixed left-0 right-0 z-50 border-t bg-background/80 backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60 md:hidden",
+          hidden && "translate-y-full",
+        )}
         style={{ bottom: "var(--bottom-toolbar-offset, 0px)" }}
       >
         <div className="px-safe flex items-center justify-around px-2 pb-safe">
