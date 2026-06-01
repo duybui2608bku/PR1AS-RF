@@ -1,7 +1,7 @@
 // PR1AS service worker — tối giản & an toàn.
 // Mục tiêu: đủ điều kiện cài PWA + tăng tốc asset tĩnh, KHÔNG cache API/socket.
 // ⚠️ Tăng version khi deploy để buộc làm mới cache cũ trên tất cả devices.
-const CACHE = "pr1as-v3"
+const CACHE = "pr1as-v4"
 
 self.addEventListener("install", () => {
   // Kích hoạt SW mới ngay, không chờ tab cũ đóng
