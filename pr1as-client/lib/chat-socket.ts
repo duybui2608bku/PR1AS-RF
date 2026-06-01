@@ -100,16 +100,24 @@ let chatSocket: ChatSocket | null = null
 
 const getSocketBaseUrl = () => {
   const explicitSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL
-  if (explicitSocketUrl) {
-    return explicitSocketUrl
-  }
-
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (apiUrl) {
-    return apiUrl.replace(/\/api\/?$/, "")
+  const rawUrl =
+    explicitSocketUrl ??
+    (apiUrl ? apiUrl.replace(/\/api\/?$/, "") : "http://localhost:3052")
+
+  // Nếu socket URL khác origin với trang hiện tại → Next.js rewrite /socket.io/* đến backend.
+  // Dùng current origin để socket đi qua proxy (same-origin, không cần CORS/cookie cross-domain).
+  if (typeof window !== "undefined") {
+    try {
+      if (new URL(rawUrl).origin !== window.location.origin) {
+        return window.location.origin
+      }
+    } catch {
+      // URL parse failed, fall through
+    }
   }
 
-  return "http://localhost:3001"
+  return rawUrl
 }
 
 // Xác thực qua httpOnly cookie (withCredentials: true) — không cần token trong memory
