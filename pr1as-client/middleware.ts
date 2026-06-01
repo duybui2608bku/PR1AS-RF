@@ -67,7 +67,7 @@ function isProtectedPath(pathname: string): boolean {
   )
 }
 
-export async function proxy(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
 
@@ -110,9 +110,6 @@ export async function proxy(req: NextRequest) {
     url.pathname = "/login"
     url.searchParams.set("from", pathname)
     const response = NextResponse.redirect(url)
-    // Xóa active_role (client-visible state) nhưng GIỮ token cookie:
-    // nếu token chỉ hết hạn (không bị tamper), client cần refreshToken
-    // để lấy token mới mà không phải login lại.
     response.cookies.delete(ACTIVE_ROLE_COOKIE_NAME)
     return response
   }

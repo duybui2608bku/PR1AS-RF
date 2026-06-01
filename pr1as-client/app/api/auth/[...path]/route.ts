@@ -47,7 +47,11 @@ async function proxyToBackend(req: NextRequest, pathSegments: string[]) {
   const resBody = await backendRes.text()
   const response = new NextResponse(resBody, {
     status: backendRes.status,
-    headers: { "content-type": backendRes.headers.get("content-type") ?? "application/json" },
+    headers: {
+      "content-type": backendRes.headers.get("content-type") ?? "application/json",
+      // Ngăn CDN/proxy cache response chứa Set-Cookie
+      "cache-control": "no-store",
+    },
   })
 
   // Explicitly copy Set-Cookie — đây là lý do route handler tồn tại
