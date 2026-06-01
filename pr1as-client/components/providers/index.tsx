@@ -15,6 +15,7 @@ import { api } from "@/lib/axios"
 import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 import type { AuthUser } from "@/lib/store/auth-store"
 
+
 /**
  * Chạy một lần sau khi hydrate: nếu chưa authenticated nhưng có cookie hợp lệ
  * từ backend, tự động restore session (cho phép stay-logged-in sau browser restart).
@@ -25,9 +26,16 @@ function SessionRestoreProvider() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const setAuth = useAuthStore((s) => s.setAuth)
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const setSessionLoaded = useAuthStore((s) => s._setSessionLoaded)
 
   React.useEffect(() => {
-    if (!hasHydrated || isAuthenticated) return
+    if (!hasHydrated) return
+
+    // Đã authenticated từ sessionStorage — không cần check network
+    if (isAuthenticated) {
+      setSessionLoaded()
+      return
+    }
 
     let cancelled = false
 
@@ -50,12 +58,14 @@ function SessionRestoreProvider() {
           // Cả token lẫn refreshToken đều không hợp lệ — user cần login
         }
         if (!cancelled) clearAuth()
+      } finally {
+        if (!cancelled) setSessionLoaded()
       }
     }
 
     restoreSession()
     return () => { cancelled = true }
-  }, [hasHydrated, isAuthenticated, setAuth, clearAuth])
+  }, [hasHydrated, isAuthenticated, setAuth, clearAuth, setSessionLoaded])
 
   return null
 }

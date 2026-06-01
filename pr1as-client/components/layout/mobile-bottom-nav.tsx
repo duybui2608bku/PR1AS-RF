@@ -9,7 +9,7 @@ import * as React from "react"
 import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
 import { useVisualViewportBottom } from "@/lib/hooks/use-visual-viewport"
 import { getRoleRoute } from "@/lib/navigation/role-routes"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthStore, useIsSessionLoaded } from "@/lib/store/auth-store"
 import { useUIStore } from "@/lib/store/ui-store"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { cn } from "@/lib/utils"
@@ -18,6 +18,7 @@ export function MobileBottomNav() {
   const pathname = usePathname()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isSessionLoaded = useIsSessionLoaded()
   const hideBottomNav = useUIStore((s) => s.hideBottomNav)
   const [moreOpen, setMoreOpen] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
@@ -66,12 +67,18 @@ export function MobileBottomNav() {
   }
 
   // Bottom nav tối giản cho guest user (chưa đăng nhập)
+  // Nếu session chưa được check xong, không hiện nút Login để tránh race condition
   if (!isAuthenticated) {
-    const guestTabs = [
-      { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
-      { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
-      { href: "/login", label: "Đăng nhập", icon: LogIn, isActive: pathname === "/login" },
-    ] as const
+    const guestTabs = isSessionLoaded
+      ? [
+          { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
+          { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+          { href: "/login", label: "Đăng nhập", icon: LogIn, isActive: pathname === "/login" },
+        ] as const
+      : [
+          { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
+          { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+        ] as const
 
     return (
       <nav
