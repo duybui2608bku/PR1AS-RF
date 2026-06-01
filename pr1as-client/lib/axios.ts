@@ -4,6 +4,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { toApiError } from "@/lib/utils/error-handler"
 import { getQueryClient } from "@/lib/query-client"
 
@@ -14,15 +15,7 @@ const ensureApiBasePath = (url: string) => {
 
 const configuredBaseURL = process.env.NEXT_PUBLIC_API_URL
 const fallbackURL = "http://localhost:3052/api"
-
-// Browser: luôn dùng /api (relative) — Next.js rewrite forward đến backend server-to-server.
-// Cookie được set cho frontend domain → không có cross-domain issue, không cần thêm env var.
-// Server (SSR): dùng full URL để request trực tiếp (không qua rewrite).
-const apiBaseURL =
-  typeof window !== "undefined"
-    ? "/api"
-    : ensureApiBasePath(configuredBaseURL ?? fallbackURL)
-
+const apiBaseURL = ensureApiBasePath(configuredBaseURL ?? fallbackURL)
 const csrfCookieName = "XSRF-TOKEN"
 const csrfHeaderName = "X-CSRF-Token"
 const unsafeMethods = new Set(["post", "put", "patch", "delete"])
@@ -32,13 +25,13 @@ if (!configuredBaseURL) {
     throw new Error("NEXT_PUBLIC_API_URL is required in production builds.")
   }
   console.warn(
-    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${fallbackURL}`
+    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${apiBaseURL}`
   )
 }
 
 export const api: AxiosInstance = axios.create({
   baseURL: apiBaseURL,
-  withCredentials: true,  // Tự động gửi httpOnly cookie với mọi request
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     "Accept-Language": "vi",
@@ -100,8 +93,12 @@ const attachCsrfHeader = async (config: InternalAxiosRequestConfig) => {
   }
 }
 
-// Request interceptor — chỉ cần CSRF header, cookie được gửi tự động bởi browser
+// Request interceptor to dynamically inject the authorization header
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`)
+  }
   await attachCsrfHeader(config)
   return config
 })
@@ -109,22 +106,22 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
 // Mechanism for silent refreshing with concurrent request queueing
 let isRefreshing = false
 let failedQueue: Array<{
-  resolve: () => void
+  resolve: (token: string) => void
   reject: (error: unknown) => void
 }> = []
 
-const processQueue = (error: unknown) => {
-  failedQueue.forEach((item) => {
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
     if (error) {
-      item.reject(error)
-    } else {
-      item.resolve()
+      prom.reject(error)
+    } else if (token) {
+      prom.resolve(token)
     }
   })
   failedQueue = []
 }
 
-// Response interceptor — bắt 401 và tự động refresh token qua cookie
+// Response interceptor to intercept 401s and execute silent refresh
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -132,60 +129,100 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       const state = useAuthStore.getState()
+      const refreshToken = state.refreshToken
 
-      // Không có session → nếu đã authenticated thì force logout
-      // Nếu chưa authenticated (request từ public page), chỉ reject
-      if (typeof window !== "undefined" && state.isAuthenticated && !state.isLoggingOut) {
-        // Nếu refresh đang chạy, queue request này
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            failedQueue.push({
-              resolve: () => resolve(api(originalRequest)),
-              reject,
-            })
-          })
+      // If we don't have a refresh token, we cannot refresh.
+      // Only force-logout if the user was previously authenticated — a plain 401
+      // from a public endpoint (e.g. /auth/login with wrong credentials) should
+      // be passed through so the calling component can show an error message.
+      if (!refreshToken) {
+        if (typeof window !== "undefined" && state.isAuthenticated && !state.isLoggingOut) {
+          state.setLoggingOut(true)
+          state.clearAuth()
+          getQueryClient().clear()
+          await clearSessionCookie()
+          window.location.replace("/login")
         }
-
-        originalRequest._retry = true
-        isRefreshing = true
-
-        try {
-          const csrfToken = await ensureCsrfToken()
-          // refreshToken cookie tự được gửi theo withCredentials vì path khớp
-          await axios.post(`${apiBaseURL}/auth/refresh-token`, {}, {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-              "Accept-Language": "vi",
-              ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
-            }
-          })
-
-          // Refresh thành công — backend đã set cookie mới, unblock queue
-          processQueue(null)
-          return api(originalRequest)
-        } catch (refreshError) {
-          processQueue(refreshError)
-
-          if (typeof window !== "undefined" && !state.isLoggingOut) {
-            state.setLoggingOut(true)
-            state.clearAuth()
-            getQueryClient().clear()
-            window.location.replace("/login")
-          }
-
-          const apiError = toApiError(error)
-          return Promise.reject(apiError ?? error)
-        } finally {
-          isRefreshing = false
-        }
+        const apiError = toApiError(error)
+        return Promise.reject(apiError ?? error)
       }
 
-      const apiError = toApiError(error)
-      return Promise.reject(apiError ?? error)
+      // If a refresh is already in flight, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({
+            resolve: (token: string) => {
+              originalRequest.headers.set("Authorization", `Bearer ${token}`)
+              resolve(api(originalRequest))
+            },
+            reject: (err: unknown) => {
+              reject(err)
+            },
+          })
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const csrfToken = await ensureCsrfToken()
+        // Call backend API directly to refresh tokens
+        const response = await axios.post(`${apiBaseURL}/auth/refresh-token`, {
+          refreshToken,
+        }, {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": "vi",
+            ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
+          }
+        })
+
+        const { success, data } = response.data
+        if (success && data && data.token) {
+          const newToken = data.token
+          const newRefreshToken = data.refreshToken ?? refreshToken
+
+          // 1. Sync Zustand store with new tokens
+          state.setAuth({
+            user: data.user || state.user,
+            token: newToken,
+            refreshToken: newRefreshToken,
+          })
+
+          // 2. Set the httpOnly session cookie
+          await setSessionCookie(newToken)
+
+          // 3. Resolve all queued requests with the new token
+          processQueue(null, newToken)
+
+          // 4. Retry the original request
+          originalRequest.headers.set("Authorization", `Bearer ${newToken}`)
+          return api(originalRequest)
+        } else {
+          throw new Error("Làm mới token không thành công.")
+        }
+      } catch (refreshError) {
+        // If refresh fails (expired refresh token), clear auth and force logout
+        processQueue(refreshError, null)
+
+        if (typeof window !== "undefined" && !state.isLoggingOut) {
+          state.setLoggingOut(true)
+          state.clearAuth()
+          getQueryClient().clear()
+          await clearSessionCookie()
+          window.location.replace("/login")
+        }
+
+        const apiError = toApiError(error)
+        return Promise.reject(apiError ?? error)
+      } finally {
+        isRefreshing = false
+      }
     }
 
-    // Handle 403 USER_BANNED
+    // Handle 403 USER_BANNED — trigger the banned modal via custom window event
     if (error.response?.status === 403) {
       const data = error.response.data as Record<string, unknown> | undefined
       const errorCode = data?.error_code ?? data?.message

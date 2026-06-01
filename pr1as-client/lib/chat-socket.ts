@@ -97,35 +97,36 @@ export type ClientToServerEvents = {
 export type ChatSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 let chatSocket: ChatSocket | null = null
+let activeToken: string | null = null
 
 const getSocketBaseUrl = () => {
   const explicitSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  const rawUrl =
-    explicitSocketUrl ??
-    (apiUrl ? apiUrl.replace(/\/api\/?$/, "") : "http://localhost:3052")
-
-  // Nếu socket URL khác origin với trang hiện tại → Next.js rewrite /socket.io/* đến backend.
-  // Dùng current origin để socket đi qua proxy (same-origin, không cần CORS/cookie cross-domain).
-  if (typeof window !== "undefined") {
-    try {
-      if (new URL(rawUrl).origin !== window.location.origin) {
-        return window.location.origin
-      }
-    } catch {
-      // URL parse failed, fall through
-    }
+  if (explicitSocketUrl) {
+    return explicitSocketUrl
   }
 
-  return rawUrl
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    return apiUrl.replace(/\/api\/?$/, "")
+  }
+
+  return "http://localhost:3001"
 }
 
-// Xác thực qua httpOnly cookie (withCredentials: true) — không cần token trong memory
-export const getChatSocket = (): ChatSocket => {
-  if (chatSocket) return chatSocket
+// token có thể là null khi chưa restore sau reload — server sẽ dùng httpOnly cookie làm fallback
+export const getChatSocket = (token: string | null): ChatSocket => {
+  if (chatSocket && activeToken === token) {
+    return chatSocket
+  }
 
+  if (chatSocket) {
+    chatSocket.disconnect()
+  }
+
+  activeToken = token
   chatSocket = io(getSocketBaseUrl(), {
     autoConnect: false,
+    auth: token ? { token } : {},
     transports: ["websocket", "polling"],
     withCredentials: true,
   })
@@ -139,4 +140,5 @@ export const disconnectChatSocket = () => {
   }
 
   chatSocket = null
+  activeToken = null
 }

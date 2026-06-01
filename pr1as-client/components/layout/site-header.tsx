@@ -26,6 +26,7 @@ import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
+import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
@@ -196,7 +197,12 @@ export function SiteHeader() {
     }
   }
 
-  const handleLoginClick = () => {
+  const handleLoginClick = async () => {
+    try {
+      await clearSessionCookie()
+    } catch {
+      // ignore — proceed to login even if cookie clear fails
+    }
     router.push("/login")
   }
 
@@ -263,14 +269,7 @@ export function SiteHeader() {
               <NotificationBell />
             </ErrorBoundary>
           ) : null}
-          {/* Hiển thị skeleton cho đến khi session check hoàn tất để tránh race condition:
-              user thấy nút Login → click → proxy redirect về dashboard vì đã có cookie hợp lệ */}
-          {!isSessionLoaded ? (
-            <div className="hidden md:flex items-center gap-2">
-              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
-              <div className="size-8 animate-pulse rounded-full bg-muted" />
-            </div>
-          ) : isAuthenticated ? (
+          {isAuthenticated ? (
             <div ref={menuContainerRef} className="relative hidden md:block">
               <Button
                 variant="ghost"
@@ -323,6 +322,11 @@ export function SiteHeader() {
                   </button>
                 </div>
               ) : null}
+            </div>
+          ) : !isSessionLoaded ? (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
             </div>
           ) : (
             <div className="flex items-center gap-2">
