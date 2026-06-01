@@ -67,7 +67,8 @@ export function MobileBottomNav() {
   }
 
   // Bottom nav tối giản cho guest user (chưa đăng nhập)
-  // Nếu session chưa được check xong, không hiện nút Login để tránh race condition
+  // Ẩn nút Login cho đến khi session check xong — tránh race condition
+  // (valid cookie → middleware redirect khỏi /login)
   if (!isAuthenticated) {
     const guestTabs = isSessionLoaded
       ? [

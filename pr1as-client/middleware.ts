@@ -4,7 +4,7 @@ import { jwtVerify } from "jose"
 import {
   ACTIVE_ROLE_COOKIE_NAME,
   TOKEN_COOKIE_NAME,
-} from "@/lib/auth/auth-cookie-names"
+} from "@/lib/auth/auth-cookie"
 
 const PROTECTED_PREFIXES = [
   "/client",
@@ -19,16 +19,18 @@ const PROTECTED_PREFIXES = [
 ]
 const AUTH_PAGES = ["/login", "/register"]
 
+// Signature and Expiration Verification at Next.js Edge Layer using jose
 async function verifyAndDecodeJwt(token: string): Promise<Record<string, unknown> | null> {
   try {
     const jwtSecret = process.env.JWT_SECRET
     if (!jwtSecret && process.env.NODE_ENV === "production") {
       console.error("[middleware] CRITICAL: JWT_SECRET env var is not set in production. All token verifications will fail.")
     }
-    const secret = new TextEncoder().encode(jwtSecret ?? "jwt_secret")
+    const secret = new TextEncoder().encode(jwtSecret ?? "pr1as-dev-only-not-for-production")
     const { payload } = await jwtVerify(token, secret)
     return payload as Record<string, unknown>
   } catch {
+    // Returns null if signature is invalid, token is forged, or token is expired
     return null
   }
 }
@@ -67,16 +69,19 @@ function isProtectedPath(pathname: string): boolean {
   )
 }
 
-export default async function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
-
+  
+  // Verify token signature and exp claim at Edge
   const payload = token ? await verifyAndDecodeJwt(token) : null
   const isTokenValid = payload !== null
 
   const cookieRole = req.cookies.get(ACTIVE_ROLE_COOKIE_NAME)?.value?.toLowerCase()
   const tokenRole = getTokenRole(payload)
 
+  // Validate cookieRole against JWT's roles array to prevent stale cookies from
+  // overriding the correct role (e.g. old "worker" cookie when user is now "client")
   const tokenPayloadRoles = (Array.isArray(payload?.roles) ? payload.roles : [])
     .filter((r): r is string => typeof r === "string")
     .map((r) => r.toLowerCase())
@@ -109,7 +114,10 @@ export default async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
     url.searchParams.set("from", pathname)
+    
+    // Clear cookies since the token is invalid/expired
     const response = NextResponse.redirect(url)
+    response.cookies.delete(TOKEN_COOKIE_NAME)
     response.cookies.delete(ACTIVE_ROLE_COOKIE_NAME)
     return response
   }
