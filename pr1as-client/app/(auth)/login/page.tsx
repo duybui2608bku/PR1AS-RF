@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/input-group"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
 import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -80,7 +79,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isSessionActive && meQuery.isError) {
-      void clearSessionCookie()
       clearAuth()
     }
   }, [isSessionActive, meQuery.isError, clearAuth])

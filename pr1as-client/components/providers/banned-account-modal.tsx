@@ -5,14 +5,12 @@ import { ShieldX } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { getChatSocket } from "@/lib/chat-socket"
-import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useAuthStore } from "@/lib/store/auth-store"
 
 const COUNTDOWN_SECONDS = 10
 
 export function BannedAccountModal() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const token = useAuthStore((s) => s.token)
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const queryClient = useQueryClient()
   const [visible, setVisible] = React.useState(false)
@@ -22,7 +20,7 @@ export function BannedAccountModal() {
   React.useEffect(() => {
     if (!isAuthenticated) return
 
-    const socket = getChatSocket(token)
+    const socket = getChatSocket()
 
     const handleBanned = () => {
       setVisible(true)
@@ -33,7 +31,7 @@ export function BannedAccountModal() {
     return () => {
       socket.off("account:banned", handleBanned)
     }
-  }, [isAuthenticated, token])
+  }, [isAuthenticated])
 
   // Listen for user:banned custom event dispatched by the HTTP 403 interceptor
   React.useEffect(() => {
@@ -55,12 +53,9 @@ export function BannedAccountModal() {
     if (!visible) return
 
     if (countdown <= 0) {
-      void (async () => {
-        clearAuth()
-        queryClient.clear()
-        await clearSessionCookie()
-        window.location.replace("/login")
-      })()
+      clearAuth()
+      queryClient.clear()
+      window.location.replace("/login")
       return
     }
 

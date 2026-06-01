@@ -4,6 +4,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ["192.168.1.2"],
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns", "radix-ui"],
   },

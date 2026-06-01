@@ -14,17 +14,14 @@ export type ChatSocketStatus =
   | "error"
 
 export function useChatSocket() {
-  const token = useAuthStore((s) => s.token)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const hasHydrated = useHasHydrated()
   const [status, setStatus] = React.useState<ChatSocketStatus>("idle")
   const [error, setError] = React.useState<string | null>(null)
   // Chờ Zustand hydrate từ sessionStorage trước khi tạo socket.
-  // Nếu tạo socket trước khi biết auth state thật, useNotificationSocket có thể
-  // disconnect socket singleton trong cùng render cycle → socket phải tạo lại.
   const socket = React.useMemo(
-    () => (hasHydrated && isAuthenticated ? getChatSocket(token) : null),
-    [hasHydrated, token, isAuthenticated]
+    () => (hasHydrated && isAuthenticated ? getChatSocket() : null),
+    [hasHydrated, isAuthenticated]
   )
 
   React.useEffect(() => {

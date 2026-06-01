@@ -12,7 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { isPasswordStrong } from "@/lib/auth/password.utils"
 import { useResetPassword } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -79,7 +78,6 @@ export default function ResetPasswordPage() {
 
       toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.")
       clearAuth()
-      await clearSessionCookie()
       setIsSuccess(true)
       window.setTimeout(() => router.push("/login"), 1800)
     } catch (error) {

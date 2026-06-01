@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(cp /Users/tuananh/PR1AS-RF/pr1as-client/middleware.ts /Users/tuananh/PR1AS-RF/pr1as-client/proxy.ts)",
+      "Bash(rm /Users/tuananh/PR1AS-RF/pr1as-client/middleware.ts)"
     ]
   }
 }

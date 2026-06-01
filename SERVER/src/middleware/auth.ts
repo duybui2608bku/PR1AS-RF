@@ -16,7 +16,9 @@ const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 const extractBearerToken = (req: Request): string | undefined => {
   const authHeader = req.headers.authorization;
-  return authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+  if (authHeader?.startsWith("Bearer ")) return authHeader.slice(7);
+  // Fallback: đọc từ httpOnly cookie (dành cho browser clients)
+  return (req.cookies as Record<string, string | undefined>)?.token;
 };
 
 /**
