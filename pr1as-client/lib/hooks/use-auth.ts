@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api } from "@/lib/axios"
-import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
@@ -74,17 +73,11 @@ export function useLogin() {
       })
       return response.data
     },
-    onSuccess: async (data) => {
-      if (!data.success || !data.data) {
-        return
-      }
-
-      const { user, token, refreshToken } = data.data
-      setAuth({ user, token, refreshToken })
-      // Set the httpOnly session cookie from the server side so it is
-      // inaccessible to JavaScript (XSS-safe). Fire before invalidating
-      // queries so the cookie is present for any subsequent SSR checks.
-      await setSessionCookie(token)
+    onSuccess: (data) => {
+      if (!data.success || !data.data) return
+      const { user } = data.data
+      // Backend đã set httpOnly cookie trực tiếp — chỉ cần lưu user profile vào Zustand
+      setAuth({ user })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -99,11 +92,10 @@ export function useGoogleLogin() {
       const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { access_token: accessToken })
       return response.data
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       if (!data.success || !data.data) return
-      const { user, token, refreshToken } = data.data
-      setAuth({ user, token, refreshToken })
-      await setSessionCookie(token)
+      const { user } = data.data
+      setAuth({ user })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -126,11 +118,10 @@ export function useMe() {
 
   return useQuery({
     queryKey: queryKeys.auth.me,
-    // Enabled whenever the store believes the user is authenticated —
-    // on a fresh page load the httpOnly cookie handles the actual auth.
     enabled: isAuthenticated,
     retry: false,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const response = await api.get<ApiResponse<{ user: AuthUser }>>("/auth/me")
       return response.data
@@ -144,13 +135,8 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      try {
-        await api.post("/auth/logout")
-      } finally {
-        // Always clear the httpOnly cookie regardless of whether the API call
-        // succeeded — prevents a stale cookie from blocking navigation to /login.
-        await clearSessionCookie()
-      }
+      // Backend xóa cả token và refreshToken cookie trong response
+      await api.post("/auth/logout").catch(() => {})
     },
     onSettled: () => {
       clearAuth()
@@ -248,9 +234,8 @@ export function useDeleteAccount() {
       )
       return response.data
     },
-    onSettled: async (_data, error) => {
+    onSettled: (_data, error) => {
       if (error) return
-      await clearSessionCookie()
       clearAuth()
       queryClient.clear()
     },

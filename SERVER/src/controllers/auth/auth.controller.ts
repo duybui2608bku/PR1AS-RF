@@ -30,6 +30,30 @@ import {
   toPublicUser,
 } from "../../utils";
 import { userService } from "../../services/user/user.service";
+import { config } from "../../config";
+
+// 7 ngày tính bằng milliseconds — khớp với JWT_EXPIRE và JWT_REFRESH_EXPIRE trong .env
+const ACCESS_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function setAuthCookies(res: Response, token: string, refreshToken: string): void {
+  const isProduction = config.nodeEnv === "production";
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+    path: "/",
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+    // Giới hạn cookie chỉ gửi đến refresh endpoint — tăng bảo mật
+    path: "/api/auth/refresh-token",
+  });
+}
 
 export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
@@ -49,14 +73,17 @@ export class AuthController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const result = await authService.login(data);
+    setAuthCookies(res, result.token, result.refreshToken);
     R.success(res, result, undefined, req);
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
-    const { refreshToken } = req.body;
+    // Đọc từ cookie (ưu tiên) hoặc từ body (backward compat với mobile clients)
+    const refreshToken = (req.cookies as Record<string, string | undefined>).refreshToken ?? req.body.refreshToken;
     if (!refreshToken)
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     const result = await authService.refreshToken(refreshToken);
+    setAuthCookies(res, result.token, result.refreshToken);
     R.success(res, result, undefined, req);
   }
 
@@ -67,7 +94,8 @@ export class AuthController {
 
   async logout(req: AuthRequest, res: Response): Promise<void> {
     await authService.logout(extractUserIdFromRequest(req));
-    res.clearCookie("token");
+    res.clearCookie("token", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/api/auth/refresh-token" });
     R.success(res, { message: AUTH_MESSAGES.LOGOUT_SUCCESS }, undefined, req);
   }
 
@@ -204,7 +232,8 @@ export class AuthController {
       extractUserIdFromRequest(req),
       data.password
     );
-    res.clearCookie("token");
+    res.clearCookie("token", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/api/auth/refresh-token" });
     R.success(res, result, AUTH_MESSAGES.ACCOUNT_DELETE_REQUESTED, req);
   }
 
@@ -215,6 +244,7 @@ export class AuthController {
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
     const result = await authService.loginWithGoogle(idToken);
+    setAuthCookies(res, result.token, result.refreshToken);
     R.success(res, result, undefined, req);
   }
 }

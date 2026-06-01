@@ -26,7 +26,6 @@ import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
-import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
@@ -196,12 +195,7 @@ export function SiteHeader() {
     }
   }
 
-  const handleLoginClick = async () => {
-    try {
-      await clearSessionCookie()
-    } catch {
-      // ignore — proceed to login even if cookie clear fails
-    }
+  const handleLoginClick = () => {
     router.push("/login")
   }
 

@@ -10,10 +10,22 @@ export function ServiceWorkerRegister() {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return
 
     const register = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        // Lỗi đăng ký không được làm hỏng app — bỏ qua im lặng.
-      })
+      navigator.serviceWorker
+        .register("/sw.js", {
+          // Luôn fetch sw.js mới từ network — không dùng HTTP cache
+          updateViaCache: "none",
+        })
+        .catch(() => {
+          // Lỗi đăng ký không được làm hỏng app
+        })
     }
+
+    // Reload page khi SW mới activate (sau deploy) — đảm bảo code mới được chạy
+    navigator.serviceWorker.addEventListener("message", (event: MessageEvent) => {
+      if (event.data?.type === "SW_UPDATED") {
+        window.location.reload()
+      }
+    })
 
     if (document.readyState === "complete") register()
     else {

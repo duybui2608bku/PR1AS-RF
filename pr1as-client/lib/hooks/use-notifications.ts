@@ -53,15 +53,11 @@ export function useMarkAllNotificationsAsRead() {
 }
 
 export function useNotificationSocket() {
-  const token = useAuthStore((s) => s.token)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const hasHydrated = useHasHydrated()
   const queryClient = useQueryClient()
 
   React.useEffect(() => {
-    // Không làm gì trước khi Zustand hydrate từ sessionStorage xong.
-    // Nếu disconnect socket ở đây trong lúc isAuthenticated còn là initial false,
-    // socket singleton sẽ bị null và phải tạo lại khi hydration xong → cascading effects.
     if (!hasHydrated) return
 
     if (!isAuthenticated) {
@@ -69,8 +65,7 @@ export function useNotificationSocket() {
       return
     }
 
-    // token có thể null sau reload — getChatSocket sẽ dùng cookie auth
-    const socket = getChatSocket(token)
+    const socket = getChatSocket()
 
     if (!socket.connected) {
       socket.connect()
@@ -93,7 +88,7 @@ export function useNotificationSocket() {
       socket.off("notification:new", handleNew)
       socket.off("notification:unread_count", handleUnreadCount)
     }
-  }, [hasHydrated, token, isAuthenticated, queryClient])
+  }, [hasHydrated, isAuthenticated, queryClient])
 }
 
 export function useNotificationsInfinite() {

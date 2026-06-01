@@ -97,7 +97,6 @@ export type ClientToServerEvents = {
 export type ChatSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 let chatSocket: ChatSocket | null = null
-let activeToken: string | null = null
 
 const getSocketBaseUrl = () => {
   const explicitSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL
@@ -113,20 +112,12 @@ const getSocketBaseUrl = () => {
   return "http://localhost:3001"
 }
 
-// token có thể là null khi chưa restore sau reload — server sẽ dùng httpOnly cookie làm fallback
-export const getChatSocket = (token: string | null): ChatSocket => {
-  if (chatSocket && activeToken === token) {
-    return chatSocket
-  }
+// Xác thực qua httpOnly cookie (withCredentials: true) — không cần token trong memory
+export const getChatSocket = (): ChatSocket => {
+  if (chatSocket) return chatSocket
 
-  if (chatSocket) {
-    chatSocket.disconnect()
-  }
-
-  activeToken = token
   chatSocket = io(getSocketBaseUrl(), {
     autoConnect: false,
-    auth: token ? { token } : {},
     transports: ["websocket", "polling"],
     withCredentials: true,
   })
@@ -140,5 +131,4 @@ export const disconnectChatSocket = () => {
   }
 
   chatSocket = null
-  activeToken = null
 }
