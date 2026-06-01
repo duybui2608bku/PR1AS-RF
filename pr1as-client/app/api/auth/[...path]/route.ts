@@ -22,6 +22,11 @@ async function proxyToBackend(req: NextRequest, pathSegments: string[]) {
   // Forward CSRF token
   const csrf = req.headers.get("x-csrf-token")
   if (csrf) headers["x-csrf-token"] = csrf
+  // Forward Origin + Referer để backend validateOrigin không reject trong production
+  const origin = req.headers.get("origin")
+  if (origin) headers["origin"] = origin
+  const referer = req.headers.get("referer")
+  if (referer) headers["referer"] = referer
   // Preserve client IP cho rate limiting
   const fwd = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip")
   if (fwd) headers["x-forwarded-for"] = fwd
