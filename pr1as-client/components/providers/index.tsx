@@ -23,9 +23,14 @@ function SessionRestoreProvider() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const setAuth = useAuthStore((s) => s.setAuth)
   const setSessionLoaded = useAuthStore((s) => s._setSessionLoaded)
+  // Chỉ check 1 lần lúc startup — không re-run sau logout
+  const didCheckRef = React.useRef(false)
 
   React.useEffect(() => {
     if (!hasHydrated) return
+    if (didCheckRef.current) return
+    didCheckRef.current = true
+
     if (isAuthenticated) { setSessionLoaded(); return }
 
     let cancelled = false
