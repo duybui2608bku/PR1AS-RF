@@ -77,12 +77,16 @@ export default function LoginPage() {
       ? (safeRedirectTarget ?? "/dashboard")
       : (safeRedirectTarget ?? defaultRedirectTarget)
 
+  // Chỉ clear auth khi me thất bại nếu user KHÔNG vừa login thành công.
+  // Sau login thành công, cookie có thể cần thêm một khoảnh khắc để propagate;
+  // xoá auth ngay tạo vòng lặp login → me 401 → clearAuth → login lại.
   useEffect(() => {
-    if (isSessionActive && meQuery.isError) {
+    if (isSessionActive && meQuery.isError && !loginMutation.isSuccess) {
       clearAuth()
     }
-  }, [isSessionActive, meQuery.isError, clearAuth])
+  }, [isSessionActive, meQuery.isError, loginMutation.isSuccess, clearAuth])
 
+  // Redirect khi me thành công (trường hợp session restore từ cookie cũ).
   useEffect(() => {
     if (isSessionActive && meSucceeded && authenticatedUser) {
       router.replace(redirectTarget)
@@ -108,6 +112,20 @@ export default function LoginPage() {
       setPassword("")
       setShowPassword(false)
       toast.success("Đăng nhập thành công.")
+
+      // Redirect ngay sau login thành công dựa vào user data từ response,
+      // không đợi useMe để tránh vòng lặp khi me 401 trong production.
+      const loggedInUser = response.data?.user ?? user
+      const resolvedRole = getActiveRole(loggedInUser)
+      const isAdminNow = resolvedRole === "admin"
+      const isWorkerNow = resolvedRole === "worker"
+      const defaultTarget = isWorkerNow ? "/posts" : "/"
+      // Dùng isWorkerNow (fresh từ response) thay vì isWorker (stale từ render cũ)
+      const safeRedirectNow = isWorkerNow && allowedSafeFrom === "/" ? null : allowedSafeFrom
+      const immediateTarget = isAdminNow
+        ? (allowedSafeFrom ?? "/dashboard")
+        : (safeRedirectNow ?? defaultTarget)
+      router.replace(immediateTarget)
     } catch (error) {
       if (isEmailNotVerifiedError(error)) {
         setPendingVerificationEmail(normalizedEmail)
