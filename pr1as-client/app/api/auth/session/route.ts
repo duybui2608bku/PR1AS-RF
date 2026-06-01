@@ -72,18 +72,22 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Yêu cầu không hợp lệ (CSRF)." }, { status: 403 })
   }
 
-  // Smart delete: skip if token is still valid (another tab may be using it).
-  // Only clear if the token is expired or invalid (stale cookie case).
-  const currentToken = req.cookies.get(TOKEN_COOKIE_NAME)?.value
-  if (currentToken) {
-    try {
-      const secret = new TextEncoder().encode(
-        process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production",
-      )
-      await jwtVerify(currentToken, secret)
-      return NextResponse.json({ ok: true, skipped: true })
-    } catch {
-      // Expired or invalid — proceed to clear
+  // force=true (explicit logout): luôn xóa cookie, không check JWT.
+  // Smart delete (không có force): chỉ xóa khi token đã hết hạn —
+  // tránh xóa nhầm cookie của tab khác đang dùng session hợp lệ.
+  const force = req.nextUrl.searchParams.get("force") === "true"
+  if (!force) {
+    const currentToken = req.cookies.get(TOKEN_COOKIE_NAME)?.value
+    if (currentToken) {
+      try {
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production",
+        )
+        await jwtVerify(currentToken, secret)
+        return NextResponse.json({ ok: true, skipped: true })
+      } catch {
+        // Expired or invalid — proceed to clear
+      }
     }
   }
 

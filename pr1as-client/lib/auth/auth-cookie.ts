@@ -13,7 +13,9 @@ export async function setSessionCookie(token: string): Promise<void> {
 }
 
 export async function clearSessionCookie(): Promise<void> {
-  await fetch("/api/auth/session", { method: "DELETE" })
+  // force=true: luôn xóa cookie khi logout chủ động,
+  // không dùng smart-delete (smart-delete giữ lại cookie còn hạn → gây auto re-login)
+  await fetch("/api/auth/session?force=true", { method: "DELETE" })
 }
 
 export function setActiveRoleCookie(activeRole: string | null | undefined): void {
