@@ -14,7 +14,15 @@ const ensureApiBasePath = (url: string) => {
 
 const configuredBaseURL = process.env.NEXT_PUBLIC_API_URL
 const fallbackURL = "http://localhost:3052/api"
-const apiBaseURL = ensureApiBasePath(configuredBaseURL ?? fallbackURL)
+
+// Browser: luôn dùng /api (relative) — Next.js rewrite forward đến backend server-to-server.
+// Cookie được set cho frontend domain → không có cross-domain issue, không cần thêm env var.
+// Server (SSR): dùng full URL để request trực tiếp (không qua rewrite).
+const apiBaseURL =
+  typeof window !== "undefined"
+    ? "/api"
+    : ensureApiBasePath(configuredBaseURL ?? fallbackURL)
+
 const csrfCookieName = "XSRF-TOKEN"
 const csrfHeaderName = "X-CSRF-Token"
 const unsafeMethods = new Set(["post", "put", "patch", "delete"])
@@ -24,7 +32,7 @@ if (!configuredBaseURL) {
     throw new Error("NEXT_PUBLIC_API_URL is required in production builds.")
   }
   console.warn(
-    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${apiBaseURL}`
+    `[axios] NEXT_PUBLIC_API_URL is not set, falling back to ${fallbackURL}`
   )
 }
 
