@@ -29,7 +29,7 @@ import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
-import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
+import { useAuthStore, useIsSessionLoaded, type AuthUser } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -97,6 +97,7 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isSessionLoaded = useIsSessionLoaded()
   const logoutMutation = useLogout()
   const switchRoleMutation = useSwitchRole()
   const menuContainerRef = React.useRef<HTMLDivElement | null>(null)
@@ -262,7 +263,14 @@ export function SiteHeader() {
               <NotificationBell />
             </ErrorBoundary>
           ) : null}
-          {isAuthenticated ? (
+          {/* Hiển thị skeleton cho đến khi session check hoàn tất để tránh race condition:
+              user thấy nút Login → click → proxy redirect về dashboard vì đã có cookie hợp lệ */}
+          {!isSessionLoaded ? (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+              <div className="size-8 animate-pulse rounded-full bg-muted" />
+            </div>
+          ) : isAuthenticated ? (
             <div ref={menuContainerRef} className="relative hidden md:block">
               <Button
                 variant="ghost"

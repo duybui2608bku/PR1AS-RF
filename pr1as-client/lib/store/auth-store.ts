@@ -55,12 +55,21 @@ type AuthState = {
    * Intentionally NOT persisted — resets to false on every page load.
    */
   _hasHydrated: boolean
+  /**
+   * True after SessionRestoreProvider has finished its async session check.
+   * Until true, auth-dependent UI (login button, user menu) shows a skeleton
+   * to prevent the race condition where user clicks "Login" but gets proxy-redirected
+   * because a valid httpOnly cookie already exists.
+   * NOT persisted — resets to false on every page load.
+   */
+  _isSessionLoaded: boolean
   setAuth: (payload: { user: AuthUser }) => void
   /** Updates user info without touching auth state (e.g. after role switch or profile update). */
   setUser: (user: AuthUser) => void
   clearAuth: () => void
   setLoggingOut: (value: boolean) => void
   _setHasHydrated: () => void
+  _setSessionLoaded: () => void
 }
 
 // BroadcastChannel để sync logout across tabs
@@ -76,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoggingOut: false,
       _hasHydrated: false,
+      _isSessionLoaded: false,
       setAuth: ({ user }) => {
         removeLegacyAuthToken()
         setActiveRoleCookie(getActiveRole(user))
@@ -99,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
       },
       setLoggingOut: (value) => set({ isLoggingOut: value }),
       _setHasHydrated: () => set({ _hasHydrated: true }),
+      _setSessionLoaded: () => set({ _isSessionLoaded: true }),
     }),
     {
       name: "auth-storage",
@@ -108,7 +119,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        // _hasHydrated intentionally excluded — must reset to false on every page load
+        // _hasHydrated và _isSessionLoaded intentionally excluded — reset on every page load
       }),
       onRehydrateStorage: () => (state) => {
         state?._setHasHydrated()
@@ -119,3 +130,6 @@ export const useAuthStore = create<AuthState>()(
 
 /** True once Zustand has finished reading from sessionStorage. */
 export const useHasHydrated = () => useAuthStore((s) => s._hasHydrated)
+
+/** True once SessionRestoreProvider has finished its async session check. */
+export const useIsSessionLoaded = () => useAuthStore((s) => s._isSessionLoaded)

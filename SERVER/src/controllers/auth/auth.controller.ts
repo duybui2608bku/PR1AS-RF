@@ -36,23 +36,41 @@ import { config } from "../../config";
 const ACCESS_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+function getCookieOptions(isProduction: boolean) {
+  // Production thường deploy backend và frontend trên KHÁC DOMAIN (cross-site).
+  // SameSite=Lax chặn cookie trong cross-site XHR → /auth/me trả về 401 dù vừa login.
+  // SameSite=None + Secure=true là giải pháp chuẩn cho cross-site credential sharing.
+  // Dev dùng SameSite=Lax vì localhost:3000 ↔ localhost:3052 là same-site, không cần None.
+  if (isProduction) {
+    return { sameSite: "none" as const, secure: true };
+  }
+  return { sameSite: "lax" as const, secure: false };
+}
+
 function setAuthCookies(res: Response, token: string, refreshToken: string): void {
   const isProduction = config.nodeEnv === "production";
+  const cookieOpts = getCookieOptions(isProduction);
   res.cookie("token", token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    ...cookieOpts,
     maxAge: ACCESS_TOKEN_MAX_AGE_MS,
     path: "/",
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    ...cookieOpts,
     maxAge: REFRESH_TOKEN_MAX_AGE_MS,
     // Giới hạn cookie chỉ gửi đến refresh endpoint — tăng bảo mật
     path: "/api/auth/refresh-token",
   });
+}
+
+function clearAuthCookies(res: Response): void {
+  const isProduction = config.nodeEnv === "production";
+  const cookieOpts = getCookieOptions(isProduction);
+  // Options phải khớp khi clear, đặc biệt secure + sameSite để browser nhận diện đúng cookie
+  res.clearCookie("token", { path: "/", ...cookieOpts });
+  res.clearCookie("refreshToken", { path: "/api/auth/refresh-token", ...cookieOpts });
 }
 
 export class AuthController {
@@ -94,8 +112,7 @@ export class AuthController {
 
   async logout(req: AuthRequest, res: Response): Promise<void> {
     await authService.logout(extractUserIdFromRequest(req));
-    res.clearCookie("token", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/api/auth/refresh-token" });
+    clearAuthCookies(res);
     R.success(res, { message: AUTH_MESSAGES.LOGOUT_SUCCESS }, undefined, req);
   }
 
@@ -232,8 +249,7 @@ export class AuthController {
       extractUserIdFromRequest(req),
       data.password
     );
-    res.clearCookie("token", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/api/auth/refresh-token" });
+    clearAuthCookies(res);
     R.success(res, result, AUTH_MESSAGES.ACCOUNT_DELETE_REQUESTED, req);
   }
 
