@@ -3,15 +3,21 @@ import type { WorkersGroupedFilters } from "@/services/worker.service"
 
 export type HomeSearchParamRaw = string | string[] | undefined
 
+// Top-level grouping: "Đồng hành" (category === COMPANIONSHIP) vs.
+// "Dịch vụ" (everything else). Drives the Airbnb-style icon tabs.
+export type ServiceTab = "SERVICE" | "COMPANIONSHIP"
+
 export type HomeSearchParams = {
   category?: HomeSearchParamRaw
   province_code?: HomeSearchParamRaw
   ward_code?: HomeSearchParamRaw
   location?: HomeSearchParamRaw
   at?: HomeSearchParamRaw
+  tab?: HomeSearchParamRaw
 }
 
 export type HomeSearchState = {
+  activeTab: ServiceTab
   activeCodes: string[]
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
@@ -73,7 +79,10 @@ export const parseHomeSearchParams = (
     if (!Number.isNaN(parsed.getTime())) scheduledAt = parsed
   }
 
-  return { activeCodes, selectedLocation, scheduledAt }
+  const activeTab: ServiceTab =
+    firstString(raw?.tab) === "COMPANIONSHIP" ? "COMPANIONSHIP" : "SERVICE"
+
+  return { activeTab, activeCodes, selectedLocation, scheduledAt }
 }
 
 export const homeStateToFilters = (
@@ -97,6 +106,9 @@ export const homeStateToFilters = (
 
 export const homeStateToQueryString = (state: HomeSearchState): string => {
   const params = new URLSearchParams()
+  if (state.activeTab === "COMPANIONSHIP") {
+    params.set("tab", "COMPANIONSHIP")
+  }
   if (state.activeCodes.length > 0) {
     params.set("category", state.activeCodes.join(","))
   }

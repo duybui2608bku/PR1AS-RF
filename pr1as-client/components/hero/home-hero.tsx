@@ -14,6 +14,7 @@ const DotLottieReact = dynamic(
 )
 import {
   Briefcase,
+  ConciergeBell,
   Crown,
   HeartHandshake,
   LayoutGrid,
@@ -41,6 +42,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
+import type { ServiceTab } from "@/lib/home/home-search-params"
 import { type LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 
@@ -62,6 +64,8 @@ const resolveIcon = (icon: string | null): LucideIcon => {
 }
 
 type HomeHeroProps = {
+  activeTab: ServiceTab
+  onSwitchTab: (tab: ServiceTab) => void
   activeCodes: string[]
   onToggleCode: (code: string) => void
   selectedLocation: LocationSearchResult | null
@@ -72,6 +76,8 @@ type HomeHeroProps = {
 }
 
 export function HomeHero({
+  activeTab,
+  onSwitchTab,
   activeCodes,
   onToggleCode,
   selectedLocation,
@@ -86,6 +92,17 @@ export function HomeHero({
     staleTime: 5 * 60 * 1000,
   })
 
+  // Only offer the services that belong to the active tab in the picker.
+  const tabServices = React.useMemo(
+    () =>
+      services.filter((s) =>
+        activeTab === "COMPANIONSHIP"
+          ? s.category === "COMPANIONSHIP"
+          : s.category !== "COMPANIONSHIP"
+      ),
+    [services, activeTab]
+  )
+
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     onSearchSubmit?.()
@@ -93,69 +110,97 @@ export function HomeHero({
 
   return (
     <section>
-      <div className="container mx-auto px-4 py-10 sm:py-14 lg:py-24">
+      <div className="container mx-auto px-4 py-6 sm:py-14 lg:py-24">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-10 lg:gap-8">
           <div className="lg:col-span-7">
-            <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Tìm người đồng hành cho mọi khoảnh khắc
-            </h1>
-            <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
-              Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển chọn
-              và xác minh.
-            </p>
-            <form
-              onSubmit={handleSearch}
-              className={cn(
-                "mt-6 w-full max-w-3xl bg-background sm:mt-8",
-                "flex flex-col divide-y divide-border rounded-2xl border border-border shadow-sm",
-                "sm:flex-row sm:items-stretch sm:gap-0 sm:divide-x sm:divide-y-0 sm:divide-none sm:rounded-full sm:p-2"
-              )}
-            >
-              <ServicePickerField
-                services={services}
+            {/* Mobile: collapsed search trigger + classification tabs */}
+            <div className="space-y-5 sm:hidden">
+              <MobileSearch
+                services={tabServices}
                 isLoading={isLoading}
                 activeCodes={activeCodes}
-                onToggle={onToggleCode}
+                onToggleCode={onToggleCode}
+                selectedLocation={selectedLocation}
+                onSelectedLocationChange={onSelectedLocationChange}
+                scheduledAt={scheduledAt}
+                onScheduledAtChange={onScheduledAtChange}
+                onSearchSubmit={onSearchSubmit}
               />
-
-              <Separator
-                orientation="vertical"
-                className="mx-0 hidden h-auto self-stretch sm:block"
+              <ServiceTabs
+                activeTab={activeTab}
+                onSwitchTab={onSwitchTab}
+                className="justify-center"
               />
+            </div>
 
-              <LocationSearchField
-                label="Địa điểm"
-                placeholder="Hà Nội hoặc Phường Cầu Giấy..."
-                value={selectedLocation}
-                onChange={onSelectedLocationChange}
-                icon={
-                  <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                }
+            {/* Desktop: tabs + heading + inline search bar */}
+            <div className="hidden sm:block">
+              <ServiceTabs
+                activeTab={activeTab}
+                onSwitchTab={onSwitchTab}
+                className="mb-8"
               />
+              <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                Tìm người đồng hành cho mọi khoảnh khắc
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
+                Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển
+                chọn và xác minh.
+              </p>
+              <form
+                onSubmit={handleSearch}
+                className={cn(
+                  "mt-6 w-full max-w-3xl bg-background sm:mt-8",
+                  "rounded-2xl border border-border shadow-sm",
+                  "flex flex-row items-stretch gap-0 divide-x divide-none rounded-full p-2"
+                )}
+              >
+                <ServicePickerField
+                  services={tabServices}
+                  isLoading={isLoading}
+                  activeCodes={activeCodes}
+                  onToggle={onToggleCode}
+                />
 
-              <Separator
-                orientation="vertical"
-                className="mx-0 hidden h-auto self-stretch sm:block"
-              />
+                <Separator
+                  orientation="vertical"
+                  className="mx-0 h-auto self-stretch"
+                />
 
-              <SearchDateField
-                label="Thời gian"
-                placeholder="Chọn ngày và giờ"
-                value={scheduledAt}
-                onChange={onScheduledAtChange}
-              />
+                <LocationSearchField
+                  label="Địa điểm"
+                  placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+                  value={selectedLocation}
+                  onChange={onSelectedLocationChange}
+                  icon={
+                    <MapPin className="size-4 shrink-0 text-muted-foreground" />
+                  }
+                />
 
-              <div className="flex items-center justify-center p-2 sm:flex sm:items-stretch sm:p-0">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-12 w-full rounded-xl sm:h-full sm:rounded-xl md:w-auto md:rounded-full md:px-6"
-                >
-                  <Search className="size-4" />
-                  Tìm kiếm
-                </Button>
-              </div>
-            </form>
+                <Separator
+                  orientation="vertical"
+                  className="mx-0 h-auto self-stretch"
+                />
+
+                <SearchDateField
+                  label="Thời gian"
+                  placeholder="Chọn ngày và giờ"
+                  value={scheduledAt}
+                  onChange={onScheduledAtChange}
+                />
+
+                <div className="flex items-stretch">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="h-full rounded-xl md:rounded-full md:px-6"
+                  >
+                    <Search className="size-4" />
+                    Tìm kiếm
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
 
           <div className="hidden lg:col-span-3 lg:block">
@@ -170,6 +215,148 @@ export function HomeHero({
         </div>
       </div>
     </section>
+  )
+}
+
+// ─── ServiceTabs ──────────────────────────────────────────────────────────────
+
+type ServiceTabsProps = {
+  activeTab: ServiceTab
+  onSwitchTab: (tab: ServiceTab) => void
+  className?: string
+}
+
+const SERVICE_TABS: { value: ServiceTab; label: string; icon: LucideIcon }[] = [
+  { value: "SERVICE", label: "Dịch vụ", icon: ConciergeBell },
+  { value: "COMPANIONSHIP", label: "Đồng hành", icon: HeartHandshake },
+]
+
+function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
+  return (
+    <div className={cn("flex items-center gap-8", className)}>
+      {SERVICE_TABS.map((tab) => {
+        const Icon = tab.icon
+        const isActive = activeTab === tab.value
+        return (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => onSwitchTab(tab.value)}
+            aria-pressed={isActive}
+            className={cn(
+              "group flex flex-col items-center gap-1 border-b-2 pb-2 transition-colors",
+              isActive
+                ? "border-foreground text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
+            <span className="text-sm font-medium">{tab.label}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── MobileSearch ─────────────────────────────────────────────────────────────
+
+type MobileSearchProps = {
+  services: ServiceItem[]
+  isLoading: boolean
+  activeCodes: string[]
+  onToggleCode: (code: string) => void
+  selectedLocation: LocationSearchResult | null
+  onSelectedLocationChange: (value: LocationSearchResult | null) => void
+  scheduledAt: Date | undefined
+  onScheduledAtChange: (value: Date | undefined) => void
+  onSearchSubmit?: () => void
+}
+
+function MobileSearch({
+  services,
+  isLoading,
+  activeCodes,
+  onToggleCode,
+  selectedLocation,
+  onSelectedLocationChange,
+  scheduledAt,
+  onScheduledAtChange,
+  onSearchSubmit,
+}: MobileSearchProps) {
+  const [open, setOpen] = React.useState(false)
+
+  const handleSubmit = () => {
+    setOpen(false)
+    onSearchSubmit?.()
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex w-full items-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-left shadow-sm",
+            "transition-shadow hover:shadow-md"
+          )}
+        >
+          <Search className="size-5 shrink-0 text-foreground" />
+          <span className="text-sm font-medium text-foreground">
+            Bắt đầu tìm kiếm
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="center"
+        sideOffset={10}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        // Keep the panel open while the user interacts with the nested
+        // location/service/date popovers (each portals to its own popper).
+        onInteractOutside={(e) => {
+          const target = e.target as Element | null
+          if (target?.closest("[data-radix-popper-content-wrapper]")) {
+            e.preventDefault()
+          }
+        }}
+        className="w-[calc(100vw-2rem)] max-w-md space-y-2 rounded-3xl p-3"
+      >
+        <div className="rounded-2xl border border-border">
+          <LocationSearchField
+            label="Địa điểm"
+            placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+            value={selectedLocation}
+            onChange={onSelectedLocationChange}
+            icon={<MapPin className="size-4 shrink-0 text-muted-foreground" />}
+          />
+        </div>
+        <div className="rounded-2xl border border-border">
+          <SearchDateField
+            label="Thời gian"
+            placeholder="Thêm ngày"
+            value={scheduledAt}
+            onChange={onScheduledAtChange}
+          />
+        </div>
+        <div className="rounded-2xl border border-border">
+          <ServicePickerField
+            services={services}
+            isLoading={isLoading}
+            activeCodes={activeCodes}
+            onToggle={onToggleCode}
+          />
+        </div>
+        <Button
+          type="button"
+          size="lg"
+          onClick={handleSubmit}
+          className="h-12 w-full rounded-full"
+        >
+          <Search className="size-4" />
+          Tìm kiếm
+        </Button>
+      </PopoverContent>
+    </Popover>
   )
 }
 

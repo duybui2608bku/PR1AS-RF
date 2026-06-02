@@ -14,6 +14,7 @@ import {
   homeStateToFilters,
   homeStateToQueryString,
   type HomeSearchState,
+  type ServiceTab,
 } from "@/lib/home/home-search-params"
 import {
   useFavoriteWorkerIds,
@@ -99,7 +100,18 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     staleTime: 30 * 1000,
   })
 
-  const groupedServices = workersQuery.data ?? []
+  // The active tab is a client-side display filter over the grouped result:
+  // "Đồng hành" shows COMPANIONSHIP services, "Dịch vụ" shows the rest.
+  const visibleGroups = React.useMemo(
+    () =>
+      (workersQuery.data ?? []).filter((group) =>
+        applied.activeTab === "COMPANIONSHIP"
+          ? group.service.category === "COMPANIONSHIP"
+          : group.service.category !== "COMPANIONSHIP",
+      ),
+    [workersQuery.data, applied.activeTab],
+  )
+
   const showFetchError = workersQuery.isError
   const favoriteIdsQuery = useFavoriteWorkerIds()
   const toggleFavoriteMutation = useToggleFavoriteWorker()
@@ -119,6 +131,16 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     })
   }, [draft])
 
+  const handleSwitchTab = React.useCallback((tab: ServiceTab) => {
+    setApplied((prev) =>
+      prev.activeTab === tab
+        ? prev
+        : // Switching tab resets the picked service codes, since the service
+          // picker only lists services belonging to the active tab.
+          { ...prev, activeTab: tab, activeCodes: [] },
+    )
+  }, [])
+
   const handleToggleCode = React.useCallback((code: string) => {
     setApplied((prev) => {
       if (code === "ALL") return { ...prev, activeCodes: [] }
@@ -134,7 +156,12 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const handleClearAllFilters = React.useCallback(() => {
     setDraft({ selectedLocation: null, scheduledAt: undefined })
-    setApplied({ activeCodes: [], selectedLocation: null, scheduledAt: undefined })
+    setApplied((prev) => ({
+      activeTab: prev.activeTab,
+      activeCodes: [],
+      selectedLocation: null,
+      scheduledAt: undefined,
+    }))
   }, [])
 
   const handleToggleFavorite = React.useCallback(
@@ -209,6 +236,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   return (
     <>
       <HomeHero
+        activeTab={applied.activeTab}
+        onSwitchTab={handleSwitchTab}
         activeCodes={applied.activeCodes}
         onToggleCode={handleToggleCode}
         selectedLocation={draft.selectedLocation}
@@ -223,7 +252,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
       />
       <div ref={resultsRef}>
         <WorkersByServiceList
-          groupedServices={groupedServices}
+          groupedServices={visibleGroups}
           hasFetchError={showFetchError}
           isFetching={workersQuery.isFetching}
           appliedFilters={appliedFilters}
