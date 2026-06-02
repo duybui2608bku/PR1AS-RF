@@ -21,6 +21,7 @@ import {
   useToggleFavoriteWorker,
 } from "@/lib/hooks/use-worker"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
+import { useIsMobile } from "@/lib/hooks/use-is-mobile"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
@@ -66,6 +67,7 @@ const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
 export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
   const pathname = usePathname()
   const { requireAuth } = useAuthRequired()
+  const isMobile = useIsMobile()
 
   const [draft, setDraft] = React.useState<DraftState>(() =>
     draftFromState(initialState),
@@ -100,17 +102,18 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     staleTime: 30 * 1000,
   })
 
-  // The active tab is a client-side display filter over the grouped result:
-  // "Đồng hành" shows COMPANIONSHIP services, "Dịch vụ" shows the rest.
-  const visibleGroups = React.useMemo(
-    () =>
-      (workersQuery.data ?? []).filter((group) =>
-        applied.activeTab === "COMPANIONSHIP"
-          ? group.service.category === "COMPANIONSHIP"
-          : group.service.category !== "COMPANIONSHIP",
-      ),
-    [workersQuery.data, applied.activeTab],
-  )
+  // The classification tabs only exist on mobile. There, the active tab acts as
+  // a client-side display filter ("Đồng hành" = COMPANIONSHIP, "Dịch vụ" = the
+  // rest). On desktop there are no tabs, so every group is shown.
+  const visibleGroups = React.useMemo(() => {
+    const groups = workersQuery.data ?? []
+    if (!isMobile) return groups
+    return groups.filter((group) =>
+      applied.activeTab === "COMPANIONSHIP"
+        ? group.service.category === "COMPANIONSHIP"
+        : group.service.category !== "COMPANIONSHIP",
+    )
+  }, [workersQuery.data, applied.activeTab, isMobile])
 
   const showFetchError = workersQuery.isError
   const favoriteIdsQuery = useFavoriteWorkerIds()

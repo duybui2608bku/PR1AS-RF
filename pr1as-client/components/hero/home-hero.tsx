@@ -133,13 +133,8 @@ export function HomeHero({
               />
             </div>
 
-            {/* Desktop: tabs + heading + inline search bar */}
+            {/* Desktop: heading + inline search bar (no classification tabs) */}
             <div className="hidden sm:block">
-              <ServiceTabs
-                activeTab={activeTab}
-                onSwitchTab={onSwitchTab}
-                className="mb-8"
-              />
               <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                 Tìm người đồng hành cho mọi khoảnh khắc
               </h1>
@@ -156,7 +151,7 @@ export function HomeHero({
                 )}
               >
                 <ServicePickerField
-                  services={tabServices}
+                  services={services}
                   isLoading={isLoading}
                   activeCodes={activeCodes}
                   onToggle={onToggleCode}
