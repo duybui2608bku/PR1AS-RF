@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR1AS — Tài liệu Thiết kế Hệ thống</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #e0e7ff;
+      --secondary: #0ea5e9;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg: #ffffff;
+      --surface: #f8fafc;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { font-size: 11px; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .avoid-break { page-break-inside: avoid; }
+      section { page-break-inside: avoid; }
+      h2 { page-break-after: avoid; }
+    }
+
+    /* ── COVER ── */
+    .cover {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #4338ca 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 60px 40px;
+      position: relative; overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(99,102,241,.25) 0%, transparent 70%);
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #a5b4fc;
+      font-size: 11px; font-weight: 600; letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 6px 18px; border-radius: 100px;
+      margin-bottom: 32px; position: relative;
+    }
+    .cover h1 {
+      font-size: 64px; font-weight: 800; color: #fff;
+      letter-spacing: -2px; line-height: 1.1;
+      position: relative;
+    }
+    .cover h1 span { color: #818cf8; }
+    .cover-sub {
+      font-size: 22px; color: #c7d2fe; font-weight: 300;
+      margin-top: 16px; position: relative;
+    }
+    .cover-desc {
+      max-width: 560px; color: #a5b4fc; font-size: 14px;
+      margin-top: 24px; line-height: 1.8; position: relative;
+    }
+    .cover-meta {
+      display: flex; gap: 40px; margin-top: 60px;
+      position: relative;
+    }
+    .cover-meta-item { text-align: center; }
+    .cover-meta-item .num {
+      font-size: 36px; font-weight: 800; color: #fff;
+      display: block;
+    }
+    .cover-meta-item .label {
+      font-size: 11px; color: #818cf8; text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .cover-date {
+      margin-top: 48px; color: #6366f1; font-size: 12px;
+      font-weight: 500; position: relative;
+    }
+    .cover-dots {
+      position: absolute; width: 400px; height: 400px;
+      border-radius: 50%;
+      border: 1px solid rgba(99,102,241,.15);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .cover-dots:nth-child(2) { width: 600px; height: 600px; border-color: rgba(99,102,241,.08); }
+    .cover-dots:nth-child(3) { width: 800px; height: 800px; border-color: rgba(99,102,241,.05); }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
+
+    /* ── TOC ── */
+    .toc-page {
+      background: var(--surface);
+      padding: 60px 0;
+    }
+    .toc-title {
+      font-size: 28px; font-weight: 700; color: var(--text);
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 3px solid var(--primary);
+    }
+    .toc-list { list-style: none; }
+    .toc-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .toc-list li a {
+      color: var(--text); text-decoration: none; font-weight: 500;
+      font-size: 13px;
+    }
+    .toc-list li a:hover { color: var(--primary); }
+    .toc-list li .toc-num {
+      font-size: 11px; color: var(--text-light);
+      font-weight: 600; letter-spacing: 1px;
+    }
+    .toc-section-header {
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      text-transform: uppercase; letter-spacing: 2px;
+      margin: 20px 0 8px;
+    }
+
+    /* ── SECTIONS ── */
+    .main-content { padding: 48px 0; }
+
+    h2 {
+      font-size: 26px; font-weight: 700;
+      color: var(--text);
+      margin: 48px 0 24px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid var(--primary);
+      display: flex; align-items: center; gap: 10px;
+    }
+    h2 .sec-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--primary); color: white;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+
+    h3 {
+      font-size: 16px; font-weight: 600; color: var(--text);
+      margin: 28px 0 12px;
+      padding-left: 12px;
+      border-left: 3px solid var(--primary);
+    }
+
+    h4 {
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    p { color: var(--text-muted); margin-bottom: 12px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+    @media print {
+      .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 12px; padding: 20px;
+      color: white; text-align: center;
+    }
+    .stat-card .num {
+      font-size: 36px; font-weight: 800; display: block;
+    }
+    .stat-card .label { font-size: 11px; opacity: .8; text-transform: uppercase; letter-spacing: 1px; }
+
+    .stat-card.green { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+    .stat-card.blue { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+    .stat-card.orange { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+    .stat-card.red { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+    .stat-card.purple { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); }
+    .stat-card.teal { background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 100px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .badge-purple { background: var(--primary-light); color: var(--primary-dark); }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-orange { background: #fef3c7; color: #92400e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    /* ── TECH STACK ITEMS ── */
+    .tech-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .tech-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .tech-item .name { font-weight: 600; font-size: 12px; }
+    .tech-item .desc { font-size: 10px; color: var(--text-light); }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow {
+      display: flex; align-items: center; gap: 0;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+    .flow-step {
+      display: flex; align-items: center;
+    }
+    .flow-box {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-box.primary { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+    .flow-box.green { border-color: #10b981; background: #d1fae5; color: #065f46; }
+    .flow-box.blue { border-color: #0ea5e9; background: #e0f2fe; color: #0369a1; }
+    .flow-box.orange { border-color: #f59e0b; background: #fef3c7; color: #92400e; }
+    .flow-arrow {
+      color: var(--text-light); font-size: 16px; padding: 0 6px;
+    }
+
+    /* ── STATUS FLOW ── */
+    .status-flow {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin: 12px 0;
+    }
+    .status-item { text-align: center; }
+    .status-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      margin: 0 auto 4px;
+    }
+    .status-label { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+
+    /* ── TABLE ── */
+    table {
+      width: 100%; border-collapse: collapse; margin: 12px 0;
+    }
+    th {
+      background: var(--surface2);
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px; vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--surface); }
+
+    /* ── CODE ── */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--surface2);
+      padding: 1px 6px; border-radius: 4px;
+      color: var(--primary-dark);
+    }
+    .code-block {
+      background: #0f172a;
+      border-radius: 10px; padding: 16px 20px;
+      margin: 12px 0; overflow: auto;
+    }
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: #e2e8f0; white-space: pre; line-height: 1.7;
+    }
+    .code-block .kw { color: #818cf8; }
+    .code-block .str { color: #86efac; }
+    .code-block .cmt { color: #64748b; font-style: italic; }
+    .code-block .key { color: #7dd3fc; }
+    .code-block .val { color: #fca5a5; }
+
+    /* ── DOMAIN CARDS ── */
+    .domain-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .domain-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+      border-top: 3px solid var(--primary);
+    }
+    .domain-card.green { border-top-color: #10b981; }
+    .domain-card.blue { border-top-color: #0ea5e9; }
+    .domain-card.orange { border-top-color: #f59e0b; }
+    .domain-card.red { border-top-color: #ef4444; }
+    .domain-card.teal { border-top-color: #0d9488; }
+    .domain-card.pink { border-top-color: #ec4899; }
+
+    .domain-card .title {
+      font-size: 13px; font-weight: 700; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .domain-card .items {
+      list-style: none;
+    }
+    .domain-card .items li {
+      font-size: 11px; color: var(--text-muted);
+      padding: 2px 0; display: flex; align-items: center; gap: 6px;
+    }
+    .domain-card .items li::before {
+      content: '›'; color: var(--primary); font-weight: 700;
+    }
+
+    /* ── ARCH LAYER ── */
+    .arch-stack {
+      display: flex; flex-direction: column; gap: 4px; margin: 16px 0;
+    }
+    .arch-layer {
+      display: flex; align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 16px; gap: 12px;
+    }
+    .arch-layer .layer-icon {
+      font-size: 18px; flex-shrink: 0;
+    }
+    .arch-layer .layer-name {
+      font-weight: 700; font-size: 13px; color: var(--text); flex-shrink: 0; width: 120px;
+    }
+    .arch-layer .layer-desc {
+      font-size: 11px; color: var(--text-muted);
+    }
+    .arch-layer.highlight {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+
+    /* ── DIVIDER ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      padding: 32px 0;
+      color: white;
+      text-align: center;
+    }
+    .page-header h2 {
+      color: white; border: none; font-size: 22px; justify-content: center;
+    }
+
+    /* ── PRINT HINT ── */
+    .print-hint {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--primary); color: white;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; box-shadow: 0 4px 20px rgba(99,102,241,.4);
+      transition: transform .15s;
+      z-index: 999;
+    }
+    .print-hint:hover { transform: translateY(-2px); }
+
+    /* ── ENDPOINT LIST ── */
+    .endpoint {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .method {
+      display: inline-block;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 48px; text-align: center;
+    }
+    .method.get { background: #d1fae5; color: #065f46; }
+    .method.post { background: #dbeafe; color: #1e40af; }
+    .method.put { background: #fef3c7; color: #92400e; }
+    .method.patch { background: #ede9fe; color: #5b21b6; }
+    .method.delete { background: #fee2e2; color: #991b1b; }
+
+    .endpoint code { background: none; padding: 0; color: var(--text); font-size: 11.5px; }
+    .endpoint .ep-desc { font-size: 11px; color: var(--text-light); margin-left: auto; }
+
+    /* ── ALERT BOX ── */
+    .alert {
+      padding: 12px 16px; border-radius: 8px; margin: 12px 0;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .alert-icon { font-size: 16px; flex-shrink: 0; }
+    .alert-body { font-size: 12px; color: var(--text-muted); }
+    .alert-body strong { color: var(--text); }
+    .alert.info { background: #eff6ff; border-left: 3px solid #3b82f6; }
+    .alert.warn { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .alert.success { background: #f0fdf4; border-left: 3px solid #22c55e; }
+
+    /* ── FOOTER ── */
+    .doc-footer {
+      background: #0f172a;
+      color: #64748b;
+      text-align: center;
+      padding: 32px;
+      font-size: 11px;
+    }
+    .doc-footer strong { color: #a5b4fc; }
+  </style>
+</head>
+<body>
+
+<!-- PRINT HINT -->
+<button class="print-hint no-print" onclick="window.print()">🖨️ Xuất PDF</button>
+
+<!-- ═══════════════════════════════════════════════
+     COVER
+══════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-dots"></div>
+  <div class="cover-dots"></div>
+  <div class="cover-dots"></div>
+
+  <div class="cover-badge">Tài liệu thiết kế hệ thống</div>
+
+  <h1>PR<span>1AS</span></h1>
+  <div class="cover-sub">Platform Dịch vụ Đồng hành</div>
+  <div class="cover-desc">
+    Hệ thống marketplace kết nối khách hàng với worker cung cấp dịch vụ đồng hành và hỗ trợ — tích hợp thanh toán, chat thời gian thực, và hệ thống đánh giá toàn diện.
+  </div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="num">19</span>
+      <span class="label">Collections</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="num">23</span>
+      <span class="label">Route Groups</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="num">15</span>
+      <span class="label">Domain Modules</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="num">3</span>
+      <span class="label">User Roles</span>
+    </div>
+  </div>
+
+  <div class="cover-date">Phiên bản 1.0 &nbsp;·&nbsp; Tháng 6 năm 2026 &nbsp;·&nbsp; Confidential</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════════════ -->
+<div class="toc-page page-break">
+  <div class="container">
+    <div class="toc-title">Mục lục</div>
+
+    <div class="toc-section-header">Tổng quan</div>
+    <ul class="toc-list">
+      <li><a href="#overview">1. Tổng quan dự án</a><span class="toc-num">01</span></li>
+      <li><a href="#tech">2. Công nghệ sử dụng</a><span class="toc-num">02</span></li>
+      <li><a href="#architecture">3. Kiến trúc hệ thống</a><span class="toc-num">03</span></li>
+    </ul>
+
+    <div class="toc-section-header">Backend</div>
+    <ul class="toc-list">
+      <li><a href="#backend">4. Kiến trúc Backend</a><span class="toc-num">04</span></li>
+      <li><a href="#database">5. Thiết kế Database</a><span class="toc-num">05</span></li>
+      <li><a href="#api">6. API Reference</a><span class="toc-num">06</span></li>
+    </ul>
+
+    <div class="toc-section-header">Frontend</div>
+    <ul class="toc-list">
+      <li><a href="#frontend">7. Kiến trúc Frontend</a><span class="toc-num">07</span></li>
+      <li><a href="#pages">8. Cấu trúc trang</a><span class="toc-num">08</span></li>
+    </ul>
+
+    <div class="toc-section-header">Tính năng chính</div>
+    <ul class="toc-list">
+      <li><a href="#auth">9. Hệ thống Auth</a><span class="toc-num">09</span></li>
+      <li><a href="#booking">10. Hệ thống Booking</a><span class="toc-num">10</span></li>
+      <li><a href="#wallet">11. Hệ thống Wallet & Thanh toán</a><span class="toc-num">11</span></li>
+      <li><a href="#chat">12. Hệ thống Chat & Thông báo</a><span class="toc-num">12</span></li>
+      <li><a href="#social">13. Tính năng Mạng xã hội</a><span class="toc-num">13</span></li>
+      <li><a href="#moderation">14. Kiểm duyệt & Danh tiếng</a><span class="toc-num">14</span></li>
+    </ul>
+
+    <div class="toc-section-header">Vận hành</div>
+    <ul class="toc-list">
+      <li><a href="#security">15. Bảo mật</a><span class="toc-num">15</span></li>
+      <li><a href="#deploy">16. Triển khai & Môi trường</a><span class="toc-num">16</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════ -->
+<div class="container main-content">
+
+  <!-- ── 1. TỔNG QUAN ── -->
+  <section id="overview">
+    <h2><span class="sec-num">1</span> Tổng quan dự án</h2>
+
+    <p>
+      <strong>PR1AS</strong> là nền tảng marketplace kết nối <em>khách hàng (Client)</em> với <em>worker</em> cung cấp các dịch vụ đồng hành và hỗ trợ. Hệ thống hỗ trợ toàn bộ vòng đời từ tìm kiếm worker, đặt lịch, thanh toán, đến đánh giá sau khi hoàn thành dịch vụ.
+    </p>
+
+    <div class="grid-3">
+      <div class="stat-card">
+        <span class="num">19</span>
+        <span class="label">MongoDB Collections</span>
+      </div>
+      <div class="stat-card blue">
+        <span class="num">23</span>
+        <span class="label">API Route Groups</span>
+      </div>
+      <div class="stat-card green">
+        <span class="num">15</span>
+        <span class="label">Domain Modules</span>
+      </div>
+      <div class="stat-card orange">
+        <span class="num">22</span>
+        <span class="label">Frontend Services</span>
+      </div>
+      <div class="stat-card purple">
+        <span class="num">3</span>
+        <span class="label">Vai trò người dùng</span>
+      </div>
+      <div class="stat-card teal">
+        <span class="num">2</span>
+        <span class="label">Hệ thống Real-time</span>
+      </div>
+    </div>
+
+    <h3>Vai trò trong hệ thống</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">👤 Client</div>
+        <p style="font-size:12px">Khách hàng tìm kiếm và đặt dịch vụ từ worker. Quản lý ví, lịch sử booking, và đánh giá worker sau khi hoàn thành.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🛠️ Worker</div>
+        <p style="font-size:12px">Người cung cấp dịch vụ. Cấu hình hồ sơ, danh sách dịch vụ và bảng giá. Nhận và quản lý các booking từ client.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🔧 Admin</div>
+        <p style="font-size:12px">Quản trị viên hệ thống. Giám sát giao dịch, xử lý tranh chấp, quản lý người dùng, cấu hình danh tiếng và cài đặt site.</p>
+      </div>
+    </div>
+
+    <h3>Phạm vi dịch vụ</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🤝 Companionship Services</div>
+        <p style="font-size:12px">Dịch vụ đồng hành: cà phê, ăn tối, đi chơi, v.v. Có phân cấp companionship (1–3), quy tắc về tiếp xúc vật lý và trang phục.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🙋 Assistance Services</div>
+        <p style="font-size:12px">Dịch vụ hỗ trợ: hướng dẫn, phiên dịch, tư vấn, v.v. Tập trung vào kỹ năng trí tuệ và chuyên môn.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 2. TECH STACK ── -->
+  <section id="tech">
+    <h2><span class="sec-num">2</span> Công nghệ sử dụng</h2>
+
+    <h3>Backend Stack</h3>
+    <div class="grid-4">
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#f0fdf4">🟢</div>
+        <div><div class="name">Node.js</div><div class="desc">Runtime</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#eff6ff">⚡</div>
+        <div><div class="name">Express</div><div class="desc">HTTP Framework</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#ede9fe">🔷</div>
+        <div><div class="name">TypeScript</div><div class="desc">Type Safety</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#f0fdf4">🍃</div>
+        <div><div class="name">MongoDB</div><div class="desc">Database</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#fef3c7">🔑</div>
+        <div><div class="name">JWT</div><div class="desc">Authentication</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#fff1f2">🔌</div>
+        <div><div class="name">Socket.IO</div><div class="desc">Real-time</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#eff6ff">✅</div>
+        <div><div class="name">Zod</div><div class="desc">Validation</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#f0fdf4">💳</div>
+        <div><div class="name">VNPay</div><div class="desc">Payment</div></div>
+      </div>
+    </div>
+
+    <h3>Frontend Stack</h3>
+    <div class="grid-4">
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#0f172a; color:white">▲</div>
+        <div><div class="name">Next.js 16</div><div class="desc">App Router</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#eff6ff">⚛️</div>
+        <div><div class="name">React 19</div><div class="desc">UI Library</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#ede9fe">🐻</div>
+        <div><div class="name">Zustand</div><div class="desc">State Mgmt</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#fef3c7">🔃</div>
+        <div><div class="name">TanStack Query</div><div class="desc">Server State</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#f0fdf4">🎨</div>
+        <div><div class="name">Tailwind 4</div><div class="desc">Styling</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#eff6ff">🧩</div>
+        <div><div class="name">shadcn/ui</div><div class="desc">Components</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#fff1f2">🔌</div>
+        <div><div class="name">Socket.IO</div><div class="desc">Real-time</div></div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon" style="background:#f0fdf4">📡</div>
+        <div><div class="name">Axios</div><div class="desc">HTTP Client</div></div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 3. KIẾN TRÚC HỆ THỐNG ── -->
+  <section id="architecture">
+    <h2><span class="sec-num">3</span> Kiến trúc hệ thống</h2>
+
+    <h3>Cấu trúc Monorepo</h3>
+    <div class="code-block"><pre>
+<span class="cmt"># Cấu trúc thư mục gốc</span>
+PR1AS-RF/
+├── <span class="key">SERVER/</span>           <span class="cmt"># Express + TypeScript + MongoDB  (port 3000)</span>
+├── <span class="key">CLIENT/</span>           <span class="cmt"># Next.js 16 — bản cũ với Ant Design (port 3001)</span>
+├── <span class="key">pr1as-client/</span>     <span class="cmt"># Next.js 16 — bản mới với shadcn/ui (port 3001)</span>
+└── <span class="key">memorybank/</span>       <span class="cmt"># Tài liệu kiến trúc (nguồn sự thật)</span></pre></div>
+
+    <h3>Luồng Request tổng thể</h3>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-box blue">Browser / App</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Next.js Middleware</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">React Component</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box primary">Axios (lib/axios.ts)</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Express Routes</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Auth Middleware</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Controller</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Service</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box green">Repository → MongoDB</div></div>
+    </div>
+
+    <h3>Giao tiếp Real-time</h3>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-box blue">Client Browser</div><div class="flow-arrow">⟷</div></div>
+      <div class="flow-step"><div class="flow-box primary">Socket.IO Client</div><div class="flow-arrow">⟷</div></div>
+      <div class="flow-step"><div class="flow-box orange">Socket.IO Server</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box green">Auth Middleware → Handlers</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div class="alert info">
+        <div class="alert-icon">💬</div>
+        <div class="alert-body"><strong>Chat System:</strong> Tin nhắn trực tiếp, group chat cho tranh chấp booking, hỗ trợ text/image/video/audio/file.</div>
+      </div>
+      <div class="alert success">
+        <div class="alert-icon">🔔</div>
+        <div class="alert-body"><strong>Notification System:</strong> Đa kênh — in-app (Socket.IO), email (Nodemailer), push (Web Push API).</div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 4. BACKEND ARCHITECTURE ── -->
+  <section id="backend" class="page-break">
+    <h2><span class="sec-num">4</span> Kiến trúc Backend</h2>
+
+    <h3>Layered Architecture</h3>
+    <div class="arch-stack">
+      <div class="arch-layer" style="background:#eff6ff; border-color:#3b82f6;">
+        <div class="layer-icon">🌐</div>
+        <div class="layer-name">Routes</div>
+        <div class="layer-desc">Định nghĩa endpoint, áp dụng middleware xác thực và validation trước khi tới controller</div>
+      </div>
+      <div class="arch-layer">
+        <div class="layer-icon">🛡️</div>
+        <div class="layer-name">Middleware</div>
+        <div class="layer-desc">authenticate, authorize, csrfProtection, rateLimiter, validateRequest (Zod)</div>
+      </div>
+      <div class="arch-layer highlight">
+        <div class="layer-icon">🎮</div>
+        <div class="layer-name">Controllers</div>
+        <div class="layer-desc">HTTP layer duy nhất. Dùng asyncHandler, trả về R.success() / R.error(). Không chứa business logic</div>
+      </div>
+      <div class="arch-layer" style="background:#f0fdf4; border-color:#22c55e;">
+        <div class="layer-icon">⚙️</div>
+        <div class="layer-name">Services</div>
+        <div class="layer-desc">Toàn bộ business logic. Không import gì từ HTTP layer. Giao tiếp với Repository</div>
+      </div>
+      <div class="arch-layer" style="background:#fffbeb; border-color:#f59e0b;">
+        <div class="layer-icon">🗃️</div>
+        <div class="layer-name">Repositories</div>
+        <div class="layer-desc">Toàn bộ Mongoose query. Service không bao giờ gọi Mongoose trực tiếp. Tách biệt data access</div>
+      </div>
+      <div class="arch-layer" style="background:#fdf2f8; border-color:#ec4899;">
+        <div class="layer-icon">🍃</div>
+        <div class="layer-name">Models</div>
+        <div class="layer-desc">Mongoose schemas + TypeScript interfaces. 19 collections trong MongoDB</div>
+      </div>
+    </div>
+
+    <h3>Domain Modules (15 modules)</h3>
+    <div class="domain-grid">
+      <div class="domain-card">
+        <div class="title">🔐 Auth & Users</div>
+        <ul class="items">
+          <li>auth — login, register, logout, refresh, verify email, password reset</li>
+          <li>users — CRUD, profile, status</li>
+        </ul>
+      </div>
+      <div class="domain-card blue">
+        <div class="title">📋 Services & Booking</div>
+        <ul class="items">
+          <li>services — danh mục dịch vụ</li>
+          <li>worker — hồ sơ, tìm kiếm</li>
+          <li>booking — đặt lịch, xác nhận, tranh chấp</li>
+          <li>review — đánh giá 5 sao</li>
+        </ul>
+      </div>
+      <div class="domain-card green">
+        <div class="title">💰 Financial</div>
+        <ul class="items">
+          <li>wallet — số dư, nạp tiền, giao dịch</li>
+          <li>admin-wallet — giám sát admin</li>
+          <li>pricing — gói subscription</li>
+        </ul>
+      </div>
+      <div class="domain-card orange">
+        <div class="title">💬 Communication</div>
+        <ul class="items">
+          <li>chat — tin nhắn, group chat</li>
+          <li>notification — đa kênh thông báo</li>
+        </ul>
+      </div>
+      <div class="domain-card teal">
+        <div class="title">📱 Community</div>
+        <ul class="items">
+          <li>post — mạng xã hội feed</li>
+          <li>comment — bình luận nested</li>
+          <li>reaction — emoji reaction</li>
+          <li>hashtag — trending, search</li>
+        </ul>
+      </div>
+      <div class="domain-card red">
+        <div class="title">🛡️ System & Admin</div>
+        <ul class="items">
+          <li>moderation — report, block, restrict</li>
+          <li>reputation — điểm uy tín động</li>
+          <li>dashboard — analytics admin</li>
+          <li>site-settings — cấu hình site</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Scheduled Jobs</h3>
+    <div class="card">
+      <div class="card-title">⏰ Booking Expiration Job</div>
+      <p style="font-size:12px">Chạy qua <code>node-cron</code>, khởi động trong <code>index.ts</code>. Tự động hủy các booking ở trạng thái PENDING quá hạn xác nhận. Sử dụng <code>JobLock</code> collection để distributed locking, tránh race condition khi scale.</p>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 5. DATABASE ── -->
+  <section id="database" class="page-break">
+    <h2><span class="sec-num">5</span> Thiết kế Database</h2>
+    <p>MongoDB với Mongoose ODM. Tất cả collections được đánh index tối ưu cho các query phổ biến.</p>
+
+    <h3>Collections chính</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Collection</th>
+          <th>Mục đích</th>
+          <th>Indexes quan trọng</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>users</code></td>
+          <td>Tài khoản + profile (worker/client)</td>
+          <td>email (unique), roles, status</td>
+        </tr>
+        <tr>
+          <td><code>services</code></td>
+          <td>Danh mục dịch vụ đa ngôn ngữ</td>
+          <td>is_active, category, code (unique)</td>
+        </tr>
+        <tr>
+          <td><code>worker_services</code></td>
+          <td>Worker ↔ Service + bảng giá</td>
+          <td>worker_id, service_id, is_active</td>
+        </tr>
+        <tr>
+          <td><code>bookings</code></td>
+          <td>Toàn bộ vòng đời đặt lịch</td>
+          <td>status, (worker_id + start_time) unique</td>
+        </tr>
+        <tr>
+          <td><code>reviews</code></td>
+          <td>Đánh giá booking_id unique</td>
+          <td>booking_id (unique), review_type, rating</td>
+        </tr>
+        <tr>
+          <td><code>wallets</code></td>
+          <td>Ví người dùng</td>
+          <td>user_id (unique)</td>
+        </tr>
+        <tr>
+          <td><code>wallet_transactions</code></td>
+          <td>Lịch sử giao dịch</td>
+          <td>user_id, type, status</td>
+        </tr>
+        <tr>
+          <td><code>notifications</code></td>
+          <td>Thông báo người dùng</td>
+          <td>user_id, is_read, dedupe_key</td>
+        </tr>
+        <tr>
+          <td><code>posts</code></td>
+          <td>Bài đăng mạng xã hội</td>
+          <td>(author_id, created_at), (created_at, _id)</td>
+        </tr>
+        <tr>
+          <td><code>comments</code></td>
+          <td>Bình luận post (nested)</td>
+          <td>post_id, author_id, parent_comment_id</td>
+        </tr>
+        <tr>
+          <td><code>reactions</code></td>
+          <td>Emoji trên post/comment</td>
+          <td>(user_id, target_id, target_type) unique</td>
+        </tr>
+        <tr>
+          <td><code>hashtags</code></td>
+          <td>Hashtag + usage count</td>
+          <td>text (unique)</td>
+        </tr>
+        <tr>
+          <td><code>reputation_histories</code></td>
+          <td>Lịch sử thay đổi điểm uy tín</td>
+          <td>user_id, event_type</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Schema nổi bật: User</h3>
+    <div class="code-block"><pre>
+<span class="cmt">// users collection — simplified</span>
+{
+  <span class="key">email</span>:          <span class="str">"unique, indexed, lowercase"</span>,
+  <span class="key">password_hash</span>:  <span class="str">"bcrypt hashed"</span>,
+  <span class="key">google_id</span>:      <span class="str">"social auth"</span>,
+  <span class="key">roles</span>:          [<span class="val">ADMIN</span> | <span class="val">WORKER</span> | <span class="val">CLIENT</span>],
+  <span class="key">status</span>:         <span class="val">ACTIVE</span> | <span class="val">BANNED</span> | <span class="val">INACTIVE</span> | <span class="val">PENDING_DELETE</span> | <span class="val">DELETED</span>,
+  <span class="key">worker_profile</span>: {
+    dob, gender, height, weight, hobbies,
+    gallery[],        <span class="cmt">// max 10 ảnh</span>
+    title, introduction, favorite_quote,
+    work_locations[], experience
+  },
+  <span class="key">client_profile</span>:  { company_info, total_spent },
+  <span class="key">meta_data</span>:       { reputation_score, pricing_plan_code, pricing_expiration },
+  <span class="key">refresh_token_hash</span>: <span class="str">"hashed in DB"</span>
+}</pre></div>
+
+    <h3>Schema nổi bật: Booking</h3>
+    <div class="code-block"><pre>
+{
+  <span class="key">client_id</span>, <span class="key">worker_id</span>, <span class="key">worker_service_id</span>, <span class="key">service_id</span>,
+  <span class="key">schedule</span>:  { start_time, end_time, duration_hours },
+  <span class="key">pricing</span>:   { unit: <span class="val">HOUR</span>|<span class="val">DAY</span>|<span class="val">MONTH</span>, quantity, total_amount },
+  <span class="key">status</span>:    <span class="val">PENDING</span> → <span class="val">CONFIRMED</span> → <span class="val">IN_PROGRESS</span> → <span class="val">COMPLETED</span>
+             | <span class="val">CANCELLED</span> | <span class="val">DISPUTED</span>,
+  <span class="key">cancellation</span>: { cancelled_by: <span class="val">CLIENT</span>|<span class="val">WORKER</span>, reason, notes },
+  <span class="key">dispute</span>:      { reason, description, evidence_urls[], disputed_by, resolution }
+  <span class="cmt">// unique index: (worker_id, schedule.start_time) cho active bookings</span>
+}</pre></div>
+  </section>
+
+  <hr />
+
+  <!-- ── 6. API REFERENCE ── -->
+  <section id="api" class="page-break">
+    <h2><span class="sec-num">6</span> API Reference</h2>
+    <p>Base URL: <code>http://localhost:3000/api</code> · Format: JSON · Auth: <code>Authorization: Bearer &lt;token&gt;</code></p>
+
+    <h3>Auth & Users</h3>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/register</code><span class="ep-desc">Đăng ký tài khoản mới</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/login</code><span class="ep-desc">Đăng nhập, nhận access + refresh token</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/logout</code><span class="ep-desc">Logout, xóa refresh token</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/refresh</code><span class="ep-desc">Làm mới access token</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/verify-email</code><span class="ep-desc">Xác thực email bằng OTP</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/auth/reset-password</code><span class="ep-desc">Đặt lại mật khẩu</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/users/me</code><span class="ep-desc">Lấy thông tin profile hiện tại</span></div>
+    <div class="endpoint"><span class="method patch">PATCH</span><code>/users/me</code><span class="ep-desc">Cập nhật profile</span></div>
+
+    <h3>Workers & Services</h3>
+    <div class="endpoint"><span class="method get">GET</span><code>/workers</code><span class="ep-desc">Tìm kiếm worker (filter, sort, pagination)</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/workers/:id</code><span class="ep-desc">Xem hồ sơ worker chi tiết</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/services</code><span class="ep-desc">Danh sách dịch vụ</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/worker/services</code><span class="ep-desc">Dịch vụ của worker hiện tại</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/worker/services</code><span class="ep-desc">Thêm dịch vụ cho worker</span></div>
+    <div class="endpoint"><span class="method put">PUT</span><code>/worker/services/:id</code><span class="ep-desc">Cập nhật dịch vụ + bảng giá</span></div>
+
+    <h3>Bookings</h3>
+    <div class="endpoint"><span class="method post">POST</span><code>/bookings</code><span class="ep-desc">Tạo booking mới</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/bookings</code><span class="ep-desc">Danh sách booking của user</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/bookings/:id</code><span class="ep-desc">Chi tiết booking</span></div>
+    <div class="endpoint"><span class="method patch">PATCH</span><code>/bookings/:id/confirm</code><span class="ep-desc">Worker xác nhận booking</span></div>
+    <div class="endpoint"><span class="method patch">PATCH</span><code>/bookings/:id/start</code><span class="ep-desc">Bắt đầu dịch vụ</span></div>
+    <div class="endpoint"><span class="method patch">PATCH</span><code>/bookings/:id/complete</code><span class="ep-desc">Hoàn thành booking</span></div>
+    <div class="endpoint"><span class="method patch">PATCH</span><code>/bookings/:id/cancel</code><span class="ep-desc">Hủy booking với lý do</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/bookings/:id/dispute</code><span class="ep-desc">Mở tranh chấp</span></div>
+
+    <h3>Wallet & Payments</h3>
+    <div class="endpoint"><span class="method get">GET</span><code>/wallet/balance</code><span class="ep-desc">Số dư ví</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/wallet/transactions</code><span class="ep-desc">Lịch sử giao dịch</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/wallet/deposit</code><span class="ep-desc">Tạo link nạp tiền VNPay</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/wallet/deposit/callback</code><span class="ep-desc">VNPay callback xác nhận giao dịch</span></div>
+
+    <h3>Chat</h3>
+    <div class="endpoint"><span class="method get">GET</span><code>/chat/conversations</code><span class="ep-desc">Danh sách cuộc trò chuyện</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/chat/messages/:userId</code><span class="ep-desc">Lịch sử tin nhắn</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/chat/messages</code><span class="ep-desc">Gửi tin nhắn</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/chat/group/:bookingId</code><span class="ep-desc">Group chat tranh chấp</span></div>
+
+    <h3>Social</h3>
+    <div class="endpoint"><span class="method get">GET</span><code>/posts</code><span class="ep-desc">Feed bài đăng</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/posts</code><span class="ep-desc">Tạo bài đăng mới</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/comments</code><span class="ep-desc">Bình luận bài đăng</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/reactions</code><span class="ep-desc">React (emoji) bài đăng / bình luận</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/hashtags/trending</code><span class="ep-desc">Hashtag đang trending</span></div>
+
+    <h3>Admin</h3>
+    <div class="endpoint"><span class="method get">GET</span><code>/admin/dashboard</code><span class="ep-desc">Thống kê tổng quan</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/admin/wallet/transactions</code><span class="ep-desc">Giám sát giao dịch toàn hệ thống</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/moderation/reports</code><span class="ep-desc">Danh sách báo cáo vi phạm</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/moderation/blocks</code><span class="ep-desc">Chặn người dùng</span></div>
+    <div class="endpoint"><span class="method post">POST</span><code>/moderation/restrictions</code><span class="ep-desc">Hạn chế tài khoản</span></div>
+    <div class="endpoint"><span class="method get">GET</span><code>/reputation/history</code><span class="ep-desc">Lịch sử điểm uy tín</span></div>
+  </section>
+
+  <hr />
+
+  <!-- ── 7. FRONTEND ARCHITECTURE ── -->
+  <section id="frontend" class="page-break">
+    <h2><span class="sec-num">7</span> Kiến trúc Frontend</h2>
+
+    <h3>State Management</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🐻 Zustand (Global Client State)</div>
+        <table style="margin:0">
+          <tbody>
+            <tr><td><code>auth.store</code></td><td style="font-size:11px">User info, token, persist to cookie</td></tr>
+            <tr><td><code>theme.store</code></td><td style="font-size:11px">Light / Dark mode</td></tr>
+            <tr><td><code>locale.store</code></td><td style="font-size:11px">Ngôn ngữ (locked: vi)</td></tr>
+            <tr><td><code>currency.store</code></td><td style="font-size:11px">Tiền tệ (locked: VND)</td></tr>
+            <tr><td><code>notification.store</code></td><td style="font-size:11px">Số thông báo chưa đọc</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">🔃 TanStack Query (Server State)</div>
+        <p style="font-size:12px">Cache và đồng bộ dữ liệu từ API. Query keys tập trung tại <code>lib/query-keys.ts</code>. Hỗ trợ background refetch, stale-while-revalidate, optimistic updates.</p>
+        <div style="margin-top:8px">
+          <span class="badge badge-blue">auth</span>
+          <span class="badge badge-blue">users</span>
+          <span class="badge badge-blue">workers</span>
+          <span class="badge badge-blue">bookings</span>
+          <span class="badge badge-blue">posts</span>
+          <span class="badge badge-blue">wallet</span>
+          <span class="badge badge-blue">chat</span>
+          <span class="badge badge-blue">notifications</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Axios Instance (lib/axios.ts)</h3>
+    <div class="code-block"><pre>
+<span class="cmt">// Interceptor tự động:</span>
+request  → đính kèm Authorization: Bearer &lt;token&gt; từ Zustand store
+response → on 401: xóa auth store + redirect /login</pre></div>
+
+    <h3>Middleware (middleware.ts)</h3>
+    <div class="card">
+      <p style="font-size:12px">Bảo vệ các route <code>/client</code>, <code>/chat</code>, <code>/posts</code>, <code>/dashboard</code>. Redirect người dùng chưa đăng nhập về <code>/login</code>. Worker truy cập <code>/</code> được redirect về <code>/posts</code>.</p>
+    </div>
+
+    <h3>Custom Hooks</h3>
+    <div class="grid-3">
+      <div><code>use-auth.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Auth state và functions</span></div>
+      <div><code>use-bookings.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Booking queries</span></div>
+      <div><code>use-wallet.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Wallet operations</span></div>
+      <div><code>use-chat-socket.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Socket.IO chat</span></div>
+      <div><code>use-comments.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Comment management</span></div>
+      <div><code>use-moderation.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Report/block operations</span></div>
+      <div><code>use-reputation.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Reputation tracking</span></div>
+      <div><code>use-hashtags.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Hashtag operations</span></div>
+      <div><code>use-is-mobile.ts</code><br/><span style="font-size:11px;color:var(--text-light)">Responsive detection</span></div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 8. PAGES ── -->
+  <section id="pages">
+    <h2><span class="sec-num">8</span> Cấu trúc trang</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>Trang công khai</h3>
+        <table>
+          <tbody>
+            <tr><td><code>/</code></td><td style="font-size:11px">Landing page</td></tr>
+            <tr><td><code>/login</code></td><td style="font-size:11px">Đăng nhập</td></tr>
+            <tr><td><code>/register</code></td><td style="font-size:11px">Đăng ký</td></tr>
+            <tr><td><code>/reset-password</code></td><td style="font-size:11px">Đặt lại mật khẩu</td></tr>
+            <tr><td><code>/verify-email</code></td><td style="font-size:11px">Xác thực email</td></tr>
+            <tr><td><code>/services</code></td><td style="font-size:11px">Duyệt dịch vụ</td></tr>
+            <tr><td><code>/pricing</code></td><td style="font-size:11px">Bảng giá subscription</td></tr>
+            <tr><td><code>/worker/[id]</code></td><td style="font-size:11px">Hồ sơ worker</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Trang Client</h3>
+        <table>
+          <tbody>
+            <tr><td><code>/client/profile</code></td><td style="font-size:11px">Hồ sơ cá nhân</td></tr>
+            <tr><td><code>/client/bookings</code></td><td style="font-size:11px">Quản lý booking</td></tr>
+            <tr><td><code>/client/favorites</code></td><td style="font-size:11px">Worker yêu thích</td></tr>
+            <tr><td><code>/client/wallet</code></td><td style="font-size:11px">Ví tiền</td></tr>
+            <tr><td><code>/client/wallet/deposit</code></td><td style="font-size:11px">Nạp tiền VNPay</td></tr>
+            <tr><td><code>/client/blocked</code></td><td style="font-size:11px">Danh sách đã chặn</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>Trang Worker</h3>
+        <table>
+          <tbody>
+            <tr><td><code>/worker/setup</code></td><td style="font-size:11px">Onboarding đa bước</td></tr>
+            <tr><td><code>/worker/bookings</code></td><td style="font-size:11px">Quản lý booking nhận</td></tr>
+            <tr><td><code>/worker/bookings/schedule</code></td><td style="font-size:11px">Lịch làm việc</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Trang chung (auth required)</h3>
+        <table>
+          <tbody>
+            <tr><td><code>/chat</code></td><td style="font-size:11px">Danh sách cuộc trò chuyện</td></tr>
+            <tr><td><code>/chat/group</code></td><td style="font-size:11px">Group chat tranh chấp</td></tr>
+            <tr><td><code>/posts</code></td><td style="font-size:11px">Social feed</td></tr>
+            <tr><td><code>/notifications</code></td><td style="font-size:11px">Trung tâm thông báo</td></tr>
+            <tr><td><code>/wallet</code></td><td style="font-size:11px">Ví tiền</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Trang Admin</h3>
+        <table>
+          <tbody>
+            <tr><td><code>/dashboard</code></td><td style="font-size:11px">Tổng quan thống kê</td></tr>
+            <tr><td><code>/dashboard/users</code></td><td style="font-size:11px">Quản lý người dùng</td></tr>
+            <tr><td><code>/dashboard/bookings</code></td><td style="font-size:11px">Quản lý booking</td></tr>
+            <tr><td><code>/dashboard/disputes</code></td><td style="font-size:11px">Xử lý tranh chấp</td></tr>
+            <tr><td><code>/dashboard/transactions</code></td><td style="font-size:11px">Giám sát giao dịch</td></tr>
+            <tr><td><code>/dashboard/reports</code></td><td style="font-size:11px">Báo cáo vi phạm</td></tr>
+            <tr><td><code>/dashboard/reputation-config</code></td><td style="font-size:11px">Cấu hình điểm uy tín</td></tr>
+            <tr><td><code>/dashboard/pricing</code></td><td style="font-size:11px">Quản lý gói giá</td></tr>
+            <tr><td><code>/dashboard/settings</code></td><td style="font-size:11px">Cài đặt site</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Worker Onboarding (Multi-step)</h3>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-box primary">Bước 1: Thông tin cá nhân</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box primary">Bước 2: Cấu hình dịch vụ</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box green">Hoàn thành hồ sơ</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Bước 1 — Thông tin cơ bản</div>
+        <p style="font-size:12px">Vị trí (geolocation / chọn tỉnh/phường), ngày sinh, giới tính, chiều cao, cân nặng, cung hoàng đạo, lối sống, sở thích, giới thiệu, ảnh gallery (tối đa 10 ảnh, 5MB/ảnh).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Bước 2 — Cấu hình dịch vụ</div>
+        <p style="font-size:12px">Chọn danh mục (ASSISTANCE hoặc COMPANIONSHIP), chọn dịch vụ cụ thể, thiết lập bảng giá theo đơn vị (HOUR/DAY/MONTH), thời lượng và mức giá.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 9. AUTH ── -->
+  <section id="auth" class="page-break">
+    <h2><span class="sec-num">9</span> Hệ thống Auth</h2>
+
+    <h3>JWT Token Strategy</h3>
+    <div class="grid-2">
+      <div class="card" style="border-top: 3px solid var(--primary);">
+        <div class="card-title">🔑 Access Token</div>
+        <table style="margin:0">
+          <tr><th>TTL</th><td>15 phút</td></tr>
+          <tr><th>Nơi lưu</th><td>Memory (Zustand store)</td></tr>
+          <tr><th>Usage</th><td><code>Authorization: Bearer</code></td></tr>
+        </table>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--success);">
+        <div class="card-title">🔄 Refresh Token</div>
+        <table style="margin:0">
+          <tr><th>TTL</th><td>7 ngày</td></tr>
+          <tr><th>Nơi lưu</th><td>Hashed trong DB (users.refresh_token_hash)</td></tr>
+          <tr><th>Usage</th><td>HttpOnly cookie</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h3>Auth Flow</h3>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-box blue">Login Request</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Validate Zod</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">bcrypt verify</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box primary">Generate tokens</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Hash refresh → DB</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box green">Return tokens</div></div>
+    </div>
+
+    <h3>Middleware bảo vệ route</h3>
+    <div class="code-block"><pre>
+<span class="cmt">// Request pipeline cho protected routes</span>
+<span class="val">authenticate</span>   → verify JWT, attach req.user
+<span class="val">authorize</span>      → kiểm tra roles (ADMIN, WORKER, CLIENT)
+<span class="val">csrfProtection</span> → validate CSRF token cho state-changing requests
+<span class="val">rateLimiter</span>    → giới hạn request rate
+<span class="val">validateRequest</span> → Zod schema validation</pre></div>
+  </section>
+
+  <hr />
+
+  <!-- ── 10. BOOKING ── -->
+  <section id="booking">
+    <h2><span class="sec-num">10</span> Hệ thống Booking</h2>
+
+    <h3>Vòng đời Booking</h3>
+    <div class="status-flow">
+      <div class="status-item">
+        <div class="status-dot" style="background:#f59e0b"></div>
+        <div class="status-label">PENDING</div>
+      </div>
+      <div style="color:var(--text-light);padding:0 4px">→</div>
+      <div class="status-item">
+        <div class="status-dot" style="background:#3b82f6"></div>
+        <div class="status-label">CONFIRMED</div>
+      </div>
+      <div style="color:var(--text-light);padding:0 4px">→</div>
+      <div class="status-item">
+        <div class="status-dot" style="background:#8b5cf6"></div>
+        <div class="status-label">IN_PROGRESS</div>
+      </div>
+      <div style="color:var(--text-light);padding:0 4px">→</div>
+      <div class="status-item">
+        <div class="status-dot" style="background:#10b981"></div>
+        <div class="status-label">COMPLETED</div>
+      </div>
+    </div>
+    <div class="status-flow" style="margin-top:8px">
+      <div class="status-item">
+        <div class="status-dot" style="background:#ef4444"></div>
+        <div class="status-label">CANCELLED</div>
+      </div>
+      <div style="color:var(--text-light);padding:0 8px">·</div>
+      <div class="status-item">
+        <div class="status-dot" style="background:#f97316"></div>
+        <div class="status-label">DISPUTED</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title">📅 Constraint chống xung đột lịch</div>
+        <p style="font-size:12px">Unique index compound <code>(worker_id, schedule.start_time)</code> trên active bookings đảm bảo không có 2 booking cùng một worker tại cùng thời điểm. Expiration job tự động hủy PENDING quá hạn.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">⚖️ Quy trình tranh chấp</div>
+        <p style="font-size:12px">Client hoặc Worker có thể mở dispute khi booking ở IN_PROGRESS hoặc COMPLETED. Admin xử lý qua dashboard, có group chat riêng cho mỗi tranh chấp với tất cả các bên.</p>
+      </div>
+    </div>
+
+    <h3>Review sau Booking</h3>
+    <div class="card">
+      <p style="font-size:12px">Sau khi booking COMPLETED, client được phép để lại review. Rating 5 sao với 4 tiêu chí chi tiết: <strong>Chuyên nghiệp</strong>, <strong>Đúng giờ</strong>, <strong>Giao tiếp</strong>, <strong>Chất lượng dịch vụ</strong>. Worker có thể trả lời review. Review có thể bị report và ẩn.</p>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 11. WALLET ── -->
+  <section id="wallet" class="page-break">
+    <h2><span class="sec-num">11</span> Hệ thống Wallet & Thanh toán</h2>
+
+    <h3>Luồng nạp tiền VNPay</h3>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-box blue">Client tạo deposit</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Server tạo txn PENDING</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box primary">Generate VNPay URL</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box">Client thanh toán</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box orange">VNPay callback</div><div class="flow-arrow">→</div></div>
+      <div class="flow-step"><div class="flow-box green">Cập nhật txn SUCCESS + balance</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Transaction Type</th><th>Mô tả</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">DEPOSIT</span></td><td style="font-size:11px">Nạp tiền vào ví qua VNPay</td></tr>
+          <tr><td><span class="badge badge-orange">WITHDRAW</span></td><td style="font-size:11px">Rút tiền từ ví</td></tr>
+          <tr><td><span class="badge badge-blue">PAYMENT</span></td><td style="font-size:11px">Thanh toán booking</td></tr>
+          <tr><td><span class="badge badge-purple">REFUND</span></td><td style="font-size:11px">Hoàn tiền khi hủy</td></tr>
+        </tbody>
+      </table>
+
+      <table>
+        <thead><tr><th>Transaction Status</th><th>Ý nghĩa</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-orange">PENDING</span></td><td style="font-size:11px">Đang chờ xử lý</td></tr>
+          <tr><td><span class="badge badge-green">SUCCESS</span></td><td style="font-size:11px">Giao dịch thành công</td></tr>
+          <tr><td><span class="badge badge-red">FAILED</span></td><td style="font-size:11px">Giao dịch thất bại</td></tr>
+          <tr><td><span class="badge badge-gray">CANCELLED</span></td><td style="font-size:11px">Đã hủy</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert warn" style="margin-top:16px">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body"><strong>Lưu ý:</strong> Số dư ví (<code>balance</code>) được tính từ tổng hợp wallet_transactions (không lưu trực tiếp), đảm bảo tính nhất quán và có audit trail đầy đủ. Tiền tệ cố định là <strong>VND</strong>.</div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 12. CHAT & NOTIFICATIONS ── -->
+  <section id="chat">
+    <h2><span class="sec-num">12</span> Hệ thống Chat & Thông báo</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>Chat System</h3>
+        <div class="card">
+          <p style="font-size:12px"><strong>Socket.IO events:</strong> Tin nhắn được gửi qua Socket.IO để real-time delivery. Có fallback HTTP API cho lịch sử tin nhắn.</p>
+          <p style="font-size:12px; margin-top:8px"><strong>Message types:</strong> <code>text</code>, <code>image</code>, <code>video</code>, <code>audio</code>, <code>file</code></p>
+          <p style="font-size:12px; margin-top:8px"><strong>Features:</strong> Read receipts, unread count, message pagination, reply-to, group chat cho tranh chấp.</p>
+        </div>
+      </div>
+
+      <div>
+        <h3>Notification System</h3>
+        <div class="card">
+          <p style="font-size:12px"><strong>Kênh delivery:</strong></p>
+          <ul style="list-style:none; margin-top:6px">
+            <li style="font-size:11px; padding:3px 0">📱 <strong>In-app</strong> — Socket.IO real-time</li>
+            <li style="font-size:11px; padding:3px 0">📧 <strong>Email</strong> — Nodemailer (Gmail)</li>
+            <li style="font-size:11px; padding:3px 0">🔔 <strong>Push</strong> — Web Push API + browser subscription</li>
+          </ul>
+          <p style="font-size:12px; margin-top:8px"><strong>Chống trùng lặp:</strong> <code>dedupe_key</code> trên mỗi notification.</p>
+          <p style="font-size:12px; margin-top:4px"><strong>Preferences:</strong> User tắt/bật từng kênh và mute từng loại thông báo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 13. SOCIAL ── -->
+  <section id="social">
+    <h2><span class="sec-num">13</span> Tính năng Mạng xã hội</h2>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">📝 Posts</div>
+        <p style="font-size:12px">Feed bài đăng với visibility PUBLIC/PRIVATE. Tối đa 5000 ký tự. Tác giả có thể khóa bình luận. Soft delete với audit trail.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">💬 Comments</div>
+        <p style="font-size:12px">Bình luận nested (parent_comment_id). Hiển thị dạng cây. Hỗ trợ reaction trên từng comment. Soft delete.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">😊 Reactions</div>
+        <p style="font-size:12px">Emoji reaction trên post và comment. Unique constraint (1 user, 1 target, 1 reaction). Toggle reaction.</p>
+      </div>
+    </div>
+
+    <h3>Hashtag System</h3>
+    <div class="card">
+      <p style="font-size:12px">Hashtag tự động extract từ nội dung post. <code>usage_count</code> tracking. API trending hashtag. Hashtag search cho discovery.</p>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 14. MODERATION & REPUTATION ── -->
+  <section id="moderation" class="page-break">
+    <h2><span class="sec-num">14</span> Kiểm duyệt & Danh tiếng</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>Moderation System</h3>
+        <table>
+          <thead><tr><th>Tính năng</th><th>Mô tả</th></tr></thead>
+          <tbody>
+            <tr><td>Content Reports</td><td style="font-size:11px">Report bài đăng vi phạm</td></tr>
+            <tr><td>User Reports</td><td style="font-size:11px">Report worker có hành vi xấu</td></tr>
+            <tr><td>User Blocks</td><td style="font-size:11px">Chặn người dùng (mutual block)</td></tr>
+            <tr><td>Restrictions</td><td style="font-size:11px">Hạn chế tài khoản với thời hạn</td></tr>
+            <tr><td>Ban</td><td style="font-size:11px">Khóa tài khoản vĩnh viễn</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>Reputation System</h3>
+        <div class="card">
+          <p style="font-size:12px"><strong>Điểm uy tín (0–100)</strong> động, thay đổi theo sự kiện:</p>
+          <ul style="list-style:none;margin-top:8px">
+            <li style="font-size:11px; padding:2px 0">✅ Hoàn thành booking → +điểm</li>
+            <li style="font-size:11px; padding:2px 0">⭐ Nhận review 5 sao → +điểm</li>
+            <li style="font-size:11px; padding:2px 0">❌ Hủy booking → -điểm</li>
+            <li style="font-size:11px; padding:2px 0">⚠️ Bị report → -điểm</li>
+            <li style="font-size:11px; padding:2px 0">🔄 Tự phục hồi theo thời gian</li>
+          </ul>
+          <p style="font-size:12px; margin-top:8px">Admin cấu hình hệ số điểm qua <code>/dashboard/reputation-config</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 15. SECURITY ── -->
+  <section id="security">
+    <h2><span class="sec-num">15</span> Bảo mật</h2>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">🔐 Authentication</div>
+        <ul style="list-style:none;font-size:11px">
+          <li style="padding:2px 0">• JWT Access (15m) + Refresh (7d)</li>
+          <li style="padding:2px 0">• Refresh token hashed với bcrypt trong DB</li>
+          <li style="padding:2px 0">• Password hashed với bcrypt (salt rounds: 10)</li>
+          <li style="padding:2px 0">• Google OAuth2 support</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">🛡️ Request Protection</div>
+        <ul style="list-style:none;font-size:11px">
+          <li style="padding:2px 0">• Helmet.js HTTP headers</li>
+          <li style="padding:2px 0">• CORS whitelist</li>
+          <li style="padding:2px 0">• CSRF token validation</li>
+          <li style="padding:2px 0">• Rate limiting per endpoint</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">✅ Input Validation</div>
+        <ul style="list-style:none;font-size:11px">
+          <li style="padding:2px 0">• Zod schemas tất cả inputs</li>
+          <li style="padding:2px 0">• Validation middleware trước controller</li>
+          <li style="padding:2px 0">• Error response không lộ stack trace</li>
+          <li style="padding:2px 0">• XSS prevention qua Helmet</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── 16. DEPLOY ── -->
+  <section id="deploy">
+    <h2><span class="sec-num">16</span> Triển khai & Môi trường</h2>
+
+    <h3>Environment Variables</h3>
+    <div class="grid-2">
+      <div>
+        <h4>SERVER (.env)</h4>
+        <div class="code-block"><pre>
+PORT=<span class="val">3000</span>
+NODE_ENV=<span class="val">development</span>
+MONGODB_URI=<span class="str">mongodb://localhost:27017</span>
+DB_NAME=<span class="str">pr1as</span>
+JWT_SECRET=<span class="str">***</span>
+JWT_EXPIRE=<span class="val">15m</span>
+JWT_REFRESH_SECRET=<span class="str">***</span>
+JWT_REFRESH_EXPIRE=<span class="val">7d</span>
+CORS_ORIGIN=<span class="str">http://localhost:3001</span>
+EMAIL_ACCOUNT=<span class="str">***</span>
+GOGGLE_APP_PASSWORD=<span class="str">***</span></pre></div>
+      </div>
+      <div>
+        <h4>pr1as-client (.env.local)</h4>
+        <div class="code-block"><pre>
+NEXT_PUBLIC_API_URL=<span class="str">http://localhost:3001/api</span></pre></div>
+
+        <h4 style="margin-top:16px">Dev Commands</h4>
+        <div class="code-block"><pre>
+<span class="cmt"># SERVER</span>
+<span class="kw">cd</span> SERVER && npm run dev
+
+<span class="cmt"># pr1as-client</span>
+<span class="kw">cd</span> pr1as-client && npm run dev</pre></div>
+      </div>
+    </div>
+
+    <h3>Ports</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">:3000 — Backend API</div>
+        <p style="font-size:12px">Express server + Socket.IO. REST API + WebSocket</p>
+      </div>
+      <div class="card">
+        <div class="card-title">:3001 — Frontend</div>
+        <p style="font-size:12px">Next.js dev server (Turbopack)</p>
+      </div>
+      <div class="card">
+        <div class="card-title">:27017 — MongoDB</div>
+        <p style="font-size:12px">Database MongoDB local</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <strong>PR1AS</strong> — Platform Dịch vụ Đồng hành &nbsp;·&nbsp;
+  Tài liệu Thiết kế Hệ thống &nbsp;·&nbsp;
+  Phiên bản 1.0 &nbsp;·&nbsp; Tháng 6 năm 2026 &nbsp;·&nbsp;
+  <strong>Confidential</strong>
+</div>
+
+</body>
+</html>
