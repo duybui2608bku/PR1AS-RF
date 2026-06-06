@@ -7,10 +7,10 @@ import { AppError } from "../utils/AppError";
 // while allowing safe HTML — equivalent to DOMPurify USE_PROFILES: html.
 // Pure CJS package: no jsdom/ESM dependency issues with ts-node-dev.
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "div", "span", "section", "header", "footer", "main", "article", "aside", "nav"]),
   allowedAttributes: {
     ...sanitizeHtml.defaults.allowedAttributes,
-    "*": ["class", "id"],
+    "*": ["class", "id", "style"],
   },
   disallowedTagsMode: "discard",
 };

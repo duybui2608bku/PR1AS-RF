@@ -11,6 +11,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  Megaphone,
   Menu,
   MessageSquare,
   MessagesSquare,
@@ -86,6 +87,11 @@ const adminNavItems = [
     href: "/dashboard/email-campaigns",
     label: "Email Marketing",
     icon: Mail,
+  },
+  {
+    href: "/dashboard/announcements",
+    label: "Thông báo",
+    icon: Megaphone,
   },
   {
     href: "/dashboard/reputation-config",

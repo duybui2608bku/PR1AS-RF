@@ -1,13 +1,17 @@
 "use client"
 
+import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ChevronLeft } from "lucide-react"
 
+import { AnnouncementRenderer } from "@/components/announcement"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { CreatePostForm } from "@/components/post/create-post-form"
 import { PostFeed } from "@/components/post/post-feed"
-import { TrendingHashtags, TrendingHashtagsStrip } from "@/components/post/trending-hashtags"
+import {
+  TrendingHashtags,
+  TrendingHashtagsStrip,
+} from "@/components/post/trending-hashtags"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useAuthStore } from "@/lib/store/auth-store"
 
@@ -21,6 +25,8 @@ export default function PostsPage() {
 
   return (
     <SiteLayout>
+      <AnnouncementRenderer placement="home_worker_popup" />
+      <AnnouncementRenderer placement="home_worker_banner" />
       {/* Thanh slim chỉ hiện khi lọc hashtag (cần nút quay lại + tên tag).
           Feed chính không cần — SiteHeader đã là thanh app chung, tránh 2 header. */}
       {hashtag ? (
@@ -35,7 +41,9 @@ export default function PostsPage() {
           >
             <ChevronLeft className="size-5" />
           </Link>
-          <h1 className="truncate text-base font-semibold tracking-tight">{title}</h1>
+          <h1 className="truncate text-base font-semibold tracking-tight">
+            {title}
+          </h1>
         </div>
       ) : null}
 
