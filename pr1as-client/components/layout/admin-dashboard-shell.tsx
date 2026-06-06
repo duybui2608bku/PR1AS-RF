@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  Mail,
   Menu,
   MessageSquare,
   MessagesSquare,
@@ -80,6 +81,11 @@ const adminNavItems = [
     href: "/dashboard/feedback",
     label: "Phản hồi",
     icon: MessagesSquare,
+  },
+  {
+    href: "/dashboard/email-campaigns",
+    label: "Email Marketing",
+    icon: Mail,
   },
   {
     href: "/dashboard/reputation-config",

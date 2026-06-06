@@ -1,0 +1,185 @@
+import { Types } from "mongoose";
+import { emailCampaignRepository } from "../../repositories/email-campaign/email-campaign.repository";
+import {
+  EMAIL_CAMPAIGN_MESSAGES,
+  EmailCampaignStatus,
+  EmailSendLogStatus,
+} from "../../constants/email-campaign";
+import { AppError } from "../../utils/AppError";
+import { PaginationHelper } from "../../utils";
+import nodemailerUtils from "../../utils/nodemailer";
+import { logger } from "../../utils/logger";
+import type {
+  EmailCampaignQuery,
+  EmailSendLogQuery,
+  CreateCampaignInput,
+  UpdateCampaignInput,
+} from "../../types/email-campaign";
+
+const BATCH_SIZE = 20;
+
+export class EmailCampaignService {
+  async createCampaign(createdBy: string, input: CreateCampaignInput) {
+    return emailCampaignRepository.create({ ...input, createdBy });
+  }
+
+  async getCampaign(id: string) {
+    const campaign = await emailCampaignRepository.findById(id);
+    if (!campaign) throw AppError.notFound(EMAIL_CAMPAIGN_MESSAGES.NOT_FOUND);
+    return campaign;
+  }
+
+  async listCampaigns(query: EmailCampaignQuery) {
+    const { campaigns, total } = await emailCampaignRepository.list(query);
+    return PaginationHelper.formatResponse(
+      campaigns,
+      query.page,
+      query.limit,
+      total
+    );
+  }
+
+  async updateCampaign(id: string, input: UpdateCampaignInput) {
+    const campaign = await emailCampaignRepository.findById(id);
+    if (!campaign) throw AppError.notFound(EMAIL_CAMPAIGN_MESSAGES.NOT_FOUND);
+
+    if (
+      campaign.status === EmailCampaignStatus.SENDING ||
+      campaign.status === EmailCampaignStatus.SENT
+    ) {
+      throw AppError.badRequest(EMAIL_CAMPAIGN_MESSAGES.CANNOT_EDIT);
+    }
+
+    return emailCampaignRepository.update(id, input);
+  }
+
+  async deleteCampaign(id: string) {
+    const campaign = await emailCampaignRepository.findById(id);
+    if (!campaign) throw AppError.notFound(EMAIL_CAMPAIGN_MESSAGES.NOT_FOUND);
+
+    if (campaign.status === EmailCampaignStatus.SENDING) {
+      throw AppError.badRequest(EMAIL_CAMPAIGN_MESSAGES.CANNOT_DELETE);
+    }
+
+    return emailCampaignRepository.delete(id);
+  }
+
+  async sendCampaign(id: string) {
+    const campaign = await emailCampaignRepository.findById(id);
+    if (!campaign) throw AppError.notFound(EMAIL_CAMPAIGN_MESSAGES.NOT_FOUND);
+
+    if (
+      campaign.status !== EmailCampaignStatus.DRAFT &&
+      campaign.status !== EmailCampaignStatus.SCHEDULED
+    ) {
+      throw AppError.badRequest(EMAIL_CAMPAIGN_MESSAGES.CANNOT_SEND);
+    }
+
+    await emailCampaignRepository.updateStatus(
+      id,
+      EmailCampaignStatus.SENDING
+    );
+
+    const recipients = await emailCampaignRepository.getRecipientEmails(
+      campaign.audience
+    );
+
+    await emailCampaignRepository.updateStatus(id, EmailCampaignStatus.SENDING, {
+      total_recipients: recipients.length,
+    });
+
+    await emailCampaignRepository.createSendLogs(
+      recipients.map((r) => ({
+        campaign_id: campaign._id as Types.ObjectId,
+        recipient_id: r._id,
+        recipient_email: r.email,
+      }))
+    );
+
+    const logs = await emailCampaignRepository.getPendingLogsForCampaign(id);
+
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < logs.length; i += BATCH_SIZE) {
+      const batch = logs.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (log) => {
+          try {
+            await nodemailerUtils({
+              email: log.recipient_email,
+              subject: campaign.subject,
+              html: campaign.html_content,
+            });
+            await emailCampaignRepository.updateSendLog(
+              log._id as Types.ObjectId,
+              EmailSendLogStatus.SENT,
+              { sent_at: new Date() }
+            );
+            sentCount++;
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            await emailCampaignRepository.updateSendLog(
+              log._id as Types.ObjectId,
+              EmailSendLogStatus.FAILED,
+              { error_message: message }
+            );
+            failedCount++;
+            logger.warn(`Email send failed to ${log.recipient_email}: ${message}`);
+          }
+        })
+      );
+      await emailCampaignRepository.incrementCounts(id, sentCount, failedCount);
+      sentCount = 0;
+      failedCount = 0;
+    }
+
+    const updated = await emailCampaignRepository.updateStatus(
+      id,
+      EmailCampaignStatus.SENT,
+      { sent_at: new Date() }
+    );
+
+    return updated;
+  }
+
+  async cancelCampaign(id: string) {
+    const campaign = await emailCampaignRepository.findById(id);
+    if (!campaign) throw AppError.notFound(EMAIL_CAMPAIGN_MESSAGES.NOT_FOUND);
+
+    if (campaign.status !== EmailCampaignStatus.SCHEDULED) {
+      throw AppError.badRequest("Only scheduled campaigns can be cancelled");
+    }
+
+    return emailCampaignRepository.updateStatus(
+      id,
+      EmailCampaignStatus.CANCELLED
+    );
+  }
+
+  async listSendLogs(query: EmailSendLogQuery) {
+    const { logs, total } = await emailCampaignRepository.listSendLogs(query);
+    return PaginationHelper.formatResponse(logs, query.page, query.limit, total);
+  }
+
+  async processScheduledCampaigns(): Promise<void> {
+    const due = await emailCampaignRepository.findScheduledDue();
+    for (const campaign of due) {
+      try {
+        await this.sendCampaign((campaign._id as Types.ObjectId).toString());
+        logger.info(`Scheduled campaign sent: ${campaign.name}`);
+      } catch (error) {
+        logger.error(
+          `Scheduled campaign failed for ${campaign.name}: ${error}`
+        );
+        await emailCampaignRepository.updateStatus(
+          (campaign._id as Types.ObjectId).toString(),
+          EmailCampaignStatus.FAILED
+        );
+      }
+    }
+  }
+}
+
+export const emailCampaignService = new EmailCampaignService();

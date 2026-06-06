@@ -117,4 +117,12 @@ export const queryKeys = {
   siteSettings: {
     all: ["site-settings"] as const,
   },
+  emailCampaigns: {
+    all: ["email-campaigns"] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["email-campaigns", "list", params] as const,
+    detail: (id: string) => ["email-campaigns", "detail", id] as const,
+    logs: (id: string, params?: Record<string, unknown>) =>
+      ["email-campaigns", "logs", id, params] as const,
+  },
 } as const

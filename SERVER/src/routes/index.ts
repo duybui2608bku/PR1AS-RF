@@ -21,6 +21,7 @@ import reputationRoutes from "./reputation/reputation.routes";
 import reputationConfigRoutes from "./reputation/reputation-config.routes";
 import feedbackRoutes from "./feedback";
 import siteSettingsRoutes from "./site-settings/site-settings.routes";
+import emailCampaignRoutes from "./email-campaign";
 import { csrfToken } from "../middleware/csrf";
 import { CSRF_CONSTANTS } from "../constants/csrf";
 import { R } from "../utils/response";
@@ -57,5 +58,6 @@ router.use("/reputation", reputationRoutes);
 router.use("/admin/reputation-config", reputationConfigRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/site-settings", siteSettingsRoutes);
+router.use("/admin/email-campaigns", emailCampaignRoutes);
 
 export default router;
