@@ -1,13 +1,14 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
 
-import { SiteLayout } from "@/components/layout/site-layout"
+import { AnnouncementRenderer } from "@/components/announcement"
 import { HomeSearchExperience } from "@/components/home/home-search-experience"
+import { SiteLayout } from "@/components/layout/site-layout"
 import {
   parseHomeSearchParams,
   type HomeSearchParams,
 } from "@/lib/home/home-search-params"
-import { createPageMetadata } from "@/lib/seo"
 import { getQueryClient } from "@/lib/query-client"
+import { createPageMetadata } from "@/lib/seo"
 import { serviceService } from "@/services/service.service"
 
 export const metadata = createPageMetadata({
@@ -36,6 +37,8 @@ export default async function ServicesPage({
 
   return (
     <SiteLayout>
+      <AnnouncementRenderer placement="home_client_popup" />
+      <AnnouncementRenderer placement="home_client_banner" />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <HomeSearchExperience initialState={initialState} />
       </HydrationBoundary>

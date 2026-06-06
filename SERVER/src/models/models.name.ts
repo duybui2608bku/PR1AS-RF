@@ -35,4 +35,5 @@ export const modelsName = {
   SITE_SETTINGS: "site_settings",
   EMAIL_CAMPAIGN: "email_campaigns",
   EMAIL_SEND_LOG: "email_send_logs",
+  ANNOUNCEMENT: "announcements",
 };

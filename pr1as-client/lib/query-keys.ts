@@ -125,4 +125,15 @@ export const queryKeys = {
     logs: (id: string, params?: Record<string, unknown>) =>
       ["email-campaigns", "logs", id, params] as const,
   },
+  announcements: {
+    all: ["announcements"] as const,
+    byPlacement: (placement: string) =>
+      ["announcements", "placement", placement] as const,
+    admin: {
+      all: ["announcements", "admin"] as const,
+      list: (params?: Record<string, unknown>) =>
+        ["announcements", "admin", "list", params] as const,
+      detail: (id: string) => ["announcements", "admin", "detail", id] as const,
+    },
+  },
 } as const
