@@ -1,9 +1,21 @@
 // PR1AS service worker — tối giản & an toàn.
 // Mục tiêu: đủ điều kiện cài PWA + tăng tốc asset tĩnh, KHÔNG cache API/socket.
 // Tăng version khi muốn buộc làm mới cache cũ.
-const CACHE = "pr1as-v5"
+const CACHE = "pr1as-v6"
 
-self.addEventListener("install", () => {
+// Trang fallback khi điều hướng lúc mất mạng (kể cả reload cứng khi offline).
+const OFFLINE_URL = "/offline"
+
+self.addEventListener("install", (event) => {
+  // Precache trang offline để luôn có sẵn dù chưa từng truy cập khi đang online.
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.add(OFFLINE_URL))
+      .catch(() => {
+        // Precache thất bại không được chặn cài SW.
+      }),
+  )
   // Kích hoạt SW mới ngay, không chờ tab cũ đóng
   self.skipWaiting()
 })
@@ -41,8 +53,9 @@ self.addEventListener("fetch", (event) => {
           cache.put(request, fresh.clone())
           return fresh
         } catch {
+          // Ưu tiên bản cache của chính trang; nếu không có thì rơi về trang offline.
           const cached = await caches.match(request)
-          return cached ?? Response.error()
+          return cached ?? (await caches.match(OFFLINE_URL)) ?? Response.error()
         }
       })(),
     )

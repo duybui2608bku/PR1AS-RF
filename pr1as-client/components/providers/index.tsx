@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
+import { NetworkStatusWatcher } from "@/components/providers/network-status-watcher"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ServiceWorkerRegister } from "@/components/providers/service-worker-register"
 import { ThemeProvider } from "@/components/providers/theme-provider"
@@ -109,6 +110,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthBroadcastListener />
         {/* Global mobile bottom nav — hiển thị trên mọi trang, kể cả /chat */}
         <MobileBottomNav />
+        {/* Theo dõi mạng — mất kết nối thì chuyển sang /offline, có lại thì quay về */}
+        <NetworkStatusWatcher />
         {/* Đăng ký service worker (production) để bật PWA */}
         <ServiceWorkerRegister />
       </QueryProvider>

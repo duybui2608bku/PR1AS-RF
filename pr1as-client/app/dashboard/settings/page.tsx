@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   AlertTriangle,
   AtSign,
@@ -17,7 +17,10 @@ import {
   Send,
   Settings,
   Share2,
+  Upload,
+  X,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,13 +44,15 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
+import { TipTapEditor } from "@/components/ui/tiptap-editor"
 import {
   useSiteSettings,
   useUpdateSiteSettings,
   useResetSiteSettings,
 } from "@/lib/hooks/use-site-settings"
 import type { SiteSettings } from "@/services/site-settings.service"
+import { uploadImage } from "@/lib/utils/upload-image"
+import { validateImageFile } from "@/lib/utils/validate-upload"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -170,6 +175,100 @@ function ImagePreview({ url, alt }: { url: string; alt: string }) {
       >
         Xem ảnh <ExternalLink className="size-3" />
       </a>
+    </div>
+  )
+}
+
+function ImageUploadField({
+  value,
+  onChange,
+  alt,
+}: {
+  value: string
+  onChange: (url: string) => void
+  alt: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [broken, setBroken] = useState(false)
+
+  useEffect(() => {
+    setBroken(false)
+  }, [value])
+
+  async function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = "" // allow re-selecting the same file
+    if (!file) return
+
+    const error = validateImageFile(file)
+    if (error) {
+      toast.error(error)
+      return
+    }
+
+    setUploading(true)
+    try {
+      const url = await uploadImage(file)
+      onChange(url)
+      toast.success("Đã tải ảnh lên.")
+    } catch {
+      toast.error("Không thể tải ảnh lên. Vui lòng thử lại.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
+        {value && !broken ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={value}
+            alt={alt}
+            className="size-full object-contain p-1"
+            onError={() => setBroken(true)}
+          />
+        ) : (
+          <ImageIcon className="size-5 text-muted-foreground" />
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleSelect}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Upload className="size-4" />
+          )}
+          {value ? "Thay ảnh" : "Tải ảnh lên"}
+        </Button>
+        {value ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={uploading}
+            onClick={() => onChange("")}
+          >
+            <X className="size-4" />
+            Xoá
+          </Button>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -393,19 +492,19 @@ export default function AdminSettingsPage() {
                   label="Mô tả trang"
                   hint="Hiển thị trong kết quả tìm kiếm (meta description), khuyến nghị 120–160 ký tự."
                 >
-                  <Textarea
+                  <TipTapEditor
                     value={identityDraft.description}
-                    maxLength={300}
-                    rows={3}
-                    onChange={(e) =>
+                    placeholder="Nhập mô tả trang..."
+                    minHeight="120px"
+                    onChange={(html) =>
                       setIdentityDraft((d) => ({
                         ...d,
-                        description: e.target.value,
+                        description: html,
                       }))
                     }
                   />
                   <p className="text-right text-xs text-muted-foreground">
-                    {identityDraft.description.length} / 300
+                    {identityDraft.description.length} ký tự
                   </p>
                 </FieldRow>
 
@@ -413,45 +512,29 @@ export default function AdminSettingsPage() {
 
                 <div className="grid gap-5 sm:grid-cols-2">
                   <FieldRow
-                    label="URL Logo"
+                    label="Logo"
                     hint="Ảnh logo chính (PNG/SVG, nền trong suốt). Dùng cho header và email."
                   >
-                    <div className="relative">
-                      <ImageIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        placeholder="https://example.com/logo.svg"
-                        value={identityDraft.logoUrl}
-                        onChange={(e) =>
-                          setIdentityDraft((d) => ({
-                            ...d,
-                            logoUrl: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <ImagePreview url={identityDraft.logoUrl} alt="Logo" />
+                    <ImageUploadField
+                      value={identityDraft.logoUrl}
+                      alt="Logo"
+                      onChange={(url) =>
+                        setIdentityDraft((d) => ({ ...d, logoUrl: url }))
+                      }
+                    />
                   </FieldRow>
 
                   <FieldRow
-                    label="URL Favicon"
+                    label="Favicon"
                     hint="Ảnh favicon hiển thị trên tab trình duyệt (.ico hoặc .png 32×32)."
                   >
-                    <div className="relative">
-                      <ImageIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        placeholder="https://example.com/favicon.png"
-                        value={identityDraft.faviconUrl}
-                        onChange={(e) =>
-                          setIdentityDraft((d) => ({
-                            ...d,
-                            faviconUrl: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <ImagePreview url={identityDraft.faviconUrl} alt="Favicon" />
+                    <ImageUploadField
+                      value={identityDraft.faviconUrl}
+                      alt="Favicon"
+                      onChange={(url) =>
+                        setIdentityDraft((d) => ({ ...d, faviconUrl: url }))
+                      }
+                    />
                   </FieldRow>
                 </div>
               </CardContent>
@@ -551,14 +634,14 @@ export default function AdminSettingsPage() {
                   label="Từ khóa (Keywords)"
                   hint="Phân cách bằng dấu phẩy. Dùng cho thẻ meta keywords."
                 >
-                  <Textarea
-                    placeholder="PR1AS, booking dịch vụ, freelancer Việt Nam"
+                  <TipTapEditor
                     value={seoDraft.keywords}
-                    rows={3}
-                    onChange={(e) =>
+                    placeholder="PR1AS, booking dịch vụ, freelancer Việt Nam"
+                    minHeight="120px"
+                    onChange={(html) =>
                       setSeoDraft((d) => ({
                         ...d,
-                        keywords: e.target.value,
+                        keywords: html,
                       }))
                     }
                   />
