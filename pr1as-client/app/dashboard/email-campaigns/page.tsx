@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  FileText,
   Loader2,
   Mail,
   MailCheck,
@@ -21,6 +22,7 @@ import {
   X,
   XCircle,
 } from "lucide-react"
+import type { DateRange } from "react-day-picker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,9 +43,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { Table } from "@/components/ui/table"
-import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TipTapEditor } from "@/components/ui/tiptap-editor"
+import { DatePicker } from "@/components/ui/date-picker"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import {
   useEmailCampaigns,
   useEmailCampaignLogs,
@@ -109,6 +113,34 @@ function formatDateTime(value?: string | null): string {
   }).format(new Date(value))
 }
 
+function startOfDayISO(d: Date): string {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x.toISOString()
+}
+
+function endOfDayISO(d: Date): string {
+  const x = new Date(d)
+  x.setHours(23, 59, 59, 999)
+  return x.toISOString()
+}
+
+// scheduled_at is kept as a local "YYYY-MM-DDTHH:mm" string inside the form.
+function parseScheduled(value: string): { date: Date | undefined; time: string } {
+  if (!value) return { date: undefined, time: "09:00" }
+  const [datePart, timePart] = value.split("T")
+  const [y, m, d] = datePart.split("-").map(Number)
+  return { date: new Date(y, m - 1, d), time: (timePart ?? "").slice(0, 5) || "09:00" }
+}
+
+function buildScheduled(date: Date | undefined, time: string): string {
+  if (!date) return ""
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}T${time || "09:00"}`
+}
+
 function getCreatorName(value: unknown): string {
   if (!value || typeof value !== "object") return "-"
   const u = value as { full_name?: string | null; email?: string }
@@ -153,6 +185,8 @@ function CampaignForm({
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
+
+  const scheduled = parseScheduled(form.scheduled_at)
 
   function handleSubmit() {
     onSubmit({
@@ -206,28 +240,55 @@ function CampaignForm({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="ec-scheduled">Lên lịch gửi (tùy chọn)</Label>
-        <Input
-          id="ec-scheduled"
-          type="datetime-local"
-          value={form.scheduled_at}
-          onChange={(e) => set("scheduled_at", e.target.value)}
-          disabled={isPending}
-        />
+        <Label>Lên lịch gửi (tùy chọn)</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-44 flex-1">
+            <DatePicker
+              value={scheduled.date}
+              onChange={(date) => set("scheduled_at", buildScheduled(date, scheduled.time))}
+              placeholder="Chọn ngày gửi"
+              disabled={isPending}
+              fromDate={new Date(new Date().setHours(0, 0, 0, 0))}
+            />
+          </div>
+          <Input
+            type="time"
+            value={scheduled.time}
+            onChange={(e) =>
+              set("scheduled_at", buildScheduled(scheduled.date, e.target.value))
+            }
+            disabled={isPending || !scheduled.date}
+            className="w-32"
+          />
+          {scheduled.date ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-9 shrink-0"
+              onClick={() => set("scheduled_at", "")}
+              disabled={isPending}
+              title="Xóa lịch"
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
         <p className="text-xs text-muted-foreground">
           Để trống nếu muốn lưu bản nháp và gửi thủ công.
         </p>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="ec-html">Nội dung email (HTML)</Label>
-        <Textarea
-          id="ec-html"
+        <Label>Nội dung email</Label>
+        <TipTapEditor
           value={form.html_content}
-          onChange={(e) => set("html_content", e.target.value)}
-          placeholder="<h1>Xin chào!</h1><p>Nội dung email...</p>"
-          className="min-h-48 font-mono text-xs"
-          disabled={isPending}
+          onChange={(html) => set("html_content", html)}
+          placeholder="Soạn nội dung email... Dùng thanh công cụ để định dạng hoặc chuyển sang chế độ HTML."
+          minHeight="240px"
         />
+        <p className="text-xs text-muted-foreground">
+          Định dạng trực quan hoặc bấm nút HTML để dán mã HTML tùy chỉnh.
+        </p>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel} disabled={isPending}>
@@ -250,13 +311,35 @@ function CampaignForm({
   )
 }
 
-function SendLogsDrawer({
-  campaign,
-  onClose,
-}: {
-  campaign: EmailCampaign
-  onClose: () => void
-}) {
+function EmailContentPreview({ campaign }: { campaign: EmailCampaign }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <p className="text-xs text-muted-foreground">Tiêu đề email</p>
+        <p className="font-medium">{campaign.subject || "-"}</p>
+      </div>
+      <div className="overflow-hidden rounded-lg border">
+        <div className="border-b bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+          Xem trước nội dung
+        </div>
+        {campaign.html_content ? (
+          <iframe
+            title="Xem trước nội dung email"
+            srcDoc={campaign.html_content}
+            sandbox=""
+            className="h-[360px] w-full bg-white"
+          />
+        ) : (
+          <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+            Chiến dịch chưa có nội dung.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SendLogsDrawer({ campaign }: { campaign: EmailCampaign }) {
   const [logStatus, setLogStatus] = useState<EmailSendLogStatus | "">("")
   const [page, setPage] = useState(1)
   const logsQuery = useEmailCampaignLogs(campaign.id ?? campaign._id ?? "", {
@@ -269,16 +352,30 @@ function SendLogsDrawer({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold">Log gửi email</h2>
-          <p className="text-sm text-muted-foreground">{campaign.name}</p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="size-4" />
-        </Button>
+      <div>
+        <h2 className="font-semibold">{campaign.name}</h2>
+        <p className="text-sm text-muted-foreground">
+          Nội dung và lịch sử gửi của chiến dịch.
+        </p>
       </div>
 
+      <Tabs defaultValue="content" className="gap-4">
+        <TabsList className="w-full">
+          <TabsTrigger value="content" className="gap-1.5">
+            <FileText className="size-3.5" />
+            Nội dung email
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-1.5">
+            <Send className="size-3.5" />
+            Log gửi
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="content">
+          <EmailContentPreview campaign={campaign} />
+        </TabsContent>
+
+        <TabsContent value="logs" className="space-y-4">
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-lg border bg-muted/30 p-3">
           <p className="text-2xl font-bold">{campaign.total_recipients}</p>
@@ -399,6 +496,8 @@ function SendLogsDrawer({
           </div>
         </div>
       ) : null}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
@@ -406,6 +505,7 @@ function SendLogsDrawer({
 export default function EmailCampaignsPage() {
   const [filterStatus, setFilterStatus] = useState<EmailCampaignStatus | "">("")
   const [filterAudience, setFilterAudience] = useState<EmailCampaignAudience | "">("")
+  const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>()
   const [page, setPage] = useState(1)
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -415,11 +515,14 @@ export default function EmailCampaignsPage() {
   const [cancelTarget, setCancelTarget] = useState<EmailCampaign | null>(null)
   const [logTarget, setLogTarget] = useState<EmailCampaign | null>(null)
 
+  const dateTo = filterDateRange?.to ?? filterDateRange?.from
   const campaignsQuery = useEmailCampaigns({
     page,
     limit: 20,
     status: filterStatus || undefined,
     audience: filterAudience || undefined,
+    from: filterDateRange?.from ? startOfDayISO(filterDateRange.from) : undefined,
+    to: dateTo ? endOfDayISO(dateTo) : undefined,
   })
   const campaigns = campaignsQuery.data?.data ?? []
   const pagination = campaignsQuery.data?.pagination
@@ -430,11 +533,13 @@ export default function EmailCampaignsPage() {
   const sendMutation = useSendEmailCampaign()
   const cancelMutation = useCancelEmailCampaign()
 
-  const hasFilters = Boolean(filterStatus) || Boolean(filterAudience)
+  const hasFilters =
+    Boolean(filterStatus) || Boolean(filterAudience) || Boolean(filterDateRange?.from)
 
   const clearFilters = () => {
     setFilterStatus("")
     setFilterAudience("")
+    setFilterDateRange(undefined)
     setPage(1)
   }
 
@@ -504,7 +609,7 @@ export default function EmailCampaignsPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">Trạng thái</Label>
               <Select
@@ -548,6 +653,18 @@ export default function EmailCampaignsPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Ngày tạo</Label>
+              <DateRangePicker
+                value={filterDateRange}
+                onChange={(range) => {
+                  setFilterDateRange(range)
+                  setPage(1)
+                }}
+                placeholder="Chọn khoảng ngày"
+                buttonClassName="h-9"
+              />
             </div>
           </div>
         </CardContent>
@@ -733,7 +850,7 @@ export default function EmailCampaignsPage() {
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tạo chiến dịch email mới</DialogTitle>
             <DialogDescription>
@@ -754,7 +871,7 @@ export default function EmailCampaignsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={Boolean(editTarget)} onOpenChange={(open) => !open && setEditTarget(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa chiến dịch</DialogTitle>
             <DialogDescription>{editTarget?.name}</DialogDescription>
@@ -902,11 +1019,9 @@ export default function EmailCampaignsPage() {
 
       {/* Send Logs Dialog */}
       <Dialog open={Boolean(logTarget)} onOpenChange={(open) => !open && setLogTarget(null)}>
-        <DialogContent className="max-w-3xl">
-          <Separator className="sr-only" />
-          {logTarget ? (
-            <SendLogsDrawer campaign={logTarget} onClose={() => setLogTarget(null)} />
-          ) : null}
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogTitle className="sr-only">Chi tiết chiến dịch email</DialogTitle>
+          {logTarget ? <SendLogsDrawer campaign={logTarget} /> : null}
         </DialogContent>
       </Dialog>
     </div>

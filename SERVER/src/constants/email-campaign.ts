@@ -24,6 +24,7 @@ export const EMAIL_CAMPAIGN_MESSAGES = {
   UPDATED: "Email campaign updated successfully",
   DELETED: "Email campaign deleted successfully",
   SENT: "Email campaign sent successfully",
+  SEND_STARTED: "Email campaign delivery started",
   NOT_FOUND: "Email campaign not found",
   CANNOT_EDIT: "Cannot edit a campaign that is already sending or sent",
   CANNOT_SEND: "Only draft or scheduled campaigns can be sent",

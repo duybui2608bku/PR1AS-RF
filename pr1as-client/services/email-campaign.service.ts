@@ -84,6 +84,8 @@ export const emailCampaignService = {
     limit?: number
     status?: EmailCampaignStatus
     audience?: EmailCampaignAudience
+    from?: string
+    to?: string
   }) => {
     const response = await api.get<ApiResponse<PaginatedResult<EmailCampaign>>>(
       "/admin/email-campaigns",

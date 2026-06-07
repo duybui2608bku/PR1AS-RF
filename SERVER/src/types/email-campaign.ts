@@ -41,6 +41,8 @@ export interface EmailCampaignQuery {
   skip: number;
   status?: EmailCampaignStatus;
   audience?: EmailCampaignAudience;
+  from?: Date;
+  to?: Date;
 }
 
 export interface EmailSendLogQuery {

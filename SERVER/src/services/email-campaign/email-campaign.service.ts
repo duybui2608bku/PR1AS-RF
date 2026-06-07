@@ -14,6 +14,7 @@ import type {
   EmailSendLogQuery,
   CreateCampaignInput,
   UpdateCampaignInput,
+  IEmailCampaignDocument,
 } from "../../types/email-campaign";
 
 const BATCH_SIZE = 20;
@@ -75,11 +76,32 @@ export class EmailCampaignService {
       throw AppError.badRequest(EMAIL_CAMPAIGN_MESSAGES.CANNOT_SEND);
     }
 
-    await emailCampaignRepository.updateStatus(
+    // Flip to "sending" synchronously so the admin gets immediate feedback,
+    // then deliver in the background. The HTTP request returns right away.
+    const updated = await emailCampaignRepository.updateStatus(
       id,
       EmailCampaignStatus.SENDING
     );
 
+    void this.deliverCampaign(id, campaign).catch(async (error) => {
+      logger.error(`Email campaign delivery failed for ${id}: ${error}`);
+      await emailCampaignRepository.updateStatus(
+        id,
+        EmailCampaignStatus.FAILED
+      );
+    });
+
+    return updated;
+  }
+
+  /**
+   * Resolves recipients, writes send logs and dispatches emails in batches.
+   * Runs detached from the request lifecycle (see sendCampaign).
+   */
+  private async deliverCampaign(
+    id: string,
+    campaign: IEmailCampaignDocument
+  ): Promise<void> {
     const recipients = await emailCampaignRepository.getRecipientEmails(
       campaign.audience
     );
@@ -135,13 +157,9 @@ export class EmailCampaignService {
       failedCount = 0;
     }
 
-    const updated = await emailCampaignRepository.updateStatus(
-      id,
-      EmailCampaignStatus.SENT,
-      { sent_at: new Date() }
-    );
-
-    return updated;
+    await emailCampaignRepository.updateStatus(id, EmailCampaignStatus.SENT, {
+      sent_at: new Date(),
+    });
   }
 
   async cancelCampaign(id: string) {
@@ -168,7 +186,7 @@ export class EmailCampaignService {
     for (const campaign of due) {
       try {
         await this.sendCampaign((campaign._id as Types.ObjectId).toString());
-        logger.info(`Scheduled campaign sent: ${campaign.name}`);
+        logger.info(`Scheduled campaign delivery started: ${campaign.name}`);
       } catch (error) {
         logger.error(
           `Scheduled campaign failed for ${campaign.name}: ${error}`

@@ -28,6 +28,8 @@ const listCampaignsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.nativeEnum(EmailCampaignStatus).optional(),
   audience: z.nativeEnum(EmailCampaignAudience).optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
 
 const listSendLogsSchema = z.object({
@@ -58,6 +60,8 @@ export class EmailCampaignController {
       ...pagination,
       status: query.status,
       audience: query.audience,
+      from: query.from,
+      to: query.to,
     });
     R.success(res, result, EMAIL_CAMPAIGN_MESSAGES.CAMPAIGNS_FETCHED, req);
   }
@@ -75,7 +79,8 @@ export class EmailCampaignController {
 
   async sendCampaign(req: Request, res: Response): Promise<void> {
     const campaign = await emailCampaignService.sendCampaign(req.params.id);
-    R.success(res, campaign, EMAIL_CAMPAIGN_MESSAGES.SENT, req);
+    res.status(202);
+    R.success(res, campaign, EMAIL_CAMPAIGN_MESSAGES.SEND_STARTED, req);
   }
 
   async cancelCampaign(req: Request, res: Response): Promise<void> {

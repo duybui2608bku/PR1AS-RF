@@ -19,6 +19,8 @@ export function useEmailCampaigns(params?: {
   limit?: number
   status?: EmailCampaignStatus
   audience?: EmailCampaignAudience
+  from?: string
+  to?: string
 }) {
   return useQuery({
     queryKey: queryKeys.emailCampaigns.list(params),
@@ -93,7 +95,9 @@ export function useSendEmailCampaign() {
   return useMutation({
     mutationFn: (id: string) => emailCampaignService.send(id),
     onSuccess: () => {
-      toast.success("Đã gửi chiến dịch email thành công!")
+      toast.success(
+        "Đã bắt đầu gửi chiến dịch email. Hệ thống đang gửi ở nền, bạn có thể theo dõi tiến độ trong mục Log."
+      )
       queryClient.invalidateQueries({ queryKey: queryKeys.emailCampaigns.all })
     },
     onError: (error) =>

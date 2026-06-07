@@ -82,6 +82,12 @@ export class EmailCampaignRepository {
     const filter: Record<string, unknown> = {};
     if (query.status) filter.status = query.status;
     if (query.audience) filter.audience = query.audience;
+    if (query.from || query.to) {
+      const createdAt: Record<string, Date> = {};
+      if (query.from) createdAt.$gte = query.from;
+      if (query.to) createdAt.$lte = query.to;
+      filter.created_at = createdAt;
+    }
 
     const [campaigns, total] = await Promise.all([
       EmailCampaign.find(filter)
