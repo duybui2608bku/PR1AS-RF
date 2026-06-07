@@ -42,66 +42,86 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
-const adminNavItems = [
+const adminNavGroups = [
   {
-    href: "/dashboard",
-    label: "Tổng quan",
-    icon: LayoutDashboard,
+    title: "Tổng quan",
+    items: [
+      {
+        href: "/dashboard",
+        label: "Tổng quan",
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    href: "/dashboard/users",
-    label: "Người dùng",
-    icon: Users,
+    title: "Quản lý dữ liệu",
+    items: [
+      {
+        href: "/dashboard/users",
+        label: "Người dùng",
+        icon: Users,
+      },
+      {
+        href: "/dashboard/bookings",
+        label: "Bookings",
+        icon: CalendarCheck,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Giao dịch",
+        icon: CreditCard,
+      },
+      {
+        href: "/dashboard/disputes",
+        label: "Tranh chấp",
+        icon: MessageSquare,
+      },
+    ],
   },
   {
-    href: "/dashboard/bookings",
-    label: "Bookings",
-    icon: CalendarCheck,
+    title: "Marketing & Phản hồi",
+    items: [
+      {
+        href: "/dashboard/email-campaigns",
+        label: "Email Marketing",
+        icon: Mail,
+      },
+      {
+        href: "/dashboard/announcements",
+        label: "Thông báo",
+        icon: Megaphone,
+      },
+      {
+        href: "/dashboard/reports",
+        label: "Báo cáo",
+        icon: ShieldAlert,
+      },
+      {
+        href: "/dashboard/feedback",
+        label: "Phản hồi",
+        icon: MessagesSquare,
+      },
+    ],
   },
   {
-    href: "/dashboard/transactions",
-    label: "Giao dịch",
-    icon: CreditCard,
-  },
-  {
-    href: "/dashboard/pricing",
-    label: "Pricing",
-    icon: Gem,
-  },
-  {
-    href: "/dashboard/disputes",
-    label: "Tranh chấp",
-    icon: MessageSquare,
-  },
-  {
-    href: "/dashboard/reports",
-    label: "Báo cáo",
-    icon: ShieldAlert,
-  },
-  {
-    href: "/dashboard/feedback",
-    label: "Phản hồi",
-    icon: MessagesSquare,
-  },
-  {
-    href: "/dashboard/email-campaigns",
-    label: "Email Marketing",
-    icon: Mail,
-  },
-  {
-    href: "/dashboard/announcements",
-    label: "Thông báo",
-    icon: Megaphone,
-  },
-  {
-    href: "/dashboard/reputation-config",
-    label: "Cấu hình điểm",
-    icon: ShieldCheck,
-  },
-  {
-    href: "/dashboard/settings",
-    label: "Cài đặt",
-    icon: Settings,
+    title: "Cấu hình & Thiết lập",
+    items: [
+      {
+        href: "/dashboard/reputation-config",
+        label: "Cấu hình điểm",
+        icon: ShieldCheck,
+      },
+      {
+        href: "/dashboard/pricing",
+        label: "Pricing",
+        icon: Gem,
+      },
+      {
+        href: "/dashboard/settings",
+        label: "Cài đặt",
+        icon: Settings,
+      },
+    ],
   },
 ]
 
@@ -283,67 +303,80 @@ function AdminSidebar({
 
         <Separator className="bg-sidebar-border" />
 
-        <SidebarContent>
-          <SidebarGroup>
-            {adminNavItems.map((item) => {
-              const Icon = item.icon
-              const active = isActiveRoute(pathname, item.href)
+        <SidebarContent className="space-y-4">
+          {adminNavGroups.map((group, groupIdx) => (
+            <SidebarGroup key={group.title} className={cn(groupIdx > 0 && "mt-2")}>
+              {!collapsed && (
+                <SidebarGroupLabel className="px-3 py-1 text-[10px] font-bold tracking-wider text-muted-foreground/50 uppercase select-none">
+                  {group.title}
+                </SidebarGroupLabel>
+              )}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const active = isActiveRoute(pathname, item.href)
 
-              return (
-                <Button
-                  key={item.href}
-                  asChild
-                  variant="ghost"
-                  className={cn(
-                    "h-auto w-full justify-start rounded-lg px-3 py-2.5 text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    collapsed && "md:size-10 md:justify-center md:px-0 md:py-0",
-                    active &&
-                      "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs"
-                  )}
-                >
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    title={collapsed ? item.label : undefined}
-                    onClick={onCloseMobile}
-                  >
-                    <Icon className="size-4 shrink-0" />
-                    <span
+                  return (
+                    <Button
+                      key={item.href}
+                      asChild
+                      variant="ghost"
                       className={cn(
-                        "min-w-0 flex-1 truncate text-sm font-medium",
-                        collapsed && "md:hidden"
+                        "h-9 w-full justify-start rounded-lg px-3 py-2 text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 relative",
+                        collapsed && "md:size-9 md:justify-center md:px-0 md:py-0",
+                        active && (
+                          collapsed
+                            ? "bg-primary/[0.06] text-primary font-semibold shadow-xs"
+                            : "bg-primary/[0.04] text-primary border-l-2 border-primary rounded-l-none pl-2.5 font-semibold shadow-2xs"
+                        )
                       )}
                     >
-                      {item.label}
-                    </span>
-                  </Link>
-                </Button>
-              )
-            })}
-          </SidebarGroup>
+                      <Link
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        title={collapsed ? item.label : undefined}
+                        onClick={onCloseMobile}
+                        className="flex items-center w-full"
+                      >
+                        <Icon className={cn("size-4 shrink-0 transition-colors", active ? "text-primary" : "text-muted-foreground")} />
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1 truncate text-sm ml-2.5",
+                            collapsed && "md:hidden"
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    </Button>
+                  )
+                })}
+              </div>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
 
         <Separator className="bg-sidebar-border" />
 
-        <SidebarFooter className="flex flex-col gap-3">
+        <SidebarFooter className="flex flex-col gap-2.5 p-3">
           <div
             className={cn(
-              "flex items-center gap-3 rounded-lg border border-sidebar-border bg-background/60 p-3",
+              "flex items-center gap-3 rounded-xl border border-sidebar-border/80 bg-background/40 backdrop-blur-xs p-3 transition-all duration-200 shadow-3xs",
               collapsed && "md:justify-center md:p-2"
             )}
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-semibold border border-primary/20 shadow-2xs">
               {initials || "AD"}
             </div>
             <div className={cn("min-w-0 flex-1", collapsed && "md:hidden")}>
-              <p className="truncate text-sm font-medium">{displayName}</p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-sm font-semibold text-foreground/90">{displayName}</p>
+              <p className="truncate text-xs text-muted-foreground/80">
                 {displayEmail}
               </p>
             </div>
             <Badge
               variant="outline"
-              className={cn("shrink-0", collapsed && "md:hidden")}
+              className={cn("shrink-0 border-primary/20 text-primary bg-primary/5 text-[10px] h-5 px-1.5 font-medium", collapsed && "md:hidden")}
             >
               Admin
             </Badge>
@@ -352,7 +385,7 @@ function AdminSidebar({
           <Button
             variant="ghost"
             className={cn(
-              "h-10 w-full justify-start rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              "h-9 w-full justify-start rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all duration-150",
               collapsed && "md:justify-center md:px-0"
             )}
             onClick={handleLogout}
@@ -364,7 +397,7 @@ function AdminSidebar({
             ) : (
               <LogOut className="size-4" />
             )}
-            <span className={cn(collapsed && "md:hidden")}>Đăng xuất</span>
+            <span className={cn("ml-2.5", collapsed && "md:hidden")}>Đăng xuất</span>
           </Button>
         </SidebarFooter>
       </Sidebar>

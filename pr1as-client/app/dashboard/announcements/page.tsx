@@ -12,6 +12,7 @@ import {
   RotateCcw,
   SlidersHorizontal,
   Trash2,
+  X,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Table } from "@/components/ui/table"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   useAdminAnnouncements,
   useCreateAnnouncement,
@@ -121,6 +123,22 @@ function toggle<T>(arr: T[], item: T): T[] {
   return arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item]
 }
 
+function parseDateTimeStr(value: string): { date: Date | undefined; time: string } {
+  if (!value) return { date: undefined, time: "00:00" }
+  const [datePart, timePart] = value.split("T")
+  if (!datePart) return { date: undefined, time: "00:00" }
+  const [y, m, d] = datePart.split("-").map(Number)
+  return { date: new Date(y, m - 1, d), time: (timePart ?? "").slice(0, 5) || "00:00" }
+}
+
+function buildDateTimeStr(date: Date | undefined, time: string): string {
+  if (!date) return ""
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}T${time || "00:00"}`
+}
+
 function AnnouncementForm({
   initial,
   onSubmit,
@@ -133,6 +151,9 @@ function AnnouncementForm({
   onCancel: () => void
 }) {
   const [form, setForm] = useState<FormState>({ ...defaultForm, ...initial })
+
+  const parsedStart = parseDateTimeStr(form.start_date)
+  const parsedEnd = parseDateTimeStr(form.end_date)
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -332,35 +353,81 @@ function AnnouncementForm({
           </div>
 
           {/* Section: Thời gian */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Thời gian (tùy chọn)
             </p>
+            
             <div className="space-y-1.5">
-              <Label htmlFor="ann-start" className="text-xs text-muted-foreground">
-                Bắt đầu
-              </Label>
-              <Input
-                id="ann-start"
-                type="datetime-local"
-                value={form.start_date}
-                onChange={(e) => setField("start_date", e.target.value)}
-                disabled={isPending}
-                className="bg-background"
-              />
+              <Label className="text-xs text-muted-foreground">Bắt đầu</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <DatePicker
+                    value={parsedStart.date}
+                    onChange={(date) => setField("start_date", buildDateTimeStr(date, parsedStart.time))}
+                    placeholder="Chọn ngày bắt đầu"
+                    disabled={isPending}
+                  />
+                </div>
+                <Input
+                  type="time"
+                  value={parsedStart.time}
+                  onChange={(e) =>
+                    setField("start_date", buildDateTimeStr(parsedStart.date, e.target.value))
+                  }
+                  disabled={isPending || !parsedStart.date}
+                  className="w-24 bg-background h-9"
+                />
+                {parsedStart.date ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 shrink-0"
+                    onClick={() => setField("start_date", "")}
+                    disabled={isPending}
+                    title="Xóa thời gian bắt đầu"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="ann-end" className="text-xs text-muted-foreground">
-                Kết thúc
-              </Label>
-              <Input
-                id="ann-end"
-                type="datetime-local"
-                value={form.end_date}
-                onChange={(e) => setField("end_date", e.target.value)}
-                disabled={isPending}
-                className="bg-background"
-              />
+              <Label className="text-xs text-muted-foreground">Kết thúc</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <DatePicker
+                    value={parsedEnd.date}
+                    onChange={(date) => setField("end_date", buildDateTimeStr(date, parsedEnd.time))}
+                    placeholder="Chọn ngày kết thúc"
+                    disabled={isPending}
+                  />
+                </div>
+                <Input
+                  type="time"
+                  value={parsedEnd.time}
+                  onChange={(e) =>
+                    setField("end_date", buildDateTimeStr(parsedEnd.date, e.target.value))
+                  }
+                  disabled={isPending || !parsedEnd.date}
+                  className="w-24 bg-background h-9"
+                />
+                {parsedEnd.date ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 shrink-0"
+                    onClick={() => setField("end_date", "")}
+                    disabled={isPending}
+                    title="Xóa thời gian kết thúc"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
 

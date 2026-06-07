@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { useState, useCallback, type FormEvent } from "react"
 import {
   AlertCircle,
@@ -41,6 +42,7 @@ import type {
   AdminTransactionType,
 } from "@/services/admin-wallet.service"
 import type { WalletTransactionStatus } from "@/services/wallet.service"
+import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 15
 const ALL_FILTER_VALUE = "all"
@@ -166,6 +168,12 @@ function TypeBadge({ type }: { type: AdminTransactionType }) {
   )
 }
 
+function formatCompactAmount(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`
+  return String(value)
+}
+
 function BarChart({
   data,
 }: {
@@ -175,7 +183,7 @@ function BarChart({
   const max = Math.max(...display.map((d) => d.amount), 0)
   const chartWidth = 640
   const chartHeight = 180
-  const padding = { top: 12, right: 8, bottom: 30, left: 42 }
+  const padding = { top: 12, right: 8, bottom: 30, left: 52 }
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
   const barGap = 4
@@ -188,6 +196,15 @@ function BarChart({
   const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
     .filter((index) => display[index])
     .filter((index, idx, arr) => arr.indexOf(index) === idx)
+
+  const yTicks = React.useMemo(() => {
+    if (max <= 0) return []
+    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const val = max * ratio
+      const y = axisY - innerHeight * ratio
+      return { val, y }
+    })
+  }, [max, innerHeight, axisY])
 
   if (display.length === 0 || max <= 0) {
     return (
@@ -206,29 +223,46 @@ function BarChart({
         className="h-full w-full overflow-visible"
         preserveAspectRatio="none"
       >
-        {[0.25, 0.5, 0.75, 1].map((ratio) => {
-          const y = axisY - innerHeight * ratio
-          return (
-            <line
-              key={ratio}
-              x1={padding.left}
-              x2={chartWidth - padding.right}
-              y1={y}
-              y2={y}
-              className="stroke-border"
-              strokeDasharray="4 6"
-              strokeWidth="1"
-            />
-          )
-        })}
+        <defs>
+          <linearGradient id="emeraldBarGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+
+        {yTicks.map(({ val, y }, idx) => (
+          <g key={idx} className="opacity-70">
+            {val > 0 && (
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={y}
+                y2={y}
+                className="stroke-border"
+                strokeDasharray="4 6"
+                strokeWidth="1"
+              />
+            )}
+            <text
+              x={padding.left - 10}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
+            >
+              {formatCompactAmount(val)}
+            </text>
+          </g>
+        ))}
+
         <line
           x1={padding.left}
           x2={chartWidth - padding.right}
           y1={axisY}
           y2={axisY}
           className="stroke-border"
-          strokeWidth="1"
+          strokeWidth="1.5"
         />
+
         {display.map((item, index) => {
           const height =
             item.amount > 0 ? Math.max((item.amount / max) * innerHeight, 4) : 0
@@ -237,7 +271,7 @@ function BarChart({
           return (
             <g
               key={item.date}
-              className="text-emerald-500 transition-colors hover:text-emerald-400"
+              className="text-emerald-500"
             >
               <title>{`${item.label}: ${formatCurrency(item.amount)}`}</title>
               <rect
@@ -245,12 +279,14 @@ function BarChart({
                 y={y}
                 width={barWidth}
                 height={height}
-                rx="3"
-                fill="currentColor"
+                rx="2"
+                fill="url(#emeraldBarGrad)"
+                className="hover:opacity-80 transition-all duration-200 cursor-pointer"
               />
             </g>
           )
         })}
+
         {tickIndexes.map((index) => {
           const x = padding.left + index * (barWidth + barGap) + barWidth / 2
           return (
@@ -259,7 +295,7 @@ function BarChart({
               x={x}
               y={chartHeight - 8}
               textAnchor="middle"
-              className="fill-muted-foreground text-[11px]"
+              className="fill-muted-foreground text-[10px] font-semibold"
             >
               {display[index].label}
             </text>
@@ -354,21 +390,21 @@ function StatCard({
   iconClass?: string
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card className="relative overflow-hidden border border-border/70 bg-background/50 backdrop-blur-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2.5">
+        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase select-none">
           {title}
         </CardTitle>
         <div
-          className={`rounded-lg p-1.5 ${iconClass ?? "bg-primary/10 text-primary"}`}
+          className={cn("flex size-9 items-center justify-center rounded-xl shadow-3xs transition-transform duration-300", iconClass ?? "bg-primary/10 text-primary border border-primary/20")}
         >
           {icon}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
+        <div className="text-3xl font-extrabold tracking-tight tabular-nums text-foreground/90">{value}</div>
         {sub ? (
-          <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+          <p className="mt-1.5 text-xs text-muted-foreground/80 flex items-center gap-1 select-none">{sub}</p>
         ) : null}
       </CardContent>
     </Card>
@@ -553,19 +589,19 @@ export default function AdminTransactionsPage() {
           }
           sub={stats ? `${stats.successCount} giao dịch` : undefined}
           icon={<TrendingUp className="size-4" />}
-          iconClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
+          iconClass="bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-500/20"
         />
         <StatCard
           title="Tổng giao dịch"
           value={stats ? stats.totalCount : <Skeleton className="h-8 w-16" />}
           icon={<CreditCard className="size-4" />}
-          iconClass="bg-primary/10 text-primary"
+          iconClass="bg-primary/10 text-primary border border-primary/20"
         />
         <StatCard
           title="Đang chờ xử lý"
           value={stats ? stats.pendingCount : <Skeleton className="h-8 w-16" />}
           icon={<Clock className="size-4" />}
-          iconClass="bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
+          iconClass="bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400 border border-amber-500/20"
         />
         <StatCard
           title="Thất bại / Đã hủy"
@@ -577,7 +613,7 @@ export default function AdminTransactionsPage() {
             )
           }
           icon={<AlertCircle className="size-4" />}
-          iconClass="bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-300"
+          iconClass="bg-red-500/10 text-red-600 dark:bg-red-500/15 dark:text-red-400 border border-red-500/20"
         />
       </div>
 

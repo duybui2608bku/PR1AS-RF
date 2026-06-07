@@ -10,6 +10,7 @@ import {
   RefreshCw,
   UserPlus,
   Users,
+  ArrowRight,
 } from "lucide-react"
 
 import {
@@ -25,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAdminTransactionStats } from "@/lib/hooks/use-admin-transactions"
 import { useDashboardAnalytics } from "@/lib/hooks/use-dashboard-analytics"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import type {
   DashboardDailyCount,
@@ -45,10 +47,10 @@ const PLAN_COLORS: Record<PricingPlanCode, string> = {
   diamond: "bg-emerald-500",
 }
 
-const PLAN_SVG_COLORS: Record<PricingPlanCode, string> = {
-  standard: "#0ea5e9",
-  gold: "#f59e0b",
-  diamond: "#10b981",
+const PLAN_GRADIENTS: Record<PricingPlanCode, string> = {
+  standard: "from-sky-400 to-sky-600",
+  gold: "from-amber-300 to-amber-500",
+  diamond: "from-emerald-400 to-emerald-600",
 }
 
 function formatCurrency(amount: number) {
@@ -99,22 +101,64 @@ function MetricCard({
 }) {
   const content = (
     <Card
-      className={cn(href && "cursor-pointer transition-shadow hover:shadow-md")}
+      className={cn(
+        "relative overflow-hidden border border-border/70 bg-background/50 backdrop-blur-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20",
+        href && "cursor-pointer"
+      )}
     >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2.5">
+        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase select-none">
           {title}
         </CardTitle>
-        <div className={cn("rounded-lg p-1.5", iconClassName)}>{icon}</div>
+        <div className={cn("flex size-9 items-center justify-center rounded-xl shadow-3xs transition-transform duration-300", iconClassName)}>
+          {icon}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
-        {sub ? <CardDescription className="mt-1">{sub}</CardDescription> : null}
+        <div className="text-3xl font-extrabold tracking-tight tabular-nums text-foreground/90">{value}</div>
+        {sub ? (
+          <CardDescription className="mt-1.5 text-xs text-muted-foreground/80 flex items-center gap-1 select-none">
+            {sub}
+          </CardDescription>
+        ) : null}
       </CardContent>
     </Card>
   )
 
   return href ? <Link href={href}>{content}</Link> : content
+}
+
+function QuickActionCard({
+  title,
+  description,
+  href,
+  icon,
+  iconClassName,
+}: {
+  title: string
+  description: string
+  href: string
+  icon: React.ReactNode
+  iconClassName: string
+}) {
+  return (
+    <Link href={href} className="group block">
+      <div className="relative flex flex-col justify-between h-full rounded-xl border border-border/60 bg-background/30 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/25 hover:bg-background/80">
+        <div className="flex items-start justify-between gap-4">
+          <div className={cn("flex size-9 items-center justify-center rounded-lg shadow-3xs transition-transform group-hover:scale-105", iconClassName)}>
+            {icon}
+          </div>
+          <div className="rounded-full bg-muted p-1 text-muted-foreground transition-all duration-300 group-hover:bg-primary/10 group-hover:text-primary">
+            <ArrowRight className="size-3.5 translate-x-0 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </div>
+        <div className="mt-4">
+          <h4 className="text-sm font-semibold text-foreground/90 group-hover:text-primary transition-colors">{title}</h4>
+          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 function BarChart({
@@ -128,7 +172,7 @@ function BarChart({
   const max = Math.max(...display.map((item) => item.count), 0)
   const chartWidth = 720
   const chartHeight = 220
-  const padding = { top: 16, right: 12, bottom: 34, left: 38 }
+  const padding = { top: 16, right: 12, bottom: 34, left: 48 }
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
   const gap = 5
@@ -141,6 +185,15 @@ function BarChart({
   const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
     .filter((index) => display[index])
     .filter((index, position, indexes) => indexes.indexOf(index) === position)
+
+  const yTicks = React.useMemo(() => {
+    if (max <= 0) return []
+    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const val = Math.round(max * ratio)
+      const y = axisY - innerHeight * ratio
+      return { val, y }
+    })
+  }, [max, innerHeight, axisY])
 
   if (display.length === 0 || max <= 0) {
     return (
@@ -159,29 +212,46 @@ function BarChart({
         className="h-full w-full overflow-visible"
         preserveAspectRatio="none"
       >
-        {[0.25, 0.5, 0.75, 1].map((ratio) => {
-          const y = axisY - innerHeight * ratio
-          return (
-            <line
-              key={ratio}
-              x1={padding.left}
-              x2={chartWidth - padding.right}
-              y1={y}
-              y2={y}
-              className="stroke-border"
-              strokeDasharray="4 6"
-              strokeWidth="1"
-            />
-          )
-        })}
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+
+        {yTicks.map(({ val, y }, idx) => (
+          <g key={idx} className="opacity-70">
+            {val > 0 && (
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={y}
+                y2={y}
+                className="stroke-border"
+                strokeDasharray="4 6"
+                strokeWidth="1"
+              />
+            )}
+            <text
+              x={padding.left - 10}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
+            >
+              {val}
+            </text>
+          </g>
+        ))}
+
         <line
           x1={padding.left}
           x2={chartWidth - padding.right}
           y1={axisY}
           y2={axisY}
           className="stroke-border"
-          strokeWidth="1"
+          strokeWidth="1.5"
         />
+
         {display.map((item, index) => {
           const height =
             item.count > 0 ? Math.max((item.count / max) * innerHeight, 4) : 0
@@ -191,7 +261,7 @@ function BarChart({
           return (
             <g
               key={item.date}
-              className="text-primary transition-colors hover:text-primary/75"
+              className="text-primary"
             >
               <title>{`${formatChartLabel(item.date)}: ${item.count} user`}</title>
               <rect
@@ -199,21 +269,23 @@ function BarChart({
                 y={y}
                 width={barWidth}
                 height={height}
-                rx="3"
-                fill="currentColor"
+                rx="2"
+                fill="url(#barGrad)"
+                className="hover:opacity-80 transition-all duration-200 cursor-pointer"
               />
             </g>
           )
         })}
+
         {tickIndexes.map((index) => {
           const x = padding.left + index * (barWidth + gap) + barWidth / 2
           return (
             <text
               key={index}
               x={x}
-              y={chartHeight - 10}
+              y={chartHeight - 8}
               textAnchor="middle"
-              className="fill-muted-foreground text-[11px]"
+              className="fill-muted-foreground text-[10px] font-semibold"
             >
               {formatChartLabel(display[index].date)}
             </text>
@@ -233,7 +305,7 @@ function PackageStackedChart({
   const max = Math.max(...display.map((item) => item.total), 0)
   const chartWidth = 720
   const chartHeight = 220
-  const padding = { top: 16, right: 12, bottom: 34, left: 38 }
+  const padding = { top: 16, right: 12, bottom: 34, left: 48 }
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
   const gap = 5
@@ -246,6 +318,15 @@ function PackageStackedChart({
   const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
     .filter((index) => display[index])
     .filter((index, position, indexes) => indexes.indexOf(index) === position)
+
+  const yTicks = React.useMemo(() => {
+    if (max <= 0) return []
+    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const val = Math.round(max * ratio)
+      const y = axisY - innerHeight * ratio
+      return { val, y }
+    })
+  }, [max, innerHeight, axisY])
 
   if (display.length === 0 || max <= 0) {
     return (
@@ -264,36 +345,61 @@ function PackageStackedChart({
         className="h-full w-full overflow-visible"
         preserveAspectRatio="none"
       >
-        {[0.25, 0.5, 0.75, 1].map((ratio) => {
-          const y = axisY - innerHeight * ratio
-          return (
-            <line
-              key={ratio}
-              x1={padding.left}
-              x2={chartWidth - padding.right}
-              y1={y}
-              y2={y}
-              className="stroke-border"
-              strokeDasharray="4 6"
-              strokeWidth="1"
-            />
-          )
-        })}
+        <defs>
+          <linearGradient id="gradStandard" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.4" />
+          </linearGradient>
+          <linearGradient id="gradGold" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.4" />
+          </linearGradient>
+          <linearGradient id="gradDiamond" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.4" />
+          </linearGradient>
+        </defs>
+
+        {yTicks.map(({ val, y }, idx) => (
+          <g key={idx} className="opacity-70">
+            {val > 0 && (
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={y}
+                y2={y}
+                className="stroke-border"
+                strokeDasharray="4 6"
+                strokeWidth="1"
+              />
+            )}
+            <text
+              x={padding.left - 10}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
+            >
+              {val}
+            </text>
+          </g>
+        ))}
+
         <line
           x1={padding.left}
           x2={chartWidth - padding.right}
           y1={axisY}
           y2={axisY}
           className="stroke-border"
-          strokeWidth="1"
+          strokeWidth="1.5"
         />
+
         {display.map((item, index) => {
           const x = padding.left + index * (barWidth + gap)
           let y = axisY
-          const segments: Array<{ plan: PricingPlanCode; count: number }> = [
-            { plan: "standard", count: item.standard },
-            { plan: "gold", count: item.gold },
-            { plan: "diamond", count: item.diamond },
+          const segments: Array<{ plan: PricingPlanCode; count: number; grad: string }> = [
+            { plan: "standard", count: item.standard, grad: "url(#gradStandard)" },
+            { plan: "gold", count: item.gold, grad: "url(#gradGold)" },
+            { plan: "diamond", count: item.diamond, grad: "url(#gradDiamond)" },
           ]
 
           return (
@@ -312,23 +418,25 @@ function PackageStackedChart({
                     y={y}
                     width={barWidth}
                     height={height}
-                    rx="2"
-                    fill={PLAN_SVG_COLORS[segment.plan]}
+                    rx="1.5"
+                    fill={segment.grad}
+                    className="hover:opacity-80 transition-all duration-200 cursor-pointer"
                   />
                 )
               })}
             </g>
           )
         })}
+
         {tickIndexes.map((index) => {
           const x = padding.left + index * (barWidth + gap) + barWidth / 2
           return (
             <text
               key={index}
               x={x}
-              y={chartHeight - 10}
+              y={chartHeight - 8}
               textAnchor="middle"
-              className="fill-muted-foreground text-[11px]"
+              className="fill-muted-foreground text-[10px] font-semibold"
             >
               {formatChartLabel(display[index].date)}
             </text>
@@ -345,26 +453,26 @@ function PackageBreakdown({
   data: DashboardPackageRegistrationByPlan[]
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {data.map((item) => (
-        <div key={item.plan_code} className="space-y-1.5">
+        <div key={item.plan_code} className="space-y-2">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex items-center gap-2 text-muted-foreground">
+            <span className="flex items-center gap-2 text-muted-foreground font-medium text-xs">
               <span
                 className={cn(
-                  "size-2.5 rounded-sm",
+                  "size-2.5 rounded-xs",
                   PLAN_COLORS[item.plan_code]
                 )}
               />
               {PLAN_LABELS[item.plan_code]}
             </span>
-            <span className="font-medium tabular-nums">
+            <span className="font-semibold text-foreground/90 text-xs tabular-nums">
               {item.count} · {item.percentage}%
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-2 overflow-hidden rounded-full bg-muted shadow-inner">
             <div
-              className={cn("h-full rounded-full", PLAN_COLORS[item.plan_code])}
+              className={cn("h-full rounded-full bg-gradient-to-r", PLAN_GRADIENTS[item.plan_code])}
               style={{ width: `${item.percentage}%` }}
             />
           </div>
@@ -375,16 +483,28 @@ function PackageBreakdown({
 }
 
 export default function DashboardPage() {
+  const user = useAuthStore((state) => state.user)
+
+  const greeting = React.useMemo(() => {
+    const hour = new Date().getHours()
+    const displayName = user?.full_name || user?.name || "Admin"
+    if (hour < 12) return `Chào buổi sáng, ${displayName}`
+    if (hour < 18) return `Chào buổi chiều, ${displayName}`
+    return `Chào buổi tối, ${displayName}`
+  }, [user])
+
   const today = React.useMemo(() => new Date(), [])
   const initialStartDate = React.useMemo(() => {
     const date = new Date(today)
     date.setDate(date.getDate() - 29)
     return date
   }, [today])
+  
   const [startDate, setStartDate] = React.useState(
     formatFilterDate(initialStartDate)
   )
   const [endDate, setEndDate] = React.useState(formatFilterDate(today))
+  const [activePreset, setActivePreset] = React.useState<number | null>(30)
 
   const dashboardQuery = useDashboardAnalytics({
     start_date: startDate,
@@ -404,62 +524,94 @@ export default function DashboardPage() {
     start.setDate(start.getDate() - (days - 1))
     setStartDate(formatFilterDate(start))
     setEndDate(formatFilterDate(end))
+    setActivePreset(days)
+  }
+
+  const handleDateChange = (range: any) => {
+    setStartDate(formatFilterDate(range?.from))
+    setEndDate(formatFilterDate(range?.to ?? range?.from))
+    setActivePreset(null)
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      {/* Header and Welcome */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tổng quan</h1>
-          <p className="hidden text-sm text-muted-foreground sm:block">
-            Theo dõi user đăng ký mới và lượt đăng ký gói theo thời gian.
+          <h1 className="text-2xl font-bold tracking-tight text-foreground/90">{greeting} 👋</h1>
+          <p className="hidden text-sm text-muted-foreground sm:block mt-1">
+            Theo dõi hoạt động hệ thống, người dùng đăng ký mới và doanh thu.
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
+          className="w-full md:w-auto h-9 shadow-2xs font-medium hover:bg-muted"
           onClick={() => dashboardQuery.refetch()}
           disabled={dashboardQuery.isFetching}
         >
           <RefreshCw
             className={cn(
-              "size-4",
+              "size-4 mr-1.5",
               dashboardQuery.isFetching && "animate-spin"
             )}
           />
-          Làm mới
+          Làm mới dữ liệu
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex w-full flex-col gap-1 sm:w-auto">
-            <Label className="text-xs text-muted-foreground">
-              Khoảng ngày
+      {/* Date Filter Panel */}
+      <Card className="border-border/70 shadow-3xs bg-background/50 backdrop-blur-xs">
+        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground/80 select-none">
+              Khoảng ngày phân tích
             </Label>
             <DateRangePicker
               value={{ from: parsedStartDate, to: parsedEndDate }}
-              onChange={(range) => {
-                setStartDate(formatFilterDate(range?.from))
-                setEndDate(formatFilterDate(range?.to ?? range?.from))
-              }}
-              buttonClassName="h-9 w-full sm:w-72 data-[size=default]:h-9"
+              onChange={handleDateChange}
+              buttonClassName="h-9 w-full sm:w-72 data-[size=default]:h-9 shadow-3xs"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => applyPreset(7)}>
+          <div className="flex items-center self-end sm:self-center bg-muted/65 p-1 rounded-lg border border-border/40 w-full sm:w-auto justify-around sm:justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-3 text-xs rounded-md transition-all",
+                activePreset === 7 && "bg-background shadow-3xs font-semibold text-foreground"
+              )}
+              onClick={() => applyPreset(7)}
+            >
               7 ngày
             </Button>
-            <Button variant="outline" size="sm" onClick={() => applyPreset(30)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-3 text-xs rounded-md transition-all",
+                activePreset === 30 && "bg-background shadow-3xs font-semibold text-foreground"
+              )}
+              onClick={() => applyPreset(30)}
+            >
               30 ngày
             </Button>
-            <Button variant="outline" size="sm" onClick={() => applyPreset(90)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-3 text-xs rounded-md transition-all",
+                activePreset === 90 && "bg-background shadow-3xs font-semibold text-foreground"
+              )}
+              onClick={() => applyPreset(90)}
+            >
               90 ngày
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Metrics Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           href="/dashboard/users"
@@ -473,20 +625,20 @@ export default function DashboardPage() {
           }
           sub={
             analytics
-              ? `${analytics.new_users} user mới trong khoảng ngày`
+              ? `+${analytics.new_users} user mới gần đây`
               : undefined
           }
           icon={<Users className="size-4" />}
-          iconClassName="bg-primary/10 text-primary"
+          iconClassName="bg-primary/10 text-primary border border-primary/20"
         />
         <MetricCard
           title="User đăng ký mới"
           value={
             analytics ? analytics.new_users : <Skeleton className="h-8 w-16" />
           }
-          sub="Theo ngày tạo tài khoản"
+          sub="Trong khoảng ngày đã chọn"
           icon={<UserPlus className="size-4" />}
-          iconClassName="bg-sky-100 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300"
+          iconClassName="bg-sky-500/10 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400 border border-sky-500/20"
         />
         <MetricCard
           title="Lượt đăng ký gói"
@@ -497,9 +649,9 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             )
           }
-          sub="Standard từ user mới, Gold/Diamond từ upgrade"
+          sub="Standard, Gold & Diamond"
           icon={<PackageCheck className="size-4" />}
-          iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300"
+          iconClassName="bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-500/20"
         />
         <MetricCard
           href="/dashboard/transactions"
@@ -511,20 +663,26 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-28" />
             )
           }
-          sub={`${pendingCount} giao dịch đang chờ xử lý`}
+          sub={`${pendingCount} giao dịch đang chờ`}
           icon={<CreditCard className="size-4" />}
-          iconClassName="bg-amber-100 text-amber-600"
+          iconClassName="bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400 border border-amber-500/20"
         />
       </div>
 
+      {/* Main Charts Block */}
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              User đăng ký mới theo ngày
-            </CardTitle>
+        <Card className="border-border/70 shadow-3xs bg-background/50 backdrop-blur-xs">
+          <CardHeader className="pb-3 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold text-foreground/90">
+                User đăng ký mới theo ngày
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Biểu đồ tần suất tài khoản mới
+              </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {dashboardQuery.isLoading || !analytics ? (
               <Skeleton className="h-56 w-full" />
             ) : (
@@ -536,13 +694,29 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Các gói được đăng ký theo ngày
-            </CardTitle>
+        <Card className="border-border/70 shadow-3xs bg-background/50 backdrop-blur-xs">
+          <CardHeader className="pb-3 border-b border-border/40 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold text-foreground/90">
+                Các gói được đăng ký theo ngày
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Phân bố nâng cấp gói dịch vụ
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] font-semibold">
+              <span className="flex items-center gap-1 text-sky-500">
+                <span className="size-2 rounded-full bg-sky-500" /> Standard
+              </span>
+              <span className="flex items-center gap-1 text-amber-500">
+                <span className="size-2 rounded-full bg-amber-500" /> Gold
+              </span>
+              <span className="flex items-center gap-1 text-emerald-500">
+                <span className="size-2 rounded-full bg-emerald-500" /> Diamond
+              </span>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {dashboardQuery.isLoading || !analytics ? (
               <Skeleton className="h-56 w-full" />
             ) : (
@@ -554,52 +728,59 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Navigation and Breakdown */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Điều hướng nhanh
+        <Card className="border-border/70 shadow-3xs bg-background/50 backdrop-blur-xs">
+          <CardHeader className="pb-3 border-b border-border/40">
+            <CardTitle className="text-sm font-bold text-foreground/90">
+              Điều hướng quản trị nhanh
             </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Truy cập nhanh vào các tính năng trọng tâm
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            <MetricCard
+          <CardContent className="grid gap-4 pt-6 sm:grid-cols-3">
+            <QuickActionCard
               href="/dashboard/bookings"
-              title="Bookings"
-              value="Xem"
-              sub="Thống kê booking và tỉ lệ hoàn thành"
-              icon={<CalendarCheck className="size-4" />}
-              iconClassName="bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"
+              title="Quản lý Bookings"
+              description="Thống kê trạng thái lịch hẹn và tỷ lệ hoàn thành công việc."
+              icon={<CalendarCheck className="size-4 text-indigo-600 dark:text-indigo-400" />}
+              iconClassName="bg-indigo-500/10 border border-indigo-500/20"
             />
-            <MetricCard
+            <QuickActionCard
               href="/dashboard/disputes"
-              title="Chat tranh chấp"
-              value="Xem"
-              sub="Các cuộc hội thoại tranh chấp"
-              icon={<MessageSquare className="size-4" />}
-              iconClassName="bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-300"
+              title="Giải quyết Tranh chấp"
+              description="Xem và quản trị các phòng chat hòa giải, giải quyết tranh chấp."
+              icon={<MessageSquare className="size-4 text-orange-600 dark:text-orange-400" />}
+              iconClassName="bg-orange-500/10 border border-orange-500/20"
             />
-            <MetricCard
+            <QuickActionCard
               href="/dashboard/transactions"
-              title="Giao dịch"
-              value="Xem"
-              sub="Nạp tiền và trạng thái"
-              icon={<CreditCard className="size-4" />}
-              iconClassName="bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300"
+              title="Lịch sử Giao dịch"
+              description="Theo dõi nạp tiền, rút tiền, doanh thu và kiểm tra giao dịch chờ duyệt."
+              icon={<CreditCard className="size-4 text-amber-600 dark:text-amber-400" />}
+              iconClassName="bg-amber-500/10 border border-amber-500/20"
             />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="border-border/70 shadow-3xs bg-background/50 backdrop-blur-xs">
+          <CardHeader className="pb-3 border-b border-border/40">
+            <CardTitle className="text-sm font-bold text-foreground/90">
               Tỉ lệ gói được đăng ký
             </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Phần trăm cơ cấu doanh thu theo gói
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {dashboardQuery.isLoading || !analytics ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <Skeleton key={index} className="h-8 w-full" />
+                  <div key={index} className="space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-2 w-full" />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -613,3 +794,4 @@ export default function DashboardPage() {
     </div>
   )
 }
+

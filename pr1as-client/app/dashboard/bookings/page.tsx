@@ -165,17 +165,19 @@ function StatCard({
   iconClassName: string
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card className="relative overflow-hidden border border-border/70 bg-background/50 backdrop-blur-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2.5">
+        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase select-none">
           {title}
         </CardTitle>
-        <div className={cn("rounded-lg p-1.5", iconClassName)}>{icon}</div>
+        <div className={cn("flex size-9 items-center justify-center rounded-xl shadow-3xs transition-transform duration-300", iconClassName)}>
+          {icon}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
+        <div className="text-3xl font-extrabold tracking-tight tabular-nums text-foreground/90">{value}</div>
         {sub ? (
-          <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
+          <p className="mt-1.5 text-xs text-muted-foreground/80 flex items-center gap-1 select-none">{sub}</p>
         ) : null}
       </CardContent>
     </Card>
@@ -191,7 +193,7 @@ function BookingCreatedChart({
   const max = Math.max(...display.map((item) => item.count), 0)
   const chartWidth = 720
   const chartHeight = 220
-  const padding = { top: 16, right: 12, bottom: 34, left: 38 }
+  const padding = { top: 16, right: 12, bottom: 34, left: 48 }
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
   const gap = 5
@@ -204,6 +206,15 @@ function BookingCreatedChart({
   const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
     .filter((index) => display[index])
     .filter((index, position, indexes) => indexes.indexOf(index) === position)
+
+  const yTicks = React.useMemo(() => {
+    if (max <= 0) return []
+    return [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const val = Math.round(max * ratio)
+      const y = axisY - innerHeight * ratio
+      return { val, y }
+    })
+  }, [max, innerHeight, axisY])
 
   if (display.length === 0 || max <= 0) {
     return (
@@ -222,29 +233,46 @@ function BookingCreatedChart({
         className="h-full w-full overflow-visible"
         preserveAspectRatio="none"
       >
-        {[0.25, 0.5, 0.75, 1].map((ratio) => {
-          const y = axisY - innerHeight * ratio
-          return (
-            <line
-              key={ratio}
-              x1={padding.left}
-              x2={chartWidth - padding.right}
-              y1={y}
-              y2={y}
-              className="stroke-border"
-              strokeDasharray="4 6"
-              strokeWidth="1"
-            />
-          )
-        })}
+        <defs>
+          <linearGradient id="bookingBarGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+
+        {yTicks.map(({ val, y }, idx) => (
+          <g key={idx} className="opacity-70">
+            {val > 0 && (
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={y}
+                y2={y}
+                className="stroke-border"
+                strokeDasharray="4 6"
+                strokeWidth="1"
+              />
+            )}
+            <text
+              x={padding.left - 10}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
+            >
+              {val}
+            </text>
+          </g>
+        ))}
+
         <line
           x1={padding.left}
           x2={chartWidth - padding.right}
           y1={axisY}
           y2={axisY}
           className="stroke-border"
-          strokeWidth="1"
+          strokeWidth="1.5"
         />
+
         {display.map((item, index) => {
           const height =
             item.count > 0 ? Math.max((item.count / max) * innerHeight, 4) : 0
@@ -254,7 +282,7 @@ function BookingCreatedChart({
           return (
             <g
               key={item.date}
-              className="text-primary transition-colors hover:text-primary/75"
+              className="text-primary"
             >
               <title>{`${formatChartLabel(item.date)}: ${item.count} booking`}</title>
               <rect
@@ -262,21 +290,23 @@ function BookingCreatedChart({
                 y={y}
                 width={barWidth}
                 height={height}
-                rx="3"
-                fill="currentColor"
+                rx="2"
+                fill="url(#bookingBarGrad)"
+                className="hover:opacity-80 transition-all duration-200 cursor-pointer"
               />
             </g>
           )
         })}
+
         {tickIndexes.map((index) => {
           const x = padding.left + index * (barWidth + gap) + barWidth / 2
           return (
             <text
               key={index}
               x={x}
-              y={chartHeight - 10}
+              y={chartHeight - 8}
               textAnchor="middle"
-              className="fill-muted-foreground text-[11px]"
+              className="fill-muted-foreground text-[10px] font-semibold"
             >
               {formatChartLabel(display[index].date)}
             </text>
@@ -300,9 +330,10 @@ function CompletionTrendChart({
   const display = data.slice(-31)
   const chartWidth = 720
   const chartHeight = 220
-  const padding = { top: 16, right: 16, bottom: 34, left: 38 }
+  const padding = { top: 16, right: 16, bottom: 34, left: 48 }
   const innerWidth = chartWidth - padding.left - padding.right
   const innerHeight = chartHeight - padding.top - padding.bottom
+  const axisY = padding.top + innerHeight
   const pointGap = innerWidth / Math.max(display.length - 1, 1)
   const points = display.map((item, index) => {
     const x = padding.left + index * pointGap
@@ -313,6 +344,9 @@ function CompletionTrendChart({
   const linePath = points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
     .join(" ")
+  const areaPath = points.length > 0
+    ? `${linePath} L ${points[points.length - 1].x} ${axisY} L ${points[0].x} ${axisY} Z`
+    : ""
   const tickIndexes = [0, Math.floor(display.length / 2), display.length - 1]
     .filter((index) => display[index])
     .filter((index, position, indexes) => indexes.indexOf(index) === position)
@@ -334,10 +368,17 @@ function CompletionTrendChart({
         className="h-full w-full overflow-visible"
         preserveAspectRatio="none"
       >
+        <defs>
+          <linearGradient id="emeraldAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
         {[0, 25, 50, 75, 100].map((value) => {
           const y = padding.top + innerHeight - (value / 100) * innerHeight
           return (
-            <g key={value}>
+            <g key={value} className="opacity-70">
               <line
                 x1={padding.left}
                 x2={chartWidth - padding.right}
@@ -348,36 +389,44 @@ function CompletionTrendChart({
                 strokeWidth="1"
               />
               <text
-                x={8}
+                x={padding.left - 10}
                 y={y + 4}
-                className="fill-muted-foreground text-[11px]"
+                textAnchor="end"
+                className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
               >
                 {value}%
               </text>
             </g>
           )
         })}
+        {areaPath && (
+          <path
+            d={areaPath}
+            fill="url(#emeraldAreaGrad)"
+            className="transition-all duration-300"
+          />
+        )}
         <path
           d={linePath}
           fill="none"
           className="stroke-emerald-500"
-          strokeWidth="3"
+          strokeWidth="2.5"
         />
         {points.map((point) => (
-          <g key={point.date} className="text-emerald-500">
+          <g key={point.date} className="text-emerald-500 hover:text-emerald-400 cursor-pointer">
             <title>
               {`${formatChartLabel(point.date)}: ${point.completion_rate}% (${point.completed}/${point.total})`}
             </title>
-            <circle cx={point.x} cy={point.y} r="4" fill="currentColor" />
+            <circle cx={point.x} cy={point.y} r="3.5" fill="currentColor" className="stroke-background stroke-2 transition-transform duration-200 hover:scale-125" />
           </g>
         ))}
         {tickIndexes.map((index) => (
           <text
             key={index}
             x={points[index].x}
-            y={chartHeight - 10}
+            y={chartHeight - 8}
             textAnchor="middle"
-            className="fill-muted-foreground text-[11px]"
+            className="fill-muted-foreground text-[10px] font-semibold"
           >
             {formatChartLabel(display[index].date)}
           </text>
