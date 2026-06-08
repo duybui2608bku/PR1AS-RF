@@ -5,6 +5,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Spring-pop animation for service tab icons — easing handles the overshoot */
+@keyframes tab-icon-bounce {
+  0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
 /* Safe area inset utilities for iOS devices */
 @utility pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
