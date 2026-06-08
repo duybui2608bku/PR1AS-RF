@@ -33,8 +33,8 @@ const serviceSchema = new Schema<IServiceDocument>(
       ko: { type: String, default: null },
     },
     description: {
-      en: { type: String, required: true },
-      vi: { type: String, required: true },
+      en: { type: String, default: "" },
+      vi: { type: String, default: "" },
       zh: { type: String, default: null },
       ko: { type: String, default: null },
     },

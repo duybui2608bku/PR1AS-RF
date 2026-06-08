@@ -22,6 +22,7 @@ import {
 } from "@/lib/hooks/use-worker"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useIsMobile } from "@/lib/hooks/use-is-mobile"
+import { useServicesHeaderStore } from "@/lib/store/services-header-store"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
@@ -46,7 +47,7 @@ const draftFromState = (state: HomeSearchState): DraftState => ({
 
 const CATEGORY_LABEL: Record<string, string> = {
   COMPANIONSHIP: "Đồng hành",
-  ASSISTANCE: "Hỗ trợ",
+  ASSISTANCE: "Trợ lý",
 }
 
 const formatScheduledLabel = (value: Date): string =>
@@ -74,6 +75,22 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   )
   const [applied, setApplied] = React.useState<HomeSearchState>(initialState)
   const resultsRef = React.useRef<HTMLDivElement>(null)
+
+  const { setActiveTab, setSearchDisplay, setSwitchTabCallback } =
+    useServicesHeaderStore()
+
+  // Sync active tab → header store
+  React.useEffect(() => {
+    setActiveTab(applied.activeTab)
+  }, [applied.activeTab, setActiveTab])
+
+  // Sync search display labels → header store
+  React.useEffect(() => {
+    setSearchDisplay(
+      draft.selectedLocation?.label ?? null,
+      draft.scheduledAt ? formatScheduledLabel(draft.scheduledAt) : null,
+    )
+  }, [draft.selectedLocation, draft.scheduledAt, setSearchDisplay])
 
   const filters = React.useMemo(() => homeStateToFilters(applied), [applied])
 
@@ -107,13 +124,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   // rest). On desktop there are no tabs, so every group is shown.
   const visibleGroups = React.useMemo(() => {
     const groups = workersQuery.data ?? []
-    if (!isMobile) return groups
-    return groups.filter((group) =>
-      applied.activeTab === "COMPANIONSHIP"
-        ? group.service.category === "COMPANIONSHIP"
-        : group.service.category !== "COMPANIONSHIP",
-    )
-  }, [workersQuery.data, applied.activeTab, isMobile])
+    return groups.filter((group) => group.service.category === applied.activeTab)
+  }, [workersQuery.data, applied.activeTab])
 
   const showFetchError = workersQuery.isError
   const favoriteIdsQuery = useFavoriteWorkerIds()
@@ -143,6 +155,12 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
           { ...prev, activeTab: tab, activeCodes: [] },
     )
   }, [])
+
+  // Expose handleSwitchTab to header store so header can trigger tab switch
+  React.useEffect(() => {
+    setSwitchTabCallback(handleSwitchTab)
+    return () => setSwitchTabCallback(null)
+  }, [handleSwitchTab, setSwitchTabCallback])
 
   const handleToggleCode = React.useCallback((code: string) => {
     setApplied((prev) => {
@@ -253,7 +271,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         }
         onSearchSubmit={handleSearchSubmit}
       />
-      <div ref={resultsRef}>
+      <div ref={resultsRef} className="pt-6">
         <WorkersByServiceList
           groupedServices={visibleGroups}
           hasFetchError={showFetchError}
