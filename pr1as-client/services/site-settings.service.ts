@@ -19,6 +19,14 @@ export interface SiteSettings {
   twitter: string
   zalo: string
   github: string
+  // Maintenance
+  maintenanceMode: boolean
+  maintenanceMessage: string
+}
+
+export interface MaintenanceStatus {
+  maintenanceMode: boolean
+  maintenanceMessage: string
 }
 
 interface ApiResponse<T> {
@@ -45,6 +53,9 @@ function buildDefaults(): SiteSettings {
     twitter: siteConfig.links.twitter,
     zalo: siteConfig.links.zalo,
     github: siteConfig.links.github,
+    maintenanceMode: false,
+    maintenanceMessage:
+      "Hệ thống đang được bảo trì và nâng cấp. Vui lòng quay lại sau.",
   }
 }
 
@@ -67,4 +78,13 @@ async function reset(): Promise<SiteSettings> {
   return res.data.data!
 }
 
-export const siteSettingsService = { get, save, reset }
+async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
+  try {
+    const res = await api.get<ApiResponse<MaintenanceStatus>>("/site-settings/maintenance")
+    return res.data.data ?? { maintenanceMode: false, maintenanceMessage: "" }
+  } catch {
+    return { maintenanceMode: false, maintenanceMessage: "" }
+  }
+}
+
+export const siteSettingsService = { get, save, reset, getMaintenanceStatus }

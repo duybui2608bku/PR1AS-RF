@@ -126,6 +126,16 @@ const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
       type: String,
       default: null,
     },
+    purpose: {
+      type: String,
+      enum: ["deposit", "pricing_upgrade"],
+      default: null,
+      index: true,
+    },
+    purpose_metadata: {
+      type: Schema.Types.Mixed,
+      default: null,
+    },
     currency: {
       type: String,
       default: "VND",

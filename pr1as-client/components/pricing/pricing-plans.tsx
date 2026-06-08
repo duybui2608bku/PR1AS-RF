@@ -1,26 +1,20 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Check, CheckCircle2, Loader2, Minus, Sparkles, Star, Zap } from "lucide-react"
+import { Check, CheckCircle2, Loader2, Minus, QrCode, Sparkles, Star, Zap } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { useMyPricing, useUpgradePricing } from "@/lib/hooks/use-pricing"
+import { useMyPricing, useBuyPricing } from "@/lib/hooks/use-pricing"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
+import { PricingPurchaseModal } from "@/components/pricing/pricing-purchase-modal"
 import type {
   PricingPackage,
   PricingPlanCode,
+  PricingPaymentResponse,
 } from "@/services/pricing.service"
 
 const PLAN_RANK: Record<PricingPlanCode, number> = {
@@ -150,19 +144,20 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
     | undefined
 
   const myPricingQuery = useMyPricing()
-  const upgradeMutation = useUpgradePricing()
+  const buyMutation = useBuyPricing()
 
   const currentPlan: PricingPlanCode | undefined =
     myPricingQuery.data?.plan_code ?? storedPlan
 
-  const [pendingPkg, setPendingPkg] = useState<PricingPackage | null>(null)
+  const [buyingPkg, setBuyingPkg] = useState<PricingPackage | null>(null)
+  const [payment, setPayment] = useState<PricingPaymentResponse | null>(null)
 
   const sortedPackages = useMemo(
     () => [...packages].sort((a, b) => getPackagePrice(a) - getPackagePrice(b)),
     [packages]
   )
 
-  const handleClick = (pkg: PricingPackage, state: ButtonState) => {
+  const handleClick = async (pkg: PricingPackage, state: ButtonState) => {
     switch (state.kind) {
       case "guest-free":
         router.push("/register")
@@ -171,24 +166,24 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
         router.push(`/login?next=/pricing`)
         return
       case "upgrade":
-        setPendingPkg(pkg)
+        if (pkg.package_code === "standard") return
+        setBuyingPkg(pkg)
+        try {
+          const result = await buyMutation.mutateAsync({
+            target_plan_code: pkg.package_code,
+            duration_months: 1,
+          })
+          if (result) {
+            setPayment(result)
+          }
+        } catch (error) {
+          toast.error(getErrorMessage(error, "Không thể tạo thanh toán. Vui lòng thử lại."))
+        } finally {
+          setBuyingPkg(null)
+        }
         return
       default:
         return
-    }
-  }
-
-  const handleConfirmUpgrade = async () => {
-    if (!pendingPkg || pendingPkg.package_code === "standard") return
-    try {
-      await upgradeMutation.mutateAsync({
-        target_plan_code: pendingPkg.package_code,
-        duration_months: 1,
-      })
-      toast.success(`Đã nâng cấp lên gói ${pendingPkg.display_name}.`)
-      setPendingPkg(null)
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể nâng cấp gói. Vui lòng thử lại."))
     }
   }
 
@@ -297,8 +292,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
                 state={state}
                 meta={meta}
                 isLoading={
-                  upgradeMutation.isPending &&
-                  pendingPkg?.id === pkg.id
+                  buyMutation.isPending && buyingPkg?.id === pkg.id
                 }
                 onClick={() => handleClick(pkg, state)}
               />
@@ -307,67 +301,10 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
         })}
       </div>
 
-      <Dialog
-        open={pendingPkg !== null}
-        onOpenChange={(open) => {
-          if (!open && !upgradeMutation.isPending) {
-            setPendingPkg(null)
-          }
-        }}
-      >
-        <DialogContent>
-          {pendingPkg ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  Xác nhận nâng cấp gói {pendingPkg.display_name}
-                </DialogTitle>
-                <DialogDescription>
-                  Hệ thống sẽ trừ trực tiếp từ số dư ví của bạn.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-2 rounded-lg border bg-muted/30 p-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Gói</span>
-                  <span className="font-semibold">
-                    {pendingPkg.display_name}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Thời hạn</span>
-                  <span className="font-semibold">1 tháng</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Số tiền</span>
-                  <span className="text-base font-bold text-primary">
-                    {formatCurrency(getPackagePrice(pendingPkg))}
-                  </span>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setPendingPkg(null)}
-                  disabled={upgradeMutation.isPending}
-                >
-                  Huỷ
-                </Button>
-                <Button
-                  onClick={handleConfirmUpgrade}
-                  disabled={upgradeMutation.isPending}
-                >
-                  {upgradeMutation.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : null}
-                  Xác nhận nâng cấp
-                </Button>
-              </DialogFooter>
-            </>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <PricingPurchaseModal
+        payment={payment}
+        onClose={() => setPayment(null)}
+      />
     </>
   )
 }
@@ -437,8 +374,12 @@ function PlanCtaButton({
           onClick={onClick}
           disabled={isLoading}
         >
-          {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-          Nâng cấp ngay
+          {isLoading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <QrCode className="size-4" />
+          )}
+          Mua gói ngay
         </Button>
       )
   }

@@ -15,6 +15,8 @@ export interface ISiteSettings {
   twitter: string;
   zalo: string;
   github: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
   updatedBy: Types.ObjectId | null;
   updatedAt: Date;
 }

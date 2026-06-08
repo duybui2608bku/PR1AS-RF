@@ -29,6 +29,8 @@ export interface CreateTransactionInput {
   bank_account_number?: string;
   bank_name?: string;
   description?: string;
+  purpose?: string;
+  purpose_metadata?: Record<string, unknown>;
 }
 
 export interface SePayTransactionUpdateInput {

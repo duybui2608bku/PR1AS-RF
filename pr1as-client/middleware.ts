@@ -19,6 +19,16 @@ const PROTECTED_PREFIXES = [
 ]
 const AUTH_PAGES = ["/login", "/register"]
 
+// Paths that bypass maintenance mode redirect
+const MAINTENANCE_BYPASS_PREFIXES = [
+  "/maintenance",
+  "/login",
+  "/register",
+  "/_next",
+  "/favicon",
+  "/api",
+]
+
 // Signature and Expiration Verification at Next.js Edge Layer using jose
 async function verifyAndDecodeJwt(token: string): Promise<Record<string, unknown> | null> {
   try {
@@ -69,10 +79,35 @@ function isProtectedPath(pathname: string): boolean {
   )
 }
 
+function isMaintenanceBypassPath(pathname: string): boolean {
+  return MAINTENANCE_BYPASS_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
+}
+
+async function fetchMaintenanceStatus(): Promise<{ maintenanceMode: boolean; maintenanceMessage: string }> {
+  try {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3052/api"
+    const url = `${apiBase}/site-settings/maintenance`
+    const res = await fetch(url, {
+      next: { revalidate: 30 }, // Cache for 30 seconds
+    })
+    if (!res.ok) return { maintenanceMode: false, maintenanceMessage: "" }
+    const json = await res.json() as { data?: { maintenanceMode?: boolean; maintenanceMessage?: string } }
+    return {
+      maintenanceMode: json.data?.maintenanceMode ?? false,
+      maintenanceMessage: json.data?.maintenanceMessage ?? "",
+    }
+  } catch {
+    // If the API is unreachable, don't block access
+    return { maintenanceMode: false, maintenanceMessage: "" }
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
-  
+
   // Verify token signature and exp claim at Edge
   const payload = token ? await verifyAndDecodeJwt(token) : null
   const isTokenValid = payload !== null
@@ -91,6 +126,16 @@ export async function middleware(req: NextRequest) {
   const isCookieRoleValid =
     !!cookieRole && (tokenPayloadRoles.length === 0 || tokenPayloadRoles.includes(cookieRole))
   const activeRole = tokenRole === "admin" ? tokenRole : (isCookieRoleValid ? cookieRole : tokenRole)
+
+  // Maintenance mode check — skip for admin users and bypass paths
+  if (!isMaintenanceBypassPath(pathname) && activeRole !== "admin") {
+    const { maintenanceMode } = await fetchMaintenanceStatus()
+    if (maintenanceMode) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/maintenance"
+      return NextResponse.redirect(url)
+    }
+  }
 
   if (isTokenValid && activeRole === "admin" && pathname === "/") {
     const url = req.nextUrl.clone()
@@ -114,7 +159,7 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
     url.searchParams.set("from", pathname)
-    
+
     // Clear cookies since the token is invalid/expired
     const response = NextResponse.redirect(url)
     response.cookies.delete(TOKEN_COOKIE_NAME)
@@ -149,19 +194,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/client/:path*",
-    "/chat/:path*",
-    "/dashboard/:path*",
-    "/notifications/:path*",
-    "/notifications",
-    "/settings/:path*",
-    "/wallet/:path*",
-    "/worker/setup/:path*",
-    "/worker/bookings/:path*",
-    "/worker/schedule/:path*",
-    "/",
-    "/login",
-    "/register",
-  ],
+  // Run middleware on all page routes; exclude Next.js internals and static files
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)"],
 }

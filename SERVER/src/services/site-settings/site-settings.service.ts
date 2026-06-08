@@ -13,6 +13,14 @@ export class SiteSettingsService {
   async reset(adminId: string) {
     return siteSettingsRepository.reset(adminId);
   }
+
+  async getMaintenanceStatus() {
+    const settings = await siteSettingsRepository.get();
+    return {
+      maintenanceMode: settings.maintenanceMode,
+      maintenanceMessage: settings.maintenanceMessage,
+    };
+  }
 }
 
 export const siteSettingsService = new SiteSettingsService();

@@ -11,13 +11,16 @@ import {
   Link2,
   Loader2,
   MessageCircle,
+  Power,
   RotateCcw,
   Save,
   Search,
   Send,
   Settings,
   Share2,
+  ShieldAlert,
   Upload,
+  Wrench,
   X,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -43,12 +46,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { TipTapEditor } from "@/components/ui/tiptap-editor"
 import {
   useSiteSettings,
   useUpdateSiteSettings,
   useResetSiteSettings,
+  useToggleMaintenanceMode,
 } from "@/lib/hooks/use-site-settings"
 import type { SiteSettings } from "@/services/site-settings.service"
 import { uploadImage } from "@/lib/utils/upload-image"
@@ -69,6 +75,8 @@ type SeoDraft = Pick<
 type SocialDraft = Pick<SiteSettings, "facebook" | "twitter" | "zalo" | "github">
 
 type SocialKey = keyof SocialDraft
+
+type MaintenanceDraft = Pick<SiteSettings, "maintenanceMode" | "maintenanceMessage">
 
 interface SocialLinkConfig {
   key: SocialKey
@@ -138,6 +146,13 @@ function toSocialDraft(s: SiteSettings): SocialDraft {
     twitter: s.twitter,
     zalo: s.zalo,
     github: s.github,
+  }
+}
+
+function toMaintenanceDraft(s: SiteSettings): MaintenanceDraft {
+  return {
+    maintenanceMode: s.maintenanceMode,
+    maintenanceMessage: s.maintenanceMessage,
   }
 }
 
@@ -351,8 +366,10 @@ export default function AdminSettingsPage() {
   const { data: settings, isLoading } = useSiteSettings()
   const updateMutation = useUpdateSiteSettings()
   const resetMutation = useResetSiteSettings()
+  const maintenanceMutation = useToggleMaintenanceMode()
 
   const [showResetDialog, setShowResetDialog] = useState(false)
+  const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false)
 
   const [identityDraft, setIdentityDraft] = useState<IdentityDraft>({
     name: "",
@@ -374,12 +391,17 @@ export default function AdminSettingsPage() {
     zalo: "",
     github: "",
   })
+  const [maintenanceDraft, setMaintenanceDraft] = useState<MaintenanceDraft>({
+    maintenanceMode: false,
+    maintenanceMessage: "",
+  })
 
   useEffect(() => {
     if (!settings) return
     setIdentityDraft(toIdentityDraft(settings))
     setSeoDraft(toSeoDraft(settings))
     setSocialDraft(toSocialDraft(settings))
+    setMaintenanceDraft(toMaintenanceDraft(settings))
   }, [settings])
 
   const identityDirty = settings
@@ -388,6 +410,9 @@ export default function AdminSettingsPage() {
   const seoDirty = settings ? isDirty(seoDraft, toSeoDraft(settings)) : false
   const socialDirty = settings
     ? isDirty(socialDraft, toSocialDraft(settings))
+    : false
+  const maintenanceDirty = settings
+    ? isDirty(maintenanceDraft, toMaintenanceDraft(settings))
     : false
 
   const isSaving = updateMutation.isPending
@@ -441,6 +466,10 @@ export default function AdminSettingsPage() {
             <TabsTrigger value="identity">Danh tính</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
             <TabsTrigger value="social">Liên kết</TabsTrigger>
+            <TabsTrigger value="maintenance" className="gap-1.5">
+              <Wrench className="size-3.5" />
+              Bảo trì
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Tab: Danh tính ── */}
@@ -719,8 +748,131 @@ export default function AdminSettingsPage() {
               onSave={() => updateMutation.mutate(socialDraft)}
             />
           </TabsContent>
+
+          {/* ── Tab: Bảo trì ── */}
+          <TabsContent value="maintenance" className="mt-4 space-y-4">
+            {/* Status banner */}
+            {maintenanceDraft.maintenanceMode ? (
+              <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
+                <ShieldAlert className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  <strong>Chế độ bảo trì đang BẬT.</strong> Tất cả người dùng (ngoại trừ admin) đang bị chặn truy cập và được chuyển hướng đến trang thông báo bảo trì.
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2.5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800/40 dark:bg-green-950/30 dark:text-green-300">
+                <Power className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  Website đang hoạt động bình thường. Tất cả người dùng có thể truy cập.
+                </span>
+              </div>
+            )}
+
+            <Card>
+              <CardHeader className="border-b bg-muted/30 pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Wrench className="size-4 text-muted-foreground" />
+                      Chế độ bảo trì &amp; nâng cấp
+                    </CardTitle>
+                    <CardDescription className="mt-0.5 text-xs">
+                      Khi bật, tất cả người dùng (client, worker) sẽ bị chuyển hướng đến trang thông báo bảo trì. Admin vẫn truy cập bình thường.
+                    </CardDescription>
+                  </div>
+                  <UnsavedBadge dirty={maintenanceDirty} />
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-6 pt-5">
+                {/* Toggle */}
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="maintenance-toggle" className="cursor-pointer text-sm font-medium">
+                      Bật chế độ bảo trì
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Người dùng sẽ thấy trang thông báo thay vì nội dung website.
+                    </p>
+                  </div>
+                  <Switch
+                    id="maintenance-toggle"
+                    checked={maintenanceDraft.maintenanceMode}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setShowMaintenanceDialog(true)
+                      } else {
+                        setMaintenanceDraft((d) => ({ ...d, maintenanceMode: false }))
+                      }
+                    }}
+                    className="data-[state=checked]:bg-red-500"
+                  />
+                </div>
+
+                {/* Message */}
+                <FieldRow
+                  label="Thông báo bảo trì"
+                  hint="Nội dung hiển thị cho người dùng trên trang bảo trì. Tối đa 500 ký tự."
+                >
+                  <Textarea
+                    rows={3}
+                    maxLength={500}
+                    placeholder="Hệ thống đang được bảo trì và nâng cấp. Vui lòng quay lại sau."
+                    value={maintenanceDraft.maintenanceMessage}
+                    onChange={(e) =>
+                      setMaintenanceDraft((d) => ({
+                        ...d,
+                        maintenanceMessage: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-right text-xs text-muted-foreground">
+                    {maintenanceDraft.maintenanceMessage.length}/500
+                  </p>
+                </FieldRow>
+              </CardContent>
+            </Card>
+
+            <SaveBar
+              dirty={maintenanceDirty}
+              saving={maintenanceMutation.isPending}
+              onSave={() => maintenanceMutation.mutate(maintenanceDraft)}
+            />
+          </TabsContent>
         </Tabs>
       </div>
+
+      {/* Maintenance mode confirmation dialog */}
+      <Dialog open={showMaintenanceDialog} onOpenChange={setShowMaintenanceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <ShieldAlert className="size-5" />
+              Bật chế độ bảo trì?
+            </DialogTitle>
+            <DialogDescription>
+              Tất cả người dùng (client, worker) sẽ ngay lập tức bị chặn truy cập và chuyển hướng đến trang thông báo bảo trì. <strong>Admin vẫn truy cập bình thường.</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowMaintenanceDialog(false)}
+            >
+              Huỷ
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setMaintenanceDraft((d) => ({ ...d, maintenanceMode: true }))
+                setShowMaintenanceDialog(false)
+              }}
+            >
+              <Wrench className="size-4" />
+              Bật bảo trì
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reset confirmation dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>

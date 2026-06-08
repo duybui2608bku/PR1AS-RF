@@ -18,4 +18,6 @@ export const updateSiteSettingsSchema = z.object({
   twitter: urlOrEmpty,
   zalo: urlOrEmpty,
   github: urlOrEmpty,
+  maintenanceMode: z.boolean().optional(),
+  maintenanceMessage: textField(500),
 });

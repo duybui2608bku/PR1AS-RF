@@ -319,6 +319,7 @@ export const PRICING_MESSAGES = {
   PRICING_PLAN_ALREADY_ACTIVE_OR_HIGHER:
     "Cannot downgrade to a lower plan; renewals must target the same or a higher plan",
   PRICING_PACKAGE_NOT_AVAILABLE: "Target pricing package is not available",
+  PRICING_PAYMENT_CREATED: "Pricing payment QR created successfully",
 } as const;
 
 export const REPUTATION_MESSAGES = {

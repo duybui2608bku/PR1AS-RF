@@ -47,6 +47,25 @@ export type UpgradePricingPayload = {
   idempotency_key?: string
 }
 
+export type BuyPricingPayload = {
+  target_plan_code: Exclude<PricingPlanCode, "standard">
+  duration_months?: number
+}
+
+export type PricingPaymentResponse = {
+  payment_url: string
+  qr_url: string
+  transaction_id: string
+  payment_code: string
+  payment_content: string
+  bank_account_number: string
+  bank_name: string
+  amount: number
+  target_plan_code: string
+  duration_months: number
+  package_display_name: string
+}
+
 export type PricingPackagePayload = {
   package_code: PricingPlanCode
   display_name: string
@@ -113,10 +132,22 @@ const deletePackage = async (id: string) => {
   return response.data.data
 }
 
+const buyPricing = async (payload: BuyPricingPayload) => {
+  const response = await api.post<ApiResponse<PricingPaymentResponse>>(
+    "/pricing/buy",
+    {
+      duration_months: 1,
+      ...payload,
+    }
+  )
+  return response.data.data
+}
+
 export const pricingService = {
   getPublicPackages,
   getMyPricing,
   upgrade,
+  buyPricing,
   getAdminPackages,
   createPackage,
   updatePackage,

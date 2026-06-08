@@ -41,3 +41,28 @@ export function useResetSiteSettings() {
     onError: () => toast.error("Không thể đặt lại cài đặt."),
   })
 }
+
+export function useToggleMaintenanceMode() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      maintenanceMode,
+      maintenanceMessage,
+    }: {
+      maintenanceMode: boolean
+      maintenanceMessage: string
+    }) =>
+      Promise.resolve(
+        siteSettingsService.save({ maintenanceMode, maintenanceMessage })
+      ),
+    onSuccess: (_, variables) => {
+      if (variables.maintenanceMode) {
+        toast.warning("Chế độ bảo trì đã được BẬT. Người dùng sẽ bị chặn truy cập.")
+      } else {
+        toast.success("Chế độ bảo trì đã được TẮT. Website hoạt động bình thường.")
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.siteSettings.all })
+    },
+    onError: () => toast.error("Không thể cập nhật trạng thái bảo trì."),
+  })
+}

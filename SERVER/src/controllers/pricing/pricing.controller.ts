@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import { pricingService } from "../../services/pricing";
+import { walletService } from "../../services/wallet";
 import { COMMON_MESSAGES, PRICING_MESSAGES } from "../../constants/messages";
 import { R, validateWithSchema } from "../../utils";
 import {
+  buyPricingSchema,
   createPricingPackageSchema,
   pricingPackageIdParamSchema,
   upgradePricingSchema,
@@ -27,6 +29,20 @@ export class PricingController {
     );
     const pricing = await pricingService.upgradePricing(userId, payload);
     R.success(res, pricing, PRICING_MESSAGES.PRICING_UPGRADED, req);
+  }
+
+  async buyPricing(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const payload = validateWithSchema(
+      buyPricingSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await walletService.createPricingPayment(userId, {
+      target_plan_code: payload.target_plan_code,
+      duration_months: payload.duration_months,
+    });
+    R.success(res, result, PRICING_MESSAGES.PRICING_PAYMENT_CREATED, req);
   }
 
   async getPublicPackages(req: Request, res: Response): Promise<void> {

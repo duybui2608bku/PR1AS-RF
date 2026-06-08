@@ -24,6 +24,13 @@ router.post(
   asyncHandler(pricingController.upgradePricing.bind(pricingController))
 );
 
+router.post(
+  "/buy",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler(pricingController.buyPricing.bind(pricingController))
+);
+
 router.get(
   "/packages/admin",
   authenticate,

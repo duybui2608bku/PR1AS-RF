@@ -21,4 +21,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   twitter: "https://twitter.com/",
   zalo: "https://zalo.me/0909090909",
   github: "https://github.com/",
+  maintenanceMode: false,
+  maintenanceMessage:
+    "Hệ thống đang được bảo trì và nâng cấp. Vui lòng quay lại sau.",
 } as const;

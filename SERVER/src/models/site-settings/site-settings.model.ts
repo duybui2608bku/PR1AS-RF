@@ -71,6 +71,16 @@ const siteSettingsSchema = new Schema<ISiteSettingsDocument>(
       maxlength: 500,
       default: SITE_SETTINGS_DEFAULTS.github,
     },
+    maintenanceMode: {
+      type: Boolean,
+      default: SITE_SETTINGS_DEFAULTS.maintenanceMode,
+    },
+    maintenanceMessage: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: SITE_SETTINGS_DEFAULTS.maintenanceMessage,
+    },
     updatedBy: {
       type: Schema.Types.ObjectId,
       ref: modelsName.USER,

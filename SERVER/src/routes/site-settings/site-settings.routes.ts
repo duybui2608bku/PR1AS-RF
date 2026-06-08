@@ -14,6 +14,14 @@ router.get(
   )
 );
 
+// Public — lightweight endpoint for middleware maintenance check
+router.get(
+  "/maintenance",
+  asyncHandler(
+    siteSettingsController.getMaintenanceStatus.bind(siteSettingsController)
+  )
+);
+
 // Admin only — partial update
 router.patch(
   "/",

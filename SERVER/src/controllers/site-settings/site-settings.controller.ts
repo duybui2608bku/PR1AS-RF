@@ -28,6 +28,11 @@ export class SiteSettingsController {
     const settings = await siteSettingsService.reset(adminId);
     R.success(res, settings, SITE_SETTINGS_MESSAGES.RESET, req);
   }
+
+  async getMaintenanceStatus(req: Request, res: Response): Promise<void> {
+    const status = await siteSettingsService.getMaintenanceStatus();
+    R.success(res, status, SITE_SETTINGS_MESSAGES.FETCHED, req);
+  }
 }
 
 export const siteSettingsController = new SiteSettingsController();

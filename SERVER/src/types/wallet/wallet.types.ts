@@ -16,6 +16,13 @@ export interface IWallet {
 
 export interface IWalletDocument extends IWallet, Document {}
 
+export type TransactionPurpose = "deposit" | "pricing_upgrade";
+
+export interface PricingUpgradePurposeMeta {
+  target_plan_code: string;
+  duration_months: number;
+}
+
 export interface IWalletTransaction {
   user_id: Types.ObjectId;
   type: TransactionType;
@@ -43,6 +50,8 @@ export interface IWalletTransaction {
   sepay_description?: string;
   description?: string;
   currency: string;
+  purpose?: TransactionPurpose;
+  purpose_metadata?: PricingUpgradePurposeMeta | Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
 }
@@ -63,6 +72,17 @@ export interface CreateDepositResponse {
   bank_account_number: string;
   bank_name: string;
   amount: number;
+}
+
+export interface CreatePricingPaymentRequest {
+  target_plan_code: string;
+  duration_months: number;
+}
+
+export interface CreatePricingPaymentResponse extends CreateDepositResponse {
+  target_plan_code: string;
+  duration_months: number;
+  package_display_name: string;
 }
 
 export interface SePayWebhookRequest {

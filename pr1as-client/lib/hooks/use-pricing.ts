@@ -8,6 +8,7 @@ import {
   pricingService,
   type PricingMeResponse,
   type UpgradePricingPayload,
+  type BuyPricingPayload,
   type PricingPackage,
   type PricingPackagePayload,
   type UpdatePricingPackagePayload,
@@ -57,6 +58,12 @@ export function useUpgradePricing() {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       queryClient.invalidateQueries({ queryKey: ["wallet"] })
     },
+  })
+}
+
+export function useBuyPricing() {
+  return useMutation({
+    mutationFn: (payload: BuyPricingPayload) => pricingService.buyPricing(payload),
   })
 }
 

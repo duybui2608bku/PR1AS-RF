@@ -53,3 +53,12 @@ export const upgradePricingSchema = z.object({
   duration_months: z.number().int().min(1).max(24).default(1),
   idempotency_key: z.string().trim().min(8).max(128).optional(),
 });
+
+export const buyPricingSchema = z.object({
+  target_plan_code: z
+    .nativeEnum(PricingPlanCode)
+    .refine((v) => v !== PricingPlanCode.STANDARD, {
+      message: "Cannot purchase the free plan",
+    }),
+  duration_months: z.number().int().min(1).max(24).default(1),
+});

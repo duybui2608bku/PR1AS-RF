@@ -6,11 +6,14 @@ import { userRepository } from "../../repositories/auth/user.repository";
 import {
   CreateDepositRequest,
   CreateDepositResponse,
+  CreatePricingPaymentRequest,
+  CreatePricingPaymentResponse,
   WalletBalanceResponse,
   TransactionHistoryQuery,
   TransactionHistoryResponse,
   SePayWebhookRequest,
   SePayWebhookResponse,
+  PricingUpgradePurposeMeta,
 } from "../../types/wallet";
 import {
   TransactionType,
@@ -21,7 +24,7 @@ import {
   SePayTransferType,
 } from "../../constants/wallet";
 import { AppError } from "../../utils/AppError";
-import { WALLET_MESSAGES } from "../../constants/messages";
+import { PRICING_MESSAGES, WALLET_MESSAGES } from "../../constants/messages";
 import { notificationEventService } from "../notification";
 import { NotificationType } from "../../constants/notification";
 import { logger } from "../../utils/logger";
@@ -29,6 +32,9 @@ import { config } from "../../config";
 import crypto from "crypto";
 import { SEPAY_CONSTANTS } from "../../constants/wallet";
 import mongoose from "mongoose";
+import { pricingService } from "../pricing/pricing.service";
+import { PricingPlanCode } from "../../constants/pricing";
+import { PricingPackage } from "../../models/pricing";
 
 export class UserWalletService {
   async createDepositTransaction(
@@ -88,6 +94,84 @@ export class UserWalletService {
       bank_account_number: config.sepay.bankAccountNumber,
       bank_name: config.sepay.bankName,
       amount,
+    };
+  }
+
+  async createPricingPayment(
+    userId: string,
+    request: CreatePricingPaymentRequest
+  ): Promise<CreatePricingPaymentResponse> {
+    const { target_plan_code, duration_months } = request;
+
+    if (
+      target_plan_code === PricingPlanCode.STANDARD ||
+      !Object.values(PricingPlanCode).includes(
+        target_plan_code as PricingPlanCode
+      )
+    ) {
+      throw AppError.badRequest(PRICING_MESSAGES.PRICING_INVALID_TARGET_PLAN);
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw AppError.notFound(WALLET_MESSAGES.WALLET_NOT_FOUND);
+    }
+
+    await pricingService.ensureDefaultPackages();
+    const targetPackage = await PricingPackage.findOne({
+      package_code: target_plan_code as PricingPlanCode,
+      is_active: true,
+    });
+    if (!targetPackage) {
+      throw AppError.badRequest(PRICING_MESSAGES.PRICING_PACKAGE_NOT_AVAILABLE);
+    }
+
+    const amount = targetPackage.price * duration_months;
+
+    const paymentCode = await this.generateSePayPaymentCode();
+    const paymentContent = paymentCode;
+    const qrUrl = this.buildSePayQrUrl(amount, paymentContent);
+
+    const transaction = await walletRepository.create({
+      user_id: userId,
+      type: TransactionType.DEPOSIT,
+      amount,
+      status: TransactionStatus.PENDING,
+      gateway: PaymentGateway.SEPAY,
+      payment_code: paymentCode,
+      payment_content: paymentContent,
+      qr_url: qrUrl,
+      bank_account_number: config.sepay.bankAccountNumber,
+      bank_name: config.sepay.bankName,
+      description: `Mua gói ${targetPackage.display_name} (${duration_months} tháng) - ${paymentCode}`,
+      purpose: "pricing_upgrade",
+      purpose_metadata: {
+        target_plan_code,
+        duration_months,
+      },
+    });
+
+    logger.info("Created SePay pricing payment transaction", {
+      transaction_id: transaction._id.toString(),
+      user_id: userId,
+      amount,
+      target_plan_code,
+      duration_months,
+      payment_code: paymentCode,
+    });
+
+    return {
+      payment_url: qrUrl,
+      qr_url: qrUrl,
+      transaction_id: transaction._id.toString(),
+      payment_code: paymentCode,
+      payment_content: paymentContent,
+      bank_account_number: config.sepay.bankAccountNumber,
+      bank_name: config.sepay.bankName,
+      amount,
+      target_plan_code,
+      duration_months,
+      package_display_name: targetPackage.display_name,
     };
   }
 
@@ -272,6 +356,15 @@ export class UserWalletService {
         logger.error("Wallet deposit success notification failed:", error)
       );
 
+    if (transaction.purpose === "pricing_upgrade" && transaction.purpose_metadata) {
+      const meta = transaction.purpose_metadata as PricingUpgradePurposeMeta;
+      void this.activatePricingPlanAfterPayment(
+        userId,
+        transaction._id.toString(),
+        meta
+      );
+    }
+
     return {
       success: true,
       status: "processed",
@@ -279,6 +372,46 @@ export class UserWalletService {
       transaction_id: transaction._id.toString(),
       balance: creditedBalance,
     };
+  }
+
+  private async activatePricingPlanAfterPayment(
+    userId: string,
+    transactionId: string,
+    meta: PricingUpgradePurposeMeta
+  ): Promise<void> {
+    try {
+      await pricingService.upgradePricing(userId, {
+        target_plan_code: meta.target_plan_code as Exclude<PricingPlanCode, PricingPlanCode.STANDARD>,
+        duration_months: meta.duration_months ?? 1,
+        idempotency_key: `qr-pay:${transactionId}`,
+      });
+
+      logger.info("Pricing plan auto-activated after QR payment", {
+        user_id: userId,
+        transaction_id: transactionId,
+        target_plan_code: meta.target_plan_code,
+      });
+
+      void notificationEventService
+        .walletEvent({
+          userId,
+          type: NotificationType.WALLET_DEPOSIT_SUCCESS,
+          title: "Gói cước đã được kích hoạt",
+          body: `Gói ${meta.target_plan_code} của bạn đã được kích hoạt thành công.`,
+          data: { transaction_id: transactionId, plan: meta.target_plan_code },
+          dedupeKey: `pricing-activated:${transactionId}`,
+        })
+        .catch((err) =>
+          logger.error("Pricing activation notification failed:", err)
+        );
+    } catch (error) {
+      logger.error("Failed to auto-activate pricing plan after QR payment", {
+        user_id: userId,
+        transaction_id: transactionId,
+        meta,
+        error,
+      });
+    }
   }
 
   private async generateSePayPaymentCode(): Promise<string> {
