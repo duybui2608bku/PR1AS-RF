@@ -369,7 +369,7 @@ export function SiteHeader() {
             )}
           </Button>
           {menuOpen ? (
-            <div className="absolute right-0 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
+            <div className="absolute right-0 mt-2 z-50 w-56 rounded-md border bg-background p-1 shadow-lg">
               <div className="px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? "Khách"}
               </div>
