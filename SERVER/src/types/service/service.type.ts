@@ -22,8 +22,8 @@ export interface IServiceDocument extends Document {
     ko?: string;
   };
   description: {
-    en: string;
-    vi: string;
+    en?: string;
+    vi?: string;
     zh?: string;
     ko?: string;
   };

@@ -9,6 +9,7 @@ import {
   Loader2,
   LogOut,
   MessageCircle,
+  Search,
   Settings,
   User,
   Wallet,
@@ -25,13 +26,23 @@ import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
-import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
+import type { ServiceTab } from "@/lib/home/home-search-params"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
 import { useSiteSettings } from "@/lib/hooks/use-site-settings"
-import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
-import { useAuthStore, useIsSessionLoaded, type AuthUser } from "@/lib/store/auth-store"
+import {
+  getRoleDefaultRoute,
+  getRoleRoute,
+  type RoleRouteKey,
+} from "@/lib/navigation/role-routes"
+import {
+  useAuthStore,
+  useIsSessionLoaded,
+  type AuthUser,
+} from "@/lib/store/auth-store"
+import { useServicesHeaderStore } from "@/lib/store/services-header-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -76,7 +87,7 @@ const resolveMenuHref = (
   routeKey: RoleRouteKey,
   fallbackHref: string,
   user: AuthUser | null | undefined,
-  activeRole: string | null | undefined,
+  activeRole: string | null | undefined
 ) => {
   if (routeKey === "profile" && isWorkerRoleActive(user) && user?.id) {
     return `/worker/${user.id}`
@@ -92,6 +103,15 @@ const PUBLIC_NAV_TABS = [
   { href: "/services", label: "Dịch vụ" },
   { href: "/posts", label: "Bài viết" },
 ] as const
+
+const HEADER_SERVICE_TABS: {
+  value: ServiceTab
+  label: string
+  emoji: string
+}[] = [
+  { value: "ASSISTANCE", label: "Trợ lý", emoji: "🔔" },
+  { value: "COMPANIONSHIP", label: "Đồng hành", emoji: "🤝" },
+]
 
 export function SiteHeader() {
   const router = useRouter()
@@ -115,7 +135,9 @@ export function SiteHeader() {
       : (userRoles[0] ?? user?.role)
   const activeRole = lastActiveRole ?? fallbackRole
   const isWorkerActive = activeRole?.toLowerCase() === "worker"
-  const hasWorkerRole = userRoles.some((role) => role.toLowerCase() === "worker")
+  const hasWorkerRole = userRoles.some(
+    (role) => role.toLowerCase() === "worker"
+  )
   const homeHref = getRoleDefaultRoute(activeRole)
 
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
@@ -143,6 +165,65 @@ export function SiteHeader() {
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
 
+  const isServicesPage = pathname === "/services"
+  const isServicesPageRef = React.useRef(isServicesPage)
+  isServicesPageRef.current = isServicesPage
+
+  const {
+    activeTab,
+    isHeaderExpanded,
+    switchTabCallback,
+    selectedLocationLabel,
+    scheduledAtLabel,
+    setHeaderExpanded,
+    setFilterSlotEl,
+  } = useServicesHeaderStore()
+  const showTabNav = isServicesPage && isHeaderExpanded
+  const showCompactPill = isServicesPage && !isHeaderExpanded
+
+  // Manual expand: user clicked compact pill while scrolled → expand in-place
+  const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
+  const isManuallyExpandedRef = React.useRef(false)
+  const servicesHeaderRef = React.useRef<HTMLDivElement>(null)
+
+  const expandHeader = React.useCallback(() => {
+    isManuallyExpandedRef.current = true
+    setIsManuallyExpanded(true)
+    setHeaderExpanded(true)
+  }, [setHeaderExpanded])
+
+  const collapseManual = React.useCallback(() => {
+    isManuallyExpandedRef.current = false
+    setIsManuallyExpanded(false)
+    setHeaderExpanded(false)
+  }, [setHeaderExpanded])
+
+  // Click outside services header while manually expanded → collapse
+  useClickOutside(
+    servicesHeaderRef,
+    (event) => {
+      // Don't collapse when clicking inside Radix popovers/dialogs (portaled to body)
+      const target = event.target as Element | null
+      if (target?.closest("[data-radix-popper-content-wrapper]")) return
+      if (target?.closest("[data-radix-portal]")) return
+      collapseManual()
+    },
+    isServicesPage && isManuallyExpanded
+  )
+
+  // Filter slot ref — portaled into by HomeHero's desktop form
+  const filterSlotRef = React.useRef<HTMLDivElement>(null)
+  React.useLayoutEffect(() => {
+    if (!isServicesPage) return
+    setFilterSlotEl(filterSlotRef.current)
+    return () => setFilterSlotEl(null)
+  }, [isServicesPage, setFilterSlotEl])
+
+  // Init header expansion state on services page
+  React.useEffect(() => {
+    if (isServicesPage) setHeaderExpanded(window.scrollY < 80)
+  }, [isServicesPage, setHeaderExpanded])
+
   // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   // Chỉ áp dụng < md (mobile); desktop header luôn hiện.
   const [hidden, setHidden] = React.useState(false)
@@ -157,6 +238,20 @@ export function SiteHeader() {
       } else if (Math.abs(diff) > 6) {
         setHidden(diff > 0) // xuống → ẩn, lên → hiện
       }
+      if (isServicesPageRef.current) {
+        if (y < 80) {
+          // Scrolled back to top: auto-expand, clear manual flag
+          if (isManuallyExpandedRef.current) {
+            isManuallyExpandedRef.current = false
+            setIsManuallyExpanded(false)
+          }
+          setHeaderExpanded(true)
+        } else if (!isManuallyExpandedRef.current) {
+          // Scrolled down, not manually expanded: collapse
+          setHeaderExpanded(false)
+        }
+        // Scrolled down + manually expanded → keep expanded (do nothing)
+      }
       lastY = y
       ticking = false
     }
@@ -168,7 +263,7 @@ export function SiteHeader() {
     }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [setHeaderExpanded])
 
   // Đóng menu user khi header bị ẩn để tránh dropdown lơ lửng
   React.useEffect(() => {
@@ -221,141 +316,276 @@ export function SiteHeader() {
     }
   }
 
+  // Right-side actions (shared between services and non-services layout)
+  const rightActions = (
+    <div className="flex items-center gap-2">
+      {isAuthenticated ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSwitchRole}
+          disabled={switchRoleMutation.isPending}
+        >
+          {switchRoleMutation.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : null}
+          <span>{switchRoleLabel}</span>
+        </Button>
+      ) : null}
+      <ThemeToggle />
+      {isAuthenticated ? (
+        <ErrorBoundary fallback={null}>
+          <NotificationBell />
+        </ErrorBoundary>
+      ) : null}
+      {isAuthenticated ? (
+        <div ref={menuContainerRef} className="relative hidden md:block">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Mở menu người dùng"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            {user?.avatar ? (
+              <Image
+                src={user.avatar}
+                alt={user.email ?? "User avatar"}
+                width={32}
+                height={32}
+                className={cn(
+                  "size-8 rounded-full object-cover",
+                  getPlanRingClass(user?.meta_data?.pricing_plan_code)
+                )}
+              />
+            ) : (
+              <div
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full bg-muted",
+                  getPlanRingClass(user?.meta_data?.pricing_plan_code)
+                )}
+              >
+                <User className="size-4" />
+              </div>
+            )}
+          </Button>
+          {menuOpen ? (
+            <div className="absolute right-0 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
+              <div className="px-3 py-2 text-xs text-muted-foreground">
+                {user?.email ?? "Khách"}
+              </div>
+              {userMenuItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <item.icon className="size-4" />
+                  {item.label}
+                </Link>
+              ))}
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent dark:text-red-400"
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+              >
+                {logoutMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
+                Đăng xuất
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : !isSessionLoaded ? (
+        <div className="hidden items-center gap-2 md:flex">
+          <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+          <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLoginClick}
+            className="hidden md:inline-flex"
+          >
+            Đăng nhập
+          </Button>
+          <Button size="sm" asChild className="hidden md:inline-flex">
+            <Link href="/register">Đăng ký</Link>
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <header
       className={cn(
-        "pt-safe px-safe sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
-        hidden && "max-md:-translate-y-full",
+        "sticky top-0 z-40 w-full border-b bg-background/80 pt-safe px-safe backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
+        hidden && "max-md:-translate-y-full"
       )}
     >
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <Link href={homeHref} className="flex items-center gap-2 font-semibold">
-            {brandLogo ? (
-              <Image
-                src={brandLogo}
-                alt={brandName}
-                width={120}
-                height={32}
-                priority
-                className="h-8 w-auto object-contain"
-              />
-            ) : (
-              brandName
-            )}
-          </Link>
-          {!isAuthenticated && (
-            <nav className="hidden md:flex items-center gap-1">
-              {PUBLIC_NAV_TABS.map((tab) => (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-sm transition-colors",
-                    pathname === tab.href
-                      ? "bg-accent font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  {tab.label}
-                </Link>
-              ))}
-            </nav>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSwitchRole}
-              disabled={switchRoleMutation.isPending}
+      {isServicesPage ? (
+        /* Services page: 2-row expandable header */
+        <div ref={servicesHeaderRef}>
+          {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
+          <div className="container mx-auto grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:px-6">
+            {/* Left: logo */}
+            <Link
+              href={homeHref}
+              className="flex shrink-0 items-center gap-2 font-semibold"
             >
-              {switchRoleMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              <span>{switchRoleLabel}</span>
-            </Button>
-          ) : null}
-          <ThemeToggle />
-          {isAuthenticated ? (
-            <ErrorBoundary fallback={null}>
-              <NotificationBell />
-            </ErrorBoundary>
-          ) : null}
-          {isAuthenticated ? (
-            <div ref={menuContainerRef} className="relative hidden md:block">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Mở menu người dùng"
-                onClick={() => setMenuOpen((value) => !value)}
-              >
-                {user?.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.email ?? "User avatar"}
-                    width={32}
-                    height={32}
-                    className={cn("size-8 rounded-full object-cover", getPlanRingClass(user?.meta_data?.pricing_plan_code))}
-                  />
-                ) : (
-                  <div className={cn("flex size-8 items-center justify-center rounded-full bg-muted", getPlanRingClass(user?.meta_data?.pricing_plan_code))}>
-                    <User className="size-4" />
-                  </div>
+              {brandLogo ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto object-contain"
+                />
+              ) : (
+                brandName
+              )}
+            </Link>
+
+            {/* Center: tab nav (expanded) ↔ compact pill (collapsed) */}
+            <div className="relative hidden items-center justify-center md:flex">
+              {/* Tab navigation */}
+              <div
+                className={cn(
+                  "flex items-center gap-8 transition-all duration-300",
+                  showTabNav
+                    ? "pointer-events-auto translate-y-0 opacity-100"
+                    : "pointer-events-none absolute -translate-y-1 opacity-0"
                 )}
-              </Button>
-              {menuOpen ? (
-                <div className="absolute right-0 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
-                  <div className="px-3 py-2 text-xs text-muted-foreground">
-                    {user?.email ?? "Khách"}
-                  </div>
-                  {userMenuItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <item.icon className="size-4" />
-                      {item.label}
-                    </Link>
-                  ))}
+              >
+                {HEADER_SERVICE_TABS.map((tab, i) => (
                   <button
+                    key={tab.value}
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-accent dark:text-red-400"
-                    onClick={handleLogout}
-                    disabled={logoutMutation.isPending}
-                  >
-                    {logoutMutation.isPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <LogOut className="size-4" />
+                    onClick={() => switchTabCallback?.(tab.value)}
+                    aria-pressed={activeTab === tab.value}
+                    className={cn(
+                      "flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
+                      activeTab === tab.value
+                        ? "border-foreground text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
-                    Đăng xuất
+                  >
+                    <span
+                      className="inline-block text-2xl leading-none select-none"
+                      style={{
+                        animation:
+                          "tab-icon-bounce 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                        animationDelay: `${i * 120}ms`,
+                        opacity: 0,
+                      }}
+                    >
+                      {tab.emoji}
+                    </span>
+                    <span>{tab.label}</span>
                   </button>
+                ))}
+              </div>
+
+              {/* Compact pill — visible when scrolled, click expands header in-place */}
+              <button
+                type="button"
+                onClick={expandHeader}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
+                  "text-sm transition-all duration-300",
+                  showCompactPill
+                    ? "pointer-events-auto scale-100 opacity-100"
+                    : "pointer-events-none absolute scale-95 opacity-0"
+                )}
+              >
+                <span className="font-medium text-foreground">
+                  {selectedLocationLabel ?? "Địa điểm bất kỳ"}
+                </span>
+                <span className="h-4 w-px shrink-0 bg-border" />
+                <span className="text-muted-foreground">
+                  {scheduledAtLabel ?? "Thời gian"}
+                </span>
+                <span className="h-4 w-px shrink-0 bg-border" />
+                <span className="text-muted-foreground">
+                  {activeTab === "COMPANIONSHIP" ? "Đồng hành" : "Trợ lý"}
+                </span>
+                <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Search className="size-3.5" />
                 </div>
-              ) : null}
+              </button>
             </div>
-          ) : !isSessionLoaded ? (
-            <div className="hidden md:flex items-center gap-2">
-              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
-              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleLoginClick} className="hidden md:inline-flex">
-                Đăng nhập
-              </Button>
-              <Button size="sm" asChild className="hidden md:inline-flex">
-                <Link href="/register">Đăng ký</Link>
-              </Button>
-            </div>
-          )}
+
+            {/* Right: user actions */}
+            {rightActions}
+          </div>
+
+          {/* Row 2: Filter form slot — portal destination, animated zoom collapse on scroll */}
+          <div
+            className="hidden overflow-hidden md:block"
+            style={{
+              maxHeight: isHeaderExpanded ? "96px" : "0px",
+              opacity: isHeaderExpanded ? 1 : 0,
+              transform: isHeaderExpanded ? "scaleY(1)" : "scaleY(0.75)",
+              transformOrigin: "top center",
+              transition:
+                "max-height 0.4s ease-in-out, opacity 0.35s ease-in-out, transform 0.4s ease-in-out",
+              pointerEvents: isHeaderExpanded ? "auto" : "none",
+            }}
+          >
+            <div ref={filterSlotRef} />
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Non-services pages: original two-column layout */
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-6">
+            <Link
+              href={homeHref}
+              className="flex items-center gap-2 font-semibold"
+            >
+              {brandLogo ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto object-contain"
+                />
+              ) : (
+                brandName
+              )}
+            </Link>
+            {!isAuthenticated && (
+              <nav className="hidden items-center gap-1 md:flex">
+                {PUBLIC_NAV_TABS.map((tab) => (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm transition-colors",
+                      pathname === tab.href
+                        ? "bg-accent font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                ))}
+              </nav>
+            )}
+          </div>
+          {rightActions}
+        </div>
+      )}
     </header>
   )
 }
-

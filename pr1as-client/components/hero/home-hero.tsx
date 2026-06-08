@@ -1,17 +1,8 @@
 "use client"
 import * as React from "react"
-import dynamic from "next/dynamic"
+import { createPortal } from "react-dom"
 import { useQuery } from "@tanstack/react-query"
 
-const DotLottieReact = dynamic(
-  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="size-full animate-pulse rounded-2xl bg-muted/30" />
-    ),
-  }
-)
 import {
   Briefcase,
   ConciergeBell,
@@ -43,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 import type { ServiceTab } from "@/lib/home/home-search-params"
+import { useServicesHeaderStore } from "@/lib/store/services-header-store"
 import { type LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 
@@ -94,12 +86,7 @@ export function HomeHero({
 
   // Only offer the services that belong to the active tab in the picker.
   const tabServices = React.useMemo(
-    () =>
-      services.filter((s) =>
-        activeTab === "COMPANIONSHIP"
-          ? s.category === "COMPANIONSHIP"
-          : s.category !== "COMPANIONSHIP"
-      ),
+    () => services.filter((s) => s.category === activeTab),
     [services, activeTab]
   )
 
@@ -108,108 +95,93 @@ export function HomeHero({
     onSearchSubmit?.()
   }
 
+  const { filterSlotEl } = useServicesHeaderStore()
+
+  // Desktop search form — portaled into the header filter slot
+  const desktopForm = (
+    <div className="flex justify-center px-4 pt-2 pb-4">
+      <form
+        onSubmit={handleSearch}
+        className={cn(
+          "w-full max-w-3xl bg-background",
+          "rounded-full border border-border shadow-md",
+          "flex flex-row items-stretch p-2"
+        )}
+      >
+        <ServicePickerField
+          services={tabServices}
+          isLoading={isLoading}
+          activeCodes={activeCodes}
+          onToggle={onToggleCode}
+        />
+
+        <Separator
+          orientation="vertical"
+          className="mx-0 h-auto self-stretch"
+        />
+
+        <LocationSearchField
+          label="Địa điểm"
+          placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+          value={selectedLocation}
+          onChange={onSelectedLocationChange}
+          icon={
+            <MapPin className="size-4 shrink-0 text-muted-foreground" />
+          }
+        />
+
+        <Separator
+          orientation="vertical"
+          className="mx-0 h-auto self-stretch"
+        />
+
+        <SearchDateField
+          label="Thời gian"
+          placeholder="Chọn ngày và giờ"
+          value={scheduledAt}
+          onChange={onScheduledAtChange}
+        />
+
+        <div className="flex items-stretch">
+          <Button
+            type="submit"
+            size="lg"
+            className="h-full rounded-full px-6"
+          >
+            <Search className="size-4" />
+            Tìm kiếm
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+
   return (
-    <section>
-      <div className="container mx-auto px-4 py-6 sm:py-14 lg:py-24">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-10 lg:gap-8">
-          <div className="lg:col-span-7">
-            {/* Mobile: collapsed search trigger + classification tabs */}
-            <div className="space-y-5 sm:hidden">
-              <MobileSearch
-                services={tabServices}
-                isLoading={isLoading}
-                activeCodes={activeCodes}
-                onToggleCode={onToggleCode}
-                selectedLocation={selectedLocation}
-                onSelectedLocationChange={onSelectedLocationChange}
-                scheduledAt={scheduledAt}
-                onScheduledAtChange={onScheduledAtChange}
-                onSearchSubmit={onSearchSubmit}
-              />
-              <ServiceTabs
-                activeTab={activeTab}
-                onSwitchTab={onSwitchTab}
-                className="justify-center"
-              />
-            </div>
-
-            {/* Desktop: heading + inline search bar (no classification tabs) */}
-            <div className="hidden sm:block">
-              <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Tìm người đồng hành cho mọi khoảnh khắc
-              </h1>
-              <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg">
-                Trợ lý cá nhân, hướng dẫn viên, người đồng hành — được tuyển
-                chọn và xác minh.
-              </p>
-              <form
-                onSubmit={handleSearch}
-                className={cn(
-                  "mt-6 w-full max-w-3xl bg-background sm:mt-8",
-                  "rounded-2xl border border-border shadow-sm",
-                  "flex flex-row items-stretch gap-0 divide-x divide-none rounded-full p-2"
-                )}
-              >
-                <ServicePickerField
-                  services={services}
-                  isLoading={isLoading}
-                  activeCodes={activeCodes}
-                  onToggle={onToggleCode}
-                />
-
-                <Separator
-                  orientation="vertical"
-                  className="mx-0 h-auto self-stretch"
-                />
-
-                <LocationSearchField
-                  label="Địa điểm"
-                  placeholder="Hà Nội hoặc Phường Cầu Giấy..."
-                  value={selectedLocation}
-                  onChange={onSelectedLocationChange}
-                  icon={
-                    <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                  }
-                />
-
-                <Separator
-                  orientation="vertical"
-                  className="mx-0 h-auto self-stretch"
-                />
-
-                <SearchDateField
-                  label="Thời gian"
-                  placeholder="Chọn ngày và giờ"
-                  value={scheduledAt}
-                  onChange={onScheduledAtChange}
-                />
-
-                <div className="flex items-stretch">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="h-full rounded-xl md:rounded-full md:px-6"
-                  >
-                    <Search className="size-4" />
-                    Tìm kiếm
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div className="hidden lg:col-span-3 lg:block">
-            <div className="relative aspect-square w-full overflow-hidden">
-              <DotLottieReact
-                src="https://lottie.host/4cf55e0b-976f-48f4-a708-af69870a581c/yOVxhyHxDY.lottie"
-                loop
-                autoplay
-              />
-            </div>
-          </div>
+    <>
+      {/* Mobile only: search trigger + tabs */}
+      <div className="sm:hidden container mx-auto px-4 py-4">
+        <div className="space-y-5">
+          <MobileSearch
+            services={tabServices}
+            isLoading={isLoading}
+            activeCodes={activeCodes}
+            onToggleCode={onToggleCode}
+            selectedLocation={selectedLocation}
+            onSelectedLocationChange={onSelectedLocationChange}
+            scheduledAt={scheduledAt}
+            onScheduledAtChange={onScheduledAtChange}
+            onSearchSubmit={onSearchSubmit}
+          />
+          <ServiceTabs
+            activeTab={activeTab}
+            onSwitchTab={onSwitchTab}
+            className="justify-center"
+          />
         </div>
       </div>
-    </section>
+      {/* Desktop form portaled into header filter slot */}
+      {filterSlotEl ? createPortal(desktopForm, filterSlotEl) : null}
+    </>
   )
 }
 
@@ -222,7 +194,7 @@ type ServiceTabsProps = {
 }
 
 const SERVICE_TABS: { value: ServiceTab; label: string; icon: LucideIcon }[] = [
-  { value: "SERVICE", label: "Dịch vụ", icon: ConciergeBell },
+  { value: "ASSISTANCE", label: "Trợ lý", icon: ConciergeBell },
   { value: "COMPANIONSHIP", label: "Đồng hành", icon: HeartHandshake },
 ]
 

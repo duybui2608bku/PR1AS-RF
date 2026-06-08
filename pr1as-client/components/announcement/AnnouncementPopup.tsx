@@ -2,12 +2,6 @@
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import {
-  BottomSheet,
-  BottomSheetContent,
-  BottomSheetTitle,
-} from "@/components/ui/bottom-sheet"
-import { useIsMobile } from "@/lib/hooks/use-is-mobile"
 import { AnnouncementContent } from "./AnnouncementContent"
 import type { Announcement } from "@/services/announcement.service"
 
@@ -18,7 +12,6 @@ interface AnnouncementPopupProps {
 
 export function AnnouncementPopup({ announcement, onDismiss }: AnnouncementPopupProps) {
   const [open, setOpen] = useState(true)
-  const isMobile = useIsMobile()
 
   const handleClose = () => {
     setOpen(false)
@@ -37,23 +30,9 @@ export function AnnouncementPopup({ announcement, onDismiss }: AnnouncementPopup
     </button>
   )
 
-  if (isMobile) {
-    return (
-      <BottomSheet open={open} onOpenChange={(v) => { if (!v && allow_close) handleClose() }}>
-        <BottomSheetContent className="max-h-[90svh] overflow-y-auto p-0">
-          <BottomSheetTitle className="sr-only">{announcement.title}</BottomSheetTitle>
-          <div className="relative">
-            {closeBtn}
-            <AnnouncementContent announcement={announcement} />
-          </div>
-        </BottomSheetContent>
-      </BottomSheet>
-    )
-  }
-
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v && allow_close) handleClose() }}>
-      <DialogContent className="max-h-[90vh] w-fit min-w-0 max-w-[95vw] overflow-y-auto p-0 [&>button]:hidden">
+      <DialogContent className="max-h-[90svh] w-[calc(100%-3rem)] overflow-y-auto p-0 sm:w-fit sm:min-w-0 sm:max-w-[95vw] [&>button]:hidden">
         <DialogTitle className="sr-only">{announcement.title}</DialogTitle>
         <DialogDescription className="sr-only">{announcement.title}</DialogDescription>
         <div className="relative">
