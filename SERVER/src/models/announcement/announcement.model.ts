@@ -10,7 +10,7 @@ import { IAnnouncementDocument } from "../../types/announcement";
 
 const announcementSchema = new Schema<IAnnouncementDocument>(
   {
-    title: { type: String, required: true, trim: true, maxlength: 300 },
+    title: { type: String, default: "", trim: true, maxlength: 300 },
     content: { type: String, required: true },
     images: [{ type: String }],
     display_types: [
