@@ -29,6 +29,7 @@ import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
+import { useSiteSettings } from "@/lib/hooks/use-site-settings"
 import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
 import { useAuthStore, useIsSessionLoaded, type AuthUser } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -101,6 +102,9 @@ export function SiteHeader() {
   const isSessionLoaded = useIsSessionLoaded()
   const logoutMutation = useLogout()
   const switchRoleMutation = useSwitchRole()
+  const { data: siteSettings } = useSiteSettings()
+  const brandName = siteSettings?.name || siteConfig.name
+  const brandLogo = siteSettings?.logoUrl
   const menuContainerRef = React.useRef<HTMLDivElement | null>(null)
 
   const userRoles = user?.roles ?? []
@@ -226,8 +230,19 @@ export function SiteHeader() {
     >
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href={homeHref} className="font-semibold">
-            {siteConfig.name}
+          <Link href={homeHref} className="flex items-center gap-2 font-semibold">
+            {brandLogo ? (
+              <Image
+                src={brandLogo}
+                alt={brandName}
+                width={120}
+                height={32}
+                priority
+                className="h-8 w-auto object-contain"
+              />
+            ) : (
+              brandName
+            )}
           </Link>
           {!isAuthenticated && (
             <nav className="hidden md:flex items-center gap-1">

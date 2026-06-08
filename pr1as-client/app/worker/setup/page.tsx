@@ -1066,7 +1066,7 @@ export default function WorkerSetupPage() {
   if (isLoadingPage) {
     return (
       <SiteLayout>
-        <div className="container mx-auto max-w-2xl px-4 py-6 space-y-4 pb-32">
+        <div className="container mx-auto max-w-2xl px-4 py-6 space-y-4 pb-48 md:pb-28 lg:pb-12">
           <Skeleton className="h-8 w-48 rounded-xl" />
           <Skeleton className="h-2 w-full rounded-full" />
           <Skeleton className="h-52 w-full rounded-2xl" />
@@ -1080,7 +1080,7 @@ export default function WorkerSetupPage() {
   // ─── Main render ─────────────────────────────────────────────────────────────
   return (
     <SiteLayout>
-      <div className="container mx-auto max-w-2xl px-4 pb-32 pt-4">
+      <div className="container mx-auto max-w-2xl px-4 pb-48 pt-4 md:pb-28 lg:pb-12">
         {/* Header */}
         <div className="mb-5 space-y-3">
           <div className="flex items-center gap-2">
@@ -1122,10 +1122,48 @@ export default function WorkerSetupPage() {
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
         </div>
+
+        {/* Desktop navigation — prev/next ở cuối nội dung mỗi bước */}
+        <div className="mt-6 hidden items-center justify-between gap-4 lg:flex">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-1.5 rounded-xl px-5"
+            onClick={handleBack}
+          >
+            <ChevronLeft className="size-4" />
+            {currentStep === 0 ? "Thoát" : "Quay lại"}
+          </Button>
+
+          {currentStep < TOTAL_STEPS - 1 ? (
+            <Button
+              type="button"
+              className="h-11 gap-1.5 rounded-xl px-5"
+              onClick={handleNext}
+            >
+              Tiếp
+              <ChevronRight className="size-4" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="h-11 min-w-[120px] gap-1.5 rounded-xl px-5"
+              onClick={() => void handleSubmit()}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Check className="size-4" />
+              )}
+              Hoàn tất
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Fixed bottom navigation */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm">
+      {/* Fixed bottom navigation — mobile nâng lên trên bottom nav, md sát đáy, lg ẩn (dùng nút 2 bên) */}
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+var(--bottom-toolbar-offset,0px))] z-40 border-t border-border bg-background/95 backdrop-blur-sm md:bottom-0 lg:hidden">
         <div className="container mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3">
           <Button
             type="button"
@@ -1186,6 +1224,7 @@ export default function WorkerSetupPage() {
           )}
         </div>
       </div>
+
 
       {/* Location picker BottomSheet */}
       <BottomSheet

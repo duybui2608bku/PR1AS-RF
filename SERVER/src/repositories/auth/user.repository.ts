@@ -245,32 +245,57 @@ export class UserRepository {
     profileFields: Record<string, unknown>,
     options?: UpdateWorkerProfileOptions
   ): Promise<IUserDocument | null> {
-    const $set: Record<string, unknown> = {};
+    const profileSet: Record<string, unknown> = {};
 
-    // Dot-notation: update only provided fields, never wipe existing subdoc data.
     // Whitelist guards against arbitrary-key injection from internal callers.
     for (const [key, val] of Object.entries(profileFields)) {
       if (val !== undefined && WORKER_PROFILE_ALLOWED_FIELDS.has(key)) {
-        $set[`worker_profile.${key}`] = val;
+        profileSet[key] = val;
       }
     }
 
+    // Aggregation-pipeline update so the subdocument can be initialized when it
+    // is null. A plain dot-notation $set ("worker_profile.<field>") throws
+    // `Cannot create field '<field>' in element {worker_profile: null}` for any
+    // user who has never set up a profile (e.g. first-time become-worker — every
+    // fresh account starts with worker_profile: null). $mergeObjects + $ifNull
+    // merges only the provided fields and never wipes existing subdoc data.
+    // $literal keeps user-supplied values (which may start with "$") as data
+    // instead of being evaluated as aggregation field paths.
+    const setStage: Record<string, unknown> = {};
+
+    if (Object.keys(profileSet).length > 0) {
+      setStage.worker_profile = {
+        $mergeObjects: [
+          { $ifNull: ["$worker_profile", {}] },
+          { $literal: profileSet },
+        ],
+      };
+    }
+
     if (options?.coords) {
-      $set["coords.latitude"] = options.coords.latitude;
-      $set["coords.longitude"] = options.coords.longitude;
+      setStage.coords = { $literal: options.coords };
     }
 
     if (options?.setLastActiveRole) {
-      $set.last_active_role = options.setLastActiveRole;
+      setStage.last_active_role = options.setLastActiveRole;
     }
-
-    const update: Record<string, unknown> = { $set };
 
     if (options?.addWorkerRole) {
-      update.$addToSet = { roles: UserRole.WORKER };
+      setStage.roles = {
+        $setUnion: [{ $ifNull: ["$roles", []] }, [UserRole.WORKER]],
+      };
     }
 
-    return User.findByIdAndUpdate(id, update, { new: true });
+    if (Object.keys(setStage).length === 0) {
+      return User.findById(id);
+    }
+
+    // Mongoose 9 requires opting into aggregation-pipeline updates explicitly.
+    return User.findByIdAndUpdate(id, [{ $set: setStage }], {
+      new: true,
+      updatePipeline: true,
+    });
   }
 
   async updateBasicProfile(

@@ -376,7 +376,7 @@ export function TipTapEditor({
     editorProps: {
       attributes: {
         class: cn(
-          "prose prose-sm max-w-none focus:outline-none px-3 py-2",
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none px-3 py-2",
           "[&_img]:max-w-full [&_img]:rounded-md [&_a]:text-primary [&_a]:underline"
         ),
       },

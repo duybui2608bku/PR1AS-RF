@@ -170,7 +170,13 @@ export default function WorkerProfilePage({
   return (
     <SiteLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div
+          className={
+            isOwnProfile
+              ? "grid grid-cols-1 gap-6"
+              : "grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"
+          }
+        >
           <div className="min-w-0">
             {isLoading ? <WorkerProfileSkeleton /> : null}
 
@@ -239,11 +245,13 @@ export default function WorkerProfilePage({
               </div>
             ) : null}
           </div>
-          <aside className="min-w-0">
-            <ErrorBoundary resetKeys={[id]} fallback={null}>
-              <WorkerSuggestions workerId={id} />
-            </ErrorBoundary>
-          </aside>
+          {!isOwnProfile ? (
+            <aside className="min-w-0">
+              <ErrorBoundary resetKeys={[id]} fallback={null}>
+                <WorkerSuggestions workerId={id} />
+              </ErrorBoundary>
+            </aside>
+          ) : null}
         </div>
       </div>
       <Dialog open={reportOpen} onOpenChange={handleReportDialogOpenChange}>

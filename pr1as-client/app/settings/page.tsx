@@ -1117,7 +1117,7 @@ export default function SettingsPage() {
   const ActiveIcon = activeMeta.icon
 
   return (
-    <div className="mx-auto w-full max-w-5xl pb-10 sm:px-4 sm:py-8">
+    <div className="container mx-auto w-full pb-10 sm:px-4 sm:py-8">
       {/* Tiêu đề trang — ẩn khi đang ở màn chi tiết trên mobile */}
       <div
         className={cn(
@@ -1135,7 +1135,7 @@ export default function SettingsPage() {
         {/* DANH SÁCH MỤC — list trên mobile, sidebar trên desktop */}
         <aside className={cn(activeSection !== null && "max-lg:hidden")}>
           <nav className="space-y-6 lg:sticky lg:top-20 lg:space-y-5">
-            <div>
+            <div className="lg:hidden">
               <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
                 Hồ sơ
               </p>
@@ -1211,7 +1211,7 @@ export default function SettingsPage() {
               </div>
             ))}
 
-            <div>
+            <div className="lg:hidden">
               <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
                 Thông tin & pháp lý
               </p>
