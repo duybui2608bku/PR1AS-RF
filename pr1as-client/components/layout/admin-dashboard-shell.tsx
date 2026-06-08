@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/sidebar"
 import { isAdminUser } from "@/lib/auth/roles"
 import { useLogout, useMe } from "@/lib/hooks/use-auth"
+import { useSiteSettings } from "@/lib/hooks/use-site-settings"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
@@ -211,6 +213,9 @@ function AdminSidebar({
   const pathname = usePathname()
   const logoutMutation = useLogout()
   const user = useAuthStore((state) => state.user)
+  const { data: siteSettings } = useSiteSettings()
+  const brandName = siteSettings?.name || "PR1AS"
+  const brandLogo = siteSettings?.logoUrl
 
   const displayName = user?.full_name || user?.name || "Admin"
   const displayEmail = user?.email || "admin@pr1as.local"
@@ -261,12 +266,22 @@ function AdminSidebar({
               collapsed && "md:hidden"
             )}
           >
-            <div className="flex size-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <LayoutDashboard className="size-5" />
-            </div>
+            {brandLogo ? (
+              <Image
+                src={brandLogo}
+                alt={brandName}
+                width={40}
+                height={40}
+                className="size-10 shrink-0 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="flex size-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <LayoutDashboard className="size-5" />
+              </div>
+            )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold tracking-tight">
-                PR1AS Admin
+                {brandName} Admin
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 Quản trị hệ thống
@@ -412,6 +427,8 @@ export function AdminDashboardShell({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false)
+  const { data: siteSettings } = useSiteSettings()
+  const brandName = siteSettings?.name || "PR1AS"
 
   return (
     <AdminGuard>
@@ -435,7 +452,7 @@ export function AdminDashboardShell({
             >
               <Menu className="size-5" />
             </Button>
-            <span className="truncate text-sm font-semibold">PR1AS Admin</span>
+            <span className="truncate text-sm font-semibold">{brandName} Admin</span>
           </div>
           <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
             {children}

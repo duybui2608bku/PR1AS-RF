@@ -26,14 +26,23 @@ import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
-import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
+import { isWorkerRoleActive } from "@/lib/auth/roles"
+import type { ServiceTab } from "@/lib/home/home-search-params"
 import { useLogout, useSwitchRole } from "@/lib/hooks/use-auth"
 import { useClickOutside } from "@/lib/hooks/use-click-outside"
-import { getRoleDefaultRoute, getRoleRoute, type RoleRouteKey } from "@/lib/navigation/role-routes"
-import { useAuthStore, useIsSessionLoaded, type AuthUser } from "@/lib/store/auth-store"
+import { useSiteSettings } from "@/lib/hooks/use-site-settings"
+import {
+  getRoleDefaultRoute,
+  getRoleRoute,
+  type RoleRouteKey,
+} from "@/lib/navigation/role-routes"
+import {
+  useAuthStore,
+  useIsSessionLoaded,
+  type AuthUser,
+} from "@/lib/store/auth-store"
 import { useServicesHeaderStore } from "@/lib/store/services-header-store"
-import type { ServiceTab } from "@/lib/home/home-search-params"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -78,7 +87,7 @@ const resolveMenuHref = (
   routeKey: RoleRouteKey,
   fallbackHref: string,
   user: AuthUser | null | undefined,
-  activeRole: string | null | undefined,
+  activeRole: string | null | undefined
 ) => {
   if (routeKey === "profile" && isWorkerRoleActive(user) && user?.id) {
     return `/worker/${user.id}`
@@ -95,7 +104,11 @@ const PUBLIC_NAV_TABS = [
   { href: "/posts", label: "Bài viết" },
 ] as const
 
-const HEADER_SERVICE_TABS: { value: ServiceTab; label: string; emoji: string }[] = [
+const HEADER_SERVICE_TABS: {
+  value: ServiceTab
+  label: string
+  emoji: string
+}[] = [
   { value: "ASSISTANCE", label: "Trợ lý", emoji: "🔔" },
   { value: "COMPANIONSHIP", label: "Đồng hành", emoji: "🤝" },
 ]
@@ -109,6 +122,9 @@ export function SiteHeader() {
   const isSessionLoaded = useIsSessionLoaded()
   const logoutMutation = useLogout()
   const switchRoleMutation = useSwitchRole()
+  const { data: siteSettings } = useSiteSettings()
+  const brandName = siteSettings?.name || siteConfig.name
+  const brandLogo = siteSettings?.logoUrl
   const menuContainerRef = React.useRef<HTMLDivElement | null>(null)
 
   const userRoles = user?.roles ?? []
@@ -119,7 +135,9 @@ export function SiteHeader() {
       : (userRoles[0] ?? user?.role)
   const activeRole = lastActiveRole ?? fallbackRole
   const isWorkerActive = activeRole?.toLowerCase() === "worker"
-  const hasWorkerRole = userRoles.some((role) => role.toLowerCase() === "worker")
+  const hasWorkerRole = userRoles.some(
+    (role) => role.toLowerCase() === "worker"
+  )
   const homeHref = getRoleDefaultRoute(activeRole)
 
   const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
@@ -190,7 +208,7 @@ export function SiteHeader() {
       if (target?.closest("[data-radix-portal]")) return
       collapseManual()
     },
-    isServicesPage && isManuallyExpanded,
+    isServicesPage && isManuallyExpanded
   )
 
   // Filter slot ref — portaled into by HomeHero's desktop form
@@ -334,10 +352,18 @@ export function SiteHeader() {
                 alt={user.email ?? "User avatar"}
                 width={32}
                 height={32}
-                className={cn("size-8 rounded-full object-cover", getPlanRingClass(user?.meta_data?.pricing_plan_code))}
+                className={cn(
+                  "size-8 rounded-full object-cover",
+                  getPlanRingClass(user?.meta_data?.pricing_plan_code)
+                )}
               />
             ) : (
-              <div className={cn("flex size-8 items-center justify-center rounded-full bg-muted", getPlanRingClass(user?.meta_data?.pricing_plan_code))}>
+              <div
+                className={cn(
+                  "flex size-8 items-center justify-center rounded-full bg-muted",
+                  getPlanRingClass(user?.meta_data?.pricing_plan_code)
+                )}
+              >
                 <User className="size-4" />
               </div>
             )}
@@ -375,13 +401,18 @@ export function SiteHeader() {
           ) : null}
         </div>
       ) : !isSessionLoaded ? (
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
           <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleLoginClick} className="hidden md:inline-flex">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLoginClick}
+            className="hidden md:inline-flex"
+          >
             Đăng nhập
           </Button>
           <Button size="sm" asChild className="hidden md:inline-flex">
@@ -395,8 +426,8 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "pt-safe px-safe sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
-        hidden && "max-md:-translate-y-full",
+        "sticky top-0 z-40 w-full border-b bg-background/80 pt-safe px-safe backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
+        hidden && "max-md:-translate-y-full"
       )}
     >
       {isServicesPage ? (
@@ -405,19 +436,33 @@ export function SiteHeader() {
           {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
           <div className="container mx-auto grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:px-6">
             {/* Left: logo */}
-            <Link href={homeHref} className="font-semibold shrink-0">
-              {siteConfig.name}
+            <Link
+              href={homeHref}
+              className="flex shrink-0 items-center gap-2 font-semibold"
+            >
+              {brandLogo ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto object-contain"
+                />
+              ) : (
+                brandName
+              )}
             </Link>
 
             {/* Center: tab nav (expanded) ↔ compact pill (collapsed) */}
-            <div className="relative hidden md:flex justify-center items-center">
+            <div className="relative hidden items-center justify-center md:flex">
               {/* Tab navigation */}
               <div
                 className={cn(
                   "flex items-center gap-8 transition-all duration-300",
                   showTabNav
-                    ? "opacity-100 translate-y-0 pointer-events-auto"
-                    : "opacity-0 -translate-y-1 pointer-events-none absolute",
+                    ? "pointer-events-auto translate-y-0 opacity-100"
+                    : "pointer-events-none absolute -translate-y-1 opacity-0"
                 )}
               >
                 {HEADER_SERVICE_TABS.map((tab, i) => (
@@ -427,16 +472,17 @@ export function SiteHeader() {
                     onClick={() => switchTabCallback?.(tab.value)}
                     aria-pressed={activeTab === tab.value}
                     className={cn(
-                      "flex flex-row items-center gap-2 border-b-2 pb-2 pt-1 text-sm font-medium transition-colors",
+                      "flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
                       activeTab === tab.value
                         ? "border-foreground text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground",
+                        : "border-transparent text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <span
-                      className="text-2xl leading-none select-none inline-block"
+                      className="inline-block text-2xl leading-none select-none"
                       style={{
-                        animation: "tab-icon-bounce 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                        animation:
+                          "tab-icon-bounce 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards",
                         animationDelay: `${i * 120}ms`,
                         opacity: 0,
                       }}
@@ -456,18 +502,18 @@ export function SiteHeader() {
                   "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
                   "text-sm transition-all duration-300",
                   showCompactPill
-                    ? "opacity-100 scale-100 pointer-events-auto"
-                    : "opacity-0 scale-95 pointer-events-none absolute",
+                    ? "pointer-events-auto scale-100 opacity-100"
+                    : "pointer-events-none absolute scale-95 opacity-0"
                 )}
               >
                 <span className="font-medium text-foreground">
                   {selectedLocationLabel ?? "Địa điểm bất kỳ"}
                 </span>
-                <span className="h-4 w-px bg-border shrink-0" />
+                <span className="h-4 w-px shrink-0 bg-border" />
                 <span className="text-muted-foreground">
                   {scheduledAtLabel ?? "Thời gian"}
                 </span>
-                <span className="h-4 w-px bg-border shrink-0" />
+                <span className="h-4 w-px shrink-0 bg-border" />
                 <span className="text-muted-foreground">
                   {activeTab === "COMPANIONSHIP" ? "Đồng hành" : "Trợ lý"}
                 </span>
@@ -483,13 +529,14 @@ export function SiteHeader() {
 
           {/* Row 2: Filter form slot — portal destination, animated zoom collapse on scroll */}
           <div
-            className="hidden md:block overflow-hidden"
+            className="hidden overflow-hidden md:block"
             style={{
               maxHeight: isHeaderExpanded ? "96px" : "0px",
               opacity: isHeaderExpanded ? 1 : 0,
               transform: isHeaderExpanded ? "scaleY(1)" : "scaleY(0.75)",
               transformOrigin: "top center",
-              transition: "max-height 0.4s ease-in-out, opacity 0.35s ease-in-out, transform 0.4s ease-in-out",
+              transition:
+                "max-height 0.4s ease-in-out, opacity 0.35s ease-in-out, transform 0.4s ease-in-out",
               pointerEvents: isHeaderExpanded ? "auto" : "none",
             }}
           >
@@ -500,11 +547,25 @@ export function SiteHeader() {
         /* Non-services pages: original two-column layout */
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
-            <Link href={homeHref} className="font-semibold">
-              {siteConfig.name}
+            <Link
+              href={homeHref}
+              className="flex items-center gap-2 font-semibold"
+            >
+              {brandLogo ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  priority
+                  className="h-8 w-auto object-contain"
+                />
+              ) : (
+                brandName
+              )}
             </Link>
             {!isAuthenticated && (
-              <nav className="hidden md:flex items-center gap-1">
+              <nav className="hidden items-center gap-1 md:flex">
                 {PUBLIC_NAV_TABS.map((tab) => (
                   <Link
                     key={tab.href}
@@ -513,7 +574,7 @@ export function SiteHeader() {
                       "rounded-md px-3 py-1.5 text-sm transition-colors",
                       pathname === tab.href
                         ? "bg-accent font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                     )}
                   >
                     {tab.label}
@@ -528,4 +589,3 @@ export function SiteHeader() {
     </header>
   )
 }
-

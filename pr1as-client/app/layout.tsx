@@ -7,48 +7,65 @@ import "./globals.css"
 import { Providers } from "@/components/providers"
 import { siteConfig } from "@/config/site"
 import { defaultKeywords } from "@/lib/seo"
+import { getServerSiteSettings } from "@/lib/site-settings-server"
 import { cn } from "@/lib/utils"
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-sans" })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
-  keywords: defaultKeywords,
-  authors: [{ name: siteConfig.name }],
-  creator: siteConfig.name,
-  publisher: siteConfig.name,
-  category: "service marketplace",
-  metadataBase: new URL(siteConfig.url),
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    title: siteConfig.name,
-    statusBarStyle: "default",
-  },
-  openGraph: {
-    title: siteConfig.name,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    images: [{ url: siteConfig.ogImage }],
-    locale: "vi_VN",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [siteConfig.ogImage],
-  },
-  icons: {
-    icon: "/favicon.ico",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getServerSiteSettings()
+
+  const name = settings.name || siteConfig.name
+  const description = settings.description || siteConfig.description
+  const siteUrl = settings.siteUrl || siteConfig.url
+  const favicon = settings.faviconUrl || "/favicon.ico"
+  const ogImage = settings.ogImageUrl || siteConfig.ogImage
+  const keywords = settings.keywords
+    ? settings.keywords.split(",").map((k) => k.trim()).filter(Boolean)
+    : defaultKeywords
+
+  return {
+    title: {
+      default: name,
+      template: `%s | ${name}`,
+    },
+    description,
+    applicationName: name,
+    keywords,
+    authors: [{ name }],
+    creator: name,
+    publisher: name,
+    category: "service marketplace",
+    metadataBase: new URL(siteUrl),
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      title: name,
+      statusBarStyle: "default",
+    },
+    openGraph: {
+      title: name,
+      description,
+      url: siteUrl,
+      siteName: name,
+      images: [{ url: ogImage }],
+      locale: "vi_VN",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: name,
+      description,
+      images: [ogImage],
+      ...(settings.twitterHandle ? { creator: settings.twitterHandle } : {}),
+    },
+    icons: {
+      icon: favicon,
+      shortcut: favicon,
+      apple: favicon,
+    },
+  }
 }
 
 export const viewport: Viewport = {

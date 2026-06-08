@@ -1,9 +1,30 @@
-import * as React from "react"
+"use client"
 
+import * as React from "react"
+import Image from "next/image"
+
+import { useSiteSettings } from "@/lib/hooks/use-site-settings"
 import { cn } from "@/lib/utils"
 
-/** Brand mark mặc định — ô bo góc chữ "P", khớp với icon PWA. */
+/** Brand mark — logo do admin cấu hình, fallback ô bo góc chữ "P" khớp icon PWA. */
 export function AuthBrandMark({ className }: { className?: string }) {
+  const { data: siteSettings } = useSiteSettings()
+  const logoUrl = siteSettings?.logoUrl
+  const name = siteSettings?.name || "PR1AS"
+
+  if (logoUrl) {
+    return (
+      <Image
+        src={logoUrl}
+        alt={name}
+        width={56}
+        height={56}
+        priority
+        className={cn("size-14 rounded-2xl object-contain", className)}
+      />
+    )
+  }
+
   return (
     <div
       className={cn(

@@ -184,11 +184,11 @@ function AnnouncementForm({
     form.display_types.length > 0
 
   return (
-    <div className="flex flex-col" style={{ maxHeight: "80vh" }}>
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* 2-column body */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[1fr_290px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_340px] md:overflow-hidden">
         {/* Left — editor */}
-        <div className="flex flex-col gap-4 overflow-y-auto p-5">
+        <div className="flex flex-col gap-4 p-5 md:overflow-y-auto">
           <div className="flex flex-1 flex-col space-y-1.5">
             <Label className="text-sm font-semibold">Nội dung thông báo</Label>
             <TipTapEditor
@@ -201,7 +201,7 @@ function AnnouncementForm({
         </div>
 
         {/* Right — config panel */}
-        <div className="flex flex-col gap-4 overflow-y-auto border-l bg-muted/20 p-5">
+        <div className="flex flex-col gap-4 border-t bg-muted/20 p-5 md:border-l md:border-t-0 md:overflow-y-auto">
           {/* Section: Vị trí */}
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -360,8 +360,8 @@ function AnnouncementForm({
             
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Bắt đầu</Label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-[150px] flex-1">
                   <DatePicker
                     value={parsedStart.date}
                     onChange={(date) => setField("start_date", buildDateTimeStr(date, parsedStart.time))}
@@ -376,7 +376,7 @@ function AnnouncementForm({
                     setField("start_date", buildDateTimeStr(parsedStart.date, e.target.value))
                   }
                   disabled={isPending || !parsedStart.date}
-                  className="w-24 bg-background h-9"
+                  className="h-9 w-[88px] shrink-0 bg-background"
                 />
                 {parsedStart.date ? (
                   <Button
@@ -396,8 +396,8 @@ function AnnouncementForm({
 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Kết thúc</Label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-[150px] flex-1">
                   <DatePicker
                     value={parsedEnd.date}
                     onChange={(date) => setField("end_date", buildDateTimeStr(date, parsedEnd.time))}
@@ -412,7 +412,7 @@ function AnnouncementForm({
                     setField("end_date", buildDateTimeStr(parsedEnd.date, e.target.value))
                   }
                   disabled={isPending || !parsedEnd.date}
-                  className="w-24 bg-background h-9"
+                  className="h-9 w-[88px] shrink-0 bg-background"
                 />
                 {parsedEnd.date ? (
                   <Button
@@ -476,7 +476,7 @@ function AnnouncementForm({
       </div>
 
       {/* Footer — always visible */}
-      <div className="flex justify-end gap-2 border-t bg-background px-5 py-3">
+      <div className="flex shrink-0 justify-end gap-2 border-t bg-background px-5 py-3">
         <Button variant="outline" onClick={onCancel} disabled={isPending}>
           Hủy
         </Button>
@@ -865,8 +865,8 @@ export default function AnnouncementsPage() {
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-[920px] w-[95vw] gap-0 overflow-hidden p-0">
-          <DialogHeader className="border-b px-5 py-4">
+        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-5 py-4 text-left">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Megaphone className="size-4" />
               Tạo thông báo mới
@@ -890,8 +890,8 @@ export default function AnnouncementsPage() {
         open={Boolean(editTarget)}
         onOpenChange={(open) => !open && setEditTarget(null)}
       >
-        <DialogContent className="max-w-[920px] w-[95vw] gap-0 overflow-hidden p-0">
-          <DialogHeader className="border-b px-5 py-4">
+        <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-5 py-4 text-left">
             <DialogTitle className="flex items-center gap-2 text-base">
               <PenLine className="size-4" />
               Chỉnh sửa thông báo

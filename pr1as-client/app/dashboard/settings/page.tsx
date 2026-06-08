@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import {
   AlertTriangle,
   AtSign,
-  ExternalLink,
   GitBranch,
   Globe,
   ImageIcon,
@@ -157,42 +156,6 @@ function toMaintenanceDraft(s: SiteSettings): MaintenanceDraft {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function ImagePreview({ url, alt }: { url: string; alt: string }) {
-  const [broken, setBroken] = useState(false)
-
-  useEffect(() => {
-    setBroken(false)
-  }, [url])
-
-  if (!url) return null
-
-  return (
-    <div className="mt-2 flex items-center gap-3">
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border bg-muted">
-        {broken ? (
-          <ImageIcon className="size-5 text-muted-foreground" />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={url}
-            alt={alt}
-            className="size-full rounded-lg object-contain p-1"
-            onError={() => setBroken(true)}
-          />
-        )}
-      </div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        Xem ảnh <ExternalLink className="size-3" />
-      </a>
-    </div>
-  )
-}
 
 function ImageUploadField({
   value,
@@ -639,24 +602,16 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <FieldRow
-                  label="URL ảnh Open Graph"
+                  label="Ảnh Open Graph"
                   hint="Ảnh hiển thị khi chia sẻ link lên Facebook, Zalo, Twitter (tối thiểu 1200×630 px)."
                 >
-                  <div className="relative">
-                    <ImageIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      placeholder="https://example.com/og-image.jpg"
-                      value={seoDraft.ogImageUrl}
-                      onChange={(e) =>
-                        setSeoDraft((d) => ({
-                          ...d,
-                          ogImageUrl: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <ImagePreview url={seoDraft.ogImageUrl} alt="OG Image" />
+                  <ImageUploadField
+                    value={seoDraft.ogImageUrl}
+                    alt="Open Graph"
+                    onChange={(url) =>
+                      setSeoDraft((d) => ({ ...d, ogImageUrl: url }))
+                    }
+                  />
                 </FieldRow>
 
                 <FieldRow

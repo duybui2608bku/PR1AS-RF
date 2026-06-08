@@ -13,7 +13,7 @@ import { AuthRequest } from "../../middleware/auth";
 import { AppError } from "../../utils/AppError";
 
 const createAnnouncementSchema = z.object({
-  title: z.string().min(1).max(300),
+  title: z.string().max(300).optional().default(""),
   content: z.string().min(1),
   images: z.array(z.string().url()).optional().default([]),
   display_types: z.array(z.nativeEnum(AnnouncementDisplayType)).min(1),
@@ -39,7 +39,7 @@ const createAnnouncementSchema = z.object({
 });
 
 const updateAnnouncementSchema = z.object({
-  title: z.string().min(1).max(300).optional(),
+  title: z.string().max(300).optional(),
   content: z.string().min(1).optional(),
   images: z.array(z.string().url()).optional(),
   display_types: z.array(z.nativeEnum(AnnouncementDisplayType)).min(1).optional(),

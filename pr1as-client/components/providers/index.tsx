@@ -9,6 +9,7 @@ import { ServiceWorkerRegister } from "@/components/providers/service-worker-reg
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { BannedAccountModal } from "@/components/providers/banned-account-modal"
+import { BrandingSync } from "@/components/providers/branding-sync"
 import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { Toaster } from "@/components/ui/sonner"
@@ -100,6 +101,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TopProgressBar />
       <QueryProvider>
         {children}
+        {/* Đồng bộ favicon theo cài đặt admin trong phiên SPA */}
+        <BrandingSync />
         <Toaster richColors position="top-right" />
         <AuthRequiredDialog />
         {/* Banned account modal — triggered by socket or HTTP 403 USER_BANNED */}
