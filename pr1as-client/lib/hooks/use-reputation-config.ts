@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/lib/utils/error-handler"
 import {
   reputationConfigService,
   type ReputationConfigKey,
+  type UpdateReputationConfigInput,
 } from "@/services/reputation-config.service"
 
 export function useReputationConfigs() {
@@ -21,8 +22,11 @@ export function useUpdateReputationConfig() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ key, value }: { key: ReputationConfigKey; value: number }) =>
-      reputationConfigService.update(key, value),
+    mutationFn: ({
+      key,
+      ...changes
+    }: { key: ReputationConfigKey } & UpdateReputationConfigInput) =>
+      reputationConfigService.update(key, changes),
     onSuccess: () => {
       toast.success("Đã cập nhật cấu hình.")
       void queryClient.invalidateQueries({

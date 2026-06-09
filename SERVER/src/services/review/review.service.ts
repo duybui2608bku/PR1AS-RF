@@ -112,10 +112,10 @@ export class ReviewService {
 
     void Promise.all([
       reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_THRESHOLD),
-      reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_DEDUCTION),
+      reputationConfigService.getActiveValue(ReputationConfigKey.LOW_REVIEW_DEDUCTION),
     ])
       .then(([threshold, points]) => {
-        if (input.rating <= threshold) {
+        if (points !== null && input.rating <= threshold) {
           void reputationService.deductPoints(
             bookingWorkerId,
             points,

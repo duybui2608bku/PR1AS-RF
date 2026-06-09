@@ -62,9 +62,13 @@ export class ReputationService {
   }
 
   async bulkDailyRecovery(): Promise<number> {
-    const recoveryPoints = await reputationConfigService.getValue(
+    const recoveryPoints = await reputationConfigService.getActiveValue(
       ReputationConfigKey.DAILY_RECOVERY_POINTS
     );
+    if (recoveryPoints === null) {
+      logger.info("Daily reputation recovery skipped: rule is disabled");
+      return 0;
+    }
     const candidates = await userRepository.findReputationRecoveryCandidates();
     let recoveredCount = 0;
 

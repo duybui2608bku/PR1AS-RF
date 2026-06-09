@@ -24,13 +24,15 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import {
   useReputationConfigs,
   useUpdateReputationConfig,
 } from "@/lib/hooks/use-reputation-config"
-import type {
-  ReputationConfig,
-  ReputationConfigKey,
+import {
+  TOGGLEABLE_REPUTATION_KEYS,
+  type ReputationConfig,
+  type ReputationConfigKey,
 } from "@/services/reputation-config.service"
 
 type ConfigMeta = {
@@ -55,6 +57,14 @@ const CONFIG_META: Record<ReputationConfigKey, ConfigMeta> = {
     icon: <XCircle className="size-4" />,
     unit: "điểm",
     hint: "Áp dụng khi worker là bên hủy",
+  },
+  client_late_cancel_deduction: {
+    label: "Client hủy muộn",
+    description:
+      "Điểm bị trừ khi client hủy booking sát giờ bắt đầu (trong khung giờ miễn phí).",
+    icon: <XCircle className="size-4" />,
+    unit: "điểm",
+    hint: "Chỉ áp dụng khi worker đã nhận và client hủy muộn",
   },
   low_review_deduction: {
     label: "Đánh giá thấp (điểm trừ)",
@@ -107,6 +117,10 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
   const isDirty = draft !== String(config.value)
   const isPending = updateMutation.isPending
 
+  const isToggleable = TOGGLEABLE_REPUTATION_KEYS.includes(config.key)
+  // A disabled rule no longer affects scoring — dim the value controls.
+  const isDisabledRule = isToggleable && !config.active
+
   const handleSave = () => {
     const parsed = parseInt(draft, 10)
     if (isNaN(parsed) || parsed < 0 || parsed > 100) return
@@ -114,6 +128,10 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
   }
 
   const handleReset = () => setDraft(String(config.value))
+
+  const handleToggleActive = (next: boolean) => {
+    updateMutation.mutate({ key: config.key, active: next })
+  }
 
   const isInvalid =
     draft === "" ||
@@ -133,7 +151,12 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
           <p className="mt-1 text-xs text-muted-foreground">{meta.description}</p>
         </div>
 
-        <div className="flex items-center gap-2 sm:shrink-0">
+        <div
+          className={
+            "flex items-center gap-2 sm:shrink-0" +
+            (isDisabledRule ? " opacity-50" : "")
+          }
+        >
           <div className="relative flex items-center">
             <Input
               type="number"
@@ -146,7 +169,7 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
                 if (e.key === "Enter" && isDirty && !isInvalid) handleSave()
               }}
               className="h-9 w-24 pr-2 text-center"
-              disabled={isPending}
+              disabled={isPending || isDisabledRule}
             />
           </div>
           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -158,7 +181,7 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
           <Button
             size="sm"
             variant="ghost"
-            disabled={!isDirty || isPending}
+            disabled={!isDirty || isPending || isDisabledRule}
             onClick={handleReset}
             title="Hoàn tác"
           >
@@ -167,7 +190,7 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
           </Button>
           <Button
             size="sm"
-            disabled={!isDirty || isInvalid || isPending}
+            disabled={!isDirty || isInvalid || isPending || isDisabledRule}
             onClick={handleSave}
           >
             {isPending ? (
@@ -182,20 +205,40 @@ function ConfigRow({ config }: { config: ReputationConfig }) {
 
       <div className="border-t bg-muted/40 px-4 py-2 flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">{meta.hint}</p>
-        {isDirty ? (
-          <Badge
-            variant="outline"
-            className="border-amber-400 text-amber-600 dark:text-amber-300 text-xs"
-          >
-            Chưa lưu
-          </Badge>
-        ) : config.updated_by ? (
-          <span className="text-xs text-muted-foreground">
-            Đã sửa {new Date(config.updated_at).toLocaleDateString("vi-VN")}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">Mặc định</span>
-        )}
+        <div className="flex items-center gap-3">
+          {isDirty ? (
+            <Badge
+              variant="outline"
+              className="border-amber-400 text-amber-600 dark:text-amber-300 text-xs"
+            >
+              Chưa lưu
+            </Badge>
+          ) : config.updated_by ? (
+            <span className="text-xs text-muted-foreground">
+              Đã sửa {new Date(config.updated_at).toLocaleDateString("vi-VN")}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Mặc định</span>
+          )}
+          {isToggleable ? (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={
+                  "text-xs font-medium " +
+                  (config.active ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")
+                }
+              >
+                {config.active ? "Đang bật" : "Đã tắt"}
+              </span>
+              <Switch
+                checked={config.active}
+                disabled={isPending}
+                onCheckedChange={handleToggleActive}
+                aria-label={config.active ? "Tắt quy tắc" : "Bật quy tắc"}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -209,6 +252,7 @@ export default function ReputationConfigPage() {
   const orderedKeys: ReputationConfigKey[] = [
     "booking_expiry_deduction",
     "worker_cancel_deduction",
+    "client_late_cancel_deduction",
     "low_review_deduction",
     "low_review_threshold",
     "daily_recovery_points",
@@ -260,7 +304,7 @@ export default function ReputationConfigPage() {
         </Card>
       ) : configsQuery.isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <ConfigRowSkeleton key={i} />
           ))}
         </div>
@@ -279,6 +323,7 @@ export default function ReputationConfigPage() {
                   [
                     "booking_expiry_deduction",
                     "worker_cancel_deduction",
+                    "client_late_cancel_deduction",
                     "low_review_deduction",
                     "low_review_threshold",
                   ].includes(c.key)

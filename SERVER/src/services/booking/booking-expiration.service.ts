@@ -88,14 +88,15 @@ export class BookingExpirationService {
 
       const workerId = expiredBooking.worker_id.toString();
       void reputationConfigService
-        .getValue(ReputationConfigKey.BOOKING_EXPIRY_DEDUCTION)
-        .then((points) =>
-          reputationService.deductPoints(
+        .getActiveValue(ReputationConfigKey.BOOKING_EXPIRY_DEDUCTION)
+        .then((points) => {
+          if (points === null) return;
+          return reputationService.deductPoints(
             workerId,
             points,
             ReputationHistoryReason.BOOKING_EXPIRY
-          )
-        )
+          );
+        })
         .catch((err) => logger.error("Reputation deduction after booking expiry failed:", err));
     }
 

@@ -152,14 +152,15 @@ export class BookingStatusService extends BookingBaseService {
       };
       const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
       void reputationConfigService
-        .getValue(ReputationConfigKey.WORKER_CANCEL_DEDUCTION)
-        .then((points) =>
-          reputationService.deductPoints(
+        .getActiveValue(ReputationConfigKey.WORKER_CANCEL_DEDUCTION)
+        .then((points) => {
+          if (points === null) return;
+          return reputationService.deductPoints(
             workerId,
             points,
             ReputationHistoryReason.WORKER_CANCEL
-          )
-        )
+          );
+        })
         .catch((err) => logger.error("Reputation deduction after worker cancel failed:", err));
     }
 
@@ -179,14 +180,15 @@ export class BookingStatusService extends BookingBaseService {
         };
         const clientId = String(clientIdRaw?._id ?? updatedBooking.client_id);
         void reputationConfigService
-          .getValue(ReputationConfigKey.CLIENT_LATE_CANCEL_DEDUCTION)
-          .then((points) =>
-            reputationService.deductPoints(
+          .getActiveValue(ReputationConfigKey.CLIENT_LATE_CANCEL_DEDUCTION)
+          .then((points) => {
+            if (points === null) return;
+            return reputationService.deductPoints(
               clientId,
               points,
               ReputationHistoryReason.CLIENT_LATE_CANCEL
-            )
-          )
+            );
+          })
           .catch((err) =>
             logger.error(
               "Reputation deduction after client late cancel failed:",

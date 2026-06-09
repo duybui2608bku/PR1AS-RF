@@ -22,14 +22,18 @@ export class ReputationConfigController {
       COMMON_MESSAGES.BAD_REQUEST
     ) as ReputationConfigKey;
 
-    const { value } = validateWithSchema(
+    const { value, active } = validateWithSchema(
       updateReputationConfigSchema,
       req.body,
       COMMON_MESSAGES.BAD_REQUEST
     );
 
     const adminId = req.user!.sub;
-    const updated = await reputationConfigService.updateConfig(key, value, adminId);
+    const updated = await reputationConfigService.updateConfig(
+      key,
+      { value, active },
+      adminId
+    );
     R.success(res, updated, "Reputation config updated successfully", req);
   }
 }

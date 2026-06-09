@@ -18,6 +18,11 @@ const reputationConfigSchema = new Schema<IReputationConfigDocument>(
       type: Number,
       required: true,
     },
+    active: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
     description: {
       type: String,
       required: true,
