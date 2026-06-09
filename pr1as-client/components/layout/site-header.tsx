@@ -107,11 +107,15 @@ const PUBLIC_NAV_TABS = [
 const HEADER_SERVICE_TABS: {
   value: ServiceTab
   label: string
-  emoji: string
+  iconSrc: string
 }[] = [
-  { value: "ASSISTANCE", label: "Trợ lý", emoji: "🔔" },
-  { value: "COMPANIONSHIP", label: "Đồng hành", emoji: "🤝" },
+  { value: "ASSISTANCE", label: "Trợ lý", iconSrc: "/icons/assistant.png" },
+  { value: "COMPANIONSHIP", label: "Đồng hành", iconSrc: "/icons/companion.png" },
 ]
+
+// Hysteresis thresholds cho services header — tránh oscillation
+const EXPAND_THRESHOLD = 40    // expand khi scrollY < ngưỡng này
+const COLLAPSE_THRESHOLD = 120 // collapse khi scrollY > ngưỡng này
 
 export function SiteHeader() {
   const router = useRouter()
@@ -165,6 +169,9 @@ export function SiteHeader() {
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
 
+  const [isMounted, setIsMounted] = React.useState(false)
+  React.useEffect(() => setIsMounted(true), [])
+
   const isServicesPage = pathname === "/services"
   const isServicesPageRef = React.useRef(isServicesPage)
   isServicesPageRef.current = isServicesPage
@@ -181,6 +188,9 @@ export function SiteHeader() {
   const showTabNav = isServicesPage && isHeaderExpanded
   const showCompactPill = isServicesPage && !isHeaderExpanded
 
+  // Tab icon click pop animation
+  const [poppingTab, setPoppingTab] = React.useState<ServiceTab | null>(null)
+
   // Manual expand: user clicked compact pill while scrolled → expand in-place
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
   const isManuallyExpandedRef = React.useRef(false)
@@ -188,12 +198,14 @@ export function SiteHeader() {
 
   const expandHeader = React.useCallback(() => {
     isManuallyExpandedRef.current = true
+    isHeaderExpandedRef.current = true
     setIsManuallyExpanded(true)
     setHeaderExpanded(true)
   }, [setHeaderExpanded])
 
   const collapseManual = React.useCallback(() => {
     isManuallyExpandedRef.current = false
+    isHeaderExpandedRef.current = false
     setIsManuallyExpanded(false)
     setHeaderExpanded(false)
   }, [setHeaderExpanded])
@@ -221,8 +233,15 @@ export function SiteHeader() {
 
   // Init header expansion state on services page
   React.useEffect(() => {
-    if (isServicesPage) setHeaderExpanded(window.scrollY < 80)
-  }, [isServicesPage, setHeaderExpanded])
+    if (isServicesPage) {
+      const expanded = window.scrollY < COLLAPSE_THRESHOLD
+      isHeaderExpandedRef.current = expanded
+      setHeaderExpanded(expanded)
+    }
+  }, [isServicesPage, setHeaderExpanded, COLLAPSE_THRESHOLD])
+
+  // Ref mirrors isHeaderExpanded để scroll handler không bị stale closure
+  const isHeaderExpandedRef = React.useRef(true)
 
   // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   // Chỉ áp dụng < md (mobile); desktop header luôn hiện.
@@ -234,23 +253,29 @@ export function SiteHeader() {
       const y = window.scrollY
       const diff = y - lastY
       if (y < 64) {
-        setHidden(false) // gần đỉnh trang → luôn hiện
+        setHidden(false)
       } else if (Math.abs(diff) > 6) {
-        setHidden(diff > 0) // xuống → ẩn, lên → hiện
+        setHidden(diff > 0)
       }
       if (isServicesPageRef.current) {
-        if (y < 80) {
-          // Scrolled back to top: auto-expand, clear manual flag
+        if (y < EXPAND_THRESHOLD) {
+          // Vùng top: auto-expand, clear manual flag
           if (isManuallyExpandedRef.current) {
             isManuallyExpandedRef.current = false
             setIsManuallyExpanded(false)
           }
-          setHeaderExpanded(true)
-        } else if (!isManuallyExpandedRef.current) {
-          // Scrolled down, not manually expanded: collapse
-          setHeaderExpanded(false)
+          if (!isHeaderExpandedRef.current) {
+            isHeaderExpandedRef.current = true
+            setHeaderExpanded(true)
+          }
+        } else if (y > COLLAPSE_THRESHOLD && !isManuallyExpandedRef.current) {
+          // Vùng bottom: collapse nếu không manually expanded
+          if (isHeaderExpandedRef.current) {
+            isHeaderExpandedRef.current = false
+            setHeaderExpanded(false)
+          }
         }
-        // Scrolled down + manually expanded → keep expanded (do nothing)
+        // Vùng 40–120px: không làm gì (hysteresis dead zone)
       }
       lastY = y
       ticking = false
@@ -434,13 +459,13 @@ export function SiteHeader() {
         /* Services page: 2-row expandable header */
         <div ref={servicesHeaderRef}>
           {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
-          <div className="container mx-auto grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:px-6">
+          <div className="container mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-6">
             {/* Left: logo */}
             <Link
               href={homeHref}
-              className="flex shrink-0 items-center gap-2 font-semibold"
+              className="flex shrink-0 items-center gap-2 font-semibold justify-self-start"
             >
-              {brandLogo ? (
+              {isMounted && brandLogo ? (
                 <Image
                   src={brandLogo}
                   alt={brandName}
@@ -454,44 +479,54 @@ export function SiteHeader() {
               )}
             </Link>
 
-            {/* Center: tab nav (expanded) ↔ compact pill (collapsed) */}
+            {/* Center: auto column sits between two equal 1fr columns → truly centered */}
             <div className="relative hidden items-center justify-center md:flex">
               {/* Tab navigation */}
               <div
                 className={cn(
-                  "flex items-center gap-8 transition-all duration-300",
+                  "flex items-center gap-14 transition-all duration-300",
                   showTabNav
                     ? "pointer-events-auto translate-y-0 opacity-100"
                     : "pointer-events-none absolute -translate-y-1 opacity-0"
                 )}
               >
-                {HEADER_SERVICE_TABS.map((tab, i) => (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    onClick={() => switchTabCallback?.(tab.value)}
-                    aria-pressed={activeTab === tab.value}
-                    className={cn(
-                      "flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
-                      activeTab === tab.value
-                        ? "border-foreground text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <span
-                      className="inline-block text-2xl leading-none select-none"
-                      style={{
-                        animation:
-                          "tab-icon-bounce 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards",
-                        animationDelay: `${i * 120}ms`,
-                        opacity: 0,
+                {HEADER_SERVICE_TABS.map((tab, i) => {
+                  const isActive = activeTab === tab.value
+                  return (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      onClick={() => {
+                        setPoppingTab(tab.value)
+                        switchTabCallback?.(tab.value)
                       }}
+                      aria-pressed={isActive}
+                      className={cn(
+                        "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "border-foreground text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      )}
                     >
-                      {tab.emoji}
-                    </span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                      <span
+                        className="tab-icon-wrap"
+                        data-pop={poppingTab === tab.value ? "true" : undefined}
+                        onAnimationEnd={(e) => {
+                          if (e.animationName === "tab-icon-pop") setPoppingTab(null)
+                        }}
+                      >
+                        <img
+                          src={tab.iconSrc}
+                          alt=""
+                          aria-hidden="true"
+                          className="tab-icon-img size-9 select-none"
+                          style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
+                        />
+                      </span>
+                      <span>{tab.label}</span>
+                    </button>
+                  )
+                })}
               </div>
 
               {/* Compact pill — visible when scrolled, click expands header in-place */}
@@ -524,7 +559,9 @@ export function SiteHeader() {
             </div>
 
             {/* Right: user actions */}
-            {rightActions}
+            <div className="flex justify-end">
+              {rightActions}
+            </div>
           </div>
 
           {/* Row 2: Filter form slot — portal destination, animated zoom collapse on scroll */}
@@ -551,7 +588,7 @@ export function SiteHeader() {
               href={homeHref}
               className="flex items-center gap-2 font-semibold"
             >
-              {brandLogo ? (
+              {isMounted && brandLogo ? (
                 <Image
                   src={brandLogo}
                   alt={brandName}
