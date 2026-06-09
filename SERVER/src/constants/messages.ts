@@ -206,6 +206,8 @@ export const BOOKING_MESSAGES = {
   DISPUTE_CREATED: "Dispute created successfully",
   DISPUTE_RESOLVED: "Dispute resolved successfully",
   BOOKING_ALREADY_DISPUTED: "This booking already has an active dispute",
+  DISPUTE_WINDOW_EXPIRED:
+    "The dispute window has closed. You can no longer open a dispute for this booking",
   BOOKING_NOT_DISPUTED: "This booking is not in disputed status",
   ONLY_CLIENT_OR_WORKER_CAN_DISPUTE:
     "Only the client or worker on this booking can open a dispute",

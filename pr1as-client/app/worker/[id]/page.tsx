@@ -212,16 +212,17 @@ export default function WorkerProfilePage({
                 />
 
                 {/* Mobile: tabbed about section directly below the intro.
-                    Desktop: stat cards grid (info/lifestyle/quote shown below). */}
+                    On desktop the stats live inside the main column below. */}
                 <WorkerAboutTabs profile={data.worker_profile} />
-                <WorkerStatCards profile={data.worker_profile} />
 
                 {/* On mobile: aside (services + calendar) appears first via order-1,
-                    then main content (info + reviews) via order-2.
-                    On lg+: standard side-by-side grid. */}
+                    then main content (stats + info + reviews) via order-2.
+                    On lg+: compact 2-column grid — stats are grouped into the
+                    main column so Services sits at the top of the side column. */}
                 <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1fr_460px] lg:gap-6">
                   {/* Main content — order-2 on mobile, first column on lg */}
                   <div className="order-2 space-y-4 lg:order-1">
+                    <WorkerStatCards profile={data.worker_profile} />
                     <WorkerInfoCards profile={data.worker_profile} />
                     <WorkerReviews reviews={data.reviews ?? []} />
                   </div>
@@ -378,15 +379,20 @@ function WorkerProfileSkeleton() {
           <Skeleton className="h-16 w-full" />
         </div>
       </div>
-      {/* Stat cards skeleton */}
-      <div className="flex gap-3 sm:grid sm:grid-cols-4">
+      {/* Mobile-only stat cards skeleton (desktop stats live in main column) */}
+      <div className="flex gap-3 lg:hidden">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 w-32 shrink-0 rounded-2xl sm:w-auto" />
+          <Skeleton key={i} className="h-24 w-32 shrink-0 rounded-2xl" />
         ))}
       </div>
       {/* Content skeleton */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1fr_460px]">
         <div className="order-2 space-y-4 lg:order-1">
+          <div className="hidden gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+            ))}
+          </div>
           <Skeleton className="h-28 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
         </div>

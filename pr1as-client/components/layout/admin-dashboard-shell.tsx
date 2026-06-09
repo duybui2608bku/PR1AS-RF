@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
+  BookOpen,
   CalendarCheck,
   CreditCard,
   Gem,
@@ -122,6 +123,11 @@ const adminNavGroups = [
         href: "/dashboard/settings",
         label: "Cài đặt",
         icon: Settings,
+      },
+      {
+        href: "/dashboard/docs",
+        label: "Tài liệu hệ thống",
+        icon: BookOpen,
       },
     ],
   },

@@ -90,6 +90,9 @@ export const BOOKING_LIMITS = {
   MAX_DURATION_MONTHS: 12,
   AUTO_CONFIRM_HOURS: 24,
   AUTO_COMPLETE_HOURS: 2,
+  // Sau khi lịch hẹn kết thúc, client chỉ còn 3 ngày để mở khiếu nại với
+  // booking đã COMPLETED. Quá hạn coi như chấp nhận kết quả, không thể tranh chấp.
+  DISPUTE_WINDOW_DAYS: 3,
   CONFIRM_DEADLINE_BEFORE_START_HOURS: 6,
   SHORT_NOTICE_CONFIRM_MINUTES: 60,
 } as const;

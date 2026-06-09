@@ -53,7 +53,8 @@ export function WorkerStatCards({ profile }: Props) {
 
   return (
     // Desktop only — on mobile these stats live inside WorkerAboutTabs.
-    <div className="hidden grid-cols-4 gap-3 lg:grid">
+    // Grouped into the main column, so 2×2 on lg and 4-across on xl.
+    <div className="hidden gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
       {stats.map((s) => {
         const Icon = s.icon
         return (

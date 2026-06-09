@@ -2,6 +2,7 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { IBookingDocument } from "../../types/booking/booking.types";
 import {
   BookingStatus,
+  BOOKING_LIMITS,
   CancellationReason,
   CancelledBy,
   DisputeReason,
@@ -47,6 +48,23 @@ export class BookingDisputeService extends BookingBaseService {
         HTTP_STATUS.BAD_REQUEST,
         ErrorCode.BOOKING_INVALID_STATUS_TRANSITION
       );
+    }
+
+    // Với booking đã COMPLETED, chỉ cho mở khiếu nại trong vòng
+    // DISPUTE_WINDOW_DAYS kể từ khi lịch hẹn kết thúc (schedule.end_time).
+    // Quá hạn coi như client chấp nhận kết quả. Các trạng thái còn đang diễn ra
+    // (IN_PROGRESS, PENDING_CLIENT_ACCEPTANCE) không bị giới hạn thời gian này.
+    if (booking.status === BookingStatus.COMPLETED) {
+      const deadline =
+        booking.schedule.end_time.getTime() +
+        BOOKING_LIMITS.DISPUTE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+      if (Date.now() > deadline) {
+        throw new AppError(
+          BOOKING_MESSAGES.DISPUTE_WINDOW_EXPIRED,
+          HTTP_STATUS.BAD_REQUEST,
+          ErrorCode.BOOKING_DISPUTE_WINDOW_EXPIRED
+        );
+      }
     }
 
     if (booking.dispute) {
