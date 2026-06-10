@@ -23,6 +23,13 @@ router.get(
   asyncHandler<AuthRequest>(postController.listFeed.bind(postController))
 );
 
+// Must be before /:id to avoid "registered" being treated as an ObjectId
+router.get(
+  "/registered",
+  authenticate,
+  asyncHandler<AuthRequest>(postController.listRegisteredFeed.bind(postController))
+);
+
 router.get(
   "/:id",
   optionalAuthenticate,
@@ -54,6 +61,21 @@ router.patch(
   asyncHandler<AuthRequest>(
     postController.setCommentsLock.bind(postController)
   )
+);
+
+router.post(
+  "/:id/registrations",
+  authenticate,
+  ...csrfProtection,
+  validateObjectId("id"),
+  asyncHandler<AuthRequest>(postController.toggleRegistration.bind(postController))
+);
+
+router.get(
+  "/:id/registrations",
+  authenticate,
+  validateObjectId("id"),
+  asyncHandler<AuthRequest>(postController.listRegistrations.bind(postController))
 );
 
 router.use("/:postId/comments", postCommentNestedRoutes);

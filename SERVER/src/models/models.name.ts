@@ -41,4 +41,5 @@ export const modelsName = {
   POINT_HISTORY: "point_histories",
   ATTENDANCE: "attendances",
   WORKER_BOOST: "worker_boosts",
+  POST_REGISTRATION: "post_registrations",
 };

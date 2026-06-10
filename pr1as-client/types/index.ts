@@ -75,6 +75,18 @@ export type ReactionSummaryPublic = {
   my_reaction: ReactionType | null
 }
 
+export type PostRegistrantWorker = {
+  id: string
+  full_name: string | null
+  avatar: string | null
+}
+
+export type PostRegistrantPublic = {
+  id: string
+  worker: PostRegistrantWorker
+  created_at: string
+}
+
 export type PostPublic = {
   id: string
   author: PostAuthor
@@ -85,6 +97,8 @@ export type PostPublic = {
   comments_count: number
   comments_locked: boolean
   reactions: ReactionSummaryPublic
+  registrations_count: number
+  my_registration: boolean
   created_at: string
   updated_at: string
 }

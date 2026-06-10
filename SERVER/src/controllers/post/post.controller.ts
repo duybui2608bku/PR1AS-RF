@@ -10,6 +10,7 @@ import {
   COMMENT_MESSAGES,
   COMMON_MESSAGES,
   POST_MESSAGES,
+  POST_REGISTRATION_MESSAGES,
 } from "../../constants/messages";
 import { AuthRequest } from "../../middleware/auth";
 import { R, extractUserIdFromRequest, validateWithSchema } from "../../utils";
@@ -73,6 +74,28 @@ export class PostController {
     );
     const post = await postService.setCommentsLocked(id, userId, data.locked);
     R.success(res, post, COMMENT_MESSAGES.COMMENTS_LOCK_UPDATED, req);
+  }
+
+  async toggleRegistration(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    const result = await postService.toggleRegistration(id, userId);
+    R.success(res, result, POST_REGISTRATION_MESSAGES.TOGGLED, req);
+  }
+
+  async listRegistrations(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    const result = await postService.listRegistrations(id, userId);
+    R.success(res, result, POST_REGISTRATION_MESSAGES.LISTED, req);
+  }
+
+  async listRegisteredFeed(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 10;
+    const result = await postService.listRegisteredFeed(userId, cursor, limit);
+    R.success(res, result, POST_REGISTRATION_MESSAGES.REGISTERED_FEED_FETCHED, req);
   }
 }
 
