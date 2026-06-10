@@ -188,8 +188,16 @@ export function SiteHeader() {
   const showTabNav = isServicesPage && isHeaderExpanded
   const showCompactPill = isServicesPage && !isHeaderExpanded
 
-  // Tab icon click pop animation
-  const [poppingTab, setPoppingTab] = React.useState<ServiceTab | null>(null)
+  // Tab icon pop animation — direct DOM manipulation to avoid re-render restart
+  const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
+  const triggerTabPop = (index: number) => {
+    const el = tabWrapRefs.current[index]
+    if (!el) return
+    el.classList.remove("popping")
+    void el.offsetWidth
+    el.classList.add("popping")
+    el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
+  }
 
   // Manual expand: user clicked compact pill while scrolled → expand in-place
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
@@ -459,7 +467,7 @@ export function SiteHeader() {
         /* Services page: 2-row expandable header */
         <div ref={servicesHeaderRef}>
           {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
-          <div className="container mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-6">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
             {/* Left: logo */}
             <Link
               href={homeHref}
@@ -496,10 +504,7 @@ export function SiteHeader() {
                     <button
                       key={tab.value}
                       type="button"
-                      onClick={() => {
-                        setPoppingTab(tab.value)
-                        switchTabCallback?.(tab.value)
-                      }}
+                      onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
                       aria-pressed={isActive}
                       className={cn(
                         "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
@@ -509,11 +514,8 @@ export function SiteHeader() {
                       )}
                     >
                       <span
+                        ref={(el) => { tabWrapRefs.current[i] = el }}
                         className="tab-icon-wrap"
-                        data-pop={poppingTab === tab.value ? "true" : undefined}
-                        onAnimationEnd={(e) => {
-                          if (e.animationName === "tab-icon-pop") setPoppingTab(null)
-                        }}
                       >
                         <img
                           src={tab.iconSrc}
