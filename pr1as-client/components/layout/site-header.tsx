@@ -567,7 +567,17 @@ export function SiteHeader() {
             </div>
 
             {/* Right: user actions */}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-1">
+              {!isAuthenticated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="hidden md:inline-flex"
+                >
+                  <Link href="/posts">Bài viết</Link>
+                </Button>
+              )}
               {rightActions}
             </div>
           </div>
