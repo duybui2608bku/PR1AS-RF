@@ -9,7 +9,9 @@ import {
   Info,
   Loader2,
   MapPin,
+  Star,
   X,
+  Zap,
 } from "lucide-react"
 import ReactMarkdown, { type Components } from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -91,7 +93,16 @@ const WorkerCard = ({
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
   const { label, prefix } = formatPricing(worker.pricing)
   return (
-    <article className="group relative flex-none w-[44vw] overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto snap-start">
+    <article
+      className={[
+        "group relative flex-none w-[44vw] overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md sm:w-auto snap-start",
+        worker.boost?.boost_tier === 1
+          ? "border-yellow-400 ring-1 ring-yellow-300 dark:border-yellow-600"
+          : worker.boost?.boost_tier === 2
+            ? "border-blue-300 dark:border-blue-700"
+            : "border-border",
+      ].join(" ")}
+    >
       <Link href={`/worker/${worker.id}`} className="block cursor-pointer">
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
         {imageSrc ? (
@@ -105,6 +116,16 @@ const WorkerCard = ({
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
             Chưa có ảnh
+          </div>
+        )}
+        {worker.boost?.boost_tier === 1 && (
+          <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow">
+            <Star className="h-2.5 w-2.5 fill-yellow-900" /> Nổi bật
+          </div>
+        )}
+        {worker.boost?.boost_tier === 2 && (
+          <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+            <Zap className="h-2.5 w-2.5" /> Đang hoạt động
           </div>
         )}
         {worker.worker_profile?.title ? (

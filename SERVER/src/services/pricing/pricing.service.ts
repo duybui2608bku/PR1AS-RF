@@ -27,6 +27,9 @@ import mongoose from "mongoose";
 import dayjs from "dayjs";
 import { User } from "../../models/auth/user.model";
 import { logger } from "../../utils/logger";
+import { pointService } from "../boost/point.service";
+import { PointReason } from "../../constants/boost";
+import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
 
 interface CreatePricingPlanInput {
   package_code: PricingPlanCode;
@@ -390,6 +393,25 @@ class PricingService {
       throw error;
     } finally {
       await session.endSession();
+    }
+
+    // Award bonus points for Gold/Diamond subscription (outside the atomic
+    // transaction — a point award failure must never roll back the payment)
+    try {
+      const config = await boostConfigRepository.get();
+      const pointReason =
+        payload.target_plan_code === PricingPlanCode.GOLD
+          ? PointReason.GOLD_PACKAGE
+          : PointReason.DIAMOND_PACKAGE;
+      const delta =
+        payload.target_plan_code === PricingPlanCode.GOLD
+          ? config.gold_package_points
+          : config.diamond_package_points;
+      if (delta > 0) {
+        await pointService.award(userId, delta, pointReason);
+      }
+    } catch (pointErr) {
+      logger.warn(`Failed to award boost points for user ${userId}: ${String(pointErr)}`);
     }
 
     return this.getMyPricing(userId);

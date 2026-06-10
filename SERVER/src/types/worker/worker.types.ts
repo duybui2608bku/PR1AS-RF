@@ -82,6 +82,11 @@ export interface WorkersGroupedByServiceItem {
       }>;
     } | null;
     pricing: WorkerServicePricing[];
+    boost?: {
+      is_boosted: boolean;
+      boost_type: string | null;
+      boost_tier: number | null; // 1=featured, 2=basic, null=none
+    };
   }>;
 }
 

@@ -32,6 +32,8 @@ import type { WorkerServicePricing } from "../../types/worker/worker-service";
 import { moderationService } from "../moderation";
 import { moderationRepository } from "../../repositories/moderation";
 import { RestrictionFeature } from "../../constants/moderation";
+import { workerBoostRepository } from "../../repositories/boost/worker-boost.repository";
+import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
 
 const parseLocation = (
   location?: string
@@ -500,13 +502,61 @@ export class WorkerService {
         ],
       });
 
-    if (!query.schedule) return groupedWorkers;
+    // Collect all worker ids, fetch active boosts, then apply boost-tier sort
+    const allWorkerIds = [
+      ...new Set(groupedWorkers.flatMap((g) => g.workers.map((w) => w.id))),
+    ];
+
+    const [activeBoosts, boostConfig] = await Promise.all([
+      workerBoostRepository.findActiveBoostsForWorkers(allWorkerIds),
+      boostConfigRepository.get(),
+    ]);
+
+    const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
+
+    // Deterministic rotation: slot changes every rotation_interval_minutes so
+    // all boosted workers at the same tier get equal exposure over time.
+    const slotId = Math.floor(
+      Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
+    );
+
+    const getBoostSortKey = (workerId: string): [number, number] => {
+      const boost = boostByWorkerId.get(workerId);
+      const tier = boost ? boost.tier : 999;
+      // Cheap deterministic scatter within same tier using last 4 hex chars of id
+      const scatter = (parseInt(workerId.slice(-4), 16) + slotId) % 1000;
+      return [tier, scatter];
+    };
+
+    const groupedWithBoost = groupedWorkers.map((group) => ({
+      ...group,
+      workers: group.workers
+        .map((w) => {
+          const boost = boostByWorkerId.get(w.id);
+          return {
+            ...w,
+            boost: {
+              is_boosted: Boolean(boost),
+              boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
+              boost_tier: boost ? boost.tier : null,
+            },
+          };
+        })
+        .sort((a, b) => {
+          const [tierA, scatterA] = getBoostSortKey(a.id);
+          const [tierB, scatterB] = getBoostSortKey(b.id);
+          if (tierA !== tierB) return tierA - tierB;
+          return scatterA - scatterB;
+        }),
+    }));
+
+    if (!query.schedule) return groupedWithBoost;
 
     const scheduleAt = query.schedule;
 
     // Build a map of unique worker → sorted non-zero durations
     const workerDurationsMap = new Map<string, number[]>();
-    for (const group of groupedWorkers) {
+    for (const group of groupedWithBoost) {
       for (const worker of group.workers) {
         const durations = [...new Set(worker.pricing.map((p) => p.duration))]
           .filter((d) => d > 0)
@@ -518,7 +568,7 @@ export class WorkerService {
     if (!workerDurationsMap.size) return [];
 
     // Single DB call instead of one per worker (N+1 fix)
-    const allWorkerIds = [...workerDurationsMap.keys()];
+    const scheduledWorkerIds = [...workerDurationsMap.keys()];
     const maxDurationOverall = Math.max(
       ...[...workerDurationsMap.values()].flat()
     );
@@ -528,7 +578,7 @@ export class WorkerService {
 
     const allConflicts =
       await bookingRepository.findConflictsForWorkersInWindow(
-        allWorkerIds,
+        scheduledWorkerIds,
         scheduleAt,
         globalMaxEndTime
       );
@@ -548,7 +598,7 @@ export class WorkerService {
     }
 
     const result: WorkersGroupedByServiceItem[] = [];
-    for (const group of groupedWorkers) {
+    for (const group of groupedWithBoost) {
       const availableWorkers = group.workers.filter((worker) => {
         const durations = workerDurationsMap.get(worker.id);
         if (!durations?.length) return false;

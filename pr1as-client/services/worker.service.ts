@@ -134,6 +134,11 @@ export type WorkerGroupedByService = {
       price: number
       currency: string
     }>
+    boost?: {
+      is_boosted: boolean
+      boost_type: "basic" | "featured" | null
+      boost_tier: number | null
+    }
   }>
 }
 

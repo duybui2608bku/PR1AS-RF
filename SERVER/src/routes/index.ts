@@ -26,6 +26,8 @@ import {
   announcementPublicRoutes,
   announcementAdminRoutes,
 } from "./announcement/announcement.routes";
+import boostRoutes from "./boost/boost.routes";
+import boostAdminRoutes from "./boost/boost-admin.routes";
 import { csrfToken } from "../middleware/csrf";
 import { CSRF_CONSTANTS } from "../constants/csrf";
 import { R } from "../utils/response";
@@ -65,5 +67,7 @@ router.use("/site-settings", siteSettingsRoutes);
 router.use("/admin/email-campaigns", emailCampaignRoutes);
 router.use("/announcements", announcementPublicRoutes);
 router.use("/admin/announcements", announcementAdminRoutes);
+router.use("/boost", boostRoutes);
+router.use("/admin/boost", boostAdminRoutes);
 
 export default router;

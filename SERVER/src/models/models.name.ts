@@ -36,4 +36,9 @@ export const modelsName = {
   EMAIL_CAMPAIGN: "email_campaigns",
   EMAIL_SEND_LOG: "email_send_logs",
   ANNOUNCEMENT: "announcements",
+  BOOST_CONFIG: "boost_configs",
+  WORKER_POINT_WALLET: "worker_point_wallets",
+  POINT_HISTORY: "point_histories",
+  ATTENDANCE: "attendances",
+  WORKER_BOOST: "worker_boosts",
 };

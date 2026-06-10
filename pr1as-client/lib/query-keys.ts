@@ -136,4 +136,7 @@ export const queryKeys = {
       detail: (id: string) => ["announcements", "admin", "detail", id] as const,
     },
   },
+  boostPoints: ["boost", "points"] as const,
+  boostStatus: ["boost", "status"] as const,
+  boostConfig: ["boost", "config"] as const,
 } as const

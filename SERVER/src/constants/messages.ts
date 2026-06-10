@@ -324,6 +324,18 @@ export const PRICING_MESSAGES = {
   PRICING_PAYMENT_CREATED: "Pricing payment QR created successfully",
 } as const;
 
+export const BOOST_MESSAGES = {
+  ATTENDANCE_CHECKED_IN: "Attendance recorded successfully",
+  POINTS_FETCHED: "Points fetched successfully",
+  BOOST_ACTIVATED: "Boost activated successfully",
+  BOOST_STATUS_FETCHED: "Boost status fetched successfully",
+  BOOST_ALREADY_ACTIVE: "You already have an active boost. Wait for it to expire before activating a new one",
+  BOOST_INSUFFICIENT_POINTS: "Insufficient points to activate this boost",
+  CONFIG_FETCHED: "Boost config fetched successfully",
+  CONFIG_UPDATED: "Boost config updated successfully",
+  POINTS_ADJUSTED: "Points adjusted successfully",
+} as const;
+
 export const REPUTATION_MESSAGES = {
   TOO_LOW_FOR_BOOKING:
     "Điểm uy tín của bạn quá thấp để tạo booking (cần tối thiểu 30 điểm)",
