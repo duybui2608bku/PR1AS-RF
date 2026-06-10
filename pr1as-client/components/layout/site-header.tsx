@@ -43,6 +43,7 @@ import {
   type AuthUser,
 } from "@/lib/store/auth-store"
 import { useServicesHeaderStore } from "@/lib/store/services-header-store"
+import { useUIStore } from "@/lib/store/ui-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -253,7 +254,12 @@ export function SiteHeader() {
 
   // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   // Chỉ áp dụng < md (mobile); desktop header luôn hiện.
+  const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
+  const setHiddenSynced = React.useCallback((value: boolean) => {
+    setHidden(value)
+    setHeaderHidden(value)
+  }, [setHeaderHidden])
   React.useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
@@ -261,9 +267,9 @@ export function SiteHeader() {
       const y = window.scrollY
       const diff = y - lastY
       if (y < 64) {
-        setHidden(false)
+        setHiddenSynced(false)
       } else if (Math.abs(diff) > 6) {
-        setHidden(diff > 0)
+        setHiddenSynced(diff > 0)
       }
       if (isServicesPageRef.current) {
         if (y < EXPAND_THRESHOLD) {

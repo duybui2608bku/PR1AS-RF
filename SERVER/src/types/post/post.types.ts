@@ -113,6 +113,23 @@ export interface ReactionSummaryPublic {
   my_reaction: string | null;
 }
 
+export interface PostRegistrationWorkerPublic {
+  id: string;
+  full_name: string | null;
+  avatar: string | null;
+}
+
+export interface PostRegistrationPublic {
+  id: string;
+  worker: PostRegistrationWorkerPublic;
+  created_at: Date;
+}
+
+export interface PostRegistrationsListPublic {
+  data: PostRegistrationPublic[];
+  total: number;
+}
+
 export interface PostPublic {
   id: string;
   author: AuthorPublic;
@@ -123,6 +140,8 @@ export interface PostPublic {
   comments_count: number;
   comments_locked: boolean;
   reactions: ReactionSummaryPublic;
+  registrations_count: number;
+  my_registration: boolean;
   created_at: Date;
   updated_at: Date;
 }
