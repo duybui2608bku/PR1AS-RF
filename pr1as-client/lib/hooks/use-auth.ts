@@ -95,8 +95,8 @@ export function useGoogleLogin() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (accessToken: string) => {
-      const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { access_token: accessToken })
+    mutationFn: async (idToken: string) => {
+      const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { id_token: idToken })
       return response.data
     },
     onSuccess: async (data) => {

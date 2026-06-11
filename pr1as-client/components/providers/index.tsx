@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { GoogleOAuthProvider } from "@react-oauth/google"
 
 import { NetworkStatusWatcher } from "@/components/providers/network-status-watcher"
 import { QueryProvider } from "@/components/providers/query-provider"
@@ -93,10 +94,8 @@ function AuthBroadcastListener() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // TODO: Khi enable Google login:
-  // 1. import { GoogleOAuthProvider } from "@react-oauth/google"
-  // 2. Bọc ThemeProvider bằng <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
   return (
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
     <ThemeProvider>
       <TopProgressBar />
       <QueryProvider>
@@ -119,5 +118,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ServiceWorkerRegister />
       </QueryProvider>
     </ThemeProvider>
+    </GoogleOAuthProvider>
   )
 }

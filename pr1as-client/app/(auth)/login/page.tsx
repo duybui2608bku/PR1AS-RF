@@ -15,13 +15,15 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
+import { GoogleLogin } from "@react-oauth/google"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
-import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
+import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,24 +32,7 @@ export default function LoginPage() {
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
-  // TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
-  // import { useGoogleLogin as useGoogleOAuth } from "@react-oauth/google"
-  // import { Separator } from "@/components/ui/separator"
-  // import { useGoogleLogin } from "@/lib/hooks/use-auth"
-  /*
   const googleLoginMutation = useGoogleLogin()
-  const triggerGoogleOAuth = useGoogleOAuth({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await googleLoginMutation.mutateAsync(tokenResponse.access_token)
-        toast.success("Đăng nhập thành công.")
-      } catch {
-        toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.")
-      }
-    },
-    onError: () => toast.error("Đăng nhập Google thất bại."),
-  })
-  */
   const forgotPasswordMutation = useForgotPassword()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
@@ -279,14 +264,14 @@ export default function LoginPage() {
         </Button>
       ) : null}
 
-      {/* TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
-        <Separator />
+      <Separator className="my-2" />
+      <div className="relative h-11 w-full">
         <Button
           type="button"
           variant="outline"
-          className="h-11 w-full text-base"
-          onClick={() => triggerGoogleOAuth()}
-          disabled={googleLoginMutation.isPending}
+          className="pointer-events-none h-11 w-full text-base"
+          tabIndex={-1}
+          aria-hidden="true"
         >
           {googleLoginMutation.isPending ? (
             <Loader2 className="animate-spin" />
@@ -300,7 +285,35 @@ export default function LoginPage() {
           )}
           Đăng nhập bằng Google
         </Button>
-      */}
+        <div
+          className="absolute inset-0 overflow-hidden opacity-0"
+          aria-hidden="true"
+          style={{ pointerEvents: googleLoginMutation.isPending ? "none" : "auto" }}
+        >
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (!credentialResponse.credential) {
+                toast.error("Đăng nhập Google thất bại.")
+                return
+              }
+              try {
+                const response = await googleLoginMutation.mutateAsync(credentialResponse.credential)
+                if (!response.success) {
+                  toast.error(localizeServerMessage(response.message, "Đăng nhập Google thất bại."))
+                  return
+                }
+                toast.success("Đăng nhập thành công.")
+              } catch (error) {
+                toast.error(getErrorMessage(error, "Đăng nhập Google thất bại. Vui lòng thử lại."))
+              }
+            }}
+            onError={() => toast.error("Đăng nhập Google thất bại.")}
+            width="500"
+            size="large"
+            text="signin_with"
+          />
+        </div>
+      </div>
 
       <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
         Chưa có tài khoản?{" "}
