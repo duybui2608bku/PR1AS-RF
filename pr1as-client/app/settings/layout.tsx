@@ -15,7 +15,7 @@ export default function SettingsLayout({
   children: React.ReactNode
 }) {
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <AuthGuard>{children}</AuthGuard>
     </SiteLayout>
   )

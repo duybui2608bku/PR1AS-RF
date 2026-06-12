@@ -160,6 +160,8 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                 <Link
                   key={worker.id}
                   href={`/worker/${worker.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group block flex-none basis-[40%] snap-start rounded-lg border p-3 transition-colors hover:border-primary/60 hover:bg-muted/40 xl:w-full xl:basis-auto"
                 >
                   <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:gap-3">

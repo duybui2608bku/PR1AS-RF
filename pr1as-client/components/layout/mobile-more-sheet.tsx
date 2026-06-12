@@ -5,6 +5,7 @@ import {
   CalendarCheck2,
   CalendarDays,
   Crown,
+  Flame,
   Heart,
   Loader2,
   LogOut,
@@ -81,6 +82,10 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
     // Schedule — worker only
     ...(activeRole === "worker"
       ? [{ href: "/worker/bookings/schedule", label: "Lịch làm việc", icon: CalendarDays }]
+      : []),
+    // Điểm danh / Boost — worker only
+    ...(activeRole === "worker"
+      ? [{ href: "/worker/boost", label: "Điểm danh", icon: Flame }]
       : []),
     // Wallet
     { href: "/wallet", label: "Ví", icon: Wallet },

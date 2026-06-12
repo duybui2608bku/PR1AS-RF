@@ -455,7 +455,7 @@ export function PostCard({ post }: Props) {
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {workerHref ? (
-            <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+            <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
               <AuthorAvatar
                 avatar={post.author.avatar}
                 name={post.author.full_name}
@@ -471,7 +471,7 @@ export function PostCard({ post }: Props) {
           )}
           <div className="min-w-0">
             {workerHref ? (
-              <Link href={workerHref} className="block truncate text-sm font-semibold leading-tight hover:underline">
+              <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="block truncate text-sm font-semibold leading-tight hover:underline">
                 {post.author.full_name ?? t("defaultUser")}
               </Link>
             ) : (

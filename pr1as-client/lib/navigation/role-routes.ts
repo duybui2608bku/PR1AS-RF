@@ -1,5 +1,6 @@
 export type RoleRouteKey =
   | "booking"
+  | "boost"
   | "chat"
   | "favorites"
   | "posts"
@@ -21,6 +22,7 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
   },
   worker: {
     booking: "/worker/bookings",
+    boost: "/worker/boost",
     chat: "/chat",
     favorites: "/client/favorites",
     posts: "/posts",

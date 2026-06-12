@@ -113,6 +113,8 @@ function CommentBodyRenderer({
             <Link
               key={i}
               href={`/worker/${userId}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
             >
               @{name}
@@ -199,6 +201,8 @@ function CommentForm({
           {replyAuthor.hasWorkerProfile ? (
             <Link
               href={`/worker/${replyAuthor.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-0.5 inline-flex shrink-0 cursor-pointer items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
             >
               @{displayName}
@@ -331,7 +335,7 @@ function CommentItem({
     <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
       <div className={cn("flex gap-2", nested ? "ml-8" : "")}>
         {workerHref ? (
-          <Link href={workerHref} className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+          <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
             <CommentAvatar avatar={comment.author.avatar} name={displayName} nested={nested} />
           </Link>
         ) : (
@@ -341,7 +345,7 @@ function CommentItem({
           <div className="rounded-lg bg-muted/50 px-3 py-2">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             {workerHref ? (
-              <Link href={workerHref} className="text-sm font-semibold hover:underline">
+              <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:underline">
                 {displayName}
               </Link>
             ) : (
