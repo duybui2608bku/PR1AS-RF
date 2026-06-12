@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { AuthHeader } from "@/components/auth/auth-header"
@@ -34,6 +35,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const t = useTranslations("Auth")
   const registerMutation = useRegister()
 
   const [email, setEmail] = useState("")
@@ -55,12 +57,12 @@ export default function RegisterPage() {
     event.preventDefault()
 
     if (!passwordMeetsAllRules) {
-      toast.error("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
+      toast.error(t("passwordWeak"))
       return
     }
 
     if (password !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp.")
+      toast.error(t("passwordMismatch"))
       return
     }
 
@@ -77,9 +79,7 @@ export default function RegisterPage() {
       })
 
       if (!response.success) {
-        toast.error(
-          localizeServerMessage(response.message, "Đăng ký thất bại.")
-        )
+        toast.error(localizeServerMessage(response.message, t("registerFailed")))
         return
       }
 
@@ -90,9 +90,7 @@ export default function RegisterPage() {
       setShowConfirmPassword(false)
       setShowSuccessPopup(true)
     } catch (error) {
-      toast.error(
-        getErrorMessage(error, "Không thể đăng ký tài khoản. Vui lòng thử lại.")
-      )
+      toast.error(getErrorMessage(error, t("registerError")))
     }
   }
 
@@ -104,9 +102,9 @@ export default function RegisterPage() {
             <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
               <MailCheck className="size-7 text-primary" />
             </div>
-            <DialogTitle>Đăng ký thành công</DialogTitle>
+            <DialogTitle>{t("registerSuccess")}</DialogTitle>
             <DialogDescription>
-              Vui lòng xác nhận email đã đăng ký trước khi đăng nhập.
+              {t("registerSuccessDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border bg-muted/30 p-3 text-center text-sm font-medium break-all text-primary">
@@ -114,7 +112,7 @@ export default function RegisterPage() {
           </div>
           <DialogFooter>
             <Button className="w-full" onClick={() => router.push("/login")}>
-              Đến trang đăng nhập
+              {t("goToLogin")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -122,15 +120,15 @@ export default function RegisterPage() {
 
       <div className="flex flex-1 flex-col">
         <AuthHeader
-          title="Tạo tài khoản"
-          subtitle="Đăng ký để bắt đầu sử dụng PR1AS"
+          title={t("registerTitle")}
+          subtitle={t("registerSubtitle")}
           className="pb-8 pt-6 sm:pt-2"
         />
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           <FieldGroup className="gap-5">
             <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
               <Input
                 id="email"
                 type="email"
@@ -146,7 +144,7 @@ export default function RegisterPage() {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="full-name">Họ và tên</FieldLabel>
+              <FieldLabel htmlFor="full-name">{t("fullName")}</FieldLabel>
               <Input
                 id="full-name"
                 value={fullName}
@@ -157,7 +155,7 @@ export default function RegisterPage() {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="phone">Số điện thoại</FieldLabel>
+              <FieldLabel htmlFor="phone">{t("phone")}</FieldLabel>
               <Input
                 id="phone"
                 type="tel"
@@ -170,7 +168,7 @@ export default function RegisterPage() {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+              <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
               <InputGroup className="h-11">
                 <InputGroupInput
                   id="password"
@@ -190,7 +188,7 @@ export default function RegisterPage() {
                     size="icon"
                     className="size-8"
                     onClick={() => setShowPassword((previous) => !previous)}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                   >
                     {showPassword ? <EyeOff /> : <Eye />}
                   </Button>
@@ -199,7 +197,7 @@ export default function RegisterPage() {
             </Field>
             <Field>
               <FieldLabel htmlFor="confirm-password">
-                Xác nhận mật khẩu
+                {t("confirmPassword")}
               </FieldLabel>
               <InputGroup className="h-11">
                 <InputGroupInput
@@ -219,14 +217,8 @@ export default function RegisterPage() {
                     variant="ghost"
                     size="icon"
                     className="size-8"
-                    onClick={() =>
-                      setShowConfirmPassword((previous) => !previous)
-                    }
-                    aria-label={
-                      showConfirmPassword
-                        ? "Ẩn mật khẩu xác nhận"
-                        : "Hiện mật khẩu xác nhận"
-                    }
+                    onClick={() => setShowConfirmPassword((previous) => !previous)}
+                    aria-label={showConfirmPassword ? t("hideConfirmPassword") : t("showConfirmPassword")}
                   >
                     {showConfirmPassword ? <EyeOff /> : <Eye />}
                   </Button>
@@ -245,17 +237,17 @@ export default function RegisterPage() {
             {registerMutation.isPending ? (
               <Loader2 className="animate-spin" />
             ) : null}
-            Đăng ký
+            {t("registerButton")}
           </Button>
         </form>
 
         <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
-          Đã có tài khoản?{" "}
+          {t("hasAccount")}{" "}
           <Link
             href="/login"
             className="font-medium text-primary hover:underline"
           >
-            Đăng nhập
+            {t("loginLink")}
           </Link>
         </p>
       </div>

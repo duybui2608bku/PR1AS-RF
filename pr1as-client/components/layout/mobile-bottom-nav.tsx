@@ -4,6 +4,7 @@ import { CalendarCheck2, FileText, Home, LogIn, MessageCircle, User } from "luci
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import * as React from "react"
 
 import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const t = useTranslations("Nav")
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isSessionLoaded = useIsSessionLoaded()
@@ -67,18 +69,16 @@ export function MobileBottomNav() {
   }
 
   // Bottom nav tối giản cho guest user (chưa đăng nhập)
-  // Ẩn nút Login cho đến khi session check xong — tránh race condition
-  // (valid cookie → middleware redirect khỏi /login)
   if (!isAuthenticated) {
     const guestTabs = isSessionLoaded
       ? [
-          { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
-          { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
-          { href: "/login", label: "Đăng nhập", icon: LogIn, isActive: pathname === "/login" },
+          { href: "/", label: t("home"), icon: Home, isActive: pathname === "/" },
+          { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+          { href: "/login", label: t("login"), icon: LogIn, isActive: pathname === "/login" },
         ] as const
       : [
-          { href: "/", label: "Trang chủ", icon: Home, isActive: pathname === "/" },
-          { href: "/posts", label: "Bài viết", icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+          { href: "/", label: t("home"), icon: Home, isActive: pathname === "/" },
+          { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
         ] as const
 
     return (
@@ -129,35 +129,32 @@ export function MobileBottomNav() {
   const isBookingsActive =
     pathname === "/worker/bookings" || pathname.startsWith("/worker/bookings/")
 
-  // CLIENT: Trang chủ (/) | Bài viết | Chat | Thêm
-  // WORKER: Bài viết     | Chat      | Bookings | Thêm
-  // → tránh trùng tab vì homeHref của Worker = "/posts"
   const navTabs = isWorker
     ? [
         {
           type: "link" as const,
           href: "/posts",
-          label: "Bài viết",
+          label: t("posts"),
           icon: FileText,
           isActive: isPostsActive,
         },
         {
           type: "link" as const,
           href: chatHref,
-          label: "Chat",
+          label: t("chat"),
           icon: MessageCircle,
           isActive: isChatActive,
         },
         {
           type: "link" as const,
           href: "/worker/bookings",
-          label: "Bookings",
+          label: t("booking"),
           icon: CalendarCheck2,
           isActive: isBookingsActive,
         },
         {
           type: "button" as const,
-          label: "Tôi",
+          label: t("me"),
           isActive: moreOpen,
         },
       ]
@@ -165,27 +162,27 @@ export function MobileBottomNav() {
         {
           type: "link" as const,
           href: "/",
-          label: "Trang chủ",
+          label: t("home"),
           icon: Home,
           isActive: isHomeActive,
         },
         {
           type: "link" as const,
           href: "/posts",
-          label: "Bài viết",
+          label: t("posts"),
           icon: FileText,
           isActive: isPostsActive,
         },
         {
           type: "link" as const,
           href: chatHref,
-          label: "Chat",
+          label: t("chat"),
           icon: MessageCircle,
           isActive: isChatActive,
         },
         {
           type: "button" as const,
-          label: "Tôi",
+          label: t("me"),
           isActive: moreOpen,
         },
       ]

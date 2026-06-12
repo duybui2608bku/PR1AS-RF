@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { LogIn, UserPlus } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,7 @@ import { useAuthDialogStore } from "@/lib/store/auth-dialog-store"
 export function AuthRequiredDialog() {
   const { open, fromPath, closeAuthDialog } = useAuthDialogStore()
   const router = useRouter()
+  const t = useTranslations("Auth")
 
   const handleLogin = () => {
     closeAuthDialog()
@@ -32,19 +34,19 @@ export function AuthRequiredDialog() {
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) closeAuthDialog() }}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Yêu cầu đăng nhập</DialogTitle>
+          <DialogTitle>{t("requireLoginTitle")}</DialogTitle>
           <DialogDescription>
-            Bạn cần đăng nhập để thực hiện thao tác này. Hãy đăng nhập hoặc tạo tài khoản mới.
+            {t("requireLoginDesc")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">
           <Button onClick={handleLogin} className="w-full gap-2">
             <LogIn className="size-4" />
-            Đăng nhập
+            {t("loginButton")}
           </Button>
           <Button onClick={handleRegister} variant="outline" className="w-full gap-2">
             <UserPlus className="size-4" />
-            Đăng ký tài khoản
+            {t("createAccount")}
           </Button>
         </div>
       </DialogContent>

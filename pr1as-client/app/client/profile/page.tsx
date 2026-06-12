@@ -607,7 +607,7 @@ function PasswordEditRow({
         </InputGroup>
       </div>
 
-      <PasswordStrengthChecklist password={newPassword} title="Yêu cầu mật khẩu mới" />
+      <PasswordStrengthChecklist password={newPassword} />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={cancel} disabled={saving}>
