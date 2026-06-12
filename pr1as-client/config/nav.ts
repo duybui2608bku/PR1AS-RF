@@ -1,6 +1,7 @@
 export type NavItem = {
   title: string
   href: string
+  key?: string
   external?: boolean
   disabled?: boolean
 }
@@ -13,26 +14,29 @@ export const mainNav: NavItem[] = [
   { title: "Contact", href: "/contact" },
 ]
 
-export const footerNav: { title: string; items: NavItem[] }[] = [
+export const footerNav: { title: string; key: string; items: NavItem[] }[] = [
   {
     title: "Sản phẩm",
+    key: "product",
     items: [
-      { title: "Tính năng", href: "/features" },
-      { title: "Bảng giá", href: "/pricing" },
+      { title: "Tính năng", href: "/features", key: "features" },
+      { title: "Bảng giá", href: "/pricing", key: "pricing" },
     ],
   },
   {
     title: "Công ty",
+    key: "company",
     items: [
-      { title: "Giới thiệu", href: "/about" },
-      { title: "Liên hệ", href: "/contact" },
+      { title: "Giới thiệu", href: "/about", key: "about" },
+      { title: "Liên hệ", href: "/contact", key: "contact" },
     ],
   },
   {
     title: "Pháp lý",
+    key: "legal",
     items: [
-      { title: "Chính sách bảo mật", href: "/privacy" },
-      { title: "Điều khoản sử dụng", href: "/terms" },
+      { title: "Chính sách bảo mật", href: "/privacy", key: "privacy" },
+      { title: "Điều khoản sử dụng", href: "/terms", key: "terms" },
     ],
   },
 ]

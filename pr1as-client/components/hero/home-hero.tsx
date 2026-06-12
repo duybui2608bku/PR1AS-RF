@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query"
 
 import {
   Briefcase,
-  ConciergeBell,
   Crown,
   HeartHandshake,
   LayoutGrid,
@@ -193,22 +192,32 @@ type ServiceTabsProps = {
   className?: string
 }
 
-const SERVICE_TABS: { value: ServiceTab; label: string; icon: LucideIcon }[] = [
-  { value: "ASSISTANCE", label: "Trợ lý", icon: ConciergeBell },
-  { value: "COMPANIONSHIP", label: "Đồng hành", icon: HeartHandshake },
+const SERVICE_TABS: { value: ServiceTab; label: string; iconSrc: string }[] = [
+  { value: "ASSISTANCE", label: "Trợ lý", iconSrc: "/icons/assistant.png" },
+  { value: "COMPANIONSHIP", label: "Đồng hành", iconSrc: "/icons/companion.png" },
 ]
 
 function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
+  const wrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
+
+  const triggerPop = (index: number) => {
+    const el = wrapRefs.current[index]
+    if (!el) return
+    el.classList.remove("popping")
+    void el.offsetWidth // force reflow so animation restarts on rapid clicks
+    el.classList.add("popping")
+    el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
+  }
+
   return (
     <div className={cn("flex items-center gap-8", className)}>
-      {SERVICE_TABS.map((tab) => {
-        const Icon = tab.icon
+      {SERVICE_TABS.map((tab, i) => {
         const isActive = activeTab === tab.value
         return (
           <button
             key={tab.value}
             type="button"
-            onClick={() => onSwitchTab(tab.value)}
+            onClick={() => { triggerPop(i); onSwitchTab(tab.value) }}
             aria-pressed={isActive}
             className={cn(
               "group flex flex-col items-center gap-1 border-b-2 pb-2 transition-colors",
@@ -217,7 +226,18 @@ function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            <Icon className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
+            <span
+              ref={(el) => { wrapRefs.current[i] = el }}
+              className="tab-icon-wrap"
+            >
+              <img
+                src={tab.iconSrc}
+                alt=""
+                aria-hidden="true"
+                className="tab-icon-img size-9 select-none"
+                style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
+              />
+            </span>
             <span className="text-sm font-medium">{tab.label}</span>
           </button>
         )

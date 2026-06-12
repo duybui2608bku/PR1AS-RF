@@ -204,7 +204,6 @@ function ProfileEditModalContent({
           <Field>
             <PasswordStrengthChecklist
               password={newPassword}
-              title="Yêu cầu mật khẩu mới"
             />
           </Field>
         </FieldGroup>

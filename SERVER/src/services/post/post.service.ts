@@ -8,6 +8,7 @@ import { hashtagRepository } from "../../repositories/hashtag/hashtag.repository
 import { userRepository } from "../../repositories/auth/user.repository";
 import { reactionRepository } from "../../repositories/reaction/reaction.repository";
 import { moderationRepository } from "../../repositories/moderation";
+import { postRegistrationRepository } from "../../repositories/post/post-registration.repository";
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
 import { PricingPackage } from "../../models/pricing";
@@ -21,6 +22,7 @@ import {
   PostFeedQuery,
   PostMediaPublic,
   PostPublic,
+  PostRegistrationsListPublic,
   PostStatsPublic,
   ReactionSummaryPublic,
   UpdatePostInput,
@@ -32,6 +34,7 @@ import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import {
   POST_MESSAGES,
+  POST_REGISTRATION_MESSAGES,
   PRICING_MESSAGES,
   REPUTATION_MESSAGES,
 } from "../../constants/messages";
@@ -120,7 +123,9 @@ const buildPostPublic = (
   post: LeanPostWithAuthor,
   media: IPostMediaDocument[],
   hashtags: IHashtagDocument[],
-  reactions: ReactionSummaryPublic = emptyReactionSummary()
+  reactions: ReactionSummaryPublic = emptyReactionSummary(),
+  registrations_count = 0,
+  my_registration = false
 ): PostPublic => {
   const populated = post.author_id;
   const authorId =
@@ -138,6 +143,8 @@ const buildPostPublic = (
     comments_count: post.comments_count ?? 0,
     comments_locked: post.comments_locked ?? false,
     reactions,
+    registrations_count,
+    my_registration,
     created_at: post.created_at,
     updated_at: post.updated_at,
   };
@@ -360,21 +367,29 @@ export class PostService {
 
     const postObjectId = post._id as Types.ObjectId;
 
-    const [media, hashtags, reactionCounts, myReactionMap] = await Promise.all([
-      postMediaRepository.findByPostId(postObjectId),
-      hashtagRepository.findByPostId(postObjectId),
-      reactionRepository.getCountsForTarget(
-        ReactionTargetType.POST,
-        postObjectId.toString()
-      ),
-      viewerId
-        ? reactionRepository.getMyReactionsForTargets(
-            viewerId,
-            ReactionTargetType.POST,
-            [postObjectId]
-          )
-        : Promise.resolve(new Map<string, ReactionType>()),
-    ]);
+    const [media, hashtags, reactionCounts, myReactionMap, regCount, myReg] =
+      await Promise.all([
+        postMediaRepository.findByPostId(postObjectId),
+        hashtagRepository.findByPostId(postObjectId),
+        reactionRepository.getCountsForTarget(
+          ReactionTargetType.POST,
+          postObjectId.toString()
+        ),
+        viewerId
+          ? reactionRepository.getMyReactionsForTargets(
+              viewerId,
+              ReactionTargetType.POST,
+              [postObjectId]
+            )
+          : Promise.resolve(new Map<string, ReactionType>()),
+        postRegistrationRepository.countByPost(postObjectId.toString()),
+        viewerId
+          ? postRegistrationRepository.findByPostAndWorker(
+              postObjectId.toString(),
+              viewerId
+            )
+          : Promise.resolve(null),
+      ]);
 
     const myReaction = myReactionMap.get(postObjectId.toString()) ?? null;
 
@@ -382,7 +397,9 @@ export class PostService {
       post as unknown as LeanPostWithAuthor,
       media,
       hashtags,
-      summarizeReactions(reactionCounts, myReaction)
+      summarizeReactions(reactionCounts, myReaction),
+      regCount,
+      myReg !== null
     );
   }
 
@@ -423,7 +440,7 @@ export class PostService {
 
     const postIds = items.map((p) => p._id as Types.ObjectId);
 
-    const [mediaMap, hashtagMap, reactionCountsMap, myReactionMap] =
+    const [mediaMap, hashtagMap, reactionCountsMap, myReactionMap, regCountMap, myRegSet] =
       await Promise.all([
         postMediaRepository.findByPostIds(postIds),
         hashtagRepository.findHashtagIdsByPostIds(postIds),
@@ -438,6 +455,10 @@ export class PostService {
               postIds
             )
           : Promise.resolve(new Map<string, ReactionType>()),
+        postRegistrationRepository.countByPosts(postIds),
+        viewerId
+          ? postRegistrationRepository.getMyRegistrationsForPosts(viewerId, postIds)
+          : Promise.resolve(new Set<string>()),
       ]);
 
     const enriched = items.map((post) => {
@@ -451,7 +472,9 @@ export class PostService {
         post as unknown as LeanPostWithAuthor,
         media,
         hashtags,
-        summarizeReactions(counts, myReaction)
+        summarizeReactions(counts, myReaction),
+        regCountMap.get(id) ?? 0,
+        myRegSet.has(id)
       );
     });
 
@@ -704,6 +727,127 @@ export class PostService {
       remaining_monthly_create_posts: quota.remainingMonthlyCreatePosts,
       can_create_post: quota.canCreatePost,
     };
+  }
+
+  async toggleRegistration(
+    postId: string,
+    workerId: string
+  ): Promise<{ registered: boolean; registrations_count: number }> {
+    const post = await postRepository.findActiveById(postId);
+    if (!post) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+
+    const worker = await userRepository.findById(workerId);
+    if (!worker?.worker_profile) {
+      throw new AppError(
+        POST_REGISTRATION_MESSAGES.WORKER_PROFILE_REQUIRED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.POST_REGISTRATION_WORKER_PROFILE_REQUIRED
+      );
+    }
+
+    if (postAuthorIdToString(post.author_id) === workerId) {
+      throw new AppError(
+        POST_REGISTRATION_MESSAGES.SELF_REGISTER_NOT_ALLOWED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.POST_REGISTRATION_SELF_REGISTER_NOT_ALLOWED
+      );
+    }
+
+    const { registered } = await postRegistrationRepository.toggle(
+      postId,
+      workerId
+    );
+    const registrations_count =
+      await postRegistrationRepository.countByPost(postId);
+
+    return { registered, registrations_count };
+  }
+
+  async listRegistrations(
+    postId: string,
+    requesterId: string
+  ): Promise<PostRegistrationsListPublic> {
+    const post = await postRepository.findActiveById(postId);
+    if (!post) {
+      throw new AppError(
+        POST_MESSAGES.POST_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.POST_NOT_FOUND
+      );
+    }
+
+    if (postAuthorIdToString(post.author_id) !== requesterId) {
+      throw new AppError(
+        POST_REGISTRATION_MESSAGES.UNAUTHORIZED,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.POST_REGISTRATION_UNAUTHORIZED
+      );
+    }
+
+    const data = await postRegistrationRepository.listByPost(postId);
+    return { data, total: data.length };
+  }
+
+  async listRegisteredFeed(
+    workerId: string,
+    cursor?: string,
+    limit = 10
+  ): Promise<CursorPaginatedResponse<PostPublic>> {
+    const postIds = await postRegistrationRepository.listPostIdsByWorker(workerId);
+    if (postIds.length === 0) {
+      return { data: [], next_cursor: null, has_more: false };
+    }
+
+    // Cursor encodes index into the postIds list for stable pagination
+    const startIndex = cursor ? parseInt(cursor, 10) : 0;
+    const actualLimit = Math.min(limit, 50);
+    const pageIds = postIds.slice(startIndex, startIndex + actualLimit + 1);
+    const hasMore = pageIds.length > actualLimit;
+    const currentPageIds = pageIds.slice(0, actualLimit);
+
+    if (currentPageIds.length === 0) {
+      return { data: [], next_cursor: null, has_more: false };
+    }
+
+    const postObjectIds = currentPageIds.map((id) => new Types.ObjectId(id));
+    const [mediaMap, hashtagMap, regCountMap] = await Promise.all([
+      postMediaRepository.findByPostIds(postObjectIds),
+      hashtagRepository.findHashtagIdsByPostIds(postObjectIds),
+      postRegistrationRepository.countByPosts(postObjectIds),
+    ]);
+
+    const posts = await Promise.all(
+      postObjectIds.map((oid) => postRepository.findActiveByIdLean(oid.toString()))
+    );
+
+    const enriched: PostPublic[] = [];
+    for (const post of posts) {
+      if (!post) continue;
+      const id = (post._id as Types.ObjectId).toString();
+      const media = mediaMap.get(id) ?? [];
+      const hashtags = hashtagMap.get(id) ?? [];
+      enriched.push(
+        buildPostPublic(
+          post as unknown as LeanPostWithAuthor,
+          media,
+          hashtags,
+          emptyReactionSummary(),
+          regCountMap.get(id) ?? 0,
+          true
+        )
+      );
+    }
+
+    const nextIndex = startIndex + actualLimit;
+    const nextCursor = hasMore ? String(nextIndex) : null;
+
+    return { data: enriched, next_cursor: nextCursor, has_more: hasMore };
   }
 }
 

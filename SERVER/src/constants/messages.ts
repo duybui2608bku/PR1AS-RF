@@ -344,3 +344,12 @@ export const REPUTATION_MESSAGES = {
   TOO_LOW_FOR_COMMENT:
     "Điểm uy tín của bạn quá thấp để bình luận (cần tối thiểu 30 điểm)",
 } as const;
+
+export const POST_REGISTRATION_MESSAGES = {
+  TOGGLED: "Registration updated successfully",
+  LISTED: "Registrations fetched successfully",
+  REGISTERED_FEED_FETCHED: "Registered posts fetched successfully",
+  WORKER_PROFILE_REQUIRED: "Bạn phải có worker profile để đăng ký",
+  SELF_REGISTER_NOT_ALLOWED: "Bạn không thể đăng ký bài viết của chính mình",
+  UNAUTHORIZED: "Chỉ tác giả bài viết mới có thể xem danh sách đăng ký",
+} as const;

@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
@@ -38,6 +39,9 @@ const formatPricingPlan = (planCode: string | null | undefined) =>
 
 export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const router = useRouter()
+  const t = useTranslations("Nav")
+  const tToast = useTranslations("Toast")
+  const tCommon = useTranslations("Common")
   const user = useAuthStore((s) => s.user)
   const logoutMutation = useLogout()
   const { data: unreadData } = useUnreadNotificationCount()
@@ -59,30 +63,26 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
     try {
       await logoutMutation.mutateAsync()
       onClose()
-      toast.success("Đăng xuất thành công.")
+      toast.success(tToast("logoutSuccess"))
       router.replace("/login")
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể đăng xuất."))
+      toast.error(getErrorMessage(error, tToast("logoutError")))
     }
   }
 
   const profileHref =
     activeRole === "worker" && user?.id ? `/worker/${user.id}` : "/client/profile"
 
-  // Menu items by role — excludes Chat / Posts (đã có trong bottom tab bar)
   const menuItems = [
-    // Hồ sơ
-    { href: profileHref, label: "Hồ sơ", icon: User },
-    // Thông báo
-    { href: "/notifications", label: "Thông báo", icon: Bell, badge: unreadCount },
-    // Yêu thích — client only
+    { href: profileHref, label: t("profile"), icon: User },
+    { href: "/notifications", label: t("notifications"), icon: Bell, badge: unreadCount },
     ...(activeRole === "client"
-      ? [{ href: "/client/favorites", label: "Yêu thích", icon: Heart }]
+      ? [{ href: "/client/favorites", label: t("favorites"), icon: Heart }]
       : []),
-    // Schedule — worker only
     ...(activeRole === "worker"
-      ? [{ href: "/worker/bookings/schedule", label: "Lịch làm việc", icon: CalendarDays }]
+      ? [{ href: "/worker/bookings/schedule", label: t("schedule"), icon: CalendarDays }]
       : []),
+<<<<<<< HEAD
     // Điểm danh / Boost — worker only
     ...(activeRole === "worker"
       ? [{ href: "/worker/boost", label: "Điểm danh", icon: Flame }]
@@ -90,14 +90,15 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
     // Wallet
     { href: "/wallet", label: "Ví", icon: Wallet },
     // Booking (role-based)
+=======
+    { href: "/wallet", label: t("wallet"), icon: Wallet },
+>>>>>>> c58be92c4cf2a092798cf214b1be5f4e7b46ee93
     {
       href: activeRole === "worker" ? "/worker/bookings" : "/client/bookings",
-      label: "Booking",
+      label: t("booking"),
       icon: CalendarCheck2,
     },
-    // Settings
-    { href: "/settings", label: "Cài đặt", icon: Settings },
-    // Pricing plan
+    { href: "/settings", label: t("settings"), icon: Settings },
     {
       href: "/pricing",
       label: formatPricingPlan(user?.meta_data?.pricing_plan_code),
@@ -136,7 +137,7 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
           )}
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
-              {user?.full_name ?? user?.email ?? "Người dùng"}
+              {user?.full_name ?? user?.email ?? tCommon("user")}
             </p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
@@ -176,7 +177,7 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
             ) : (
               <LogOut className="size-5 shrink-0" />
             )}
-            <span>Đăng xuất</span>
+            <span>{t("logout")}</span>
           </button>
         </div>
       </BottomSheetContent>

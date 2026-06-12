@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Montserrat, Geist_Mono } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
-import { getMessages } from "next-intl/server"
+import { getLocale, getMessages } from "next-intl/server"
 
 import "./globals.css"
 import { Providers } from "@/components/providers"
@@ -85,10 +85,10 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const messages = await getMessages()
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()])
   return (
     <html
-      lang="vi"
+      lang={locale}
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, "font-sans", montserrat.variable)}
     >

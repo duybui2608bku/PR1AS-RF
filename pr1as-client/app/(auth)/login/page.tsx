@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { AuthHeader } from "@/components/auth/auth-header"
@@ -15,39 +16,25 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group"
+import { GoogleLogin } from "@react-oauth/google"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
-import { useForgotPassword, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
+import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useTranslations("Auth")
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
-  // TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
-  // import { useGoogleLogin as useGoogleOAuth } from "@react-oauth/google"
-  // import { Separator } from "@/components/ui/separator"
-  // import { useGoogleLogin } from "@/lib/hooks/use-auth"
-  /*
   const googleLoginMutation = useGoogleLogin()
-  const triggerGoogleOAuth = useGoogleOAuth({
-    onSuccess: async (tokenResponse) => {
-      try {
-        await googleLoginMutation.mutateAsync(tokenResponse.access_token)
-        toast.success("Đăng nhập thành công.")
-      } catch {
-        toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.")
-      }
-    },
-    onError: () => toast.error("Đăng nhập Google thất bại."),
-  })
-  */
   const forgotPasswordMutation = useForgotPassword()
   const resendVerificationMutation = useResendVerification()
   const meQuery = useMe()
@@ -103,25 +90,21 @@ export default function LoginPage() {
       })
 
       if (!response.success) {
-        toast.error(localizeServerMessage(response.message, "Đăng nhập thất bại."))
+        toast.error(localizeServerMessage(response.message, t("loginFailed")))
         return
       }
 
       setPassword("")
       setShowPassword(false)
-      toast.success("Đăng nhập thành công.")
+      toast.success(t("loginSuccess"))
     } catch (error) {
       if (isEmailNotVerifiedError(error)) {
         setPendingVerificationEmail(normalizedEmail)
-        toast.warning(
-          "Email chưa được xác minh. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác minh."
-        )
+        toast.warning(t("emailNotVerified"))
         return
       }
 
-      toast.error(
-        getErrorMessage(error, "Không thể đăng nhập. Vui lòng thử lại.")
-      )
+      toast.error(getErrorMessage(error, t("loginError")))
     }
   }
 
@@ -132,14 +115,9 @@ export default function LoginPage() {
       await resendVerificationMutation.mutateAsync({
         email: pendingVerificationEmail,
       })
-      toast.success("Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.")
+      toast.success(t("resendSuccess"))
     } catch (error) {
-      toast.error(
-        getErrorMessage(
-          error,
-          "Gửi lại email xác minh thất bại. Vui lòng thử lại."
-        )
-      )
+      toast.error(getErrorMessage(error, t("resendError")))
     }
   }
 
@@ -158,40 +136,28 @@ export default function LoginPage() {
       })
 
       if (!response.success) {
-        toast.error(
-          localizeServerMessage(response.message, "Gửi email đặt lại mật khẩu thất bại.")
-        )
+        toast.error(localizeServerMessage(response.message, t("forgotPasswordFailed")))
         return
       }
 
-      toast.success(
-        localizeServerMessage(
-          response.message,
-          "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi."
-        )
-      )
+      toast.success(localizeServerMessage(response.message, t("forgotPasswordSuccess")))
     } catch (error) {
-      toast.error(
-        getErrorMessage(
-          error,
-          "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại."
-        )
-      )
+      toast.error(getErrorMessage(error, t("forgotPasswordError")))
     }
   }
 
   return (
     <div className="flex flex-1 flex-col">
       <AuthHeader
-        title="Chào mừng trở lại"
-        subtitle="Đăng nhập để tiếp tục với PR1AS"
+        title={t("loginTitle")}
+        subtitle={t("loginSubtitle")}
         className="pb-8 pt-6 sm:pt-2"
       />
 
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <FieldGroup className="gap-5">
           <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
             <Input
               ref={emailInputRef}
               id="email"
@@ -209,7 +175,7 @@ export default function LoginPage() {
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
+            <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
             <InputGroup className="h-11">
               <InputGroupInput
                 id="password"
@@ -230,7 +196,7 @@ export default function LoginPage() {
                   size="icon"
                   className="size-8"
                   onClick={() => setShowPassword((previous) => !previous)}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </Button>
@@ -248,7 +214,7 @@ export default function LoginPage() {
                 {forgotPasswordMutation.isPending ? (
                   <Loader2 className="animate-spin" />
                 ) : null}
-                Quên mật khẩu?
+                {t("forgotPassword")}
               </Button>
             </div>
           </Field>
@@ -261,7 +227,7 @@ export default function LoginPage() {
           {loginMutation.isPending ? (
             <Loader2 className="animate-spin" />
           ) : null}
-          Đăng nhập
+          {t("loginButton")}
         </Button>
       </form>
 
@@ -275,18 +241,18 @@ export default function LoginPage() {
           {resendVerificationMutation.isPending ? (
             <Loader2 className="animate-spin" />
           ) : null}
-          Gửi lại email xác minh
+          {t("resendVerification")}
         </Button>
       ) : null}
 
-      {/* TODO: Uncomment khi NEXT_PUBLIC_GOOGLE_CLIENT_ID được set trong Vercel
-        <Separator />
+      <Separator className="my-2" />
+      <div className="relative h-11 w-full">
         <Button
           type="button"
           variant="outline"
-          className="h-11 w-full text-base"
-          onClick={() => triggerGoogleOAuth()}
-          disabled={googleLoginMutation.isPending}
+          className="pointer-events-none h-11 w-full text-base"
+          tabIndex={-1}
+          aria-hidden="true"
         >
           {googleLoginMutation.isPending ? (
             <Loader2 className="animate-spin" />
@@ -298,17 +264,45 @@ export default function LoginPage() {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
           )}
-          Đăng nhập bằng Google
+          {t("loginWithGoogle")}
         </Button>
-      */}
+        <div
+          className="absolute inset-0 overflow-hidden opacity-0"
+          aria-hidden="true"
+          style={{ pointerEvents: googleLoginMutation.isPending ? "none" : "auto" }}
+        >
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (!credentialResponse.credential) {
+                toast.error(t("googleLoginFailed"))
+                return
+              }
+              try {
+                const response = await googleLoginMutation.mutateAsync(credentialResponse.credential)
+                if (!response.success) {
+                  toast.error(localizeServerMessage(response.message, t("googleLoginFailed")))
+                  return
+                }
+                toast.success(t("loginSuccess"))
+              } catch (error) {
+                toast.error(getErrorMessage(error, t("googleLoginError")))
+              }
+            }}
+            onError={() => toast.error(t("googleLoginFailed"))}
+            width="500"
+            size="large"
+            text="signin_with"
+          />
+        </div>
+      </div>
 
       <p className="mt-auto pt-8 text-center text-sm text-muted-foreground">
-        Chưa có tài khoản?{" "}
+        {t("noAccount")}{" "}
         <Link
           href="/register"
           className="font-medium text-primary hover:underline"
         >
-          Đăng ký
+          {t("registerLink")}
         </Link>
       </p>
     </div>

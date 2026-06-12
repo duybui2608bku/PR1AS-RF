@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 import { siteConfig } from "@/config/site"
 import { footerNav } from "@/config/nav"
@@ -35,6 +38,8 @@ const socialLinks = [
 ] as const
 
 export function SiteFooter({ className }: { className?: string }) {
+  const t = useTranslations("Footer")
+
   return (
     <footer className={cn("border-t", className)}>
       <div className="container mx-auto px-4 py-10">
@@ -63,8 +68,8 @@ export function SiteFooter({ className }: { className?: string }) {
           </div>
 
           {footerNav.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-medium">{section.title}</h3>
+            <div key={section.key}>
+              <h3 className="text-sm font-medium">{t(section.key as Parameters<typeof t>[0])}</h3>
               <ul className="mt-3 space-y-2 text-sm">
                 {section.items.map((item) => (
                   <li key={item.href}>
@@ -72,7 +77,7 @@ export function SiteFooter({ className }: { className?: string }) {
                       href={item.href}
                       className="text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {item.title}
+                      {item.key ? t(item.key as Parameters<typeof t>[0]) : item.title}
                     </Link>
                   </li>
                 ))}
@@ -83,8 +88,7 @@ export function SiteFooter({ className }: { className?: string }) {
 
         <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t pt-6 text-xs text-muted-foreground md:flex-row">
           <p>
-            &copy; {new Date().getFullYear()} {siteConfig.name}. Bản quyền thuộc
-            về chúng tôi.
+            &copy; {new Date().getFullYear()} {siteConfig.name}. {t("copyright")}
           </p>
           <p>
             <a

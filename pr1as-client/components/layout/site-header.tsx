@@ -19,9 +19,11 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 
+import { LocaleSwitcher } from "@/components/layout/locale-switcher"
 import { NotificationBell } from "@/components/layout/notification-bell"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
@@ -44,37 +46,39 @@ import {
   type AuthUser,
 } from "@/lib/store/auth-store"
 import { useServicesHeaderStore } from "@/lib/store/services-header-store"
+import { useUIStore } from "@/lib/store/ui-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
 
-type UserMenuItem = {
+type UserMenuItemDef = {
   routeKey: RoleRouteKey
   href: string
-  label: string
+  labelKey: string
   icon: LucideIcon
   roles?: readonly string[]
 }
 
-const USER_MENU_ITEMS: readonly UserMenuItem[] = [
-  { routeKey: "chat", href: "/chat", label: "Chat", icon: MessageCircle },
-  { routeKey: "posts", href: "/posts", label: "Posts", icon: FileText },
+const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
+  { routeKey: "chat", href: "/chat", labelKey: "chat", icon: MessageCircle },
+  { routeKey: "posts", href: "/posts", labelKey: "posts", icon: FileText },
   {
     routeKey: "favorites",
     href: "/client/favorites",
-    label: "Yêu thích",
+    labelKey: "favorites",
     icon: Heart,
     roles: ["client"],
   },
-  { routeKey: "profile", href: "/client/profile", label: "Hồ sơ", icon: User },
-  { routeKey: "settings", href: "/settings", label: "Cài đặt", icon: Settings },
+  { routeKey: "profile", href: "/client/profile", labelKey: "profile", icon: User },
+  { routeKey: "settings", href: "/settings", labelKey: "settings", icon: Settings },
   {
     routeKey: "schedule",
     href: "/worker/bookings/schedule",
-    label: "Schedule",
+    labelKey: "schedule",
     icon: CalendarDays,
     roles: ["worker"],
   },
+<<<<<<< HEAD
   {
     routeKey: "boost",
     href: "/worker/boost",
@@ -83,10 +87,13 @@ const USER_MENU_ITEMS: readonly UserMenuItem[] = [
     roles: ["worker"],
   },
   { routeKey: "wallet", href: "/wallet", label: "Ví", icon: Wallet },
+=======
+  { routeKey: "wallet", href: "/wallet", labelKey: "wallet", icon: Wallet },
+>>>>>>> c58be92c4cf2a092798cf214b1be5f4e7b46ee93
   {
     routeKey: "booking",
     href: "/booking",
-    label: "Booking",
+    labelKey: "booking",
     icon: CalendarCheck2,
   },
 ]
@@ -107,20 +114,6 @@ const resolveMenuHref = (
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
-const PUBLIC_NAV_TABS = [
-  { href: "/services", label: "Dịch vụ" },
-  { href: "/posts", label: "Bài viết" },
-] as const
-
-const HEADER_SERVICE_TABS: {
-  value: ServiceTab
-  label: string
-  iconSrc: string
-}[] = [
-  { value: "ASSISTANCE", label: "Trợ lý", iconSrc: "/icons/assistant.png" },
-  { value: "COMPANIONSHIP", label: "Đồng hành", iconSrc: "/icons/companion.png" },
-]
-
 // Hysteresis thresholds cho services header — tránh oscillation
 const EXPAND_THRESHOLD = 40    // expand khi scrollY < ngưỡng này
 const COLLAPSE_THRESHOLD = 120 // collapse khi scrollY > ngưỡng này
@@ -128,6 +121,9 @@ const COLLAPSE_THRESHOLD = 120 // collapse khi scrollY > ngưỡng này
 export function SiteHeader() {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations("Nav")
+  const tToast = useTranslations("Toast")
+  const tServices = useTranslations("Services")
   const [menuOpen, setMenuOpen] = React.useState(false)
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -152,10 +148,10 @@ export function SiteHeader() {
   )
   const homeHref = getRoleDefaultRoute(activeRole)
 
-  const switchRoleLabel = isWorkerActive ? "CLIENT" : "WORKER"
+  const switchRoleLabel = isWorkerActive ? t("switchToClient") : t("switchToWorker")
   const userMenuItems = React.useMemo(
     () => [
-      ...USER_MENU_ITEMS.filter((item) => {
+      ...USER_MENU_ITEM_DEFS.filter((item) => {
         if (!item.roles) return true
 
         return activeRole
@@ -163,6 +159,7 @@ export function SiteHeader() {
           : false
       }).map((item) => ({
         ...item,
+        label: t(item.labelKey as Parameters<typeof t>[0]),
         href: resolveMenuHref(item.routeKey, item.href, user, activeRole),
       })),
       {
@@ -172,7 +169,7 @@ export function SiteHeader() {
         icon: Crown,
       },
     ],
-    [activeRole, user]
+    [t, activeRole, user]
   )
 
   useClickOutside(menuContainerRef, () => setMenuOpen(false), menuOpen)
@@ -196,8 +193,25 @@ export function SiteHeader() {
   const showTabNav = isServicesPage && isHeaderExpanded
   const showCompactPill = isServicesPage && !isHeaderExpanded
 
-  // Tab icon click pop animation
-  const [poppingTab, setPoppingTab] = React.useState<ServiceTab | null>(null)
+  const HEADER_SERVICE_TABS: {
+    value: ServiceTab
+    label: string
+    iconSrc: string
+  }[] = [
+    { value: "ASSISTANCE", label: tServices("assistance"), iconSrc: "/icons/assistant.png" },
+    { value: "COMPANIONSHIP", label: tServices("companionship"), iconSrc: "/icons/companion.png" },
+  ]
+
+  // Tab icon pop animation — direct DOM manipulation to avoid re-render restart
+  const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
+  const triggerTabPop = (index: number) => {
+    const el = tabWrapRefs.current[index]
+    if (!el) return
+    el.classList.remove("popping")
+    void el.offsetWidth
+    el.classList.add("popping")
+    el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
+  }
 
   // Manual expand: user clicked compact pill while scrolled → expand in-place
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
@@ -246,14 +260,18 @@ export function SiteHeader() {
       isHeaderExpandedRef.current = expanded
       setHeaderExpanded(expanded)
     }
-  }, [isServicesPage, setHeaderExpanded, COLLAPSE_THRESHOLD])
+  }, [isServicesPage, setHeaderExpanded])
 
   // Ref mirrors isHeaderExpanded để scroll handler không bị stale closure
   const isHeaderExpandedRef = React.useRef(true)
 
   // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
-  // Chỉ áp dụng < md (mobile); desktop header luôn hiện.
+  const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
+  const setHiddenSynced = React.useCallback((value: boolean) => {
+    setHidden(value)
+    setHeaderHidden(value)
+  }, [setHeaderHidden])
   React.useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
@@ -261,13 +279,12 @@ export function SiteHeader() {
       const y = window.scrollY
       const diff = y - lastY
       if (y < 64) {
-        setHidden(false)
+        setHiddenSynced(false)
       } else if (Math.abs(diff) > 6) {
-        setHidden(diff > 0)
+        setHiddenSynced(diff > 0)
       }
       if (isServicesPageRef.current) {
         if (y < EXPAND_THRESHOLD) {
-          // Vùng top: auto-expand, clear manual flag
           if (isManuallyExpandedRef.current) {
             isManuallyExpandedRef.current = false
             setIsManuallyExpanded(false)
@@ -277,13 +294,11 @@ export function SiteHeader() {
             setHeaderExpanded(true)
           }
         } else if (y > COLLAPSE_THRESHOLD && !isManuallyExpandedRef.current) {
-          // Vùng bottom: collapse nếu không manually expanded
           if (isHeaderExpandedRef.current) {
             isHeaderExpandedRef.current = false
             setHeaderExpanded(false)
           }
         }
-        // Vùng 40–120px: không làm gì (hysteresis dead zone)
       }
       lastY = y
       ticking = false
@@ -305,7 +320,7 @@ export function SiteHeader() {
 
   const handleSwitchRole = async () => {
     if (!isAuthenticated) {
-      toast.info("Vui lòng đăng nhập để chuyển role.")
+      toast.info(tToast("switchRoleLoginRequired"))
       router.push("/login")
       return
     }
@@ -314,18 +329,18 @@ export function SiteHeader() {
       const nextRole = isWorkerActive ? "client" : "worker"
 
       if (nextRole === "worker" && !hasWorkerRole) {
-        toast.info("Hoàn tất hồ sơ worker để bắt đầu nhận việc.")
+        toast.info(tToast("switchRoleWorkerRequired"))
         setMenuOpen(false)
         router.push("/worker/setup")
         return
       }
 
       await switchRoleMutation.mutateAsync({ last_active_role: nextRole })
-      toast.success("Chuyển trạng thái tài khoản thành công.")
+      toast.success(tToast("switchRoleSuccess"))
       router.replace(getRoleDefaultRoute(nextRole))
       router.refresh()
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể đổi role."))
+      toast.error(getErrorMessage(error, tToast("switchRoleError")))
     }
   }
 
@@ -342,10 +357,10 @@ export function SiteHeader() {
     try {
       await logoutMutation.mutateAsync()
       setMenuOpen(false)
-      toast.success("Đăng xuất thành công.")
+      toast.success(tToast("logoutSuccess"))
       router.replace("/login")
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể đăng xuất."))
+      toast.error(getErrorMessage(error, tToast("logoutError")))
     }
   }
 
@@ -366,6 +381,7 @@ export function SiteHeader() {
         </Button>
       ) : null}
       <ThemeToggle />
+      <LocaleSwitcher />
       {isAuthenticated ? (
         <ErrorBoundary fallback={null}>
           <NotificationBell />
@@ -376,7 +392,7 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Mở menu người dùng"
+            aria-label={t("openUserMenu")}
             onClick={() => setMenuOpen((value) => !value)}
           >
             {user?.avatar ? (
@@ -404,7 +420,7 @@ export function SiteHeader() {
           {menuOpen ? (
             <div className="absolute right-0 mt-2 z-50 w-56 rounded-md border bg-background p-1 shadow-lg">
               <div className="px-3 py-2 text-xs text-muted-foreground">
-                {user?.email ?? "Khách"}
+                {user?.email ?? t("me")}
               </div>
               {userMenuItems.map((item) => (
                 <Link
@@ -428,7 +444,7 @@ export function SiteHeader() {
                 ) : (
                   <LogOut className="size-4" />
                 )}
-                Đăng xuất
+                {t("logout")}
               </button>
             </div>
           ) : null}
@@ -446,10 +462,10 @@ export function SiteHeader() {
             onClick={handleLoginClick}
             className="hidden md:inline-flex"
           >
-            Đăng nhập
+            {t("login")}
           </Button>
           <Button size="sm" asChild className="hidden md:inline-flex">
-            <Link href="/register">Đăng ký</Link>
+            <Link href="/register">{t("register")}</Link>
           </Button>
         </div>
       )}
@@ -467,7 +483,7 @@ export function SiteHeader() {
         /* Services page: 2-row expandable header */
         <div ref={servicesHeaderRef}>
           {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
-          <div className="container mx-auto grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 md:px-6">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
             {/* Left: logo */}
             <Link
               href={homeHref}
@@ -487,7 +503,7 @@ export function SiteHeader() {
               )}
             </Link>
 
-            {/* Center: auto column sits between two equal 1fr columns → truly centered */}
+            {/* Center */}
             <div className="relative hidden items-center justify-center md:flex">
               {/* Tab navigation */}
               <div
@@ -504,10 +520,7 @@ export function SiteHeader() {
                     <button
                       key={tab.value}
                       type="button"
-                      onClick={() => {
-                        setPoppingTab(tab.value)
-                        switchTabCallback?.(tab.value)
-                      }}
+                      onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
                       aria-pressed={isActive}
                       className={cn(
                         "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
@@ -517,11 +530,8 @@ export function SiteHeader() {
                       )}
                     >
                       <span
+                        ref={(el) => { tabWrapRefs.current[i] = el }}
                         className="tab-icon-wrap"
-                        data-pop={poppingTab === tab.value ? "true" : undefined}
-                        onAnimationEnd={(e) => {
-                          if (e.animationName === "tab-icon-pop") setPoppingTab(null)
-                        }}
                       >
                         <img
                           src={tab.iconSrc}
@@ -537,7 +547,7 @@ export function SiteHeader() {
                 })}
               </div>
 
-              {/* Compact pill — visible when scrolled, click expands header in-place */}
+              {/* Compact pill */}
               <button
                 type="button"
                 onClick={expandHeader}
@@ -550,15 +560,15 @@ export function SiteHeader() {
                 )}
               >
                 <span className="font-medium text-foreground">
-                  {selectedLocationLabel ?? "Địa điểm bất kỳ"}
+                  {selectedLocationLabel ?? tServices("anyLocation")}
                 </span>
                 <span className="h-4 w-px shrink-0 bg-border" />
                 <span className="text-muted-foreground">
-                  {scheduledAtLabel ?? "Thời gian"}
+                  {scheduledAtLabel ?? tServices("time")}
                 </span>
                 <span className="h-4 w-px shrink-0 bg-border" />
                 <span className="text-muted-foreground">
-                  {activeTab === "COMPANIONSHIP" ? "Đồng hành" : "Trợ lý"}
+                  {activeTab === "COMPANIONSHIP" ? tServices("companionship") : tServices("assistance")}
                 </span>
                 <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <Search className="size-3.5" />
@@ -567,12 +577,22 @@ export function SiteHeader() {
             </div>
 
             {/* Right: user actions */}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-1">
+              {!isAuthenticated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="hidden md:inline-flex"
+                >
+                  <Link href="/posts">{t("posts")}</Link>
+                </Button>
+              )}
               {rightActions}
             </div>
           </div>
 
-          {/* Row 2: Filter form slot — portal destination, animated zoom collapse on scroll */}
+          {/* Row 2: Filter form slot */}
           <div
             className="hidden overflow-hidden md:block"
             style={{
@@ -611,7 +631,10 @@ export function SiteHeader() {
             </Link>
             {!isAuthenticated && (
               <nav className="hidden items-center gap-1 md:flex">
-                {PUBLIC_NAV_TABS.map((tab) => (
+                {[
+                  { href: "/services", label: t("services") },
+                  { href: "/posts", label: t("posts") },
+                ].map((tab) => (
                   <Link
                     key={tab.href}
                     href={tab.href}

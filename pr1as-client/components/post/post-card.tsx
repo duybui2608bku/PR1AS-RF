@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
-import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,11 +12,11 @@ import {
   Globe,
   Lock,
   LockOpen,
-  MessageCircle,
   MoreHorizontal,
   Pencil,
   Trash2,
   User,
+  Users,
   X,
 } from "lucide-react"
 
@@ -53,18 +53,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import Image from "next/image"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
-import { useAuthRequired } from "@/lib/hooks/use-auth-required"
+import { useTogglePostRegistration } from "@/lib/hooks/use-post-registrations"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { formatRelativeOrDate } from "@/lib/utils/time"
 import type { PostPublic } from "@/types"
-import { CommentsSheet } from "./comments-sheet"
 import { EditPostDialog } from "./edit-post-dialog"
-import { REACTION_META, ReactionPicker, topReactionTypes } from "./reaction-picker"
+import { RegistrantsSheet } from "./registrants-sheet"
 import { Textarea } from "@/components/ui/textarea"
 import type { ReportReason } from "@/services/moderation.service"
 
@@ -384,21 +385,25 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
 export function PostCard({ post }: Props) {
   const t = useTranslations("PostCard")
   const { user, isAuthenticated } = useAuthStore()
-  const { requireAuth } = useAuthRequired()
   const deleteMutation = useDeletePost()
   const lockMutation = useSetCommentsLock()
   const reportMutation = useReportPost()
+  const toggleRegistrationMutation = useTogglePostRegistration(post.id)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [commentsOpen, setCommentsOpen] = useState(false)
+  const [registrantsOpen, setRegistrantsOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState<ReportReason>("scam")
   const [reportDescription, setReportDescription] = useState("")
   const [reportDescriptionError, setReportDescriptionError] = useState("")
 
+  const { requireAuth } = useAuthRequired()
+
   const isOwner = user?.id === post.author.id
   const canManagePost = isOwner && !isWorkerRoleActive(user)
+  const isWorkerActive = isWorkerRoleActive(user)
+  const hasWorkerProfile = Boolean(user?.worker_profile)
   const openPostReportQuery = useOpenPostReport(
     post.id,
     menuOpen && isAuthenticated && !canManagePost
@@ -609,68 +614,113 @@ export function PostCard({ post }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-3 flex flex-col gap-2 border-t pt-2">
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          {post.reactions.total > 0 ? (
-            <div className="flex items-center gap-1">
-              <div className="flex -space-x-1">
-                {topReactionTypes(post.reactions).map((type) => (
-                  <span
-                    key={type}
-                    className="inline-flex size-5 items-center justify-center rounded-full border border-background bg-muted text-sm leading-none"
-                  >
-                    {REACTION_META[type].emoji}
-                  </span>
-                ))}
-              </div>
-              <span>{post.reactions.total}</span>
-            </div>
-          ) : <span />}
-          <div className="flex items-center gap-2">
-            <span aria-label={t("commentsCountLabel")}>
-              {post.comments_count > 0
-                ? t("commentsCount", { count: post.comments_count })
-                : t("noComments")}
-            </span>
-            {post.comments_locked ? (
-              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                <Lock className="size-3" />
-                {t("commentsLocked")}
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {isAuthenticated ? <ReactionPicker post={post} /> : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="flex-1 text-muted-foreground"
-            aria-expanded={commentsOpen}
-            onClick={() => setCommentsOpen((open) => !open)}
+      <div className="mt-3 border-t pt-3">
+        <div className="flex items-center justify-between gap-3">
+          {/* Registration count pill */}
+          <div
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300",
+              post.registrations_count > 0
+                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400"
+                : "text-muted-foreground"
+            )}
           >
-            <MessageCircle className="size-4" />
-            {t("commentButton")}
-            {post.comments_count > 0 ? (
-              <span className="ml-1 text-xs font-medium">
-                ({post.comments_count})
-              </span>
-            ) : null}
-          </Button>
+            <Users className="size-3.5 shrink-0" />
+            <span className="tabular-nums">
+              {post.registrations_count > 0
+                ? `${post.registrations_count} người đăng ký`
+                : "Chưa có người đăng ký"}
+            </span>
+          </div>
+
+          {/* Registration action button */}
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={() => setRegistrantsOpen(true)}
+              className="group flex items-center gap-2 rounded-xl border border-border bg-accent/50 px-3.5 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:shadow-sm active:scale-[0.97]"
+            >
+              <Image
+                src="/icons/contact-list.png"
+                alt=""
+                width={26}
+                height={26}
+                className="shrink-0 transition-transform duration-200 group-hover:scale-110"
+              />
+              Xem danh sách
+              {post.registrations_count > 0 ? (
+                <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold tabular-nums text-background">
+                  {post.registrations_count > 99 ? "99+" : post.registrations_count}
+                </span>
+              ) : null}
+            </button>
+          ) : isAuthenticated && isWorkerActive && hasWorkerProfile ? (
+            <button
+              type="button"
+              disabled={toggleRegistrationMutation.isPending}
+              onClick={() => toggleRegistrationMutation.mutate()}
+              className={cn(
+                "group flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.97]",
+                post.my_registration
+                  ? "border border-green-500/40 bg-green-50 text-green-700 shadow-[0_0_12px_rgba(34,197,94,0.18)] hover:shadow-[0_0_18px_rgba(34,197,94,0.28)] dark:bg-green-950/40 dark:text-green-400"
+                  : "border border-sky-400/20 bg-sky-400 text-white shadow-sm hover:bg-sky-500 hover:shadow-md",
+                toggleRegistrationMutation.isPending && "cursor-not-allowed opacity-60"
+              )}
+            >
+              <Image
+                src={post.my_registration ? "/icons/document.png" : "/icons/register.png"}
+                alt=""
+                width={26}
+                height={26}
+                className={cn(
+                  "shrink-0 transition-transform duration-200",
+                  post.my_registration
+                    ? "group-hover:scale-110"
+                    : "group-hover:scale-110 group-hover:-rotate-6"
+                )}
+              />
+              {post.my_registration ? "Đã đăng ký" : "Đăng ký"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                toast.info(
+                  !isAuthenticated
+                    ? "Bạn phải đăng nhập và tạo worker profile"
+                    : "Bạn phải tạo worker profile"
+                )
+              }}
+              className="group flex items-center gap-2 rounded-xl border border-border/50 px-3.5 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-accent/50 active:scale-[0.97]"
+            >
+              <Image
+                src="/icons/register.png"
+                alt=""
+                width={26}
+                height={26}
+                className="shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105"
+              />
+              Đăng ký
+            </button>
+          )}
         </div>
       </div>
 
-      <CommentsSheet
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
+      {/* TODO: re-enable like and comment features
+      <div className="mt-3 flex flex-col gap-2 border-t pt-2">
+        <div className="flex items-center gap-1">
+          {isAuthenticated ? <ReactionPicker post={post} /> : null}
+          <Button ... comment button ... />
+        </div>
+      </div>
+      <CommentsSheet ... />
+      */}
+
+      <RegistrantsSheet
+        open={registrantsOpen}
+        onOpenChange={setRegistrantsOpen}
         postId={post.id}
-        commentsCount={post.comments_count}
-        currentUserId={user?.id}
-        isAuthenticated={isAuthenticated}
-        commentsLocked={post.comments_locked}
-        canBypassLock={canManagePost}
-        isPostOwner={canManagePost}
+        registrationsCount={post.registrations_count}
       />
 
       {editOpen && canManagePost ? (
