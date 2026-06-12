@@ -650,5 +650,18 @@
       "errSelectTime": "请选择开始时间",
       "errMinAdvance": "预约须至少提前 {hours} 小时"
     }
+  },
+  "Onboarding": {
+    "title": "欢迎！👋",
+    "subtitle": "告诉我们您想做什么",
+    "chooseRole": "选择您的角色",
+    "clientTitle": "寻找工作者",
+    "clientDesc": "为您的项目寻找专业自由职业者",
+    "clientBadge": "客户",
+    "workerTitle": "提供服务",
+    "workerDesc": "注册成为工作者，接受预约并赚取收入",
+    "workerBadge": "工作者",
+    "startButton": "立即开始",
+    "skipButton": "暂时跳过"
   }
 }

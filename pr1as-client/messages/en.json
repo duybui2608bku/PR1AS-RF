@@ -650,5 +650,18 @@
       "errSelectTime": "Please select a start time",
       "errMinAdvance": "Bookings must be made at least {hours} hours in advance"
     }
+  },
+  "Onboarding": {
+    "title": "Welcome! 👋",
+    "subtitle": "Tell us what you'd like to do",
+    "chooseRole": "Choose your role",
+    "clientTitle": "Find a Worker",
+    "clientDesc": "Find skilled freelancers & professionals for your projects",
+    "clientBadge": "Client",
+    "workerTitle": "Provide Services",
+    "workerDesc": "Register as a worker, accept bookings, and earn income",
+    "workerBadge": "Worker",
+    "startButton": "Get Started",
+    "skipButton": "Skip for now"
   }
 }

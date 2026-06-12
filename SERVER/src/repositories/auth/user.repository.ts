@@ -357,6 +357,14 @@ export class UserRepository {
     );
   }
 
+  async setOnboardingDone(id: string): Promise<IUserDocument | null> {
+    return User.findByIdAndUpdate(
+      id,
+      { "meta_data.onboarding_done": true },
+      { new: true }
+    );
+  }
+
   async emailExists(email: string): Promise<boolean> {
     return User.exists({ email: email.toLowerCase().trim() }).then(Boolean);
   }

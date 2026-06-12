@@ -317,3 +317,19 @@ export function useUpdateBasicProfile() {
     },
   })
 }
+
+export function useCompleteOnboarding() {
+  const user = useAuthStore((s) => s.user)
+  const setUser = useAuthStore((s) => s.setUser)
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await api.patch<ApiResponse<{ user: AuthUser }>>("/auth/onboarding")
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (!data.success || !data.data?.user) return
+      setUser({ ...user, ...data.data.user } as AuthUser)
+    },
+  })
+}

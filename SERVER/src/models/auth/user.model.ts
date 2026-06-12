@@ -187,6 +187,10 @@ const userSchema = new Schema<IUserDocument>(
             default: null,
             index: true,
           },
+          onboarding_done: {
+            type: Boolean,
+            default: false,
+          },
         },
         { _id: false }
       ),
@@ -195,6 +199,7 @@ const userSchema = new Schema<IUserDocument>(
         pricing_plan_code: PricingPlanCode.STANDARD,
         pricing_started_at: null,
         pricing_expires_at: null,
+        onboarding_done: false,
       }),
     },
   },

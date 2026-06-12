@@ -192,9 +192,9 @@ type ServiceTabsProps = {
   className?: string
 }
 
-const SERVICE_TABS: { value: ServiceTab; label: string; iconSrc: string }[] = [
-  { value: "ASSISTANCE", label: "Trợ lý", iconSrc: "/icons/assistant.png" },
-  { value: "COMPANIONSHIP", label: "Đồng hành", iconSrc: "/icons/companion.png" },
+const SERVICE_TABS: { value: ServiceTab; label: string; icon: LucideIcon }[] = [
+  { value: "ASSISTANCE", label: "Trợ lý", icon: Briefcase },
+  { value: "COMPANIONSHIP", label: "Đồng hành", icon: HeartHandshake },
 ]
 
 function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
@@ -230,11 +230,9 @@ function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
               ref={(el) => { wrapRefs.current[i] = el }}
               className="tab-icon-wrap"
             >
-              <img
-                src={tab.iconSrc}
-                alt=""
+              <tab.icon
                 aria-hidden="true"
-                className="tab-icon-img size-9 select-none"
+                className="tab-icon-img size-6 select-none"
                 style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
               />
             </span>
