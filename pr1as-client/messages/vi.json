@@ -650,5 +650,18 @@
       "errSelectTime": "Vui lòng chọn giờ bắt đầu",
       "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ"
     }
+  },
+  "Onboarding": {
+    "title": "Chào mừng bạn! 👋",
+    "subtitle": "Hãy cho chúng tôi biết bạn muốn làm gì",
+    "chooseRole": "Chọn vai trò của bạn",
+    "clientTitle": "Tìm kiếm Worker",
+    "clientDesc": "Tìm freelancer & thợ lành nghề cho công việc của bạn",
+    "clientBadge": "Khách hàng",
+    "workerTitle": "Cung cấp dịch vụ",
+    "workerDesc": "Đăng ký làm worker, nhận booking và kiếm thu nhập",
+    "workerBadge": "Worker",
+    "startButton": "Bắt đầu ngay",
+    "skipButton": "Bỏ qua, tôi sẽ chọn sau"
   }
 }

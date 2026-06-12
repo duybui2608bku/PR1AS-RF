@@ -331,6 +331,12 @@ export class UserService {
 
     return updatedUser;
   }
+
+  async completeOnboarding(userId: string): Promise<IUserDocument> {
+    const user = await userRepository.setOnboardingDone(userId);
+    if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    return user;
+  }
 }
 
 export const userService = new UserService();

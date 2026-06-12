@@ -93,6 +93,15 @@ router.patch(
   )
 );
 
+router.patch(
+  "/onboarding",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(
+    authController.completeOnboarding.bind(authController)
+  )
+);
+
 router.post(
   "/forgot-password",
   emailActionLimiter,

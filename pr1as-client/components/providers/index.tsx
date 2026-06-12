@@ -10,6 +10,7 @@ import { ServiceWorkerRegister } from "@/components/providers/service-worker-reg
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { BannedAccountModal } from "@/components/providers/banned-account-modal"
+import { OnboardingRoleModal } from "@/components/providers/onboarding-role-modal"
 import { BrandingSync } from "@/components/providers/branding-sync"
 import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
@@ -106,6 +107,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthRequiredDialog />
         {/* Banned account modal — triggered by socket or HTTP 403 USER_BANNED */}
         <BannedAccountModal />
+        {/* Onboarding modal — shown once on first login */}
+        <OnboardingRoleModal />
         {/* Restore session từ cookie khi sessionStorage empty */}
         <SessionRestoreProvider />
         {/* Sync logout across tabs */}

@@ -44,6 +44,7 @@ export type AuthUser = {
     pricing_started_at?: string | null
     pricing_expires_at?: string | null
     reputation_score?: number
+    onboarding_done?: boolean
   }
 }
 

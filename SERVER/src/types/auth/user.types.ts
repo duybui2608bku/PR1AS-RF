@@ -101,6 +101,7 @@ export interface IUser {
     pricing_plan_code: PricingPlanCode;
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;
+    onboarding_done: boolean;
   };
 }
 
@@ -129,6 +130,7 @@ export interface IUserPublic {
     pricing_plan_code: PricingPlanCode;
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;
+    onboarding_done: boolean;
   };
 }
 

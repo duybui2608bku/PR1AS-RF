@@ -1,11 +1,13 @@
 "use client"
 
 import {
+  Briefcase,
   CalendarCheck2,
   CalendarDays,
   Crown,
   FileText,
   Heart,
+  HeartHandshake,
   Loader2,
   LogOut,
   MessageCircle,
@@ -15,10 +17,10 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 
@@ -68,8 +70,18 @@ const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
     icon: Heart,
     roles: ["client"],
   },
-  { routeKey: "profile", href: "/client/profile", labelKey: "profile", icon: User },
-  { routeKey: "settings", href: "/settings", labelKey: "settings", icon: Settings },
+  {
+    routeKey: "profile",
+    href: "/client/profile",
+    labelKey: "profile",
+    icon: User,
+  },
+  {
+    routeKey: "settings",
+    href: "/settings",
+    labelKey: "settings",
+    icon: Settings,
+  },
   {
     routeKey: "schedule",
     href: "/worker/bookings/schedule",
@@ -102,9 +114,8 @@ const resolveMenuHref = (
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
-
-const EXPAND_THRESHOLD = 40  
-const COLLAPSE_THRESHOLD = 120 
+const EXPAND_THRESHOLD = 40
+const COLLAPSE_THRESHOLD = 120
 
 export function SiteHeader() {
   const router = useRouter()
@@ -136,7 +147,9 @@ export function SiteHeader() {
   )
   const homeHref = getRoleDefaultRoute(activeRole)
 
-  const switchRoleLabel = isWorkerActive ? t("switchToClient") : t("switchToWorker")
+  const switchRoleLabel = isWorkerActive
+    ? t("switchToClient")
+    : t("switchToWorker")
   const userMenuItems = React.useMemo(
     () => [
       ...USER_MENU_ITEM_DEFS.filter((item) => {
@@ -184,12 +197,15 @@ export function SiteHeader() {
   const HEADER_SERVICE_TABS: {
     value: ServiceTab
     label: string
-    iconSrc: string
+    icon: LucideIcon
   }[] = [
-    { value: "ASSISTANCE", label: tServices("assistance"), iconSrc: "/icons/assistant.png" },
-    { value: "COMPANIONSHIP", label: tServices("companionship"), iconSrc: "/icons/companion.png" },
+    { value: "ASSISTANCE", label: tServices("assistance"), icon: Briefcase },
+    {
+      value: "COMPANIONSHIP",
+      label: tServices("companionship"),
+      icon: HeartHandshake,
+    },
   ]
-
 
   const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
   const triggerTabPop = (index: number) => {
@@ -198,7 +214,9 @@ export function SiteHeader() {
     el.classList.remove("popping")
     void el.offsetWidth
     el.classList.add("popping")
-    el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
+    el.addEventListener("animationend", () => el.classList.remove("popping"), {
+      once: true,
+    })
   }
 
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
@@ -219,7 +237,6 @@ export function SiteHeader() {
     setHeaderExpanded(false)
   }, [setHeaderExpanded])
 
-
   useClickOutside(
     servicesHeaderRef,
     (event) => {
@@ -238,7 +255,6 @@ export function SiteHeader() {
     return () => setFilterSlotEl(null)
   }, [isServicesPage, setFilterSlotEl])
 
-
   React.useEffect(() => {
     if (isServicesPage) {
       const expanded = window.scrollY < COLLAPSE_THRESHOLD
@@ -247,15 +263,20 @@ export function SiteHeader() {
     }
   }, [isServicesPage, setHeaderExpanded])
 
-
   const isHeaderExpandedRef = React.useRef(true)
 
   const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
-  const setHiddenSynced = React.useCallback((value: boolean) => {
-    setHidden(value)
-    setHeaderHidden(value)
-  }, [setHeaderHidden])
+  const hiddenRef = React.useRef(false)
+  const setHiddenSynced = React.useCallback(
+    (value: boolean) => {
+      if (hiddenRef.current === value) return
+      hiddenRef.current = value
+      setHidden(value)
+      setHeaderHidden(value)
+    },
+    [setHeaderHidden]
+  )
   React.useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
@@ -268,7 +289,7 @@ export function SiteHeader() {
         setHiddenSynced(diff > 0)
       }
       if (isServicesPageRef.current) {
-        if (y < EXPAND_THRESHOLD) {
+        if (y <= EXPAND_THRESHOLD) {
           if (isManuallyExpandedRef.current) {
             isManuallyExpandedRef.current = false
             setIsManuallyExpanded(false)
@@ -296,7 +317,6 @@ export function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [setHeaderExpanded])
-
 
   React.useEffect(() => {
     if (hidden) setMenuOpen(false)
@@ -331,8 +351,7 @@ export function SiteHeader() {
   const handleLoginClick = async () => {
     try {
       await clearSessionCookie()
-    } catch {
-    }
+    } catch {}
     router.push("/login")
   }
 
@@ -346,7 +365,6 @@ export function SiteHeader() {
       toast.error(getErrorMessage(error, tToast("logoutError")))
     }
   }
-
 
   const rightActions = (
     <div className="flex items-center gap-2">
@@ -401,7 +419,7 @@ export function SiteHeader() {
             )}
           </Button>
           {menuOpen ? (
-            <div className="absolute right-0 mt-2 z-50 w-56 rounded-md border bg-background p-1 shadow-lg">
+            <div className="absolute right-0 z-50 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
               <div className="px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? t("me")}
               </div>
@@ -467,7 +485,7 @@ export function SiteHeader() {
           <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
             <Link
               href={homeHref}
-              className="flex shrink-0 items-center gap-2 font-semibold justify-self-start"
+              className="flex shrink-0 items-center gap-2 justify-self-start font-semibold"
             >
               {isMounted && brandLogo ? (
                 <Image
@@ -482,73 +500,87 @@ export function SiteHeader() {
                 brandName
               )}
             </Link>
-            <div className="relative hidden items-center justify-center md:flex">
-              <div
-                className={cn(
-                  "flex items-center gap-14 transition-all duration-300",
-                  showTabNav
-                    ? "pointer-events-auto translate-y-0 opacity-100"
-                    : "pointer-events-none absolute -translate-y-1 opacity-0"
-                )}
-              >
-                {HEADER_SERVICE_TABS.map((tab, i) => {
-                  const isActive = activeTab === tab.value
-                  return (
-                    <button
-                      key={tab.value}
-                      type="button"
-                      onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
-                      aria-pressed={isActive}
-                      className={cn(
-                        "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "border-foreground text-foreground"
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <span
-                        ref={(el) => { tabWrapRefs.current[i] = el }}
-                        className="tab-icon-wrap"
+
+            {/* Center */}
+            <div className="hidden items-center justify-center md:flex">
+              {/* Grid stack: tab nav + compact pill overlap in same cell, no absolute toggling */}
+              <div className="grid place-items-center">
+                {/* Tab navigation */}
+                <div
+                  style={{ gridArea: "1/1" }}
+                  className={cn(
+                    "flex items-center gap-14 transition-[opacity,transform] duration-300",
+                    showTabNav
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none -translate-y-1 opacity-0"
+                  )}
+                >
+                  {HEADER_SERVICE_TABS.map((tab, i) => {
+                    const isActive = activeTab === tab.value
+                    return (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        onClick={() => {
+                          triggerTabPop(i)
+                          switchTabCallback?.(tab.value)
+                        }}
+                        aria-pressed={isActive}
+                        className={cn(
+                          "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        )}
                       >
-                        <img
-                          src={tab.iconSrc}
-                          alt=""
-                          aria-hidden="true"
-                          className="tab-icon-img size-9 select-none"
-                          style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
-                        />
-                      </span>
-                      <span>{tab.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={expandHeader}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
-                  "text-sm transition-all duration-300",
-                  showCompactPill
-                    ? "pointer-events-auto scale-100 opacity-100"
-                    : "pointer-events-none absolute scale-95 opacity-0"
-                )}
-              >
-                <span className="font-medium text-foreground">
-                  {selectedLocationLabel ?? tServices("anyLocation")}
-                </span>
-                <span className="h-4 w-px shrink-0 bg-border" />
-                <span className="text-muted-foreground">
-                  {scheduledAtLabel ?? tServices("time")}
-                </span>
-                <span className="h-4 w-px shrink-0 bg-border" />
-                <span className="text-muted-foreground">
-                  {activeTab === "COMPANIONSHIP" ? tServices("companionship") : tServices("assistance")}
-                </span>
-                <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Search className="size-3.5" />
+                        <span
+                          ref={(el) => {
+                            tabWrapRefs.current[i] = el
+                          }}
+                          className="tab-icon-wrap"
+                        >
+                          <tab.icon
+                            aria-hidden="true"
+                            className="tab-icon-img size-6 select-none"
+                          />
+                        </span>
+                        <span>{tab.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
-              </button>
+
+                {/* Compact pill */}
+                <button
+                  type="button"
+                  onClick={expandHeader}
+                  style={{ gridArea: "1/1" }}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
+                    "text-sm transition-[opacity,transform] duration-300",
+                    showCompactPill
+                      ? "pointer-events-auto scale-100 opacity-100"
+                      : "pointer-events-none scale-95 opacity-0"
+                  )}
+                >
+                  <span className="font-medium text-foreground">
+                    {selectedLocationLabel ?? tServices("anyLocation")}
+                  </span>
+                  <span className="h-4 w-px shrink-0 bg-border" />
+                  <span className="text-muted-foreground">
+                    {scheduledAtLabel ?? tServices("time")}
+                  </span>
+                  <span className="h-4 w-px shrink-0 bg-border" />
+                  <span className="text-muted-foreground">
+                    {activeTab === "COMPANIONSHIP"
+                      ? tServices("companionship")
+                      : tServices("assistance")}
+                  </span>
+                  <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Search className="size-3.5" />
+                  </div>
+                </button>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-1">
               {!isAuthenticated && (

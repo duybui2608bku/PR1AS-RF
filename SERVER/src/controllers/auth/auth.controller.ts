@@ -192,6 +192,17 @@ export class AuthController {
     );
   }
 
+  async completeOnboarding(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const updatedUser = await userService.completeOnboarding(userId);
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.PROFILE_UPDATED,
+      req
+    );
+  }
+
   async forgotPassword(req: Request, res: Response): Promise<void> {
     const data = validateWithSchema(
       forgotPasswordSchema,

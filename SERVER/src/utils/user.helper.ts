@@ -25,6 +25,7 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
       pricing_plan_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
       pricing_started_at: user.meta_data?.pricing_started_at ?? null,
       pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
+      onboarding_done: user.meta_data?.onboarding_done ?? false,
     },
   };
 };

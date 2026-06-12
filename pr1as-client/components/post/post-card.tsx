@@ -1,13 +1,10 @@
 "use client"
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react"
-import { createPortal } from "react-dom"
-import Link from "next/link"
-import { useTranslations } from "next-intl"
-import { toast } from "sonner"
 import {
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Flag,
   Globe,
   Lock,
@@ -16,19 +13,16 @@ import {
   Pencil,
   Trash2,
   User,
+  UserPlus,
   Users,
   X,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
+import Link from "next/link"
+import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import { createPortal } from "react-dom"
+import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +33,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,21 +56,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import Image from "next/image"
+import { Textarea } from "@/components/ui/textarea"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
-import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
-import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
-import { useTogglePostRegistration } from "@/lib/hooks/use-post-registrations"
-import { useAuthStore } from "@/lib/store/auth-store"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
+import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
+import { useTogglePostRegistration } from "@/lib/hooks/use-post-registrations"
+import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { formatRelativeOrDate } from "@/lib/utils/time"
+import type { ReportReason } from "@/services/moderation.service"
 import type { PostPublic } from "@/types"
+import Image from "next/image"
 import { EditPostDialog } from "./edit-post-dialog"
 import { RegistrantsSheet } from "./registrants-sheet"
-import { Textarea } from "@/components/ui/textarea"
-import type { ReportReason } from "@/services/moderation.service"
 
 type Props = {
   post: PostPublic
@@ -125,14 +128,15 @@ function PostBodyWithHashtags({
 }) {
   // Map "#display" (thường hoá) → slug để link chính xác về trang lọc hashtag.
   const slugByDisplay = new Map(
-    hashtags.map((h) => [`#${h.display.toLowerCase()}`, h.slug]),
+    hashtags.map((h) => [`#${h.display.toLowerCase()}`, h.slug])
   )
   const parts = body.split(/(#[\p{L}\p{N}_]{1,50})/gu)
   return (
-    <p className="break-words whitespace-pre-wrap text-sm leading-relaxed">
+    <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
       {parts.map((part, i) => {
         if (!part.startsWith("#")) return part
-        const slug = slugByDisplay.get(part.toLowerCase()) ?? part.slice(1).toLowerCase()
+        const slug =
+          slugByDisplay.get(part.toLowerCase()) ?? part.slice(1).toLowerCase()
         return (
           <Link
             key={i}
@@ -157,14 +161,7 @@ function MediaPreview({
   className?: string
 }) {
   if (item.type === "video") {
-    return (
-      <video
-        src={item.url}
-        muted
-        playsInline
-        className={className}
-      />
-    )
+    return <video src={item.url} muted playsInline className={className} />
   }
 
   return (
@@ -195,7 +192,8 @@ function MediaSlider({
   const touchStartX = useRef<number | null>(null)
 
   const goNext = () => onChange((currentIndex + 1) % items.length)
-  const goPrev = () => onChange((currentIndex - 1 + items.length) % items.length)
+  const goPrev = () =>
+    onChange((currentIndex - 1 + items.length) % items.length)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -216,7 +214,7 @@ function MediaSlider({
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95">
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
           {currentIndex + 1}/{items.length}
         </span>
@@ -238,9 +236,11 @@ function MediaSlider({
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-muted/80"
+            className="absolute top-1/2 left-3 z-10 -translate-y-1/2 rounded-full bg-muted/80"
             aria-label={t("prevImage")}
-            onClick={() => onChange((currentIndex - 1 + items.length) % items.length)}
+            onClick={() =>
+              onChange((currentIndex - 1 + items.length) % items.length)
+            }
           >
             <ChevronLeft className="size-6" />
           </Button>
@@ -248,7 +248,7 @@ function MediaSlider({
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-muted/80"
+            className="absolute top-1/2 right-3 z-10 -translate-y-1/2 rounded-full bg-muted/80"
             aria-label={t("nextImage")}
             onClick={() => onChange((currentIndex + 1) % items.length)}
           >
@@ -264,7 +264,8 @@ function MediaSlider({
         }}
         onTouchEnd={(event) => {
           if (touchStartX.current === null || !hasMultiple) return
-          const dx = (event.changedTouches[0]?.clientX ?? 0) - touchStartX.current
+          const dx =
+            (event.changedTouches[0]?.clientX ?? 0) - touchStartX.current
           if (Math.abs(dx) > 50) {
             if (dx < 0) goNext()
             else goPrev()
@@ -312,7 +313,11 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
       <div>
         {item.type === "video" ? (
           <div className="overflow-hidden rounded-lg border bg-muted">
-            <video src={item.url} controls className="max-h-[32rem] w-full object-contain" />
+            <video
+              src={item.url}
+              controls
+              className="max-h-[32rem] w-full object-contain"
+            />
           </div>
         ) : (
           <button
@@ -357,7 +362,10 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
             onClick={() => setViewerIndex(index)}
             aria-label={t("openMedia", { index: index + 1 })}
           >
-            <MediaPreview item={item} className="h-full w-full object-contain" />
+            <MediaPreview
+              item={item}
+              className="h-full w-full object-contain"
+            />
             {index === 3 && hiddenCount > 0 ? (
               <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white transition-colors group-hover:bg-black/45">
                 {t("viewMore", { count: hiddenCount })}
@@ -410,14 +418,15 @@ export function PostCard({ post }: Props) {
   )
   const hasOpenPostReport = Boolean(openPostReportQuery.data)
   const timeAgo = formatRelativeOrDate(post.created_at)
-  const workerHref = post.author.has_worker_profile ? `/worker/${post.author.id}` : null
+  const workerHref = post.author.has_worker_profile
+    ? `/worker/${post.author.id}`
+    : null
 
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(post.id)
       setDeleteOpen(false)
-    } catch {
-    }
+    } catch {}
   }
 
   const handleToggleCommentsLock = () => {
@@ -460,7 +469,12 @@ export function PostCard({ post }: Props) {
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           {workerHref ? (
-            <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+            <Link
+              href={workerHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-full transition-opacity hover:opacity-80"
+            >
               <AuthorAvatar
                 avatar={post.author.avatar}
                 name={post.author.full_name}
@@ -476,11 +490,16 @@ export function PostCard({ post }: Props) {
           )}
           <div className="min-w-0">
             {workerHref ? (
-              <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="block truncate text-sm font-semibold leading-tight hover:underline">
+              <Link
+                href={workerHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate text-sm leading-tight font-semibold hover:underline"
+              >
                 {post.author.full_name ?? t("defaultUser")}
               </Link>
             ) : (
-              <p className="truncate text-sm font-semibold leading-tight">
+              <p className="truncate text-sm leading-tight font-semibold">
                 {post.author.full_name ?? t("defaultUser")}
               </p>
             )}
@@ -545,11 +564,15 @@ export function PostCard({ post }: Props) {
               </>
             ) : (
               <DropdownMenuItem
-                disabled={isAuthenticated && (openPostReportQuery.isFetching || hasOpenPostReport)}
+                disabled={
+                  isAuthenticated &&
+                  (openPostReportQuery.isFetching || hasOpenPostReport)
+                }
                 onSelect={(event) => {
                   event.preventDefault()
                   requireAuth(() => {
-                    if (openPostReportQuery.isFetching || hasOpenPostReport) return
+                    if (openPostReportQuery.isFetching || hasOpenPostReport)
+                      return
                     setReportOpen(true)
                   })
                 }}
@@ -601,11 +624,16 @@ export function PostCard({ post }: Props) {
           <PostMedia media={post.media} />
         </div>
       ) : null}
-  
+
       {post.hashtags.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {post.hashtags.map((tag) => (
-            <Badge key={tag.slug} asChild variant="secondary" className="text-xs">
+            <Badge
+              key={tag.slug}
+              asChild
+              variant="secondary"
+              className="text-xs"
+            >
               <Link href={`/posts?hashtag=${encodeURIComponent(tag.slug)}`}>
                 #{tag.display}
               </Link>
@@ -640,17 +668,13 @@ export function PostCard({ post }: Props) {
               onClick={() => setRegistrantsOpen(true)}
               className="group flex items-center gap-2 rounded-xl border border-border bg-accent/50 px-3.5 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:shadow-sm active:scale-[0.97]"
             >
-              <Image
-                src="/icons/contact-list.png"
-                alt=""
-                width={26}
-                height={26}
-                className="shrink-0 transition-transform duration-200 group-hover:scale-110"
-              />
-              {t("viewList")}
+              <ClipboardList className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              Xem danh sách
               {post.registrations_count > 0 ? (
-                <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold tabular-nums text-background">
-                  {post.registrations_count > 99 ? "99+" : post.registrations_count}
+                <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background tabular-nums">
+                  {post.registrations_count > 99
+                    ? "99+"
+                    : post.registrations_count}
                 </span>
               ) : null}
             </button>
@@ -664,22 +688,16 @@ export function PostCard({ post }: Props) {
                 post.my_registration
                   ? "border border-green-500/40 bg-green-50 text-green-700 shadow-[0_0_12px_rgba(34,197,94,0.18)] hover:shadow-[0_0_18px_rgba(34,197,94,0.28)] dark:bg-green-950/40 dark:text-green-400"
                   : "border border-sky-400/20 bg-sky-400 text-white shadow-sm hover:bg-sky-500 hover:shadow-md",
-                toggleRegistrationMutation.isPending && "cursor-not-allowed opacity-60"
+                toggleRegistrationMutation.isPending &&
+                  "cursor-not-allowed opacity-60"
               )}
             >
-              <Image
-                src={post.my_registration ? "/icons/document.png" : "/icons/register.png"}
-                alt=""
-                width={26}
-                height={26}
-                className={cn(
-                  "shrink-0 transition-transform duration-200",
-                  post.my_registration
-                    ? "group-hover:scale-110"
-                    : "group-hover:scale-110 group-hover:-rotate-6"
-                )}
-              />
-              {post.my_registration ? t("registered") : t("register")}
+              {post.my_registration ? (
+                <BadgeCheck className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              ) : (
+                <UserPlus className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              )}
+              {post.my_registration ? "Đã đăng ký" : "Đăng ký"}
             </button>
           ) : (
             <button
@@ -693,14 +711,8 @@ export function PostCard({ post }: Props) {
               }}
               className="group flex items-center gap-2 rounded-xl border border-border/50 px-3.5 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-accent/50 active:scale-[0.97]"
             >
-              <Image
-                src="/icons/register.png"
-                alt=""
-                width={26}
-                height={26}
-                className="shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105"
-              />
-              {t("register")}
+              <UserPlus className="size-5 shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105" />
+              Đăng ký
             </button>
           )}
         </div>
@@ -765,9 +777,7 @@ export function PostCard({ post }: Props) {
             }`}
           />
           {reportDescriptionError ? (
-            <p className="text-sm text-destructive">
-              {reportDescriptionError}
-            </p>
+            <p className="text-sm text-destructive">{reportDescriptionError}</p>
           ) : null}
           <DialogFooter>
             <Button
