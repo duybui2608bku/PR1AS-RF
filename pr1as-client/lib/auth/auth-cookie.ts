@@ -4,12 +4,35 @@ export const ACTIVE_ROLE_COOKIE_NAME = "active_role"
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
 
-export async function setSessionCookie(token: string): Promise<void> {
-  await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
-  })
+/**
+ * Set httpOnly session cookie qua POST /api/auth/session.
+ * Retry với backoff để chịu được network blip trên mobile — đây là request
+ * duy nhất tạo cookie cho middleware, fail đồng nghĩa user bị đá khỏi
+ * protected routes dù Zustand đã authenticated.
+ * @returns true nếu cookie được set thành công.
+ */
+export async function setSessionCookie(token: string): Promise<boolean> {
+  const MAX_ATTEMPTS = 3
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+        credentials: "same-origin",
+        cache: "no-store",
+        // keepalive: request không bị huỷ nếu trang điều hướng giữa chừng
+        keepalive: true,
+      })
+      if (res.ok) return true
+    } catch {
+      // Network blip — thử lại với backoff
+    }
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * attempt))
+    }
+  }
+  return false
 }
 
 export async function clearSessionCookie(): Promise<void> {

@@ -19,7 +19,6 @@ import {
 import { GoogleLogin } from "@react-oauth/google"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
 import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -32,7 +31,6 @@ export default function LoginPage() {
   const t = useTranslations("Auth")
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
-  const clearAuth = useAuthStore((state) => state.clearAuth)
   const loginMutation = useLogin()
   const googleLoginMutation = useGoogleLogin()
   const forgotPasswordMutation = useForgotPassword()
@@ -48,7 +46,6 @@ export default function LoginPage() {
   >(null)
 
   const isSessionActive = isAuthenticated
-  const meSucceeded = meQuery.isSuccess && meQuery.data?.success === true
   const authenticatedUser = meQuery.data?.data?.user ?? user
   const isWorker = authenticatedUser && isWorkerRoleActive(authenticatedUser)
   const activeRole = getActiveRole(authenticatedUser)
@@ -65,18 +62,17 @@ export default function LoginPage() {
       ? (safeRedirectTarget ?? "/dashboard")
       : (safeRedirectTarget ?? defaultRedirectTarget)
 
-  useEffect(() => {
-    if (isSessionActive && meQuery.isError) {
-      void clearSessionCookie()
-      clearAuth()
-    }
-  }, [isSessionActive, meQuery.isError, clearAuth])
+  // Lưu ý: KHÔNG clearAuth khi meQuery lỗi — lỗi network thoáng qua trên mobile
+  // từng khiến user bị logout oan. 401 thật đã được axios interceptor xử lý
+  // (refresh token hoặc force logout).
 
+  // Điều hướng ngay khi store đã authenticated — sau Lớp 2, isAuthenticated=true
+  // đồng nghĩa httpOnly cookie đã được set thành công, không cần chờ /auth/me.
   useEffect(() => {
-    if (isSessionActive && meSucceeded && authenticatedUser) {
+    if (isSessionActive && authenticatedUser) {
       router.replace(redirectTarget)
     }
-  }, [isSessionActive, meSucceeded, authenticatedUser, redirectTarget, router])
+  }, [isSessionActive, authenticatedUser, redirectTarget, router])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -144,6 +140,17 @@ export default function LoginPage() {
     } catch (error) {
       toast.error(getErrorMessage(error, t("forgotPasswordError")))
     }
+  }
+
+  // Đang authenticated (vừa login xong, hoặc bị middleware đá về đây trong lúc
+  // token đang được silent-refresh) → hiển thị loading thay vì form login để
+  // tránh "chớp form" gây cảm giác bị logout; effect phía trên sẽ tự điều hướng.
+  if (isSessionActive) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-24">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (

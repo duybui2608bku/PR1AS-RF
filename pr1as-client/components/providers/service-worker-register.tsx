@@ -15,10 +15,42 @@ export function ServiceWorkerRegister() {
       })
     }
 
-    if (document.readyState === "complete") register()
-    else {
+    // SW mới activate sau deploy sẽ postMessage SW_UPDATED (xem sw.js).
+    // Reload để tab chạy code mới — nhưng không reload giữa lúc user đang
+    // thao tác: nếu tab đang hiển thị thì đợi đến khi bị ẩn mới reload.
+    let pendingReload = false
+    const reloadWhenSafe = () => {
+      if (document.visibilityState === "hidden") {
+        window.location.reload()
+      } else {
+        pendingReload = true
+      }
+    }
+    const onVisibilityChange = () => {
+      if (pendingReload && document.visibilityState === "hidden") {
+        window.location.reload()
+      }
+    }
+    const onMessage = (event: MessageEvent) => {
+      if ((event.data as { type?: string } | null)?.type === "SW_UPDATED") {
+        reloadWhenSafe()
+      }
+    }
+    navigator.serviceWorker.addEventListener("message", onMessage)
+    document.addEventListener("visibilitychange", onVisibilityChange)
+
+    let removeLoadListener: (() => void) | undefined
+    if (document.readyState === "complete") {
+      register()
+    } else {
       window.addEventListener("load", register)
-      return () => window.removeEventListener("load", register)
+      removeLoadListener = () => window.removeEventListener("load", register)
+    }
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", onMessage)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+      removeLoadListener?.()
     }
   }, [])
 

@@ -91,6 +91,9 @@ async function fetchMaintenanceStatus(): Promise<{ maintenanceMode: boolean; mai
     const url = `${apiBase}/site-settings/maintenance`
     const res = await fetch(url, {
       next: { revalidate: 30 }, // Cache for 30 seconds
+      // Check này chạy trên gần như mọi navigation — không được phép treo
+      // navigation khi mạng mobile chập chờn. Quá 2s thì bỏ qua (catch bên dưới).
+      signal: AbortSignal.timeout(2000),
     })
     if (!res.ok) return { maintenanceMode: false, maintenanceMessage: "" }
     const json = await res.json() as { data?: { maintenanceMode?: boolean; maintenanceMessage?: string } }

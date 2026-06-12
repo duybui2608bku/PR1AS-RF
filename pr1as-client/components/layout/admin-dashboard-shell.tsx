@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sidebar"
 import { isAdminUser } from "@/lib/auth/roles"
 import { useLogout, useMe } from "@/lib/hooks/use-auth"
+import { ApiError } from "@/lib/utils/error-handler"
 import { useSiteSettings } from "@/lib/hooks/use-site-settings"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -178,10 +179,15 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   }, [meQuery.isSuccess, resolvedUser, router])
 
   React.useEffect(() => {
-    if (meQuery.isError) {
+    // Chỉ đá về login khi lỗi auth xác định (401/403) — lỗi network thoáng qua
+    // trên mobile không được phép kick admin khỏi dashboard. 401 thật đã được
+    // axios interceptor xử lý (refresh hoặc force logout) nên đây chỉ là chốt chặn.
+    const status =
+      meQuery.error instanceof ApiError ? meQuery.error.statusCode : undefined
+    if (meQuery.isError && (status === 401 || status === 403)) {
       router.replace(loginTarget)
     }
-  }, [meQuery.isError, router, loginTarget])
+  }, [meQuery.isError, meQuery.error, router, loginTarget])
 
   if (isLoading) {
     return (

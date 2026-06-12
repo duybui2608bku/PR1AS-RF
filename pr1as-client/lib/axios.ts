@@ -184,15 +184,21 @@ api.interceptors.response.use(
           const newToken = data.token
           const newRefreshToken = data.refreshToken ?? refreshToken
 
-          // 1. Sync Zustand store with new tokens
+          // 1. Set the httpOnly session cookie TRƯỚC khi sync store —
+          // middleware dựa hoàn toàn vào cookie. Nếu set fail (đã retry
+          // bên trong) thì coi như refresh thất bại để tránh trạng thái
+          // "token mới trong store nhưng cookie chứa JWT cũ đã hết hạn".
+          const cookieOk = await setSessionCookie(newToken)
+          if (!cookieOk) {
+            throw new Error("SESSION_SYNC_FAILED")
+          }
+
+          // 2. Sync Zustand store with new tokens
           state.setAuth({
             user: data.user || state.user,
             token: newToken,
             refreshToken: newRefreshToken,
           })
-
-          // 2. Set the httpOnly session cookie
-          await setSessionCookie(newToken)
 
           // 3. Resolve all queued requests with the new token
           processQueue(null, newToken)
