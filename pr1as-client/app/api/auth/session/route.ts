@@ -49,8 +49,13 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      // Session cookie (no maxAge) — clears when browser closes,
-      // matching the sessionStorage lifecycle of the Zustand auth store.
+      // maxAge 7 ngày (khớp vòng đời refresh token) thay vì session cookie —
+      // mobile browser (đặc biệt iOS) có thể purge session cookie khi app bị
+      // background, gây desync "Zustand authenticated nhưng cookie mất" và
+      // user bị đá khỏi protected routes. JWT bên trong vẫn hết hạn sau 15'
+      // và middleware luôn verify exp, nên cookie sống lâu không mở rộng
+      // quyền truy cập; silent refresh sẽ ghi đè cookie bằng JWT mới.
+      maxAge: 60 * 60 * 24 * 7,
       path: "/",
     })
     return res

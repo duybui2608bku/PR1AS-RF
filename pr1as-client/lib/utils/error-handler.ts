@@ -251,6 +251,8 @@ const SERVER_MESSAGE_TRANSLATIONS: Record<string, string> = {
   "Review updated successfully": "Đã cập nhật đánh giá.",
   "Reviews fetched successfully": "Đã tải danh sách đánh giá.",
   "Route not found": "Không tìm thấy đường dẫn.",
+  SESSION_SYNC_FAILED:
+    "Đăng nhập chưa hoàn tất do mạng không ổn định. Vui lòng thử lại.",
   "Socket.IO not initialized. Call initializeSocket() first.": "Socket.IO chưa được khởi tạo.",
   Success: "Thành công.",
   "Target pricing package is not available": "Gói pricing đã chọn hiện không khả dụng.",

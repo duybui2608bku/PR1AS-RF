@@ -8,6 +8,7 @@ import { NetworkStatusWatcher } from "@/components/providers/network-status-watc
 import { QueryProvider } from "@/components/providers/query-provider"
 import { ServiceWorkerRegister } from "@/components/providers/service-worker-register"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { TokenForegroundRefresh } from "@/components/providers/token-foreground-refresh"
 import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { BannedAccountModal } from "@/components/providers/banned-account-modal"
 import { OnboardingRoleModal } from "@/components/providers/onboarding-role-modal"
@@ -17,6 +18,31 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useAuthStore, useHasHydrated, type AuthUser } from "@/lib/store/auth-store"
+
+/** GET /api/auth/session với retry — network blip lúc mở app trên mobile không
+ *  được phép làm mất phiên (cookie hợp lệ nhưng Zustand trống → UI tưởng logged out).
+ */
+async function fetchSessionWithRetry(): Promise<{
+  ok: boolean
+  user?: AuthUser
+  token?: string
+}> {
+  const MAX_ATTEMPTS = 3
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch("/api/auth/session", { cache: "no-store" })
+      if (res.ok) {
+        return (await res.json()) as { ok: boolean; user?: AuthUser; token?: string }
+      }
+    } catch {
+      // Network blip — thử lại với backoff
+    }
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 300 * attempt))
+    }
+  }
+  return { ok: false }
+}
 
 /** Restores Zustand session from httpOnly cookie khi sessionStorage empty (e.g. tab mới).
  *  Gọi GET /api/auth/session — Next.js server đọc cookie và verify JWT server-side.
@@ -38,14 +64,12 @@ function SessionRestoreProvider() {
     if (isAuthenticated) { setSessionLoaded(); return }
 
     let cancelled = false
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((data: { ok: boolean; user?: AuthUser; token?: string }) => {
+    fetchSessionWithRetry()
+      .then((data) => {
         if (!cancelled && data.ok && data.user && data.token) {
           setAuth({ user: data.user, token: data.token })
         }
       })
-      .catch(() => {})
       .finally(() => { if (!cancelled) setSessionLoaded() })
 
     return () => { cancelled = true }
@@ -111,6 +135,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <OnboardingRoleModal />
         {/* Restore session từ cookie khi sessionStorage empty */}
         <SessionRestoreProvider />
+        {/* Chủ động refresh token khi app quay lại foreground (chống bị đá khỏi protected routes sau khi background >15') */}
+        <TokenForegroundRefresh />
         {/* Sync logout across tabs */}
         <AuthBroadcastListener />
         {/* Global mobile bottom nav — hiển thị trên mọi trang, kể cả /chat */}

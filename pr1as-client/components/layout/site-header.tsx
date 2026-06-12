@@ -349,6 +349,27 @@ export function SiteHeader() {
   }
 
   const handleLoginClick = async () => {
+    // UI có thể hiển thị "chưa đăng nhập" trong khi httpOnly cookie vẫn hợp lệ
+    // (vd: session restore fail vì network blip). Thử khôi phục phiên trước —
+    // nếu cookie còn tốt thì đăng nhập lại ngay, không phá phiên hợp lệ.
+    try {
+      const res = await fetch("/api/auth/session", { cache: "no-store" })
+      if (res.ok) {
+        const data = (await res.json()) as {
+          ok: boolean
+          user?: AuthUser
+          token?: string
+        }
+        if (data.ok && data.user && data.token) {
+          useAuthStore.getState().setAuth({ user: data.user, token: data.token })
+          return
+        }
+      }
+    } catch {
+      // Không xác nhận được — rơi xuống flow login thường
+    }
+
+    // Cookie không hợp lệ/không có — dọn sạch rồi vào trang login
     try {
       await clearSessionCookie()
     } catch {}

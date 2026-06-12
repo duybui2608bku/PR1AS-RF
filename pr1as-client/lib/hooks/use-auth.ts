@@ -7,6 +7,7 @@ import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
+import { ApiError } from "@/lib/utils/error-handler"
 
 interface ApiResponse<T> {
   success: boolean
@@ -72,19 +73,25 @@ export function useLogin() {
         ...payload,
         email: normalizeEmail(payload.email),
       })
+      // Set httpOnly cookie TRƯỚC khi báo thành công — middleware dựa hoàn toàn
+      // vào cookie này. Nếu set fail (đã retry bên trong) thì coi như login
+      // thất bại, tránh trạng thái "Zustand authenticated nhưng không có cookie"
+      // khiến user bị đá về /login khi vào protected routes.
+      if (response.data.success && response.data.data) {
+        const cookieOk = await setSessionCookie(response.data.data.token)
+        if (!cookieOk) {
+          throw new Error("SESSION_SYNC_FAILED")
+        }
+      }
       return response.data
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       if (!data.success || !data.data) {
         return
       }
 
       const { user, token, refreshToken } = data.data
       setAuth({ user, token, refreshToken })
-      // Set the httpOnly session cookie from the server side so it is
-      // inaccessible to JavaScript (XSS-safe). Fire before invalidating
-      // queries so the cookie is present for any subsequent SSR checks.
-      await setSessionCookie(token)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -97,13 +104,19 @@ export function useGoogleLogin() {
   return useMutation({
     mutationFn: async (idToken: string) => {
       const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { id_token: idToken })
+      // Cookie trước, authenticated sau — xem giải thích ở useLogin.
+      if (response.data.success && response.data.data) {
+        const cookieOk = await setSessionCookie(response.data.data.token)
+        if (!cookieOk) {
+          throw new Error("SESSION_SYNC_FAILED")
+        }
+      }
       return response.data
     },
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       if (!data.success || !data.data) return
       const { user, token, refreshToken } = data.data
       setAuth({ user, token, refreshToken })
-      await setSessionCookie(token)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
     },
   })
@@ -129,7 +142,14 @@ export function useMe() {
     // Enabled whenever the store believes the user is authenticated —
     // on a fresh page load the httpOnly cookie handles the actual auth.
     enabled: isAuthenticated,
-    retry: false,
+    // Chỉ retry lỗi network (không có statusCode) — chịu được blip mạng mobile.
+    // Lỗi 4xx/5xx là kết quả xác định, retry chỉ thêm độ trễ; 401 đã được
+    // axios interceptor xử lý (refresh hoặc logout).
+    retry: (failureCount, error) => {
+      if (failureCount >= 2) return false
+      return error instanceof ApiError ? error.statusCode === undefined : true
+    },
+    retryDelay: (attempt) => 500 * (attempt + 1),
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const response = await api.get<ApiResponse<{ user: AuthUser }>>("/auth/me")
