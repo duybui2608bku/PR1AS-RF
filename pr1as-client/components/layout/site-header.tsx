@@ -5,7 +5,9 @@ import {
   CalendarDays,
   Crown,
   FileText,
+  Briefcase,
   Heart,
+  HeartHandshake,
   Loader2,
   LogOut,
   MessageCircle,
@@ -102,9 +104,11 @@ const resolveMenuHref = (
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
-// Hysteresis thresholds cho services header — tránh oscillation
-const EXPAND_THRESHOLD = 40    // expand khi scrollY < ngưỡng này
-const COLLAPSE_THRESHOLD = 120 // collapse khi scrollY > ngưỡng này
+// Hysteresis thresholds cho services header
+// EXPAND_THRESHOLD = 0: chỉ expand khi về tuyệt đối đầu trang,
+// tránh scroll-anchoring push y vượt COLLAPSE_THRESHOLD gây oscillation loop
+const EXPAND_THRESHOLD = 0
+const COLLAPSE_THRESHOLD = 120
 
 export function SiteHeader() {
   const router = useRouter()
@@ -184,10 +188,10 @@ export function SiteHeader() {
   const HEADER_SERVICE_TABS: {
     value: ServiceTab
     label: string
-    iconSrc: string
+    icon: LucideIcon
   }[] = [
-    { value: "ASSISTANCE", label: tServices("assistance"), iconSrc: "/icons/assistant.png" },
-    { value: "COMPANIONSHIP", label: tServices("companionship"), iconSrc: "/icons/companion.png" },
+    { value: "ASSISTANCE", label: tServices("assistance"), icon: Briefcase },
+    { value: "COMPANIONSHIP", label: tServices("companionship"), icon: HeartHandshake },
   ]
 
   // Tab icon pop animation — direct DOM manipulation to avoid re-render restart
@@ -256,7 +260,10 @@ export function SiteHeader() {
   // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
+  const hiddenRef = React.useRef(false)
   const setHiddenSynced = React.useCallback((value: boolean) => {
+    if (hiddenRef.current === value) return
+    hiddenRef.current = value
     setHidden(value)
     setHeaderHidden(value)
   }, [setHeaderHidden])
@@ -272,7 +279,7 @@ export function SiteHeader() {
         setHiddenSynced(diff > 0)
       }
       if (isServicesPageRef.current) {
-        if (y < EXPAND_THRESHOLD) {
+        if (y <= EXPAND_THRESHOLD) {
           if (isManuallyExpandedRef.current) {
             isManuallyExpandedRef.current = false
             setIsManuallyExpanded(false)
@@ -492,61 +499,62 @@ export function SiteHeader() {
             </Link>
 
             {/* Center */}
-            <div className="relative hidden items-center justify-center md:flex">
-              {/* Tab navigation */}
-              <div
-                className={cn(
-                  "flex items-center gap-14 transition-all duration-300",
-                  showTabNav
-                    ? "pointer-events-auto translate-y-0 opacity-100"
-                    : "pointer-events-none absolute -translate-y-1 opacity-0"
-                )}
-              >
-                {HEADER_SERVICE_TABS.map((tab, i) => {
-                  const isActive = activeTab === tab.value
-                  return (
-                    <button
-                      key={tab.value}
-                      type="button"
-                      onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
-                      aria-pressed={isActive}
-                      className={cn(
-                        "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "border-foreground text-foreground"
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <span
-                        ref={(el) => { tabWrapRefs.current[i] = el }}
-                        className="tab-icon-wrap"
+            <div className="hidden items-center justify-center md:flex">
+              {/* Grid stack: tab nav + compact pill overlap in same cell, no absolute toggling */}
+              <div className="grid place-items-center">
+                {/* Tab navigation */}
+                <div
+                  style={{ gridArea: "1/1" }}
+                  className={cn(
+                    "flex items-center gap-14 transition-[opacity,transform] duration-300",
+                    showTabNav
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none -translate-y-1 opacity-0"
+                  )}
+                >
+                  {HEADER_SERVICE_TABS.map((tab, i) => {
+                    const isActive = activeTab === tab.value
+                    return (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
+                        aria-pressed={isActive}
+                        className={cn(
+                          "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "border-foreground text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        )}
                       >
-                        <img
-                          src={tab.iconSrc}
-                          alt=""
-                          aria-hidden="true"
-                          className="tab-icon-img size-9 select-none"
-                          style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
-                        />
-                      </span>
-                      <span>{tab.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
+                        <span
+                          ref={(el) => { tabWrapRefs.current[i] = el }}
+                          className="tab-icon-wrap"
+                        >
+                          <tab.icon
+                            aria-hidden="true"
+                            className="tab-icon-img size-6 select-none"
+                          />
+                        </span>
+                        <span>{tab.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
 
-              {/* Compact pill */}
-              <button
-                type="button"
-                onClick={expandHeader}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
-                  "text-sm transition-all duration-300",
-                  showCompactPill
-                    ? "pointer-events-auto scale-100 opacity-100"
-                    : "pointer-events-none absolute scale-95 opacity-0"
-                )}
-              >
+                {/* Compact pill */}
+                <button
+                  type="button"
+                  onClick={expandHeader}
+                  style={{ gridArea: "1/1" }}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
+                    "text-sm transition-[opacity,transform] duration-300",
+                    showCompactPill
+                      ? "pointer-events-auto scale-100 opacity-100"
+                      : "pointer-events-none scale-95 opacity-0"
+                  )}
+                >
                 <span className="font-medium text-foreground">
                   {selectedLocationLabel ?? tServices("anyLocation")}
                 </span>
@@ -561,7 +569,8 @@ export function SiteHeader() {
                 <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <Search className="size-3.5" />
                 </div>
-              </button>
+                </button>
+              </div>
             </div>
 
             {/* Right: user actions */}

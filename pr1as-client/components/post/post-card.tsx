@@ -6,8 +6,10 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import {
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Flag,
   Globe,
   Lock,
@@ -16,6 +18,7 @@ import {
   Pencil,
   Trash2,
   User,
+  UserPlus,
   Users,
   X,
 } from "lucide-react"
@@ -640,13 +643,7 @@ export function PostCard({ post }: Props) {
               onClick={() => setRegistrantsOpen(true)}
               className="group flex items-center gap-2 rounded-xl border border-border bg-accent/50 px-3.5 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:shadow-sm active:scale-[0.97]"
             >
-              <Image
-                src="/icons/contact-list.png"
-                alt=""
-                width={26}
-                height={26}
-                className="shrink-0 transition-transform duration-200 group-hover:scale-110"
-              />
+              <ClipboardList className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
               Xem danh sách
               {post.registrations_count > 0 ? (
                 <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold tabular-nums text-background">
@@ -667,18 +664,10 @@ export function PostCard({ post }: Props) {
                 toggleRegistrationMutation.isPending && "cursor-not-allowed opacity-60"
               )}
             >
-              <Image
-                src={post.my_registration ? "/icons/document.png" : "/icons/register.png"}
-                alt=""
-                width={26}
-                height={26}
-                className={cn(
-                  "shrink-0 transition-transform duration-200",
-                  post.my_registration
-                    ? "group-hover:scale-110"
-                    : "group-hover:scale-110 group-hover:-rotate-6"
-                )}
-              />
+              {post.my_registration
+                ? <BadgeCheck className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                : <UserPlus className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              }
               {post.my_registration ? "Đã đăng ký" : "Đăng ký"}
             </button>
           ) : (
@@ -693,13 +682,7 @@ export function PostCard({ post }: Props) {
               }}
               className="group flex items-center gap-2 rounded-xl border border-border/50 px-3.5 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-accent/50 active:scale-[0.97]"
             >
-              <Image
-                src="/icons/register.png"
-                alt=""
-                width={26}
-                height={26}
-                className="shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105"
-              />
+              <UserPlus className="size-5 shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105" />
               Đăng ký
             </button>
           )}
