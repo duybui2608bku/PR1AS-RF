@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { ThumbsUp } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,14 +22,14 @@ import { REACTION_TYPES } from "@/types"
 
 export const REACTION_META: Record<
   ReactionType,
-  { emoji: string; label: string; color: string }
+  { emoji: string; labelKey: string; color: string }
 > = {
-  like: { emoji: "👍", label: "Thích", color: "text-blue-600" },
-  love: { emoji: "❤️", label: "Yêu thích", color: "text-rose-600" },
-  haha: { emoji: "😆", label: "Haha", color: "text-amber-500" },
-  wow: { emoji: "😮", label: "Wow", color: "text-amber-500" },
-  sad: { emoji: "😢", label: "Buồn", color: "text-amber-500" },
-  angry: { emoji: "😡", label: "Phẫn nộ", color: "text-orange-600" },
+  like: { emoji: "👍", labelKey: "like", color: "text-blue-600" },
+  love: { emoji: "❤️", labelKey: "love", color: "text-rose-600" },
+  haha: { emoji: "😆", labelKey: "haha", color: "text-amber-500" },
+  wow: { emoji: "😮", labelKey: "wow", color: "text-amber-500" },
+  sad: { emoji: "😢", labelKey: "sad", color: "text-amber-500" },
+  angry: { emoji: "😡", labelKey: "angry", color: "text-orange-600" },
 }
 
 export function topReactionTypes(summary: ReactionSummaryPublic): ReactionType[] {
@@ -44,6 +45,7 @@ export function topReactionTypes(summary: ReactionSummaryPublic): ReactionType[]
 }
 
 export function ReactionPicker({ post }: { post: PostPublic }) {
+  const t = useTranslations("Reactions")
   const [open, setOpen] = useState(false)
   const toggleReaction = useTogglePostReaction(post.id)
   const { requireAuth } = useAuthRequired()
@@ -94,7 +96,7 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
     })
   }
 
-  const triggerLabel = myMeta?.label ?? "Thích"
+  const triggerLabel = t(myMeta?.labelKey ?? "like")
 
   return (
     <div className="flex flex-1 items-center gap-2">
@@ -165,8 +167,8 @@ export function ReactionPicker({ post }: { post: PostPublic }) {
               <button
                 key={type}
                 type="button"
-                aria-label={meta.label}
-                title={meta.label}
+                aria-label={t(meta.labelKey)}
+                title={t(meta.labelKey)}
                 disabled={toggleReaction.isPending}
                 onClick={() => handleToggle(type)}
                 className={cn(

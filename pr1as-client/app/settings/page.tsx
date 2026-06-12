@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 import {
@@ -73,6 +74,7 @@ import {
 } from "@/lib/hooks/use-moderation"
 import { useReputationHistory } from "@/lib/hooks/use-reputation"
 import { siteConfig } from "@/config/site"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import {
@@ -109,70 +111,75 @@ type SettingsSection =
   | "feedback"
   | "delete-account"
 
+type SettingsTranslator = ReturnType<typeof useTranslations>
+
+const useLocaleTag = () => {
+  const locale = useLocale() as SupportedLocale
+  return INTL_LOCALE_TAGS[locale] ?? "vi-VN"
+}
+
 const sectionMeta: Record<
   SettingsSection,
   {
-    label: string
-    description: string
+    labelKey: string
+    descriptionKey: string
     icon: React.ComponentType<{ className?: string }>
     danger?: boolean
   }
 > = {
   blocked: {
-    label: "Danh sách chặn",
-    description: "Xem và bỏ chặn những người dùng bạn đã chặn.",
+    labelKey: "blockedLabel",
+    descriptionKey: "blockedDesc",
     icon: Ban,
   },
   "post-reports": {
-    label: "Bài viết đã báo cáo",
-    description:
-      "Theo dõi trạng thái và kết quả xử lý các bài viết bạn đã báo cáo.",
+    labelKey: "postReportsLabel",
+    descriptionKey: "postReportsDesc",
     icon: FileWarning,
   },
   "worker-reports": {
-    label: "Worker đã báo cáo",
-    description:
-      "Theo dõi trạng thái và kết quả xử lý các worker bạn đã báo cáo.",
+    labelKey: "workerReportsLabel",
+    descriptionKey: "workerReportsDesc",
     icon: UserX,
   },
   reputation: {
-    label: "Điểm uy tín",
-    description: "Xem điểm hiện tại và lịch sử cộng trừ điểm của bạn.",
+    labelKey: "reputationLabel",
+    descriptionKey: "reputationDesc",
     icon: Star,
   },
   feedback: {
-    label: "Gửi phản hồi",
-    description: "Gửi báo lỗi hoặc đề xuất tính năng tới đội ngũ quản trị.",
+    labelKey: "feedbackLabel",
+    descriptionKey: "feedbackDesc",
     icon: MessageSquarePlus,
   },
   "delete-account": {
-    label: "Xoá tài khoản",
-    description: "Yêu cầu xoá vĩnh viễn tài khoản của bạn.",
+    labelKey: "deleteLabel",
+    descriptionKey: "deleteDesc",
     icon: Trash2,
     danger: true,
   },
 }
 
-const sectionGroups: Array<{ title: string; items: SettingsSection[] }> = [
+const sectionGroups: Array<{ titleKey: string; items: SettingsSection[] }> = [
   {
-    title: "An toàn & kiểm duyệt",
+    titleKey: "groupSafety",
     items: ["blocked", "post-reports", "worker-reports"],
   },
-  { title: "Tài khoản", items: ["reputation", "feedback"] },
-  { title: "Vùng nguy hiểm", items: ["delete-account"] },
+  { titleKey: "groupAccount", items: ["reputation", "feedback"] },
+  { titleKey: "groupDanger", items: ["delete-account"] },
 ]
 
 // Các hàng điều hướng tới trang riêng (không phải panel trong settings).
 const navLinks: Array<{
   href: string
-  label: string
-  description: string
+  labelKey: string
+  descriptionKey: string
   icon: React.ComponentType<{ className?: string }>
 }> = [
   {
     href: "/client/profile",
-    label: "Thông tin cá nhân",
-    description: "Họ tên, email, ảnh đại diện, gói thành viên.",
+    labelKey: "profileLabel",
+    descriptionKey: "profileDesc",
     icon: User,
   },
 ]
@@ -180,37 +187,38 @@ const navLinks: Array<{
 // Trang thông tin, pháp lý và liên hệ — trước đây nằm ở footer (đã ẩn trên mobile).
 const infoLinks: Array<{
   href: string
-  label: string
-  description: string
+  labelKey: string
+  descriptionKey?: string
+  descriptionRaw?: string
   icon: React.ComponentType<{ className?: string }>
   external?: boolean
 }> = [
   {
     href: "/privacy",
-    label: "Chính sách bảo mật",
-    description: "Cách chúng tôi thu thập và bảo vệ dữ liệu của bạn.",
+    labelKey: "privacyLabel",
+    descriptionKey: "privacyDesc",
     icon: Lock,
   },
   {
     href: "/terms",
-    label: "Điều khoản sử dụng",
-    description: "Quy định khi sử dụng nền tảng PR1AS.",
+    labelKey: "termsLabel",
+    descriptionKey: "termsDesc",
     icon: FileText,
   },
   {
     href: `mailto:${siteConfig.contactEmail}`,
-    label: "Liên hệ",
-    description: siteConfig.contactEmail,
+    labelKey: "contactLabel",
+    descriptionRaw: siteConfig.contactEmail,
     icon: Mail,
     external: true,
   },
 ]
 
-const feedbackStatusLabels: Record<FeedbackStatus, string> = {
-  open: "Đã gửi",
-  in_progress: "Đang xử lý",
-  resolved: "Đã xử lý",
-  rejected: "Đã từ chối",
+const feedbackStatusKeys: Record<FeedbackStatus, string> = {
+  open: "fbStatusOpen",
+  in_progress: "fbStatusInProgress",
+  resolved: "fbStatusResolved",
+  rejected: "fbStatusRejected",
 }
 
 const feedbackStatusVariants: Record<
@@ -223,32 +231,32 @@ const feedbackStatusVariants: Record<
   rejected: "destructive",
 }
 
-const feedbackTypeLabels: Record<FeedbackType, string> = {
-  bug: "Báo lỗi",
-  feature: "Đề xuất tính năng",
+const feedbackTypeKeys: Record<FeedbackType, string> = {
+  bug: "fbTypeBug",
+  feature: "fbTypeFeature",
 }
 
-const statusLabels: Record<ReportStatus, string> = {
-  open: "Đang mở",
-  reviewing: "Đang xem xét",
-  resolved: "Đã xử lý",
-  rejected: "Đã từ chối",
+const statusKeys: Record<ReportStatus, string> = {
+  open: "reportStatusOpen",
+  reviewing: "reportStatusReviewing",
+  resolved: "reportStatusResolved",
+  rejected: "reportStatusRejected",
 }
 
-const reasonLabels: Record<ReportReason, string> = {
-  scam: "Lừa đảo",
-  low_quality: "Chất lượng thấp",
-  harassment: "Quấy rối",
-  fake_profile: "Hồ sơ giả mạo",
-  other: "Khác",
+const reasonKeys: Record<ReportReason, string> = {
+  scam: "reasonScam",
+  low_quality: "reasonLowQuality",
+  harassment: "reasonHarassment",
+  fake_profile: "reasonFakeProfile",
+  other: "reasonOther",
 }
 
-const reputationReasonLabels: Record<ReputationHistoryReason, string> = {
-  booking_expiry: "Trừ điểm do booking hết hạn",
-  worker_cancel: "Trừ điểm do worker hủy booking",
-  low_review: "Trừ điểm do đánh giá thấp",
-  daily_recovery: "Cộng điểm phục hồi hằng ngày",
-  manual: "Điều chỉnh thủ công",
+const reputationReasonKeys: Record<ReputationHistoryReason, string> = {
+  booking_expiry: "repBookingExpiry",
+  worker_cancel: "repWorkerCancel",
+  low_review: "repLowReview",
+  daily_recovery: "repDailyRecovery",
+  manual: "repManual",
 }
 
 const statusVariants: Record<
@@ -261,21 +269,21 @@ const statusVariants: Record<
   rejected: "destructive",
 }
 
-function formatDateTime(value?: string | null) {
+function formatDateTime(value?: string | null, localeTag = "vi-VN") {
   if (!value) return "-"
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat(localeTag, {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value))
 }
 
-function getBlockedUser(block: UserBlock) {
+function getBlockedUser(block: UserBlock, defaultName: string) {
   const blocked = block.blocked_id
   if (typeof blocked === "object" && blocked) {
     const id = blocked._id ?? blocked.id
     return {
       id,
-      name: blocked.full_name || blocked.email || id || "Người dùng",
+      name: blocked.full_name || blocked.email || id || defaultName,
       email: blocked.email ?? "",
     }
   }
@@ -301,20 +309,20 @@ function getDisplayName(value: unknown) {
   return user.full_name || user.email || "-"
 }
 
-function getPostPreview(value: unknown) {
-  if (!value || typeof value !== "object") return "Bài viết"
+function getPostPreview(value: unknown, t: SettingsTranslator) {
+  if (!value || typeof value !== "object") return t("postFallback")
   const post = value as {
     body?: string | null
     deleted?: boolean
     deleted_at?: string | null
   }
-  if (post.deleted || post.deleted_at) return "Bài viết đã bị xóa"
+  if (post.deleted || post.deleted_at) return t("postDeleted")
   const body = post.body?.trim()
   return body
     ? body.length > 96
       ? `${body.slice(0, 96)}...`
       : body
-    : "Bài viết"
+    : t("postFallback")
 }
 
 function getReportedPost(value: unknown) {
@@ -359,24 +367,23 @@ function getReportedPost(value: unknown) {
 }
 
 function ReportOutcome({ report }: { report: ModerationReport }) {
+  const t = useTranslations("Settings")
   const hasRestriction =
     Boolean(report.post_create_restriction_id) ||
     Boolean(report.worker_activity_restriction_id)
   if (report.post_deleted_at) {
-    return <Badge variant="outline">Bài viết đã bị xóa</Badge>
+    return <Badge variant="outline">{t("postDeleted")}</Badge>
   }
   if (hasRestriction) {
-    return <Badge variant="outline">Đã áp dụng hạn chế</Badge>
+    return <Badge variant="outline">{t("outcomeRestricted")}</Badge>
   }
   if (report.status === "resolved") {
-    return (
-      <Badge variant="outline">Đã xử lý, chưa có hành động công khai</Badge>
-    )
+    return <Badge variant="outline">{t("outcomeResolvedNoAction")}</Badge>
   }
   if (report.status === "rejected") {
-    return <Badge variant="destructive">Không vi phạm</Badge>
+    return <Badge variant="destructive">{t("outcomeNoViolation")}</Badge>
   }
-  return <Badge variant="secondary">Chưa có kết quả</Badge>
+  return <Badge variant="secondary">{t("outcomePending")}</Badge>
 }
 
 function EmptyState({
@@ -395,19 +402,20 @@ function EmptyState({
 }
 
 function BlockedList() {
+  const t = useTranslations("Settings")
   const blocksQuery = useBlockedUsers()
   const unblockMutation = useUnblockUser()
   const blocks = blocksQuery.data ?? []
 
   if (blocksQuery.isLoading) return <LoadingPanel />
   if (blocks.length === 0) {
-    return <EmptyState icon={Ban} title="Bạn chưa chặn người dùng nào." />
+    return <EmptyState icon={Ban} title={t("noBlocked")} />
   }
 
   return (
     <div className="divide-y">
       {blocks.map((block) => {
-        const user = getBlockedUser(block)
+        const user = getBlockedUser(block, t("defaultUser"))
         return (
           <div
             key={block.id}
@@ -416,12 +424,12 @@ function BlockedList() {
             <div className="min-w-0">
               <p className="truncate font-medium">{user.name}</p>
               <p className="truncate text-sm text-muted-foreground">
-                {user.email || "Không có email"}
+                {user.email || t("noEmail")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {block.block_profile
-                  ? "Đang chặn profile và bài viết"
-                  : "Chỉ chặn chat"}
+                  ? t("blockingProfile")
+                  : t("blockingChatOnly")}
               </p>
             </div>
             <AlertDialog>
@@ -432,18 +440,20 @@ function BlockedList() {
                   size="sm"
                   disabled={unblockMutation.isPending || !user.id}
                 >
-                  Bỏ chặn
+                  {t("unblock")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Bỏ chặn người dùng?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("unblockTitle")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bạn sẽ có thể nhắn tin và xem lại nội dung của {user.name}.
+                    {t("unblockDesc", { name: user.name })}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-2 sm:space-x-0">
-                  <AlertDialogCancel className="mt-0">Hủy</AlertDialogCancel>
+                  <AlertDialogCancel className="mt-0">
+                    {t("cancel")}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     disabled={unblockMutation.isPending || !user.id}
                     onClick={() => {
@@ -451,7 +461,7 @@ function BlockedList() {
                       unblockMutation.mutate(user.id)
                     }}
                   >
-                    Xác nhận bỏ chặn
+                    {t("confirmUnblock")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -472,13 +482,14 @@ function ReportedPostDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const t = useTranslations("Settings")
   const post = getReportedPost(report?.post_id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Bài viết</DialogTitle>
+          <DialogTitle>{t("postDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-md bg-muted/30 p-4">
@@ -488,7 +499,7 @@ function ReportedPostDialog({
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Không có nội dung bài viết trong lịch sử báo cáo.
+                {t("noPostContent")}
               </p>
             )}
           </div>
@@ -513,7 +524,7 @@ function ReportedPostDialog({
                   >
                     <Image
                       src={item.url}
-                      alt="Hình ảnh bài viết"
+                      alt={t("postImageAlt")}
                       fill
                       sizes="(max-width: 640px) 100vw, 320px"
                       className="object-cover"
@@ -530,6 +541,8 @@ function ReportedPostDialog({
 }
 
 function ReportsList({ targetType }: { targetType: ReportTargetType }) {
+  const t = useTranslations("Settings")
+  const localeTag = useLocaleTag()
   const [previewReport, setPreviewReport] =
     React.useState<ModerationReport | null>(null)
   const reportsQuery = useMyReports({
@@ -546,8 +559,8 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
         icon={targetType === "post" ? FileWarning : UserX}
         title={
           targetType === "post"
-            ? "Bạn chưa báo cáo bài viết nào."
-            : "Bạn chưa báo cáo worker nào."
+            ? t("noPostReports")
+            : t("noWorkerReports")
         }
       />
     )
@@ -568,7 +581,7 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={statusVariants[report.status]}>
-                      {statusLabels[report.status]}
+                      {t(statusKeys[report.status])}
                     </Badge>
                     <ReportOutcome report={report} />
                   </div>
@@ -581,12 +594,12 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
                         {getDisplayName(report.target_user_id)}
                       </Link>
                     ) : (
-                      getPostPreview(report.post_id)
+                      getPostPreview(report.post_id, t)
                     )}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Lý do: {reasonLabels[report.reason]} ·{" "}
-                    {formatDateTime(report.created_at)}
+                    {t("reasonLabel")} {t(reasonKeys[report.reason])} ·{" "}
+                    {formatDateTime(report.created_at, localeTag)}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:items-end">
@@ -598,12 +611,12 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
                       onClick={() => setPreviewReport(report)}
                     >
                       <Eye className="size-4" />
-                      Xem bài viết
+                      {t("viewPost")}
                     </Button>
                   ) : null}
                   {report.admin_note ? (
                     <div className="max-w-sm rounded-md bg-muted px-3 py-2 text-sm">
-                      <span className="font-medium">Phản hồi: </span>
+                      <span className="font-medium">{t("adminNote")} </span>
                       {report.admin_note}
                     </div>
                   ) : null}
@@ -630,6 +643,8 @@ function ReportsList({ targetType }: { targetType: ReportTargetType }) {
 }
 
 function ReputationPanel() {
+  const t = useTranslations("Settings")
+  const localeTag = useLocaleTag()
   const user = useAuthStore((state) => state.user)
   const score = getReputationScore(user?.meta_data?.reputation_score)
   const historyQuery = useReputationHistory({ page: 1, limit: 30 })
@@ -640,7 +655,7 @@ function ReputationPanel() {
       <div className="rounded-md border bg-background p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Điểm hiện tại</p>
+            <p className="text-sm text-muted-foreground">{t("currentScore")}</p>
             <p className="text-3xl font-semibold tracking-tight">{score}/100</p>
           </div>
           <span
@@ -649,7 +664,11 @@ function ReputationPanel() {
               getReputationBadgeClass(score)
             )}
           >
-            {score < 30 ? "Cần cải thiện" : score < 70 ? "Ổn định" : "Tốt"}
+            {score < 30
+              ? t("scoreNeedsImprovement")
+              : score < 70
+                ? t("scoreStable")
+                : t("scoreGood")}
           </span>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
@@ -660,10 +679,7 @@ function ReputationPanel() {
       {historyQuery.isLoading ? (
         <LoadingPanel />
       ) : histories.length === 0 ? (
-        <EmptyState
-          icon={ShieldCheck}
-          title="Chưa có lịch sử cộng hoặc trừ điểm."
-        />
+        <EmptyState icon={ShieldCheck} title={t("noHistory")} />
       ) : (
         <div className="divide-y rounded-md border bg-background">
           {histories.map((item: ReputationHistory) => (
@@ -673,11 +689,11 @@ function ReputationPanel() {
             >
               <div className="min-w-0">
                 <p className="font-medium">
-                  {reputationReasonLabels[item.reason]}
+                  {t(reputationReasonKeys[item.reason])}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {item.previous_score} → {item.new_score} ·{" "}
-                  {formatDateTime(item.created_at)}
+                  {formatDateTime(item.created_at, localeTag)}
                 </p>
               </div>
               <Badge variant={item.delta >= 0 ? "outline" : "destructive"}>
@@ -693,6 +709,8 @@ function ReputationPanel() {
 }
 
 function FeedbackPanel() {
+  const t = useTranslations("Settings")
+  const localeTag = useLocaleTag()
   const createMutation = useCreateFeedback()
   const feedbackQuery = useMyFeedback({ page: 1, limit: 30 })
   const feedbacks = feedbackQuery.data?.data ?? []
@@ -732,7 +750,7 @@ function FeedbackPanel() {
         className="space-y-4 rounded-md border bg-background p-4"
       >
         <div className="space-y-1.5">
-          <Label htmlFor="feedback-type">Loại phản hồi</Label>
+          <Label htmlFor="feedback-type">{t("feedbackTypeLabel")}</Label>
           <Select
             value={type}
             onValueChange={(value) => setType(value as FeedbackType)}
@@ -744,26 +762,26 @@ function FeedbackPanel() {
             <SelectContent>
               <SelectItem value="bug">
                 <Bug className="size-4" />
-                Báo lỗi (bug)
+                {t("feedbackTypeBugOption")}
               </SelectItem>
               <SelectItem value="feature">
                 <Lightbulb className="size-4" />
-                Đề xuất tính năng
+                {t("feedbackTypeFeatureOption")}
               </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="feedback-title">Tiêu đề</Label>
+          <Label htmlFor="feedback-title">{t("titleLabel")}</Label>
           <Input
             id="feedback-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={
               type === "bug"
-                ? "Tóm tắt ngắn gọn lỗi bạn gặp phải"
-                : "Tóm tắt ngắn gọn tính năng bạn đề xuất"
+                ? t("titlePlaceholderBug")
+                : t("titlePlaceholderFeature")
             }
             maxLength={200}
             disabled={createMutation.isPending}
@@ -771,21 +789,21 @@ function FeedbackPanel() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="feedback-description">Mô tả chi tiết</Label>
+          <Label htmlFor="feedback-description">{t("descLabel")}</Label>
           <Textarea
             id="feedback-description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder={
               type === "bug"
-                ? "Mô tả các bước tái hiện lỗi, thiết bị/trình duyệt bạn dùng, kết quả mong đợi..."
-                : "Mô tả tính năng bạn mong muốn và lý do nó hữu ích..."
+                ? t("descPlaceholderBug")
+                : t("descPlaceholderFeature")
             }
             maxLength={5000}
             className="min-h-32"
             disabled={createMutation.isPending}
           />
-          <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự.</p>
+          <p className="text-xs text-muted-foreground">{t("minChars")}</p>
         </div>
 
         <div className="flex justify-end">
@@ -795,20 +813,17 @@ function FeedbackPanel() {
             ) : (
               <Send className="size-4" />
             )}
-            Gửi phản hồi
+            {t("submitFeedback")}
           </Button>
         </div>
       </form>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">Phản hồi đã gửi</h3>
+        <h3 className="text-sm font-medium">{t("sentFeedback")}</h3>
         {feedbackQuery.isLoading ? (
           <LoadingPanel />
         ) : feedbacks.length === 0 ? (
-          <EmptyState
-            icon={MessageSquarePlus}
-            title="Bạn chưa gửi phản hồi nào."
-          />
+          <EmptyState icon={MessageSquarePlus} title={t("noFeedback")} />
         ) : (
           <div className="space-y-3">
             {feedbacks.map((feedback: Feedback) => {
@@ -822,13 +837,13 @@ function FeedbackPanel() {
                       ) : (
                         <Lightbulb className="size-3.5" />
                       )}
-                      {feedbackTypeLabels[feedback.type]}
+                      {t(feedbackTypeKeys[feedback.type])}
                     </Badge>
                     <Badge variant={feedbackStatusVariants[feedback.status]}>
-                      {feedbackStatusLabels[feedback.status]}
+                      {t(feedbackStatusKeys[feedback.status])}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatDateTime(feedback.created_at)}
+                      {formatDateTime(feedback.created_at, localeTag)}
                     </span>
                   </div>
                   <p className="mt-2 font-medium">{feedback.title}</p>
@@ -837,7 +852,7 @@ function FeedbackPanel() {
                   </p>
                   {feedback.admin_note ? (
                     <div className="mt-3 rounded-md bg-muted px-3 py-2 text-sm">
-                      <span className="font-medium">Phản hồi từ admin: </span>
+                      <span className="font-medium">{t("adminReply")} </span>
                       {feedback.admin_note}
                     </div>
                   ) : null}
@@ -866,18 +881,22 @@ const formatVND = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 
-function blockerMessage(blocker: AccountDeleteBlocker): string {
+function blockerMessage(
+  blocker: AccountDeleteBlocker,
+  t: SettingsTranslator
+): string {
   switch (blocker.code) {
     case "WALLET_BALANCE":
-      return `Số dư ví còn ${formatVND(blocker.detail)}. Vui lòng rút hết trước khi xoá.`
+      return t("blockerWallet", { amount: formatVND(blocker.detail) })
     case "ACTIVE_BOOKINGS":
-      return `Bạn đang có ${blocker.detail} booking chưa kết thúc.`
+      return t("blockerBookings", { count: blocker.detail })
     case "OPEN_DISPUTES":
-      return `Bạn đang có ${blocker.detail} khiếu nại chưa được xử lý.`
+      return t("blockerDisputes", { count: blocker.detail })
   }
 }
 
 function DeleteAccountPanel() {
+  const t = useTranslations("Settings")
   const router = useRouter()
   const user = useAuthStore((state) => state.user)
   const statusQuery = useDeletionStatus(true)
@@ -891,7 +910,7 @@ function DeleteAccountPanel() {
 
   const handleSendResetEmail = async () => {
     if (!user?.email) {
-      toast.error("Không tìm thấy email tài khoản.")
+      toast.error(t("emailNotFound"))
       return
     }
     try {
@@ -899,16 +918,12 @@ function DeleteAccountPanel() {
         email: user.email,
       })
       if (response.success) {
-        toast.success(
-          "Đã gửi email đặt mật khẩu. Sau khi đặt xong, quay lại để xoá tài khoản."
-        )
+        toast.success(t("resetEmailSent"))
       } else {
-        toast.error(
-          getErrorMessage(response.error, "Không thể gửi email đặt mật khẩu.")
-        )
+        toast.error(getErrorMessage(response.error, t("resetEmailError")))
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể gửi email đặt mật khẩu."))
+      toast.error(getErrorMessage(error, t("resetEmailError")))
     }
   }
 
@@ -916,9 +931,7 @@ function DeleteAccountPanel() {
     setSubmitBlockers([])
     try {
       await deleteMutation.mutateAsync({ password })
-      toast.success(
-        "Đã yêu cầu xoá tài khoản. Đăng nhập lại trong 30 ngày để huỷ thao tác."
-      )
+      toast.success(t("deleteRequested"))
       setConfirmOpen(false)
       router.replace("/login")
     } catch (error) {
@@ -931,7 +944,7 @@ function DeleteAccountPanel() {
         statusQuery.refetch()
         return
       }
-      toast.error(getErrorMessage(error, "Không thể xoá tài khoản."))
+      toast.error(getErrorMessage(error, t("deleteError")))
     }
   }
 
@@ -941,9 +954,9 @@ function DeleteAccountPanel() {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="size-4" />
-        <AlertTitle>Không thể tải trạng thái</AlertTitle>
+        <AlertTitle>{t("statusLoadError")}</AlertTitle>
         <AlertDescription>
-          {getErrorMessage(statusQuery.error, "Vui lòng thử lại sau.")}
+          {getErrorMessage(statusQuery.error, t("tryAgainLater"))}
         </AlertDescription>
       </Alert>
     )
@@ -958,37 +971,27 @@ function DeleteAccountPanel() {
     <div className="space-y-5">
       <Alert variant="destructive">
         <AlertTriangle className="size-4" />
-        <AlertTitle>Hành động này có thời gian khôi phục 30 ngày</AlertTitle>
+        <AlertTitle>{t("recoveryWarningTitle")}</AlertTitle>
         <AlertDescription className="space-y-2">
-          <p>
-            Sau khi xoá, tài khoản sẽ bị khoá ngay lập tức. Trong vòng 30 ngày,
-            đăng nhập lại bằng email và mật khẩu hiện tại để khôi phục.
-          </p>
-          <p>
-            Sau 30 ngày, thông tin cá nhân (tên, ảnh đại diện, số điện thoại, hồ
-            sơ) sẽ bị xoá vĩnh viễn. Bài viết và bình luận của bạn sẽ bị ẩn khỏi
-            cộng đồng. Lịch sử booking, đánh giá và ví được giữ lại theo quy
-            định để phục vụ đối chiếu.
-          </p>
+          <p>{t("recoveryWarning1")}</p>
+          <p>{t("recoveryWarning2")}</p>
         </AlertDescription>
       </Alert>
 
       <div className="rounded-md border bg-background p-4">
-        <h3 className="font-medium">Trước khi xoá, vui lòng đảm bảo:</h3>
+        <h3 className="font-medium">{t("beforeDeleteTitle")}</h3>
         <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
           <li className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <span>Số dư ví đã được rút về tài khoản ngân hàng.</span>
+            <span>{t("beforeDelete1")}</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <span>
-              Không còn booking nào đang chờ xác nhận hoặc đang thực hiện.
-            </span>
+            <span>{t("beforeDelete2")}</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <span>Không còn khiếu nại nào chưa được xử lý.</span>
+            <span>{t("beforeDelete3")}</span>
           </li>
         </ul>
       </div>
@@ -996,11 +999,11 @@ function DeleteAccountPanel() {
       {blockers.length > 0 ? (
         <Alert variant="destructive">
           <AlertTriangle className="size-4" />
-          <AlertTitle>Chưa thể xoá tài khoản</AlertTitle>
+          <AlertTitle>{t("cannotDeleteTitle")}</AlertTitle>
           <AlertDescription>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               {blockers.map((blocker) => (
-                <li key={blocker.code}>{blockerMessage(blocker)}</li>
+                <li key={blocker.code}>{blockerMessage(blocker, t)}</li>
               ))}
             </ul>
           </AlertDescription>
@@ -1010,12 +1013,9 @@ function DeleteAccountPanel() {
       {status && !status.has_password ? (
         <Alert>
           <AlertTriangle className="size-4" />
-          <AlertTitle>Cần đặt mật khẩu trước khi xoá</AlertTitle>
+          <AlertTitle>{t("needPasswordTitle")}</AlertTitle>
           <AlertDescription className="space-y-3">
-            <p>
-              Tài khoản của bạn đang đăng nhập bằng Google nên chưa có mật khẩu.
-              Vui lòng đặt mật khẩu để xác nhận quyền sở hữu trước khi xoá.
-            </p>
+            <p>{t("needPasswordDesc")}</p>
             <Button
               type="button"
               variant="outline"
@@ -1026,7 +1026,7 @@ function DeleteAccountPanel() {
               {forgotPasswordMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Gửi email đặt mật khẩu
+              {t("sendResetEmail")}
             </Button>
           </AlertDescription>
         </Alert>
@@ -1049,19 +1049,20 @@ function DeleteAccountPanel() {
             className="h-11 w-full"
           >
             <Trash2 className="size-4" />
-            Xoá tài khoản của tôi
+            {t("deleteMyAccount")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xoá tài khoản</AlertDialogTitle>
+            <AlertDialogTitle>{t("confirmDeleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Nhập mật khẩu hiện tại để xác nhận. Bạn sẽ bị đăng xuất khỏi mọi
-              thiết bị ngay sau khi xác nhận.
+              {t("confirmDeleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
-            <Label htmlFor="delete-account-password">Mật khẩu hiện tại</Label>
+            <Label htmlFor="delete-account-password">
+              {t("currentPassword")}
+            </Label>
             <Input
               id="delete-account-password"
               type="password"
@@ -1069,7 +1070,7 @@ function DeleteAccountPanel() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={deleteMutation.isPending}
-              placeholder="Nhập mật khẩu để xác nhận"
+              placeholder={t("passwordPlaceholder")}
             />
           </div>
           <AlertDialogFooter className="gap-2 sm:space-x-0">
@@ -1077,7 +1078,7 @@ function DeleteAccountPanel() {
               className="mt-0"
               disabled={deleteMutation.isPending}
             >
-              Huỷ
+              {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={deleteMutation.isPending || password.length === 0}
@@ -1090,7 +1091,7 @@ function DeleteAccountPanel() {
               {deleteMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Xác nhận xoá
+              {t("confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1109,6 +1110,7 @@ function SectionContent({ section }: { section: SettingsSection }) {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations("Settings")
   // null = đang ở màn danh sách (mobile). Desktop luôn hiển thị 2 cột.
   const [activeSection, setActiveSection] =
     React.useState<SettingsSection | null>(null)
@@ -1128,7 +1130,9 @@ export default function SettingsPage() {
         <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <ShieldCheck className="size-5" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Cài đặt</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("pageTitle")}
+        </h1>
       </div>
 
       <div className="lg:grid lg:grid-cols-[19rem_1fr] lg:gap-6">
@@ -1137,7 +1141,7 @@ export default function SettingsPage() {
           <nav className="space-y-6 lg:sticky lg:top-20 lg:space-y-5">
             <div className="lg:hidden">
               <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
-                Hồ sơ
+                {t("profileHeader")}
               </p>
               <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
                 {navLinks.map((link) => {
@@ -1153,10 +1157,10 @@ export default function SettingsPage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">
-                          {link.label}
+                          {t(link.labelKey)}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground lg:hidden">
-                          {link.description}
+                          {t(link.descriptionKey)}
                         </span>
                       </span>
                       <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
@@ -1166,9 +1170,9 @@ export default function SettingsPage() {
               </div>
             </div>
             {sectionGroups.map((group) => (
-              <div key={group.title}>
+              <div key={group.titleKey}>
                 <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
-                  {group.title}
+                  {t(group.titleKey)}
                 </p>
                 <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
                   {group.items.map((id) => {
@@ -1197,10 +1201,10 @@ export default function SettingsPage() {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">
-                            {meta.label}
+                            {t(meta.labelKey)}
                           </span>
                           <span className="block truncate text-xs text-muted-foreground lg:hidden">
-                            {meta.description}
+                            {t(meta.descriptionKey)}
                           </span>
                         </span>
                         <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
@@ -1213,7 +1217,7 @@ export default function SettingsPage() {
 
             <div className="lg:hidden">
               <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
-                Thông tin & pháp lý
+                {t("infoHeader")}
               </p>
               <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
                 {infoLinks.map((link) => {
@@ -1227,10 +1231,12 @@ export default function SettingsPage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">
-                          {link.label}
+                          {t(link.labelKey)}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground lg:hidden">
-                          {link.description}
+                          {link.descriptionKey
+                            ? t(link.descriptionKey)
+                            : link.descriptionRaw}
                         </span>
                       </span>
                       <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
@@ -1261,13 +1267,13 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => setActiveSection(null)}
-              aria-label="Quay lại"
+              aria-label={t("back")}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-transform active:scale-90"
             >
               <ChevronLeft className="size-5" />
             </button>
             <h2 className="truncate text-base font-semibold tracking-tight">
-              {activeMeta.label}
+              {t(activeMeta.labelKey)}
             </h2>
           </div>
 
@@ -1279,9 +1285,11 @@ export default function SettingsPage() {
                   <ActiveIcon className="size-5" />
                 </span>
                 <div>
-                  <h2 className="text-lg font-semibold">{activeMeta.label}</h2>
+                  <h2 className="text-lg font-semibold">
+                    {t(activeMeta.labelKey)}
+                  </h2>
                   <p className="text-sm text-muted-foreground">
-                    {activeMeta.description}
+                    {t(activeMeta.descriptionKey)}
                   </p>
                 </div>
               </div>

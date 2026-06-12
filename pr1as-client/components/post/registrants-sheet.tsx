@@ -3,7 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Dialog as DialogPrimitive } from "radix-ui"
-import { Loader2, User, X } from "lucide-react"
+import { User, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { usePostRegistrations } from "@/lib/hooks/use-post-registrations"
 import { cn } from "@/lib/utils"
@@ -21,6 +22,7 @@ export function RegistrantsSheet({
   postId,
   registrationsCount,
 }: RegistrantsSheetProps) {
+  const t = useTranslations("Registrants")
   const { data, isLoading } = usePostRegistrations(postId, open)
 
   return (
@@ -49,10 +51,11 @@ export function RegistrantsSheet({
 
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <DialogPrimitive.Title className="text-base font-semibold">
-              Người đăng ký{registrationsCount > 0 ? ` (${registrationsCount})` : ""}
+              {t("title")}
+              {registrationsCount > 0 ? ` (${registrationsCount})` : ""}
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
-              aria-label="Đóng"
+              aria-label={t("close")}
               className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-transform hover:bg-accent active:scale-90"
             >
               <X className="size-5" />
@@ -71,9 +74,9 @@ export function RegistrantsSheet({
               </div>
             ) : !data || data.data.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-sm font-medium">Chưa có ai đăng ký</p>
+                <p className="text-sm font-medium">{t("emptyTitle")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Danh sách người đăng ký sẽ hiện ở đây
+                  {t("emptyDesc")}
                 </p>
               </div>
             ) : (
@@ -99,7 +102,7 @@ export function RegistrantsSheet({
                         </div>
                       )}
                       <span className="w-full truncate text-center text-xs font-medium leading-tight">
-                        {reg.worker.full_name ?? "Người dùng"}
+                        {reg.worker.full_name ?? t("defaultUser")}
                       </span>
                     </Link>
                   </li>

@@ -28,6 +28,7 @@ import {
 import Image from "next/image"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
@@ -48,6 +49,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getPlanRingClass } from "@/lib/utils/plan"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
 import { getActiveRole } from "@/lib/auth/roles"
@@ -103,6 +105,13 @@ type ChatPageProps = {
 
 type NewMessagePayload = Parameters<ServerToClientEvents["new_message"]>[0]
 
+type ChatTranslator = ReturnType<typeof useTranslations>
+
+const useLocaleTag = () => {
+  const locale = useLocale() as SupportedLocale
+  return INTL_LOCALE_TAGS[locale] ?? "vi-VN"
+}
+
 type ReplyTarget = {
   id: string
   senderId: string
@@ -126,22 +135,26 @@ const getOtherUserId = (
     : conversation.sender_id
 }
 
-const getDirectTitle = (conversation: ChatConversation | null | undefined) => {
+const getDirectTitle = (
+  t: ChatTranslator,
+  conversation: ChatConversation | null | undefined
+) => {
   return (
     conversation?.other_user?.full_name ||
     conversation?.other_user?.email ||
-    "Trò chuyện trực tiếp"
+    t("directTitleFallback")
   )
 }
 
 const getDirectSubtitle = (
+  t: ChatTranslator,
   conversation: ChatConversation | null | undefined,
   currentUserId: string | undefined
 ) => {
   return (
     conversation?.other_user?.email ||
     getOtherUserId(conversation, currentUserId) ||
-    "Chưa chọn người nhận"
+    t("noReceiver")
   )
 }
 
@@ -168,15 +181,21 @@ const getOutgoingMessageType = (value: string) => {
   return isImageUrl(value.trim()) ? "image" : "text"
 }
 
-const getMessagePreview = (message?: ChatMessage | GroupChatMessage | null) => {
-  if (!message) return "Chưa có tin nhắn"
-  if (message.is_deleted) return "Tin nhắn đã xóa"
-  if (message.type === "image") return "Ảnh"
+const getMessagePreview = (
+  t: ChatTranslator,
+  message?: ChatMessage | GroupChatMessage | null
+) => {
+  if (!message) return t("noMessage")
+  if (message.is_deleted) return t("messageDeleted")
+  if (message.type === "image") return t("imageMessage")
   return message.content
 }
 
-const getMemberName = (member?: GroupChatMember | null) => {
-  return member?.full_name || member?.email || "Thành viên"
+const getMemberName = (
+  t: ChatTranslator,
+  member?: GroupChatMember | null
+) => {
+  return member?.full_name || member?.email || t("memberFallback")
 }
 
 const isAdminMember = (member?: GroupChatMember | null) => {
@@ -184,6 +203,7 @@ const isAdminMember = (member?: GroupChatMember | null) => {
 }
 
 const getGroupMemberNames = (
+  t: ChatTranslator,
   conversation: GroupChatConversation | null | undefined,
   currentUserId?: string
 ) => {
@@ -193,25 +213,27 @@ const getGroupMemberNames = (
   )
 
   if (visibleMembers.length === 0) {
-    return `${conversation?.members.length ?? 0} thành viên`
+    return t("memberCount", { count: conversation?.members.length ?? 0 })
   }
 
-  return visibleMembers.map(getMemberName).join(", ")
+  return visibleMembers.map((member) => getMemberName(t, member)).join(", ")
 }
 
 const getGroupTitle = (
+  t: ChatTranslator,
   conversation: GroupChatConversation | null | undefined
 ) => {
-  if (!conversation) return "Nhóm trò chuyện"
+  if (!conversation) return t("groupTitleFallback")
   return conversation.name || `Booking ${shortenId(conversation.booking_id)}`
 }
 
 const getReplyTargetFromMessage = (
+  t: ChatTranslator,
   message: ChatMessage | GroupChatMessage
 ): ReplyTarget => ({
   id: message._id,
   senderId: message.sender_id,
-  content: getMessagePreview(message),
+  content: getMessagePreview(t, message),
   type: message.type,
 })
 
@@ -235,9 +257,9 @@ const shouldHighlightDirectConversation = (
   )
 }
 
-const formatTime = (value?: string | null) => {
+const formatTime = (value?: string | null, localeTag = "vi-VN") => {
   if (!value) return ""
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat(localeTag, {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value))
@@ -248,9 +270,9 @@ const shortenId = (value?: string | null) => {
   return value.length > 10 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value
 }
 
-const formatDateTime = (value?: string | null) => {
+const formatDateTime = (value?: string | null, localeTag = "vi-VN") => {
   if (!value) return ""
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat(localeTag, {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value))
@@ -263,13 +285,14 @@ function AdminVerifiedBadge({
   className?: string
   withLabel?: boolean
 }) {
+  const t = useTranslations("Chat")
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-1 text-sky-500",
         className
       )}
-      title="Tài khoản admin đã xác minh"
+      title={t("adminVerifiedTitle")}
     >
       <BadgeCheck className="size-4 fill-sky-500 text-white" />
       {withLabel ? (
@@ -382,9 +405,12 @@ export function ChatPage({
   initialGroupConversationId = null,
   initialReceiverId = null,
   showHomeButton = true,
-  title = "Tin nhắn",
+  title,
   variant = "standalone",
 }: ChatPageProps) {
+  const t = useTranslations("Chat")
+  const localeTag = useLocaleTag()
+  const headerTitle = title ?? t("title")
   const router = useRouter()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
@@ -559,11 +585,11 @@ export function ChatPage({
     if (!term) return directConversations
 
     return directConversations.filter((conversation) => {
-      const title = getDirectTitle(conversation).toLowerCase()
-      const subtitle = getDirectSubtitle(conversation, user?.id).toLowerCase()
+      const title = getDirectTitle(t, conversation).toLowerCase()
+      const subtitle = getDirectSubtitle(t, conversation, user?.id).toLowerCase()
       return title.includes(term) || subtitle.includes(term)
     })
-  }, [directConversations, search, user?.id])
+  }, [directConversations, search, user?.id, t])
 
   const filteredGroupConversations = React.useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -596,17 +622,17 @@ export function ChatPage({
   const activeTitle =
     mode === "direct"
       ? isDirectComposerOpen
-        ? "Tin nhắn mới"
-        : getDirectTitle(selectedDirect)
-      : getGroupTitle(selectedGroup)
+        ? t("newMessage")
+        : getDirectTitle(t, selectedDirect)
+      : getGroupTitle(t, selectedGroup)
   const activeSubtitle =
     mode === "direct"
       ? isDirectComposerOpen
-        ? "Bắt đầu trò chuyện với worker đã chọn"
-        : getDirectSubtitle(selectedDirect, user?.id)
+        ? t("composerSubtitle")
+        : getDirectSubtitle(t, selectedDirect, user?.id)
       : selectedGroup
-        ? getGroupMemberNames(selectedGroup, user?.id)
-        : "Chưa chọn nhóm"
+        ? getGroupMemberNames(t, selectedGroup, user?.id)
+        : t("noGroupSelected")
   const hasActiveThread = Boolean(activeConversationId || isDirectComposerOpen)
   const isActiveDirectAdmin = Boolean(
     mode === "direct" &&
@@ -622,7 +648,7 @@ export function ChatPage({
     activeRole === "worker" &&
     isDirectComposerOpen &&
     directReceiverId !== adminUserId
-      ? "Worker không thể bắt đầu chat trực tiếp với worker khác. Vui lòng chuyển sang vai trò client hoặc chọn cuộc trò chuyện hợp lệ."
+      ? t("workerCannotDirectChat")
       : null
 
   React.useEffect(() => {
@@ -815,7 +841,7 @@ export function ChatPage({
 
     const handleSocketError = (payload: { message?: string } | Error) => {
       toast.error(
-        localizeServerMessage(payload.message, "Không thể kết nối trò chuyện.")
+        localizeServerMessage(payload.message, t("connectError"))
       )
     }
 
@@ -840,7 +866,7 @@ export function ChatPage({
     }
   // activeDirectId, activeGroupId, user?.id đọc qua refs → không cần trong deps
   // Chỉ re-register listeners khi socket instance thay đổi
-  }, [queryClient, setTyping, socket])
+  }, [queryClient, setTyping, socket, t])
 
   React.useEffect(() => {
     const typingClearTimers = typingClearTimersRef.current
@@ -1004,7 +1030,7 @@ export function ChatPage({
       }
 
       if (!directReceiverId) {
-        toast.error("Chọn cuộc trò chuyện trước khi gửi.")
+        toast.error(t("selectDirectBeforeSend"))
         return
       }
 
@@ -1021,7 +1047,7 @@ export function ChatPage({
     }
 
     if (!selectedGroup?.booking_id) {
-      toast.error("Chọn nhóm trò chuyện trước khi gửi.")
+      toast.error(t("selectGroupBeforeSend"))
       return
     }
 
@@ -1088,7 +1114,7 @@ export function ChatPage({
         }
 
         if (!directReceiverId) {
-          toast.error("Chọn cuộc trò chuyện trước khi gửi.")
+          toast.error(t("selectDirectBeforeSend"))
           if (content) {
             setDraft(previousDraft)
             setReplyTarget(previousReplyTarget)
@@ -1127,7 +1153,7 @@ export function ChatPage({
       }
 
       if (!selectedGroup?.booking_id) {
-        toast.error("Chọn nhóm trò chuyện trước khi gửi.")
+        toast.error(t("selectGroupBeforeSend"))
         if (content) {
           setDraft(previousDraft)
           setReplyTarget(previousReplyTarget)
@@ -1170,13 +1196,13 @@ export function ChatPage({
         setDraft(previousDraft)
         setReplyTarget(previousReplyTarget)
       }
-      toast.error(getErrorMessage(error, "Không thể gửi tin nhắn."))
+      toast.error(getErrorMessage(error, t("sendError")))
     }
   }
 
   const handleContactAdmin = React.useCallback(() => {
     if (!adminContact) {
-      toast.error("Không tìm thấy admin để liên hệ.")
+      toast.error(t("adminNotFound"))
       return
     }
 
@@ -1200,7 +1226,7 @@ export function ChatPage({
     setSelectedDirectId(null)
     setMobileThreadOpen(true)
     router.replace(`/chat?receiver_id=${adminContact._id}`)
-  }, [adminContact, directConversations, resetComposer, router, user?.id])
+  }, [adminContact, directConversations, resetComposer, router, user?.id, t])
 
   const handleDeleteDirectMessage = async (messageId: string) => {
     try {
@@ -1219,9 +1245,9 @@ export function ChatPage({
               : current
         )
       }
-      toast.success("Đã xóa tin nhắn.")
+      toast.success(t("messageDeletedToast"))
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể xóa tin nhắn."))
+      toast.error(getErrorMessage(error, t("deleteError")))
     }
   }
 
@@ -1264,12 +1290,12 @@ export function ChatPage({
               variant="ghost"
               size="icon"
               onClick={() => router.push("/")}
-              aria-label="Về trang chủ"
+              aria-label={t("home")}
             >
               <Home className="size-4" />
             </Button>
           ) : null}
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{headerTitle}</h1>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -1293,12 +1319,12 @@ export function ChatPage({
                   size="icon"
                   className="-ml-2"
                   onClick={() => router.push("/")}
-                  aria-label="Về trang chủ"
+                  aria-label={t("home")}
                 >
                   <ChevronLeft className="size-5" />
                 </Button>
               ) : null}
-              <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+              <h1 className="text-xl font-bold tracking-tight">{headerTitle}</h1>
             </div>
             <ThemeToggle />
           </div>
@@ -1319,7 +1345,7 @@ export function ChatPage({
                 }}
               >
                 <MessageCircle className="size-4" />
-                Cá nhân
+                {t("tabDirect")}
               </button>
               <button
                 type="button"
@@ -1336,7 +1362,7 @@ export function ChatPage({
                 }}
               >
                 <Users className="size-4" />
-                Nhóm
+                {t("tabGroup")}
               </button>
             </div>
             {!isAdminUser ? (
@@ -1354,14 +1380,14 @@ export function ChatPage({
                   <Headset className="size-4 text-sky-600" />
                 )}
                 <span className="flex flex-1 items-center gap-1.5 text-left">
-                  Liên hệ admin
+                  {t("contactAdmin")}
                   <AdminVerifiedBadge />
                 </span>
                 <Badge
                   variant="secondary"
                   className="bg-sky-100 text-[10px] text-sky-800 dark:bg-sky-900 dark:text-sky-100"
                 >
-                  Hỗ trợ
+                  {t("support")}
                 </Badge>
               </Button>
             ) : null}
@@ -1371,7 +1397,7 @@ export function ChatPage({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="h-10 rounded-xl bg-muted/60 pl-9 focus-visible:bg-background md:h-9 md:rounded-md md:bg-background"
-                placeholder="Tìm cuộc trò chuyện..."
+                placeholder={t("searchPlaceholder")}
               />
             </div>
           </div>
@@ -1423,7 +1449,7 @@ export function ChatPage({
                 size="icon"
                 className="size-10 shrink-0 md:hidden"
                 onClick={() => setMobileThreadOpen(false)}
-                aria-label="Quay lại danh sách"
+                aria-label={t("backToList")}
               >
                 <ArrowLeft className="size-5" />
               </Button>
@@ -1454,7 +1480,7 @@ export function ChatPage({
                   {mode === "direct" && selectedDirectUserBanned ? (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
                       <Ban className="size-3" />
-                      Đã bị khóa
+                      {t("banned")}
                     </span>
                   ) : null}
                 </h2>
@@ -1486,10 +1512,14 @@ export function ChatPage({
                     setBlockDialogOpen(true)
                   }}
                   aria-label={
-                    selectedDirectBlocked ? "Bỏ chặn tin nhắn" : "Chặn tin nhắn"
+                    selectedDirectBlocked
+                      ? t("unblockMessages")
+                      : t("blockMessages")
                   }
                   title={
-                    selectedDirectBlocked ? "Bỏ chặn tin nhắn" : "Chặn tin nhắn"
+                    selectedDirectBlocked
+                      ? t("unblockMessages")
+                      : t("blockMessages")
                   }
                 >
                   {blockUserMutation.isPending ||
@@ -1501,7 +1531,7 @@ export function ChatPage({
                 </Button>
               ) : null}
               {!activeConversationId ? (
-                <Badge variant="outline">Chưa chọn</Badge>
+                <Badge variant="outline">{t("noneSelected")}</Badge>
               ) : null}
             </div>
           </div>
@@ -1529,7 +1559,7 @@ export function ChatPage({
               directPeer={selectedDirect?.other_user}
               groupConversation={selectedGroup}
               onReply={(message) =>
-                setReplyTarget(getReplyTargetFromMessage(message))
+                setReplyTarget(getReplyTargetFromMessage(t, message))
               }
               onDeleteDirect={handleDeleteDirectMessage}
               deletingMessageId={
@@ -1543,7 +1573,7 @@ export function ChatPage({
 
           <div className="min-h-0 border-t bg-background px-4 text-xs text-muted-foreground">
             {activeTypingUser
-              ? `${shortenId(activeTypingUser)} đang nhập...`
+              ? t("typing", { user: shortenId(activeTypingUser) })
               : null}
           </div>
 
@@ -1558,14 +1588,14 @@ export function ChatPage({
                 <Reply className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Đang trả lời{" "}
+                    {t("replyingToLabel")}{" "}
                     {replyTarget.senderId === user?.id
-                      ? "bạn"
+                      ? t("you")
                       : mode === "direct"
                         ? selectedDirect?.other_user?.full_name ||
                           selectedDirect?.other_user?.email ||
-                          "người gửi"
-                        : "thành viên"}
+                          t("sender")
+                        : t("member")}
                   </p>
                   <p className="truncate text-sm">{replyTarget.content}</p>
                 </div>
@@ -1575,7 +1605,7 @@ export function ChatPage({
                   size="icon"
                   className="size-7 shrink-0"
                   onClick={() => setReplyTarget(null)}
-                  aria-label="Bỏ trả lời"
+                  aria-label={t("cancelReply")}
                 >
                   <X className="size-4" />
                 </Button>
@@ -1590,14 +1620,14 @@ export function ChatPage({
                   >
                     <img
                       src={preview.previewUrl}
-                      alt={`Ảnh ${index + 1}`}
+                      alt={t("imageAlt", { index: index + 1 })}
                       className="size-full object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => handleRemoveImagePreview(index)}
                       className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
-                      aria-label="Xóa ảnh"
+                      aria-label={t("removeImage")}
                     >
                       <X className="size-2.5" />
                     </button>
@@ -1612,7 +1642,7 @@ export function ChatPage({
                     Boolean(directRoleBlockedReason)
                   }
                   className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-                  aria-label="Thêm ảnh"
+                  aria-label={t("addImage")}
                 >
                   <ImagePlus className="size-5" />
                 </button>
@@ -1621,8 +1651,8 @@ export function ChatPage({
             {(selectedDirectBlocked || selectedDirectBlockedMe) ? (
               <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs text-muted-foreground">
                 {selectedDirectBlocked
-                  ? "Bạn đã chặn người dùng này. Gỡ chặn để có thể nhắn tin."
-                  : "Bạn đã bị chặn bởi người dùng này."}
+                  ? t("youBlockedNotice")
+                  : t("blockedByNotice")}
               </div>
             ) : null}
             <TooltipProvider>
@@ -1651,7 +1681,7 @@ export function ChatPage({
                         (mode === "direct" && !directReceiverId) ||
                         (mode === "group" && !selectedGroup)
                       }
-                      aria-label="Chọn ảnh"
+                      aria-label={t("selectImage")}
                     >
                       <ImagePlus className="size-4" />
                     </Button>
@@ -1662,12 +1692,12 @@ export function ChatPage({
                       placeholder={
                         selectedDirectBlocked || selectedDirectBlockedMe
                           ? selectedDirectBlocked
-                            ? "Đã chặn người dùng này"
-                            : "Đã bị chặn"
+                            ? t("blockedPlaceholder")
+                            : t("blockedByPlaceholder")
                           : activeConversationId ||
                               (mode === "direct" && directReceiverId)
-                            ? "Nhập tin nhắn..."
-                            : "Chọn cuộc trò chuyện"
+                            ? t("inputPlaceholder")
+                            : t("selectConversation")
                       }
                       rows={1}
                       disabled={
@@ -1703,8 +1733,8 @@ export function ChatPage({
                 {(selectedDirectBlocked || selectedDirectBlockedMe) ? (
                   <TooltipContent side="top">
                     {selectedDirectBlocked
-                      ? "Bạn đã chặn người dùng này"
-                      : "Bạn đã bị chặn bởi người dùng này"}
+                      ? t("youBlockedTooltip")
+                      : t("blockedByTooltip")}
                   </TooltipContent>
                 ) : null}
               </Tooltip>
@@ -1715,10 +1745,8 @@ export function ChatPage({
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chặn người dùng này?</DialogTitle>
-            <DialogDescription>
-              Bạn sẽ không thể gửi hoặc nhận tin nhắn trực tiếp với người này.
-            </DialogDescription>
+            <DialogTitle>{t("blockDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("blockDialogDesc")}</DialogDescription>
           </DialogHeader>
           <div className="flex items-start gap-3 rounded-md border p-3">
             <Checkbox
@@ -1727,7 +1755,7 @@ export function ChatPage({
               onCheckedChange={(value) => setBlockProfile(Boolean(value))}
             />
             <Label htmlFor="block-profile" className="text-sm leading-5">
-              Chặn luôn profile và bài viết của người này
+              {t("blockProfileLabel")}
             </Label>
           </div>
           <DialogFooter>
@@ -1737,7 +1765,7 @@ export function ChatPage({
               onClick={() => setBlockDialogOpen(false)}
               disabled={blockUserMutation.isPending}
             >
-              Hủy
+              {t("cancel")}
             </Button>
             <Button
               type="button"
@@ -1748,7 +1776,7 @@ export function ChatPage({
               {blockUserMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Chặn
+              {t("block")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1774,6 +1802,8 @@ function ConversationList({
   adminUserId?: string | null
   onSelect: (id: string) => void
 }) {
+  const t = useTranslations("Chat")
+  const localeTag = useLocaleTag()
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center py-12">
@@ -1788,7 +1818,7 @@ function ConversationList({
         <div className="flex size-14 items-center justify-center rounded-full bg-muted">
           <Inbox className="size-7" />
         </div>
-        <p>Chưa có cuộc trò chuyện nào</p>
+        <p>{t("noConversations")}</p>
       </div>
     )
   }
@@ -1804,14 +1834,14 @@ function ConversationList({
           ? null
           : (conversation as GroupChatConversation)
         const title = isDirect
-          ? getDirectTitle(directConversation)
-          : getGroupTitle(groupConversation)
+          ? getDirectTitle(t, directConversation)
+          : getGroupTitle(t, groupConversation)
         const subtitle = isDirect
-          ? getDirectSubtitle(directConversation, currentUserId)
-          : getGroupMemberNames(groupConversation, currentUserId)
+          ? getDirectSubtitle(t, directConversation, currentUserId)
+          : getGroupMemberNames(t, groupConversation, currentUserId)
         const lastMessage = isDirect
-          ? getMessagePreview(directConversation?.last_message_data)
-          : getMessagePreview(groupConversation?.last_message_data)
+          ? getMessagePreview(t, directConversation?.last_message_data)
+          : getMessagePreview(t, groupConversation?.last_message_data)
         const updatedAt = isDirect
           ? directConversation?.updated_at
           : groupConversation?.updated_at
@@ -1868,12 +1898,12 @@ function ConversationList({
                   {isOtherUserBanned ? (
                     <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
                       <Ban className="size-2.5" />
-                      Bị khóa
+                      {t("bannedShort")}
                     </span>
                   ) : null}
                 </p>
                 <span className="shrink-0 text-[11px] text-muted-foreground">
-                  {formatTime(updatedAt)}
+                  {formatTime(updatedAt, localeTag)}
                 </span>
               </div>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -1958,6 +1988,7 @@ function ThreadAvatar({
 }
 
 function GroupMemberAvatars({ members }: { members?: GroupChatMember[] }) {
+  const t = useTranslations("Chat")
   const visibleMembers = (members ?? [])
     .filter((member) => !isAdminMember(member))
     .slice(0, 3)
@@ -1973,7 +2004,7 @@ function GroupMemberAvatars({ members }: { members?: GroupChatMember[] }) {
   return (
     <div className="flex size-10 shrink-0 items-center">
       {visibleMembers.map((member, index) => {
-        const name = getMemberName(member)
+        const name = getMemberName(t, member)
 
         return member.avatar ? (
           <div
@@ -2012,6 +2043,8 @@ function GroupBookingSummary({
 }: {
   conversation: GroupChatConversation
 }) {
+  const t = useTranslations("Chat")
+  const localeTag = useLocaleTag()
   const booking = conversation.booking_data
   if (!booking) return null
 
@@ -2023,19 +2056,21 @@ function GroupBookingSummary({
             Booking {booking.service_code}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {formatDateTime(booking.schedule.start_time)} -{" "}
-            {formatDateTime(booking.schedule.end_time)}
+            {formatDateTime(booking.schedule.start_time, localeTag)} -{" "}
+            {formatDateTime(booking.schedule.end_time, localeTag)}
           </p>
         </div>
         <Badge variant="outline">{booking.status}</Badge>
       </div>
       <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-        <p className="truncate">Client: {getMemberName(booking.client)}</p>
-        <p className="truncate">Worker: {getMemberName(booking.worker)}</p>
+        <p className="truncate">Client: {getMemberName(t, booking.client)}</p>
+        <p className="truncate">Worker: {getMemberName(t, booking.worker)}</p>
       </div>
       {booking.dispute ? (
         <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-          <p className="font-medium">Tranh chấp: {booking.dispute.reason}</p>
+          <p className="font-medium">
+            {t("dispute", { reason: booking.dispute.reason })}
+          </p>
           <p className="mt-1 line-clamp-2">{booking.dispute.description}</p>
         </div>
       ) : null}
@@ -2068,6 +2103,8 @@ function MessagePane({
   onDeleteDirect: (messageId: string) => void
   deletingMessageId: string | null
 }) {
+  const t = useTranslations("Chat")
+  const localeTag = useLocaleTag()
   const groupMemberMap = new Map(
     (groupConversation?.members_data ?? []).map((member) => [
       member._id,
@@ -2148,7 +2185,7 @@ function MessagePane({
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
         <MessageCircle className="size-10" />
-        <p>Chọn một cuộc trò chuyện để bắt đầu</p>
+        <p>{t("selectConversationToStart")}</p>
       </div>
     )
   }
@@ -2165,7 +2202,7 @@ function MessagePane({
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
         <Inbox className="size-10" />
-        <p>Chưa có tin nhắn trong cuộc trò chuyện này</p>
+        <p>{t("noMessagesInConversation")}</p>
       </div>
     )
   }
@@ -2196,11 +2233,11 @@ function MessagePane({
         const senderName =
           mode === "direct"
             ? mine
-              ? "Bạn"
-              : directPeer?.full_name || directPeer?.email || "Người gửi"
+              ? t("youSender")
+              : directPeer?.full_name || directPeer?.email || t("senderFallback")
             : mine
-              ? "Bạn"
-              : getMemberName(groupSender)
+              ? t("youSender")
+              : getMemberName(t, groupSender)
 
         return (
           <div
@@ -2266,17 +2303,17 @@ function MessagePane({
                   )}
                 >
                   <p className="font-medium">
-                    Trả lời{" "}
+                    {t("reply")}{" "}
                     {replyMessage.sender_id === currentUserId
-                      ? "bạn"
+                      ? t("you")
                       : mode === "direct"
                         ? directPeer?.full_name ||
                           directPeer?.email ||
-                          "người gửi"
-                        : "thành viên"}
+                          t("sender")
+                        : t("member")}
                   </p>
                   <p className="line-clamp-2">
-                    {getMessagePreview(replyMessage)}
+                    {getMessagePreview(t, replyMessage)}
                   </p>
                 </div>
               ) : null}
@@ -2287,7 +2324,7 @@ function MessagePane({
                   mine ? "text-primary-foreground/70" : "text-muted-foreground"
                 )}
               >
-                <span>{formatTime(message.created_at)}</span>
+                <span>{formatTime(message.created_at, localeTag)}</span>
                 {mine && directMessage ? (
                   <span className="flex items-center gap-1">
                     {directMessage.is_read ? (
@@ -2295,14 +2332,14 @@ function MessagePane({
                     ) : (
                       <Check className="size-3" />
                     )}
-                    {directMessage.is_read ? "Đã đọc" : "Đã gửi"}
+                    {directMessage.is_read ? t("read") : t("sent")}
                   </span>
                 ) : null}
                 {directMessage?.read_at ? (
-                  <span>{formatTime(directMessage.read_at)}</span>
+                  <span>{formatTime(directMessage.read_at, localeTag)}</span>
                 ) : null}
                 {groupReadCount > 0 ? (
-                  <span>{groupReadCount} đã đọc</span>
+                  <span>{t("readByCount", { count: groupReadCount })}</span>
                 ) : null}
               </div>
             </div>
@@ -2316,7 +2353,7 @@ function MessagePane({
                 size="icon"
                 className="size-8"
                 onClick={() => onReply(message)}
-                aria-label="Trả lời"
+                aria-label={t("reply")}
               >
                 <Reply className="size-4" />
               </Button>
@@ -2328,9 +2365,9 @@ function MessagePane({
                   className="size-8"
                   onClick={() => {
                     navigator.clipboard.writeText(message.content).catch(() => {})
-                    toast.success("Đã sao chép tin nhắn")
+                    toast.success(t("copied"))
                   }}
-                  aria-label="Sao chép"
+                  aria-label={t("copy")}
                 >
                   <Copy className="size-4" />
                 </Button>
@@ -2343,7 +2380,7 @@ function MessagePane({
                   className="size-8 text-red-600 dark:text-red-400"
                   onClick={() => onDeleteDirect(message._id)}
                   disabled={deletingMessageId === message._id}
-                  aria-label="Xóa tin nhắn"
+                  aria-label={t("deleteMessage")}
                 >
                   {deletingMessageId === message._id ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -2369,7 +2406,7 @@ function MessagePane({
             }}
             onCopy={() => {
               navigator.clipboard.writeText(messageSelection.message.content).catch(() => {})
-              toast.success("Đã sao chép tin nhắn")
+              toast.success(t("copied"))
               setMessageSelection(null)
             }}
             onDeleteDirect={() => {
@@ -2409,6 +2446,7 @@ function MessageContent({
   mine: boolean
   onImageClick?: (url: string) => void
 }) {
+  const t = useTranslations("Chat")
   if (message.is_deleted) {
     return (
       <p
@@ -2417,7 +2455,7 @@ function MessageContent({
           mine ? "text-primary-foreground/70" : "text-muted-foreground"
         )}
       >
-        Tin nhắn đã xóa
+        {t("messageDeleted")}
       </p>
     )
   }
@@ -2428,13 +2466,13 @@ function MessageContent({
         type="button"
         className="block overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => onImageClick?.(message.content)}
-        aria-label="Xem ảnh"
+        aria-label={t("viewImage")}
       >
         <Image
           src={message.content}
           width={640}
           height={480}
-          alt="Ảnh trong tin nhắn"
+          alt={t("imageInMessage")}
           className="max-h-80 max-w-full rounded-md object-contain transition-opacity hover:opacity-90"
         />
       </button>
@@ -2472,6 +2510,7 @@ function MessageContextOverlay({
   onClose: () => void
   deletingMessageId: string | null
 }) {
+  const t = useTranslations("Chat")
   const { message, rect, mine } = selection
   const isDeleting = deletingMessageId === message._id
   const canDelete = mode === "direct" && mine
@@ -2540,7 +2579,7 @@ function MessageContextOverlay({
           className="flex w-full items-center justify-between border-b border-zinc-700 px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80"
           onClick={onReply}
         >
-          <span>Trả lời</span>
+          <span>{t("reply")}</span>
           <Reply className="size-5 text-white/60" />
         </button>
 
@@ -2554,7 +2593,7 @@ function MessageContextOverlay({
             )}
             onClick={onCopy}
           >
-            <span>Sao chép</span>
+            <span>{t("copy")}</span>
             <Copy className="size-5 text-white/60" />
           </button>
         ) : null}
@@ -2567,7 +2606,7 @@ function MessageContextOverlay({
             onClick={onDeleteDirect}
             disabled={isDeleting}
           >
-            <span>Xóa tin nhắn</span>
+            <span>{t("deleteMessage")}</span>
             {isDeleting ? (
               <Loader2 className="size-5 animate-spin" />
             ) : (
@@ -2598,6 +2637,7 @@ function ImageLightbox({
   onPrev?: () => void
   onNext?: () => void
 }) {
+  const t = useTranslations("Chat")
   const [scale, setScale] = React.useState(1)
 
   // Reset zoom when image changes
@@ -2625,7 +2665,7 @@ function ImageLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         <span className="text-sm">
-          {total > 1 ? `${index + 1} / ${total}` : "Xem ảnh"}
+          {total > 1 ? `${index + 1} / ${total}` : t("viewImage")}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -2633,7 +2673,7 @@ function ImageLightbox({
             onClick={zoomOut}
             disabled={scale <= 0.5}
             className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 disabled:opacity-30"
-            aria-label="Thu nhỏ"
+            aria-label={t("zoomOut")}
           >
             <ZoomOut className="size-5" />
           </button>
@@ -2642,7 +2682,7 @@ function ImageLightbox({
             onClick={zoomIn}
             disabled={scale >= 4}
             className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 disabled:opacity-30"
-            aria-label="Phóng to"
+            aria-label={t("zoomIn")}
           >
             <ZoomIn className="size-5" />
           </button>
@@ -2652,15 +2692,15 @@ function ImageLightbox({
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm text-white/70 hover:bg-white/10"
-            aria-label="Mở ảnh gốc"
+            aria-label={t("openOriginalAria")}
           >
-            Mở gốc
+            {t("openOriginal")}
           </a>
           <button
             type="button"
             onClick={onClose}
             className="flex size-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10"
-            aria-label="Đóng"
+            aria-label={t("close")}
           >
             <X className="size-5" />
           </button>
@@ -2673,7 +2713,7 @@ function ImageLightbox({
           type="button"
           onClick={(e) => { e.stopPropagation(); onPrev() }}
           className="absolute left-3 top-1/2 -translate-y-1/2 flex size-10 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
-          aria-label="Ảnh trước"
+          aria-label={t("prevImage")}
         >
           <ChevronLeft className="size-6" />
         </button>
@@ -2683,7 +2723,7 @@ function ImageLightbox({
           type="button"
           onClick={(e) => { e.stopPropagation(); onNext() }}
           className="absolute right-3 top-1/2 -translate-y-1/2 flex size-10 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
-          aria-label="Ảnh tiếp theo"
+          aria-label={t("nextImage")}
         >
           <ChevronRight className="size-6" />
         </button>
@@ -2698,7 +2738,7 @@ function ImageLightbox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={url}
-          alt="Xem ảnh"
+          alt={t("viewImage")}
           className="rounded-md object-contain transition-transform duration-200"
           style={{
             maxHeight: "85dvh",

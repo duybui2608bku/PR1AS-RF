@@ -9,6 +9,7 @@ import {
   Star,
   UserRound,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -34,8 +35,16 @@ const getServiceName = (service: WorkerSuggestion["matched_service"]) =>
 const getInitials = (name: string | null) =>
   (name?.trim().charAt(0) || "?").toUpperCase()
 
-const formatPrice = (pricing: WorkerServicePricing | null) => {
-  if (!pricing) return "Chưa có giá"
+type Translator = ReturnType<typeof useTranslations>
+
+const UNIT_KEY: Record<string, string> = {
+  HOURLY: "enums.unitHourly",
+  DAILY: "enums.unitDaily",
+  MONTHLY: "enums.unitMonthly",
+}
+
+const formatPrice = (pricing: WorkerServicePricing | null, t: Translator) => {
+  if (!pricing) return t("suggestions.noPrice")
 
   const currencyMap: Record<string, string> = { VND: "đ", USD: "$" }
   const symbol = currencyMap[pricing.currency] ?? pricing.currency
@@ -43,21 +52,16 @@ const formatPrice = (pricing: WorkerServicePricing | null) => {
     pricing.currency === "VND"
       ? `${new Intl.NumberFormat("vi-VN").format(pricing.price)}${symbol}`
       : `${symbol}${new Intl.NumberFormat("en-US").format(pricing.price)}`
-  const unit =
-    pricing.unit === "HOURLY"
-      ? "giờ"
-      : pricing.unit === "DAILY"
-        ? "ngày"
-        : "tháng"
+  const unit = t(UNIT_KEY[pricing.unit] ?? "enums.unitMonthly")
 
   return `${value}/${unit}`
 }
 
-const getPriceGapLabel = (percent: number | null) => {
+const getPriceGapLabel = (percent: number | null, t: Translator) => {
   if (percent === null) return null
-  if (percent === 0) return "Giá tương đương"
-  if (percent <= 15) return `Giá gần ${percent}%`
-  return `Chênh ${percent}%`
+  if (percent === 0) return t("suggestions.priceEqual")
+  if (percent <= 15) return t("suggestions.priceNear", { percent })
+  return t("suggestions.priceGap", { percent })
 }
 
 function WorkerSuggestionSkeleton() {
@@ -81,6 +85,7 @@ function WorkerSuggestionSkeleton() {
 }
 
 export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
+  const t = useTranslations("WorkerProfile")
   const carouselRef = useRef<HTMLDivElement>(null)
   const {
     data: suggestions = [],
@@ -102,7 +107,9 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
   return (
     <Card className="overflow-hidden xl:sticky xl:top-20">
       <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-2">
-        <CardTitle className="text-sm font-semibold">Worker tương tự</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          {t("suggestions.title")}
+        </CardTitle>
         {canNavigate ? (
           <div className="flex items-center gap-1 xl:hidden">
             <Button
@@ -110,7 +117,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
               variant="outline"
               size="icon"
               className="size-8 rounded-full"
-              aria-label="Xem worker trước"
+              aria-label={t("suggestions.prev")}
               onClick={() => scrollSuggestions(-1)}
             >
               <ChevronLeft className="size-4" />
@@ -120,7 +127,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
               variant="outline"
               size="icon"
               className="size-8 rounded-full"
-              aria-label="Xem worker tiếp theo"
+              aria-label={t("suggestions.next")}
               onClick={() => scrollSuggestions(1)}
             >
               <ChevronRight className="size-4" />
@@ -133,13 +140,13 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
 
         {!isLoading && isError ? (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            Chưa tải được worker đề xuất
+            {t("suggestions.loadError")}
           </p>
         ) : null}
 
         {!isLoading && !isError && suggestions.length === 0 ? (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            Chưa có worker phù hợp
+            {t("suggestions.empty")}
           </p>
         ) : null}
 
@@ -151,15 +158,19 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
             {suggestions.map((worker) => {
               const serviceName = getServiceName(worker.matched_service)
               const priceGapLabel = getPriceGapLabel(
-                worker.price_difference_percent
+                worker.price_difference_percent,
+                t
               )
               const rating = worker.review_stats.average
-              const ratingText = rating > 0 ? rating.toFixed(1) : "Mới"
+              const ratingText =
+                rating > 0 ? rating.toFixed(1) : t("suggestions.ratingNew")
 
               return (
                 <Link
                   key={worker.id}
                   href={`/worker/${worker.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group block flex-none basis-[40%] snap-start rounded-lg border p-3 transition-colors hover:border-primary/60 hover:bg-muted/40 xl:w-full xl:basis-auto"
                 >
                   <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:gap-3">
@@ -182,7 +193,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="min-w-0">
                         <p className="line-clamp-1 text-sm font-semibold text-foreground">
-                          {worker.full_name ?? "Chưa cập nhật tên"}
+                          {worker.full_name ?? t("suggestions.noName")}
                         </p>
                         {worker.worker_profile?.title ? (
                           <p className="line-clamp-1 text-xs text-muted-foreground">
@@ -233,7 +244,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                       </div>
 
                       <p className="line-clamp-1 text-xs font-semibold text-primary">
-                        {formatPrice(worker.pricing)}
+                        {formatPrice(worker.pricing, t)}
                       </p>
                     </div>
                   </div>

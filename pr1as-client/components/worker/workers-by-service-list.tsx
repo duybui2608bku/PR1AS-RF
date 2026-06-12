@@ -103,7 +103,12 @@ const WorkerCard = ({
             : "border-border",
       ].join(" ")}
     >
-      <Link href={`/worker/${worker.id}`} className="block cursor-pointer">
+      <Link
+        href={`/worker/${worker.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block cursor-pointer"
+      >
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
         {imageSrc ? (
           <Image

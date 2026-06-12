@@ -9,3 +9,10 @@ export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   en: "English",
   zh: "中文",
 }
+
+/** BCP-47 tags for Intl APIs (date/number formatting). */
+export const INTL_LOCALE_TAGS: Record<SupportedLocale, string> = {
+  vi: "vi-VN",
+  en: "en-US",
+  zh: "zh-CN",
+}

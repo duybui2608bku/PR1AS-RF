@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { X } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { PostComments } from "@/components/post/post-comments"
 import { cn } from "@/lib/utils"
@@ -34,6 +35,7 @@ export function CommentsSheet({
   canBypassLock,
   isPostOwner,
 }: CommentsSheetProps) {
+  const t = useTranslations("CommentsSheet")
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -64,10 +66,11 @@ export function CommentsSheet({
           {/* Header cố định */}
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <DialogPrimitive.Title className="text-base font-semibold">
-              Bình luận{commentsCount > 0 ? ` (${commentsCount})` : ""}
+              {t("title")}
+              {commentsCount > 0 ? ` (${commentsCount})` : ""}
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
-              aria-label="Đóng"
+              aria-label={t("close")}
               className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-transform hover:bg-accent active:scale-90"
             >
               <X className="size-5" />

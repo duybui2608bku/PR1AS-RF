@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { WorkerProfilePublic } from "@/types"
 
@@ -6,11 +8,14 @@ type Props = {
 }
 
 export function WorkerInfoCards({ profile }: Props) {
+  const t = useTranslations("WorkerProfile")
   return (
     <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid">
       <Card>
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm font-semibold">Lifestyle</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            {t("infoCards.lifestyle")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <p className="text-sm whitespace-pre-line text-muted-foreground">
@@ -21,7 +26,9 @@ export function WorkerInfoCards({ profile }: Props) {
 
       <Card>
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm font-semibold">Quote</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            {t("infoCards.quote")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <p className="text-sm italic whitespace-pre-line text-muted-foreground">

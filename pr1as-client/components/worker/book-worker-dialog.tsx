@@ -2,6 +2,7 @@
 
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { useMemo, useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -30,25 +31,17 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateBooking } from "@/lib/hooks/use-bookings"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import type { WorkerPricingUnit, WorkerServiceItem } from "@/types"
 
 const MIN_ADVANCE_HOURS = 2
 const DATE_RANGE_DAYS = 30
-const WEEKDAY_VI_LONG = [
-  "Chủ nhật",
-  "Thứ 2",
-  "Thứ 3",
-  "Thứ 4",
-  "Thứ 5",
-  "Thứ 6",
-  "Thứ 7",
-]
 
-const UNIT_LABEL: Record<WorkerPricingUnit, string> = {
-  HOURLY: "giờ",
-  DAILY: "ngày",
-  MONTHLY: "tháng",
+const UNIT_KEY: Record<WorkerPricingUnit, string> = {
+  HOURLY: "enums.unitHourly",
+  DAILY: "enums.unitDaily",
+  MONTHLY: "enums.unitMonthly",
 }
 
 const HOURS_PER_UNIT: Record<WorkerPricingUnit, number> = {
@@ -73,12 +66,13 @@ const startOfDay = (date: Date) => {
 const startOfMonth = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), 1)
 
-const formatDateLabel = (date: Date) => {
-  const dd = String(date.getDate()).padStart(2, "0")
-  const mm = String(date.getMonth() + 1).padStart(2, "0")
-  const yyyy = date.getFullYear()
-  return `${WEEKDAY_VI_LONG[date.getDay()]}, ${dd}/${mm}/${yyyy}`
-}
+const formatDateLabel = (date: Date, localeTag: string) =>
+  date.toLocaleDateString(localeTag, {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
 
 const computeBookedDays = (
   schedule: Array<{ start_time: string; end_time: string }>,
@@ -129,6 +123,9 @@ export function BookWorkerDialog({
   serviceName,
 }: Props) {
   const createBooking = useCreateBooking()
+  const t = useTranslations("WorkerProfile")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale] ?? "vi-VN"
 
   const availableUnits = useMemo<WorkerPricingUnit[]>(() => {
     if (!service) return []
@@ -229,18 +226,18 @@ export function BookWorkerDialog({
 
   const validationError = useMemo(() => {
     if (!open) return null
-    if (!service) return "Vui lòng chọn dịch vụ"
-    if (!unit) return "Vui lòng chọn hình thức"
-    if (!date) return "Vui lòng chọn ngày"
-    if (quantity < 1) return "Số lượng tối thiểu là 1"
-    if (!startDateTime) return "Vui lòng chọn giờ bắt đầu"
+    if (!service) return t("book.errSelectService")
+    if (!unit) return t("book.errSelectUnit")
+    if (!date) return t("book.errSelectDate")
+    if (quantity < 1) return t("book.errMinQuantity")
+    if (!startDateTime) return t("book.errSelectTime")
 
     const minStart = new Date(now + MIN_ADVANCE_HOURS * 60 * 60 * 1000)
     if (startDateTime < minStart) {
-      return `Lịch phải đặt trước ít nhất ${MIN_ADVANCE_HOURS} giờ`
+      return t("book.errMinAdvance", { hours: MIN_ADVANCE_HOURS })
     }
     return null
-  }, [service, unit, date, quantity, startDateTime, now])
+  }, [open, service, unit, date, quantity, startDateTime, now, t])
 
   const handleSubmit = async () => {
     if (
@@ -280,25 +277,25 @@ export function BookWorkerDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Thuê {workerName}</DialogTitle>
+          <DialogTitle>{t("book.title", { name: workerName })}</DialogTitle>
           <DialogDescription>{serviceName}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="book-unit">Hình thức</Label>
+            <Label htmlFor="book-unit">{t("book.unit")}</Label>
             <Select
               value={unit}
               onValueChange={(v) => setSelectedUnit(v as WorkerPricingUnit)}
               disabled={availableUnits.length === 0}
             >
               <SelectTrigger id="book-unit" className="w-full">
-                <SelectValue placeholder="Chọn hình thức thuê" />
+                <SelectValue placeholder={t("book.unitPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {availableUnits.map((u) => (
                   <SelectItem key={u} value={u}>
-                    Theo {UNIT_LABEL[u]}
+                    {t("book.unitOption", { unit: t(UNIT_KEY[u]) })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -307,7 +304,7 @@ export function BookWorkerDialog({
 
           <div className="grid grid-cols-1 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="book-date">Ngày</Label>
+              <Label htmlFor="book-date">{t("book.date")}</Label>
               <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -321,7 +318,9 @@ export function BookWorkerDialog({
                   >
                     <CalendarIcon className="size-4 shrink-0" />
                     <span className="truncate">
-                      {date ? formatDateLabel(date) : "Chọn ngày"}
+                      {date
+                        ? formatDateLabel(date, localeTag)
+                        : t("book.datePlaceholder")}
                     </span>
                   </Button>
                 </PopoverTrigger>
@@ -353,7 +352,7 @@ export function BookWorkerDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="book-time">Giờ bắt đầu</Label>
+              <Label htmlFor="book-time">{t("book.startTime")}</Label>
               <Select
                 value={time}
                 onValueChange={(value) => {
@@ -362,7 +361,7 @@ export function BookWorkerDialog({
                 }}
               >
                 <SelectTrigger id="book-time" className="w-full">
-                  <SelectValue placeholder="Chọn giờ" />
+                  <SelectValue placeholder={t("book.timePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {HOUR_OPTIONS.map((opt) => (
@@ -377,7 +376,9 @@ export function BookWorkerDialog({
 
           <div className="grid gap-2">
             <Label htmlFor="book-quantity">
-              Số lượng ({unit ? UNIT_LABEL[unit] : "đơn vị"})
+              {t("book.quantity", {
+                unit: unit ? t(UNIT_KEY[unit]) : t("book.quantityUnit"),
+              })}
             </Label>
             <Input
               id="book-quantity"
@@ -392,22 +393,23 @@ export function BookWorkerDialog({
             />
             {endDateTime ? (
               <p className="text-xs text-muted-foreground">
-                Kết thúc dự kiến:{" "}
-                {endDateTime.toLocaleString("vi-VN", {
-                  dateStyle: "short",
-                  timeStyle: "short",
+                {t("book.estimatedEnd", {
+                  date: endDateTime.toLocaleString(localeTag, {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  }),
                 })}
               </p>
             ) : null}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="book-notes">Ghi chú (tùy chọn)</Label>
+            <Label htmlFor="book-notes">{t("book.notes")}</Label>
             <Textarea
               id="book-notes"
               rows={3}
               maxLength={1000}
-              placeholder="Yêu cầu thêm cho worker"
+              placeholder={t("book.notesPlaceholder")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -416,15 +418,19 @@ export function BookWorkerDialog({
           {totalPrice ? (
             <div className="rounded-lg border bg-muted/50 px-4 py-3 text-sm">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Đơn giá ({UNIT_LABEL[unit as WorkerPricingUnit]})</span>
+                <span>
+                  {t("book.unitPrice", {
+                    unit: t(UNIT_KEY[unit as WorkerPricingUnit]),
+                  })}
+                </span>
                 <span>{formatPrice(totalPrice.unitAmount, totalPrice.currency)}</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-muted-foreground">
-                <span>Số lượng</span>
+                <span>{t("book.quantityLabel")}</span>
                 <span>× {quantity}</span>
               </div>
               <div className="mt-2 flex items-center justify-between border-t pt-2 font-semibold text-foreground">
-                <span>Tổng cộng</span>
+                <span>{t("book.total")}</span>
                 <span className="text-primary">
                   {formatPrice(totalPrice.amount, totalPrice.currency)}
                 </span>
@@ -444,7 +450,7 @@ export function BookWorkerDialog({
             onClick={() => handleOpenChange(false)}
             disabled={createBooking.isPending}
           >
-            Hủy
+            {t("book.cancel")}
           </Button>
           <Button
             className="flex-1"
@@ -454,7 +460,7 @@ export function BookWorkerDialog({
             {createBooking.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            Xác nhận đặt
+            {t("book.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

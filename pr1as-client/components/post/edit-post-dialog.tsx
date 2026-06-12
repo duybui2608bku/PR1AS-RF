@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +23,7 @@ type Props = {
 }
 
 export function EditPostDialog({ post, onClose }: Props) {
+  const t = useTranslations("EditPost")
   const [body, setBody] = useState(post.body)
   const [visibility, setVisibility] = useState<PostVisibility>(post.visibility)
   const updateMutation = useUpdatePost(post.id)
@@ -42,17 +44,15 @@ export function EditPostDialog({ post, onClose }: Props) {
     }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa bài viết</DialogTitle>
-          <DialogDescription>
-            Cập nhật nội dung và chế độ hiển thị của bài viết.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <Textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            placeholder="Nội dung bài viết..."
+            placeholder={t("bodyPlaceholder")}
             rows={6}
             maxLength={5000}
           />
@@ -62,8 +62,8 @@ export function EditPostDialog({ post, onClose }: Props) {
               value={visibility}
               onChange={(event) => setVisibility(event.target.value as PostVisibility)}
             >
-              <option value="public">Công khai</option>
-              <option value="private">Riêng tư</option>
+              <option value="public">{t("public")}</option>
+              <option value="private">{t("private")}</option>
             </select>
             <span className="text-xs text-muted-foreground">{body.length}/5000</span>
           </div>
@@ -76,7 +76,7 @@ export function EditPostDialog({ post, onClose }: Props) {
             onClick={onClose}
             disabled={updateMutation.isPending}
           >
-            Hủy
+            {t("cancel")}
           </Button>
           <Button
             size="sm"
@@ -84,7 +84,7 @@ export function EditPostDialog({ post, onClose }: Props) {
             disabled={!body.trim() || updateMutation.isPending}
           >
             {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Lưu thay đổi
+            {t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

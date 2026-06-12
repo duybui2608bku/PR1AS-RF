@@ -15,6 +15,7 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -25,16 +26,22 @@ import {
   useDepositTransactions,
   useWalletBalance,
 } from "@/lib/hooks/use-wallet"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import {
   formatVnd,
   formatWalletDate,
   statusClassName,
-  statusLabel,
+  statusKeys,
 } from "@/components/wallet/wallet-format"
 import type { WalletTransaction } from "@/services/wallet.service"
 
 const PAGE_SIZE = 10
+
+const useLocaleTag = () => {
+  const locale = useLocale() as SupportedLocale
+  return INTL_LOCALE_TAGS[locale] ?? "vi-VN"
+}
 
 // iOS-style: vòng tròn icon + màu theo trạng thái giao dịch
 const statusVisual: Record<
@@ -66,6 +73,7 @@ function TransactionStatusBadge({
 }: {
   status: WalletTransaction["status"]
 }) {
+  const t = useTranslations("Wallet")
   return (
     <span
       className={cn(
@@ -73,7 +81,7 @@ function TransactionStatusBadge({
         statusClassName[status]
       )}
     >
-      {statusLabel[status]}
+      {t(statusKeys[status])}
     </span>
   )
 }
@@ -86,6 +94,8 @@ function MobileTransactionRow({
   transaction: WalletTransaction
   isLast: boolean
 }) {
+  const t = useTranslations("Wallet")
+  const localeTag = useLocaleTag()
   const visual = statusVisual[transaction.status]
   const Icon = visual.icon
   const isPending = transaction.status === "pending"
@@ -105,12 +115,12 @@ function MobileTransactionRow({
           {transaction.payment_code ?? transaction.id}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {formatWalletDate(transaction.created_at)}
+          {formatWalletDate(transaction.created_at, localeTag)}
         </p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className="text-[15px] font-semibold">
-          {formatVnd(transaction.amount)}
+          {formatVnd(transaction.amount, localeTag)}
         </span>
         <span
           className={cn(
@@ -118,7 +128,7 @@ function MobileTransactionRow({
             statusClassName[transaction.status]
           )}
         >
-          {statusLabel[transaction.status]}
+          {t(statusKeys[transaction.status])}
         </span>
       </div>
       {isPending ? (
@@ -150,6 +160,8 @@ function MobileTransactionRow({
 }
 
 export function WalletPage() {
+  const t = useTranslations("Wallet")
+  const localeTag = useLocaleTag()
   const [page, setPage] = useState(1)
 
   const balanceQuery = useWalletBalance()
@@ -193,10 +205,10 @@ export function WalletPage() {
       <div className="mb-5 flex items-start justify-between gap-4 md:mb-6 md:items-end">
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Ví của tôi
+            {t("myWallet")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Số dư và giao dịch nạp tiền
+            {t("myWalletSubtitle")}
           </p>
         </div>
 
@@ -216,7 +228,7 @@ export function WalletPage() {
           <Button asChild>
             <Link href="/wallet/deposit">
               <Plus className="size-4" />
-              Nạp tiền
+              {t("deposit")}
             </Link>
           </Button>
         </div>
@@ -224,7 +236,7 @@ export function WalletPage() {
         {/* Mobile: nút làm mới tròn */}
         <button
           type="button"
-          aria-label="Làm mới"
+          aria-label={t("refresh")}
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-card text-foreground transition-colors active:scale-95 disabled:opacity-60 md:hidden"
@@ -243,12 +255,11 @@ export function WalletPage() {
       >
         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
         <div className="space-y-1">
-          <p className="font-semibold">
-            Chỉ nạp đủ tiền cho gói cước bạn dự định mua
-          </p>
+          <p className="font-semibold">{t("warningTitle")}</p>
           <p className="text-xs">
-            Hệ thống <strong>chưa hỗ trợ rút tiền</strong>. Số dư chỉ dùng để
-            thanh toán gói cước và dịch vụ trong nền tảng.
+            {t.rich("warningDesc", {
+              b: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
         </div>
       </div>
@@ -261,21 +272,21 @@ export function WalletPage() {
               <Wallet className="size-5" />
             </span>
             <span className="text-sm font-medium text-primary-foreground/80">
-              Số dư khả dụng
+              {t("availableBalance")}
             </span>
           </div>
           <div className="mt-4 text-4xl font-bold tracking-tight">
-            {formatVnd(balanceQuery.data?.balance ?? 0)}
+            {formatVnd(balanceQuery.data?.balance ?? 0, localeTag)}
           </div>
           <p className="mt-1 text-xs text-primary-foreground/70">
-            VND · ID {balanceQuery.data?.user_id || "-"}
+            {t("balanceMeta", { id: balanceQuery.data?.user_id || "-" })}
           </p>
           <Link
             href="/wallet/deposit"
             className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary-foreground text-[15px] font-semibold text-primary shadow-sm transition-colors hover:bg-primary-foreground/90 active:scale-[0.99]"
           >
             <Plus className="size-4" />
-            Nạp tiền
+            {t("deposit")}
           </Link>
         </div>
 
@@ -284,11 +295,15 @@ export function WalletPage() {
             <ReceiptText className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">Tổng nạp thành công</p>
-            <p className="text-lg font-semibold">{formatVnd(totalDeposited)}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("totalDepositedSuccess")}
+            </p>
+            <p className="text-lg font-semibold">
+              {formatVnd(totalDeposited, localeTag)}
+            </p>
           </div>
           <span className="shrink-0 text-sm text-muted-foreground">
-            {transactions.length} GD
+            {t("txCountShort", { count: transactions.length })}
           </span>
         </div>
       </div>
@@ -299,17 +314,17 @@ export function WalletPage() {
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <Wallet className="size-5" />
-              Số dư
+              {t("balance")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="text-4xl font-bold tracking-tight">
-              {formatVnd(balanceQuery.data?.balance ?? 0)}
+              {formatVnd(balanceQuery.data?.balance ?? 0, localeTag)}
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
               <span className="rounded-md border px-3 py-1">VND</span>
               <span className="rounded-md border px-3 py-1">
-                User ID: {balanceQuery.data?.user_id || "-"}
+                {t("userId", { id: balanceQuery.data?.user_id || "-" })}
               </span>
             </div>
           </CardContent>
@@ -319,15 +334,15 @@ export function WalletPage() {
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <ReceiptText className="size-5" />
-              Tổng nạp
+              {t("totalDeposited")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="text-2xl font-semibold">
-              {formatVnd(totalDeposited)}
+              {formatVnd(totalDeposited, localeTag)}
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              {transactions.length} giao dịch
+              {t("txCount", { count: transactions.length })}
             </p>
           </CardContent>
         </Card>
@@ -337,18 +352,18 @@ export function WalletPage() {
       <div className="mt-6 md:hidden">
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Lịch sử nạp tiền
+            {t("depositHistory")}
           </h2>
           <span className="text-xs text-muted-foreground">
-            {pagination?.total ?? 0} giao dịch
+            {t("txCount", { count: pagination?.total ?? 0 })}
           </span>
         </div>
         {transactions.length === 0 ? (
           <div className="flex min-h-44 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card px-4 text-center">
             <ReceiptText className="size-9 text-muted-foreground" />
-            <p className="text-sm font-medium">Chưa có giao dịch nạp tiền</p>
+            <p className="text-sm font-medium">{t("emptyHistory")}</p>
             <Button asChild size="sm">
-              <Link href="/wallet/deposit">Nạp tiền</Link>
+              <Link href="/wallet/deposit">{t("deposit")}</Link>
             </Button>
           </div>
         ) : (
@@ -367,16 +382,16 @@ export function WalletPage() {
       {/* Desktop: bảng lịch sử nạp tiền */}
       <Card className="mt-5 hidden md:block">
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
-          <CardTitle className="text-base">Lịch sử nạp tiền</CardTitle>
+          <CardTitle className="text-base">{t("depositHistory")}</CardTitle>
           <Badge variant="outline">{pagination?.total ?? 0}</Badge>
         </CardHeader>
         <CardContent className="p-0">
           {transactions.length === 0 ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
               <ReceiptText className="size-9 text-muted-foreground" />
-              <p className="text-sm font-medium">Chưa có giao dịch nạp tiền</p>
+              <p className="text-sm font-medium">{t("emptyHistory")}</p>
               <Button asChild size="sm">
-                <Link href="/wallet/deposit">Nạp tiền</Link>
+                <Link href="/wallet/deposit">{t("deposit")}</Link>
               </Button>
             </div>
           ) : (

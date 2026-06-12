@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Heart, Loader2, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
@@ -55,12 +56,18 @@ function FavoriteWorkerCard({
   isPending: boolean
   onRemove: (workerId: string) => void
 }) {
+  const t = useTranslations("Favorites")
   const imageSrc =
     worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
 
   return (
     <article className="group relative flex-none w-[44vw] snap-start overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto">
-      <Link href={`/worker/${worker.id}`} className="block cursor-pointer">
+      <Link
+        href={`/worker/${worker.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block cursor-pointer"
+      >
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
           {imageSrc ? (
             <Image
@@ -72,7 +79,7 @@ function FavoriteWorkerCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted text-sm text-muted-foreground">
-              Chưa có ảnh
+              {t("noImage")}
             </div>
           )}
           {worker.worker_profile?.title ? (
@@ -81,7 +88,7 @@ function FavoriteWorkerCard({
         </div>
         <div className="px-2.5 pt-2 pb-2.5">
           <p className="line-clamp-1 text-sm font-semibold leading-tight text-foreground">
-            {worker.full_name ?? "Chưa cập nhật tên"}
+            {worker.full_name ?? t("unnamedWorker")}
           </p>
         </div>
       </Link>
@@ -90,8 +97,8 @@ function FavoriteWorkerCard({
         <AlertDialogTrigger asChild>
           <button
             type="button"
-            aria-label="Remove favorite worker"
-            title="Xóa khỏi yêu thích"
+            aria-label={t("removeAria")}
+            title={t("removeTitle")}
             disabled={isPending}
             className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
           >
@@ -104,19 +111,18 @@ function FavoriteWorkerCard({
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa worker yêu thích?</AlertDialogTitle>
+            <AlertDialogTitle>{t("removeConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Worker này sẽ bị xóa khỏi danh sách yêu thích của bạn. Bạn có
-              chắc chắn muốn tiếp tục?
+              {t("removeConfirmDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => onRemove(worker.id)}
             >
-              Xóa
+              {t("remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -126,6 +132,7 @@ function FavoriteWorkerCard({
 }
 
 export function FavoriteWorkersClient() {
+  const t = useTranslations("Favorites")
   const favoritesQuery = useFavoriteWorkers()
   const toggleFavoriteMutation = useToggleFavoriteWorker()
   const favorites = favoritesQuery.data ?? []
@@ -134,8 +141,8 @@ export function FavoriteWorkersClient() {
     toggleFavoriteMutation.mutate(
       { workerId, favorite: false },
       {
-        onSuccess: () => toast.success("Đã bỏ worker khỏi danh sách yêu thích."),
-        onError: () => toast.error("Không thể cập nhật danh sách yêu thích."),
+        onSuccess: () => toast.success(t("removeSuccess")),
+        onError: () => toast.error(t("removeError")),
       },
     )
   }
@@ -148,11 +155,9 @@ export function FavoriteWorkersClient() {
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Worker yêu thích
+            {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Danh sách worker bạn đã lưu từ trang dịch vụ.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -160,7 +165,7 @@ export function FavoriteWorkersClient() {
 
       {!favoritesQuery.isLoading && favoritesQuery.isError ? (
         <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-          Không thể tải danh sách worker yêu thích.
+          {t("loadError")}
         </div>
       ) : null}
 
@@ -168,12 +173,10 @@ export function FavoriteWorkersClient() {
       !favoritesQuery.isError &&
       favorites.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="font-medium">Chưa có worker yêu thích</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Bấm icon tim trên worker card để lưu worker vào danh sách này.
-          </p>
+          <p className="font-medium">{t("emptyTitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("emptyDesc")}</p>
           <Button className="mt-4" asChild>
-            <Link href="/services">Tìm worker</Link>
+            <Link href="/services">{t("findWorker")}</Link>
           </Button>
         </div>
       ) : null}

@@ -15,6 +15,7 @@ import {
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -24,18 +25,18 @@ import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputat
 import { WorkerReportButton } from "@/components/worker/worker-report-button"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
 
-const EXPERIENCE_LABEL: Record<WorkerExperience, string> = {
-  LESS_THAN_1: "Dưới 1 năm",
-  ONE_TO_3: "1-3 năm",
-  THREE_TO_5: "3-5 năm",
-  FIVE_TO_10: "5-10 năm",
-  MORE_THAN_10: "Trên 10 năm",
+const EXPERIENCE_KEY: Record<WorkerExperience, string> = {
+  LESS_THAN_1: "enums.expLessThan1",
+  ONE_TO_3: "enums.exp1To3",
+  THREE_TO_5: "enums.exp3To5",
+  FIVE_TO_10: "enums.exp5To10",
+  MORE_THAN_10: "enums.expMoreThan10",
 }
 
-const GENDER_LABEL: Record<WorkerGender, string> = {
-  MALE: "Nam",
-  FEMALE: "Nữ",
-  OTHER: "Khác",
+const GENDER_KEY: Record<WorkerGender, string> = {
+  MALE: "enums.genderMale",
+  FEMALE: "enums.genderFemale",
+  OTHER: "enums.genderOther",
 }
 
 const GenderIcon = ({ gender }: { gender?: WorkerGender }) => {
@@ -64,6 +65,7 @@ export function WorkerProfileHeader({
   onReport,
 }: Props) {
   const router = useRouter()
+  const t = useTranslations("WorkerProfile")
   const profile = worker.worker_profile
   const stats = worker.review_stats
   const ratingAverage = stats?.average ?? 0
@@ -73,7 +75,11 @@ export function WorkerProfileHeader({
   const [activeIndex, setActiveIndex] = useState(0)
   const activeImage = gallery[activeIndex] ?? gallery[0] ?? null
 
-  const fullName = worker.user.full_name ?? "Chưa cập nhật"
+  const fullName = worker.user.full_name ?? t("header.notUpdated")
+  const ratingLabel =
+    ratingCount > 0
+      ? t("header.reviewsCount", { count: ratingCount })
+      : t("header.noReviews")
   const title = profile?.title ?? null
   const reputationScore = getReputationScore(worker.user.meta_data?.reputation_score)
   const isLowReputation = reputationScore < 30
@@ -84,7 +90,7 @@ export function WorkerProfileHeader({
         <Alert className="border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">
           <AlertTriangle className="size-4 text-red-500" />
           <AlertDescription className="font-medium">
-            Worker này có điểm uy tín thấp ({reputationScore}/100). Dịch vụ đặt lịch tạm thời bị hạn chế.
+            {t("header.lowReputationWarning", { score: reputationScore })}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -104,7 +110,7 @@ export function WorkerProfileHeader({
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Chưa có ảnh
+              {t("header.noImage")}
             </div>
           )}
 
@@ -122,7 +128,7 @@ export function WorkerProfileHeader({
                 onClick={() => router.push("/worker/setup")}
               >
                 <Pencil className="size-3.5" />
-                Chỉnh sửa
+                {t("header.edit")}
               </Button>
             ) : (
               <>
@@ -131,7 +137,11 @@ export function WorkerProfileHeader({
                     type="button"
                     onClick={onToggleFavorite}
                     disabled={isFavoritePending}
-                    aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+                    aria-label={
+                      isFavorite
+                        ? t("header.removeFavorite")
+                        : t("header.favorite")
+                    }
                     className={cn(
                       "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50",
                       isFavorite
@@ -185,7 +195,7 @@ export function WorkerProfileHeader({
                 ))}
               </div>
               <span className="text-sm text-white/80">
-                {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
+                {ratingLabel}
               </span>
             </div>
           </div>
@@ -205,7 +215,7 @@ export function WorkerProfileHeader({
                     ? "border-primary shadow-sm"
                     : "border-transparent opacity-55 hover:opacity-90",
                 )}
-                aria-label={`Ảnh ${index + 1}`}
+                aria-label={t("header.imageAlt", { index: index + 1 })}
               >
                 <Image src={url} alt="" fill sizes="56px" className="object-cover" />
               </button>
@@ -223,20 +233,20 @@ export function WorkerProfileHeader({
               )}
             >
               <ShieldCheck className="size-3.5" />
-              Uy tín {reputationScore}/100
+              {t("header.reputation", { score: reputationScore })}
             </span>
 
             {profile?.gender ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">
                 <GenderIcon gender={profile.gender} />
-                {GENDER_LABEL[profile.gender]}
+                {t(GENDER_KEY[profile.gender])}
               </span>
             ) : null}
 
             {profile?.experience ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-foreground">
                 <Trophy className="size-3 text-amber-500" />
-                {EXPERIENCE_LABEL[profile.experience]}
+                {t(EXPERIENCE_KEY[profile.experience])}
               </span>
             ) : null}
           </div>
@@ -298,7 +308,7 @@ export function WorkerProfileHeader({
                         ? "border-primary"
                         : "border-transparent opacity-70 hover:opacity-100",
                     )}
-                    aria-label={`Ảnh ${index + 1}`}
+                    aria-label={t("header.imageAlt", { index: index + 1 })}
                   >
                     <Image src={url} alt="" fill sizes="64px" className="object-cover" />
                   </button>
@@ -329,7 +339,7 @@ export function WorkerProfileHeader({
                     onClick={() => router.push("/worker/setup")}
                   >
                     <Pencil className="size-3.5" />
-                    Chỉnh sửa
+                    {t("header.edit")}
                   </Button>
                 ) : (
                   <>
@@ -338,8 +348,16 @@ export function WorkerProfileHeader({
                         type="button"
                         onClick={onToggleFavorite}
                         disabled={isFavoritePending}
-                        aria-label={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
-                        title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                        aria-label={
+                      isFavorite
+                        ? t("header.removeFavorite")
+                        : t("header.favorite")
+                    }
+                        title={
+                          isFavorite
+                            ? t("header.removeFavorite")
+                            : t("header.addToFavorite")
+                        }
                         className={cn(
                           "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
                           isFavorite
@@ -387,7 +405,7 @@ export function WorkerProfileHeader({
                 ))}
               </div>
               <span>
-                {ratingCount > 0 ? `${ratingCount} đánh giá` : "Chưa có đánh giá"}
+                {ratingLabel}
               </span>
               <span
                 className={cn(
@@ -396,7 +414,7 @@ export function WorkerProfileHeader({
                 )}
               >
                 <ShieldCheck className="size-3.5" />
-                Uy tín {reputationScore}/100
+                {t("header.reputation", { score: reputationScore })}
               </span>
             </div>
 
@@ -406,13 +424,13 @@ export function WorkerProfileHeader({
                 {profile.gender ? (
                   <span className="inline-flex items-center gap-1.5 text-foreground">
                     <GenderIcon gender={profile.gender} />
-                    {GENDER_LABEL[profile.gender]}
+                    {t(GENDER_KEY[profile.gender])}
                   </span>
                 ) : null}
                 {profile.experience ? (
                   <span className="inline-flex items-center gap-1.5 text-foreground">
                     <Trophy className="size-3.5 text-amber-500" />
-                    {EXPERIENCE_LABEL[profile.experience]}
+                    {t(EXPERIENCE_KEY[profile.experience])}
                   </span>
                 ) : null}
               </div>

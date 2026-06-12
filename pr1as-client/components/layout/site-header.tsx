@@ -1,11 +1,11 @@
 "use client"
 
 import {
+  Briefcase,
   CalendarCheck2,
   CalendarDays,
   Crown,
   FileText,
-  Briefcase,
   Heart,
   HeartHandshake,
   Loader2,
@@ -17,10 +17,10 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
 
@@ -70,8 +70,18 @@ const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
     icon: Heart,
     roles: ["client"],
   },
-  { routeKey: "profile", href: "/client/profile", labelKey: "profile", icon: User },
-  { routeKey: "settings", href: "/settings", labelKey: "settings", icon: Settings },
+  {
+    routeKey: "profile",
+    href: "/client/profile",
+    labelKey: "profile",
+    icon: User,
+  },
+  {
+    routeKey: "settings",
+    href: "/settings",
+    labelKey: "settings",
+    icon: Settings,
+  },
   {
     routeKey: "schedule",
     href: "/worker/bookings/schedule",
@@ -104,10 +114,7 @@ const resolveMenuHref = (
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
-// Hysteresis thresholds cho services header
-// EXPAND_THRESHOLD = 0: chỉ expand khi về tuyệt đối đầu trang,
-// tránh scroll-anchoring push y vượt COLLAPSE_THRESHOLD gây oscillation loop
-const EXPAND_THRESHOLD = 0
+const EXPAND_THRESHOLD = 40
 const COLLAPSE_THRESHOLD = 120
 
 export function SiteHeader() {
@@ -140,7 +147,9 @@ export function SiteHeader() {
   )
   const homeHref = getRoleDefaultRoute(activeRole)
 
-  const switchRoleLabel = isWorkerActive ? t("switchToClient") : t("switchToWorker")
+  const switchRoleLabel = isWorkerActive
+    ? t("switchToClient")
+    : t("switchToWorker")
   const userMenuItems = React.useMemo(
     () => [
       ...USER_MENU_ITEM_DEFS.filter((item) => {
@@ -191,10 +200,13 @@ export function SiteHeader() {
     icon: LucideIcon
   }[] = [
     { value: "ASSISTANCE", label: tServices("assistance"), icon: Briefcase },
-    { value: "COMPANIONSHIP", label: tServices("companionship"), icon: HeartHandshake },
+    {
+      value: "COMPANIONSHIP",
+      label: tServices("companionship"),
+      icon: HeartHandshake,
+    },
   ]
 
-  // Tab icon pop animation — direct DOM manipulation to avoid re-render restart
   const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
   const triggerTabPop = (index: number) => {
     const el = tabWrapRefs.current[index]
@@ -202,10 +214,11 @@ export function SiteHeader() {
     el.classList.remove("popping")
     void el.offsetWidth
     el.classList.add("popping")
-    el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
+    el.addEventListener("animationend", () => el.classList.remove("popping"), {
+      once: true,
+    })
   }
 
-  // Manual expand: user clicked compact pill while scrolled → expand in-place
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
   const isManuallyExpandedRef = React.useRef(false)
   const servicesHeaderRef = React.useRef<HTMLDivElement>(null)
@@ -224,11 +237,9 @@ export function SiteHeader() {
     setHeaderExpanded(false)
   }, [setHeaderExpanded])
 
-  // Click outside services header while manually expanded → collapse
   useClickOutside(
     servicesHeaderRef,
     (event) => {
-      // Don't collapse when clicking inside Radix popovers/dialogs (portaled to body)
       const target = event.target as Element | null
       if (target?.closest("[data-radix-popper-content-wrapper]")) return
       if (target?.closest("[data-radix-portal]")) return
@@ -237,7 +248,6 @@ export function SiteHeader() {
     isServicesPage && isManuallyExpanded
   )
 
-  // Filter slot ref — portaled into by HomeHero's desktop form
   const filterSlotRef = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
     if (!isServicesPage) return
@@ -245,7 +255,6 @@ export function SiteHeader() {
     return () => setFilterSlotEl(null)
   }, [isServicesPage, setFilterSlotEl])
 
-  // Init header expansion state on services page
   React.useEffect(() => {
     if (isServicesPage) {
       const expanded = window.scrollY < COLLAPSE_THRESHOLD
@@ -254,19 +263,20 @@ export function SiteHeader() {
     }
   }, [isServicesPage, setHeaderExpanded])
 
-  // Ref mirrors isHeaderExpanded để scroll handler không bị stale closure
   const isHeaderExpandedRef = React.useRef(true)
 
-  // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
   const hiddenRef = React.useRef(false)
-  const setHiddenSynced = React.useCallback((value: boolean) => {
-    if (hiddenRef.current === value) return
-    hiddenRef.current = value
-    setHidden(value)
-    setHeaderHidden(value)
-  }, [setHeaderHidden])
+  const setHiddenSynced = React.useCallback(
+    (value: boolean) => {
+      if (hiddenRef.current === value) return
+      hiddenRef.current = value
+      setHidden(value)
+      setHeaderHidden(value)
+    },
+    [setHeaderHidden]
+  )
   React.useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
@@ -308,7 +318,6 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [setHeaderExpanded])
 
-  // Đóng menu user khi header bị ẩn để tránh dropdown lơ lửng
   React.useEffect(() => {
     if (hidden) setMenuOpen(false)
   }, [hidden])
@@ -342,9 +351,7 @@ export function SiteHeader() {
   const handleLoginClick = async () => {
     try {
       await clearSessionCookie()
-    } catch {
-      // ignore — proceed to login even if cookie clear fails
-    }
+    } catch {}
     router.push("/login")
   }
 
@@ -359,7 +366,6 @@ export function SiteHeader() {
     }
   }
 
-  // Right-side actions (shared between services and non-services layout)
   const rightActions = (
     <div className="flex items-center gap-2">
       {isAuthenticated ? (
@@ -413,7 +419,7 @@ export function SiteHeader() {
             )}
           </Button>
           {menuOpen ? (
-            <div className="absolute right-0 mt-2 z-50 w-56 rounded-md border bg-background p-1 shadow-lg">
+            <div className="absolute right-0 z-50 mt-2 w-56 rounded-md border bg-background p-1 shadow-lg">
               <div className="px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? t("me")}
               </div>
@@ -475,14 +481,11 @@ export function SiteHeader() {
       )}
     >
       {isServicesPage ? (
-        /* Services page: 2-row expandable header */
         <div ref={servicesHeaderRef}>
-          {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
           <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
-            {/* Left: logo */}
             <Link
               href={homeHref}
-              className="flex shrink-0 items-center gap-2 font-semibold justify-self-start"
+              className="flex shrink-0 items-center gap-2 justify-self-start font-semibold"
             >
               {isMounted && brandLogo ? (
                 <Image
@@ -518,7 +521,10 @@ export function SiteHeader() {
                       <button
                         key={tab.value}
                         type="button"
-                        onClick={() => { triggerTabPop(i); switchTabCallback?.(tab.value) }}
+                        onClick={() => {
+                          triggerTabPop(i)
+                          switchTabCallback?.(tab.value)
+                        }}
                         aria-pressed={isActive}
                         className={cn(
                           "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
@@ -528,7 +534,9 @@ export function SiteHeader() {
                         )}
                       >
                         <span
-                          ref={(el) => { tabWrapRefs.current[i] = el }}
+                          ref={(el) => {
+                            tabWrapRefs.current[i] = el
+                          }}
                           className="tab-icon-wrap"
                         >
                           <tab.icon
@@ -555,25 +563,25 @@ export function SiteHeader() {
                       : "pointer-events-none scale-95 opacity-0"
                   )}
                 >
-                <span className="font-medium text-foreground">
-                  {selectedLocationLabel ?? tServices("anyLocation")}
-                </span>
-                <span className="h-4 w-px shrink-0 bg-border" />
-                <span className="text-muted-foreground">
-                  {scheduledAtLabel ?? tServices("time")}
-                </span>
-                <span className="h-4 w-px shrink-0 bg-border" />
-                <span className="text-muted-foreground">
-                  {activeTab === "COMPANIONSHIP" ? tServices("companionship") : tServices("assistance")}
-                </span>
-                <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Search className="size-3.5" />
-                </div>
+                  <span className="font-medium text-foreground">
+                    {selectedLocationLabel ?? tServices("anyLocation")}
+                  </span>
+                  <span className="h-4 w-px shrink-0 bg-border" />
+                  <span className="text-muted-foreground">
+                    {scheduledAtLabel ?? tServices("time")}
+                  </span>
+                  <span className="h-4 w-px shrink-0 bg-border" />
+                  <span className="text-muted-foreground">
+                    {activeTab === "COMPANIONSHIP"
+                      ? tServices("companionship")
+                      : tServices("assistance")}
+                  </span>
+                  <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Search className="size-3.5" />
+                  </div>
                 </button>
               </div>
             </div>
-
-            {/* Right: user actions */}
             <div className="flex items-center justify-end gap-1">
               {!isAuthenticated && (
                 <Button
@@ -588,8 +596,6 @@ export function SiteHeader() {
               {rightActions}
             </div>
           </div>
-
-          {/* Row 2: Filter form slot */}
           <div
             className="hidden overflow-hidden md:block"
             style={{
@@ -606,7 +612,6 @@ export function SiteHeader() {
           </div>
         </div>
       ) : (
-        /* Non-services pages: original two-column layout */
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <Link

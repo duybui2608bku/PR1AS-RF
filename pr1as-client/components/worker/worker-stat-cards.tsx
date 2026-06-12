@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import { Gauge, Move, Star, User } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Card, CardContent } from "@/components/ui/card"
 import type { WorkerProfilePublic } from "@/types"
@@ -26,27 +27,28 @@ type Props = {
 }
 
 export function WorkerStatCards({ profile }: Props) {
+  const t = useTranslations("WorkerProfile")
   const age = calculateAge(profile?.date_of_birth)
 
   const stats: StatItem[] = [
     {
       icon: User,
-      label: "Tuổi",
-      value: age !== null ? `${age} tuổi` : "—",
+      label: t("about.age"),
+      value: age !== null ? t("about.ageValue", { age }) : "—",
     },
     {
       icon: Move,
-      label: "Chiều cao",
+      label: t("about.height"),
       value: profile?.height_cm ? `${profile.height_cm} cm` : "—",
     },
     {
       icon: Gauge,
-      label: "Cân nặng",
+      label: t("about.weight"),
       value: profile?.weight_kg ? `${profile.weight_kg} kg` : "—",
     },
     {
       icon: Star,
-      label: "Cung hoàng đạo",
+      label: t("about.starSign"),
       value: profile?.star_sign ?? "—",
     },
   ]

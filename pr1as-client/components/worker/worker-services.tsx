@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { Crown, MessageCircle, ShoppingCart } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { BookWorkerDialog } from "@/components/worker/book-worker-dialog"
@@ -27,8 +28,19 @@ import type { WorkerServiceItem, WorkerServicePricing } from "@/types"
 
 const MESSAGING_PLAN_CODES = new Set(["gold", "diamond"])
 
-const formatPrice = (pricing: WorkerServicePricing | undefined) => {
-  if (!pricing) return "Chưa có giá"
+type Translator = ReturnType<typeof useTranslations>
+
+const UNIT_KEY: Record<string, string> = {
+  HOURLY: "enums.unitHourly",
+  DAILY: "enums.unitDaily",
+  MONTHLY: "enums.unitMonthly",
+}
+
+const formatPrice = (
+  pricing: WorkerServicePricing | undefined,
+  t: Translator,
+) => {
+  if (!pricing) return t("services.noPrice")
 
   const currencyMap: Record<string, string> = { VND: "đ", USD: "$" }
   const symbol = currencyMap[pricing.currency] ?? pricing.currency
@@ -37,14 +49,9 @@ const formatPrice = (pricing: WorkerServicePricing | undefined) => {
       ? `${new Intl.NumberFormat("vi-VN").format(pricing.price)}${symbol}`
       : `${symbol}${new Intl.NumberFormat("en-US").format(pricing.price)}`
 
-  const unit =
-    pricing.unit === "HOURLY"
-      ? "giờ"
-      : pricing.unit === "DAILY"
-        ? "ngày"
-        : "tháng"
+  const unit = t(UNIT_KEY[pricing.unit] ?? "enums.unitMonthly")
 
-  return `Giá từ ${value}/${unit}`
+  return t("services.priceFrom", { value, unit })
 }
 
 const cheapestPricing = (
@@ -62,6 +69,7 @@ type Props = {
 }
 
 export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100 }: Props) {
+  const t = useTranslations("WorkerProfile")
   const [bookOpen, setBookOpen] = useState(false)
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
@@ -126,15 +134,15 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const handleBook = () => {
     requireAuth(() => {
       if (isOwnProfile) {
-        toast.info("Bạn không thể đặt lịch chính mình.")
+        toast.info(t("services.cannotBookSelf"))
         return
       }
       if (isWorkerLowReputation) {
-        toast.error("Worker này hiện không thể nhận booking do điểm uy tín thấp.")
+        toast.error(t("services.cannotBookLowReputation"))
         return
       }
       if (!selectedId) {
-        toast.warning("Vui lòng chọn một dịch vụ.")
+        toast.warning(t("services.selectServiceWarning"))
         return
       }
       setBookOpen(true)
@@ -144,11 +152,11 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const handleMessage = () => {
     requireAuth(() => {
       if (isOwnProfile) {
-        toast.info("Bạn không thể nhắn tin chính mình.")
+        toast.info(t("services.cannotMessageSelf"))
         return
       }
       if (isCheckingPricing) {
-        toast.info("Đang kiểm tra gói hiện tại của bạn.")
+        toast.info(t("services.checkingPlan"))
         return
       }
       if (!canMessageWorker) {
@@ -162,12 +170,14 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   return (
     <Card>
       <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-sm font-semibold">Dịch vụ</CardTitle>
+        <CardTitle className="text-sm font-semibold">
+          {t("services.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-2">
         {activeServices.length === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            Worker chưa cung cấp dịch vụ nào
+            {t("services.empty")}
           </p>
         ) : (
           <RadioGroup
@@ -204,7 +214,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                       {name}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatPrice(cheapest)}
+                      {formatPrice(cheapest, t)}
                     </p>
                   </div>
                 </label>
@@ -220,7 +230,9 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
           onClick={handleBook}
         >
           <ShoppingCart className="size-4" />
-          {isWorkerLowReputation ? "Không thể đặt (điểm uy tín thấp)" : "Thuê ngay"}
+          {isWorkerLowReputation
+            ? t("services.bookLowReputation")
+            : t("services.book")}
         </Button>
 
         <Button
@@ -232,7 +244,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
           onClick={handleMessage}
         >
           <MessageCircle className="size-4" />
-          {isCheckingPricing ? "Đang kiểm tra..." : "Nhắn tin"}
+          {isCheckingPricing ? t("services.checking") : t("services.message")}
         </Button>
       </CardContent>
 
@@ -251,11 +263,8 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
             <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Crown className="size-5" />
             </div>
-            <DialogTitle>Cần nâng cấp gói</DialogTitle>
-            <DialogDescription>
-              Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng
-              cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.
-            </DialogDescription>
+            <DialogTitle>{t("services.upgradeTitle")}</DialogTitle>
+            <DialogDescription>{t("services.upgradeDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
@@ -263,7 +272,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
               variant="outline"
               onClick={() => setUpgradePlanOpen(false)}
             >
-              Để sau
+              {t("services.upgradeLater")}
             </Button>
             <Button
               type="button"
@@ -272,7 +281,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                 router.push("/pricing")
               }}
             >
-              Nâng cấp gói
+              {t("services.upgradeConfirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
