@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Loader2, Newspaper } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,6 +33,7 @@ function PostSkeleton() {
 }
 
 export function PostFeed({ params = {} }: Props) {
+  const t = useTranslations("PostFeed")
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useListFeed(params)
 
@@ -108,8 +110,8 @@ export function PostFeed({ params = {} }: Props) {
     return (
       <div className="flex flex-col items-center justify-center border-b bg-card py-16 text-center sm:rounded-xl sm:border">
         <Newspaper className="mb-3 size-10 text-muted-foreground" />
-        <p className="text-sm font-medium">Chưa có bài viết nào</p>
-        <p className="mt-1 text-xs text-muted-foreground">Hãy là người đầu tiên đăng bài!</p>
+        <p className="text-sm font-medium">{t("emptyTitle")}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("emptyDesc")}</p>
       </div>
     )
   }
@@ -154,7 +156,7 @@ export function PostFeed({ params = {} }: Props) {
 
         {!hasNextPage && posts.length > 0 ? (
           <p className="py-4 text-center text-xs text-muted-foreground">
-            Đã hiển thị tất cả bài viết
+            {t("end")}
           </p>
         ) : null}
       </div>

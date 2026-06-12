@@ -2,6 +2,7 @@
 
 import { use, useState, type ChangeEvent } from "react"
 import { AlertCircle, ImagePlus, Loader2, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
@@ -48,12 +49,12 @@ import type { ReportReason } from "@/services/moderation.service"
 
 type PageParams = { id: string }
 
-const reportReasonOptions: Array<{ value: ReportReason; label: string }> = [
-  { value: "low_quality", label: "Chất lượng thấp" },
-  { value: "scam", label: "Lừa đảo" },
-  { value: "harassment", label: "Quấy rối" },
-  { value: "fake_profile", label: "Hồ sơ giả mạo" },
-  { value: "other", label: "Khác" },
+const reportReasonKeys: Array<{ value: ReportReason; labelKey: string }> = [
+  { value: "low_quality", labelKey: "report.reasonLowQuality" },
+  { value: "scam", labelKey: "report.reasonScam" },
+  { value: "harassment", labelKey: "report.reasonHarassment" },
+  { value: "fake_profile", labelKey: "report.reasonFakeProfile" },
+  { value: "other", labelKey: "report.reasonOther" },
 ]
 
 export default function WorkerProfilePage({
@@ -62,6 +63,7 @@ export default function WorkerProfilePage({
   params: Promise<PageParams>
 }) {
   const { id } = use(params)
+  const t = useTranslations("WorkerProfile")
   const { data, isLoading, error } = useWorkerDetail(id)
   const currentUserId = useAuthStore((s) => s.user?.id)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -90,7 +92,7 @@ export default function WorkerProfilePage({
     requireAuth(() => {
       toggleFavoriteMutation.mutate(
         { workerId: id, favorite: !isFavorite },
-        { onError: () => toast.error("Không thể cập nhật danh sách yêu thích.") }
+        { onError: () => toast.error(t("favoriteError")) }
       )
     })
   }
@@ -98,7 +100,7 @@ export default function WorkerProfilePage({
   const handleReportWorker = async () => {
     const description = reportDescription.trim()
     if (description.length < 10) {
-      setReportDescriptionError("Mô tả báo cáo phải có ít nhất 10 ký tự.")
+      setReportDescriptionError(t("report.descriptionMin"))
       return
     }
 
@@ -110,7 +112,7 @@ export default function WorkerProfilePage({
           ? await uploadMultipleImages(reportEvidenceImages)
           : []
     } catch {
-      toast.error("Không thể tải ảnh minh chứng. Vui lòng thử lại.")
+      toast.error(t("report.uploadEvidenceError"))
       setIsReportSubmitting(false)
       return
     }
@@ -147,7 +149,7 @@ export default function WorkerProfilePage({
     setReportDescription(value)
     setReportDescriptionError(
       value.trim().length > 0 && value.trim().length < 10
-        ? "Mô tả báo cáo phải có ít nhất 10 ký tự."
+        ? t("report.descriptionMin")
         : ""
     )
   }
@@ -183,10 +185,8 @@ export default function WorkerProfilePage({
             {error ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Không thể tải thông tin worker</AlertTitle>
-                <AlertDescription>
-                  Vui lòng thử lại sau hoặc kiểm tra đường dẫn.
-                </AlertDescription>
+                <AlertTitle>{t("loadErrorTitle")}</AlertTitle>
+                <AlertDescription>{t("loadErrorDesc")}</AlertDescription>
               </Alert>
             ) : null}
 
@@ -258,7 +258,7 @@ export default function WorkerProfilePage({
       <Dialog open={reportOpen} onOpenChange={handleReportDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Báo cáo worker</DialogTitle>
+            <DialogTitle>{t("report.title")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Select
@@ -267,12 +267,12 @@ export default function WorkerProfilePage({
               disabled={isReportBusy}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn lý do báo cáo" />
+                <SelectValue placeholder={t("report.reasonPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                {reportReasonOptions.map((option) => (
+                {reportReasonKeys.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -280,7 +280,7 @@ export default function WorkerProfilePage({
             <Textarea
               value={reportDescription}
               onChange={handleReportDescriptionChange}
-              placeholder="Mô tả vấn đề bạn gặp với worker..."
+              placeholder={t("report.descriptionPlaceholder")}
               aria-invalid={Boolean(reportDescriptionError)}
               className={`min-h-28 ${
                 reportDescriptionError
@@ -296,7 +296,7 @@ export default function WorkerProfilePage({
             <div className="space-y-2">
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground transition-colors hover:bg-muted/50">
                 <ImagePlus className="size-4" />
-                Thêm ảnh minh chứng
+                {t("report.addEvidence")}
                 <Input
                   type="file"
                   accept="image/*"
@@ -321,7 +321,7 @@ export default function WorkerProfilePage({
                         className="size-6"
                         onClick={() => removeReportEvidenceImage(index)}
                         disabled={isReportBusy}
-                        aria-label="Xóa ảnh minh chứng"
+                        aria-label={t("report.removeEvidence")}
                       >
                         <X className="size-3" />
                       </Button>
@@ -338,7 +338,7 @@ export default function WorkerProfilePage({
               onClick={() => setReportOpen(false)}
               disabled={isReportBusy}
             >
-              Hủy
+              {t("report.cancel")}
             </Button>
             <Button
               type="button"
@@ -348,7 +348,7 @@ export default function WorkerProfilePage({
               {isReportBusy ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              Báo cáo
+              {t("report.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

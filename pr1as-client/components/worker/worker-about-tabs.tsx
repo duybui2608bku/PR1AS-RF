@@ -15,13 +15,15 @@ import {
   VenusAndMars,
 } from "lucide-react"
 
+import { useTranslations } from "next-intl"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { WorkerGender, WorkerProfilePublic } from "@/types"
 
-const GENDER_LABEL: Record<WorkerGender, string> = {
-  MALE: "Nam",
-  FEMALE: "Nữ",
-  OTHER: "Khác",
+const GENDER_KEY: Record<WorkerGender, string> = {
+  MALE: "enums.genderMale",
+  FEMALE: "enums.genderFemale",
+  OTHER: "enums.genderOther",
 }
 
 const calculateAge = (dob?: string | null): number | null => {
@@ -60,37 +62,38 @@ type Props = {
  * segmented-control style set of tabs for an app-like feel.
  */
 export function WorkerAboutTabs({ profile }: Props) {
+  const t = useTranslations("WorkerProfile")
   const age = calculateAge(profile?.date_of_birth)
 
   const infoRows: InfoRow[] = [
     {
       icon: Cake,
       iconClass: "text-rose-400",
-      label: "Tuổi",
-      value: age !== null ? `${age} tuổi` : "—",
+      label: t("about.age"),
+      value: age !== null ? t("about.ageValue", { age }) : "—",
     },
     {
       icon: VenusAndMars,
-      label: "Giới tính",
-      value: profile?.gender ? GENDER_LABEL[profile.gender] : "—",
+      label: t("about.gender"),
+      value: profile?.gender ? t(GENDER_KEY[profile.gender]) : "—",
       leading: <GenderIcon gender={profile?.gender} />,
     },
     {
       icon: Move,
       iconClass: "text-emerald-500",
-      label: "Chiều cao",
+      label: t("about.height"),
       value: profile?.height_cm ? `${profile.height_cm} cm` : "—",
     },
     {
       icon: Gauge,
       iconClass: "text-sky-500",
-      label: "Cân nặng",
+      label: t("about.weight"),
       value: profile?.weight_kg ? `${profile.weight_kg} kg` : "—",
     },
     {
       icon: Star,
       iconClass: "text-amber-400",
-      label: "Cung hoàng đạo",
+      label: t("about.starSign"),
       value: profile?.star_sign?.trim() || "—",
     },
   ]
@@ -104,15 +107,15 @@ export function WorkerAboutTabs({ profile }: Props) {
         <TabsList className="h-10 w-full rounded-xl bg-muted/70 p-1">
           <TabsTrigger value="info" className="rounded-lg text-xs">
             <Sparkles className="size-3.5" />
-            Thông tin
+            {t("about.tabInfo")}
           </TabsTrigger>
           <TabsTrigger value="lifestyle" className="rounded-lg text-xs">
             <Heart className="size-3.5" />
-            Lifestyle
+            {t("about.tabLifestyle")}
           </TabsTrigger>
           <TabsTrigger value="quote" className="rounded-lg text-xs">
             <QuoteIcon className="size-3.5" />
-            Quote
+            {t("about.tabQuote")}
           </TabsTrigger>
         </TabsList>
 
@@ -153,10 +156,7 @@ export function WorkerAboutTabs({ profile }: Props) {
                 {lifestyle}
               </p>
             ) : (
-              <EmptyState
-                icon={Heart}
-                text="Chưa có thông tin lifestyle."
-              />
+              <EmptyState icon={Heart} text={t("about.noLifestyle")} />
             )}
           </div>
         </TabsContent>
@@ -170,10 +170,7 @@ export function WorkerAboutTabs({ profile }: Props) {
                 {quote}
               </blockquote>
             ) : (
-              <EmptyState
-                icon={QuoteIcon}
-                text="Chưa có câu nói yêu thích."
-              />
+              <EmptyState icon={QuoteIcon} text={t("about.noQuote")} />
             )}
           </div>
         </TabsContent>

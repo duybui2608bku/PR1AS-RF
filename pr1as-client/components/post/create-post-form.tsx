@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import Image from "next/image"
 import { Globe, ImagePlus, Loader2, Lock, User, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,7 @@ function UserAvatar({
 }
 
 export function CreatePostForm() {
+  const t = useTranslations("CreatePost")
   const { user, isAuthenticated } = useAuthStore()
   const createMutation = useCreatePost()
   const { requireAuth } = useAuthRequired()
@@ -174,13 +176,13 @@ export function CreatePostForm() {
             onClick={() => requireAuth(() => setOpen(true))}
             className="flex-1 rounded-full border bg-muted/50 px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted"
           >
-            Bạn đang nghĩ gì?
+            {t("triggerPlaceholder")}
           </button>
           <button
             type="button"
             onClick={() => requireAuth(() => setOpen(true))}
             className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent"
-            aria-label="Thêm ảnh"
+            aria-label={t("addImage")}
           >
             <ImagePlus className="size-5 text-green-500" />
           </button>
@@ -191,7 +193,7 @@ export function CreatePostForm() {
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-h-[90vh] overflow-y-auto max-sm:!h-[100dvh] max-sm:!max-h-[100dvh] max-sm:!w-screen max-sm:!max-w-none max-sm:!rounded-none sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-center">Tạo bài viết</DialogTitle>
+            <DialogTitle className="text-center">{t("title")}</DialogTitle>
           </DialogHeader>
 
           <div className="flex items-center gap-3 pt-1">
@@ -202,7 +204,7 @@ export function CreatePostForm() {
             />
             <div>
               <p className="text-sm font-semibold leading-tight">
-                {user?.full_name ?? "Người dùng"}
+                {user?.full_name ?? t("defaultUser")}
               </p>
               <div className="mt-1 flex items-center gap-1 rounded-md border px-2 py-0.5">
                 {visibility === "public" ? (
@@ -216,8 +218,8 @@ export function CreatePostForm() {
                   onChange={(e) => setVisibility(e.target.value as PostVisibility)}
                   disabled={isPending}
                 >
-                  <option value="public">Công khai</option>
-                  <option value="private">Riêng tư</option>
+                  <option value="public">{t("public")}</option>
+                  <option value="private">{t("private")}</option>
                 </select>
               </div>
             </div>
@@ -226,7 +228,7 @@ export function CreatePostForm() {
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Bạn đang nghĩ gì? Dùng #hashtag để phân loại bài viết..."
+            placeholder={t("bodyPlaceholder")}
             rows={5}
             maxLength={MAX_BODY}
             autoFocus
@@ -267,13 +269,13 @@ export function CreatePostForm() {
           ) : null}
 
           <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-            <span className="text-sm text-muted-foreground">Thêm vào bài viết</span>
+            <span className="text-sm text-muted-foreground">{t("addToPost")}</span>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={previews.length >= MAX_IMAGES || isPending}
               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-              aria-label="Thêm ảnh"
+              aria-label={t("addImage")}
             >
               <ImagePlus className="size-5 text-green-500" />
             </button>
@@ -299,7 +301,7 @@ export function CreatePostForm() {
             disabled={!canSubmit}
           >
             {isPending ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-            {uploading ? "Đang tải ảnh..." : "Đăng bài viết"}
+            {uploading ? t("uploading") : t("submit")}
           </Button>
         </DialogContent>
       </Dialog>

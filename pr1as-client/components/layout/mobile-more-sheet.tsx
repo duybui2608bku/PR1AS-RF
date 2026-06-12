@@ -82,17 +82,11 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
     ...(activeRole === "worker"
       ? [{ href: "/worker/bookings/schedule", label: t("schedule"), icon: CalendarDays }]
       : []),
-<<<<<<< HEAD
-    // Điểm danh / Boost — worker only
     ...(activeRole === "worker"
       ? [{ href: "/worker/boost", label: "Điểm danh", icon: Flame }]
       : []),
-    // Wallet
     { href: "/wallet", label: "Ví", icon: Wallet },
-    // Booking (role-based)
-=======
     { href: "/wallet", label: t("wallet"), icon: Wallet },
->>>>>>> c58be92c4cf2a092798cf214b1be5f4e7b46ee93
     {
       href: activeRole === "worker" ? "/worker/bookings" : "/client/bookings",
       label: t("booking"),
@@ -112,7 +106,6 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
         aria-describedby={undefined}
         className="pb-safe"
       >
-        {/* User info */}
         <div className="flex items-center gap-3 border-b px-4 py-3">
           {user?.avatar ? (
             <Image
@@ -142,8 +135,6 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>
-
-        {/* Menu items */}
         <div className="px-2 py-2">
           {menuItems.map((item) => (
             <button
@@ -161,11 +152,7 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
               )}
             </button>
           ))}
-
-          {/* Divider */}
           <div className="my-1 border-t" />
-
-          {/* Logout */}
           <button
             type="button"
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-accent dark:text-red-400"

@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Crown,
   FileText,
-  Flame,
   Heart,
   Loader2,
   LogOut,
@@ -78,18 +77,7 @@ const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
     icon: CalendarDays,
     roles: ["worker"],
   },
-<<<<<<< HEAD
-  {
-    routeKey: "boost",
-    href: "/worker/boost",
-    label: "Điểm danh",
-    icon: Flame,
-    roles: ["worker"],
-  },
-  { routeKey: "wallet", href: "/wallet", label: "Ví", icon: Wallet },
-=======
   { routeKey: "wallet", href: "/wallet", labelKey: "wallet", icon: Wallet },
->>>>>>> c58be92c4cf2a092798cf214b1be5f4e7b46ee93
   {
     routeKey: "booking",
     href: "/booking",
@@ -114,9 +102,9 @@ const resolveMenuHref = (
 const formatPricingPlan = (planCode: string | null | undefined) =>
   (planCode?.trim() || "standard").replace(/[-_]+/g, " ").toUpperCase()
 
-// Hysteresis thresholds cho services header — tránh oscillation
-const EXPAND_THRESHOLD = 40    // expand khi scrollY < ngưỡng này
-const COLLAPSE_THRESHOLD = 120 // collapse khi scrollY > ngưỡng này
+
+const EXPAND_THRESHOLD = 40  
+const COLLAPSE_THRESHOLD = 120 
 
 export function SiteHeader() {
   const router = useRouter()
@@ -202,7 +190,7 @@ export function SiteHeader() {
     { value: "COMPANIONSHIP", label: tServices("companionship"), iconSrc: "/icons/companion.png" },
   ]
 
-  // Tab icon pop animation — direct DOM manipulation to avoid re-render restart
+
   const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
   const triggerTabPop = (index: number) => {
     const el = tabWrapRefs.current[index]
@@ -213,7 +201,6 @@ export function SiteHeader() {
     el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
   }
 
-  // Manual expand: user clicked compact pill while scrolled → expand in-place
   const [isManuallyExpanded, setIsManuallyExpanded] = React.useState(false)
   const isManuallyExpandedRef = React.useRef(false)
   const servicesHeaderRef = React.useRef<HTMLDivElement>(null)
@@ -232,11 +219,10 @@ export function SiteHeader() {
     setHeaderExpanded(false)
   }, [setHeaderExpanded])
 
-  // Click outside services header while manually expanded → collapse
+
   useClickOutside(
     servicesHeaderRef,
     (event) => {
-      // Don't collapse when clicking inside Radix popovers/dialogs (portaled to body)
       const target = event.target as Element | null
       if (target?.closest("[data-radix-popper-content-wrapper]")) return
       if (target?.closest("[data-radix-portal]")) return
@@ -245,7 +231,6 @@ export function SiteHeader() {
     isServicesPage && isManuallyExpanded
   )
 
-  // Filter slot ref — portaled into by HomeHero's desktop form
   const filterSlotRef = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
     if (!isServicesPage) return
@@ -253,7 +238,7 @@ export function SiteHeader() {
     return () => setFilterSlotEl(null)
   }, [isServicesPage, setFilterSlotEl])
 
-  // Init header expansion state on services page
+
   React.useEffect(() => {
     if (isServicesPage) {
       const expanded = window.scrollY < COLLAPSE_THRESHOLD
@@ -262,10 +247,9 @@ export function SiteHeader() {
     }
   }, [isServicesPage, setHeaderExpanded])
 
-  // Ref mirrors isHeaderExpanded để scroll handler không bị stale closure
+
   const isHeaderExpandedRef = React.useRef(true)
 
-  // Auto-hide header kiểu Instagram: cuộn xuống → ẩn, cuộn lên → hiện.
   const setHeaderHidden = useUIStore((s) => s.setHeaderHidden)
   const [hidden, setHidden] = React.useState(false)
   const setHiddenSynced = React.useCallback((value: boolean) => {
@@ -313,7 +297,7 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [setHeaderExpanded])
 
-  // Đóng menu user khi header bị ẩn để tránh dropdown lơ lửng
+
   React.useEffect(() => {
     if (hidden) setMenuOpen(false)
   }, [hidden])
@@ -348,7 +332,6 @@ export function SiteHeader() {
     try {
       await clearSessionCookie()
     } catch {
-      // ignore — proceed to login even if cookie clear fails
     }
     router.push("/login")
   }
@@ -364,7 +347,7 @@ export function SiteHeader() {
     }
   }
 
-  // Right-side actions (shared between services and non-services layout)
+
   const rightActions = (
     <div className="flex items-center gap-2">
       {isAuthenticated ? (
@@ -480,11 +463,8 @@ export function SiteHeader() {
       )}
     >
       {isServicesPage ? (
-        /* Services page: 2-row expandable header */
         <div ref={servicesHeaderRef}>
-          {/* Row 1: Logo | Tab nav ↔ Compact pill | Actions */}
           <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
-            {/* Left: logo */}
             <Link
               href={homeHref}
               className="flex shrink-0 items-center gap-2 font-semibold justify-self-start"
@@ -502,10 +482,7 @@ export function SiteHeader() {
                 brandName
               )}
             </Link>
-
-            {/* Center */}
             <div className="relative hidden items-center justify-center md:flex">
-              {/* Tab navigation */}
               <div
                 className={cn(
                   "flex items-center gap-14 transition-all duration-300",
@@ -546,8 +523,6 @@ export function SiteHeader() {
                   )
                 })}
               </div>
-
-              {/* Compact pill */}
               <button
                 type="button"
                 onClick={expandHeader}
@@ -575,8 +550,6 @@ export function SiteHeader() {
                 </div>
               </button>
             </div>
-
-            {/* Right: user actions */}
             <div className="flex items-center justify-end gap-1">
               {!isAuthenticated && (
                 <Button
@@ -591,8 +564,6 @@ export function SiteHeader() {
               {rightActions}
             </div>
           </div>
-
-          {/* Row 2: Filter form slot */}
           <div
             className="hidden overflow-hidden md:block"
             style={{
@@ -609,7 +580,6 @@ export function SiteHeader() {
           </div>
         </div>
       ) : (
-        /* Non-services pages: original two-column layout */
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <Link

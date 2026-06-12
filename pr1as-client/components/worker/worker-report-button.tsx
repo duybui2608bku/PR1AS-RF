@@ -1,6 +1,7 @@
 "use client"
 
 import { Flag } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,15 +19,15 @@ type Props = {
   className?: string
 }
 
-const PENDING_MESSAGE =
-  "Báo cáo của bạn đang được xử lý. Bạn có thể gửi báo cáo mới sau khi admin hoàn tất báo cáo hiện tại."
-
 export function WorkerReportButton({
   hasOpenReport,
   onReport,
   variant = "default",
   className,
 }: Props) {
+  const t = useTranslations("WorkerProfile")
+  const pendingMessage = t("report.pendingMessage")
+  const reportLabel = t("report.ariaReport")
   // ── Mobile overlay: icon-only pill matching the favorite button's size. ──
   if (variant === "overlay") {
     const overlayClass = cn(
@@ -41,12 +42,12 @@ export function WorkerReportButton({
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" aria-label="Báo cáo" className={overlayClass}>
+            <button type="button" aria-label={reportLabel} className={overlayClass}>
               <Flag className="size-3.5" />
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="text-sm">
-            {PENDING_MESSAGE}
+            {pendingMessage}
           </PopoverContent>
         </Popover>
       )
@@ -56,7 +57,7 @@ export function WorkerReportButton({
       <button
         type="button"
         onClick={onReport}
-        aria-label="Báo cáo"
+        aria-label={reportLabel}
         className={overlayClass}
       >
         <Flag className="size-3.5" />
@@ -85,7 +86,7 @@ export function WorkerReportButton({
           </span>
         </PopoverTrigger>
         <PopoverContent align="end" className="text-sm">
-          {PENDING_MESSAGE}
+          {pendingMessage}
         </PopoverContent>
       </Popover>
     )

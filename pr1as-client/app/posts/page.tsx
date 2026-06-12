@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { ChevronLeft, Loader2, Newspaper } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 import { AnnouncementRenderer } from "@/components/announcement"
 import { SiteLayout } from "@/components/layout/site-layout"
@@ -41,6 +42,7 @@ function PostSkeleton() {
 }
 
 function RegisteredPostFeed() {
+  const t = useTranslations("Posts")
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useListRegisteredFeed()
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -76,9 +78,9 @@ function RegisteredPostFeed() {
     return (
       <div className="flex flex-col items-center justify-center border-b bg-card py-16 text-center sm:rounded-xl sm:border">
         <Newspaper className="mb-3 size-10 text-muted-foreground" />
-        <p className="text-sm font-medium">Chưa đăng ký bài viết nào</p>
+        <p className="text-sm font-medium">{t("registeredEmptyTitle")}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Các bài viết bạn đăng ký sẽ hiển thị ở đây
+          {t("registeredEmptyDesc")}
         </p>
       </div>
     )
@@ -99,7 +101,7 @@ function RegisteredPostFeed() {
       ) : null}
       {!hasNextPage && posts.length > 0 ? (
         <p className="py-4 text-center text-xs text-muted-foreground">
-          Đã hiển thị tất cả bài viết đã đăng ký
+          {t("registeredEnd")}
         </p>
       ) : null}
     </div>
@@ -107,6 +109,7 @@ function RegisteredPostFeed() {
 }
 
 export default function PostsPage() {
+  const t = useTranslations("Posts")
   const searchParams = useSearchParams()
   const hashtag = searchParams.get("hashtag") ?? undefined
   const { isAuthenticated, user } = useAuthStore()
@@ -122,12 +125,12 @@ export default function PostsPage() {
   }, [hashtag])
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "all", label: "Tất cả bài viết" },
+    { key: "all", label: t("tabAll") },
     ...(isAuthenticated && !isWorker
-      ? [{ key: "mine" as TabKey, label: "Bài viết của tôi" }]
+      ? [{ key: "mine" as TabKey, label: t("tabMine") }]
       : []),
     ...(isAuthenticated && isWorker
-      ? [{ key: "registered" as TabKey, label: "Bài viết đã đăng ký" }]
+      ? [{ key: "registered" as TabKey, label: t("tabRegistered") }]
       : []),
   ]
 
@@ -183,7 +186,7 @@ export default function PostsPage() {
         >
           <Link
             href="/posts"
-            aria-label="Quay lại bảng tin"
+            aria-label={t("backToFeed")}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-transform active:scale-90"
           >
             <ChevronLeft className="size-5" />
@@ -198,9 +201,11 @@ export default function PostsPage() {
         {/* Desktop title — only on "all" tab when no hashtag */}
         {activeTab === "all" && !hashtag ? (
           <div className="mb-6 hidden sm:block">
-            <h1 className="text-2xl font-bold tracking-tight">Bảng tin</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {t("feedTitle")}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Chia sẻ ý tưởng, cập nhật dự án và kết nối với cộng đồng
+              {t("feedSubtitle")}
             </p>
           </div>
         ) : null}
@@ -208,7 +213,7 @@ export default function PostsPage() {
           <div className="mb-6 hidden sm:block">
             <h1 className="text-2xl font-bold tracking-tight">#{hashtag}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tất cả bài viết có hashtag{" "}
+              {t("hashtagSubtitlePrefix")}{" "}
               <span className="font-medium text-primary">#{hashtag}</span>
             </p>
           </div>

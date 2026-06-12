@@ -1,17 +1,23 @@
 import type { WalletTransactionStatus } from "@/services/wallet.service"
 
-export const formatVnd = (amount: number): string =>
-  new Intl.NumberFormat("vi-VN", {
+export const formatVnd = (
+  amount: number,
+  localeTag: string = "vi-VN"
+): string =>
+  new Intl.NumberFormat(localeTag, {
     style: "currency",
     currency: "VND",
     maximumFractionDigits: 0,
   }).format(amount)
 
-export const formatWalletDate = (value?: string | null): string => {
+export const formatWalletDate = (
+  value?: string | null,
+  localeTag: string = "vi-VN"
+): string => {
   if (!value) return "-"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "-"
-  return date.toLocaleString("vi-VN", {
+  return date.toLocaleString(localeTag, {
     hour: "2-digit",
     minute: "2-digit",
     day: "2-digit",
@@ -20,11 +26,12 @@ export const formatWalletDate = (value?: string | null): string => {
   })
 }
 
-export const statusLabel: Record<WalletTransactionStatus, string> = {
-  pending: "Chờ thanh toán",
-  success: "Thành công",
-  failed: "Thất bại",
-  cancelled: "Đã hủy",
+/** Translation keys (namespace "Wallet") for each transaction status. */
+export const statusKeys: Record<WalletTransactionStatus, string> = {
+  pending: "statusPending",
+  success: "statusSuccess",
+  failed: "statusFailed",
+  cancelled: "statusCancelled",
 }
 
 export const statusClassName: Record<WalletTransactionStatus, string> = {

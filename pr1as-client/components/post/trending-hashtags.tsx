@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { Hash, TrendingUp } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useGetTrendingHashtags } from "@/lib/hooks/use-hashtags"
 
 export function TrendingHashtagsStrip({ className }: { className?: string }) {
+  const t = useTranslations("TrendingHashtags")
   const { data: trending, isLoading } = useGetTrendingHashtags({ window: "24h", limit: 10 })
 
   const isEmpty = !isLoading && (!trending || trending.length === 0)
@@ -17,7 +19,7 @@ export function TrendingHashtagsStrip({ className }: { className?: string }) {
       <div className="flex items-center gap-3 overflow-x-auto scrollbar-none">
         <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <TrendingUp className="size-3.5 text-primary" />
-          Xu hướng
+          {t("trending")}
         </span>
         <div className="h-4 w-px shrink-0 bg-border" />
         {isLoading ? (
@@ -25,7 +27,7 @@ export function TrendingHashtagsStrip({ className }: { className?: string }) {
             <Skeleton key={i} className="h-6 w-16 shrink-0 rounded-full" />
           ))
         ) : isEmpty ? (
-          <span className="text-xs text-muted-foreground">Chưa có hashtag nào.</span>
+          <span className="text-xs text-muted-foreground">{t("empty")}</span>
         ) : (
           (trending ?? []).map((tag) => (
             <Link
@@ -43,13 +45,14 @@ export function TrendingHashtagsStrip({ className }: { className?: string }) {
 }
 
 export function TrendingHashtags() {
+  const t = useTranslations("TrendingHashtags")
   const { data: trending, isLoading } = useGetTrendingHashtags({ window: "24h", limit: 10 })
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <TrendingUp className="size-4 text-primary" />
-        <h3 className="text-sm font-semibold">Xu hướng hôm nay</h3>
+        <h3 className="text-sm font-semibold">{t("todayTitle")}</h3>
       </div>
 
       {isLoading ? (
@@ -62,7 +65,7 @@ export function TrendingHashtags() {
           ))}
         </div>
       ) : (trending ?? []).length === 0 ? (
-        <p className="text-xs text-muted-foreground">Chưa có hashtag nào.</p>
+        <p className="text-xs text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="space-y-1">
           {(trending ?? []).map((tag) => (
@@ -76,7 +79,7 @@ export function TrendingHashtags() {
                   {tag.display}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {tag.post_count} bài
+                  {t("postCount", { count: tag.post_count })}
                 </span>
               </Link>
             </li>

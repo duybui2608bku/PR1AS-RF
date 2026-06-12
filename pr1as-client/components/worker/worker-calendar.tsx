@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 
 import { Calendar } from "@/components/ui/calendar"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
@@ -46,6 +47,7 @@ type Props = {
 }
 
 export function WorkerCalendar({ workerId }: Props) {
+  const t = useTranslations("WorkerProfile")
   const [month, setMonth] = useState<Date>(() => startOfMonth(new Date()))
 
   const range = useMemo(
@@ -85,7 +87,7 @@ export function WorkerCalendar({ workerId }: Props) {
       />
       {isLoading ? (
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Đang tải lịch...
+          {t("calendar.loading")}
         </p>
       ) : null}
     </div>

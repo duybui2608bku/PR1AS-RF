@@ -73,12 +73,12 @@ type Props = {
   post: PostPublic
 }
 
-const reportReasonOptions: Array<{ value: ReportReason; label: string }> = [
-  { value: "scam", label: "Lừa đảo" },
-  { value: "low_quality", label: "Chất lượng thấp" },
-  { value: "harassment", label: "Quấy rối" },
-  { value: "fake_profile", label: "Hồ sơ giả mạo" },
-  { value: "other", label: "Khác" },
+const reportReasonKeys: Array<{ value: ReportReason; labelKey: string }> = [
+  { value: "scam", labelKey: "reportReasonScam" },
+  { value: "low_quality", labelKey: "reportReasonLowQuality" },
+  { value: "harassment", labelKey: "reportReasonHarassment" },
+  { value: "fake_profile", labelKey: "reportReasonFakeProfile" },
+  { value: "other", labelKey: "reportReasonOther" },
 ]
 
 function AuthorAvatar({
@@ -428,7 +428,7 @@ export function PostCard({ post }: Props) {
   const handleReport = async () => {
     const description = reportDescription.trim()
     if (description.length < 10) {
-      setReportDescriptionError("Mô tả báo cáo phải có ít nhất 10 ký tự.")
+      setReportDescriptionError(t("reportDescriptionMin"))
       return
     }
 
@@ -450,7 +450,7 @@ export function PostCard({ post }: Props) {
     setReportDescription(value)
     setReportDescriptionError(
       value.trim().length > 0 && value.trim().length < 10
-        ? "Mô tả báo cáo phải có ít nhất 10 ký tự."
+        ? t("reportDescriptionMin")
         : ""
     )
   }
@@ -556,8 +556,8 @@ export function PostCard({ post }: Props) {
               >
                 <Flag className="size-3.5" />
                 {isAuthenticated && hasOpenPostReport
-                  ? "Báo cáo đang được xử lý"
-                  : "Báo cáo bài viết"}
+                  ? t("reportPending")
+                  : t("reportPost")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -628,8 +628,8 @@ export function PostCard({ post }: Props) {
             <Users className="size-3.5 shrink-0" />
             <span className="tabular-nums">
               {post.registrations_count > 0
-                ? `${post.registrations_count} người đăng ký`
-                : "Chưa có người đăng ký"}
+                ? t("registrantsCount", { count: post.registrations_count })
+                : t("noRegistrants")}
             </span>
           </div>
 
@@ -647,7 +647,7 @@ export function PostCard({ post }: Props) {
                 height={26}
                 className="shrink-0 transition-transform duration-200 group-hover:scale-110"
               />
-              Xem danh sách
+              {t("viewList")}
               {post.registrations_count > 0 ? (
                 <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold tabular-nums text-background">
                   {post.registrations_count > 99 ? "99+" : post.registrations_count}
@@ -679,7 +679,7 @@ export function PostCard({ post }: Props) {
                     : "group-hover:scale-110 group-hover:-rotate-6"
                 )}
               />
-              {post.my_registration ? "Đã đăng ký" : "Đăng ký"}
+              {post.my_registration ? t("registered") : t("register")}
             </button>
           ) : (
             <button
@@ -687,8 +687,8 @@ export function PostCard({ post }: Props) {
               onClick={() => {
                 toast.info(
                   !isAuthenticated
-                    ? "Bạn phải đăng nhập và tạo worker profile"
-                    : "Bạn phải tạo worker profile"
+                    ? t("mustLoginAndProfile")
+                    : t("mustCreateProfile")
                 )
               }}
               className="group flex items-center gap-2 rounded-xl border border-border/50 px-3.5 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-accent/50 active:scale-[0.97]"
@@ -700,7 +700,7 @@ export function PostCard({ post }: Props) {
                 height={26}
                 className="shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105"
               />
-              Đăng ký
+              {t("register")}
             </button>
           )}
         </div>
@@ -735,7 +735,7 @@ export function PostCard({ post }: Props) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Báo cáo bài viết</DialogTitle>
+            <DialogTitle>{t("reportPost")}</DialogTitle>
           </DialogHeader>
           <Select
             value={reportReason}
@@ -743,12 +743,12 @@ export function PostCard({ post }: Props) {
             disabled={reportMutation.isPending}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Chọn lý do báo cáo" />
+              <SelectValue placeholder={t("reportReasonPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              {reportReasonOptions.map((option) => (
+              {reportReasonKeys.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -756,7 +756,7 @@ export function PostCard({ post }: Props) {
           <Textarea
             value={reportDescription}
             onChange={handleReportDescriptionChange}
-            placeholder="Mô tả lý do báo cáo..."
+            placeholder={t("reportDescriptionPlaceholder")}
             aria-invalid={Boolean(reportDescriptionError)}
             className={`min-h-28 ${
               reportDescriptionError
@@ -776,14 +776,14 @@ export function PostCard({ post }: Props) {
               onClick={() => setReportOpen(false)}
               disabled={reportMutation.isPending}
             >
-              Hủy
+              {t("cancel")}
             </Button>
             <Button
               type="button"
               onClick={() => void handleReport()}
               disabled={reportMutation.isPending}
             >
-              Báo cáo
+              {t("reportSubmit")}
             </Button>
           </DialogFooter>
         </DialogContent>
