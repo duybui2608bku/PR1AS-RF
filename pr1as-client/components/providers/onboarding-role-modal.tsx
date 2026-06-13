@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Briefcase, Check, Search, Sparkles } from "lucide-react"
+import { Briefcase, Check, Search } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { Badge } from "@/components/ui/badge"
@@ -76,35 +76,31 @@ export function OnboardingRoleModal() {
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="max-sm:h-screen max-sm:rounded-none max-sm:border-0 sm:max-w-[500px]"
+        className="sm:max-w-[560px]"
         hideCloseButton
         overlayClassName="bg-background/80 backdrop-blur-md"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <div className="relative overflow-hidden px-1 pt-4 pb-2">
-          {/* Decorative background element */}
+        <div className="relative overflow-hidden px-1 pt-2 pb-1">
           <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />
 
           <DialogHeader className="items-center text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Sparkles className="h-6 w-6 animate-pulse" />
-            </div>
-            <DialogTitle className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
               {t("title")}
             </DialogTitle>
-            <DialogDescription className="text-balance text-base text-muted-foreground">
+            <DialogDescription className="text-sm text-muted-foreground">
               {t("subtitle")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-8 space-y-4">
-            <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+          <div className="mt-5 space-y-3">
+            <p className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
               {t("chooseRole")}
             </p>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {ROLES.map(({ id, icon: Icon, iconClass, activeClass, titleKey, descKey, badgeKey }) => {
                 const isActive = selected === id
                 return (
@@ -114,7 +110,9 @@ export function OnboardingRoleModal() {
                     onClick={() => setSelected(id)}
                     disabled={isPending}
                     className={cn(
-                      "group relative flex h-auto flex-col items-center rounded-2xl border-2 p-5 text-center transition-all duration-300",
+                      "group relative flex h-auto whitespace-normal rounded-2xl border-2 transition-all duration-300",
+                      "flex-row items-center gap-3 p-4 text-left",
+                      "sm:flex-col sm:items-stretch sm:gap-0 sm:p-6",
                       "hover:border-primary/50 hover:bg-muted/30",
                       "disabled:pointer-events-none disabled:opacity-50",
                       isActive
@@ -123,39 +121,59 @@ export function OnboardingRoleModal() {
                     )}
                   >
                     {isActive && (
-                      <div className="absolute top-3 right-3 flex h-6 w-6 animate-in zoom-in-50 fade-in duration-300 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="h-4 w-4" strokeWidth={3} />
+                      <div className="absolute top-3 right-3 flex h-5 w-5 animate-in zoom-in-50 fade-in duration-300 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3 w-3" strokeWidth={3} />
                       </div>
                     )}
 
+                    {/* Icon */}
                     <div
                       className={cn(
-                        "mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border transition-transform duration-300 group-hover:scale-110",
+                        "flex shrink-0 items-center justify-center rounded-xl border transition-transform duration-300 group-hover:scale-110",
+                        "h-11 w-11",
+                        "sm:mx-auto sm:mb-3 sm:h-14 sm:w-14 sm:rounded-2xl",
                         iconClass,
                       )}
                     >
-                      <Icon className="h-8 w-8" />
+                      <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <p className="text-base font-bold text-foreground">
-                        {t(titleKey)}
-                      </p>
-                      <p className="text-xs leading-relaxed text-muted-foreground/90 line-clamp-2">
+                    {/* Mobile text: horizontal row, badge inline with title */}
+                    <div className="flex-1 min-w-0 sm:hidden">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-foreground">{t(titleKey)}</p>
+                        <Badge
+                          variant={isActive ? "default" : "secondary"}
+                          className={cn(
+                            "shrink-0 px-2 py-0 text-[10px] font-bold uppercase tracking-wider",
+                            !isActive && "bg-muted/50 text-muted-foreground border-transparent"
+                          )}
+                        >
+                          {t(badgeKey)}
+                        </Badge>
+                      </div>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground/80 line-clamp-2">
                         {t(descKey)}
                       </p>
                     </div>
 
-                    <div className="mt-4">
-                      <Badge 
-                        variant={isActive ? "default" : "secondary"}
-                        className={cn(
-                          "px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
-                          !isActive && "bg-muted/50 text-muted-foreground border-transparent"
-                        )}
-                      >
-                        {t(badgeKey)}
-                      </Badge>
+                    {/* Desktop text: vertical centered, badge below description */}
+                    <div className="hidden sm:block sm:w-full sm:space-y-1.5 sm:text-center">
+                      <p className="text-base font-bold text-foreground">{t(titleKey)}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground/80">
+                        {t(descKey)}
+                      </p>
+                      <div className="flex justify-center pt-2">
+                        <Badge
+                          variant={isActive ? "default" : "secondary"}
+                          className={cn(
+                            "px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+                            !isActive && "bg-muted/50 text-muted-foreground border-transparent"
+                          )}
+                        >
+                          {t(badgeKey)}
+                        </Badge>
+                      </div>
                     </div>
                   </Button>
                 )
@@ -164,10 +182,10 @@ export function OnboardingRoleModal() {
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col gap-3 pt-4 sm:flex-col sm:space-x-0">
-          <Button 
-            className="h-12 w-full rounded-xl text-base font-bold shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" 
-            onClick={handleConfirm} 
+        <DialogFooter className="flex flex-col gap-2 pt-3 sm:flex-col sm:space-x-0">
+          <Button
+            className="h-11 w-full rounded-xl text-sm font-bold shadow-md shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            onClick={handleConfirm}
             disabled={isPending}
           >
             {isPending ? (
@@ -179,10 +197,10 @@ export function OnboardingRoleModal() {
               t("startButton")
             )}
           </Button>
-          <Button 
-            variant="ghost" 
-            className="h-11 w-full rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground" 
-            onClick={handleSkip} 
+          <Button
+            variant="ghost"
+            className="h-10 w-full rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground"
+            onClick={handleSkip}
             disabled={isPending}
           >
             {t("skipButton")}

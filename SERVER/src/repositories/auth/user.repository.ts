@@ -23,6 +23,30 @@ export interface CreateGoogleUserInput {
   avatar?: string;
 }
 
+export interface CreateByAdminInput {
+  email: string;
+  password_hash: string;
+  full_name: string;
+  phone?: string | null;
+  avatar?: string | null;
+  roles: UserRole[];
+  last_active_role: UserRole;
+  status: UserStatus;
+  worker_profile?: Record<string, unknown> | null;
+}
+
+export interface UpdateByAdminInput {
+  email?: string;
+  password_hash?: string;
+  full_name: string;
+  phone?: string | null;
+  avatar?: string | null;
+  roles: UserRole[];
+  last_active_role: UserRole;
+  status: UserStatus;
+  worker_profile?: Record<string, unknown> | null;
+}
+
 export interface FindAllUsersResult {
   users: IUserDocument[];
   total: number;
@@ -135,6 +159,63 @@ export class UserRepository {
     });
 
     return user.save();
+  }
+
+  /**
+   * Admin-provisioned account. Unlike `create`, every identity field is
+   * caller-supplied and the account is created already verified/active so it
+   * can log in immediately without the email-verification handshake.
+   */
+  async createByAdmin(data: CreateByAdminInput): Promise<IUserDocument> {
+    const user = new User({
+      email: data.email.toLowerCase().trim(),
+      password_hash: data.password_hash,
+      full_name: data.full_name,
+      phone: data.phone ?? null,
+      avatar: data.avatar ?? null,
+      roles: data.roles,
+      last_active_role: data.last_active_role,
+      status: data.status,
+      verify_email: true,
+      created_by_admin: true,
+      worker_profile: data.worker_profile ?? null,
+      meta_data: {
+        reputation_score: 100,
+        pricing_plan_code: PricingPlanCode.STANDARD,
+        pricing_started_at: null,
+        pricing_expires_at: null,
+        onboarding_done: true,
+        locale: "vi",
+      },
+      created_at: new Date(),
+      last_login: null,
+    });
+
+    return user.save();
+  }
+
+  /**
+   * Admin edit of an existing account. Replaces account + worker_profile fields
+   * wholesale (email/password only when provided). Wallet/point-wallet balances
+   * are untouched.
+   */
+  async updateByAdmin(
+    id: string,
+    data: UpdateByAdminInput
+  ): Promise<IUserDocument | null> {
+    const update: Record<string, unknown> = {
+      full_name: data.full_name,
+      phone: data.phone ?? null,
+      avatar: data.avatar ?? null,
+      roles: data.roles,
+      last_active_role: data.last_active_role,
+      status: data.status,
+      worker_profile: data.worker_profile ?? null,
+    };
+    if (data.email) update.email = data.email.toLowerCase().trim();
+    if (data.password_hash) update.password_hash = data.password_hash;
+
+    return User.findByIdAndUpdate(id, { $set: update }, { new: true });
   }
 
   async findByGoogleId(googleId: string): Promise<IUserDocument | null> {
@@ -380,6 +461,7 @@ export class UserRepository {
       status,
       startDate,
       endDate,
+      created_by_admin,
     } = query;
 
     const filter: Record<string, unknown> = {};
@@ -395,6 +477,8 @@ export class UserRepository {
 
     if (role) filter.roles = role;
     if (status) filter.status = status;
+    if (created_by_admin === "true") filter.created_by_admin = true;
+    if (created_by_admin === "false") filter.created_by_admin = { $ne: true };
 
     if (startDate || endDate) {
       const dateFilter: { $gte?: Date; $lte?: Date } = {};
@@ -532,10 +616,7 @@ export class UserRepository {
             locked_until: {
               $cond: [
                 {
-                  $gte: [
-                    "$failed_login_attempts",
-                    lockIfAt.threshold,
-                  ],
+                  $gte: ["$failed_login_attempts", lockIfAt.threshold],
                 },
                 lockIfAt.lockUntil,
                 "$locked_until",

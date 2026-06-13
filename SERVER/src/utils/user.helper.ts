@@ -15,6 +15,7 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     status: user.status,
     last_active_role: user.last_active_role,
     verify_email: user.verify_email,
+    created_by_admin: user.created_by_admin ?? false,
     worker_profile: user.worker_profile,
     client_profile: user.client_profile,
     created_at: user.created_at,
@@ -22,7 +23,8 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     coords: user.coords,
     meta_data: {
       reputation_score: user.meta_data?.reputation_score ?? 100,
-      pricing_plan_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
+      pricing_plan_code:
+        user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
       pricing_started_at: user.meta_data?.pricing_started_at ?? null,
       pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
       onboarding_done: user.meta_data?.onboarding_done ?? false,

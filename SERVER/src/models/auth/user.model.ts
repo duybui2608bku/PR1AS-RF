@@ -119,6 +119,14 @@ const userSchema = new Schema<IUserDocument>(
       type: Boolean,
       default: false,
     },
+    // True for accounts provisioned through the admin "create user" flow. Only
+    // these accounts may be edited by an admin; real (self-registered) users
+    // are read-only from the admin panel.
+    created_by_admin: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     created_at: {
       type: Date,
       default: Date.now,
@@ -224,7 +232,18 @@ const userSchema = new Schema<IUserDocument>(
 
 userSchema.index({ password_reset_token: 1 });
 userSchema.index({ email_verification_token: 1 });
-userSchema.index({ google_id: 1 }, { sparse: true, unique: true });
+// Partial (not sparse) unique index: enforce uniqueness only for real Google
+// accounts. The schema defaults google_id to `null`, so a sparse index would
+// still index every non-Google user (field present, value null) and reject the
+// second one with E11000 on `{ google_id: null }`. Restricting the index to
+// string values lets unlimited email/password accounts coexist.
+userSchema.index(
+  { google_id: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { google_id: { $type: "string" } },
+  }
+);
 userSchema.index({
   "meta_data.pricing_plan_code": 1,
   "meta_data.pricing_expires_at": 1,

@@ -83,6 +83,7 @@ export interface IUser {
   booking_lock_version?: number;
   deleted_at: Date | null;
   verify_email: boolean;
+  created_by_admin?: boolean;
   created_at: Date;
   last_login: Date | null;
   refresh_token_hash?: string | null;
@@ -117,6 +118,7 @@ export interface IUserPublic {
   roles: UserRole[];
   status: UserStatus;
   verify_email: boolean;
+  created_by_admin?: boolean;
   last_active_role: UserRole;
   worker_profile: WorkerProfile | null;
   client_profile: ClientProfile | null;

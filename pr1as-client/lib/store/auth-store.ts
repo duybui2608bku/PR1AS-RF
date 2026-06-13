@@ -39,6 +39,7 @@ export type AuthUser = {
   client_profile?: ClientProfile | null
   avatar?: string | null
   verify_email?: boolean
+  created_by_admin?: boolean
   meta_data?: {
     pricing_plan_code?: string | null
     pricing_started_at?: string | null
@@ -64,7 +65,11 @@ type AuthState = {
   _hasHydrated: boolean
   _isSessionLoaded: boolean
   _setSessionLoaded: () => void
-  setAuth: (payload: { user: AuthUser; token: string; refreshToken?: string | null }) => void
+  setAuth: (payload: {
+    user: AuthUser
+    token: string
+    refreshToken?: string | null
+  }) => void
   /** Updates user info without touching the token (e.g. after role switch or profile update). */
   setUser: (user: AuthUser) => void
   clearAuth: () => void
@@ -98,7 +103,13 @@ export const useAuthStore = create<AuthState>()(
       setAuth: ({ user, token, refreshToken = null }) => {
         removeLegacyAuthToken()
         setActiveRoleCookie(getActiveRole(user))
-        set({ user, token, refreshToken, isAuthenticated: true, isLoggingOut: false })
+        set({
+          user,
+          token,
+          refreshToken,
+          isAuthenticated: true,
+          isLoggingOut: false,
+        })
       },
       setUser: (user) => {
         setActiveRoleCookie(getActiveRole(user))
@@ -126,7 +137,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       storage: createJSONStorage(() =>
-        typeof window !== "undefined" ? window.sessionStorage : (undefined as unknown as Storage)
+        typeof window !== "undefined"
+          ? window.sessionStorage
+          : (undefined as unknown as Storage)
       ),
       partialize: (state) => ({
         user: state.user,

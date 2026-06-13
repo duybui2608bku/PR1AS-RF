@@ -51,6 +51,7 @@ export const getUsersQuerySchema = z.object({
   status: z.nativeEnum(UserStatus).optional(),
   startDate: isoDateString,
   endDate: isoDateString,
+  created_by_admin: z.enum(["true", "false"]).optional(),
 });
 
 export type UpdateUserStatusSchemaType = z.infer<typeof updateUserStatusSchema>;

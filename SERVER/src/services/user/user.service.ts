@@ -1,14 +1,28 @@
 import { userRepository } from "../../repositories/auth/user.repository";
+import { serviceRepository } from "../../repositories/service/service.repository";
+import {
+  workerServiceRepository,
+  UpsertWorkerServicePayload,
+} from "../../repositories/worker/worker-service.repository";
+import { walletBalanceRepository } from "../../repositories/wallet/wallet-balance.repository";
+import { workerPointWalletRepository } from "../../repositories/boost/worker-point-wallet.repository";
 import { GetUsersQuery } from "../../types/user/user.dto";
 import { UserStatus, UserRole } from "../../types/auth/user.types";
 import { AppError } from "../../utils/AppError";
-import { USER_MESSAGES, AUTH_MESSAGES } from "../../constants/messages";
+import {
+  USER_MESSAGES,
+  AUTH_MESSAGES,
+  COMMON_MESSAGES,
+} from "../../constants/messages";
 import { IUserDocument } from "../../types/auth/user.types";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
 import {
   UpdateBasicProfileSchemaType,
   UpdateWorkerProfileSchemaType,
 } from "../../validations/user/user.validation";
+import { AdminCreateUserSchemaType } from "../../validations/user/admin-create-user.validation";
+import { AdminUpdateUserSchemaType } from "../../validations/user/admin-update-user.validation";
+import { WorkerServicePricing } from "../../types/worker/worker-service";
 import nodemailerUtils from "../../utils/nodemailer";
 import { accountBannedTemplate } from "../../utils/template-mail";
 import { APP_CONSTANTS } from "../../constants/app";
@@ -58,14 +72,12 @@ export class UserService {
     invalidateUserStatusCache(userId);
 
     const becameBanned =
-      status === UserStatus.BANNED &&
-      existingUser.status !== UserStatus.BANNED;
+      status === UserStatus.BANNED && existingUser.status !== UserStatus.BANNED;
     const becameInactive =
       status === UserStatus.INACTIVE &&
       existingUser.status !== UserStatus.INACTIVE;
     const wasUnbanned =
-      existingUser.status === UserStatus.BANNED &&
-      status === UserStatus.ACTIVE;
+      existingUser.status === UserStatus.BANNED && status === UserStatus.ACTIVE;
 
     // Both a ban and a deactivation must cut off live access: revoke the
     // refresh token (so no new access token can be minted) and drop every open
@@ -166,7 +178,11 @@ export class UserService {
 
   private async sendAccountBannedEmail(user: IUserDocument): Promise<void> {
     const locale = (user.meta_data?.locale ?? "en") as Locale;
-    const { subject, html } = accountBannedTemplate(APP_CONSTANTS.ADMIN_CONTACT_EMAIL, user.full_name, locale);
+    const { subject, html } = accountBannedTemplate(
+      APP_CONSTANTS.ADMIN_CONTACT_EMAIL,
+      user.full_name,
+      locale
+    );
     await nodemailerUtils({ email: user.email, html, subject });
   }
 
@@ -331,6 +347,256 @@ export class UserService {
   async completeOnboarding(userId: string): Promise<IUserDocument> {
     const user = await userRepository.setOnboardingDone(userId);
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    return user;
+  }
+
+  /**
+   * Resolves the admin-supplied service codes into upsert payloads, validating
+   * that each code maps to an active service and that no code is repeated. Done
+   * up front (before the user is persisted) so a bad code fails the whole
+   * request without leaving an orphan account behind.
+   */
+  private async resolveWorkerServices(
+    services: NonNullable<AdminCreateUserSchemaType["worker_services"]>
+  ): Promise<UpsertWorkerServicePayload[]> {
+    const payloads: UpsertWorkerServicePayload[] = [];
+    const seen = new Set<string>();
+
+    for (const item of services) {
+      const code = item.service_code.toUpperCase();
+      if (seen.has(code)) {
+        throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, [
+          {
+            field: "worker_services",
+            message: `Duplicate service_code: ${code}`,
+          },
+        ]);
+      }
+      seen.add(code);
+
+      const service = await serviceRepository.findByCode(code);
+      if (!service || !service.is_active) {
+        throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, [
+          {
+            field: "worker_services",
+            message: `Service not found or inactive: ${code}`,
+          },
+        ]);
+      }
+
+      payloads.push({
+        serviceId: service._id.toString(),
+        serviceCode: service.code,
+        pricing: item.pricing.map((p) => ({
+          unit: p.unit,
+          duration: p.duration,
+          price: Number(p.price),
+          currency: "VND",
+        })),
+      });
+    }
+
+    return payloads;
+  }
+
+  /**
+   * Admin-side user provisioning. Creates an already-verified, active account
+   * (no email-verification handshake) and, when the worker role is requested,
+   * provisions everything needed for the worker to show up and be bookable:
+   * worker_profile + point wallet + service offerings. Every user also gets a
+   * wallet.
+   */
+  async createUserByAdmin(
+    input: AdminCreateUserSchemaType
+  ): Promise<IUserDocument> {
+    const email = input.email.toLowerCase().trim();
+
+    if (await userRepository.emailExists(email)) {
+      throw AppError.badRequest(AUTH_MESSAGES.EMAIL_EXISTS, [
+        { field: "email", message: AUTH_MESSAGES.EMAIL_EXISTS },
+      ]);
+    }
+
+    const isWorker = input.roles.includes(UserRole.WORKER);
+
+    // A worker is always also a client, so they can switch back to the client
+    // experience. last_active_role decides which UI they land in first.
+    const roles = Array.from(
+      new Set<UserRole>(
+        isWorker ? [UserRole.CLIENT, UserRole.WORKER] : input.roles
+      )
+    );
+    const lastActiveRole = isWorker ? UserRole.WORKER : UserRole.CLIENT;
+
+    const workerServicePayloads = isWorker
+      ? await this.resolveWorkerServices(input.worker_services!)
+      : [];
+
+    let workerProfile: Record<string, unknown> | null = null;
+    if (isWorker && input.worker_profile) {
+      // coords are not part of the user schema — drop them.
+      const { coords: _coords, ...profileFields } = input.worker_profile;
+      void _coords;
+      workerProfile = profileFields;
+    }
+
+    const password_hash = await hashPassword(input.password);
+
+    const user = await userRepository.createByAdmin({
+      email,
+      password_hash,
+      full_name: input.full_name.trim(),
+      phone: input.phone ?? null,
+      avatar: input.avatar ?? null,
+      roles,
+      last_active_role: lastActiveRole,
+      status: input.status,
+      worker_profile: workerProfile,
+    });
+
+    const userId = user._id.toString();
+
+    await walletBalanceRepository.createOrUpdate(userId, 0);
+
+    if (isWorker) {
+      await workerPointWalletRepository.findOrCreate(userId);
+      await workerServiceRepository.upsertManyForWorker(
+        userId,
+        workerServicePayloads,
+        new Date()
+      );
+    }
+
+    logger.info("AUDIT admin created user", {
+      event: "ADMIN_CREATE_USER",
+      userId,
+      email,
+      roles,
+      isWorker,
+    });
+
+    return user;
+  }
+
+  /**
+   * Full account + worker offering for the admin edit form. Includes the
+   * worker services (a separate collection) so the form can prefill pricing.
+   */
+  async getUserDetailForAdmin(userId: string): Promise<{
+    user: IUserDocument;
+    worker_services: Array<{
+      service_code: string;
+      pricing: WorkerServicePricing[];
+    }>;
+  }> {
+    const user = await userRepository.findById(userId);
+    if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    const services = user.roles.includes(UserRole.WORKER)
+      ? await workerServiceRepository.findAllForWorker(userId)
+      : [];
+
+    return {
+      user,
+      worker_services: services.map((s) => ({
+        service_code: s.service_code,
+        pricing: s.pricing,
+      })),
+    };
+  }
+
+  /**
+   * Admin edit of an existing account. Mirrors createUserByAdmin but updates in
+   * place: account fields, worker_profile and worker services are replaced;
+   * password/email change only when provided. Any pre-existing ADMIN role is
+   * preserved (the edit form only toggles client/worker).
+   */
+  async updateUserByAdmin(
+    userId: string,
+    input: AdminUpdateUserSchemaType
+  ): Promise<IUserDocument> {
+    const existing = await userRepository.findById(userId);
+    if (!existing) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    // Only admin-provisioned accounts are editable; real users are read-only.
+    if (!existing.created_by_admin) {
+      throw AppError.forbidden(USER_MESSAGES.NOT_ADMIN_CREATED);
+    }
+
+    const newEmail = input.email?.toLowerCase().trim();
+    if (newEmail && newEmail !== existing.email) {
+      if (await userRepository.emailExists(newEmail)) {
+        throw AppError.badRequest(AUTH_MESSAGES.EMAIL_EXISTS, [
+          { field: "email", message: AUTH_MESSAGES.EMAIL_EXISTS },
+        ]);
+      }
+    }
+
+    const isWorker = input.roles.includes(UserRole.WORKER);
+    const isAdmin = existing.roles.includes(UserRole.ADMIN);
+
+    const roleSet = new Set<UserRole>(
+      isWorker ? [UserRole.CLIENT, UserRole.WORKER] : [UserRole.CLIENT]
+    );
+    if (isAdmin) roleSet.add(UserRole.ADMIN);
+    const roles = Array.from(roleSet);
+
+    const lastActiveRole =
+      existing.last_active_role === UserRole.ADMIN
+        ? UserRole.ADMIN
+        : isWorker
+          ? UserRole.WORKER
+          : UserRole.CLIENT;
+
+    const workerServicePayloads = isWorker
+      ? await this.resolveWorkerServices(input.worker_services!)
+      : [];
+
+    let workerProfile: Record<string, unknown> | null = null;
+    if (isWorker && input.worker_profile) {
+      const { coords: _coords, ...profileFields } = input.worker_profile;
+      void _coords;
+      workerProfile = profileFields;
+    }
+
+    const password_hash = input.password
+      ? await hashPassword(input.password)
+      : undefined;
+
+    const user = await userRepository.updateByAdmin(userId, {
+      email: newEmail,
+      password_hash,
+      full_name: input.full_name.trim(),
+      phone: input.phone ?? null,
+      avatar: input.avatar ?? null,
+      roles,
+      last_active_role: lastActiveRole,
+      status: input.status,
+      worker_profile: workerProfile,
+    });
+    if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    // Replace the worker service offerings so removed services disappear.
+    await workerServiceRepository.deleteAllForWorker(userId);
+    if (isWorker) {
+      await workerPointWalletRepository.findOrCreate(userId);
+      await workerServiceRepository.upsertManyForWorker(
+        userId,
+        workerServicePayloads,
+        new Date()
+      );
+    }
+
+    // Status may have changed — drop the cached status so auth checks see it.
+    invalidateUserStatusCache(userId);
+
+    logger.info("AUDIT admin updated user", {
+      event: "ADMIN_UPDATE_USER",
+      userId,
+      roles,
+      isWorker,
+    });
+
     return user;
   }
 }

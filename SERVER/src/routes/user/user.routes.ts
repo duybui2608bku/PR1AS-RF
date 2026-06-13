@@ -24,6 +24,25 @@ router.get(
   asyncHandler(userController.getUsers.bind(userController))
 );
 
+router.post(
+  "/",
+  ...csrfProtection,
+  asyncHandler(userController.createUser.bind(userController))
+);
+
+router.get(
+  "/:id",
+  validateObjectId("id"),
+  asyncHandler(userController.getUserById.bind(userController))
+);
+
+router.put(
+  "/:id",
+  validateObjectId("id"),
+  ...csrfProtection,
+  asyncHandler(userController.updateUser.bind(userController))
+);
+
 router.patch(
   "/:id/status",
   validateObjectId("id"),

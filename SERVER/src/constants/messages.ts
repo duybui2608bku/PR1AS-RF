@@ -102,6 +102,13 @@ export const USER_MESSAGES = {
   INVALID_AVATAR_URL: "Avatar URL must use http or https",
   WORKER_ROLE_REQUIRED:
     "Worker role is required to update worker profile. Use the become-worker endpoint first.",
+  FULL_NAME_REQUIRED: "Full name is required",
+  WORKER_PROFILE_REQUIRED: "Worker profile is required for a worker account",
+  USER_CREATED: "User created successfully",
+  USER_UPDATED: "User updated successfully",
+  USER_FETCHED: "User fetched successfully",
+  NOT_ADMIN_CREATED:
+    "Chỉ có thể chỉnh sửa người dùng do admin tạo. Tài khoản người dùng thật không thể chỉnh sửa.",
 } as const;
 
 export const PAGINATION_MESSAGES = {
@@ -329,7 +336,8 @@ export const BOOST_MESSAGES = {
   POINTS_FETCHED: "Points fetched successfully",
   BOOST_ACTIVATED: "Boost activated successfully",
   BOOST_STATUS_FETCHED: "Boost status fetched successfully",
-  BOOST_ALREADY_ACTIVE: "You already have an active boost. Wait for it to expire before activating a new one",
+  BOOST_ALREADY_ACTIVE:
+    "You already have an active boost. Wait for it to expire before activating a new one",
   BOOST_INSUFFICIENT_POINTS: "Insufficient points to activate this boost",
   CONFIG_FETCHED: "Boost config fetched successfully",
   CONFIG_UPDATED: "Boost config updated successfully",
