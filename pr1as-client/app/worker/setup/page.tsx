@@ -96,6 +96,16 @@ import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
+import { useCurrency } from "@/lib/hooks/use-currency"
+import {
+  convertToVnd,
+  convertVndTo,
+  formatAmountInput,
+  formatMoney,
+  hasStoredCurrency,
+  isSupportedCurrency,
+  parseAmountInput,
+} from "@/lib/currency"
 import type {
   WorkerExperience,
   WorkerGender,
@@ -135,19 +145,6 @@ const EXPERIENCE_VALUES: WorkerExperience[] = [
 ]
 
 const STEP_KEYS = ["area", "style", "gallery", "services"] as const
-
-function parseVndInput(value: string) {
-  const digits = value.replace(/[^\d]/g, "")
-  if (!digits) return undefined
-  const amount = Number(digits)
-  return Number.isFinite(amount) && amount > 0 ? amount : undefined
-}
-
-function formatVndInput(value: number | string | undefined, localeTag: string) {
-  const digits = String(value ?? "").replace(/[^\d]/g, "")
-  if (!digits) return ""
-  return new Intl.NumberFormat(localeTag).format(Number(digits))
-}
 
 function parseWorkerProfile(raw: unknown): WorkerProfilePublic | null {
   if (!raw || typeof raw !== "object") return null
@@ -208,6 +205,7 @@ export default function WorkerSetupPage() {
   const t = useTranslations("WorkerSetup")
   const locale = useLocale() as SupportedLocale
   const localeTag = INTL_LOCALE_TAGS[locale]
+  const { currency, setCurrency, meta: currencyMeta } = useCurrency()
   const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const userId = useAuthStore((s) => s.user?.id)
@@ -225,6 +223,12 @@ export default function WorkerSetupPage() {
   const hydratedRef = useRef(false)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const hobbyInputRef = useRef<HTMLInputElement>(null)
+  // Original saved pricing keyed by `${serviceId}:${unit}` → exact price +
+  // currency + price_vnd. Used to re-submit untouched prices verbatim so the
+  // VND→currency→VND round trip doesn't drift values the worker never edited.
+  const originalPricingRef = useRef<
+    Map<string, { price: number; currency: string; priceVnd: number }>
+  >(new Map())
 
   // Step state
   const [currentStep, setCurrentStep] = useState(0)
@@ -287,6 +291,9 @@ export default function WorkerSetupPage() {
   const [galleryUrls, setGalleryUrls] = useState<string[]>([])
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [selectedPricing, setSelectedPricing] = useState<Map<string, WorkerPricingSlot[]>>(new Map())
+  // Raw input strings keyed by `${serviceId}:${unit}` so decimal typing (e.g.
+  // "6.") isn't clobbered by re-deriving the value from the numeric model.
+  const [priceDrafts, setPriceDrafts] = useState<Map<string, string>>(new Map())
 
   const persistedCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
 
@@ -339,21 +346,43 @@ export default function WorkerSetupPage() {
     const mine = mineQuery.data ?? []
     const cat = catalogQuery.data ?? EMPTY_SERVICE_LIST
     const nextMap = new Map<string, WorkerPricingSlot[]>()
+    let savedCurrency: string | undefined
     for (const ws of mine) {
       const svc = cat.find((c) => c.id === ws.service_id)
       if (svc && isServiceIncludedInWorkerSetupStep(svc)) {
+        savedCurrency = savedCurrency ?? ws.pricing.find((p) => p.currency)?.currency
+        for (const p of ws.pricing) {
+          const priceVnd = p.price_vnd ?? p.price
+          originalPricingRef.current.set(`${ws.service_id}:${p.unit}`, {
+            price: p.price,
+            currency: p.currency ?? "VND",
+            priceVnd,
+          })
+        }
         nextMap.set(
           ws.service_id,
           normalizeWorkerPricingSlots(
+            // Store canonically in VND; the display layer converts to the
+            // selected currency. `price_vnd` is the normalised value from BE.
             ws.pricing.map((p) => ({
               unit: p.unit,
               duration: p.duration,
-              price: p.price,
-              currency: p.currency,
+              price: p.price_vnd ?? p.price,
+              currency: "VND",
             })),
           ),
         )
       }
+    }
+    // When editing existing services, default to the currency they were saved
+    // in — but only if the user hasn't explicitly chosen a currency yet. A
+    // user-selected currency (persisted) must win over the saved data.
+    if (
+      savedCurrency &&
+      isSupportedCurrency(savedCurrency) &&
+      !hasStoredCurrency()
+    ) {
+      setCurrency(savedCurrency)
     }
 
     queueMicrotask(() => {
@@ -462,11 +491,18 @@ export default function WorkerSetupPage() {
   }
 
   const setPriceForUnit = (serviceId: string, unit: WorkerPricingUnit, raw: string) => {
-    const value = parseVndInput(raw)
+    // `raw` is typed in the selected currency; store canonically in VND.
+    const typed = parseAmountInput(raw, currencyMeta.decimals)
+    const valueVnd = typed == null ? undefined : convertToVnd(typed, currency)
+    setPriceDrafts((prev) => {
+      const next = new Map(prev)
+      next.set(`${serviceId}:${unit}:${currency}`, formatAmountInput(raw, localeTag, currencyMeta.decimals))
+      return next
+    })
     setSelectedPricing((prev) => {
       const next = new Map(prev)
       const cur = normalizeWorkerPricingSlots(next.get(serviceId) ?? [])
-      next.set(serviceId, buildPricingFromUnits(unit, value, cur))
+      next.set(serviceId, buildPricingFromUnits(unit, valueVnd, cur, "VND"))
       return next
     })
   }
@@ -550,7 +586,25 @@ export default function WorkerSetupPage() {
         toast.error(t("toast.serviceNeedsPrice", { service: serviceService.getName(svc.name) }))
         return null
       }
-      items.push({ service_id: serviceId, pricing: norm.map((p) => ({ ...p, currency: "VND" })) })
+      // `norm` prices are canonical VND. For slots the worker never edited
+      // (canonical VND still equals the originally saved price_vnd), re-submit
+      // the original price + currency verbatim so BE recomputes the identical
+      // price_vnd — no rounding drift. Edited slots convert to the selected
+      // currency (BE re-derives price_vnd from price × rate).
+      items.push({
+        service_id: serviceId,
+        pricing: norm.map((p) => {
+          const original = originalPricingRef.current.get(`${serviceId}:${p.unit}`)
+          if (original && original.priceVnd === p.price) {
+            return { ...p, price: original.price, currency: original.currency }
+          }
+          return {
+            ...p,
+            price: Number(convertVndTo(p.price, currency).toFixed(currencyMeta.decimals)),
+            currency,
+          }
+        }),
+      })
     }
     if (items.length === 0) {
       toast.error(t("toast.selectServiceAndPrice"))
@@ -653,27 +707,50 @@ export default function WorkerSetupPage() {
 
         {checked && (
           <div className="border-t border-border px-4 py-3 space-y-2.5 bg-muted/30">
-            <p className="text-xs text-muted-foreground">{t("pricing.priceHelp")}</p>
-            {WORKER_SETUP_PRICING_SLOT_ORDER.map((unit) => (
-              <div key={unit} className="flex items-center gap-3">
-                <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-                  {t(`units.${unit}`)}
-                </Label>
-                <div className="relative flex-1">
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={formatVndInput(priceForUnit(pricing, unit), localeTag)}
-                    onChange={(e) => setPriceForUnit(service.id, unit, e.target.value)}
-                    className="h-11 pr-10 text-sm"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                    ₫
-                  </span>
+            <p className="text-xs text-muted-foreground">
+              {t("pricing.priceHelp", { currency: currencyMeta.code })}
+            </p>
+            {WORKER_SETUP_PRICING_SLOT_ORDER.map((unit) => {
+              const priceVnd = priceForUnit(pricing, unit)
+              const draftKey = `${service.id}:${unit}:${currency}`
+              const displayValue = priceDrafts.has(draftKey)
+                ? priceDrafts.get(draftKey)!
+                : formatAmountInput(
+                    priceVnd == null
+                      ? undefined
+                      : Number(convertVndTo(priceVnd, currency).toFixed(currencyMeta.decimals)),
+                    localeTag,
+                    currencyMeta.decimals,
+                  )
+              const showVnd = currency !== "VND" && priceVnd != null && priceVnd > 0
+              return (
+                <div key={unit} className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <Label className="w-20 shrink-0 text-xs text-muted-foreground">
+                      {t(`units.${unit}`)}
+                    </Label>
+                    <div className="relative flex-1">
+                      <Input
+                        type="text"
+                        inputMode={currencyMeta.decimals > 0 ? "decimal" : "numeric"}
+                        placeholder="0"
+                        value={displayValue}
+                        onChange={(e) => setPriceForUnit(service.id, unit, e.target.value)}
+                        className="h-11 pr-10 text-sm"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                        {currencyMeta.symbol}
+                      </span>
+                    </div>
+                  </div>
+                  {showVnd && (
+                    <p className="pl-[5.75rem] text-xs text-muted-foreground">
+                      ≈ {formatMoney(priceVnd, "VND", localeTag)}
+                    </p>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

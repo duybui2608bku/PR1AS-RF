@@ -52,6 +52,7 @@ export function buildPricingFromUnits(
   unit: WorkerPricingUnit,
   value: number | undefined,
   current: WorkerPricingSlot[],
+  currency: string = "VND",
 ): WorkerPricingSlot[] {
   const map = new Map<WorkerPricingUnit, number>()
   for (const p of current) {
@@ -68,7 +69,7 @@ export function buildPricingFromUnits(
     unit: u,
     duration: 1,
     price: map.get(u)!,
-    currency: "VND",
+    currency,
   }))
 }
 

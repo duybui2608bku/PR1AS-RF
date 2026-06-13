@@ -31,6 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateBooking } from "@/lib/hooks/use-bookings"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import type { WorkerPricingUnit, WorkerServiceItem } from "@/types"
@@ -97,14 +98,6 @@ const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   return { value: label, label }
 })
 
-const formatPrice = (price: number, currency: string): string => {
-  const formatted =
-    currency === "VND"
-      ? new Intl.NumberFormat("vi-VN").format(price)
-      : new Intl.NumberFormat("en-US").format(price)
-  return currency === "USD" ? `$${formatted}` : `${formatted}đ`
-}
-
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -124,6 +117,7 @@ export function BookWorkerDialog({
 }: Props) {
   const createBooking = useCreateBooking()
   const t = useTranslations("WorkerProfile")
+  const { format } = useCurrency()
   const locale = useLocale() as SupportedLocale
   const localeTag = INTL_LOCALE_TAGS[locale] ?? "vi-VN"
 
@@ -217,10 +211,10 @@ export function BookWorkerDialog({
 
   const totalPrice = useMemo(() => {
     if (!unitPricing) return null
+    const unitVnd = unitPricing.price_vnd ?? unitPricing.price
     return {
-      amount: unitPricing.price * quantity,
-      currency: unitPricing.currency,
-      unitAmount: unitPricing.price,
+      amount: unitVnd * quantity,
+      unitAmount: unitVnd,
     }
   }, [unitPricing, quantity])
 
@@ -423,7 +417,7 @@ export function BookWorkerDialog({
                     unit: t(UNIT_KEY[unit as WorkerPricingUnit]),
                   })}
                 </span>
-                <span>{formatPrice(totalPrice.unitAmount, totalPrice.currency)}</span>
+                <span>{format(totalPrice.unitAmount)}</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-muted-foreground">
                 <span>{t("book.quantityLabel")}</span>
@@ -432,7 +426,7 @@ export function BookWorkerDialog({
               <div className="mt-2 flex items-center justify-between border-t pt-2 font-semibold text-foreground">
                 <span>{t("book.total")}</span>
                 <span className="text-primary">
-                  {formatPrice(totalPrice.amount, totalPrice.currency)}
+                  {format(totalPrice.amount)}
                 </span>
               </div>
             </div>

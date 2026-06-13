@@ -9,8 +9,13 @@ export enum PricingUnit {
 export interface WorkerServicePricing {
   unit: PricingUnit;
   duration: number;
+  /** Price as entered by the worker, in `currency`. */
   price: number;
   currency: string;
+  /** Snapshot of how many VND one unit of `currency` was worth at save time. */
+  exchange_rate: number;
+  /** Normalised price in VND (= price * exchange_rate), computed server-side. */
+  price_vnd: number;
 }
 
 export interface IWorkerService {

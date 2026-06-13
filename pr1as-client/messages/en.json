@@ -34,7 +34,8 @@
     "switchToClient": "CLIENT",
     "me": "Me",
     "selectLanguage": "Select language",
-    "boost": "Attendance (Boost)"
+    "boost": "Attendance (Boost)",
+    "displayCurrency": "Display currency"
   },
   "Footer": {
     "copyright": "All rights reserved.",
@@ -792,7 +793,7 @@
       "saveError": "Unable to save. Please try again."
     },
     "pricing": {
-      "priceHelp": "Enter a VND price for at least one unit"
+      "priceHelp": "Enter a {currency} price for at least one unit"
     },
     "gallery": {
       "primary": "Primary",

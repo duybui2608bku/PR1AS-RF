@@ -247,8 +247,13 @@ export type WorkerServiceUpsertPayload = {
 export type WorkerServicePricing = {
   unit: WorkerPricingUnit
   duration: number
+  /** Price as entered by the worker, in `currency`. */
   price: number
   currency: string
+  /** Snapshot of how many VND one unit of `currency` was worth at save time. */
+  exchange_rate?: number
+  /** Normalised price in VND (= price * exchange_rate). Prefer this for display. */
+  price_vnd?: number
 }
 
 export type WorkerServiceItem = {

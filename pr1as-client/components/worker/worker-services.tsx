@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useMyPricing } from "@/lib/hooks/use-pricing"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -39,16 +40,11 @@ const UNIT_KEY: Record<string, string> = {
 const formatPrice = (
   pricing: WorkerServicePricing | undefined,
   t: Translator,
+  format: (amountVnd: number | null | undefined) => string,
 ) => {
   if (!pricing) return t("services.noPrice")
 
-  const currencyMap: Record<string, string> = { VND: "đ", USD: "$" }
-  const symbol = currencyMap[pricing.currency] ?? pricing.currency
-  const value =
-    pricing.currency === "VND"
-      ? `${new Intl.NumberFormat("vi-VN").format(pricing.price)}${symbol}`
-      : `${symbol}${new Intl.NumberFormat("en-US").format(pricing.price)}`
-
+  const value = format(pricing.price_vnd ?? pricing.price)
   const unit = t(UNIT_KEY[pricing.unit] ?? "enums.unitMonthly")
 
   return t("services.priceFrom", { value, unit })
@@ -58,7 +54,9 @@ const cheapestPricing = (
   pricing: WorkerServicePricing[],
 ): WorkerServicePricing | undefined => {
   if (!pricing.length) return undefined
-  return [...pricing].sort((a, b) => a.price - b.price)[0]
+  return [...pricing].sort(
+    (a, b) => (a.price_vnd ?? a.price) - (b.price_vnd ?? b.price),
+  )[0]
 }
 
 type Props = {
@@ -70,6 +68,7 @@ type Props = {
 
 export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100 }: Props) {
   const t = useTranslations("WorkerProfile")
+  const { format } = useCurrency()
   const [bookOpen, setBookOpen] = useState(false)
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
@@ -214,7 +213,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                       {name}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatPrice(cheapest, t)}
+                      {formatPrice(cheapest, t, format)}
                     </p>
                   </div>
                 </label>

@@ -34,7 +34,8 @@
     "switchToClient": "CLIENT",
     "me": "Tôi",
     "selectLanguage": "Chọn ngôn ngữ",
-    "boost": "Điểm danh (Boost)"
+    "boost": "Điểm danh (Boost)",
+    "displayCurrency": "Tiền tệ hiển thị"
   },
   "Footer": {
     "copyright": "Bản quyền thuộc về chúng tôi.",
@@ -792,7 +793,7 @@
       "saveError": "Không thể lưu. Vui lòng thử lại."
     },
     "pricing": {
-      "priceHelp": "Nhập giá (VND) cho ít nhất một đơn vị"
+      "priceHelp": "Nhập giá ({currency}) cho ít nhất một đơn vị"
     },
     "gallery": {
       "primary": "Chính",
