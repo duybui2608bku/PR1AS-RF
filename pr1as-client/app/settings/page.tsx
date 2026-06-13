@@ -1130,9 +1130,11 @@ export default function SettingsPage() {
         <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <ShieldCheck className="size-5" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("pageTitle")}
-        </h1>
+        <div>
+          <h1 className="mb-1">
+            {t("pageTitle")}
+          </h1>
+        </div>
       </div>
 
       <div className="lg:grid lg:grid-cols-[19rem_1fr] lg:gap-6">

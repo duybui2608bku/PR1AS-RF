@@ -1330,13 +1330,14 @@ export function ChatPage({
           </div>
           <div className="border-b p-3">
             <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 className={cn(
-                  "flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
+                  "flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
                   mode === "direct"
-                    ? "bg-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background shadow-sm hover:bg-background"
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                 )}
                 onClick={() => {
                   resetComposer()
@@ -1346,14 +1347,15 @@ export function ChatPage({
               >
                 <MessageCircle className="size-4" />
                 {t("tabDirect")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 className={cn(
-                  "flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
+                  "flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors md:h-9",
                   mode === "group"
-                    ? "bg-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background shadow-sm hover:bg-background"
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent"
                 )}
                 onClick={() => {
                   resetComposer()
@@ -1363,7 +1365,7 @@ export function ChatPage({
               >
                 <Users className="size-4" />
                 {t("tabGroup")}
-              </button>
+              </Button>
             </div>
             {!isAdminUser ? (
               <Button
@@ -2462,9 +2464,10 @@ function MessageContent({
 
   if (message.type === "image") {
     return (
-      <button
-        type="button"
-        className="block overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <Button
+        asChild
+        variant="ghost"
+        className="block h-auto w-fit p-0 overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => onImageClick?.(message.content)}
         aria-label={t("viewImage")}
       >
@@ -2475,7 +2478,7 @@ function MessageContent({
           alt={t("imageInMessage")}
           className="max-h-80 max-w-full rounded-md object-contain transition-opacity hover:opacity-90"
         />
-      </button>
+      </Button>
     )
   }
 
@@ -2574,28 +2577,30 @@ function MessageContextOverlay({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Reply */}
-        <button
+        <Button
           type="button"
-          className="flex w-full items-center justify-between border-b border-zinc-700 px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80"
+          variant="ghost"
+          className="flex h-auto w-full items-center justify-between border-b border-zinc-700 px-5 py-3.5 text-left text-[15px] text-white hover:bg-zinc-700/80 active:bg-zinc-700/80"
           onClick={onReply}
         >
           <span>{t("reply")}</span>
           <Reply className="size-5 text-white/60" />
-        </button>
+        </Button>
 
         {/* Copy (text messages only) */}
         {isTextMessage ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             className={cn(
-              "flex w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-white active:bg-zinc-700/80",
+              "flex h-auto w-full items-center justify-between px-5 py-3.5 text-left text-[15px] text-white hover:bg-zinc-700/80 active:bg-zinc-700/80",
               canDelete && "border-b border-zinc-700"
             )}
             onClick={onCopy}
           >
             <span>{t("copy")}</span>
             <Copy className="size-5 text-white/60" />
-          </button>
+          </Button>
         ) : null}
 
         {/* Delete (own messages in direct mode) */}

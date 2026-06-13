@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -294,7 +295,7 @@ export default function WorkerProfilePage({
               </p>
             ) : null}
             <div className="space-y-2">
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground transition-colors hover:bg-muted/50">
+              <Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm font-normal text-muted-foreground transition-colors hover:bg-muted/50">
                 <ImagePlus className="size-4" />
                 {t("report.addEvidence")}
                 <Input
@@ -305,7 +306,7 @@ export default function WorkerProfilePage({
                   onChange={handleReportEvidenceChange}
                   disabled={isReportBusy}
                 />
-              </label>
+              </Label>
               {reportEvidenceImages.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {reportEvidenceImages.map((file, index) => (

@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import * as React from "react"
 
 import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
+import { Button } from "@/components/ui/button"
 import { useVisualViewportBottom } from "@/lib/hooks/use-visual-viewport"
 import { getRoleRoute } from "@/lib/navigation/role-routes"
 import { useAuthStore, useIsSessionLoaded } from "@/lib/store/auth-store"
@@ -209,9 +210,9 @@ export function MobileBottomNav() {
 
             if (tab.type === "button") {
               return (
-                <button
+                <Button
                   key={tab.label}
-                  type="button"
+                  variant="ghost"
                   className={itemClass}
                   onClick={() => setMoreOpen(true)}
                 >
@@ -238,8 +239,8 @@ export function MobileBottomNav() {
                       <User className="size-3.5" />
                     </div>
                   )}
-                  <span className="text-[10px] leading-none">{tab.label}</span>
-                </button>
+                  <span className="text-[10px] leading-none font-normal">{tab.label}</span>
+                </Button>
               )
             }
 

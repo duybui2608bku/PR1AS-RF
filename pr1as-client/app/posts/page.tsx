@@ -191,7 +191,7 @@ export default function PostsPage() {
           >
             <ChevronLeft className="size-5" />
           </Link>
-          <h1 className="truncate text-base font-semibold tracking-tight">
+          <h1 className="truncate text-lg font-semibold whitespace-nowrap">
             #{hashtag}
           </h1>
         </div>
@@ -201,9 +201,7 @@ export default function PostsPage() {
         {/* Desktop title — only on "all" tab when no hashtag */}
         {activeTab === "all" && !hashtag ? (
           <div className="mb-6 hidden sm:block">
-            <h1 className="text-2xl font-bold tracking-tight">
-              {t("feedTitle")}
-            </h1>
+            <h1 className="mb-1">{t("feedTitle")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("feedSubtitle")}
             </p>
@@ -211,7 +209,7 @@ export default function PostsPage() {
         ) : null}
         {activeTab === "all" && hashtag ? (
           <div className="mb-6 hidden sm:block">
-            <h1 className="text-2xl font-bold tracking-tight">#{hashtag}</h1>
+            <h1 className="mb-1">#{hashtag}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("hashtagSubtitlePrefix")}{" "}
               <span className="font-medium text-primary">#{hashtag}</span>

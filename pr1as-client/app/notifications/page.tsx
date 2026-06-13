@@ -126,62 +126,65 @@ function NotifRow({
   const isUnread = !notification.is_read
 
   return (
-    <button
-      type="button"
+    <Button
+      asChild
+      variant="ghost"
       className={cn(
-        "relative flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors active:bg-accent",
+        "relative flex h-auto w-full items-start gap-3 rounded-none px-4 py-3.5 text-left transition-colors active:bg-accent",
         isUnread && "bg-blue-50/70 dark:bg-blue-950/25",
       )}
       onClick={onClick}
     >
-      {/* Icon avatar */}
-      <div className="relative mt-0.5 shrink-0">
-        <div
-          className={cn(
-            "flex size-11 items-center justify-center rounded-full text-white shadow-sm",
-            bg,
+      <div>
+        {/* Icon avatar */}
+        <div className="relative mt-0.5 shrink-0">
+          <div
+            className={cn(
+              "flex size-11 items-center justify-center rounded-full text-white shadow-sm",
+              bg,
+            )}
+          >
+            <Icon className="size-[22px]" />
+          </div>
+          {isUnread && (
+            <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background bg-blue-500" />
           )}
-        >
-          <Icon className="size-[22px]" />
         </div>
+
+        {/* Text */}
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "text-[15px] leading-[1.3] whitespace-normal",
+              isUnread ? "font-semibold text-foreground" : "font-normal text-foreground/85",
+            )}
+          >
+            {notification.title}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground whitespace-normal">
+            {notification.body}
+          </p>
+          <p className="mt-1.5 text-[12px] font-medium text-muted-foreground/60">
+            {formatDistanceToNow(new Date(notification.created_at), {
+              addSuffix: true,
+              locale: vi,
+            })}
+          </p>
+        </div>
+
+        {/* Unread dot — iOS right-side indicator */}
         {isUnread && (
-          <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background bg-blue-500" />
+          <div className="mt-1.5 shrink-0 self-start">
+            <span className="size-2.5 rounded-full bg-blue-500 block" />
+          </div>
+        )}
+
+        {/* Row divider (iOS-style: left-inset) */}
+        {!isLast && (
+          <div className="pointer-events-none absolute bottom-0 left-[68px] right-0 h-px bg-border/50" />
         )}
       </div>
-
-      {/* Text */}
-      <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "text-[15px] leading-[1.3]",
-            isUnread ? "font-semibold text-foreground" : "font-normal text-foreground/85",
-          )}
-        >
-          {notification.title}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
-          {notification.body}
-        </p>
-        <p className="mt-1.5 text-[12px] font-medium text-muted-foreground/60">
-          {formatDistanceToNow(new Date(notification.created_at), {
-            addSuffix: true,
-            locale: vi,
-          })}
-        </p>
-      </div>
-
-      {/* Unread dot — iOS right-side indicator */}
-      {isUnread && (
-        <div className="mt-1.5 shrink-0 self-start">
-          <span className="size-2.5 rounded-full bg-blue-500 block" />
-        </div>
-      )}
-
-      {/* Row divider (iOS-style: left-inset) */}
-      {!isLast && (
-        <div className="pointer-events-none absolute bottom-0 left-[68px] right-0 h-px bg-border/50" />
-      )}
-    </button>
+    </Button>
   )
 }
 

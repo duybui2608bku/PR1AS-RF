@@ -194,9 +194,11 @@ function SortableImage({
           Chính
         </span>
       )}
-      <button
+      <Button
         type="button"
-        className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-black/70 text-white shadow-sm backdrop-blur-sm"
+        variant="secondary"
+        size="icon"
+        className="absolute right-1.5 top-1.5 size-7 rounded-full bg-black/70 text-white shadow-sm backdrop-blur-sm hover:bg-black/80"
         aria-label="Xóa ảnh"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
@@ -205,7 +207,7 @@ function SortableImage({
         }}
       >
         <X className="size-3.5" />
-      </button>
+      </Button>
     </div>
   )
 }
@@ -606,9 +608,10 @@ export default function WorkerSetupPage() {
         key={service.id}
         className="overflow-hidden rounded-2xl border border-border bg-card"
       >
-        <button
+        <Button
           type="button"
-          className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-accent/60 transition-colors"
+          variant="ghost"
+          className="flex h-auto w-full items-center gap-3 px-4 py-4 text-left active:bg-accent/60 transition-colors"
           onClick={() => toggleService(service.id)}
         >
           <div
@@ -624,7 +627,7 @@ export default function WorkerSetupPage() {
           <span className="flex-1 text-sm font-medium leading-snug">
             {serviceService.getName(service.name)}
           </span>
-        </button>
+        </Button>
 
         {checked && (
           <div className="border-t border-border px-4 py-3 space-y-2.5 bg-muted/30">
@@ -683,14 +686,16 @@ export default function WorkerSetupPage() {
                   >
                     {isProvince ? <Globe2 className="size-3" /> : <MapPin className="size-3" />}
                     {w.label_snapshot ?? id}
-                    <button
+                    <Button
                       type="button"
-                      className="ml-0.5 flex size-4 items-center justify-center rounded-full hover:bg-black/20 active:bg-black/30"
+                      variant="ghost"
+                      size="icon"
+                      className="ml-0.5 size-4 rounded-full hover:bg-black/20 active:bg-black/30"
                       aria-label="Xóa"
                       onClick={() => removeWorkLocation(w.province_code, w.ward_code)}
                     >
                       <X className="size-2.5" />
-                    </button>
+                    </Button>
                   </Badge>
                 )
               })}
@@ -736,9 +741,10 @@ export default function WorkerSetupPage() {
             <Label className="text-sm font-medium">Giới tính</Label>
             <div className="flex gap-1.5 rounded-xl border border-border bg-muted/40 p-1">
               {(["MALE", "FEMALE", "OTHER"] as WorkerGender[]).map((g) => (
-                <button
+                <Button
                   key={g}
                   type="button"
+                  variant={gender === g ? "secondary" : "ghost"}
                   className={cn(
                     "flex-1 rounded-lg py-2.5 text-sm font-medium transition-all duration-200",
                     gender === g
@@ -748,7 +754,7 @@ export default function WorkerSetupPage() {
                   onClick={() => setGender(g)}
                 >
                   {g === "MALE" ? "Nam" : g === "FEMALE" ? "Nữ" : "Khác"}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
