@@ -34,7 +34,7 @@ export const api: AxiosInstance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    "Accept-Language": "vi",
+    "Accept-Language": "en",
   },
   timeout: 15_000,
 })
@@ -63,7 +63,7 @@ const ensureCsrfToken = async () => {
     csrfFetchPromise = axios
       .get(`${apiBaseURL}/csrf-token`, {
         withCredentials: true,
-        headers: { "Accept-Language": "vi" },
+        headers: { "Accept-Language": useAuthStore.getState().user?.meta_data?.locale ?? "en" },
       })
       .then((response) => {
         const bodyToken = response.data?.data?.csrfToken
@@ -93,12 +93,13 @@ const attachCsrfHeader = async (config: InternalAxiosRequestConfig) => {
   }
 }
 
-// Request interceptor to dynamically inject the authorization header
+// Request interceptor to dynamically inject the authorization and locale headers
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = useAuthStore.getState().token
+  const { token, user } = useAuthStore.getState()
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`)
   }
+  config.headers.set("Accept-Language", user?.meta_data?.locale ?? "en")
   await attachCsrfHeader(config)
   return config
 })
@@ -174,7 +175,7 @@ api.interceptors.response.use(
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
-            "Accept-Language": "vi",
+            "Accept-Language": state.user?.meta_data?.locale ?? "en",
             ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
           }
         })

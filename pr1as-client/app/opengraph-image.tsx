@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og"
+import { getTranslations } from "next-intl/server"
 
 import { siteConfig } from "@/config/site"
 
@@ -10,7 +11,9 @@ export const size = {
 }
 export const contentType = "image/png"
 
-export default function Image() {
+export default async function Image() {
+  const t = await getTranslations("System.og")
+
   return new ImageResponse(
     <div
       style={{
@@ -43,7 +46,7 @@ export default function Image() {
           lineHeight: 1.05,
         }}
       >
-        Tìm dịch vụ, đặt lịch và quản lý booking trên một nền tảng
+        {t("title")}
       </div>
       <div
         style={{
@@ -54,7 +57,7 @@ export default function Image() {
           color: "#d4d4d8",
         }}
       >
-        Kết nối khách hàng với worker và freelancer uy tín.
+        {t("subtitle")}
       </div>
     </div>,
     size

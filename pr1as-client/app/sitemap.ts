@@ -10,8 +10,6 @@ const publicRoutes = [
   { path: "/terms", priority: 0.3, changeFrequency: "monthly" as const },
 ] as const
 
-// Fixed at build time — prevents search engines from re-crawling
-// all pages on every sitemap fetch just because new Date() changed.
 const BUILD_DATE = new Date("2025-05-31")
 
 export default function sitemap(): MetadataRoute.Sitemap {

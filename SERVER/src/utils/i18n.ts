@@ -205,14 +205,164 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "이 작업을 수행할 권한이 없습니다",
     zh: "您没有执行此操作的权限",
   },
+
+  // Email subjects
+  "email.subject.emailVerification": {
+    en: "{appName} Email Verification",
+    vi: "{appName} - Xác thực địa chỉ email",
+    ko: "{appName} 이메일 인증",
+    zh: "{appName} 电子邮件验证",
+  },
+  "email.subject.passwordReset": {
+    en: "{appName} Password Reset Request",
+    vi: "{appName} - Yêu cầu đặt lại mật khẩu",
+    ko: "{appName} 비밀번호 재설정 요청",
+    zh: "{appName} 密码重置请求",
+  },
+  "email.subject.accountBanned": {
+    en: "{appName} Account Locked",
+    vi: "Tài khoản {appName} đã bị khóa",
+    ko: "{appName} 계정이 잠겼습니다",
+    zh: "{appName} 账户已被锁定",
+  },
+
+  // Email verification template
+  "email.verification.heading": {
+    en: "Verify Your Email Address",
+    vi: "Xác thực địa chỉ email của bạn",
+    ko: "이메일 주소를 인증하세요",
+    zh: "验证您的电子邮件地址",
+  },
+  "email.verification.body": {
+    en: "Thank you for registering with {appName}. Please click the button below to verify your email address:",
+    vi: "Cảm ơn bạn đã đăng ký với {appName}. Vui lòng nhấp vào nút bên dưới để xác thực địa chỉ email của bạn:",
+    ko: "{appName}에 등록해 주셔서 감사합니다. 아래 버튼을 클릭하여 이메일 주소를 인증하세요:",
+    zh: "感谢您注册{appName}。请点击下面的按钮验证您的电子邮件地址：",
+  },
+  "email.verification.button": {
+    en: "Verify Email",
+    vi: "Xác thực email",
+    ko: "이메일 인증",
+    zh: "验证邮箱",
+  },
+  "email.verification.pasteLink": {
+    en: "Or paste this link into your browser:",
+    vi: "Hoặc dán liên kết này vào trình duyệt của bạn:",
+    ko: "또는 이 링크를 브라우저에 붙여 넣으세요:",
+    zh: "或将此链接粘贴到浏览器中：",
+  },
+  "email.verification.expiry": {
+    en: "This link will expire in {hours} hours.",
+    vi: "Liên kết này sẽ hết hạn trong {hours} giờ.",
+    ko: "이 링크는 {hours}시간 후에 만료됩니다.",
+    zh: "此链接将在{hours}小时后过期。",
+  },
+  "email.verification.notCreated": {
+    en: "If you did not create an account, please ignore this email.",
+    vi: "Nếu bạn không tạo tài khoản, vui lòng bỏ qua email này.",
+    ko: "계정을 만들지 않으셨다면 이 이메일을 무시하세요.",
+    zh: "如果您没有创建账户，请忽略此邮件。",
+  },
+
+  // Password reset template
+  "email.passwordReset.heading": {
+    en: "Password Reset Request",
+    vi: "Yêu cầu đặt lại mật khẩu",
+    ko: "비밀번호 재설정 요청",
+    zh: "密码重置请求",
+  },
+  "email.passwordReset.greeting.named": {
+    en: "Hello {name},",
+    vi: "Xin chào {name},",
+    ko: "안녕하세요 {name}님,",
+    zh: "您好 {name}，",
+  },
+  "email.passwordReset.greeting.anonymous": {
+    en: "Hello,",
+    vi: "Xin chào,",
+    ko: "안녕하세요,",
+    zh: "您好，",
+  },
+  "email.passwordReset.body": {
+    en: "We received a request to reset your password. Click the button below to create a new password:",
+    vi: "Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu. Nhấp vào nút bên dưới để tạo mật khẩu mới:",
+    ko: "비밀번호 재설정 요청을 받았습니다. 아래 버튼을 클릭하여 새 비밀번호를 만드세요:",
+    zh: "我们收到了重置密码的请求。点击下面的按钮创建新密码：",
+  },
+  "email.passwordReset.button": {
+    en: "Reset Password",
+    vi: "Đặt lại mật khẩu",
+    ko: "비밀번호 재설정",
+    zh: "重置密码",
+  },
+  "email.passwordReset.pasteLink": {
+    en: "Or paste this link into your browser:",
+    vi: "Hoặc dán liên kết này vào trình duyệt của bạn:",
+    ko: "또는 이 링크를 브라우저에 붙여 넣으세요:",
+    zh: "或将此链接粘贴到浏览器中：",
+  },
+  "email.passwordReset.expiry": {
+    en: "Important: This link will expire in {minutes} minutes.",
+    vi: "Quan trọng: Liên kết này sẽ hết hạn trong {minutes} phút.",
+    ko: "중요: 이 링크는 {minutes}분 후에 만료됩니다.",
+    zh: "重要提示：此链接将在{minutes}分钟后过期。",
+  },
+  "email.passwordReset.notRequested": {
+    en: "If you did not request a password reset, please ignore this email. Your password will not change.",
+    vi: "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này. Mật khẩu của bạn sẽ không thay đổi.",
+    ko: "비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하세요. 비밀번호는 변경되지 않습니다.",
+    zh: "如果您没有请求重置密码，请忽略此邮件。您的密码不会更改。",
+  },
+  "email.passwordReset.securityNote": {
+    en: "For security reasons, do not share this link with anyone.",
+    vi: "Vì lý do bảo mật, đừng chia sẻ liên kết này với bất kỳ ai.",
+    ko: "보안을 위해 이 링크를 누구와도 공유하지 마세요.",
+    zh: "出于安全原因，请勿与任何人分享此链接。",
+  },
+
+  // Account banned template
+  "email.banned.heading": {
+    en: "Your {appName} Account Has Been Locked",
+    vi: "Tài khoản {appName} của bạn đã bị khóa",
+    ko: "회원님의 {appName} 계정이 잠겼습니다",
+    zh: "您的{appName}账户已被锁定",
+  },
+  "email.banned.greeting.named": {
+    en: "Hello {name},",
+    vi: "Xin chào {name},",
+    ko: "안녕하세요 {name}님,",
+    zh: "您好 {name}，",
+  },
+  "email.banned.greeting.anonymous": {
+    en: "Hello,",
+    vi: "Xin chào,",
+    ko: "안녕하세요,",
+    zh: "您好，",
+  },
+  "email.banned.contact": {
+    en: "Your {appName} account has been locked. Please contact admin via {adminEmailLink} for more details.",
+    vi: "Tài khoản {appName} của bạn đã bị khóa. Vui lòng liên hệ admin qua {adminEmailLink} để biết thêm chi tiết.",
+    ko: "{appName} 계정이 잠겼습니다. 자세한 내용은 {adminEmailLink}을 통해 관리자에게 문의하세요.",
+    zh: "您的{appName}账户已被锁定。请通过{adminEmailLink}联系管理员了解更多详情。",
+  },
+  "email.banned.footer": {
+    en: "If you believe this is a mistake, please respond soon to get support.",
+    vi: "Nếu bạn cho rằng đây là nhầm lẫn, vui lòng phản hồi sớm để được hỗ trợ.",
+    ko: "이것이 실수라고 생각되신다면, 빨리 답변하여 지원을 받으세요.",
+    zh: "如果您认为这是错误，请尽快回复以获得支持。",
+  },
 };
 
-export function t(key: string, locale: Locale = "en"): string {
+export function t(key: string, locale: Locale = "en", vars?: Record<string, string | number>): string {
   const translation = translations[key];
-  if (!translation) {
-    return key;
+  if (!translation) return key;
+  let result = translation[locale] || translation.en || key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      result = result.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+    }
   }
-  return translation[locale] || translation.en || key;
+  return result;
 }
 
 export function getLocaleFromHeader(acceptLanguage?: string): Locale {

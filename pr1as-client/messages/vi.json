@@ -33,7 +33,8 @@
     "switchToWorker": "WORKER",
     "switchToClient": "CLIENT",
     "me": "Tôi",
-    "selectLanguage": "Chọn ngôn ngữ"
+    "selectLanguage": "Chọn ngôn ngữ",
+    "boost": "Điểm danh (Boost)"
   },
   "Footer": {
     "copyright": "Bản quyền thuộc về chúng tôi.",
@@ -663,5 +664,313 @@
     "workerBadge": "Worker",
     "startButton": "Bắt đầu ngay",
     "skipButton": "Bỏ qua, tôi sẽ chọn sau"
+  },
+  "System": {
+    "errorTitle": "Đã xảy ra lỗi",
+    "errorMessage": "Ứng dụng gặp lỗi ngoài ý muốn",
+    "errorCritical": "Đã xảy ra lỗi nghiêm trọng",
+    "errorCannotContinue": "Ứng dụng không thể tiếp tục",
+    "errorRetry": "Vui lòng thử lại. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ.",
+    "errorCode": "Mã lỗi: {code}",
+    "tryAgain": "Thử lại",
+    "backToHome": "Quay lại trang chủ",
+    "contactSupport": "Liên hệ hỗ trợ",
+    "globalError": {
+      "heading": "Đã xảy ra lỗi nghiêm trọng",
+      "title": "Ứng dụng không thể tiếp tục",
+      "description": "Có lỗi không mong muốn xảy ra. Vui lòng thử lại hoặc quay về trang chủ. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ."
+    },
+    "og": {
+      "title": "Tìm dịch vụ, đặt lịch và quản lý booking trên một nền tảng",
+      "subtitle": "Kết nối khách hàng với worker và freelancer uy tín."
+    },
+    "loading": "Đang tải...",
+    "maintenance": {
+      "title": "Bảo trì hệ thống",
+      "description": "Website đang được bảo trì và nâng cấp. Hệ thống đang được bảo trì và nâng cấp để phục vụ bạn tốt hơn. Vui lòng quay lại sau.",
+      "patience": "Cảm ơn sự kiên nhẫn của bạn",
+      "emergency": "Nếu bạn cần hỗ trợ khẩn cấp, vui lòng liên hệ"
+    },
+    "offline": {
+      "title": "Mất kết nối mạng",
+      "description": "Có vẻ như bạn đang ngoại tuyến. Vui lòng kiểm tra kết nối Wi‑Fi hoặc dữ liệu di động rồi thử lại.",
+      "checking": "Đang kiểm tra...",
+      "retry": "Thử lại"
+    },
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundDescription": "Trang bạn đang tìm có thể đã được chuyển hoặc xóa."
+  },
+  "SEO": {
+    "servicesTitle": "Tìm dịch vụ và worker",
+    "servicesDescription": "Tìm kiếm worker phù hợp, lọc theo dịch vụ và khu vực, xem hồ sơ và đặt lịch trực tuyến trên PR1AS."
+  },
+  "Home": {
+    "heroLocationLabel": "Địa điểm",
+    "heroLocationPlaceholder": "Hà Nội hoặc Phường Cầu Giấy...",
+    "heroTimeLabel": "Thời gian",
+    "heroTimePlaceholder": "Chọn ngày và giờ",
+    "heroSearchButton": "Tìm kiếm",
+    "heroMobileSearchTrigger": "Bắt đầu tìm kiếm",
+    "heroServiceLabel": "Dịch vụ",
+    "heroServicePlaceholder": "Chọn dịch vụ",
+    "heroServiceAll": "Tất cả",
+    "heroServiceCount": "{count} dịch vụ"
+  },
+  "ServicePicker": {
+    "title": "Chọn dịch vụ",
+    "searchPlaceholder": "Tìm kiếm dịch vụ...",
+    "empty": "Không tìm thấy dịch vụ phù hợp",
+    "allServices": "Tất cả dịch vụ"
+  },
+  "Bookings": {
+    "myBookings": "Booking của tôi",
+    "manageBookings": "Quản lý các booking bạn đã đặt",
+    "refresh": "Làm mới",
+    "status": "Trạng thái",
+    "allStatus": "Tất cả trạng thái",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
+    "reset": "Đặt lại",
+    "listTitle": "Danh sách booking",
+    "noBookings": "Chưa có booking nào",
+    "loadError": "Không tải được danh sách booking",
+    "tryAgain": "Thử lại",
+    "service": "Dịch vụ",
+    "worker": "Worker",
+    "appointment": "Lịch hẹn",
+    "createdAt": "Ngày tạo",
+    "workerNotes": "Ghi chú worker",
+    "actions": "Hành động",
+    "duration": "Thời lượng: {hours} giờ",
+    "viewCancelReason": "Xem lý do hủy",
+    "cancelReasonPrefix": "Lý do: {reason}",
+    "cancelledByPrefix": "Bởi: {by}",
+    "cancelledAtPrefix": "Thời điểm: {time}",
+    "notes": "Ghi chú:",
+    "noActions": "Không có hành động",
+    "selectAction": "Chọn hành động",
+    "openComplaintGroup": "Mở nhóm khiếu nại",
+    "review": "Đánh giá",
+    "confirmComplete": "Xác nhận hoàn thành",
+    "complaint": "Khiếu nại",
+    "cancel": "Hủy",
+    "prev": "Trước",
+    "next": "Sau",
+    "loginRequiredReview": "Bạn cần đăng nhập để đánh giá.",
+    "workerNotFound": "Không tìm thấy thợ của booking.",
+    "complaintGroupError": "Không thể mở nhóm khiếu nại.",
+    "statusLabels": {
+      "PENDING": "Đang chờ",
+      "REJECTED": "Đã từ chối",
+      "CONFIRMED": "Đã xác nhận",
+      "IN_PROGRESS": "Đang thực hiện",
+      "PENDING_CLIENT_ACCEPTANCE": "Chờ khách xác nhận",
+      "COMPLETED": "Đã hoàn thành",
+      "CANCELLED": "Đã hủy",
+      "DISPUTED": "Khiếu nại",
+      "EXPIRED": "Hết hạn"
+    },
+    "cancellationReasons": {
+      "CLIENT_REQUEST": "Khách hàng yêu cầu",
+      "WORKER_UNAVAILABLE": "Thợ không có sẵn",
+      "SCHEDULE_CONFLICT": "Trùng lịch",
+      "EMERGENCY": "Khẩn cấp",
+      "POLICY_VIOLATION": "Vi phạm chính sách",
+      "OTHER": "Khác"
+    },
+    "cancelledBy": {
+      "CLIENT": "Khách hàng",
+      "WORKER": "Thợ",
+      "ADMIN": "Quản trị viên",
+      "SYSTEM": "Hệ thống"
+    },
+    "disputeReasons": {
+      "SERVICE_NOT_AS_DESCRIBED": "Dịch vụ không đúng mô tả",
+      "WORKER_NO_SHOW": "Thợ không đến",
+      "POOR_QUALITY": "Chất lượng kém",
+      "INCOMPLETE_SERVICE": "Dịch vụ không hoàn thành",
+      "UNPROFESSIONAL_BEHAVIOR": "Thái độ không chuyên nghiệp",
+      "SAFETY_CONCERN": "Lo ngại về an toàn",
+      "OTHER": "Khác"
+    },
+    "cancelDialog": {
+      "title": "Hủy booking",
+      "description": "Vui lòng chọn lý do hủy. Hành động này không thể hoàn tác.",
+      "reasonLabel": "Lý do",
+      "reasonPlaceholder": "Chọn lý do hủy",
+      "notesLabel": "Ghi chú (tùy chọn)",
+      "notesPlaceholder": "Mô tả thêm lý do hủy (tối đa 500 ký tự)",
+      "confirmButton": "Xác nhận hủy",
+      "errorSelectReason": "Vui lòng chọn lý do hủy."
+    }
+  },
+  "Pricing": {
+    "title": "Bảng giá",
+    "description": "So sánh các gói Standard, Gold và Diamond của PR1AS để nâng cấp hồ sơ, nhắn tin với khách hàng và quản lý dịch vụ.",
+    "heroTitle": "Chọn gói phù hợp với bạn",
+    "heroDescription": "Tất cả các gói đều có thể nâng cấp bất cứ lúc nào. Thanh toán nhanh qua ví trong ứng dụng.",
+    "fetchErrorTitle": "Không thể tải bảng giá",
+    "fetchErrorDescription": "Đã xảy ra sự cố khi tải bảng giá. Vui lòng thử lại sau giây lát.",
+    "comparisonTitle": "SO SÁNH CHI TIẾT",
+    "featureColumn": "Tính năng",
+    "pricePerMonth": "Giá / tháng",
+    "free": "Miễn phí",
+    "unlimited": "Không giới hạn",
+    "perMonth": "mỗi tháng",
+    "active": "Đang dùng",
+    "popular": "Phổ biến nhất",
+    "premium": "Cao cấp",
+    "featureLabels": {
+      "messaging": "Nhắn tin với khách hàng",
+      "createJob": "Đăng tin",
+      "boostProfile": "Boost hồ sơ mỗi tháng",
+      "noAds": "Ẩn quảng cáo"
+    },
+    "units": {
+      "recipients": "người nhận",
+      "job": "job",
+      "turn": "lượt"
+    },
+    "buttons": {
+      "current": "Gói hiện tại",
+      "lower": "Gói thấp hơn",
+      "free": "Gói miễn phí",
+      "guestFree": "Bắt đầu miễn phí",
+      "guestUpgrade": "Đăng nhập để nâng cấp",
+      "buyNow": "Mua gói ngay"
+    },
+    "errors": {
+      "paymentCreateFailed": "Không thể tạo thanh toán. Vui lòng thử lại."
+    },
+    "yes": "Có",
+    "purchaseModal": {
+      "title": "Thanh toán gói {package}",
+      "description": "Quét mã QR hoặc chuyển khoản theo thông tin bên dưới. Hệ thống sẽ tự động kích hoạt gói sau khi nhận được tiền.",
+      "bankLabel": "Ngân hàng",
+      "accountLabel": "Số tài khoản",
+      "amountLabel": "Số tiền",
+      "contentLabel": "Nội dung CK",
+      "checkingStatus": "Đang chờ xác nhận thanh toán…",
+      "successStatus": "Gói đã được kích hoạt thành công!",
+      "failedStatus": "Giao dịch thất bại hoặc sai số tiền",
+      "noteTitle": "Lưu ý quan trọng",
+      "noteContent": "Nhập chính xác nội dung chuyển khoản {content} để hệ thống xác nhận tự động. Sai nội dung sẽ không kích hoạt gói.",
+      "copied": "Đã sao chép {label}.",
+      "successToast": "Gói {package} đã được kích hoạt thành công!",
+      "failedToast": "Giao dịch thất bại hoặc sai số tiền. Vui lòng kiểm tra lại.",
+      "close": "Đóng",
+      "cancel": "Hủy"
+    }
+  },
+  "Privacy": {
+    "title": "Chính sách bảo mật",
+    "lastUpdated": "Cập nhật lần cuối: tháng 5 năm 2026",
+    "section1": {
+      "title": "1. Thông tin chúng tôi thu thập",
+      "content": "Chúng tôi thu thập các thông tin bạn cung cấp khi đăng ký tài khoản bao gồm: họ và tên, địa chỉ email, số điện thoại, và thông tin thanh toán. Ngoài ra, chúng tôi có thể thu thập dữ liệu sử dụng như địa chỉ IP, loại trình duyệt, trang bạn truy cập và thời gian sử dụng nhằm cải thiện trải nghiệm dịch vụ."
+    },
+    "section2": {
+      "title": "2. Mục đích sử dụng thông tin",
+      "items": [
+        "Tạo và quản lý tài khoản của bạn.",
+        "Xử lý giao dịch và thanh toán.",
+        "Gửi thông báo liên quan đến dịch vụ, bao gồm xác nhận đặt lịch và cập nhật hệ thống.",
+        "Cải thiện và phát triển tính năng sản phẩm.",
+        "Tuân thủ các nghĩa vụ pháp lý."
+      ]
+    },
+    "section3": {
+      "title": "3. Chia sẻ thông tin",
+      "content": "Chúng tôi không bán, trao đổi hoặc chuyển nhượng thông tin cá nhân của bạn cho bên thứ ba, ngoại trừ các đối tác cung cấp dịch vụ hỗ trợ vận hành nền tảng (ví dụ: cổng thanh toán) và trong trường hợp pháp luật yêu cầu."
+    },
+    "section4": {
+      "title": "4. Bảo mật dữ liệu",
+      "content": "Chúng tôi áp dụng các biện pháp kỹ thuật và tổ chức phù hợp để bảo vệ thông tin cá nhân của bạn trước nguy cơ truy cập trái phép, mất mát hoặc phá hủy. Mật khẩu được mã hóa một chiều và mọi kết nối đều sử dụng giao thức HTTPS."
+    },
+    "section5": {
+      "title": "5. Cookie",
+      "content": "Chúng tôi sử dụng cookie phiên để duy trì trạng thái đăng nhập và cookie phân tích để hiểu cách người dùng tương tác với nền tảng. Bạn có thể vô hiệu hóa cookie trong cài đặt trình duyệt, tuy nhiên một số tính năng có thể không hoạt động đúng."
+    },
+    "section6": {
+      "title": "6. Quyền của bạn",
+      "content": "Bạn có quyền truy cập, chỉnh sửa hoặc yêu cầu xóa thông tin cá nhân của mình bất kỳ lúc nào bằng cách liên hệ với chúng tôi qua email hỗ trợ. Chúng tôi sẽ phản hồi trong vòng 7 ngày làm việc."
+    },
+    "section7": {
+      "title": "7. Liên hệ",
+      "content": "Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật này, vui lòng liên hệ với chúng tôi qua email được hiển thị ở chân trang."
+    }
+  },
+  "Terms": {
+    "title": "Điều khoản sử dụng",
+    "lastUpdated": "Cập nhật lần cuối: tháng 5 năm 2026",
+    "section1": {
+      "title": "1. Chấp nhận điều khoản",
+      "content": "Bằng cách truy cập hoặc sử dụng nền tảng, bạn đồng ý bị ràng buộc bởi các điều khoản và điều kiện này. Nếu bạn không đồng ý với bất kỳ phần nào, vui lòng không sử dụng dịch vụ."
+    },
+    "section2": {
+      "title": "2. Tài khoản người dùng",
+      "items": [
+        "Bạn phải đủ 18 tuổi trở lên để đăng ký và sử dụng dịch vụ.",
+        "Bạn chịu trách nhiệm bảo mật thông tin đăng nhập của mình.",
+        "Mỗi người dùng chỉ được tạo một tài khoản. Tài khoản trùng lặp có thể bị xóa.",
+        "Thông tin tài khoản phải chính xác và được cập nhật kịp thời."
+      ]
+    },
+    "section3": {
+      "title": "3. Sử dụng dịch vụ",
+      "content": "Bạn đồng ý không sử dụng nền tảng để:",
+      "items": [
+        "Vi phạm bất kỳ luật pháp hoặc quy định hiện hành nào.",
+        "Gửi nội dung spam, lừa đảo hoặc gây hại.",
+        "Xâm phạm quyền riêng tư hoặc sở hữu trí tuệ của người khác.",
+        "Phá hoại hoặc can thiệp vào hệ thống và máy chủ của chúng tôi."
+      ]
+    },
+    "section4": {
+      "title": "4. Thanh toán và hoàn tiền",
+      "content": "Các giao dịch nạp ví được xử lý qua cổng thanh toán được chứng nhận. Số dư trong ví chỉ có thể được sử dụng trên nền tảng. Chúng tôi không hoàn trả số dư ví trừ khi có lỗi kỹ thuật được xác nhận từ phía hệ thống."
+    },
+    "section5": {
+      "title": "5. Gói dịch vụ",
+      "content": "Các gói nâng cấp (Gold, Diamond) có hiệu lực theo chu kỳ thanh toán đã chọn. Gói tự động gia hạn trừ khi bạn hủy trước ngày gia hạn. Chúng tôi có quyền thay đổi giá hoặc tính năng gói với thông báo trước ít nhất 30 ngày."
+    },
+    "section6": {
+      "title": "6. Chấm dứt tài khoản",
+      "content": "Chúng tôi có quyền tạm ngừng hoặc xóa tài khoản nếu phát hiện hành vi vi phạm điều khoản, gian lận hoặc gây hại cho người dùng khác. Bạn cũng có thể yêu cầu xóa tài khoản bất kỳ lúc nào bằng cách liên hệ với bộ phận hỗ trợ."
+    },
+    "section7": {
+      "title": "7. Giới hạn trách nhiệm",
+      "content": "Dịch vụ được cung cấp theo trạng thái \"như hiện tại\". Chúng tôi không đảm bảo dịch vụ luôn hoạt động liên tục và không chịu trách nhiệm về thiệt hại gián tiếp phát sinh từ việc sử dụng nền tảng."
+    },
+    "section8": {
+      "title": "8. Thay đổi điều khoản",
+      "content": "Chúng tôi có thể cập nhật điều khoản này định kỳ. Mọi thay đổi sẽ được thông báo qua email hoặc thông báo trong ứng dụng. Việc tiếp tục sử dụng dịch vụ sau khi thay đổi được áp dụng đồng nghĩa với việc bạn chấp nhận điều khoản mới."
+    }
+  },
+  "GlobalError": {
+    "title": "Đã có lỗi xảy ra",
+    "description": "Chúng tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau.",
+    "backHome": "Về trang chủ",
+    "retry": "Thử lại"
+  },
+  "OG": {
+    "defaultTitle": "PR1AS - Kết nối dịch vụ chuyên nghiệp",
+    "defaultDescription": "Nền tảng kết nối worker và khách hàng uy tín, nhanh chóng và tiện lợi."
+  },
+  "Location": {
+    "searchProvince": "Tìm tỉnh / thành phố...",
+    "searchWard": "Tìm phường/xã ở {province}...",
+    "chooseProvinceLeft": "Chọn tỉnh bên trái",
+    "allProvince": "Toàn {province}",
+    "chooseAllOrWard": "Chọn toàn khu vực hoặc phường/xã",
+    "loadProvinceError": "Không tải được danh sách tỉnh/thành.",
+    "loadWardError": "Không tải được danh sách phường/xã.",
+    "noProvinceResults": "Không có kết quả.",
+    "noWardResults": "Không có phường/xã phù hợp.",
+    "chooseProvinceFirst": "Chọn tỉnh để xem phường/xã.",
+    "back": "Quay lại",
+    "otherProvince": "Chọn tỉnh khác",
+    "clear": "Xóa",
+    "select": "Chọn"
   }
 }

@@ -14,6 +14,7 @@ import {
   Star,
   XCircle,
 } from "lucide-react"
+import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -75,43 +76,49 @@ import {
 
 const PAGE_SIZE = 10
 
-const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] = [
-  { value: "all", label: "Tất cả trạng thái" },
-  {
-    value: BookingStatus.PENDING,
-    label: bookingStatusLabel[BookingStatus.PENDING],
-  },
-  {
-    value: BookingStatus.CONFIRMED,
-    label: bookingStatusLabel[BookingStatus.CONFIRMED],
-  },
-  {
-    value: BookingStatus.IN_PROGRESS,
-    label: bookingStatusLabel[BookingStatus.IN_PROGRESS],
-  },
-  {
-    value: BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-    label: bookingStatusLabel[BookingStatus.PENDING_CLIENT_ACCEPTANCE],
-  },
-  {
-    value: BookingStatus.COMPLETED,
-    label: bookingStatusLabel[BookingStatus.COMPLETED],
-  },
-  {
-    value: BookingStatus.CANCELLED,
-    label: bookingStatusLabel[BookingStatus.CANCELLED],
-  },
-  {
-    value: BookingStatus.REJECTED,
-    label: bookingStatusLabel[BookingStatus.REJECTED],
-  },
-  {
-    value: BookingStatus.DISPUTED,
-    label: bookingStatusLabel[BookingStatus.DISPUTED],
-  },
-]
-
 export default function ClientBookingsPage() {
+  const t = useTranslations("Bookings")
+  const locale = useLocale()
+
+  const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] =
+    React.useMemo(
+      () => [
+        { value: "all", label: t("allStatus") },
+        {
+          value: BookingStatus.PENDING,
+          label: t(`statusLabels.${BookingStatus.PENDING}`),
+        },
+        {
+          value: BookingStatus.CONFIRMED,
+          label: t(`statusLabels.${BookingStatus.CONFIRMED}`),
+        },
+        {
+          value: BookingStatus.IN_PROGRESS,
+          label: t(`statusLabels.${BookingStatus.IN_PROGRESS}`),
+        },
+        {
+          value: BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+          label: t(`statusLabels.${BookingStatus.PENDING_CLIENT_ACCEPTANCE}`),
+        },
+        {
+          value: BookingStatus.COMPLETED,
+          label: t(`statusLabels.${BookingStatus.COMPLETED}`),
+        },
+        {
+          value: BookingStatus.CANCELLED,
+          label: t(`statusLabels.${BookingStatus.CANCELLED}`),
+        },
+        {
+          value: BookingStatus.REJECTED,
+          label: t(`statusLabels.${BookingStatus.REJECTED}`),
+        },
+        {
+          value: BookingStatus.DISPUTED,
+          label: t(`statusLabels.${BookingStatus.DISPUTED}`),
+        },
+      ],
+      [t]
+    )
   const [page, setPage] = React.useState(1)
   const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>(
     "all"
@@ -194,12 +201,12 @@ export default function ClientBookingsPage() {
   }) => {
     if (!reviewTarget) return
     if (!currentUserId) {
-      toast.error("Bạn cần đăng nhập để đánh giá.")
+      toast.error(t("loginRequiredReview"))
       return
     }
     const workerId = getRefId(reviewTarget.worker_id)
     if (!workerId) {
-      toast.error("Không tìm thấy thợ của booking.")
+      toast.error(t("workerNotFound"))
       return
     }
     await reviewMutation.mutateAsync({
@@ -219,7 +226,7 @@ export default function ClientBookingsPage() {
       const conversation = await complaintMutation.mutateAsync(bookingId)
       router.push(`/chat/group?group=${conversation._id}`)
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể mở nhóm khiếu nại."))
+      toast.error(getErrorMessage(error, t("complaintGroupError")))
     } finally {
       setComplaintLoadingId(null)
     }
@@ -250,10 +257,10 @@ export default function ClientBookingsPage() {
         <div className="flex justify-end">
           <Select disabled value="none">
             <SelectTrigger className="h-9 w-full min-w-40 text-muted-foreground data-[size=default]:h-9 md:w-44">
-              <SelectValue placeholder="Không có hành động" />
+              <SelectValue placeholder={t("noActions")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Không có hành động</SelectItem>
+              <SelectItem value="none">{t("noActions")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -288,13 +295,13 @@ export default function ClientBookingsPage() {
           disabled={complaintLoading || completing}
         >
           <SelectTrigger
-            aria-label="Chọn hành động booking"
+            aria-label={t("selectAction")}
             className="h-9 w-full min-w-40 cursor-pointer px-3 data-[size=default]:h-9 md:w-44"
           >
             {complaintLoading || completing ? (
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : null}
-            <SelectValue placeholder="Chọn hành động" />
+            <SelectValue placeholder={t("selectAction")} />
           </SelectTrigger>
           <SelectContent align="end" className="min-w-52">
             {showComplaintGroup ? (
@@ -303,7 +310,7 @@ export default function ClientBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5"
               >
                 <MessageSquare className="size-4" />
-                Mở nhóm khiếu nại
+                {t("openComplaintGroup")}
               </SelectItem>
             ) : null}
             {showReview ? (
@@ -312,7 +319,7 @@ export default function ClientBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5"
               >
                 <Star className="size-4" />
-                Đánh giá
+                {t("review")}
               </SelectItem>
             ) : null}
             {showComplete ? (
@@ -321,7 +328,7 @@ export default function ClientBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5"
               >
                 <CheckCircle2 className="size-4" />
-                Xác nhận hoàn thành
+                {t("confirmComplete")}
               </SelectItem>
             ) : null}
             {showDispute ? (
@@ -330,7 +337,7 @@ export default function ClientBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5"
               >
                 <MessageSquareWarning className="size-4" />
-                Khiếu nại
+                {t("complaint")}
               </SelectItem>
             ) : null}
             {showCancel ? (
@@ -339,7 +346,7 @@ export default function ClientBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5 text-destructive focus:text-destructive"
               >
                 <XCircle className="size-4" />
-                Hủy
+                {t("cancel")}
               </SelectItem>
             ) : null}
           </SelectContent>
@@ -354,10 +361,10 @@ export default function ClientBookingsPage() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
             <CalendarCheck2 className="size-7" />
-            Booking của tôi
+            {t("myBookings")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Quản lý các booking bạn đã đặt
+            {t("manageBookings")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -371,7 +378,7 @@ export default function ClientBookingsPage() {
             ) : (
               <RefreshCw className="size-4" />
             )}
-            Làm mới
+            {t("refresh")}
           </Button>
         </div>
       </div>
@@ -379,7 +386,7 @@ export default function ClientBookingsPage() {
       <Card className="mb-5">
         <CardContent className="grid gap-4 p-5 md:grid-cols-4">
           <div className="grid gap-2">
-            <Label htmlFor="filter-status">Trạng thái</Label>
+            <Label htmlFor="filter-status">{t("status")}</Label>
             <Select
               value={statusFilter}
               onValueChange={(value) => {
@@ -403,7 +410,7 @@ export default function ClientBookingsPage() {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Từ ngày</Label>
+            <Label>{t("fromDate")}</Label>
             <DatePicker
               value={startDate}
               onChange={(date) => {
@@ -414,7 +421,7 @@ export default function ClientBookingsPage() {
             />
           </div>
           <div className="grid gap-2">
-            <Label>Đến ngày</Label>
+            <Label>{t("toDate")}</Label>
             <DatePicker
               value={endDate}
               onChange={(date) => {
@@ -430,7 +437,7 @@ export default function ClientBookingsPage() {
               className="w-full"
               onClick={handleResetFilters}
             >
-              Đặt lại
+              {t("reset")}
             </Button>
           </div>
         </CardContent>
@@ -438,7 +445,7 @@ export default function ClientBookingsPage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
-          <CardTitle className="text-base">Danh sách booking</CardTitle>
+          <CardTitle className="text-base">{t("listTitle")}</CardTitle>
           <Badge variant="outline">{total}</Badge>
         </CardHeader>
         <CardContent className="p-0">
@@ -450,20 +457,20 @@ export default function ClientBookingsPage() {
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
               <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
               <p className="text-sm font-medium">
-                Không tải được danh sách booking
+                {t("loadError")}
               </p>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => bookingsQuery.refetch()}
               >
-                Thử lại
+                {t("tryAgain")}
               </Button>
             </div>
           ) : bookings.length === 0 ? (
             <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
               <CalendarCheck2 className="size-9 text-muted-foreground" />
-              <p className="text-sm font-medium">Chưa có booking nào</p>
+              <p className="text-sm font-medium">{t("noBookings")}</p>
             </div>
           ) : (
             <>
@@ -492,16 +499,16 @@ export default function ClientBookingsPage() {
                 <Table className="min-w-[1040px]">
                   <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
                     <tr>
-                      <th className="px-4 py-3 font-medium">Dịch vụ</th>
-                      <th className="px-4 py-3 font-medium">Worker</th>
-                      <th className="px-4 py-3 font-medium">Lịch hẹn</th>
-                      <th className="px-4 py-3 font-medium">Trạng thái</th>
-                      <th className="px-4 py-3 font-medium">Ngày tạo</th>
+                      <th className="px-4 py-3 font-medium">{t("service")}</th>
+                      <th className="px-4 py-3 font-medium">{t("worker")}</th>
+                      <th className="px-4 py-3 font-medium">{t("appointment")}</th>
+                      <th className="px-4 py-3 font-medium">{t("status")}</th>
+                      <th className="px-4 py-3 font-medium">{t("createdAt")}</th>
                       <th className="px-4 py-3 font-medium">
-                        Ghi chú worker
+                        {t("workerNotes")}
                       </th>
                       <th className="px-4 py-3 text-right font-medium">
-                        Hành động
+                        {t("actions")}
                       </th>
                     </tr>
                   </thead>
@@ -535,10 +542,16 @@ export default function ClientBookingsPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div>
-                              {formatDateTime(booking.schedule.start_time)}
+                               {!booking.schedule.start_time ? "-" : new Date(booking.schedule.start_time).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Thời lượng: {booking.schedule.duration_hours} giờ
+                              {t("duration", { hours: booking.schedule.duration_hours })}
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -549,7 +562,7 @@ export default function ClientBookingsPage() {
                                   bookingStatusBadgeClass[displayStatus]
                                 )}
                               >
-                                {bookingStatusLabel[displayStatus]}
+                                {t(`statusLabels.${displayStatus}`)}
                               </span>
                               {booking.status === BookingStatus.CANCELLED &&
                               booking.cancellation ? (
@@ -557,7 +570,7 @@ export default function ClientBookingsPage() {
                                   <HoverCardTrigger asChild>
                                     <button
                                       type="button"
-                                      aria-label="Xem lý do hủy"
+                                      aria-label={t("viewCancelReason")}
                                       className="inline-flex size-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
                                     >
                                       <Info className="size-4" />
@@ -570,42 +583,48 @@ export default function ClientBookingsPage() {
                                     <div className="space-y-1.5">
                                       <div>
                                         <span className="text-muted-foreground">
-                                          Lý do:{" "}
-                                        </span>
-                                        <span className="font-medium">
-                                          {
-                                            cancellationReasonLabel[
-                                              booking.cancellation.reason
-                                            ]
-                                          }
+                                          {t("cancelReasonPrefix", {
+                                            reason: t(
+                                              `cancellationReasons.${booking.cancellation.reason}`
+                                            ),
+                                          })}
                                         </span>
                                       </div>
                                       <div>
                                         <span className="text-muted-foreground">
-                                          Bởi:{" "}
-                                        </span>
-                                        <span className="font-medium">
-                                          {
-                                            cancelledByLabel[
-                                              booking.cancellation.cancelled_by
-                                            ]
-                                          }
+                                          {t("cancelledByPrefix", {
+                                            by: t(
+                                              `cancelledBy.${booking.cancellation.cancelled_by}`
+                                            ),
+                                          })}
                                         </span>
                                       </div>
                                       <div>
                                         <span className="text-muted-foreground">
-                                          Thời điểm:{" "}
-                                        </span>
-                                        <span>
-                                          {formatDateTime(
-                                            booking.cancellation.cancelled_at
-                                          )}
+                                          {t("cancelledAtPrefix", {
+                                            time: new Date(
+                                              booking.cancellation.cancelled_at
+                                            ).toLocaleString(
+                                              locale === "vi"
+                                                ? "vi-VN"
+                                                : locale === "zh"
+                                                ? "zh-CN"
+                                                : "en-US",
+                                              {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                day: "2-digit",
+                                                month: "2-digit",
+                                                year: "numeric",
+                                              }
+                                            ),
+                                          })}
                                         </span>
                                       </div>
                                       {booking.cancellation.notes ? (
                                         <div>
                                           <div className="text-muted-foreground">
-                                            Ghi chú:
+                                            {t("notes")}
                                           </div>
                                           <div className="whitespace-pre-wrap">
                                             {booking.cancellation.notes}
@@ -619,7 +638,13 @@ export default function ClientBookingsPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
-                            {formatDateTime(booking.created_at)}
+                            {new Date(booking.created_at).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })}
                           </td>
                           <td className="max-w-[260px] px-4 py-3 text-sm text-muted-foreground">
                             {booking.worker_response ? (
@@ -652,7 +677,7 @@ export default function ClientBookingsPage() {
             onClick={() => setPage((value) => Math.max(1, value - 1))}
             disabled={!canGoBack}
           >
-            Trước
+            {t("prev")}
           </Button>
           <span className="text-sm text-muted-foreground">
             {page}/{Math.max(totalPages, 1)}
@@ -663,7 +688,7 @@ export default function ClientBookingsPage() {
             onClick={() => setPage((value) => value + 1)}
             disabled={!canGoNext}
           >
-            Sau
+            {t("next")}
           </Button>
         </div>
       ) : null}

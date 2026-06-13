@@ -75,10 +75,7 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  // Cho phép env(safe-area-inset-*) hoạt động trên iPhone có notch / home indicator
   viewportFit: "cover",
-  // Chặn auto-zoom khi focus input + double-tap zoom → cảm giác như app native.
-  // Lưu ý a11y: người dùng vẫn pinch-zoom được trên trình duyệt hiện đại.
   maximumScale: 1,
 }
 

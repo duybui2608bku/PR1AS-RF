@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 
 export default function GlobalError({
   error,
@@ -9,12 +10,14 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations("System")
+
   React.useEffect(() => {
     console.error("[global-error]", error)
   }, [error])
 
   return (
-    <html lang="vi">
+    <html>
       <body
         style={{
           margin: 0,
@@ -47,14 +50,13 @@ export default function GlobalError({
               color: "#dc2626",
             }}
           >
-            Đã xảy ra lỗi nghiêm trọng
+            {t("globalError.heading")}
           </p>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, lineHeight: 1.2 }}>
-            Ứng dụng không thể tiếp tục
+            {t("globalError.title")}
           </h1>
           <p style={{ margin: 0, fontSize: 14, color: "#525252" }}>
-            Có lỗi không mong muốn xảy ra. Vui lòng thử lại hoặc quay về trang
-            chủ. Nếu lỗi vẫn tiếp diễn, hãy liên hệ hỗ trợ.
+            {t("globalError.description")}
           </p>
           {error.digest ? (
             <p
@@ -66,7 +68,7 @@ export default function GlobalError({
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
               }}
             >
-              Mã lỗi: {error.digest}
+              {t("errorCode", { code: error.digest })}
             </p>
           ) : null}
           <div
@@ -92,7 +94,7 @@ export default function GlobalError({
                 color: "#fafafa",
               }}
             >
-              Thử lại
+              {t("tryAgain")}
             </button>
             <button
               type="button"
@@ -108,7 +110,7 @@ export default function GlobalError({
                 border: "1px solid #e5e5e5",
               }}
             >
-              Về trang chủ
+              {t("backToHome")}
             </button>
           </div>
         </div>

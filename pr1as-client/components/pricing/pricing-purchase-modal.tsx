@@ -1,15 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import {
-  CheckCircle2,
-  Copy,
-  Loader2,
-  QrCode,
-  XCircle,
-} from "lucide-react"
+import { CheckCircle2, Copy, Loader2, QrCode, XCircle } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
+import { useTranslations, useLocale } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,15 +22,14 @@ import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
 import type { PricingPaymentResponse } from "@/services/pricing.service"
 
-const formatVnd = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount)
-
 interface PricingPurchaseModalProps {
   payment: PricingPaymentResponse | null
   onClose: () => void
 }
 
 export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalProps) {
+  const t = useTranslations("Pricing.purchaseModal")
+  const locale = useLocale()
   const queryClient = useQueryClient()
   const setUser = useAuthStore((s) => s.setUser)
   const notifiedRef = useRef<string | null>(null)
@@ -53,7 +47,7 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
 
     if (isSuccess) {
       notifiedRef.current = payment.transaction_id
-      toast.success(`Gói ${payment.package_display_name} đã được kích hoạt thành công!`)
+      toast.success(t("successToast", { package: payment.package_display_name }))
       queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       queryClient.invalidateQueries({ queryKey: WALLET_KEYS.all })
@@ -65,13 +59,19 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
 
     if (isFailed) {
       notifiedRef.current = payment.transaction_id
-      toast.error("Giao dịch thất bại hoặc sai số tiền. Vui lòng kiểm tra lại.")
+      toast.error(t("failedToast"))
     }
-  }, [isSuccess, isFailed, payment, queryClient, setUser])
+  }, [isSuccess, isFailed, payment, queryClient, setUser, t])
 
-  const copyText = async (value: string, label: string) => {
+  const formatVnd = (amount: number) =>
+    new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount)
+
+  const copyText = async (value: string, labelKey: string) => {
     await navigator.clipboard.writeText(value)
-    toast.success(`Đã sao chép ${label}.`)
+    toast.success(t("copied", { label: t(labelKey).toLowerCase() }))
   }
 
   const canClose = !payment || isSuccess || isFailed
@@ -89,12 +89,9 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <QrCode className="size-5" />
-                Thanh toán gói {payment.package_display_name}
+                {t("title", { package: payment.package_display_name })}
               </DialogTitle>
-              <DialogDescription>
-                Quét mã QR hoặc chuyển khoản theo thông tin bên dưới. Hệ thống
-                sẽ tự động kích hoạt gói sau khi nhận được tiền.
-              </DialogDescription>
+              <DialogDescription>{t("description")}</DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
@@ -111,30 +108,28 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
 
               <div className="space-y-2.5">
                 <PaymentRow
-                  label="Ngân hàng"
+                  label={t("bankLabel")}
                   value={payment.bank_name}
-                  onCopy={() => copyText(payment.bank_name, "ngân hàng")}
+                  onCopy={() => copyText(payment.bank_name, "bankLabel")}
                 />
                 <PaymentRow
-                  label="Số tài khoản"
+                  label={t("accountLabel")}
                   value={payment.bank_account_number}
-                  onCopy={() => copyText(payment.bank_account_number, "số tài khoản")}
+                  onCopy={() => copyText(payment.bank_account_number, "accountLabel")}
                 />
                 <PaymentRow
-                  label="Số tiền"
+                  label={t("amountLabel")}
                   value={formatVnd(payment.amount)}
-                  onCopy={() => copyText(String(payment.amount), "số tiền")}
+                  onCopy={() => copyText(String(payment.amount), "amountLabel")}
                 />
                 <PaymentRow
-                  label="Nội dung CK"
+                  label={t("contentLabel")}
                   value={payment.payment_content}
-                  onCopy={() => copyText(payment.payment_content, "nội dung")}
+                  onCopy={() => copyText(payment.payment_content, "contentLabel")}
                 />
 
                 <PaymentStatus
-                  isChecking={
-                    transactionQuery.isFetching && !isSuccess && !isFailed
-                  }
+                  isChecking={transactionQuery.isFetching && !isSuccess && !isFailed}
                   isSuccess={isSuccess}
                   isFailed={isFailed}
                 />
@@ -142,17 +137,13 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
             </div>
 
             <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-              <p className="font-semibold">⚠️ Lưu ý quan trọng</p>
-              <p className="mt-1">
-                Nhập <strong>chính xác nội dung chuyển khoản</strong> (
-                {payment.payment_content}) để hệ thống xác nhận tự động. Sai nội
-                dung sẽ không kích hoạt gói.
-              </p>
+              <p className="font-semibold">⚠️ {t("noteTitle")}</p>
+              <p className="mt-1">{t("noteContent", { content: payment.payment_content })}</p>
             </div>
 
             {canClose && (
               <Button variant="outline" className="w-full" onClick={onClose}>
-                {isSuccess ? "Đóng" : "Huỷ"}
+                {isSuccess ? t("close") : t("cancel")}
               </Button>
             )}
           </>
@@ -200,11 +191,12 @@ function PaymentStatus({
   isSuccess: boolean
   isFailed: boolean
 }) {
+  const t = useTranslations("Pricing.purchaseModal")
   if (isSuccess) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
         <CheckCircle2 className="size-4" />
-        <span>Gói đã được kích hoạt thành công!</span>
+        <span>{t("successStatus")}</span>
       </div>
     )
   }
@@ -213,7 +205,7 @@ function PaymentStatus({
     return (
       <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
         <XCircle className="size-4" />
-        <span>Giao dịch thất bại hoặc sai số tiền</span>
+        <span>{t("failedStatus")}</span>
       </div>
     )
   }
@@ -225,7 +217,7 @@ function PaymentStatus({
       ) : (
         <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
       )}
-      <span>Đang chờ xác nhận thanh toán…</span>
+      <span>{t("checkingStatus")}</span>
     </div>
   )
 }

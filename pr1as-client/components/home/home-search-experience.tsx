@@ -3,6 +3,7 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
 
 import { HomeHero } from "@/components/hero/home-hero"
@@ -31,10 +32,6 @@ type HomeSearchExperienceProps = {
   initialState: HomeSearchState
 }
 
-// "Draft" = current form values (not yet applied).
-// "Applied" = the actual filter that drives URL + data fetch.
-// Form fields update only the draft; clicking the search button (or
-// removing a chip) writes into the applied state.
 type DraftState = {
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
@@ -45,30 +42,45 @@ const draftFromState = (state: HomeSearchState): DraftState => ({
   scheduledAt: state.scheduledAt,
 })
 
-const CATEGORY_LABEL: Record<string, string> = {
-  COMPANIONSHIP: "Đồng hành",
-  ASSISTANCE: "Trợ lý",
-}
-
-const formatScheduledLabel = (value: Date): string =>
-  value.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
-
-const findCategoryLabel = (code: string, services: ServiceItem[]): string => {
+const findCategoryLabel = (
+  code: string,
+  services: ServiceItem[],
+  categoryLabels: Record<string, string>,
+): string => {
   if (!code) return ""
   const match = services.find((s) => s.code === code)
   if (match) return serviceService.getName(match.name)
-  return CATEGORY_LABEL[code] ?? code
+  return categoryLabels[code] ?? code
 }
 
 
 export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps) {
+  const t = useTranslations()
+  const locale = useLocale()
   const pathname = usePathname()
   const { requireAuth } = useAuthRequired()
   const isMobile = useIsMobile()
+
+  const CATEGORY_LABEL: Record<string, string> = React.useMemo(
+    () => ({
+      COMPANIONSHIP: t("Services.companionship"),
+      ASSISTANCE: t("Services.assistance"),
+    }),
+    [t],
+  )
+
+  const formatScheduledLabel = React.useCallback(
+    (value: Date): string =>
+      value.toLocaleDateString(
+        locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      ),
+    [locale],
+  )
 
   const [draft, setDraft] = React.useState<DraftState>(() =>
     draftFromState(initialState),
@@ -79,12 +91,10 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   const { setActiveTab, setSearchDisplay, setSwitchTabCallback } =
     useServicesHeaderStore()
 
-  // Sync active tab → header store
   React.useEffect(() => {
     setActiveTab(applied.activeTab)
   }, [applied.activeTab, setActiveTab])
 
-  // Sync search display labels → header store
   React.useEffect(() => {
     setSearchDisplay(
       draft.selectedLocation?.label ?? null,
@@ -94,7 +104,6 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const filters = React.useMemo(() => homeStateToFilters(applied), [applied])
 
-  // Sync applied state -> URL without triggering RSC navigation.
   const isFirstSyncRef = React.useRef(true)
   React.useEffect(() => {
     const queryString = homeStateToQueryString(applied)
@@ -119,9 +128,6 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     staleTime: 30 * 1000,
   })
 
-  // The classification tabs only exist on mobile. There, the active tab acts as
-  // a client-side display filter ("Đồng hành" = COMPANIONSHIP, "Dịch vụ" = the
-  // rest). On desktop there are no tabs, so every group is shown.
   const visibleGroups = React.useMemo(() => {
     const groups = workersQuery.data ?? []
     return groups.filter((group) => group.service.category === applied.activeTab)
@@ -150,13 +156,9 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     setApplied((prev) =>
       prev.activeTab === tab
         ? prev
-        : // Switching tab resets the picked service codes, since the service
-          // picker only lists services belonging to the active tab.
-          { ...prev, activeTab: tab, activeCodes: [] },
+        : { ...prev, activeTab: tab, activeCodes: [] },
     )
   }, [])
-
-  // Expose handleSwitchTab to header store so header can trigger tab switch
   React.useEffect(() => {
     setSwitchTabCallback(handleSwitchTab)
     return () => setSwitchTabCallback(null)
@@ -191,9 +193,9 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         toggleFavoriteMutation.mutate(
           { workerId, favorite },
           {
-            onError: () => {
-              toast.error("Không thể cập nhật danh sách yêu thích.")
-            },
+    onError: () => {
+      toast.error(t("Favorites.removeError"))
+    },
           },
         )
       })
@@ -224,7 +226,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
       const matchedService = services.find((s) => s.code === code)
       chips.push({
         id: `category-${code}`,
-        label: findCategoryLabel(code, services),
+        label: findCategoryLabel(code, services, CATEGORY_LABEL),
         description: matchedService?.description
           ? serviceService.getDescription(matchedService.description) ?? undefined
           : undefined,

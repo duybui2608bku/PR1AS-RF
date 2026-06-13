@@ -23,11 +23,8 @@ import {
 } from "../../utils/template-mail";
 import { config } from "../../config";
 import { logger } from "../../utils/logger";
-import {
-  APP_CONSTANTS,
-  EMAIL_SUBJECTS,
-  LOGIN_LOCKOUT,
-} from "../../constants/app";
+import { LOGIN_LOCKOUT } from "../../constants/app";
+import { Locale } from "../../utils/i18n";
 import { TIME_IN_MS } from "../../constants/time";
 import {
   createPasswordResetExpiry,
@@ -355,10 +352,12 @@ export class AuthService {
 
     const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
 
+    const locale = (user.meta_data?.locale ?? "en") as Locale;
+    const { subject: resetSubject, html: resetHtml } = passwordResetTemplate(resetLink, user.full_name || undefined, locale);
     await nodemailerUtils({
       email: user.email,
-      html: passwordResetTemplate(resetLink, user.full_name || undefined),
-      subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.PASSWORD_RESET}`,
+      html: resetHtml,
+      subject: resetSubject,
     }).catch((error) => {
       logger.error("Failed to send password reset email", {
         userId: user._id.toString(),
@@ -425,10 +424,12 @@ export class AuthService {
 
     const verificationLink = `${config.frontendUrl}/verify-email?token=${verificationToken}`;
 
+    const locale = (user.meta_data?.locale ?? "en") as Locale;
+    const { subject: verifySubject, html: verifyHtml } = emailVerificationTemplate(verificationLink, locale);
     await nodemailerUtils({
       email: user.email,
-      html: emailVerificationTemplate(verificationLink),
-      subject: `${APP_CONSTANTS.NAME} ${EMAIL_SUBJECTS.EMAIL_VERIFICATION}`,
+      html: verifyHtml,
+      subject: verifySubject,
     }).catch((error) => {
       logger.error("Failed to send verification email", {
         userId: user._id.toString(),

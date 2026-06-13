@@ -102,6 +102,7 @@ export interface IUser {
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;
     onboarding_done: boolean;
+    locale?: string;
   };
 }
 
@@ -131,6 +132,7 @@ export interface IUserPublic {
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;
     onboarding_done: boolean;
+    locale?: string;
   };
 }
 

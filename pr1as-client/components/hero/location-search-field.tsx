@@ -4,6 +4,7 @@ import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { ChevronLeft, ChevronRight, Globe2, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,6 +46,7 @@ export function LocationSearchField({
   onChange,
   icon,
 }: LocationSearchFieldProps) {
+  const t = useTranslations("Location")
   const id = React.useId()
   const [open, setOpen] = React.useState(false)
   const [provinceQuery, setProvinceQuery] = React.useState("")
@@ -69,15 +71,15 @@ export function LocationSearchField({
 
   React.useEffect(() => {
     if (provincesQuery.isError) {
-      toast.error("Không tải được danh sách tỉnh/thành.")
+      toast.error(t("loadProvinceError"))
     }
-  }, [provincesQuery.isError])
+  }, [provincesQuery.isError, t])
 
   React.useEffect(() => {
     if (wardsQuery.isError) {
-      toast.error("Không tải được danh sách phường/xã.")
+      toast.error(t("loadWardError"))
     }
-  }, [wardsQuery.isError])
+  }, [wardsQuery.isError, t])
 
   const activeProvince = React.useMemo<ProvinceOption | null>(
     () =>
@@ -196,7 +198,7 @@ export function LocationSearchField({
                 type="button"
                 onClick={handleClear}
                 className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-muted sm:size-5"
-                aria-label="Xóa"
+                aria-label={t("clear")}
               >
                 <X className="size-4 sm:size-3" />
               </button>
@@ -218,7 +220,7 @@ export function LocationSearchField({
             >
               <div className="border-b p-2">
                 <Input
-                  placeholder="Tìm tỉnh / thành phố..."
+                  placeholder={t("searchProvince")}
                   value={provinceQuery}
                   onChange={(e) => setProvinceQuery(e.target.value)}
                   className="h-11 text-base sm:h-8 sm:text-sm"
@@ -232,7 +234,7 @@ export function LocationSearchField({
                     </div>
                   ) : filteredProvinces.length === 0 ? (
                     <p className="p-3 text-xs text-muted-foreground">
-                      Không có kết quả.
+                      {t("noProvinceResults")}
                     </p>
                   ) : (
                     filteredProvinces.map((p) => (
@@ -267,7 +269,7 @@ export function LocationSearchField({
                     type="button"
                     onClick={handleBackToProvinces}
                     className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-accent"
-                    aria-label="Chọn tỉnh khác"
+                    aria-label={t("otherProvince")}
                   >
                     <ChevronLeft className="size-5" />
                   </button>
@@ -276,7 +278,7 @@ export function LocationSearchField({
                       {activeProvince.short_name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Chọn toàn khu vực hoặc phường/xã
+                      {t("chooseAllOrWard")}
                     </p>
                   </div>
                 </div>
@@ -285,8 +287,8 @@ export function LocationSearchField({
                 <Input
                   placeholder={
                     activeProvince
-                      ? `Tìm phường/xã ở ${activeProvince.short_name}...`
-                      : "Chọn tỉnh bên trái"
+                      ? t("searchWard", { province: activeProvince.short_name })
+                      : t("chooseProvinceLeft")
                   }
                   value={wardQuery}
                   onChange={(e) => setWardQuery(e.target.value)}
@@ -297,7 +299,7 @@ export function LocationSearchField({
               <ScrollArea className="h-[min(56vh,360px)] sm:h-72">
                 {!activeProvince ? (
                   <p className="p-3 text-xs text-muted-foreground">
-                    Chọn tỉnh để xem phường/xã.
+                    {t("chooseProvinceFirst")}
                   </p>
                 ) : (
                   <>
@@ -309,11 +311,13 @@ export function LocationSearchField({
                       <span className="flex min-w-0 items-center gap-2">
                         <Globe2 className="size-4" />
                         <span className="truncate">
-                          Toàn {activeProvince.name.toLowerCase()}
+                          {t("allProvince", {
+                            province: activeProvince.name.toLowerCase(),
+                          })}
                         </span>
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Chọn
+                        {t("select")}
                       </span>
                     </button>
                     <div className="p-1">
@@ -323,7 +327,7 @@ export function LocationSearchField({
                         </div>
                       ) : filteredWards.length === 0 ? (
                         <p className="p-3 text-xs text-muted-foreground">
-                          Không có phường/xã phù hợp.
+                          {t("noWardResults")}
                         </p>
                       ) : (
                         filteredWards.map((w) => (

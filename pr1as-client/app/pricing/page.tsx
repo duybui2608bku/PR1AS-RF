@@ -1,92 +1,32 @@
 import { Check, Minus, Sparkles, Star, Zap } from "lucide-react"
+import { getTranslations, getLocale } from "next-intl/server"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { PricingPlans } from "@/components/pricing/pricing-plans"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { pricingService, type PricingPackage } from "@/services/pricing.service"
 import { cn } from "@/lib/utils"
-import { createPageMetadata } from "@/lib/seo"
 
-export const metadata = createPageMetadata({
-  title: "Bảng giá",
-  description:
-    "So sánh các gói Standard, Gold và Diamond của PR1AS để nâng cấp hồ sơ, nhắn tin với khách hàng và quản lý dịch vụ.",
-  path: "/pricing",
-})
-
-const PLAN_META: Record<
-  PricingPackage["package_code"],
-  {
-    icon: React.ReactNode
-    color: string
+export async function generateMetadata() {
+  const t = await getTranslations("Pricing")
+  return {
+    title: t("title"),
+    description: t("description"),
   }
-> = {
-  standard: {
-    icon: <Zap className="size-5" />,
-    color: "text-foreground",
-  },
-  gold: {
-    icon: <Star className="size-5 fill-amber-400 text-amber-400" />,
-    color: "text-amber-500",
-  },
-  diamond: {
-    icon: <Sparkles className="size-5 text-violet-500" />,
-    color: "text-violet-500",
-  },
 }
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    amount
-  )
+const formatCurrency = (amount: number, locale: string) =>
+  new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount)
 
 const getPackagePrice = (pkg: PricingPackage) =>
   Number.isFinite(pkg.price) ? pkg.price : 0
 
-const formatLimit = (value: number | null, unit = "") =>
-  value === null ? "Không giới hạn" : `${value}${unit ? " " + unit : ""}`
-
-const FEATURE_ROWS: {
-  label: string
-  get: (pkg: PricingPackage) => { enabled: boolean; text: string }
-}[] = [
-  {
-    label: "Nhắn tin với khách hàng",
-    get: (pkg) => ({
-      enabled: pkg.features.messaging_enabled,
-      text: pkg.features.messaging_enabled
-        ? formatLimit(pkg.features.messaging_max_recipients, "người nhận")
-        : "—",
-    }),
-  },
-  {
-    label: "Đăng tin",
-    get: (pkg) => ({
-      enabled: pkg.features.create_job_enabled,
-      text: pkg.features.create_job_enabled
-        ? formatLimit(pkg.features.create_job_limit, "job")
-        : "—",
-    }),
-  },
-  {
-    label: "Boost hồ sơ mỗi tháng",
-    get: (pkg) => ({
-      enabled: pkg.features.boost_profile_enabled,
-      text: pkg.features.boost_profile_enabled
-        ? formatLimit(pkg.features.boost_profile_monthly_limit, "lượt")
-        : "—",
-    }),
-  },
-  {
-    label: "Ẩn quảng cáo",
-    get: (pkg) => ({
-      enabled: !pkg.features.ads_enabled,
-      text: !pkg.features.ads_enabled ? "Có" : "—",
-    }),
-  },
-]
-
 export default async function PricingPage() {
+  const t = await getTranslations("Pricing")
+  const locale = await getLocale()
   let packages: PricingPackage[] = []
   let fetchError = false
 
@@ -97,29 +37,92 @@ export default async function PricingPage() {
     fetchError = true
   }
 
+  const PLAN_META: Record<
+    PricingPackage["package_code"],
+    {
+      icon: React.ReactNode
+      color: string
+    }
+  > = {
+    standard: {
+      icon: <Zap className="size-5" />,
+      color: "text-foreground",
+    },
+    gold: {
+      icon: <Star className="size-5 fill-amber-400 text-amber-400" />,
+      color: "text-amber-500",
+    },
+    diamond: {
+      icon: <Sparkles className="size-5 text-violet-500" />,
+      color: "text-violet-500",
+    },
+  }
+
+  const formatLimit = (value: number | null, unitKey?: string) =>
+    value === null
+      ? t("unlimited")
+      : `${value}${unitKey ? " " + t(`units.${unitKey}`) : ""}`
+
+  const FEATURE_ROWS: {
+    label: string
+    get: (pkg: PricingPackage) => { enabled: boolean; text: string }
+  }[] = [
+    {
+      label: t("featureLabels.messaging"),
+      get: (pkg) => ({
+        enabled: pkg.features.messaging_enabled,
+        text: pkg.features.messaging_enabled
+          ? formatLimit(pkg.features.messaging_max_recipients, "recipients")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.createJob"),
+      get: (pkg) => ({
+        enabled: pkg.features.create_job_enabled,
+        text: pkg.features.create_job_enabled
+          ? formatLimit(pkg.features.create_job_limit, "job")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.boostProfile"),
+      get: (pkg) => ({
+        enabled: pkg.features.boost_profile_enabled,
+        text: pkg.features.boost_profile_enabled
+          ? formatLimit(pkg.features.boost_profile_monthly_limit, "turn")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.noAds"),
+      get: (pkg) => ({
+        enabled: !pkg.features.ads_enabled,
+        text: !pkg.features.ads_enabled ? t("yes") : "—",
+      }),
+    },
+  ]
+
   return (
     <SiteLayout>
       {/* ── Hero ── */}
       <section className="container mx-auto px-4 py-10 md:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-block rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold tracking-widest text-primary uppercase">
-            Bảng giá
+            {t("title")}
           </span>
           <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
-            Chọn gói phù hợp với bạn
+            {t("heroTitle")}
           </h1>
           <p className="mt-4 text-base text-muted-foreground md:text-lg">
-            Tất cả các gói đều có thể nâng cấp bất cứ lúc nào. Thanh toán nhanh
-            qua ví trong ứng dụng.
+            {t("heroDescription")}
           </p>
         </div>
 
         {fetchError ? (
           <Alert variant="destructive" className="mx-auto mt-10 max-w-2xl">
-            <AlertTitle>Không thể tải bảng giá</AlertTitle>
-            <AlertDescription>
-              Đã xảy ra sự cố khi tải bảng giá. Vui lòng thử lại sau giây lát.
-            </AlertDescription>
+            <AlertTitle>{t("fetchErrorTitle")}</AlertTitle>
+            <AlertDescription>{t("fetchErrorDescription")}</AlertDescription>
           </Alert>
         ) : (
           <>
@@ -128,20 +131,20 @@ export default async function PricingPage() {
             {/* ── Comparison table ── */}
             <div className="mt-12 md:mt-16">
               <h2 className="mb-5 text-center text-xl font-bold tracking-tight md:mb-6 md:text-2xl">
-                SO SÁNH CHI TIẾT
+                {t("comparisonTitle")}
               </h2>
 
               {/* Mobile: nhóm thẻ theo tính năng (iOS) */}
               <div className="space-y-3 md:hidden">
                 {[
                   {
-                    label: "Giá / tháng",
+                    label: t("pricePerMonth"),
                     get: (pkg: PricingPackage) => ({
                       enabled: true,
                       text:
                         getPackagePrice(pkg) === 0
-                          ? "Miễn phí"
-                          : formatCurrency(getPackagePrice(pkg)),
+                          ? t("free")
+                          : formatCurrency(getPackagePrice(pkg), locale),
                     }),
                   },
                   ...FEATURE_ROWS,
@@ -200,7 +203,7 @@ export default async function PricingPage() {
                   <thead>
                     <tr className="bg-muted/50 text-left">
                       <th className="w-1/3 px-6 py-4 font-semibold text-muted-foreground">
-                        Tính năng
+                        {t("featureColumn")}
                       </th>
                       {packages.map((pkg) => {
                         const meta = PLAN_META[pkg.package_code]
@@ -224,15 +227,17 @@ export default async function PricingPage() {
                   <tbody className="divide-y divide-border">
                     {/* Price row */}
                     <tr className="hover:bg-muted/30">
-                      <td className="px-6 py-4 font-medium">Giá / tháng</td>
+                      <td className="px-6 py-4 font-medium">
+                        {t("pricePerMonth")}
+                      </td>
                       {packages.map((pkg) => (
                         <td
                           key={pkg.id}
                           className="px-6 py-4 text-center font-semibold"
                         >
                           {getPackagePrice(pkg) === 0
-                            ? "Miễn phí"
-                            : formatCurrency(getPackagePrice(pkg))}
+                            ? t("free")
+                            : formatCurrency(getPackagePrice(pkg), locale)}
                         </td>
                       ))}
                     </tr>

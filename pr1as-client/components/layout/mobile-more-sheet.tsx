@@ -83,9 +83,8 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
       ? [{ href: "/worker/bookings/schedule", label: t("schedule"), icon: CalendarDays }]
       : []),
     ...(activeRole === "worker"
-      ? [{ href: "/worker/boost", label: "Điểm danh", icon: Flame }]
+      ? [{ href: "/worker/boost", label: t("boost"), icon: Flame }]
       : []),
-    { href: "/wallet", label: "Ví", icon: Wallet },
     { href: "/wallet", label: t("wallet"), icon: Wallet },
     {
       href: activeRole === "worker" ? "/worker/bookings" : "/client/bookings",

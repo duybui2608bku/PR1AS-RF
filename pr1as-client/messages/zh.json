@@ -33,7 +33,8 @@
     "switchToWorker": "工作者",
     "switchToClient": "客户",
     "me": "我",
-    "selectLanguage": "选择语言"
+    "selectLanguage": "选择语言",
+    "boost": "签到 (Boost)"
   },
   "Footer": {
     "copyright": "版权所有。",
@@ -663,5 +664,313 @@
     "workerBadge": "工作者",
     "startButton": "立即开始",
     "skipButton": "暂时跳过"
+  },
+  "System": {
+    "errorTitle": "发生错误",
+    "errorMessage": "应用程序遇到了意外错误",
+    "errorCritical": "发生严重错误",
+    "errorCannotContinue": "应用程序无法继续",
+    "errorRetry": "请重试。如果问题仍然存在，请联系支持部门。",
+    "errorCode": "错误代码: {code}",
+    "tryAgain": "重试",
+    "backToHome": "返回首页",
+    "contactSupport": "联系客服",
+    "globalError": {
+      "heading": "发生关键错误",
+      "title": "应用无法继续运行",
+      "description": "发生意外错误。请重试或返回首页。如果问题仍然存在，请联系客服。"
+    },
+    "og": {
+      "title": "在一个平台上发现服务、预约和管理预约",
+      "subtitle": "连接客户与信誉良好的工人和自由职业者。"
+    },
+    "loading": "加载中...",
+    "maintenance": {
+      "title": "系统维护",
+      "description": "网站正在维护和升级中。系统正在维护升级，以便为您提供更好的服务。请稍后再回来。",
+      "patience": "感谢您的耐心等待",
+      "emergency": "如果您需要紧急支持，请联系"
+    },
+    "offline": {
+      "title": "网络连接中断",
+      "description": "您似乎已离线。请检查您的 Wi-Fi 或移动数据连接，然后重试。",
+      "checking": "正在检查...",
+      "retry": "重试"
+    },
+    "notFoundTitle": "页面未找到",
+    "notFoundDescription": "您正在寻找的页面可能已被移动或删除。"
+  },
+  "SEO": {
+    "servicesTitle": "查找服务和工作者",
+    "servicesDescription": "寻找合适的工作者，按服务和地区过滤，查看个人资料并在线预约 PR1AS。"
+  },
+  "Home": {
+    "heroLocationLabel": "地点",
+    "heroLocationPlaceholder": "城市或区...",
+    "heroTimeLabel": "时间",
+    "heroTimePlaceholder": "选择日期和时间",
+    "heroSearchButton": "搜索",
+    "heroMobileSearchTrigger": "开始搜索",
+    "heroServiceLabel": "服务",
+    "heroServicePlaceholder": "选择服务",
+    "heroServiceAll": "全部",
+    "heroServiceCount": "{count} 项服务"
+  },
+  "ServicePicker": {
+    "title": "选择服务",
+    "searchPlaceholder": "搜索服务...",
+    "empty": "未找到匹配的服务",
+    "allServices": "全部服务"
+  },
+  "Bookings": {
+    "myBookings": "我的预约",
+    "manageBookings": "管理您已下单的预约",
+    "refresh": "刷新",
+    "status": "状态",
+    "allStatus": "所有状态",
+    "fromDate": "开始日期",
+    "toDate": "结束日期",
+    "reset": "重置",
+    "listTitle": "预约列表",
+    "noBookings": "暂无预约",
+    "loadError": "加载预约列表失败",
+    "tryAgain": "重试",
+    "service": "服务",
+    "worker": "工作者",
+    "appointment": "预约时间",
+    "createdAt": "创建日期",
+    "workerNotes": "工作者备注",
+    "actions": "操作",
+    "duration": "时长: {hours} 小时",
+    "viewCancelReason": "查看取消原因",
+    "cancelReasonPrefix": "原因: {reason}",
+    "cancelledByPrefix": "操作人: {by}",
+    "cancelledAtPrefix": "时间: {time}",
+    "notes": "备注:",
+    "noActions": "无可用操作",
+    "selectAction": "选择操作",
+    "openComplaintGroup": "打开投诉群组",
+    "review": "评价",
+    "confirmComplete": "确认完成",
+    "complaint": "投诉",
+    "cancel": "取消",
+    "prev": "上一页",
+    "next": "下一页",
+    "loginRequiredReview": "您需要登录才能进行评价。",
+    "workerNotFound": "未找到该预约的工作者。",
+    "complaintGroupError": "无法打开投诉群组。",
+    "statusLabels": {
+      "PENDING": "待处理",
+      "REJECTED": "已拒绝",
+      "CONFIRMED": "已确认",
+      "IN_PROGRESS": "进行中",
+      "PENDING_CLIENT_ACCEPTANCE": "等待客户接受",
+      "COMPLETED": "已完成",
+      "CANCELLED": "已取消",
+      "DISPUTED": "有争议",
+      "EXPIRED": "已过期"
+    },
+    "cancellationReasons": {
+      "CLIENT_REQUEST": "客户请求",
+      "WORKER_UNAVAILABLE": "工作者不可用",
+      "SCHEDULE_CONFLICT": "时间冲突",
+      "EMERGENCY": "紧急情况",
+      "POLICY_VIOLATION": "违反政策",
+      "OTHER": "其他"
+    },
+    "cancelledBy": {
+      "CLIENT": "客户",
+      "WORKER": "工作者",
+      "ADMIN": "管理员",
+      "SYSTEM": "系统"
+    },
+    "disputeReasons": {
+      "SERVICE_NOT_AS_DESCRIBED": "服务与描述不符",
+      "WORKER_NO_SHOW": "工作者未到场",
+      "POOR_QUALITY": "质量不佳",
+      "INCOMPLETE_SERVICE": "服务未完成",
+      "UNPROFESSIONAL_BEHAVIOR": "态度不专业",
+      "SAFETY_CONCERN": "安全担忧",
+      "OTHER": "其他"
+    },
+    "cancelDialog": {
+      "title": "取消预约",
+      "description": "请选择取消原因。此操作无法撤销。",
+      "reasonLabel": "原因",
+      "reasonPlaceholder": "选择取消原因",
+      "notesLabel": "备注 (可选)",
+      "notesPlaceholder": "描述取消原因 (最多 500 个字符)",
+      "confirmButton": "确认取消",
+      "errorSelectReason": "请选择取消原因。"
+    }
+  },
+  "Pricing": {
+    "title": "价格",
+    "description": "比较 PR1AS 标准版、黄金版和钻石版计划，以升级您的个人资料、与客户沟通并管理服务。",
+    "heroTitle": "选择适合您的计划",
+    "heroDescription": "所有计划均可随时升级。通过应用内钱包快速支付。",
+    "fetchErrorTitle": "无法加载价格",
+    "fetchErrorDescription": "加载价目表时出现问题。请稍后再试。",
+    "comparisonTitle": "详细比较",
+    "featureColumn": "功能",
+    "pricePerMonth": "价格 / 月",
+    "free": "免费",
+    "unlimited": "无限制",
+    "perMonth": "每月",
+    "active": "生效中",
+    "popular": "最受欢迎",
+    "premium": "高级",
+    "featureLabels": {
+      "messaging": "与客户沟通",
+      "createJob": "发布文章",
+      "boostProfile": "每月置顶资料",
+      "noAds": "隐藏广告"
+    },
+    "units": {
+      "recipients": "位联系人",
+      "job": "个帖子",
+      "turn": "次"
+    },
+    "buttons": {
+      "current": "当前计划",
+      "lower": "低级计划",
+      "free": "免费计划",
+      "guestFree": "免费开始",
+      "guestUpgrade": "登录并升级",
+      "buyNow": "立即购买"
+    },
+    "errors": {
+      "paymentCreateFailed": "无法创建支付。请重试。"
+    },
+    "yes": "是",
+    "purchaseModal": {
+      "title": "购买 {package} 计划",
+      "description": "扫描二维码或根据以下信息进行转账。系统收到款项后会自动激活套餐。",
+      "bankLabel": "银行",
+      "accountLabel": "账号",
+      "amountLabel": "金额",
+      "contentLabel": "转账备注",
+      "checkingStatus": "等待付款确认...",
+      "successStatus": "套餐激活成功！",
+      "failedStatus": "交易失败或金额不正确",
+      "noteTitle": "重要提示",
+      "noteContent": "请输入准确的转账备注 {content} 以进行自动确认。备注错误将无法激活套餐。",
+      "copied": "已复制 {label}。",
+      "successToast": "{package} 套餐已成功激活！",
+      "failedToast": "交易失败或金额不正确。请重试。",
+      "close": "关闭",
+      "cancel": "取消"
+    }
+  },
+  "Privacy": {
+    "title": "隐私政策",
+    "lastUpdated": "最后更新：2026年5月",
+    "section1": {
+      "title": "1. 我们收集的信息",
+      "content": "我们收集您在注册账户时提供的信息，包括：姓名、电子邮件地址、电话号码和付款信息。此外，我们可能会收集使用数据，例如 IP 地址、浏览器类型、您访问的页面和使用时间，以改善服务体验。"
+    },
+    "section2": {
+      "title": "2. 使用信息的目的",
+      "items": [
+        "创建并管理您的账户。",
+        "处理交易和付款。",
+        "发送与服务相关的通知，包括预约确认和系统更新。",
+        "改进和开发产品功能。",
+        "履行法律义务。"
+      ]
+    },
+    "section3": {
+      "title": "3. 共享信息",
+      "content": "我们不会将您的个人信息出售、交易或转让给第三方，但为支持平台运营而提供服务的合作伙伴（例如付款网关）以及法律要求的情况除外。"
+    },
+    "section4": {
+      "title": "4. 数据安全",
+      "content": "我们采取适当的技术和组织措施，保护您的个人信息免遭未经授权的访问、丢失或破坏。密码经过单向加密，所有连接均使用 HTTPS 协议。"
+    },
+    "section5": {
+      "title": "5. Cookie",
+      "content": "我们使用会话 Cookie 来维护登录状态，并使用分析 Cookie 来了解用户如何与平台互动。您可以在浏览器设置中禁用 Cookie，但某些功能可能无法正常运行。"
+    },
+    "section6": {
+      "title": "6. 您的权利",
+      "content": "您可以随时通过支持电子邮件与我们联系，访问、编辑或要求删除您的个人信息。我们将在 7 个工作日内回复。"
+    },
+    "section7": {
+      "title": "7. 联系我们",
+      "content": "如果您对本隐私政策有任何疑问，请通过页脚中显示的电子邮件与我们联系。"
+    }
+  },
+  "Terms": {
+    "title": "使用条款",
+    "lastUpdated": "最后更新：2026年5月",
+    "section1": {
+      "title": "1. 接受条款",
+      "content": "通过访问或使用本平台，您同意受这些条款和条件的约束。如果您不同意任何部分，请不要使用该服务。"
+    },
+    "section2": {
+      "title": "2. 用户账户",
+      "items": [
+        "您必须年满 18 岁才能注册和使用该服务。",
+        "您负责维护登录信息的安全性。",
+        "每个用户只能创建一个账户。重复的账户可能会被删除。",
+        "账户信息必须准确并及时更新。"
+      ]
+    },
+    "section3": {
+      "title": "3. 服务使用",
+      "content": "您同意不将平台用于：",
+      "items": [
+        "违反任何适用的法律或法规。",
+        "发送垃圾邮件、欺诈或有害内容。",
+        "侵犯他人的隐私或知识产权。",
+        "破坏或干扰我们的系统和服务器。"
+      ]
+    },
+    "section4": {
+      "title": "4. 付款和退款",
+      "content": "钱包充值交易通过经过认证的支付网关处理。钱包余额只能在平台上使用。除非系统方面确认存在技术错误，否则我们不退还钱包余额。"
+    },
+    "section5": {
+      "title": "5. 服务套餐",
+      "content": "升级套餐（黄金、钻石）根据所选账单周期生效。套餐会自动续订，除非您在续订日期前取消。我们保留更改价格或套餐功能的权利，并至少提前 30 天通知。"
+    },
+    "section6": {
+      "title": "6. 账户终止",
+      "content": "如果我们发现违反条款、欺诈或损害其他用户的行为，我们保留暂停或删除账户的权利。您也可以随时通过联系客服要求删除账户。"
+    },
+    "section7": {
+      "title": "7. 责任限制",
+      "content": "服务按“原样”提供。我们不保证服务始终连续，且不对因使用平台而产生的间接损害负责。"
+    },
+    "section8": {
+      "title": "8. 条款变更",
+      "content": "我们可能会定期更新这些条款。任何变更都将通过电子邮件或应用内通知。在变更应用后继续使用服务意味着您接受新条款。"
+    }
+  },
+  "GlobalError": {
+    "title": "出错了",
+    "description": "抱歉，发生了一些意外。请尝试刷新页面或稍后再试。",
+    "backHome": "返回首页",
+    "retry": "重试"
+  },
+  "OG": {
+    "defaultTitle": "PR1AS - 寻找专业服务",
+    "defaultDescription": "在 PR1AS 寻找并预约您所在地区的专业工作者。"
+  },
+  "Location": {
+    "searchProvince": "搜索省/市...",
+    "searchWard": "搜索 {province} 的镇/街道...",
+    "chooseProvinceLeft": "请选择左侧的省份",
+    "allProvince": "全{province}",
+    "chooseAllOrWard": "选择整个区域或城镇/街道",
+    "loadProvinceError": "无法加载省份列表。",
+    "loadWardError": "无法加载城镇/街道列表。",
+    "noProvinceResults": "无结果。",
+    "noWardResults": "未找到匹配的城镇/街道。",
+    "chooseProvinceFirst": "选择省份以查看城镇/街道。",
+    "back": "返回",
+    "otherProvince": "选择其他省份",
+    "clear": "清除",
+    "select": "选择"
   }
 }

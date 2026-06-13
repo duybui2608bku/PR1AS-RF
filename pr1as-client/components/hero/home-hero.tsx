@@ -1,6 +1,7 @@
 "use client"
 import * as React from "react"
 import { createPortal } from "react-dom"
+import { useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 
 import {
@@ -77,13 +78,13 @@ export function HomeHero({
   onScheduledAtChange,
   onSearchSubmit,
 }: HomeHeroProps) {
+  const t = useTranslations("Home")
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services", "list"],
     queryFn: serviceService.getServices,
     staleTime: 5 * 60 * 1000,
   })
 
-  // Only offer the services that belong to the active tab in the picker.
   const tabServices = React.useMemo(
     () => services.filter((s) => s.category === activeTab),
     [services, activeTab]
@@ -96,7 +97,6 @@ export function HomeHero({
 
   const { filterSlotEl } = useServicesHeaderStore()
 
-  // Desktop search form — portaled into the header filter slot
   const desktopForm = (
     <div className="flex justify-center px-4 pt-2 pb-4">
       <form
@@ -120,8 +120,8 @@ export function HomeHero({
         />
 
         <LocationSearchField
-          label="Địa điểm"
-          placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+          label={t("heroLocationLabel")}
+          placeholder={t("heroLocationPlaceholder")}
           value={selectedLocation}
           onChange={onSelectedLocationChange}
           icon={
@@ -135,8 +135,8 @@ export function HomeHero({
         />
 
         <SearchDateField
-          label="Thời gian"
-          placeholder="Chọn ngày và giờ"
+          label={t("heroTimeLabel")}
+          placeholder={t("heroTimePlaceholder")}
           value={scheduledAt}
           onChange={onScheduledAtChange}
         />
@@ -148,7 +148,7 @@ export function HomeHero({
             className="h-full rounded-full px-6"
           >
             <Search className="size-4" />
-            Tìm kiếm
+            {t("heroSearchButton")}
           </Button>
         </div>
       </form>
@@ -157,7 +157,6 @@ export function HomeHero({
 
   return (
     <>
-      {/* Mobile only: search trigger + tabs */}
       <div className="sm:hidden container mx-auto px-4 py-4">
         <div className="space-y-5">
           <MobileSearch
@@ -178,13 +177,11 @@ export function HomeHero({
           />
         </div>
       </div>
-      {/* Desktop form portaled into header filter slot */}
       {filterSlotEl ? createPortal(desktopForm, filterSlotEl) : null}
     </>
   )
 }
 
-// ─── ServiceTabs ──────────────────────────────────────────────────────────────
 
 type ServiceTabsProps = {
   activeTab: ServiceTab
@@ -192,19 +189,20 @@ type ServiceTabsProps = {
   className?: string
 }
 
-const SERVICE_TABS: { value: ServiceTab; label: string; icon: LucideIcon }[] = [
-  { value: "ASSISTANCE", label: "Trợ lý", icon: Briefcase },
-  { value: "COMPANIONSHIP", label: "Đồng hành", icon: HeartHandshake },
+const SERVICE_TABS: { value: ServiceTab; labelKey: string; icon: LucideIcon }[] = [
+  { value: "ASSISTANCE", labelKey: "Services.assistance", icon: Briefcase },
+  { value: "COMPANIONSHIP", labelKey: "Services.companionship", icon: HeartHandshake },
 ]
 
 function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
+  const t = useTranslations()
   const wrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])
 
   const triggerPop = (index: number) => {
     const el = wrapRefs.current[index]
     if (!el) return
     el.classList.remove("popping")
-    void el.offsetWidth // force reflow so animation restarts on rapid clicks
+    void el.offsetWidth
     el.classList.add("popping")
     el.addEventListener("animationend", () => el.classList.remove("popping"), { once: true })
   }
@@ -236,7 +234,7 @@ function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
                 style={{ "--tab-delay": `${i * 120}ms` } as React.CSSProperties}
               />
             </span>
-            <span className="text-sm font-medium">{tab.label}</span>
+            <span className="text-sm font-medium">{t(tab.labelKey)}</span>
           </button>
         )
       })}
@@ -244,7 +242,6 @@ function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
   )
 }
 
-// ─── MobileSearch ─────────────────────────────────────────────────────────────
 
 type MobileSearchProps = {
   services: ServiceItem[]
@@ -269,6 +266,7 @@ function MobileSearch({
   onScheduledAtChange,
   onSearchSubmit,
 }: MobileSearchProps) {
+  const t = useTranslations("Home")
   const [open, setOpen] = React.useState(false)
 
   const handleSubmit = () => {
@@ -288,7 +286,7 @@ function MobileSearch({
         >
           <Search className="size-5 shrink-0 text-foreground" />
           <span className="text-sm font-medium text-foreground">
-            Bắt đầu tìm kiếm
+            {t("heroMobileSearchTrigger")}
           </span>
         </button>
       </PopoverTrigger>
@@ -296,8 +294,6 @@ function MobileSearch({
         align="center"
         sideOffset={10}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        // Keep the panel open while the user interacts with the nested
-        // location/service/date popovers (each portals to its own popper).
         onInteractOutside={(e) => {
           const target = e.target as Element | null
           if (target?.closest("[data-radix-popper-content-wrapper]")) {
@@ -308,8 +304,8 @@ function MobileSearch({
       >
         <div className="rounded-2xl border border-border">
           <LocationSearchField
-            label="Địa điểm"
-            placeholder="Hà Nội hoặc Phường Cầu Giấy..."
+            label={t("heroLocationLabel")}
+            placeholder={t("heroLocationPlaceholder")}
             value={selectedLocation}
             onChange={onSelectedLocationChange}
             icon={<MapPin className="size-4 shrink-0 text-muted-foreground" />}
@@ -317,8 +313,8 @@ function MobileSearch({
         </div>
         <div className="rounded-2xl border border-border">
           <SearchDateField
-            label="Thời gian"
-            placeholder="Thêm ngày"
+            label={t("heroTimeLabel")}
+            placeholder={t("heroTimePlaceholder")}
             value={scheduledAt}
             onChange={onScheduledAtChange}
           />
@@ -338,14 +334,12 @@ function MobileSearch({
           className="h-12 w-full rounded-full"
         >
           <Search className="size-4" />
-          Tìm kiếm
+          {t("heroSearchButton")}
         </Button>
       </PopoverContent>
     </Popover>
   )
 }
-
-// ─── ServicePickerField ───────────────────────────────────────────────────────
 
 type ServicePickerFieldProps = {
   services: ServiceItem[]
@@ -360,14 +354,15 @@ function ServicePickerField({
   activeCodes,
   onToggle,
 }: ServicePickerFieldProps) {
+  const t = useTranslations("Home")
   const displayValue = React.useMemo(() => {
     if (activeCodes.length === 0) return null
     if (activeCodes.length === 1) {
       const match = services.find((s) => s.code === activeCodes[0])
       return match ? serviceService.getName(match.name) : activeCodes[0]
     }
-    return `${activeCodes.length} dịch vụ`
-  }, [activeCodes, services])
+    return t("heroServiceCount", { count: activeCodes.length })
+  }, [activeCodes, services, t])
 
   return (
     <Popover>
@@ -380,7 +375,9 @@ function ServicePickerField({
             "sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2"
           )}
         >
-          <span className="text-xs font-semibold text-foreground">Dịch vụ</span>
+          <span className="text-xs font-semibold text-foreground">
+            {t("heroServiceLabel")}
+          </span>
           <div className="flex items-center gap-2">
             <LayoutGrid className="size-4 shrink-0 text-muted-foreground" />
             <span
@@ -389,7 +386,7 @@ function ServicePickerField({
                 displayValue ? "text-foreground" : "text-muted-foreground"
               )}
             >
-              {displayValue ?? "Chọn dịch vụ"}
+              {displayValue ?? t("heroServicePlaceholder")}
             </span>
           </div>
         </button>
@@ -405,7 +402,7 @@ function ServicePickerField({
           <div className="flex flex-col gap-1">
             <ServicePill
               icon={LayoutGrid}
-              label="Tất cả"
+              label={t("heroServiceAll")}
               isActive={activeCodes.length === 0}
               onClick={() => onToggle("ALL")}
             />
@@ -424,8 +421,6 @@ function ServicePickerField({
     </Popover>
   )
 }
-
-// ─── SearchDateField ──────────────────────────────────────────────────────────
 
 type SearchDateFieldProps = {
   label: string
@@ -470,8 +465,6 @@ function SearchDateField({
     </div>
   )
 }
-
-// ─── ServicePill ──────────────────────────────────────────────────────────────
 
 type ServicePillProps = {
   icon: LucideIcon

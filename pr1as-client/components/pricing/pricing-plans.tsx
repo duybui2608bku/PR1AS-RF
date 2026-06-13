@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { Check, CheckCircle2, Loader2, Minus, QrCode, Sparkles, Star, Zap } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
+import { useTranslations, useLocale } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { useMyPricing, useBuyPricing } from "@/lib/hooks/use-pricing"
@@ -23,89 +24,8 @@ const PLAN_RANK: Record<PricingPlanCode, number> = {
   diamond: 2,
 }
 
-const PLAN_META: Record<
-  PricingPlanCode,
-  {
-    icon: React.ReactNode
-    highlight: boolean
-    badge: string | null
-    color: string
-    border: string
-  }
-> = {
-  standard: {
-    icon: <Zap className="size-5" />,
-    highlight: false,
-    badge: null,
-    color: "text-foreground",
-    border: "border-border",
-  },
-  gold: {
-    icon: <Star className="size-5 fill-amber-400 text-amber-400" />,
-    highlight: true,
-    badge: "Phổ biến nhất",
-    color: "text-amber-500",
-    border: "border-amber-400",
-  },
-  diamond: {
-    icon: <Sparkles className="size-5 text-violet-500" />,
-    highlight: false,
-    badge: "Cao cấp",
-    color: "text-violet-500",
-    border: "border-violet-400",
-  },
-}
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    amount
-  )
-
 const getPackagePrice = (pkg: PricingPackage) =>
   Number.isFinite(pkg.price) ? pkg.price : 0
-
-const formatLimit = (value: number | null, unit = "") =>
-  value === null ? "Không giới hạn" : `${value}${unit ? " " + unit : ""}`
-
-const FEATURE_ROWS: {
-  label: string
-  get: (pkg: PricingPackage) => { enabled: boolean; text: string }
-}[] = [
-  {
-    label: "Nhắn tin với khách hàng",
-    get: (pkg) => ({
-      enabled: pkg.features.messaging_enabled,
-      text: pkg.features.messaging_enabled
-        ? formatLimit(pkg.features.messaging_max_recipients, "người nhận")
-        : "—",
-    }),
-  },
-  {
-    label: "Đăng tin",
-    get: (pkg) => ({
-      enabled: pkg.features.create_job_enabled,
-      text: pkg.features.create_job_enabled
-        ? formatLimit(pkg.features.create_job_limit, "job")
-        : "—",
-    }),
-  },
-  {
-    label: "Boost hồ sơ mỗi tháng",
-    get: (pkg) => ({
-      enabled: pkg.features.boost_profile_enabled,
-      text: pkg.features.boost_profile_enabled
-        ? formatLimit(pkg.features.boost_profile_monthly_limit, "lượt")
-        : "—",
-    }),
-  },
-  {
-    label: "Ẩn quảng cáo",
-    get: (pkg) => ({
-      enabled: !pkg.features.ads_enabled,
-      text: !pkg.features.ads_enabled ? "Có" : "—",
-    }),
-  },
-]
 
 type ButtonState =
   | { kind: "current" }
@@ -136,8 +56,18 @@ function getButtonState(
   return { kind: "upgrade" }
 }
 
+type PricingPlanMeta = {
+  icon: React.ReactNode
+  highlight: boolean
+  badge: string | null
+  color: string
+  border: string
+}
+
 export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const router = useRouter()
+  const t = useTranslations("Pricing")
+  const locale = useLocale()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const storedPlan = useAuthStore((s) => s.user?.meta_data?.pricing_plan_code) as
     | PricingPlanCode
@@ -152,10 +82,85 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const [buyingPkg, setBuyingPkg] = useState<PricingPackage | null>(null)
   const [payment, setPayment] = useState<PricingPaymentResponse | null>(null)
 
+  const PLAN_META: Record<PricingPlanCode, PricingPlanMeta> = {
+    standard: {
+      icon: <Zap className="size-5" />,
+      highlight: false,
+      badge: null,
+      color: "text-foreground",
+      border: "border-border",
+    },
+    gold: {
+      icon: <Star className="size-5 fill-amber-400 text-amber-400" />,
+      highlight: true,
+      badge: t("popular"),
+      color: "text-amber-500",
+      border: "border-amber-400",
+    },
+    diamond: {
+      icon: <Sparkles className="size-5 text-violet-500" />,
+      highlight: false,
+      badge: t("premium"),
+      color: "text-violet-500",
+      border: "border-violet-400",
+    },
+  }
+
   const sortedPackages = useMemo(
     () => [...packages].sort((a, b) => getPackagePrice(a) - getPackagePrice(b)),
     [packages]
   )
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount)
+
+  const formatLimit = (value: number | null, unitKey?: string) =>
+    value === null
+      ? t("unlimited")
+      : `${value}${unitKey ? " " + t(`units.${unitKey}`) : ""}`
+
+  const FEATURE_ROWS: {
+    label: string
+    get: (pkg: PricingPackage) => { enabled: boolean; text: string }
+  }[] = [
+    {
+      label: t("featureLabels.messaging"),
+      get: (pkg) => ({
+        enabled: pkg.features.messaging_enabled,
+        text: pkg.features.messaging_enabled
+          ? formatLimit(pkg.features.messaging_max_recipients, "recipients")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.createJob"),
+      get: (pkg) => ({
+        enabled: pkg.features.create_job_enabled,
+        text: pkg.features.create_job_enabled
+          ? formatLimit(pkg.features.create_job_limit, "job")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.boostProfile"),
+      get: (pkg) => ({
+        enabled: pkg.features.boost_profile_enabled,
+        text: pkg.features.boost_profile_enabled
+          ? formatLimit(pkg.features.boost_profile_monthly_limit, "turn")
+          : "—",
+      }),
+    },
+    {
+      label: t("featureLabels.noAds"),
+      get: (pkg) => ({
+        enabled: !pkg.features.ads_enabled,
+        text: !pkg.features.ads_enabled ? t("yes") : "—",
+      }),
+    },
+  ]
 
   const handleClick = async (pkg: PricingPackage, state: ButtonState) => {
     switch (state.kind) {
@@ -177,7 +182,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
             setPayment(result)
           }
         } catch (error) {
-          toast.error(getErrorMessage(error, "Không thể tạo thanh toán. Vui lòng thử lại."))
+          toast.error(getErrorMessage(error, t("errors.paymentCreateFailed")))
         } finally {
           setBuyingPkg(null)
         }
@@ -231,21 +236,21 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
                 {isCurrent ? (
                   <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                     <CheckCircle2 className="size-3.5" />
-                    Đang dùng
+                    {t("active")}
                   </span>
                 ) : null}
               </div>
 
               <div className="mt-4">
                 {price === 0 ? (
-                  <p className="text-3xl font-extrabold">Miễn phí</p>
+                  <p className="text-3xl font-extrabold">{t("free")}</p>
                 ) : (
                   <>
                     <p className="text-3xl font-extrabold">
                       {formatCurrency(price)}
                     </p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      mỗi tháng
+                      {t("perMonth")}
                     </p>
                   </>
                 )}
@@ -316,10 +321,11 @@ function PlanCtaButton({
   onClick,
 }: {
   state: ButtonState
-  meta: (typeof PLAN_META)[PricingPlanCode]
+  meta: PricingPlanMeta
   isLoading: boolean
   onClick: () => void
 }) {
+  const t = useTranslations("Pricing.buttons")
   const baseClass = cn("mt-6 w-full", meta.highlight ? "shadow-md" : "")
 
   switch (state.kind) {
@@ -331,19 +337,19 @@ function PlanCtaButton({
           disabled
         >
           <CheckCircle2 className="size-4" />
-          Gói hiện tại
+          {t("current")}
         </Button>
       )
     case "lower":
       return (
         <Button className={baseClass} variant="outline" disabled>
-          Gói thấp hơn
+          {t("lower")}
         </Button>
       )
     case "free":
       return (
         <Button className={baseClass} variant="outline" disabled>
-          Gói miễn phí
+          {t("free")}
         </Button>
       )
     case "guest-free":
@@ -353,7 +359,7 @@ function PlanCtaButton({
           variant={meta.highlight ? "default" : "outline"}
           onClick={onClick}
         >
-          Bắt đầu miễn phí
+          {t("guestFree")}
         </Button>
       )
     case "guest-upgrade":
@@ -363,7 +369,7 @@ function PlanCtaButton({
           variant={meta.highlight ? "default" : "outline"}
           onClick={onClick}
         >
-          Đăng nhập để nâng cấp
+          {t("guestUpgrade")}
         </Button>
       )
     case "upgrade":
@@ -379,7 +385,7 @@ function PlanCtaButton({
           ) : (
             <QrCode className="size-4" />
           )}
-          Mua gói ngay
+          {t("buyNow")}
         </Button>
       )
   }

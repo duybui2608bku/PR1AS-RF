@@ -33,7 +33,8 @@
     "switchToWorker": "WORKER",
     "switchToClient": "CLIENT",
     "me": "Me",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "boost": "Attendance (Boost)"
   },
   "Footer": {
     "copyright": "All rights reserved.",
@@ -663,5 +664,303 @@
     "workerBadge": "Worker",
     "startButton": "Get Started",
     "skipButton": "Skip for now"
+  },
+  "System": {
+    "errorTitle": "An error occurred",
+    "errorMessage": "Unexpected application error",
+    "errorCritical": "Critical error occurred",
+    "errorCannotContinue": "The application cannot continue",
+    "errorRetry": "Please try again. If the error persists, contact support.",
+    "errorCode": "Error code: {code}",
+    "tryAgain": "Try again",
+    "backToHome": "Back to home",
+    "contactSupport": "Contact support",
+    "globalError": {
+      "heading": "A critical error has occurred",
+      "title": "Application cannot continue",
+      "description": "An unexpected error occurred. Please try again or return to home page. If the error persists, contact support."
+    },
+    "og": {
+      "title": "Find services, book and manage bookings on one platform",
+      "subtitle": "Connecting customers with reputable workers and freelancers."
+    },
+    "loading": "Loading...",
+    "maintenance": {
+      "title": "System Maintenance",
+      "description": "The website is currently under maintenance and upgrade. System is undergoing maintenance and upgrade to serve you better. Please back later.",
+      "patience": "Thank you for your patience",
+      "emergency": "If you need emergency support, please contact"
+    },
+    "offline": {
+      "title": "Network connection lost",
+      "description": "It seems you are offline. Please check your Wi-Fi or mobile data connection and try again.",
+      "checking": "Checking...",
+      "retry": "Try again"
+    },
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you are looking for might have been moved or deleted."
+  },
+  "SEO": {
+    "servicesTitle": "Find services and workers",
+    "servicesDescription": "Find the right worker, filter by service and region, view profiles and book online on PR1AS."
+  },
+  "Home": {
+    "heroLocationLabel": "Location",
+    "heroLocationPlaceholder": "City or Ward...",
+    "heroTimeLabel": "Time",
+    "heroTimePlaceholder": "Select date and time",
+    "heroSearchButton": "Search",
+    "heroMobileSearchTrigger": "Start your search",
+    "heroServiceLabel": "Services",
+    "heroServicePlaceholder": "Choose services",
+    "heroServiceAll": "All",
+    "heroServiceCount": "{count} services"
+  },
+  "ServicePicker": {
+    "title": "Select services",
+    "searchPlaceholder": "Search for services...",
+    "empty": "No matching services found",
+    "allServices": "All services"
+  },
+  "Bookings": {
+    "myBookings": "My Bookings",
+    "manageBookings": "Manage the bookings you have placed",
+    "refresh": "Refresh",
+    "status": "Status",
+    "allStatus": "All status",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "reset": "Reset",
+    "listTitle": "Booking List",
+    "noBookings": "No bookings yet",
+    "loadError": "Failed to load booking list",
+    "tryAgain": "Try again",
+    "service": "Service",
+    "worker": "Worker",
+    "appointment": "Appointment",
+    "createdAt": "Created at",
+    "workerNotes": "Worker notes",
+    "actions": "Actions",
+    "duration": "Duration: {hours} hours",
+    "viewCancelReason": "View cancel reason",
+    "cancelReasonPrefix": "Reason: {reason}",
+    "cancelledByPrefix": "By: {by}",
+    "cancelledAtPrefix": "Time: {time}",
+    "notes": "Notes:",
+    "noActions": "No actions",
+    "selectAction": "Select action",
+    "openComplaintGroup": "Open complaint group",
+    "review": "Review",
+    "confirmComplete": "Confirm complete",
+    "complaint": "Complaint",
+    "cancel": "Cancel",
+    "prev": "Prev",
+    "next": "Next",
+    "loginRequiredReview": "You need to login to review.",
+    "workerNotFound": "Worker not found for this booking.",
+    "complaintGroupError": "Could not open complaint group.",
+    "statusLabels": {
+      "PENDING": "Pending",
+      "REJECTED": "Rejected",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In Progress",
+      "PENDING_CLIENT_ACCEPTANCE": "Waiting for acceptance",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "DISPUTED": "Disputed",
+      "EXPIRED": "Expired"
+    },
+    "cancellationReasons": {
+      "CLIENT_REQUEST": "Client request",
+      "WORKER_UNAVAILABLE": "Worker unavailable",
+      "SCHEDULE_CONFLICT": "Schedule conflict",
+      "EMERGENCY": "Emergency",
+      "POLICY_VIOLATION": "Policy violation",
+      "OTHER": "Other"
+    },
+    "cancelledBy": {
+      "CLIENT": "Client",
+      "WORKER": "Worker",
+      "ADMIN": "Admin",
+      "SYSTEM": "System"
+    },
+    "disputeReasons": {
+      "SERVICE_NOT_AS_DESCRIBED": "Service not as described",
+      "WORKER_NO_SHOW": "Worker no-show",
+      "POOR_QUALITY": "Poor quality",
+      "INCOMPLETE_SERVICE": "Incomplete service",
+      "UNPROFESSIONAL_BEHAVIOR": "Unprofessional behavior",
+      "SAFETY_CONCERN": "Safety concern",
+      "OTHER": "Other"
+    },
+    "cancelDialog": {
+      "title": "Cancel Booking",
+      "description": "Please select a cancellation reason. This action cannot be undone.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Select cancellation reason",
+      "notesLabel": "Notes (optional)",
+      "notesPlaceholder": "Describe the reason for cancellation (max 500 characters)",
+      "confirmButton": "Confirm Cancellation",
+      "errorSelectReason": "Please select a cancellation reason."
+    }
+  },
+  "Pricing": {
+    "title": "Pricing",
+    "description": "Compare PR1AS Standard, Gold and Diamond plans to upgrade your profile, message with customers and manage services.",
+    "heroTitle": "Choose the right plan for you",
+    "heroDescription": "All plans can be upgraded at any time. Fast payment via in-app wallet.",
+    "fetchErrorTitle": "Cannot load pricing",
+    "fetchErrorDescription": "There was a problem loading the pricing table. Please try again in a moment.",
+    "comparisonTitle": "DETAILED COMPARISON",
+    "featureColumn": "Feature",
+    "pricePerMonth": "Price / month",
+    "free": "Free",
+    "unlimited": "Unlimited",
+    "perMonth": "per month",
+    "active": "Active",
+    "popular": "Most Popular",
+    "premium": "Premium",
+    "featureLabels": {
+      "messaging": "Messaging with customers",
+      "createJob": "Create post",
+      "boostProfile": "Boost profile monthly",
+      "noAds": "Hide ads"
+    },
+    "units": {
+      "recipients": "recipients",
+      "job": "job",
+      "turn": "turns"
+    },
+    "buttons": {
+      "current": "Current plan",
+      "lower": "Lower plan",
+      "free": "Free plan",
+      "guestFree": "Get started for free",
+      "guestUpgrade": "Login to upgrade",
+      "buyNow": "Buy now"
+    },
+    "errors": {
+      "paymentCreateFailed": "Cannot create payment. Please try again."
+    },
+    "yes": "Yes",
+    "purchaseModal": {
+      "title": "Payment for {package} plan",
+      "description": "Scan the QR code or transfer according to the information below. The system will automatically activate the plan after receiving the money.",
+      "bankLabel": "Bank",
+      "accountLabel": "Account number",
+      "amountLabel": "Amount",
+      "contentLabel": "Transfer content",
+      "checkingStatus": "Waiting for payment confirmation…",
+      "successStatus": "Plan activated successfully!",
+      "failedStatus": "Transaction failed or incorrect amount",
+      "noteTitle": "Important Note",
+      "noteContent": "Enter the TRANSFER CONTENT EXACTLY ({content}) for automatic confirmation. Incorrect content will not activate the plan.",
+      "copied": "Copied {label}.",
+      "successToast": "{package} plan has been successfully activated!",
+      "failedToast": "Transaction failed or incorrect amount. Please check again.",
+      "close": "Close",
+      "cancel": "Cancel"
+    }
+  },
+  "Privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: May 2026",
+    "section1": {
+      "title": "1. Information We Collect",
+      "content": "We collect information you provide when registering for an account, including: full name, email address, phone number, and payment information. In addition, we may collect usage data such as IP address, browser type, pages you visit and time of use to improve the service experience."
+    },
+    "section2": {
+      "title": "2. Purpose of Using Information",
+      "items": [
+        "Create and manage your account.",
+        "Process transactions and payments.",
+        "Send service-related notifications, including booking confirmations and system updates.",
+        "Improve and develop product features.",
+        "Comply with legal obligations."
+      ]
+    },
+    "section3": {
+      "title": "3. Sharing Information",
+      "content": "We do not sell, trade, or transfer your personal information to third parties, except for partners who provide services to support the operation of the platform (e.g., payment gateways) and in cases required by law."
+    },
+    "section4": {
+      "title": "4. Data Security",
+      "content": "We apply appropriate technical and organizational measures to protect your personal information against unauthorized access, loss or destruction. Passwords are one-way encrypted and all connections use the HTTPS protocol."
+    },
+    "section5": {
+      "title": "5. Cookies",
+      "content": "We use session cookies to maintain login status and analytics cookies to understand how users interact with the platform. You can disable cookies in your browser settings, however some features may not function properly."
+    },
+    "section6": {
+      "title": "6. Your Rights",
+      "content": "You have the right to access, edit or request deletion of your personal information at any time by contacting us via support email. We will respond within 7 working days."
+    },
+    "section7": {
+      "title": "7. Contact",
+      "content": "If you have any questions about this privacy policy, please contact us via the email displayed in the footer."
+    }
+  },
+  "Terms": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last updated: May 2026",
+    "section1": {
+      "title": "1. Acceptance of Terms",
+      "content": "By accessing or using the platform, you agree to be bound by these terms and conditions. If you do not agree with any part, please do not use the service."
+    },
+    "section2": {
+      "title": "2. User Account",
+      "items": [
+        "You must be 18 years of age or older to register and use the service.",
+        "You are responsible for maintaining the security of your login information.",
+        "Each user can only create one account. Duplicate accounts may be deleted.",
+        "Account information must be accurate and updated promptly."
+      ]
+    },
+    "section3": {
+      "title": "3. Service Usage",
+      "content": "You agree not to use the platform to:",
+      "items": [
+        "Violate any applicable laws or regulations.",
+        "Send spam, fraudulent or harmful content.",
+        "Infringe upon the privacy or intellectual property rights of others.",
+        "Disrupt or interfere with our systems and servers."
+      ]
+    },
+    "section4": {
+      "title": "4. Payment and Refund",
+      "content": "Wallet top-up transactions are processed through certified payment gateways. Wallet balance can only be used on the platform. We do not refund wallet balance unless there is a confirmed technical error from the system side."
+    },
+    "section5": {
+      "title": "5. Service Packages",
+      "content": "Upgrade packages (Gold, Diamond) are effective according to the selected billing cycle. Packages automatically renew unless you cancel before the renewal date. We reserve the right to change prices or package features with at least 30 days' prior notice."
+    },
+    "section6": {
+      "title": "6. Account Termination",
+      "content": "We reserve the right to suspend or delete accounts if we detect violations of the terms, fraud or harm to other users. You can also request account deletion at any time by contacting support."
+    },
+    "section7": {
+      "title": "7. Limitation of Liability",
+      "content": "Service is provided on an 'as is' basis. We do not guarantee service will always be continuous and are not liable for indirect damages arising from the use of the platform."
+    },
+    "section8": {
+      "title": "8. Changes to Terms",
+      "content": "We may update these terms periodically. Any changes will be notified via email or in-app notification. Continued use of the service after changes are applied means you accept the new terms."
+    }
+  },
+  "Location": {
+    "searchProvince": "Search province / city...",
+    "searchWard": "Search ward in {province}...",
+    "chooseProvinceLeft": "Select province on the left",
+    "allProvince": "All of {province}",
+    "chooseAllOrWard": "Select entire area or ward",
+    "loadProvinceError": "Failed to load province list.",
+    "loadWardError": "Failed to load ward list.",
+    "noProvinceResults": "No results.",
+    "noWardResults": "No matching wards found.",
+    "chooseProvinceFirst": "Select a province to view wards.",
+    "back": "Back",
+    "otherProvince": "Select another province",
+    "clear": "Clear",
+    "select": "Select"
   }
 }

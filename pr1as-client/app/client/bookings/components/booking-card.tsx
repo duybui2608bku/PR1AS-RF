@@ -20,6 +20,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
 
@@ -57,6 +58,9 @@ export function BookingCard({
   openingComplaintGroup,
   completing,
 }: BookingCardProps) {
+  const t = useTranslations("Bookings")
+  const locale = useLocale()
+
   const expired = isBookingExpired(
     booking.schedule,
     booking.status,
@@ -69,6 +73,20 @@ export function BookingCard({
     !expired && booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
   const showReview = booking.status === BookingStatus.COMPLETED
   const showComplaintGroup = booking.status === BookingStatus.DISPUTED
+
+  const formatLdt = (val?: string | null) => {
+    if (!val) return "-"
+    return new Date(val).toLocaleString(
+      locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    )
+  }
 
   return (
     <div className="border-b p-4 last:border-b-0">
@@ -85,17 +103,17 @@ export function BookingCard({
           <span
             className={cn(
               "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
-              bookingStatusBadgeClass[displayStatus],
+              bookingStatusBadgeClass[displayStatus]
             )}
           >
-            {bookingStatusLabel[displayStatus]}
+            {t(`statusLabels.${displayStatus}`)}
           </span>
           {booking.status === BookingStatus.CANCELLED && booking.cancellation ? (
             <HoverCard openDelay={100} closeDelay={100}>
               <HoverCardTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Xem lý do hủy"
+                  aria-label={t("viewCancelReason")}
                   className="inline-flex size-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <Info className="size-4" />
@@ -104,24 +122,31 @@ export function BookingCard({
               <HoverCardContent align="end" className="text-xs">
                 <div className="space-y-1.5">
                   <div>
-                    <span className="text-muted-foreground">Lý do: </span>
-                    <span className="font-medium">
-                      {cancellationReasonLabel[booking.cancellation.reason]}
+                    <span className="text-muted-foreground">
+                      {t("cancelReasonPrefix", {
+                        reason: t(
+                          `cancellationReasons.${booking.cancellation.reason}`
+                        ),
+                      })}
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Bởi: </span>
-                    <span className="font-medium">
-                      {cancelledByLabel[booking.cancellation.cancelled_by]}
+                    <span className="text-muted-foreground">
+                      {t("cancelledByPrefix", {
+                        by: t(`cancelledBy.${booking.cancellation.cancelled_by}`),
+                      })}
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Thời điểm: </span>
-                    <span>{formatDateTime(booking.cancellation.cancelled_at)}</span>
+                    <span className="text-muted-foreground">
+                      {t("cancelledAtPrefix", {
+                        time: formatLdt(booking.cancellation.cancelled_at),
+                      })}
+                    </span>
                   </div>
                   {booking.cancellation.notes ? (
                     <div>
-                      <div className="text-muted-foreground">Ghi chú:</div>
+                      <div className="text-muted-foreground">{t("notes")}</div>
                       <div className="whitespace-pre-wrap">
                         {booking.cancellation.notes}
                       </div>
@@ -138,7 +163,7 @@ export function BookingCard({
         <div className="flex items-start gap-2">
           <User2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <dt className="text-xs text-muted-foreground">Worker</dt>
+            <dt className="text-xs text-muted-foreground">{t("worker")}</dt>
             <dd className="truncate font-medium">
               {getWorkerName(booking.worker_id)}
             </dd>
@@ -147,21 +172,21 @@ export function BookingCard({
         <div className="flex items-start gap-2">
           <CalendarDays className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <dt className="text-xs text-muted-foreground">Lịch hẹn</dt>
+            <dt className="text-xs text-muted-foreground">{t("appointment")}</dt>
             <dd className="font-medium">
-              {formatDateTime(booking.schedule.start_time)}
+              {formatLdt(booking.schedule.start_time)}
             </dd>
             <dd className="text-xs text-muted-foreground">
-              Thời lượng: {booking.schedule.duration_hours} giờ
+              {t("duration", { hours: booking.schedule.duration_hours })}
             </dd>
           </div>
         </div>
         <div className="flex items-start gap-2">
           <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <dt className="text-xs text-muted-foreground">Ngày tạo</dt>
+            <dt className="text-xs text-muted-foreground">{t("createdAt")}</dt>
             <dd className="text-muted-foreground">
-              {formatDateTime(booking.created_at)}
+              {formatLdt(booking.created_at)}
             </dd>
           </div>
         </div>
@@ -170,7 +195,7 @@ export function BookingCard({
             <MessageSquare className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 flex-1">
               <dt className="text-xs text-muted-foreground">
-                Ghi chú từ worker
+                {t("workerNotes")}
               </dt>
               <dd className="whitespace-pre-wrap text-muted-foreground">
                 {booking.worker_response}
@@ -198,7 +223,7 @@ export function BookingCard({
               ) : (
                 <MessageSquare className="size-4" />
               )}
-              Mở nhóm khiếu nại
+              {t("openComplaintGroup")}
             </Button>
           ) : null}
           {showReview ? (
@@ -208,7 +233,7 @@ export function BookingCard({
               onClick={() => onReview(booking)}
             >
               <Star className="size-4" />
-              Đánh giá
+              {t("review")}
             </Button>
           ) : null}
           {showComplete ? (
@@ -223,7 +248,7 @@ export function BookingCard({
               ) : (
                 <CheckCircle2 className="size-4" />
               )}
-              Xác nhận hoàn thành
+              {t("confirmComplete")}
             </Button>
           ) : null}
           {showDispute ? (
@@ -233,7 +258,7 @@ export function BookingCard({
               onClick={() => onDispute(booking)}
             >
               <MessageSquareWarning className="size-4" />
-              Khiếu nại
+              {t("complaint")}
             </Button>
           ) : null}
           {showCancel ? (
@@ -243,7 +268,7 @@ export function BookingCard({
               onClick={() => onCancel(booking)}
             >
               <XCircle className="size-4" />
-              Hủy
+              {t("cancel")}
             </Button>
           ) : null}
         </div>

@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
+import { getTranslations } from "next-intl/server"
 
 import { AnnouncementRenderer } from "@/components/announcement"
 import { HomeSearchExperience } from "@/components/home/home-search-experience"
@@ -11,12 +12,14 @@ import { getQueryClient } from "@/lib/query-client"
 import { createPageMetadata } from "@/lib/seo"
 import { serviceService } from "@/services/service.service"
 
-export const metadata = createPageMetadata({
-  title: "Tìm dịch vụ và worker",
-  description:
-    "Tìm kiếm worker phù hợp, lọc theo dịch vụ và khu vực, xem hồ sơ và đặt lịch trực tuyến trên PR1AS.",
-  path: "/services",
-})
+export async function generateMetadata() {
+  const t = await getTranslations("SEO")
+  return createPageMetadata({
+    title: t("servicesTitle"),
+    description: t("servicesDescription"),
+    path: "/services",
+  })
+}
 
 type ServicesPageProps = {
   searchParams: Promise<HomeSearchParams>

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,6 +49,10 @@ export function CancelBookingDialog({
   onOpenChange,
   onSubmit,
 }: CancelBookingDialogProps) {
+  const t = useTranslations("Bookings.cancelDialog")
+  const tRoot = useTranslations("Bookings")
+  const tCommon = useTranslations("Common")
+
   const [reason, setReason] = React.useState<CancellationReason>(
     CancellationReason.CLIENT_REQUEST
   )
@@ -68,7 +73,7 @@ export function CancelBookingDialog({
 
   const handleConfirm = async () => {
     if (!reason) {
-      setError("Vui lòng chọn lý do hủy.")
+      setError(t("errorSelectReason"))
       return
     }
     setError(null)
@@ -79,15 +84,15 @@ export function CancelBookingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Hủy booking</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Vui lòng chọn lý do hủy. Hành động này không thể hoàn tác.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="cancel-reason">Lý do</Label>
+            <Label htmlFor="cancel-reason">{t("reasonLabel")}</Label>
             <Select
               value={reason}
               onValueChange={(value) => setReason(value as CancellationReason)}
@@ -97,12 +102,12 @@ export function CancelBookingDialog({
                 id="cancel-reason"
                 className="h-10 w-full data-[size=default]:h-10"
               >
-                <SelectValue placeholder="Chọn lý do hủy" />
+                <SelectValue placeholder={t("reasonPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {REASON_OPTIONS.map((option) => (
                   <SelectItem key={option} value={option}>
-                    {cancellationReasonLabel[option]}
+                    {tRoot(`cancellationReasons.${option}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -110,12 +115,12 @@ export function CancelBookingDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="cancel-notes">Ghi chú (tùy chọn)</Label>
+            <Label htmlFor="cancel-notes">{t("notesLabel")}</Label>
             <Textarea
               id="cancel-notes"
               maxLength={500}
               rows={4}
-              placeholder="Mô tả thêm lý do hủy (tối đa 500 ký tự)"
+              placeholder={t("notesPlaceholder")}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               disabled={loading}
@@ -131,7 +136,7 @@ export function CancelBookingDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Đóng
+            {tCommon("close")}
           </Button>
           <Button
             variant="destructive"
@@ -139,7 +144,7 @@ export function CancelBookingDialog({
             disabled={loading}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-            Xác nhận hủy
+            {t("confirmButton")}
           </Button>
         </DialogFooter>
       </DialogContent>

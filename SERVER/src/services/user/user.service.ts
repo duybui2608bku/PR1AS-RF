@@ -11,7 +11,8 @@ import {
 } from "../../validations/user/user.validation";
 import nodemailerUtils from "../../utils/nodemailer";
 import { accountBannedTemplate } from "../../utils/template-mail";
-import { APP_CONSTANTS, EMAIL_SUBJECTS } from "../../constants/app";
+import { APP_CONSTANTS } from "../../constants/app";
+import { Locale } from "../../utils/i18n";
 import { logger } from "../../utils/logger";
 import { getSocketIO } from "../../config/socket";
 import { getUserRoom } from "../../utils/chat.helper";
@@ -164,14 +165,9 @@ export class UserService {
   }
 
   private async sendAccountBannedEmail(user: IUserDocument): Promise<void> {
-    await nodemailerUtils({
-      email: user.email,
-      html: accountBannedTemplate(
-        APP_CONSTANTS.ADMIN_CONTACT_EMAIL,
-        user.full_name
-      ),
-      subject: EMAIL_SUBJECTS.ACCOUNT_BANNED,
-    });
+    const locale = (user.meta_data?.locale ?? "en") as Locale;
+    const { subject, html } = accountBannedTemplate(APP_CONSTANTS.ADMIN_CONTACT_EMAIL, user.full_name, locale);
+    await nodemailerUtils({ email: user.email, html, subject });
   }
 
   async updateLastActiveRole(

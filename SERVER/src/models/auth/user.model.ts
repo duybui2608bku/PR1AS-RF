@@ -191,6 +191,10 @@ const userSchema = new Schema<IUserDocument>(
             type: Boolean,
             default: false,
           },
+          locale: {
+            type: String,
+            default: "en",
+          },
         },
         { _id: false }
       ),
@@ -200,6 +204,7 @@ const userSchema = new Schema<IUserDocument>(
         pricing_started_at: null,
         pricing_expires_at: null,
         onboarding_done: false,
+        locale: "en",
       }),
     },
   },
