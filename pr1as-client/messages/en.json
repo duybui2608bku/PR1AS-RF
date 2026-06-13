@@ -35,7 +35,13 @@
     "me": "Me",
     "selectLanguage": "Select language",
     "boost": "Attendance (Boost)",
-    "displayCurrency": "Display currency"
+    "displayCurrency": "Display currency",
+    "preferences": "Preferences",
+    "appearance": "Appearance",
+    "language": "Language",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "Footer": {
     "copyright": "All rights reserved.",
@@ -63,6 +69,8 @@
     "loginButton": "Login",
     "registerButton": "Register",
     "loginWithGoogle": "Sign in with Google",
+    "registerWithGoogle": "Sign up with Google",
+    "orContinueWith": "Or continue with",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "registerLink": "Register",
@@ -969,7 +977,19 @@
     "workerDesc": "Register as a worker, accept bookings, and earn income",
     "workerBadge": "Worker",
     "startButton": "Get Started",
-    "skipButton": "Skip for now"
+    "skipButton": "Skip for now",
+    "loading": "Please wait...",
+    "next": "Next",
+    "back": "Back",
+    "introWelcomeTitle": "Welcome to PR1AS 👋",
+    "introWelcomeDesc": "PR1AS connects you with trusted companions and helpers for everyday activities, outings, and support.",
+    "introServicesTitle": "Discover services",
+    "introServicesDesc": "Browse providers by service and filter by location and time to find the perfect match.",
+    "introPostsTitle": "Community & posts",
+    "introPostsDesc": "Explore the feed, share posts, and find or offer opportunities within the community.",
+    "introBookingTitle": "Book & connect",
+    "introBookingDesc": "Book providers, chat in real time, and manage your schedule and wallet — all in one place.",
+    "roleStepTitle": "How will you use PR1AS?"
   },
   "System": {
     "errorTitle": "An error occurred",

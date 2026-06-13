@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import { createPortal } from "react-dom"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 
 import {
@@ -355,14 +355,15 @@ function ServicePickerField({
   onToggle,
 }: ServicePickerFieldProps) {
   const t = useTranslations("Home")
+  const locale = useLocale()
   const displayValue = React.useMemo(() => {
     if (activeCodes.length === 0) return null
     if (activeCodes.length === 1) {
       const match = services.find((s) => s.code === activeCodes[0])
-      return match ? serviceService.getName(match.name) : activeCodes[0]
+      return match ? serviceService.getName(match.name, locale) : activeCodes[0]
     }
     return t("heroServiceCount", { count: activeCodes.length })
-  }, [activeCodes, services, t])
+  }, [activeCodes, services, t, locale])
 
   return (
     <Popover>
@@ -410,7 +411,7 @@ function ServicePickerField({
               <ServicePill
                 key={service.id}
                 icon={resolveIcon(service.icon)}
-                label={serviceService.getName(service.name)}
+                label={serviceService.getName(service.name, locale)}
                 isActive={activeCodes.includes(service.code)}
                 onClick={() => onToggle(service.code)}
               />

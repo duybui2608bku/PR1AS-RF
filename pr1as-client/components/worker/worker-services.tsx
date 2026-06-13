@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { Crown, MessageCircle, ShoppingCart } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { BookWorkerDialog } from "@/components/worker/book-worker-dialog"
@@ -68,6 +68,7 @@ type Props = {
 
 export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100 }: Props) {
   const t = useTranslations("WorkerProfile")
+  const locale = useLocale()
   const { format } = useCurrency()
   const [bookOpen, setBookOpen] = useState(false)
   const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
@@ -126,9 +127,9 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
     if (!selectedService) return ""
     const catalogItem = catalogByCode.get(selectedService.service_code)
     return catalogItem
-      ? serviceService.getName(catalogItem.name)
+      ? serviceService.getName(catalogItem.name, locale)
       : selectedService.service_code
-  }, [selectedService, catalogByCode])
+  }, [selectedService, catalogByCode, locale])
 
   const handleBook = () => {
     requireAuth(() => {
@@ -187,7 +188,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
             {activeServices.map((service) => {
               const catalogItem = catalogByCode.get(service.service_code)
               const name = catalogItem
-                ? serviceService.getName(catalogItem.name)
+                ? serviceService.getName(catalogItem.name, locale)
                 : service.service_code
               const cheapest = cheapestPricing(service.pricing)
               const isActive = selectedId === service._id

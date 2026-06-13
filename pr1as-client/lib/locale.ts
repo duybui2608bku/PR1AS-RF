@@ -16,3 +16,37 @@ export const INTL_LOCALE_TAGS: Record<SupportedLocale, string> = {
   en: "en-US",
   zh: "zh-CN",
 }
+
+/** A multilingual string as returned by the API (may include locales we don't UI-switch, e.g. ko). */
+export type LocalizedText = {
+  en?: string | null
+  vi?: string | null
+  zh?: string | null
+  ko?: string | null
+}
+
+/** Fallback chain per active locale: preferred locale first, then the rest. */
+const LOCALE_FALLBACK_ORDER: Record<SupportedLocale, (keyof LocalizedText)[]> = {
+  vi: ["vi", "en", "zh", "ko"],
+  en: ["en", "vi", "zh", "ko"],
+  zh: ["zh", "vi", "en", "ko"],
+}
+
+/**
+ * Pick the best string from a multilingual field for the given locale, falling
+ * back through the other locales when the preferred one is missing/empty.
+ */
+export function pickLocalized(
+  text: LocalizedText | null | undefined,
+  locale: string
+): string | null {
+  if (!text) return null
+  const order =
+    LOCALE_FALLBACK_ORDER[locale as SupportedLocale] ??
+    LOCALE_FALLBACK_ORDER[DEFAULT_LOCALE]
+  for (const key of order) {
+    const value = text[key]
+    if (value != null && String(value).trim() !== "") return value
+  }
+  return null
+}

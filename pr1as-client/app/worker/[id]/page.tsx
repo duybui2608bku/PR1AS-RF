@@ -171,7 +171,7 @@ export default function WorkerProfilePage({
   }
 
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <div className="container mx-auto px-4 py-8">
         <div
           className={

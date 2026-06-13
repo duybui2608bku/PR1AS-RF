@@ -2,6 +2,7 @@ import { AxiosError } from "axios"
 import { cache } from "react"
 
 import { api } from "@/lib/axios"
+import { pickLocalized } from "@/lib/locale"
 import type {
   WorkerBlackoutItem,
   WorkerDetail,
@@ -144,8 +145,10 @@ export type WorkerGroupedByService = {
   }>
 }
 
-const getFallbackName = (name: WorkerGroupedByService["service"]["name"]) =>
-  name.vi ?? name.en ?? name.zh ?? name.ko ?? "Dịch vụ"
+const getFallbackName = (
+  name: WorkerGroupedByService["service"]["name"],
+  locale: string
+) => pickLocalized(name, locale) ?? "Dịch vụ"
 
 const fetchGroupedByService = async (
   filters?: WorkersGroupedFilters

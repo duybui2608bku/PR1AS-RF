@@ -35,7 +35,13 @@
     "me": "Tôi",
     "selectLanguage": "Chọn ngôn ngữ",
     "boost": "Điểm danh (Boost)",
-    "displayCurrency": "Tiền tệ hiển thị"
+    "displayCurrency": "Tiền tệ hiển thị",
+    "preferences": "Tùy chỉnh",
+    "appearance": "Giao diện",
+    "language": "Ngôn ngữ",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Hệ thống"
   },
   "Footer": {
     "copyright": "Bản quyền thuộc về chúng tôi.",
@@ -63,6 +69,8 @@
     "loginButton": "Đăng nhập",
     "registerButton": "Đăng ký",
     "loginWithGoogle": "Đăng nhập bằng Google",
+    "registerWithGoogle": "Đăng ký bằng Google",
+    "orContinueWith": "Hoặc tiếp tục với",
     "noAccount": "Chưa có tài khoản?",
     "hasAccount": "Đã có tài khoản?",
     "registerLink": "Đăng ký",
@@ -969,7 +977,19 @@
     "workerDesc": "Đăng ký làm worker, nhận booking và kiếm thu nhập",
     "workerBadge": "Worker",
     "startButton": "Bắt đầu ngay",
-    "skipButton": "Bỏ qua, tôi sẽ chọn sau"
+    "skipButton": "Bỏ qua, tôi sẽ chọn sau",
+    "loading": "Vui lòng đợi...",
+    "next": "Tiếp tục",
+    "back": "Quay lại",
+    "introWelcomeTitle": "Chào mừng đến PR1AS 👋",
+    "introWelcomeDesc": "PR1AS kết nối bạn với những người đồng hành và trợ giúp đáng tin cậy cho các hoạt động, chuyến đi và nhu cầu hằng ngày.",
+    "introServicesTitle": "Khám phá dịch vụ",
+    "introServicesDesc": "Duyệt người cung cấp theo dịch vụ, lọc theo địa điểm và thời gian để tìm lựa chọn phù hợp.",
+    "introPostsTitle": "Cộng đồng & bài viết",
+    "introPostsDesc": "Xem bảng tin, đăng bài và tìm hoặc đăng cơ hội ngay trong cộng đồng.",
+    "introBookingTitle": "Đặt lịch & kết nối",
+    "introBookingDesc": "Đặt người cung cấp, trò chuyện trực tiếp, quản lý lịch và ví — tất cả ở một nơi.",
+    "roleStepTitle": "Bạn sẽ dùng PR1AS như thế nào?"
   },
   "System": {
     "errorTitle": "Đã xảy ra lỗi",

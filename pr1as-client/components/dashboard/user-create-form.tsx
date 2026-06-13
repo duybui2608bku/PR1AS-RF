@@ -3,6 +3,7 @@
 import { useRef, useState } from "react"
 import Image from "next/image"
 import { useQuery } from "@tanstack/react-query"
+import { useLocale } from "next-intl"
 import {
   Check,
   Copy,
@@ -1361,6 +1362,7 @@ function ServicesSection({
   loading,
 }: Props & { catalog: ServiceItem[]; loading: boolean }) {
   const { currency, meta: currencyMeta, localeTag } = useCurrency()
+  const locale = useLocale()
   // Raw input strings keyed by `${code}:${unit}:${currency}` so decimal typing
   // isn't clobbered by re-deriving the value from the canonical VND model.
   const [priceDrafts, setPriceDrafts] = useState<Map<string, string>>(new Map())
@@ -1431,7 +1433,7 @@ function ServicesSection({
                 )}
               </span>
               <span className="flex-1 text-sm leading-snug font-medium">
-                {serviceService.getName(service.name)}
+                {serviceService.getName(service.name, locale)}
               </span>
             </button>
 

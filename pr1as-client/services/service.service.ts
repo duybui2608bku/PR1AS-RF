@@ -1,19 +1,15 @@
 import { cache } from "react"
 
 import { api } from "@/lib/axios"
+import { pickLocalized, type LocalizedText } from "@/lib/locale"
+
+export type { LocalizedText }
 
 type ApiResponse<T> = {
   success: boolean
   statusCode?: number
   message?: string
   data?: T
-}
-
-export type LocalizedText = {
-  en?: string | null
-  vi?: string | null
-  zh?: string | null
-  ko?: string | null
 }
 
 export type ServiceItem = {
@@ -46,8 +42,8 @@ const getServices = cache(async (): Promise<ServiceItem[]> => {
 
 export const serviceService = {
   getServices,
-  getName: (name: LocalizedText) =>
-    name.vi ?? name.en ?? name.zh ?? name.ko ?? "Dịch vụ",
-  getDescription: (desc: LocalizedText) =>
-    desc.vi ?? desc.en ?? desc.zh ?? desc.ko ?? null,
+  getName: (name: LocalizedText, locale: string) =>
+    pickLocalized(name, locale) ?? "Dịch vụ",
+  getDescription: (desc: LocalizedText, locale: string) =>
+    pickLocalized(desc, locale),
 }

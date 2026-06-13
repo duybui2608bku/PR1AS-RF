@@ -583,7 +583,7 @@ export default function WorkerSetupPage() {
       const norm = normalizeWorkerPricingSlots(pricing)
       const err = validateNormalizedPricing(norm)
       if (err) {
-        toast.error(t("toast.serviceNeedsPrice", { service: serviceService.getName(svc.name) }))
+        toast.error(t("toast.serviceNeedsPrice", { service: serviceService.getName(svc.name, locale) }))
         return null
       }
       // `norm` prices are canonical VND. For slots the worker never edited
@@ -701,7 +701,7 @@ export default function WorkerSetupPage() {
             {checked && <Check className="size-3.5 text-primary-foreground stroke-[3]" />}
           </div>
           <span className="flex-1 text-sm font-medium leading-snug">
-            {serviceService.getName(service.name)}
+            {serviceService.getName(service.name, locale)}
           </span>
         </Button>
 

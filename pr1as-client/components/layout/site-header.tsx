@@ -10,6 +10,7 @@ import {
   HeartHandshake,
   Loader2,
   LogOut,
+  Menu,
   MessageCircle,
   Search,
   Settings,
@@ -24,12 +25,16 @@ import { usePathname, useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 
-import { LocaleSwitcher } from "@/components/layout/locale-switcher"
-import { CurrencyOptions, CurrencySwitcher } from "@/components/layout/currency-switcher"
+import { CurrencyOptions } from "@/components/layout/currency-switcher"
+import { MobilePrefsSheet, PrefsPanel } from "@/components/layout/mobile-prefs-sheet"
 import { NotificationBell } from "@/components/layout/notification-bell"
-import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { siteConfig } from "@/config/site"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
@@ -125,6 +130,7 @@ export function SiteHeader() {
   const tToast = useTranslations("Toast")
   const tServices = useTranslations("Services")
   const [menuOpen, setMenuOpen] = React.useState(false)
+  const [prefsOpen, setPrefsOpen] = React.useState(false)
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isSessionLoaded = useIsSessionLoaded()
@@ -403,9 +409,30 @@ export function SiteHeader() {
           <span>{switchRoleLabel}</span>
         </Button>
       ) : null}
-      <ThemeToggle />
-      <LocaleSwitcher />
-      {!isAuthenticated ? <CurrencySwitcher /> : null}
+      {/* Desktop: preferences popover behind a single icon-bar (hamburger) button */}
+      <div className="hidden md:block">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label={t("preferences")}>
+              <Menu className="size-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72">
+            <PrefsPanel />
+          </PopoverContent>
+        </Popover>
+      </div>
+      {/* Mobile: same options inside a bottom sheet */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        aria-label={t("preferences")}
+        onClick={() => setPrefsOpen(true)}
+      >
+        <Menu className="size-4" />
+      </Button>
+      <MobilePrefsSheet open={prefsOpen} onClose={() => setPrefsOpen(false)} />
       {isAuthenticated ? (
         <ErrorBoundary fallback={null}>
           <NotificationBell />

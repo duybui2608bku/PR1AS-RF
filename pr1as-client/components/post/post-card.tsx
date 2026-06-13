@@ -669,7 +669,7 @@ export function PostCard({ post }: Props) {
               className="group flex items-center gap-2 rounded-xl border border-border bg-accent/50 px-3.5 py-2 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent hover:shadow-sm active:scale-[0.97]"
             >
               <ClipboardList className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-              Xem danh sách
+              {t("viewList")}
               {post.registrations_count > 0 ? (
                 <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background tabular-nums">
                   {post.registrations_count > 99
@@ -697,7 +697,7 @@ export function PostCard({ post }: Props) {
               ) : (
                 <UserPlus className="size-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
               )}
-              {post.my_registration ? "Đã đăng ký" : "Đăng ký"}
+              {post.my_registration ? t("registered") : t("register")}
             </button>
           ) : (
             <button
@@ -712,7 +712,7 @@ export function PostCard({ post }: Props) {
               className="group flex items-center gap-2 rounded-xl border border-border/50 px-3.5 py-2 text-sm font-medium text-muted-foreground/70 transition-all duration-200 hover:bg-accent/50 active:scale-[0.97]"
             >
               <UserPlus className="size-5 shrink-0 opacity-40 transition-transform duration-200 group-hover:scale-105" />
-              Đăng ký
+              {t("register")}
             </button>
           )}
         </div>

@@ -46,10 +46,11 @@ const findCategoryLabel = (
   code: string,
   services: ServiceItem[],
   categoryLabels: Record<string, string>,
+  locale: string,
 ): string => {
   if (!code) return ""
   const match = services.find((s) => s.code === code)
-  if (match) return serviceService.getName(match.name)
+  if (match) return serviceService.getName(match.name, locale)
   return categoryLabels[code] ?? code
 }
 
@@ -226,9 +227,9 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
       const matchedService = services.find((s) => s.code === code)
       chips.push({
         id: `category-${code}`,
-        label: findCategoryLabel(code, services, CATEGORY_LABEL),
+        label: findCategoryLabel(code, services, CATEGORY_LABEL, locale),
         description: matchedService?.description
-          ? serviceService.getDescription(matchedService.description) ?? undefined
+          ? serviceService.getDescription(matchedService.description, locale) ?? undefined
           : undefined,
         onRemove: () => removeCategoryCode(code),
       })
@@ -251,6 +252,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   }, [
     applied,
     services,
+    locale,
     removeCategoryCode,
     removeLocationFilter,
     removeDateFilter,

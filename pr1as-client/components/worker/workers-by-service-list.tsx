@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   AlertCircle,
   ArrowRight,
@@ -373,6 +373,7 @@ export const WorkersByServiceList = ({
   onToggleFavorite,
 }: WorkersByServiceListProps) => {
   const t = useTranslations("WorkersByServiceList")
+  const locale = useLocale()
   const hasActiveFilters = appliedFilters.length > 0
 
   if (hasFetchError) {
@@ -426,9 +427,9 @@ export const WorkersByServiceList = ({
         className={isFetching ? "space-y-12 opacity-70 transition-opacity" : "space-y-12"}
       >
         {groupedServices.map((group) => {
-          const serviceName = workerService.getFallbackName(group.service.name)
+          const serviceName = workerService.getFallbackName(group.service.name, locale)
           const serviceDescription = group.service.description
-            ? serviceService.getDescription(group.service.description)
+            ? serviceService.getDescription(group.service.description, locale)
             : null
 
           return (

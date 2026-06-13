@@ -35,7 +35,13 @@
     "me": "我",
     "selectLanguage": "选择语言",
     "boost": "签到 (Boost)",
-    "displayCurrency": "显示货币"
+    "displayCurrency": "显示货币",
+    "preferences": "偏好设置",
+    "appearance": "外观",
+    "language": "语言",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "系统"
   },
   "Footer": {
     "copyright": "版权所有。",
@@ -63,6 +69,8 @@
     "loginButton": "登录",
     "registerButton": "注册",
     "loginWithGoogle": "使用 Google 登录",
+    "registerWithGoogle": "使用 Google 注册",
+    "orContinueWith": "或继续使用",
     "noAccount": "还没有账户?",
     "hasAccount": "已有账户?",
     "registerLink": "注册",
@@ -969,7 +977,19 @@
     "workerDesc": "注册成为工作者，接受预约并赚取收入",
     "workerBadge": "工作者",
     "startButton": "立即开始",
-    "skipButton": "暂时跳过"
+    "skipButton": "暂时跳过",
+    "loading": "请稍候...",
+    "next": "下一步",
+    "back": "返回",
+    "introWelcomeTitle": "欢迎来到 PR1AS 👋",
+    "introWelcomeDesc": "PR1AS 帮助您连接值得信赖的陪伴者与帮手，满足日常活动、出行与支持需求。",
+    "introServicesTitle": "探索服务",
+    "introServicesDesc": "按服务浏览服务者，按地点和时间筛选，找到最合适的人选。",
+    "introPostsTitle": "社区与帖子",
+    "introPostsDesc": "浏览动态、发布帖子，并在社区中寻找或提供机会。",
+    "introBookingTitle": "预约与连接",
+    "introBookingDesc": "预约服务者、实时聊天，并管理您的日程与钱包——一站搞定。",
+    "roleStepTitle": "您将如何使用 PR1AS？"
   },
   "System": {
     "errorTitle": "发生错误",
