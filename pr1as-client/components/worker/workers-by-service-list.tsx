@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useLocale, useTranslations } from "next-intl"
 import {
   AlertCircle,
   ArrowRight,
@@ -37,11 +38,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { serviceService } from "@/services/service.service"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
 type Worker = WorkerGroupedByService["workers"][number]
 type Pricing = Worker["pricing"][number]
+type WorkersListTranslator = ReturnType<typeof useTranslations>
 type WorkLocation = NonNullable<
   NonNullable<Worker["worker_profile"]>["work_locations"]
 >[number]
@@ -56,8 +59,12 @@ const formatWorkLocations = (locations?: WorkLocation[]): string => {
   return `${labels.slice(0, 2).join(" · ")} +${labels.length - 2}`
 }
 
-const formatPricing = (pricing: Pricing[]) => {
-  if (!pricing.length) return { label: "Chưa có bảng giá", prefix: "" }
+const formatPricing = (
+  pricing: Pricing[],
+  t: WorkersListTranslator,
+  localeTag: string,
+) => {
+  if (!pricing.length) return { label: t("pricing.noPrice"), prefix: "" }
 
   const sorted = [...pricing].sort((a, b) => a.price - b.price)
   const item = sorted[0]
@@ -68,14 +75,21 @@ const formatPricing = (pricing: Pricing[]) => {
 
   const value =
     item.currency === "VND"
-      ? new Intl.NumberFormat("vi-VN").format(item.price) + symbol
-      : symbol + new Intl.NumberFormat("en-US").format(item.price)
+      ? new Intl.NumberFormat(localeTag).format(item.price) + symbol
+      : symbol + new Intl.NumberFormat(localeTag).format(item.price)
 
-  const unit = item.unit === "HOURLY" ? "giờ" : item.unit === "DAILY" ? "ngày" : item.unit.toLowerCase()
+  const unit =
+    item.unit === "HOURLY"
+      ? t("pricing.units.hourly")
+      : item.unit === "DAILY"
+        ? t("pricing.units.daily")
+        : item.unit === "MONTHLY"
+          ? t("pricing.units.monthly")
+          : item.unit.toLowerCase()
 
   return {
     label: `${value} / ${unit}`,
-    prefix: isMultiple ? "Từ " : "",
+    prefix: isMultiple ? t("pricing.from") : "",
   }
 }
 
@@ -84,14 +98,18 @@ const WorkerCard = ({
   isFavorite = false,
   isFavoritePending = false,
   onToggleFavorite,
+  t,
+  localeTag,
 }: {
   worker: Worker
   isFavorite?: boolean
   isFavoritePending?: boolean
   onToggleFavorite?: (workerId: string, favorite: boolean) => void
+  t: WorkersListTranslator
+  localeTag: string
 }) => {
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
-  const { label, prefix } = formatPricing(worker.pricing)
+  const { label, prefix } = formatPricing(worker.pricing, t, localeTag)
   return (
     <article
       className={[
@@ -113,24 +131,24 @@ const WorkerCard = ({
         {imageSrc ? (
           <Image
             src={imageSrc}
-            alt={worker.full_name ?? "Worker"}
+            alt={worker.full_name ?? t("workerFallback")}
             fill
             sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 44vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
-            Chưa có ảnh
+            {t("noImage")}
           </div>
         )}
         {worker.boost?.boost_tier === 1 && (
           <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow">
-            <Star className="h-2.5 w-2.5 fill-yellow-900" /> Nổi bật
+            <Star className="h-2.5 w-2.5 fill-yellow-900" /> {t("boost.featured")}
           </div>
         )}
         {worker.boost?.boost_tier === 2 && (
           <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-            <Zap className="h-2.5 w-2.5" /> Đang hoạt động
+            <Zap className="h-2.5 w-2.5" /> {t("boost.active")}
           </div>
         )}
         {worker.worker_profile?.title ? (
@@ -139,7 +157,7 @@ const WorkerCard = ({
       </div>
       <div className="px-2.5 pt-2 pb-0">
         <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">
-          {worker.full_name ?? "Chưa cập nhật tên"}
+          {worker.full_name ?? t("nameFallback")}
         </p>
       </div>
 
@@ -177,9 +195,9 @@ const WorkerCard = ({
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                aria-label="Bỏ worker khỏi Yêu thích"
+                aria-label={t("favorite.removeAria")}
                 aria-pressed={isFavorite}
-                title="Bỏ Yêu thích"
+                title={t("favorite.removeTitle")}
                 disabled={isFavoritePending}
                 className="absolute right-2 top-2 inline-flex size-9 items-center justify-center rounded-full border border-white/50 bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-red-500 disabled:opacity-70"
               >
@@ -192,19 +210,18 @@ const WorkerCard = ({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Xóa worker yêu thích?</AlertDialogTitle>
+                <AlertDialogTitle>{t("favorite.confirmTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Worker này sẽ bị xóa khỏi danh sách yêu thích của bạn. Bạn có
-                  chắc chắn muốn tiếp tục?
+                  {t("favorite.confirmDesc")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={() => onToggleFavorite(worker.id, false)}
                 >
-                  Xóa
+                  {t("actions.remove")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -212,9 +229,9 @@ const WorkerCard = ({
         ) : (
           <button
             type="button"
-            aria-label="Thêm worker vào Yêu thích"
+            aria-label={t("favorite.addAria")}
             aria-pressed={isFavorite}
-            title="Yêu thích"
+            title={t("favorite.addTitle")}
             disabled={isFavoritePending}
             onClick={(event) => {
               event.preventDefault()
@@ -284,14 +301,16 @@ const markdownComponents: Components = {
 const FilterChips = ({
   filters,
   onClearAll,
+  t,
 }: {
   filters: AppliedFilterChip[]
   onClearAll?: () => void
+  t: WorkersListTranslator
 }) => {
   if (!filters.length) return null
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground">Đang lọc:</span>
+      <span className="text-xs font-medium text-muted-foreground">{t("filters.activeLabel")}</span>
       {filters.map((chip) => (
         <Badge key={chip.id} variant="secondary" className="gap-1 pr-1">
           <span>{chip.label}</span>
@@ -300,7 +319,7 @@ const FilterChips = ({
               <DialogTrigger asChild>
                 <button
                   type="button"
-                  aria-label={`Xem mô tả ${chip.label}`}
+                  aria-label={t("filters.viewDescription", { label: chip.label })}
                   className="cursor-pointer rounded-full p-0.5 hover:bg-muted"
                 >
                   <Info className="size-3" />
@@ -325,7 +344,7 @@ const FilterChips = ({
             <button
               type="button"
               onClick={chip.onRemove}
-              aria-label={`Bỏ lọc ${chip.label}`}
+              aria-label={t("filters.removeFilter", { label: chip.label })}
               className="rounded-full p-0.5 hover:bg-muted"
             >
               <X className="size-3" />
@@ -341,7 +360,7 @@ const FilterChips = ({
           onClick={onClearAll}
           className="h-6 px-2 text-xs"
         >
-          Xoá tất cả
+          {t("filters.clearAll")}
         </Button>
       ) : null}
     </div>
@@ -358,6 +377,9 @@ export const WorkersByServiceList = ({
   favoritePendingWorkerId,
   onToggleFavorite,
 }: WorkersByServiceListProps) => {
+  const t = useTranslations("WorkersByServiceList")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale]
   const hasActiveFilters = appliedFilters.length > 0
 
   if (hasFetchError) {
@@ -365,9 +387,9 @@ export const WorkersByServiceList = ({
       <section className="container mx-auto px-4 pb-16">
         <Alert variant="destructive" className="mt-2">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Không thể tải danh sách worker</AlertTitle>
+          <AlertTitle>{t("error.title")}</AlertTitle>
           <AlertDescription>
-            Đã xảy ra sự cố khi tải dữ liệu. Vui lòng thử lại sau giây lát.
+            {t("error.description")}
           </AlertDescription>
         </Alert>
       </section>
@@ -378,23 +400,23 @@ export const WorkersByServiceList = ({
     return (
       <section className="container mx-auto px-4 pb-16 space-y-4">
         {hasActiveFilters ? (
-          <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} />
+          <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} t={t} />
         ) : null}
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>
             {isFetching
-              ? "Đang tìm kiếm..."
+              ? t("empty.searchingTitle")
               : hasActiveFilters
-                ? "Không có worker phù hợp"
-                : "Chưa có dữ liệu"}
+                ? t("empty.noMatchTitle")
+                : t("empty.noDataTitle")}
           </AlertTitle>
           <AlertDescription>
             {isFetching
-              ? "Đang tải danh sách worker theo bộ lọc."
+              ? t("empty.searchingDescription")
               : hasActiveFilters
-                ? "Hãy thử bỏ bớt một vài tiêu chí, đổi khu vực hoặc xoá toàn bộ filter ở phía trên."
-                : "Hiện chưa có worker nào để hiển thị."}
+                ? t("empty.noMatchDescription")
+                : t("empty.noDataDescription")}
           </AlertDescription>
         </Alert>
       </section>
@@ -404,26 +426,31 @@ export const WorkersByServiceList = ({
   return (
     <section className="container mx-auto px-4 pb-16 space-y-6">
       {hasActiveFilters ? (
-        <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} />
+        <FilterChips filters={appliedFilters} onClearAll={onClearAllFilters} t={t} />
       ) : null}
       <div
         aria-busy={isFetching}
         className={isFetching ? "space-y-12 opacity-70 transition-opacity" : "space-y-12"}
       >
-        {groupedServices.map((group) => (
+        {groupedServices.map((group) => {
+          const serviceName = workerService.getFallbackName(group.service.name)
+          const serviceDescription = group.service.description
+            ? serviceService.getDescription(group.service.description)
+            : null
+
+          return (
           <div key={group.service.id}>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <h3 className="text-xl font-bold tracking-tight">
-                  {workerService.getFallbackName(group.service.name)}
+                  {serviceName}
                 </h3>
-                {group.service.description &&
-                serviceService.getDescription(group.service.description) ? (
+                {serviceDescription ? (
                   <Dialog>
                     <DialogTrigger asChild>
                       <button
                         type="button"
-                        aria-label={`Xem mô tả ${workerService.getFallbackName(group.service.name)}`}
+                        aria-label={t("service.viewDescription", { service: serviceName })}
                         className="cursor-pointer rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       >
                         <Info className="size-4" />
@@ -432,7 +459,7 @@ export const WorkersByServiceList = ({
                     <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col gap-0 p-0">
                       <DialogHeader className="border-b px-6 py-4">
                         <DialogTitle>
-                          {workerService.getFallbackName(group.service.name)}
+                          {serviceName}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="overflow-y-auto px-6 py-5">
@@ -440,7 +467,7 @@ export const WorkersByServiceList = ({
                           remarkPlugins={[remarkGfm]}
                           components={markdownComponents}
                         >
-                          {serviceService.getDescription(group.service.description)!}
+                          {serviceDescription}
                         </ReactMarkdown>
                       </div>
                     </DialogContent>
@@ -448,11 +475,11 @@ export const WorkersByServiceList = ({
                 ) : null}
               </div>
               <div className="ml-auto flex items-center gap-2 shrink-0">
-                <Badge variant="outline">{group.workers.length} worker</Badge>
+                <Badge variant="outline">{t("service.workerCount", { count: group.workers.length })}</Badge>
                 <Link
                   href={`/services?category=${group.service.code}`}
                   className="inline-flex items-center justify-center rounded-full w-7 h-7 border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                  aria-label={`Xem tất cả dịch vụ ${workerService.getFallbackName(group.service.name)}`}
+                  aria-label={t("service.viewAll", { service: serviceName })}
                 >
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
@@ -472,11 +499,14 @@ export const WorkersByServiceList = ({
                   isFavorite={favoriteWorkerIds?.has(worker.id) ?? false}
                   isFavoritePending={favoritePendingWorkerId === worker.id}
                   onToggleFavorite={onToggleFavorite}
+                  t={t}
+                  localeTag={localeTag}
                 />
               ))}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )

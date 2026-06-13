@@ -537,6 +537,59 @@
       "older": "Older"
     }
   },
+  "WorkersByServiceList": {
+    "workerFallback": "Worker",
+    "nameFallback": "Name not updated",
+    "noImage": "No photo yet",
+    "boost": {
+      "featured": "Featured",
+      "active": "Active now"
+    },
+    "pricing": {
+      "noPrice": "No pricing yet",
+      "from": "From ",
+      "units": {
+        "hourly": "hour",
+        "daily": "day",
+        "monthly": "month"
+      }
+    },
+    "favorite": {
+      "addAria": "Add worker to favorites",
+      "addTitle": "Favorite",
+      "removeAria": "Remove worker from favorites",
+      "removeTitle": "Remove favorite",
+      "confirmTitle": "Remove favorite worker?",
+      "confirmDesc": "This worker will be removed from your favorites. Are you sure you want to continue?"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "remove": "Remove"
+    },
+    "filters": {
+      "activeLabel": "Filtering:",
+      "viewDescription": "View description for {label}",
+      "removeFilter": "Remove filter {label}",
+      "clearAll": "Clear all"
+    },
+    "error": {
+      "title": "Unable to load worker list",
+      "description": "Something went wrong while loading data. Please try again in a moment."
+    },
+    "empty": {
+      "searchingTitle": "Searching...",
+      "noMatchTitle": "No matching workers",
+      "noDataTitle": "No data yet",
+      "searchingDescription": "Loading workers for the current filters.",
+      "noMatchDescription": "Try removing a few criteria, changing the area, or clearing all filters above.",
+      "noDataDescription": "There are no workers to display yet."
+    },
+    "service": {
+      "viewDescription": "View description for {service}",
+      "workerCount": "{count, plural, one {# worker} other {# workers}}",
+      "viewAll": "View all {service} services"
+    }
+  },
   "ClientProfile": {
     "userFallback": "User",
     "avatarAria": "Update avatar",

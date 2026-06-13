@@ -537,6 +537,59 @@
       "older": "Cũ hơn"
     }
   },
+  "WorkersByServiceList": {
+    "workerFallback": "Worker",
+    "nameFallback": "Chưa cập nhật tên",
+    "noImage": "Chưa có ảnh",
+    "boost": {
+      "featured": "Nổi bật",
+      "active": "Đang hoạt động"
+    },
+    "pricing": {
+      "noPrice": "Chưa có bảng giá",
+      "from": "Từ ",
+      "units": {
+        "hourly": "giờ",
+        "daily": "ngày",
+        "monthly": "tháng"
+      }
+    },
+    "favorite": {
+      "addAria": "Thêm worker vào Yêu thích",
+      "addTitle": "Yêu thích",
+      "removeAria": "Bỏ worker khỏi Yêu thích",
+      "removeTitle": "Bỏ Yêu thích",
+      "confirmTitle": "Xóa worker yêu thích?",
+      "confirmDesc": "Worker này sẽ bị xóa khỏi danh sách yêu thích của bạn. Bạn có chắc chắn muốn tiếp tục?"
+    },
+    "actions": {
+      "cancel": "Hủy",
+      "remove": "Xóa"
+    },
+    "filters": {
+      "activeLabel": "Đang lọc:",
+      "viewDescription": "Xem mô tả {label}",
+      "removeFilter": "Bỏ lọc {label}",
+      "clearAll": "Xoá tất cả"
+    },
+    "error": {
+      "title": "Không thể tải danh sách worker",
+      "description": "Đã xảy ra sự cố khi tải dữ liệu. Vui lòng thử lại sau giây lát."
+    },
+    "empty": {
+      "searchingTitle": "Đang tìm kiếm...",
+      "noMatchTitle": "Không có worker phù hợp",
+      "noDataTitle": "Chưa có dữ liệu",
+      "searchingDescription": "Đang tải danh sách worker theo bộ lọc.",
+      "noMatchDescription": "Hãy thử bỏ bớt một vài tiêu chí, đổi khu vực hoặc xoá toàn bộ filter ở phía trên.",
+      "noDataDescription": "Hiện chưa có worker nào để hiển thị."
+    },
+    "service": {
+      "viewDescription": "Xem mô tả {service}",
+      "workerCount": "{count} worker",
+      "viewAll": "Xem tất cả dịch vụ {service}"
+    }
+  },
   "ClientProfile": {
     "userFallback": "Người dùng",
     "avatarAria": "Cập nhật ảnh đại diện",

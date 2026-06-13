@@ -537,6 +537,59 @@
       "older": "更早"
     }
   },
+  "WorkersByServiceList": {
+    "workerFallback": "工作者",
+    "nameFallback": "姓名未更新",
+    "noImage": "暂无照片",
+    "boost": {
+      "featured": "精选",
+      "active": "活跃中"
+    },
+    "pricing": {
+      "noPrice": "暂无价格表",
+      "from": "起价 ",
+      "units": {
+        "hourly": "小时",
+        "daily": "天",
+        "monthly": "月"
+      }
+    },
+    "favorite": {
+      "addAria": "将工作者加入收藏",
+      "addTitle": "收藏",
+      "removeAria": "从收藏中移除工作者",
+      "removeTitle": "取消收藏",
+      "confirmTitle": "移除收藏的工作者？",
+      "confirmDesc": "该工作者将从你的收藏列表中移除。确定要继续吗？"
+    },
+    "actions": {
+      "cancel": "取消",
+      "remove": "删除"
+    },
+    "filters": {
+      "activeLabel": "筛选中：",
+      "viewDescription": "查看 {label} 的说明",
+      "removeFilter": "移除筛选 {label}",
+      "clearAll": "全部清除"
+    },
+    "error": {
+      "title": "无法加载工作者列表",
+      "description": "加载数据时出现问题，请稍后再试。"
+    },
+    "empty": {
+      "searchingTitle": "正在搜索...",
+      "noMatchTitle": "没有匹配的工作者",
+      "noDataTitle": "暂无数据",
+      "searchingDescription": "正在按当前筛选加载工作者列表。",
+      "noMatchDescription": "请尝试减少条件、更换地区，或清除上方全部筛选。",
+      "noDataDescription": "当前没有可显示的工作者。"
+    },
+    "service": {
+      "viewDescription": "查看 {service} 的说明",
+      "workerCount": "{count} 位工作者",
+      "viewAll": "查看全部 {service} 服务"
+    }
+  },
   "ClientProfile": {
     "userFallback": "用户",
     "avatarAria": "更新头像",
