@@ -2,6 +2,7 @@
 
 import { ChangeEvent, ReactNode, useRef, useState } from "react"
 import Image from "next/image"
+import { useLocale, useTranslations } from "next-intl"
 import {
   BadgeCheck,
   Building2,
@@ -38,15 +39,16 @@ import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import { uploadImage } from "@/lib/utils/upload-image"
 import { validateImageFile } from "@/lib/utils/validate-upload"
 
-const formatDateTime = (value?: string | null): string => {
+const formatDateTime = (value: string | null | undefined, localeTag: string): string => {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "—"
-  return date.toLocaleString("vi-VN")
+  return date.toLocaleString(localeTag)
 }
 
 const toStatusColor = (status?: string): string => {
@@ -70,6 +72,9 @@ const toPlanColor = (planCode?: string): string => {
 }
 
 export default function ClientProfilePage() {
+  const t = useTranslations("ClientProfile")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale]
   const user = useAuthStore((s) => s.user)
   const meQuery = useMe()
   const updateProfileMutation = useUpdateBasicProfile()
@@ -79,7 +84,7 @@ export default function ClientProfilePage() {
 
   const profileData = meQuery.data?.data?.user ?? user
   const userRoles = profileData?.roles ?? []
-  const displayName = profileData?.full_name ?? "Người dùng"
+  const displayName = profileData?.full_name ?? t("userFallback")
   const reputationScore = getReputationScore(profileData?.meta_data?.reputation_score)
 
   // Lưu một field cơ bản (tên / sđt). API cập nhật từng phần nên chỉ gửi field đổi.
@@ -90,13 +95,13 @@ export default function ClientProfilePage() {
     try {
       const response = await updateProfileMutation.mutateAsync(payload)
       if (!response.success) {
-        toast.error(localizeServerMessage(response.message, "Cập nhật thất bại."))
+        toast.error(localizeServerMessage(response.message, t("toast.updateFailed")))
         return false
       }
-      toast.success("Cập nhật hồ sơ thành công.")
+      toast.success(t("toast.updateSuccess"))
       return true
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể cập nhật hồ sơ."))
+      toast.error(getErrorMessage(error, t("toast.updateError")))
       return false
     }
   }
@@ -106,7 +111,7 @@ export default function ClientProfilePage() {
     newPassword: string,
   ): Promise<boolean> => {
     if (!isPasswordStrong(newPassword)) {
-      toast.error("Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.")
+      toast.error(t("toast.passwordWeak"))
       return false
     }
     try {
@@ -115,13 +120,13 @@ export default function ClientProfilePage() {
         password: newPassword,
       })
       if (!response.success) {
-        toast.error(localizeServerMessage(response.message, "Đổi mật khẩu thất bại."))
+        toast.error(localizeServerMessage(response.message, t("toast.passwordFailed")))
         return false
       }
-      toast.success("Đổi mật khẩu thành công.")
+      toast.success(t("toast.passwordSuccess"))
       return true
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể đổi mật khẩu."))
+      toast.error(getErrorMessage(error, t("toast.passwordError")))
       return false
     }
   }
@@ -141,12 +146,12 @@ export default function ClientProfilePage() {
         const avatarUrl = await uploadImage(croppedFile)
         const response = await updateProfileMutation.mutateAsync({ avatar: avatarUrl })
         if (!response.success) {
-          toast.error(localizeServerMessage(response.message, "Không thể cập nhật ảnh đại diện."))
+          toast.error(localizeServerMessage(response.message, t("toast.avatarFailed")))
           return
         }
-        toast.success("Cập nhật ảnh đại diện thành công.")
+        toast.success(t("toast.avatarSuccess"))
       } catch (error) {
-        toast.error(getErrorMessage(error, "Tải ảnh thất bại. Vui lòng thử lại."))
+        toast.error(getErrorMessage(error, t("toast.avatarUploadError")))
       } finally {
         setIsUploadingAvatar(false)
       }
@@ -192,7 +197,7 @@ export default function ClientProfilePage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingAvatar}
                 className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border bg-background shadow transition hover:bg-muted active:scale-90 disabled:cursor-not-allowed disabled:opacity-60"
-                aria-label="Cập nhật ảnh đại diện"
+                aria-label={t("avatarAria")}
               >
                 {isUploadingAvatar ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
               </button>
@@ -206,7 +211,7 @@ export default function ClientProfilePage() {
               <div className="flex flex-wrap justify-center gap-2 pt-1">
                 <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
                   <ShieldCheck className="size-3.5" />
-                  Điểm uy tín {reputationScore}/100
+                  {t("reputation", { score: reputationScore })}
                 </span>
                 {userRoles.map((role) => (
                   <span key={role} className="rounded-full bg-muted px-3 py-1 text-xs capitalize text-muted-foreground">
@@ -223,25 +228,25 @@ export default function ClientProfilePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <UserCog className="size-5 text-foreground" />
-                Chi tiết tài khoản
+                {t("accountDetails.title")}
               </CardTitle>
-              <CardDescription>Chạm biểu tượng bút để sửa từng mục</CardDescription>
+              <CardDescription>{t("accountDetails.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <EditableField
                 icon={<User className="size-4" />}
-                label="Họ và tên"
+                label={t("fields.fullName")}
                 value={profileData?.full_name}
-                placeholder="Nhập họ và tên"
+                placeholder={t("placeholders.fullName")}
                 disabled={updateProfileMutation.isPending}
                 onSave={(next) => saveBasic({ full_name: next })}
               />
-              <InfoRow icon={<Mail className="size-4" />} label="Email" value={profileData?.email ?? "—"} />
+              <InfoRow icon={<Mail className="size-4" />} label={t("fields.email")} value={profileData?.email ?? "—"} />
               <EditableField
                 icon={<Phone className="size-4" />}
-                label="Số điện thoại"
+                label={t("fields.phone")}
                 value={profileData?.phone}
-                placeholder="Nhập số điện thoại"
+                placeholder={t("placeholders.phone")}
                 inputType="tel"
                 disabled={updateProfileMutation.isPending}
                 onSave={(next) => saveBasic({ phone: next })}
@@ -253,44 +258,44 @@ export default function ClientProfilePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ShieldCheck className="size-5 text-foreground" />
-                Trạng thái
+                {t("status.title")}
               </CardTitle>
-              <CardDescription>Vai trò hoạt động cuối · ID người dùng</CardDescription>
+              <CardDescription>{t("status.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <InfoRow
                 icon={<ShieldCheck className="size-4" />}
-                label="Trạng thái"
+                label={t("fields.status")}
                 value={
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${toStatusColor(profileData?.status)}`}>
-                    {profileData?.status ?? "unknown"}
+                    {profileData?.status?.toLowerCase() === "active" ? t("status.active") : profileData?.status ?? t("status.unknown")}
                   </span>
                 }
               />
               <InfoRow
                 icon={<BadgeCheck className="size-4" />}
-                label="Email xác minh"
+                label={t("fields.emailVerified")}
                 value={
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${toVerifyColor(profileData?.verify_email)}`}>
-                    {profileData?.verify_email ? "Đã xác minh" : "Chưa xác minh"}
+                    {profileData?.verify_email ? t("status.verified") : t("status.unverified")}
                   </span>
                 }
               />
               <InfoRow
                 icon={<User className="size-4" />}
-                label="Vai trò hoạt động cuối"
+                label={t("fields.lastActiveRole")}
                 value={profileData?.last_active_role ?? "—"}
               />
               <InfoRow
                 icon={<ShieldCheck className="size-4" />}
-                label="Điểm uy tín"
+                label={t("fields.reputationScore")}
                 value={
                   <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", getReputationBadgeClass(reputationScore))}>
                     {reputationScore}/100
                   </span>
                 }
               />
-              <InfoRow icon={<User className="size-4" />} label="ID người dùng" value={profileData?.id ?? "—"} />
+              <InfoRow icon={<User className="size-4" />} label={t("fields.userId")} value={profileData?.id ?? "—"} />
             </CardContent>
           </Card>
         </div>
@@ -299,9 +304,9 @@ export default function ClientProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <KeyRound className="size-5 text-foreground" />
-              Bảo mật
+              {t("security.title")}
             </CardTitle>
-            <CardDescription>Đổi mật khẩu đăng nhập của bạn</CardDescription>
+            <CardDescription>{t("security.description")}</CardDescription>
           </CardHeader>
           <CardContent className="text-sm">
             <PasswordEditRow
@@ -316,9 +321,9 @@ export default function ClientProfilePage() {
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Building2 className="size-5 text-foreground" />
-                Gói thành viên
+                {t("plan.title")}
               </CardTitle>
-              <CardDescription>Gói hiện tại và thời hạn hiệu lực của bạn</CardDescription>
+              <CardDescription>{t("plan.description")}</CardDescription>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${toPlanColor(profileData?.meta_data?.pricing_plan_code ?? undefined)}`}>
               {profileData?.meta_data?.pricing_plan_code ?? "standard"}
@@ -328,16 +333,16 @@ export default function ClientProfilePage() {
             <div className="rounded-lg border p-4">
               <p className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                 <CalendarDays className="size-3.5" />
-                Bắt đầu gói
+                {t("plan.startedAt")}
               </p>
-              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_started_at ?? undefined)}</p>
+              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_started_at, localeTag)}</p>
             </div>
             <div className="rounded-lg border p-4">
               <p className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                 <CalendarDays className="size-3.5" />
-                Hết hạn gói
+                {t("plan.expiresAt")}
               </p>
-              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_expires_at ?? undefined)}</p>
+              <p className="font-medium">{formatDateTime(profileData?.meta_data?.pricing_expires_at, localeTag)}</p>
             </div>
           </CardContent>
         </Card>
@@ -391,6 +396,7 @@ function EditableField({
   onSave: (next: string | null) => Promise<boolean>
   disabled?: boolean
 }) {
+  const t = useTranslations("ClientProfile")
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value ?? "")
   const [saving, setSaving] = useState(false)
@@ -444,7 +450,7 @@ function EditableField({
             className="size-10 shrink-0"
             onClick={() => void save()}
             disabled={saving}
-            aria-label="Lưu"
+            aria-label={t("actions.save")}
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
           </Button>
@@ -455,7 +461,7 @@ function EditableField({
             className="size-10 shrink-0"
             onClick={cancel}
             disabled={saving}
-            aria-label="Hủy"
+            aria-label={t("actions.cancel")}
           >
             <X className="size-4" />
           </Button>
@@ -479,7 +485,7 @@ function EditableField({
             setEditing(true)
           }}
           disabled={disabled}
-          aria-label={`Sửa ${label}`}
+          aria-label={t("actions.editField", { label })}
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground active:scale-90 disabled:opacity-50"
         >
           <PencilLine className="size-4" />
@@ -497,6 +503,7 @@ function PasswordEditRow({
   onSave: (oldPassword: string, newPassword: string) => Promise<boolean>
   disabled?: boolean
 }) {
+  const t = useTranslations("ClientProfile")
   const [editing, setEditing] = useState(false)
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -532,7 +539,7 @@ function PasswordEditRow({
       <div className="flex items-center justify-between gap-3">
         <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
           <KeyRound className="size-4" />
-          <span>Mật khẩu</span>
+          <span>{t("fields.password")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="font-medium tracking-widest">••••••••</span>
@@ -540,7 +547,7 @@ function PasswordEditRow({
             type="button"
             onClick={() => setEditing(true)}
             disabled={disabled}
-            aria-label="Đổi mật khẩu"
+            aria-label={t("actions.changePassword")}
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground active:scale-90 disabled:opacity-50"
           >
             <PencilLine className="size-4" />
@@ -553,7 +560,7 @@ function PasswordEditRow({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <span className="text-muted-foreground">Mật khẩu hiện tại</span>
+        <span className="text-muted-foreground">{t("fields.currentPassword")}</span>
         <InputGroup className="h-10">
           <InputGroupInput
             type={showOld ? "text" : "password"}
@@ -571,7 +578,7 @@ function PasswordEditRow({
               size="icon"
               className="size-8"
               onClick={() => setShowOld((prev) => !prev)}
-              aria-label={showOld ? "Ẩn mật khẩu cũ" : "Hiện mật khẩu cũ"}
+              aria-label={showOld ? t("actions.hideCurrentPassword") : t("actions.showCurrentPassword")}
             >
               {showOld ? <EyeOff /> : <Eye />}
             </Button>
@@ -580,7 +587,7 @@ function PasswordEditRow({
       </div>
 
       <div className="space-y-1.5">
-        <span className="text-muted-foreground">Mật khẩu mới</span>
+        <span className="text-muted-foreground">{t("fields.newPassword")}</span>
         <InputGroup className="h-10">
           <InputGroupInput
             type={showNew ? "text" : "password"}
@@ -599,7 +606,7 @@ function PasswordEditRow({
               size="icon"
               className="size-8"
               onClick={() => setShowNew((prev) => !prev)}
-              aria-label={showNew ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+              aria-label={showNew ? t("actions.hideNewPassword") : t("actions.showNewPassword")}
             >
               {showNew ? <EyeOff /> : <Eye />}
             </Button>
@@ -611,11 +618,11 @@ function PasswordEditRow({
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={cancel} disabled={saving}>
-          Hủy
+          {t("actions.cancel")}
         </Button>
         <Button type="button" onClick={() => void save()} disabled={!canSave}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-          Lưu mật khẩu
+          {t("actions.savePassword")}
         </Button>
       </div>
     </div>

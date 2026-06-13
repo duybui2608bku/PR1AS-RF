@@ -8,6 +8,7 @@ import {
 } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
@@ -94,6 +95,7 @@ import {
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { serviceService, type ServiceItem } from "@/services/service.service"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import type {
   WorkerExperience,
   WorkerGender,
@@ -109,41 +111,30 @@ const MAX_GALLERY = 10
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const TOTAL_STEPS = 4
 
-const STAR_SIGNS: { value: string; label: string }[] = [
-  { value: "ARIES", label: "Bạch Dương ♈" },
-  { value: "TAURUS", label: "Kim Ngưu ♉" },
-  { value: "GEMINI", label: "Song Tử ♊" },
-  { value: "CANCER", label: "Cự Giải ♋" },
-  { value: "LEO", label: "Sư Tử ♌" },
-  { value: "VIRGO", label: "Xử Nữ ♍" },
-  { value: "LIBRA", label: "Thiên Bình ♎" },
-  { value: "SCORPIO", label: "Bọ Cạp ♏" },
-  { value: "SAGITTARIUS", label: "Nhân Mã ♐" },
-  { value: "CAPRICORN", label: "Ma Kết ♑" },
-  { value: "AQUARIUS", label: "Bảo Bình ♒" },
-  { value: "PISCES", label: "Song Ngư ♓" },
+const STAR_SIGN_VALUES = [
+  "ARIES",
+  "TAURUS",
+  "GEMINI",
+  "CANCER",
+  "LEO",
+  "VIRGO",
+  "LIBRA",
+  "SCORPIO",
+  "SAGITTARIUS",
+  "CAPRICORN",
+  "AQUARIUS",
+  "PISCES",
+] as const
+
+const EXPERIENCE_VALUES: WorkerExperience[] = [
+  "LESS_THAN_1",
+  "ONE_TO_3",
+  "THREE_TO_5",
+  "FIVE_TO_10",
+  "MORE_THAN_10",
 ]
 
-const EXPERIENCE_OPTIONS: { value: WorkerExperience; label: string }[] = [
-  { value: "LESS_THAN_1", label: "Dưới 1 năm" },
-  { value: "ONE_TO_3", label: "1–3 năm" },
-  { value: "THREE_TO_5", label: "3–5 năm" },
-  { value: "FIVE_TO_10", label: "5–10 năm" },
-  { value: "MORE_THAN_10", label: "Trên 10 năm" },
-]
-
-const UNIT_LABEL: Record<WorkerPricingUnit, string> = {
-  HOURLY: "Theo giờ",
-  DAILY: "Theo ngày",
-  MONTHLY: "Theo tháng",
-}
-
-const STEP_INFO = [
-  { title: "Khu vực & Cơ bản", subtitle: "Nơi làm việc và thông tin cơ bản" },
-  { title: "Phong cách cá nhân", subtitle: "Tính cách, sở thích và lời giới thiệu" },
-  { title: "Thư viện ảnh", subtitle: `Tối đa ${MAX_GALLERY} ảnh, mỗi ảnh tối đa 5MB` },
-  { title: "Dịch vụ & Giá", subtitle: "Chọn dịch vụ và thiết lập bảng giá" },
-]
+const STEP_KEYS = ["area", "style", "gallery", "services"] as const
 
 function parseVndInput(value: string) {
   const digits = value.replace(/[^\d]/g, "")
@@ -152,10 +143,10 @@ function parseVndInput(value: string) {
   return Number.isFinite(amount) && amount > 0 ? amount : undefined
 }
 
-function formatVndInput(value: number | string | undefined) {
+function formatVndInput(value: number | string | undefined, localeTag: string) {
   const digits = String(value ?? "").replace(/[^\d]/g, "")
   if (!digits) return ""
-  return new Intl.NumberFormat("vi-VN").format(Number(digits))
+  return new Intl.NumberFormat(localeTag).format(Number(digits))
 }
 
 function parseWorkerProfile(raw: unknown): WorkerProfilePublic | null {
@@ -172,6 +163,7 @@ function SortableImage({
   index: number
   onRemove: () => void
 }) {
+  const t = useTranslations("WorkerSetup")
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: url })
 
@@ -191,7 +183,7 @@ function SortableImage({
       <Image src={url} alt="" fill className="object-cover pointer-events-none" sizes="150px" />
       {index === 0 && (
         <span className="absolute bottom-1.5 left-1.5 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
-          Chính
+          {t("gallery.primary")}
         </span>
       )}
       <Button
@@ -199,7 +191,7 @@ function SortableImage({
         variant="secondary"
         size="icon"
         className="absolute right-1.5 top-1.5 size-7 rounded-full bg-black/70 text-white shadow-sm backdrop-blur-sm hover:bg-black/80"
-        aria-label="Xóa ảnh"
+        aria-label={t("gallery.removeImage")}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation()
@@ -213,6 +205,9 @@ function SortableImage({
 }
 
 export default function WorkerSetupPage() {
+  const t = useTranslations("WorkerSetup")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale]
   const router = useRouter()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const userId = useAuthStore((s) => s.user?.id)
@@ -411,12 +406,12 @@ export default function WorkerSetupPage() {
   ])
 
   useEffect(() => {
-    if (provincesQuery.isError) toast.error("Không tải được danh sách tỉnh/thành.")
-  }, [provincesQuery.isError])
+    if (provincesQuery.isError) toast.error(t("toast.loadProvincesError"))
+  }, [provincesQuery.isError, t])
 
   useEffect(() => {
-    if (wardsQuery.isError) toast.error("Không tải được danh sách phường/xã.")
-  }, [wardsQuery.isError])
+    if (wardsQuery.isError) toast.error(t("toast.loadWardsError"))
+  }, [wardsQuery.isError, t])
 
   // Location helpers
   const addProvinceLocation = (p: ProvinceOption) => {
@@ -424,12 +419,12 @@ export default function WorkerSetupPage() {
       const cleaned = prev.filter((w) => w.province_code !== p.code)
       if (cleaned.some((w) => w.province_code === p.code && w.ward_code == null)) return cleaned
       if (cleaned.length >= WORK_LOCATIONS_MAX) {
-        toast.warning(`Tối đa ${WORK_LOCATIONS_MAX} khu vực.`)
+        toast.warning(t("toast.maxLocations", { max: WORK_LOCATIONS_MAX }))
         return prev
       }
       const removedWardCount = prev.length - cleaned.length
       if (removedWardCount > 0) {
-        toast.info(`Đã thay thế ${removedWardCount} phường/xã bằng toàn ${p.short_name}.`)
+        toast.info(t("toast.replacedWards", { count: removedWardCount, province: p.short_name }))
       }
       return [...cleaned, { province_code: p.code, ward_code: null, label_snapshot: formatProvinceLabel(p) }]
     })
@@ -440,11 +435,11 @@ export default function WorkerSetupPage() {
       const cleaned = prev.filter((x) => !(x.province_code === p.code && x.ward_code == null))
       if (cleaned.some((x) => x.ward_code === w.code)) return cleaned
       if (cleaned.length >= WORK_LOCATIONS_MAX) {
-        toast.warning(`Tối đa ${WORK_LOCATIONS_MAX} khu vực.`)
+        toast.warning(t("toast.maxLocations", { max: WORK_LOCATIONS_MAX }))
         return prev
       }
       if (prev.length !== cleaned.length) {
-        toast.info(`Đã bỏ toàn ${p.short_name} để thêm phường/xã cụ thể.`)
+        toast.info(t("toast.removedWholeProvince", { province: p.short_name }))
       }
       return [...cleaned, { province_code: p.code, ward_code: w.code, label_snapshot: formatWardLabel(w, p) }]
     })
@@ -496,11 +491,11 @@ export default function WorkerSetupPage() {
     const slice = arr.slice(0, remaining)
     const valid = slice.filter((f) => {
       if (!/^image\/(jpeg|png|webp)$/i.test(f.type)) {
-        toast.error("Chỉ chấp nhận JPG, PNG hoặc WebP.")
+        toast.error(t("toast.invalidImageType"))
         return false
       }
       if (f.size > MAX_IMAGE_BYTES) {
-        toast.error("Ảnh vượt quá 5MB.")
+        toast.error(t("toast.imageTooLarge"))
         return false
       }
       return true
@@ -515,7 +510,7 @@ export default function WorkerSetupPage() {
         }
         setGalleryUrls((prev) => [...prev, ...urls].slice(-MAX_GALLERY))
       } catch (e) {
-        toast.error(getErrorMessage(e, "Tải ảnh thất bại."))
+        toast.error(getErrorMessage(e, t("toast.uploadFailed")))
       } finally {
         setGalleryUploading(false)
       }
@@ -552,33 +547,33 @@ export default function WorkerSetupPage() {
       const norm = normalizeWorkerPricingSlots(pricing)
       const err = validateNormalizedPricing(norm)
       if (err) {
-        toast.error(`${serviceService.getName(svc.name)}: nhập ít nhất một mức giá hợp lệ.`)
+        toast.error(t("toast.serviceNeedsPrice", { service: serviceService.getName(svc.name) }))
         return null
       }
       items.push({ service_id: serviceId, pricing: norm.map((p) => ({ ...p, currency: "VND" })) })
     }
     if (items.length === 0) {
-      toast.error("Chọn ít nhất một dịch vụ và nhập giá.")
+      toast.error(t("toast.selectServiceAndPrice"))
       return null
     }
     return items
   }
 
   const handleSubmit = async () => {
-    if (!gender) { toast.error("Chọn giới tính."); return }
-    if (workLocations.length < 1) { toast.error("Chọn ít nhất một khu vực làm việc."); return }
+    if (!gender) { toast.error(t("toast.selectGender")); return }
+    if (workLocations.length < 1) { toast.error(t("toast.selectLocation")); return }
     const servicesPayload = buildServicesPayload()
     if (!servicesPayload) return
     const profilePayload = buildProfilePayload()
     try {
       await updateProfileMutation.mutateAsync(profilePayload)
       await upsertServicesMutation.mutateAsync({ services: servicesPayload })
-      toast.success("Đã lưu hồ sơ và dịch vụ.")
+      toast.success(t("toast.saveSuccess"))
       const id = userId ?? meQuery.data?.data?.user?.id
       if (id) router.push(`/worker/${id}`)
       else router.push("/")
     } catch (e) {
-      toast.error(getErrorMessage(e, "Không thể lưu. Vui lòng thử lại."))
+      toast.error(getErrorMessage(e, t("toast.saveError")))
     }
   }
 
@@ -597,6 +592,7 @@ export default function WorkerSetupPage() {
     !isAuthenticated || meQuery.isLoading || catalogQuery.isLoading || mineQuery.isLoading
   const isSaving =
     updateProfileMutation.isPending || upsertServicesMutation.isPending
+  const currentStepKey = STEP_KEYS[currentStep]
 
   // ─── Service row (mobile-optimised) ─────────────────────────────────────────
   const renderServiceRow = (service: ServiceItem) => {
@@ -631,18 +627,18 @@ export default function WorkerSetupPage() {
 
         {checked && (
           <div className="border-t border-border px-4 py-3 space-y-2.5 bg-muted/30">
-            <p className="text-xs text-muted-foreground">Nhập giá (VND) cho ít nhất một đơn vị</p>
+            <p className="text-xs text-muted-foreground">{t("pricing.priceHelp")}</p>
             {WORKER_SETUP_PRICING_SLOT_ORDER.map((unit) => (
               <div key={unit} className="flex items-center gap-3">
                 <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-                  {UNIT_LABEL[unit]}
+                  {t(`units.${unit}`)}
                 </Label>
                 <div className="relative flex-1">
                   <Input
                     type="text"
                     inputMode="numeric"
                     placeholder="0"
-                    value={formatVndInput(priceForUnit(pricing, unit))}
+                    value={formatVndInput(priceForUnit(pricing, unit), localeTag)}
                     onChange={(e) => setPriceForUnit(service.id, unit, e.target.value)}
                     className="h-11 pr-10 text-sm"
                   />
@@ -666,10 +662,10 @@ export default function WorkerSetupPage() {
         <CardHeader className="px-4 pt-4 pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <MapPin className="size-4 text-primary" />
-            Khu vực làm việc
+            {t("sections.workLocations.title")}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Tối đa {WORK_LOCATIONS_MAX} khu vực, bắt buộc chọn ít nhất 1
+            {t("sections.workLocations.subtitle", { max: WORK_LOCATIONS_MAX })}
           </p>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-3">
@@ -691,7 +687,7 @@ export default function WorkerSetupPage() {
                       variant="ghost"
                       size="icon"
                       className="ml-0.5 size-4 rounded-full hover:bg-black/20 active:bg-black/30"
-                      aria-label="Xóa"
+                      aria-label={t("actions.remove")}
                       onClick={() => removeWorkLocation(w.province_code, w.ward_code)}
                     >
                       <X className="size-2.5" />
@@ -716,7 +712,7 @@ export default function WorkerSetupPage() {
             }}
           >
             <Plus className="size-4" />
-            Thêm khu vực
+            {t("actions.addLocation")}
           </Button>
         </CardContent>
       </Card>
@@ -724,21 +720,21 @@ export default function WorkerSetupPage() {
       {/* Basic info */}
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Thông tin cơ bản</CardTitle>
+          <CardTitle className="text-base">{t("sections.basicInfo.title")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Ngày sinh</Label>
+            <Label className="text-sm font-medium">{t("fields.dateOfBirth")}</Label>
             <DatePicker
               value={dateOfBirth}
               onChange={setDateOfBirth}
-              placeholder="Chọn ngày sinh"
+              placeholder={t("placeholders.dateOfBirth")}
               toDate={new Date()}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Giới tính</Label>
+            <Label className="text-sm font-medium">{t("fields.gender")}</Label>
             <div className="flex gap-1.5 rounded-xl border border-border bg-muted/40 p-1">
               {(["MALE", "FEMALE", "OTHER"] as WorkerGender[]).map((g) => (
                 <Button
@@ -753,21 +749,23 @@ export default function WorkerSetupPage() {
                   )}
                   onClick={() => setGender(g)}
                 >
-                  {g === "MALE" ? "Nam" : g === "FEMALE" ? "Nữ" : "Khác"}
+                  {t(`gender.${g}`)}
                 </Button>
               ))}
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Kinh nghiệm <span className="font-normal text-muted-foreground">(tuỳ chọn)</span></Label>
+            <Label className="text-sm font-medium">
+              {t("fields.experience")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+            </Label>
             <Select value={experience} onValueChange={(v) => setExperience(v as WorkerExperience)}>
               <SelectTrigger className="h-11 w-full rounded-xl">
-                <SelectValue placeholder="Chọn kinh nghiệm" />
+                <SelectValue placeholder={t("placeholders.experience")} />
               </SelectTrigger>
               <SelectContent>
-                {EXPERIENCE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                {EXPERIENCE_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>{t(`experience.${value}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -782,12 +780,12 @@ export default function WorkerSetupPage() {
       {/* Physical */}
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Thể chất</CardTitle>
+          <CardTitle className="text-base">{t("sections.physical.title")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Chiều cao</Label>
+              <Label className="text-sm font-medium">{t("fields.height")}</Label>
               <div className="relative">
                 <Input
                   type="number"
@@ -803,7 +801,7 @@ export default function WorkerSetupPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Cân nặng</Label>
+              <Label className="text-sm font-medium">{t("fields.weight")}</Label>
               <div className="relative">
                 <Input
                   type="number"
@@ -821,14 +819,16 @@ export default function WorkerSetupPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Cung hoàng đạo <span className="font-normal text-muted-foreground">(tuỳ chọn)</span></Label>
+            <Label className="text-sm font-medium">
+              {t("fields.starSign")} <span className="font-normal text-muted-foreground">{t("optional")}</span>
+            </Label>
             <Select value={starSign} onValueChange={setStarSign}>
               <SelectTrigger className="h-11 w-full rounded-xl">
-                <SelectValue placeholder="Chọn cung hoàng đạo" />
+                <SelectValue placeholder={t("placeholders.starSign")} />
               </SelectTrigger>
               <SelectContent>
-                {STAR_SIGNS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                {STAR_SIGN_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>{t(`starSigns.${value}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -839,34 +839,34 @@ export default function WorkerSetupPage() {
       {/* Identity */}
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Định danh cá nhân</CardTitle>
+          <CardTitle className="text-base">{t("sections.identity.title")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Tên nghề / Chức danh</Label>
+            <Label className="text-sm font-medium">{t("fields.title")}</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
-              placeholder="VD: Trợ lý cá nhân, Người bạn đồng hành..."
+              placeholder={t("placeholders.title")}
               className="h-11 rounded-xl"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Lối sống</Label>
+            <Label className="text-sm font-medium">{t("fields.lifestyle")}</Label>
             <Input
               value={lifestyle}
               onChange={(e) => setLifestyle(e.target.value)}
-              placeholder="VD: Năng động, thích khám phá..."
+              placeholder={t("placeholders.lifestyle")}
               className="h-11 rounded-xl"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Câu nói yêu thích</Label>
+            <Label className="text-sm font-medium">{t("fields.quote")}</Label>
             <Input
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
-              placeholder="Một câu nói ấn tượng về bạn..."
+              placeholder={t("placeholders.quote")}
               className="h-11 rounded-xl"
             />
           </div>
@@ -876,7 +876,7 @@ export default function WorkerSetupPage() {
       {/* Hobbies */}
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Sở thích</CardTitle>
+          <CardTitle className="text-base">{t("sections.hobbies.title")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-3">
           {hobbies.length > 0 && (
@@ -887,7 +887,7 @@ export default function WorkerSetupPage() {
                   <button
                     type="button"
                     className="flex size-4 items-center justify-center rounded-full hover:bg-black/15 active:bg-black/25"
-                    aria-label={`Xóa ${h}`}
+                    aria-label={t("actions.removeHobby", { hobby: h })}
                     onClick={() => setHobbies((prev) => prev.filter((x) => x !== h))}
                   >
                     <X className="size-2.5" />
@@ -899,7 +899,7 @@ export default function WorkerSetupPage() {
           <div className="flex gap-2">
             <Input
               ref={hobbyInputRef}
-              placeholder="Thêm sở thích..."
+              placeholder={t("placeholders.hobby")}
               value={hobbyDraft}
               onChange={(e) => setHobbyDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -913,6 +913,7 @@ export default function WorkerSetupPage() {
               size="icon"
               className="h-11 w-11 shrink-0 rounded-xl"
               onClick={addHobby}
+              aria-label={t("actions.addHobby")}
             >
               <Plus className="size-4" />
             </Button>
@@ -923,14 +924,14 @@ export default function WorkerSetupPage() {
       {/* Introduction */}
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Lời giới thiệu</CardTitle>
+          <CardTitle className="text-base">{t("sections.introduction.title")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
           <Textarea
             rows={5}
             value={introduction}
             onChange={(e) => setIntroduction(e.target.value)}
-            placeholder="Viết vài dòng giới thiệu bản thân, điểm mạnh và phong cách làm việc của bạn..."
+            placeholder={t("placeholders.introduction")}
             className="rounded-xl resize-none"
           />
         </CardContent>
@@ -942,9 +943,9 @@ export default function WorkerSetupPage() {
     <div className="space-y-5">
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Thư viện ảnh</CardTitle>
+          <CardTitle className="text-base">{t("sections.gallery.title")}</CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {galleryUrls.length}/{MAX_GALLERY} ảnh · JPG, PNG hoặc WebP · Tối đa 5MB/ảnh
+            {t("gallery.summary", { count: galleryUrls.length, max: MAX_GALLERY })}
           </p>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
@@ -970,12 +971,12 @@ export default function WorkerSetupPage() {
             {galleryUploading ? (
               <>
                 <Loader2 className="size-5 animate-spin" />
-                Đang tải lên...
+                {t("gallery.uploading")}
               </>
             ) : (
               <>
                 <ImagePlus className="size-5" />
-                Chọn ảnh
+                {t("gallery.chooseImage")}
               </>
             )}
           </Button>
@@ -983,7 +984,7 @@ export default function WorkerSetupPage() {
           {galleryUrls.length > 0 && (
             <>
               <p className="text-xs text-muted-foreground">
-                Kéo để sắp xếp · Ảnh đầu tiên là ảnh chính
+                {t("gallery.dragHelp")}
               </p>
               <DndContext
                 sensors={gallerySensors}
@@ -1011,8 +1012,8 @@ export default function WorkerSetupPage() {
           {galleryUrls.length === 0 && !galleryUploading && (
             <div className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-10 text-center">
               <ImagePlus className="size-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">Chưa có ảnh nào</p>
-              <p className="text-xs text-muted-foreground/70">Thêm ảnh để hồ sơ thêm nổi bật</p>
+              <p className="text-sm text-muted-foreground">{t("gallery.emptyTitle")}</p>
+              <p className="text-xs text-muted-foreground/70">{t("gallery.emptyDesc")}</p>
             </div>
           )}
         </CardContent>
@@ -1025,8 +1026,8 @@ export default function WorkerSetupPage() {
       {catalogQuery.isError && (
         <Alert variant="destructive" className="rounded-2xl">
           <AlertCircle className="size-4" />
-          <AlertTitle>Không tải được danh mục dịch vụ</AlertTitle>
-          <AlertDescription>Vui lòng tải lại trang.</AlertDescription>
+          <AlertTitle>{t("services.loadErrorTitle")}</AlertTitle>
+          <AlertDescription>{t("services.loadErrorDesc")}</AlertDescription>
         </Alert>
       )}
 
@@ -1034,10 +1035,10 @@ export default function WorkerSetupPage() {
         <CardHeader className="px-4 pt-4 pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <WalletCards className="size-4 text-primary" />
-            Trợ lý &amp; Hỗ trợ
+            {t("services.assistanceTitle")}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Chọn dịch vụ bạn cung cấp và đặt giá tương ứng
+            {t("services.subtitle")}
           </p>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-3">
@@ -1047,14 +1048,14 @@ export default function WorkerSetupPage() {
 
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">Đồng hành</CardTitle>
+          <CardTitle className="text-base">{t("services.companionshipTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-3">
           {companionshipSplit.base && renderServiceRow(companionshipSplit.base)}
           {companionshipSplit.levels.map((s) => renderServiceRow(s))}
           {!companionshipSplit.base && companionshipSplit.levels.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Không có dịch vụ đồng hành trong danh mục.
+              {t("services.emptyCompanionship")}
             </p>
           )}
         </CardContent>
@@ -1062,7 +1063,9 @@ export default function WorkerSetupPage() {
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-4 py-3">
         <p className="text-xs text-amber-800 dark:text-amber-300">
-          Chọn ít nhất <strong>1 dịch vụ</strong> và nhập giá cho ít nhất một đơn vị (giờ / ngày / tháng) để hoàn tất hồ sơ.
+          {t.rich("services.requirement", {
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       </div>
     </div>
@@ -1091,12 +1094,12 @@ export default function WorkerSetupPage() {
         <div className="mb-5 space-y-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-              Bước {currentStep + 1}/{TOTAL_STEPS}
+              {t("stepCounter", { current: currentStep + 1, total: TOTAL_STEPS })}
             </span>
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">{STEP_INFO[currentStep].title}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{STEP_INFO[currentStep].subtitle}</p>
+            <h1 className="text-xl font-bold tracking-tight">{t(`steps.${currentStepKey}.title`)}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t(`steps.${currentStepKey}.subtitle`, { max: MAX_GALLERY })}</p>
           </div>
 
           {/* Progress bar */}
@@ -1138,7 +1141,7 @@ export default function WorkerSetupPage() {
             onClick={handleBack}
           >
             <ChevronLeft className="size-4" />
-            {currentStep === 0 ? "Thoát" : "Quay lại"}
+            {currentStep === 0 ? t("actions.exit") : t("actions.back")}
           </Button>
 
           {currentStep < TOTAL_STEPS - 1 ? (
@@ -1147,7 +1150,7 @@ export default function WorkerSetupPage() {
               className="h-11 gap-1.5 rounded-xl px-5"
               onClick={handleNext}
             >
-              Tiếp
+              {t("actions.next")}
               <ChevronRight className="size-4" />
             </Button>
           ) : (
@@ -1162,7 +1165,7 @@ export default function WorkerSetupPage() {
               ) : (
                 <Check className="size-4" />
               )}
-              Hoàn tất
+              {t("actions.finish")}
             </Button>
           )}
         </div>
@@ -1178,7 +1181,7 @@ export default function WorkerSetupPage() {
             onClick={handleBack}
           >
             <ChevronLeft className="size-4" />
-            {currentStep === 0 ? "Thoát" : "Quay lại"}
+            {currentStep === 0 ? t("actions.exit") : t("actions.back")}
           </Button>
 
           {/* Step dots */}
@@ -1199,7 +1202,7 @@ export default function WorkerSetupPage() {
                     ? "w-2.5 h-2.5 bg-primary/50"
                     : "w-2.5 h-2.5 bg-muted-foreground/30",
                 )}
-                aria-label={`Bước ${i + 1}`}
+                aria-label={t("stepAria", { step: i + 1 })}
               />
             ))}
           </div>
@@ -1210,7 +1213,7 @@ export default function WorkerSetupPage() {
               className="gap-1.5 h-11 px-4 rounded-xl"
               onClick={handleNext}
             >
-              Tiếp
+              {t("actions.next")}
               <ChevronRight className="size-4" />
             </Button>
           ) : (
@@ -1225,7 +1228,7 @@ export default function WorkerSetupPage() {
               ) : (
                 <Check className="size-4" />
               )}
-              Hoàn tất
+              {t("actions.finish")}
             </Button>
           )}
         </div>
@@ -1259,13 +1262,13 @@ export default function WorkerSetupPage() {
                 }}
               >
                 <ChevronLeft className="size-4" />
-                Tỉnh
+                {t("locationPicker.province")}
               </button>
             )}
             <BottomSheetTitle className="flex-1 text-base">
               {locationPickerPhase === "province"
-                ? "Chọn tỉnh / thành phố"
-                : `${locationPickerProvince?.short_name} — Chọn khu vực`}
+                ? t("locationPicker.chooseProvince")
+                : t("locationPicker.chooseArea", { province: locationPickerProvince?.short_name ?? "" })}
             </BottomSheetTitle>
           </div>
 
@@ -1274,8 +1277,8 @@ export default function WorkerSetupPage() {
             <Input
               placeholder={
                 locationPickerPhase === "province"
-                  ? "Tìm tỉnh / thành phố..."
-                  : "Tìm phường / xã / thị trấn..."
+                  ? t("locationPicker.searchProvince")
+                  : t("locationPicker.searchWard")
               }
               value={locationPickerPhase === "province" ? provinceQuery : wardQuery}
               onChange={(e) =>
@@ -1299,7 +1302,7 @@ export default function WorkerSetupPage() {
                     </div>
                   ) : filteredProvinces.length === 0 ? (
                     <p className="py-8 text-center text-sm text-muted-foreground">
-                      Không tìm thấy kết quả.
+                      {t("locationPicker.noProvinceResults")}
                     </p>
                   ) : (
                     filteredProvinces.map((p) => (
@@ -1339,7 +1342,7 @@ export default function WorkerSetupPage() {
                   >
                     <Globe2 className="size-4 text-primary shrink-0" />
                     <span className="flex-1 text-sm font-medium text-left">
-                      Toàn {locationPickerProvince?.name.toLowerCase()}
+                      {t("locationPicker.wholeProvince", { province: locationPickerProvince?.name.toLowerCase() ?? "" })}
                     </span>
                     {workLocations.some(
                       (w) => w.province_code === locationPickerProvince?.code && w.ward_code == null,
@@ -1354,7 +1357,7 @@ export default function WorkerSetupPage() {
                     </div>
                   ) : filteredWards.length === 0 ? (
                     <p className="py-8 text-center text-sm text-muted-foreground">
-                      Không tìm thấy phường/xã.
+                      {t("locationPicker.noWardResults")}
                     </p>
                   ) : (
                     filteredWards.map((w) => {

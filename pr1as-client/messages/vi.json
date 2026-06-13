@@ -519,6 +519,235 @@
     "copyLabelAmount": "số tiền",
     "copyLabelContent": "nội dung"
   },
+  "ClientProfile": {
+    "userFallback": "Người dùng",
+    "avatarAria": "Cập nhật ảnh đại diện",
+    "reputation": "Điểm uy tín {score}/100",
+    "accountDetails": {
+      "title": "Chi tiết tài khoản",
+      "description": "Chạm biểu tượng bút để sửa từng mục"
+    },
+    "fields": {
+      "fullName": "Họ và tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "status": "Trạng thái",
+      "emailVerified": "Email xác minh",
+      "lastActiveRole": "Vai trò hoạt động cuối",
+      "reputationScore": "Điểm uy tín",
+      "userId": "ID người dùng",
+      "password": "Mật khẩu",
+      "currentPassword": "Mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới"
+    },
+    "placeholders": {
+      "fullName": "Nhập họ và tên",
+      "phone": "Nhập số điện thoại"
+    },
+    "status": {
+      "title": "Trạng thái",
+      "description": "Vai trò hoạt động cuối · ID người dùng",
+      "active": "Đang hoạt động",
+      "unknown": "Không rõ",
+      "verified": "Đã xác minh",
+      "unverified": "Chưa xác minh"
+    },
+    "security": {
+      "title": "Bảo mật",
+      "description": "Đổi mật khẩu đăng nhập của bạn"
+    },
+    "plan": {
+      "title": "Gói thành viên",
+      "description": "Gói hiện tại và thời hạn hiệu lực của bạn",
+      "startedAt": "Bắt đầu gói",
+      "expiresAt": "Hết hạn gói"
+    },
+    "actions": {
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "editField": "Sửa {label}",
+      "changePassword": "Đổi mật khẩu",
+      "showCurrentPassword": "Hiện mật khẩu cũ",
+      "hideCurrentPassword": "Ẩn mật khẩu cũ",
+      "showNewPassword": "Hiện mật khẩu mới",
+      "hideNewPassword": "Ẩn mật khẩu mới",
+      "savePassword": "Lưu mật khẩu",
+      "saveChanges": "Lưu thay đổi"
+    },
+    "toast": {
+      "updateFailed": "Cập nhật thất bại.",
+      "updateSuccess": "Cập nhật hồ sơ thành công.",
+      "updateError": "Không thể cập nhật hồ sơ.",
+      "passwordWeak": "Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.",
+      "passwordFailed": "Đổi mật khẩu thất bại.",
+      "passwordSuccess": "Đổi mật khẩu thành công.",
+      "passwordError": "Không thể đổi mật khẩu.",
+      "avatarFailed": "Không thể cập nhật ảnh đại diện.",
+      "avatarSuccess": "Cập nhật ảnh đại diện thành công.",
+      "avatarUploadError": "Tải ảnh thất bại. Vui lòng thử lại."
+    },
+    "modal": {
+      "title": "Cập nhật hồ sơ",
+      "description": "Chỉnh sửa thông tin cá nhân và mật khẩu khi cần."
+    }
+  },
+  "WorkerSetup": {
+    "optional": "(tuỳ chọn)",
+    "stepCounter": "Bước {current}/{total}",
+    "stepAria": "Bước {step}",
+    "steps": {
+      "area": {
+        "title": "Khu vực & Cơ bản",
+        "subtitle": "Nơi làm việc và thông tin cơ bản"
+      },
+      "style": {
+        "title": "Phong cách cá nhân",
+        "subtitle": "Tính cách, sở thích và lời giới thiệu"
+      },
+      "gallery": {
+        "title": "Thư viện ảnh",
+        "subtitle": "Tối đa {max} ảnh, mỗi ảnh tối đa 5MB"
+      },
+      "services": {
+        "title": "Dịch vụ & Giá",
+        "subtitle": "Chọn dịch vụ và thiết lập bảng giá"
+      }
+    },
+    "units": {
+      "HOURLY": "Theo giờ",
+      "DAILY": "Theo ngày",
+      "MONTHLY": "Theo tháng"
+    },
+    "gender": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
+    "experience": {
+      "LESS_THAN_1": "Dưới 1 năm",
+      "ONE_TO_3": "1-3 năm",
+      "THREE_TO_5": "3-5 năm",
+      "FIVE_TO_10": "5-10 năm",
+      "MORE_THAN_10": "Trên 10 năm"
+    },
+    "starSigns": {
+      "ARIES": "Bạch Dương ♈",
+      "TAURUS": "Kim Ngưu ♉",
+      "GEMINI": "Song Tử ♊",
+      "CANCER": "Cự Giải ♋",
+      "LEO": "Sư Tử ♌",
+      "VIRGO": "Xử Nữ ♍",
+      "LIBRA": "Thiên Bình ♎",
+      "SCORPIO": "Bọ Cạp ♏",
+      "SAGITTARIUS": "Nhân Mã ♐",
+      "CAPRICORN": "Ma Kết ♑",
+      "AQUARIUS": "Bảo Bình ♒",
+      "PISCES": "Song Ngư ♓"
+    },
+    "sections": {
+      "workLocations": {
+        "title": "Khu vực làm việc",
+        "subtitle": "Tối đa {max} khu vực, bắt buộc chọn ít nhất 1"
+      },
+      "basicInfo": {
+        "title": "Thông tin cơ bản"
+      },
+      "physical": {
+        "title": "Thể chất"
+      },
+      "identity": {
+        "title": "Định danh cá nhân"
+      },
+      "hobbies": {
+        "title": "Sở thích"
+      },
+      "introduction": {
+        "title": "Lời giới thiệu"
+      },
+      "gallery": {
+        "title": "Thư viện ảnh"
+      }
+    },
+    "fields": {
+      "dateOfBirth": "Ngày sinh",
+      "gender": "Giới tính",
+      "experience": "Kinh nghiệm",
+      "height": "Chiều cao",
+      "weight": "Cân nặng",
+      "starSign": "Cung hoàng đạo",
+      "title": "Tên nghề / Chức danh",
+      "lifestyle": "Lối sống",
+      "quote": "Câu nói yêu thích"
+    },
+    "placeholders": {
+      "dateOfBirth": "Chọn ngày sinh",
+      "experience": "Chọn kinh nghiệm",
+      "starSign": "Chọn cung hoàng đạo",
+      "title": "VD: Trợ lý cá nhân, Người bạn đồng hành...",
+      "lifestyle": "VD: Năng động, thích khám phá...",
+      "quote": "Một câu nói ấn tượng về bạn...",
+      "hobby": "Thêm sở thích...",
+      "introduction": "Viết vài dòng giới thiệu bản thân, điểm mạnh và phong cách làm việc của bạn..."
+    },
+    "actions": {
+      "remove": "Xóa",
+      "addLocation": "Thêm khu vực",
+      "addHobby": "Thêm sở thích",
+      "removeHobby": "Xóa {hobby}",
+      "exit": "Thoát",
+      "back": "Quay lại",
+      "next": "Tiếp",
+      "finish": "Hoàn tất"
+    },
+    "toast": {
+      "loadProvincesError": "Không tải được danh sách tỉnh/thành.",
+      "loadWardsError": "Không tải được danh sách phường/xã.",
+      "maxLocations": "Tối đa {max} khu vực.",
+      "replacedWards": "Đã thay thế {count} phường/xã bằng toàn {province}.",
+      "removedWholeProvince": "Đã bỏ toàn {province} để thêm phường/xã cụ thể.",
+      "invalidImageType": "Chỉ chấp nhận JPG, PNG hoặc WebP.",
+      "imageTooLarge": "Ảnh vượt quá 5MB.",
+      "uploadFailed": "Tải ảnh thất bại.",
+      "serviceNeedsPrice": "{service}: nhập ít nhất một mức giá hợp lệ.",
+      "selectServiceAndPrice": "Chọn ít nhất một dịch vụ và nhập giá.",
+      "selectGender": "Chọn giới tính.",
+      "selectLocation": "Chọn ít nhất một khu vực làm việc.",
+      "saveSuccess": "Đã lưu hồ sơ và dịch vụ.",
+      "saveError": "Không thể lưu. Vui lòng thử lại."
+    },
+    "pricing": {
+      "priceHelp": "Nhập giá (VND) cho ít nhất một đơn vị"
+    },
+    "gallery": {
+      "primary": "Chính",
+      "removeImage": "Xóa ảnh",
+      "summary": "{count}/{max} ảnh · JPG, PNG hoặc WebP · Tối đa 5MB/ảnh",
+      "uploading": "Đang tải lên...",
+      "chooseImage": "Chọn ảnh",
+      "dragHelp": "Kéo để sắp xếp · Ảnh đầu tiên là ảnh chính",
+      "emptyTitle": "Chưa có ảnh nào",
+      "emptyDesc": "Thêm ảnh để hồ sơ thêm nổi bật"
+    },
+    "services": {
+      "loadErrorTitle": "Không tải được danh mục dịch vụ",
+      "loadErrorDesc": "Vui lòng tải lại trang.",
+      "assistanceTitle": "Trợ lý & Hỗ trợ",
+      "subtitle": "Chọn dịch vụ bạn cung cấp và đặt giá tương ứng",
+      "companionshipTitle": "Đồng hành",
+      "emptyCompanionship": "Không có dịch vụ đồng hành trong danh mục.",
+      "requirement": "Chọn ít nhất <strong>1 dịch vụ</strong> và nhập giá cho ít nhất một đơn vị (giờ / ngày / tháng) để hoàn tất hồ sơ."
+    },
+    "locationPicker": {
+      "province": "Tỉnh",
+      "chooseProvince": "Chọn tỉnh / thành phố",
+      "chooseArea": "{province} — Chọn khu vực",
+      "searchProvince": "Tìm tỉnh / thành phố...",
+      "searchWard": "Tìm phường / xã / thị trấn...",
+      "noProvinceResults": "Không tìm thấy kết quả.",
+      "noWardResults": "Không tìm thấy phường/xã.",
+      "wholeProvince": "Toàn {province}"
+    }
+  },
   "WorkerProfile": {
     "loadErrorTitle": "Không thể tải thông tin worker",
     "loadErrorDesc": "Vui lòng thử lại sau hoặc kiểm tra đường dẫn.",

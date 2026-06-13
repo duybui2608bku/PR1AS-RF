@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Eye, EyeOff, Loader2, Phone, User } from "lucide-react"
 import { toast } from "sonner"
 
@@ -72,6 +73,7 @@ function ProfileEditModalContent({
   onClose,
   onSubmit,
 }: Omit<ProfileEditModalProps, "open">) {
+  const t = useTranslations("ClientProfile")
   const [fullName, setFullName] = useState(initialFullName ?? "")
   const [phone, setPhone] = useState(initialPhone ?? "")
   const [oldPassword, setOldPassword] = useState("")
@@ -87,7 +89,7 @@ function ProfileEditModalContent({
     event.preventDefault()
 
     if (newPassword && !newPasswordMeetsAllRules) {
-      toast.error("Mật khẩu chưa đáp ứng đủ điều kiện bảo mật.")
+      toast.error(t("toast.passwordWeak"))
       return
     }
 
@@ -102,16 +104,16 @@ function ProfileEditModalContent({
   return (
     <DialogContent className="sm:max-w-xl">
       <DialogHeader>
-        <DialogTitle>Cập nhật hồ sơ</DialogTitle>
+        <DialogTitle>{t("modal.title")}</DialogTitle>
         <DialogDescription>
-          Chỉnh sửa thông tin cá nhân và mật khẩu khi cần.
+          {t("modal.description")}
         </DialogDescription>
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="full_name">Họ và tên</FieldLabel>
+            <FieldLabel htmlFor="full_name">{t("fields.fullName")}</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
                 <User />
@@ -120,13 +122,13 @@ function ProfileEditModalContent({
                 id="full_name"
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
-                placeholder="Nhập họ và tên"
+                placeholder={t("placeholders.fullName")}
               />
             </InputGroup>
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="phone">Số điện thoại</FieldLabel>
+            <FieldLabel htmlFor="phone">{t("fields.phone")}</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
                 <Phone />
@@ -135,14 +137,14 @@ function ProfileEditModalContent({
                 id="phone"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                placeholder="Nhập số điện thoại"
+                placeholder={t("placeholders.phone")}
               />
             </InputGroup>
           </Field>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field>
-              <FieldLabel htmlFor="old_password">Mật khẩu cũ</FieldLabel>
+              <FieldLabel htmlFor="old_password">{t("fields.currentPassword")}</FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id="old_password"
@@ -161,7 +163,7 @@ function ProfileEditModalContent({
                     className="size-8"
                     onClick={() => setShowOldPassword((previous) => !previous)}
                     aria-label={
-                      showOldPassword ? "Ẩn mật khẩu cũ" : "Hiện mật khẩu cũ"
+                      showOldPassword ? t("actions.hideCurrentPassword") : t("actions.showCurrentPassword")
                     }
                   >
                     {showOldPassword ? <EyeOff /> : <Eye />}
@@ -171,7 +173,7 @@ function ProfileEditModalContent({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="new_password">Mật khẩu mới</FieldLabel>
+              <FieldLabel htmlFor="new_password">{t("fields.newPassword")}</FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id="new_password"
@@ -191,7 +193,7 @@ function ProfileEditModalContent({
                     className="size-8"
                     onClick={() => setShowNewPassword((previous) => !previous)}
                     aria-label={
-                      showNewPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"
+                      showNewPassword ? t("actions.hideNewPassword") : t("actions.showNewPassword")
                     }
                   >
                     {showNewPassword ? <EyeOff /> : <Eye />}
@@ -210,11 +212,11 @@ function ProfileEditModalContent({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Hủy
+            {t("actions.cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="animate-spin" /> : null}
-            Lưu thay đổi
+            {t("actions.saveChanges")}
           </Button>
         </DialogFooter>
       </form>

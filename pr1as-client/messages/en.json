@@ -519,6 +519,235 @@
     "copyLabelAmount": "amount",
     "copyLabelContent": "transfer note"
   },
+  "ClientProfile": {
+    "userFallback": "User",
+    "avatarAria": "Update avatar",
+    "reputation": "Reputation {score}/100",
+    "accountDetails": {
+      "title": "Account details",
+      "description": "Tap the pencil icon to edit each item"
+    },
+    "fields": {
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone number",
+      "status": "Status",
+      "emailVerified": "Email verification",
+      "lastActiveRole": "Last active role",
+      "reputationScore": "Reputation score",
+      "userId": "User ID",
+      "password": "Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password"
+    },
+    "placeholders": {
+      "fullName": "Enter full name",
+      "phone": "Enter phone number"
+    },
+    "status": {
+      "title": "Status",
+      "description": "Last active role · User ID",
+      "active": "Active",
+      "unknown": "Unknown",
+      "verified": "Verified",
+      "unverified": "Not verified"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Change your login password"
+    },
+    "plan": {
+      "title": "Membership plan",
+      "description": "Your current plan and validity period",
+      "startedAt": "Plan started",
+      "expiresAt": "Plan expires"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "editField": "Edit {label}",
+      "changePassword": "Change password",
+      "showCurrentPassword": "Show current password",
+      "hideCurrentPassword": "Hide current password",
+      "showNewPassword": "Show new password",
+      "hideNewPassword": "Hide new password",
+      "savePassword": "Save password",
+      "saveChanges": "Save changes"
+    },
+    "toast": {
+      "updateFailed": "Update failed.",
+      "updateSuccess": "Profile updated successfully.",
+      "updateError": "Unable to update profile.",
+      "passwordWeak": "The new password does not meet security requirements.",
+      "passwordFailed": "Password change failed.",
+      "passwordSuccess": "Password changed successfully.",
+      "passwordError": "Unable to change password.",
+      "avatarFailed": "Unable to update avatar.",
+      "avatarSuccess": "Avatar updated successfully.",
+      "avatarUploadError": "Image upload failed. Please try again."
+    },
+    "modal": {
+      "title": "Update profile",
+      "description": "Edit your personal information and password when needed."
+    }
+  },
+  "WorkerSetup": {
+    "optional": "(optional)",
+    "stepCounter": "Step {current}/{total}",
+    "stepAria": "Step {step}",
+    "steps": {
+      "area": {
+        "title": "Area & Basics",
+        "subtitle": "Work locations and basic information"
+      },
+      "style": {
+        "title": "Personal style",
+        "subtitle": "Personality, hobbies and introduction"
+      },
+      "gallery": {
+        "title": "Photo gallery",
+        "subtitle": "Up to {max} photos, 5MB each"
+      },
+      "services": {
+        "title": "Services & Pricing",
+        "subtitle": "Choose services and set your prices"
+      }
+    },
+    "units": {
+      "HOURLY": "Hourly",
+      "DAILY": "Daily",
+      "MONTHLY": "Monthly"
+    },
+    "gender": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+    "experience": {
+      "LESS_THAN_1": "Under 1 year",
+      "ONE_TO_3": "1-3 years",
+      "THREE_TO_5": "3-5 years",
+      "FIVE_TO_10": "5-10 years",
+      "MORE_THAN_10": "Over 10 years"
+    },
+    "starSigns": {
+      "ARIES": "Aries ♈",
+      "TAURUS": "Taurus ♉",
+      "GEMINI": "Gemini ♊",
+      "CANCER": "Cancer ♋",
+      "LEO": "Leo ♌",
+      "VIRGO": "Virgo ♍",
+      "LIBRA": "Libra ♎",
+      "SCORPIO": "Scorpio ♏",
+      "SAGITTARIUS": "Sagittarius ♐",
+      "CAPRICORN": "Capricorn ♑",
+      "AQUARIUS": "Aquarius ♒",
+      "PISCES": "Pisces ♓"
+    },
+    "sections": {
+      "workLocations": {
+        "title": "Work locations",
+        "subtitle": "Up to {max} areas, at least 1 is required"
+      },
+      "basicInfo": {
+        "title": "Basic information"
+      },
+      "physical": {
+        "title": "Physical details"
+      },
+      "identity": {
+        "title": "Personal identity"
+      },
+      "hobbies": {
+        "title": "Hobbies"
+      },
+      "introduction": {
+        "title": "Introduction"
+      },
+      "gallery": {
+        "title": "Photo gallery"
+      }
+    },
+    "fields": {
+      "dateOfBirth": "Date of birth",
+      "gender": "Gender",
+      "experience": "Experience",
+      "height": "Height",
+      "weight": "Weight",
+      "starSign": "Zodiac sign",
+      "title": "Job title / Role",
+      "lifestyle": "Lifestyle",
+      "quote": "Favorite quote"
+    },
+    "placeholders": {
+      "dateOfBirth": "Select date of birth",
+      "experience": "Select experience",
+      "starSign": "Select zodiac sign",
+      "title": "E.g. Personal assistant, companion...",
+      "lifestyle": "E.g. Active, enjoys exploring...",
+      "quote": "A memorable quote about you...",
+      "hobby": "Add a hobby...",
+      "introduction": "Write a short introduction about yourself, your strengths and working style..."
+    },
+    "actions": {
+      "remove": "Remove",
+      "addLocation": "Add area",
+      "addHobby": "Add hobby",
+      "removeHobby": "Remove {hobby}",
+      "exit": "Exit",
+      "back": "Back",
+      "next": "Next",
+      "finish": "Finish"
+    },
+    "toast": {
+      "loadProvincesError": "Failed to load province list.",
+      "loadWardsError": "Failed to load ward list.",
+      "maxLocations": "Maximum {max} areas.",
+      "replacedWards": "Replaced {count} wards with all of {province}.",
+      "removedWholeProvince": "Removed all of {province} to add a specific ward.",
+      "invalidImageType": "Only JPG, PNG or WebP files are accepted.",
+      "imageTooLarge": "Image exceeds 5MB.",
+      "uploadFailed": "Image upload failed.",
+      "serviceNeedsPrice": "{service}: enter at least one valid price.",
+      "selectServiceAndPrice": "Select at least one service and enter a price.",
+      "selectGender": "Select gender.",
+      "selectLocation": "Select at least one work area.",
+      "saveSuccess": "Profile and services saved.",
+      "saveError": "Unable to save. Please try again."
+    },
+    "pricing": {
+      "priceHelp": "Enter a VND price for at least one unit"
+    },
+    "gallery": {
+      "primary": "Primary",
+      "removeImage": "Remove image",
+      "summary": "{count}/{max} photos · JPG, PNG or WebP · Max 5MB/photo",
+      "uploading": "Uploading...",
+      "chooseImage": "Choose photos",
+      "dragHelp": "Drag to reorder · The first photo is the primary photo",
+      "emptyTitle": "No photos yet",
+      "emptyDesc": "Add photos to make your profile stand out"
+    },
+    "services": {
+      "loadErrorTitle": "Unable to load service catalog",
+      "loadErrorDesc": "Please reload the page.",
+      "assistanceTitle": "Assistant & Support",
+      "subtitle": "Choose the services you provide and set matching prices",
+      "companionshipTitle": "Companionship",
+      "emptyCompanionship": "No companionship services in the catalog.",
+      "requirement": "Select at least <strong>1 service</strong> and enter a price for at least one unit (hour / day / month) to complete your profile."
+    },
+    "locationPicker": {
+      "province": "Province",
+      "chooseProvince": "Choose province / city",
+      "chooseArea": "{province} — Choose area",
+      "searchProvince": "Search province / city...",
+      "searchWard": "Search ward / commune / town...",
+      "noProvinceResults": "No results found.",
+      "noWardResults": "No wards found.",
+      "wholeProvince": "All of {province}"
+    }
+  },
   "WorkerProfile": {
     "loadErrorTitle": "Unable to load worker information",
     "loadErrorDesc": "Please try again later or check the URL.",
