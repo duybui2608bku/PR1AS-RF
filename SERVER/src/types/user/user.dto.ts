@@ -9,4 +9,5 @@ export interface GetUsersQuery {
   status?: UserStatus;
   startDate?: string;
   endDate?: string;
+  created_by_admin?: "true" | "false";
 }

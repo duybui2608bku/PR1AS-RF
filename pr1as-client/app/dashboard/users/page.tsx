@@ -2,13 +2,16 @@
 
 import { useState, useCallback, type FormEvent } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import {
   BadgeCheck,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  FilterX,
   Loader2,
-  RefreshCw,
+  Plus,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -22,7 +25,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Select,
   SelectContent,
@@ -34,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
 import { useGetUsers, useUpdateUserStatus } from "@/lib/hooks/use-users"
 import { isAdminUser } from "@/lib/auth/roles"
+import { UserDetailDialog } from "@/components/dashboard/user-detail-dialog"
 import { useAuthStore } from "@/lib/store/auth-store"
 import type {
   GetUsersParams,
@@ -63,6 +67,15 @@ const STATUS_OPTIONS: {
   { label: "Tất cả trạng thái", value: ALL_FILTER_VALUE },
   { label: "Hoạt động", value: "active" },
   { label: "Đã khóa", value: "banned" },
+]
+
+const SOURCE_OPTIONS: {
+  label: string
+  value: "true" | "false" | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả nguồn", value: ALL_FILTER_VALUE },
+  { label: "Do admin tạo", value: "true" },
+  { label: "Người dùng thật", value: "false" },
 ]
 
 function formatDate(value?: string | null) {
@@ -232,6 +245,7 @@ export default function AdminUsersPage() {
     user: UserListItem
     nextStatus: UserStatus
   } | null>(null)
+  const [detailUser, setDetailUser] = useState<UserListItem | null>(null)
 
   const usersQuery = useGetUsers(filters)
   const updateStatusMutation = useUpdateUserStatus()
@@ -298,26 +312,19 @@ export default function AdminUsersPage() {
             khoản
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => usersQuery.refetch()}
-          disabled={usersQuery.isFetching}
-          className="hidden sm:inline-flex"
-        >
-          <RefreshCw
-            className={usersQuery.isFetching ? "size-4 animate-spin" : "size-4"}
-          />
-          Làm mới
+        <Button asChild size="sm">
+          <Link href="/dashboard/users/create">
+            <Plus className="size-4" />
+            Tạo người dùng
+          </Link>
         </Button>
       </div>
       <Card>
-        <CardHeader className="pb-3">
-        </CardHeader>
+        <CardHeader className="pb-3"></CardHeader>
         <CardContent>
           <form
             onSubmit={applySearch}
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_160px_170px_240px_auto]"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(180px,1fr)_150px_150px_160px_220px_auto]"
           >
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">Tìm kiếm</Label>
@@ -392,6 +399,32 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">
+                Nguồn tài khoản
+              </Label>
+              <Select
+                value={filters.createdByAdmin || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "createdByAdmin",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
+                }
+              >
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9">
+                  <SelectValue placeholder="Tất cả nguồn" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
               <Label className="text-xs text-muted-foreground">
                 Khoảng ngày tạo
@@ -410,36 +443,30 @@ export default function AdminUsersPage() {
               />
             </div>
 
-            <div className="flex gap-2 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
               <Button
-                type="button"
-                variant="outline"
+                type="submit"
                 size="sm"
-                className="h-9 flex-1 sm:hidden"
-                onClick={() => usersQuery.refetch()}
+                className="h-9 flex-1 lg:flex-none"
                 disabled={usersQuery.isFetching}
-                aria-label="Làm mới"
               >
-                <RefreshCw
-                  className={
-                    usersQuery.isFetching
-                      ? "size-4 animate-spin"
-                      : "size-4"
-                  }
-                />
-                <span>Làm mới</span>
+                <Search className="size-4" />
+                Tìm kiếm
               </Button>
               <Button
                 type="button"
-                variant="default"
-                size="sm"
-                className="h-9 flex-1 lg:w-full"
+                variant="outline"
+                size="icon"
+                className="size-9 shrink-0"
+                title="Xóa bộ lọc"
+                aria-label="Xóa bộ lọc"
                 disabled={
                   !filters.role &&
                   !filters.status &&
                   !filters.startDate &&
                   !filters.endDate &&
-                  !filters.search
+                  !filters.search &&
+                  !filters.createdByAdmin
                 }
                 onClick={() => {
                   setSearchInput("")
@@ -451,12 +478,11 @@ export default function AdminUsersPage() {
                     status: "",
                     startDate: "",
                     endDate: "",
+                    createdByAdmin: "",
                   })
                 }}
-                aria-label="Xóa bộ lọc"
               >
-                <X className="size-4" />
-                <span className="sm:hidden">Xóa bộ lọc</span>
+                <FilterX className="size-4" />
               </Button>
             </div>
           </form>
@@ -514,7 +540,14 @@ export default function AdminUsersPage() {
                       {r}
                     </Badge>
                   ))}
-                  <PlanBadge code={user.meta_data?.pricing_plan_code ?? undefined} />
+                  {user.created_by_admin && (
+                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                      Admin tạo
+                    </Badge>
+                  )}
+                  <PlanBadge
+                    code={user.meta_data?.pricing_plan_code ?? undefined}
+                  />
                   {user.verify_email ? (
                     <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                       <BadgeCheck className="size-3.5" />
@@ -548,21 +581,32 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                {isAdmin ? (
+                <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant={user.status === "active" ? "outline" : "default"}
-                    className={
-                      user.status === "active"
-                        ? "w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
-                        : "w-full"
-                    }
-                    onClick={() => openConfirm(user)}
-                    disabled={updateStatusMutation.isPending}
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setDetailUser(user)}
                   >
-                    {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+                    <Eye className="size-4" />
+                    Chi tiết
                   </Button>
-                ) : null}
+                  {isAdmin ? (
+                    <Button
+                      size="sm"
+                      variant={user.status === "active" ? "outline" : "default"}
+                      className={
+                        user.status === "active"
+                          ? "flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                          : "flex-1"
+                      }
+                      onClick={() => openConfirm(user)}
+                      disabled={updateStatusMutation.isPending}
+                    >
+                      {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             ))
           )}
@@ -704,6 +748,11 @@ export default function AdminUsersPage() {
                             </Badge>
                           )
                         )}
+                        {user.created_by_admin && (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                            Admin tạo
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -722,7 +771,9 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <PlanBadge code={user.meta_data?.pricing_plan_code ?? undefined} />
+                      <PlanBadge
+                        code={user.meta_data?.pricing_plan_code ?? undefined}
+                      />
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {formatDate(user.last_login)}
@@ -731,23 +782,33 @@ export default function AdminUsersPage() {
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {isAdmin ? (
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           size="sm"
-                          variant={
-                            user.status === "active" ? "outline" : "default"
-                          }
-                          className={
-                            user.status === "active"
-                              ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
-                              : ""
-                          }
-                          onClick={() => openConfirm(user)}
-                          disabled={updateStatusMutation.isPending}
+                          variant="ghost"
+                          onClick={() => setDetailUser(user)}
                         >
-                          {user.status === "active" ? "Khóa" : "Mở khóa"}
+                          <Eye className="size-4" />
+                          Chi tiết
                         </Button>
-                      ) : null}
+                        {isAdmin ? (
+                          <Button
+                            size="sm"
+                            variant={
+                              user.status === "active" ? "outline" : "default"
+                            }
+                            className={
+                              user.status === "active"
+                                ? "border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                                : ""
+                            }
+                            onClick={() => openConfirm(user)}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            {user.status === "active" ? "Khóa" : "Mở khóa"}
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -813,6 +874,13 @@ export default function AdminUsersPage() {
           isPending={updateStatusMutation.isPending}
         />
       ) : null}
+
+      <UserDetailDialog
+        user={detailUser}
+        onOpenChange={(open) => {
+          if (!open) setDetailUser(null)
+        }}
+      />
     </div>
   )
 }

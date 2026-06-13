@@ -13,7 +13,15 @@ import {
   updateUserStatusSchema,
   getUsersQuerySchema,
 } from "../../validations/user/user.validation";
-import { R, validateWithSchema, PaginationHelper, extractUserIdFromRequest, toPublicUser } from "../../utils";
+import { adminCreateUserSchema } from "../../validations/user/admin-create-user.validation";
+import { adminUpdateUserSchema } from "../../validations/user/admin-update-user.validation";
+import {
+  R,
+  validateWithSchema,
+  PaginationHelper,
+  extractUserIdFromRequest,
+  toPublicUser,
+} from "../../utils";
 
 export class UserController {
   async getMyPostStats(req: AuthRequest, res: Response): Promise<void> {
@@ -45,6 +53,31 @@ export class UserController {
     );
 
     R.success(res, response, USER_MESSAGES.USERS_FETCHED, req);
+  }
+
+  async createUser(req: AuthRequest, res: Response): Promise<void> {
+    const body = validateWithSchema(adminCreateUserSchema, req.body);
+    const user = await userService.createUserByAdmin(body);
+    R.created(res, toPublicUser(user), USER_MESSAGES.USER_CREATED, req);
+  }
+
+  async getUserById(req: AuthRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const { user, worker_services } =
+      await userService.getUserDetailForAdmin(id);
+    R.success(
+      res,
+      { ...toPublicUser(user), worker_services },
+      USER_MESSAGES.USER_FETCHED,
+      req
+    );
+  }
+
+  async updateUser(req: AuthRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const body = validateWithSchema(adminUpdateUserSchema, req.body);
+    const user = await userService.updateUserByAdmin(id, body);
+    R.success(res, toPublicUser(user), USER_MESSAGES.USER_UPDATED, req);
   }
 
   async updateUserStatus(req: AuthRequest, res: Response): Promise<void> {

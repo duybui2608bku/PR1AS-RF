@@ -176,6 +176,12 @@ class WorkerServiceRepository {
     }).sort({ created_at: -1, service_code: 1 });
   }
 
+  async deleteAllForWorker(workerId: string): Promise<void> {
+    await WorkerService.deleteMany({
+      worker_id: new mongoose.Types.ObjectId(workerId),
+    });
+  }
+
   async findActiveServicesForWorkers(
     workerIds: string[]
   ): Promise<Array<WorkerFavoriteServiceItem & { worker_id: string }>> {
