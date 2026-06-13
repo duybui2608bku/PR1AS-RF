@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import {
   AlertCircle,
   ArrowRight,
@@ -38,8 +38,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { serviceService } from "@/services/service.service"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
 type Worker = WorkerGroupedByService["workers"][number]
@@ -62,21 +62,17 @@ const formatWorkLocations = (locations?: WorkLocation[]): string => {
 const formatPricing = (
   pricing: Pricing[],
   t: WorkersListTranslator,
-  localeTag: string,
+  format: (amountVnd: number | null | undefined) => string,
 ) => {
   if (!pricing.length) return { label: t("pricing.noPrice"), prefix: "" }
 
-  const sorted = [...pricing].sort((a, b) => a.price - b.price)
+  const sorted = [...pricing].sort(
+    (a, b) => (a.price_vnd ?? a.price) - (b.price_vnd ?? b.price),
+  )
   const item = sorted[0]
   const isMultiple = pricing.length > 1
 
-  const currencyMap: Record<string, string> = { VND: "đ", USD: "$" }
-  const symbol = currencyMap[item.currency] ?? item.currency
-
-  const value =
-    item.currency === "VND"
-      ? new Intl.NumberFormat(localeTag).format(item.price) + symbol
-      : symbol + new Intl.NumberFormat(localeTag).format(item.price)
+  const value = format(item.price_vnd ?? item.price)
 
   const unit =
     item.unit === "HOURLY"
@@ -99,17 +95,16 @@ const WorkerCard = ({
   isFavoritePending = false,
   onToggleFavorite,
   t,
-  localeTag,
 }: {
   worker: Worker
   isFavorite?: boolean
   isFavoritePending?: boolean
   onToggleFavorite?: (workerId: string, favorite: boolean) => void
   t: WorkersListTranslator
-  localeTag: string
 }) => {
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
-  const { label, prefix } = formatPricing(worker.pricing, t, localeTag)
+  const { format } = useCurrency()
+  const { label, prefix } = formatPricing(worker.pricing, t, format)
   return (
     <article
       className={[
@@ -378,8 +373,6 @@ export const WorkersByServiceList = ({
   onToggleFavorite,
 }: WorkersByServiceListProps) => {
   const t = useTranslations("WorkersByServiceList")
-  const locale = useLocale() as SupportedLocale
-  const localeTag = INTL_LOCALE_TAGS[locale]
   const hasActiveFilters = appliedFilters.length > 0
 
   if (hasFetchError) {
@@ -500,7 +493,6 @@ export const WorkersByServiceList = ({
                   isFavoritePending={favoritePendingWorkerId === worker.id}
                   onToggleFavorite={onToggleFavorite}
                   t={t}
-                  localeTag={localeTag}
                 />
               ))}
             </div>

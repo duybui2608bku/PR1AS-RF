@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkerSuggestions } from "@/lib/hooks/use-worker"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { cn } from "@/lib/utils"
 import type { WorkerServicePricing, WorkerSuggestion } from "@/types"
 
@@ -43,15 +44,14 @@ const UNIT_KEY: Record<string, string> = {
   MONTHLY: "enums.unitMonthly",
 }
 
-const formatPrice = (pricing: WorkerServicePricing | null, t: Translator) => {
+const formatPrice = (
+  pricing: WorkerServicePricing | null,
+  t: Translator,
+  format: (amountVnd: number | null | undefined) => string,
+) => {
   if (!pricing) return t("suggestions.noPrice")
 
-  const currencyMap: Record<string, string> = { VND: "đ", USD: "$" }
-  const symbol = currencyMap[pricing.currency] ?? pricing.currency
-  const value =
-    pricing.currency === "VND"
-      ? `${new Intl.NumberFormat("vi-VN").format(pricing.price)}${symbol}`
-      : `${symbol}${new Intl.NumberFormat("en-US").format(pricing.price)}`
+  const value = format(pricing.price_vnd ?? pricing.price)
   const unit = t(UNIT_KEY[pricing.unit] ?? "enums.unitMonthly")
 
   return `${value}/${unit}`
@@ -86,6 +86,7 @@ function WorkerSuggestionSkeleton() {
 
 export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
   const t = useTranslations("WorkerProfile")
+  const { format } = useCurrency()
   const carouselRef = useRef<HTMLDivElement>(null)
   const {
     data: suggestions = [],
@@ -244,7 +245,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                       </div>
 
                       <p className="line-clamp-1 text-xs font-semibold text-primary">
-                        {formatPrice(worker.pricing, t)}
+                        {formatPrice(worker.pricing, t, format)}
                       </p>
                     </div>
                   </div>

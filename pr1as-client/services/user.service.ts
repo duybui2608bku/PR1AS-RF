@@ -50,6 +50,7 @@ export interface AdminUserDetail extends UserListItem {
       duration: number
       price: number
       currency?: string
+      price_vnd?: number
     }>
   }>
 }

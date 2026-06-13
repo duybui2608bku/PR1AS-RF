@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import { z } from "zod";
 import { PricingUnit } from "../../types/worker/worker-service";
+import {
+  DEFAULT_CURRENCY,
+  SUPPORTED_CURRENCY_CODES,
+} from "../../constants/currency";
 
 const objectIdSchema = z
   .string({ required_error: "service_id is required" })
@@ -45,10 +49,16 @@ const pricingSchema = z
     currency: z
       .string({ invalid_type_error: "currency must be a string" })
       .trim()
-      .min(3, { message: "currency must be a 3-letter code" })
-      .max(3, { message: "currency must be a 3-letter code" })
+      .toUpperCase()
+      .pipe(
+        z.enum(SUPPORTED_CURRENCY_CODES as [string, ...string[]], {
+          errorMap: () => ({
+            message: `currency must be one of: ${SUPPORTED_CURRENCY_CODES.join(", ")}`,
+          }),
+        })
+      )
       .optional()
-      .transform(() => "VND"),
+      .default(DEFAULT_CURRENCY),
   })
   .strict();
 

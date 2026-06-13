@@ -23,6 +23,12 @@ import {
 import { AdminCreateUserSchemaType } from "../../validations/user/admin-create-user.validation";
 import { AdminUpdateUserSchemaType } from "../../validations/user/admin-update-user.validation";
 import { WorkerServicePricing } from "../../types/worker/worker-service";
+import {
+  DEFAULT_CURRENCY,
+  getExchangeRate,
+  isSupportedCurrency,
+  toVnd,
+} from "../../constants/currency";
 import nodemailerUtils from "../../utils/nodemailer";
 import { accountBannedTemplate } from "../../utils/template-mail";
 import { APP_CONSTANTS } from "../../constants/app";
@@ -387,12 +393,21 @@ export class UserService {
       payloads.push({
         serviceId: service._id.toString(),
         serviceCode: service.code,
-        pricing: item.pricing.map((p) => ({
-          unit: p.unit,
-          duration: p.duration,
-          price: Number(p.price),
-          currency: "VND",
-        })),
+        pricing: item.pricing.map((p) => {
+          const currency =
+            p.currency && isSupportedCurrency(p.currency)
+              ? p.currency
+              : DEFAULT_CURRENCY;
+          const price = Number(p.price);
+          return {
+            unit: p.unit,
+            duration: p.duration,
+            price,
+            currency,
+            exchange_rate: getExchangeRate(currency),
+            price_vnd: toVnd(price, currency),
+          };
+        }),
       });
     }
 

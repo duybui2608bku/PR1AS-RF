@@ -33,6 +33,16 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { useCurrency } from "@/lib/hooks/use-currency"
+import {
+  convertToVnd,
+  convertVndTo,
+  formatAmountInput,
+  formatMoney,
+  getCurrencyMeta,
+  parseAmountInput,
+} from "@/lib/currency"
+import { useCurrencyStore } from "@/lib/store/currency-store"
 import { uploadImage } from "@/lib/utils/upload-image"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import {
@@ -183,12 +193,6 @@ export function createEmptyDraft(): UserDraft {
 
 export function draftLabel(draft: UserDraft): string {
   return draft.full_name.trim() || draft.email.trim() || "Người dùng mới"
-}
-
-function formatVnd(value: string): string {
-  const digits = String(value).replace(/\D/g, "")
-  if (!digits) return ""
-  return new Intl.NumberFormat("vi-VN").format(Number(digits))
 }
 
 function slugifyName(name: string): string {
@@ -395,13 +399,19 @@ function buildWorkerFields(draft: UserDraft):
   const selected = draft.services.filter((s) => s.service_code)
   if (selected.length === 0) return { error: "Worker cần ít nhất 1 dịch vụ." }
 
+  // Prices are stored canonically in VND; convert to the selected currency for
+  // submission (BE re-derives price_vnd from price × rate).
+  const currency = useCurrencyStore.getState().currency
+  const decimals = getCurrencyMeta(currency).decimals
   const worker_services: NonNullable<
     AdminCreateUserPayload["worker_services"]
   > = []
   for (const s of selected) {
     const pricing = PRICING_UNITS.flatMap((unit) => {
-      const price = Number(String(s.prices[unit]).replace(/\D/g, ""))
-      return price > 0 ? [{ unit, duration: 1, price }] : []
+      const vnd = Number(String(s.prices[unit]).replace(/\D/g, ""))
+      if (vnd <= 0) return []
+      const price = Number(convertVndTo(vnd, currency).toFixed(decimals))
+      return [{ unit, duration: 1, price, currency }]
     })
     if (pricing.length === 0)
       return { error: `Dịch vụ "${s.service_code}" cần ít nhất 1 mức giá.` }
@@ -509,7 +519,8 @@ export function draftFromUser(detail: AdminUserDetail): UserDraft {
     const prices = emptyPrices()
     for (const p of s.pricing) {
       if (p.unit in prices && !prices[p.unit]) {
-        prices[p.unit] = String(p.price)
+        // Store canonically in VND (price_vnd when available; old data is VND).
+        prices[p.unit] = String(p.price_vnd ?? p.price)
       }
     }
     return { service_code: s.service_code, prices }
@@ -1349,6 +1360,11 @@ function ServicesSection({
   catalog,
   loading,
 }: Props & { catalog: ServiceItem[]; loading: boolean }) {
+  const { currency, meta: currencyMeta, localeTag } = useCurrency()
+  // Raw input strings keyed by `${code}:${unit}:${currency}` so decimal typing
+  // isn't clobbered by re-deriving the value from the canonical VND model.
+  const [priceDrafts, setPriceDrafts] = useState<Map<string, string>>(new Map())
+
   const toggleService = (code: string) => {
     const exists = draft.services.some((s) => s.service_code === code)
     onPatch({
@@ -1359,11 +1375,18 @@ function ServicesSection({
   }
 
   const setPrice = (code: string, unit: WorkerPricingUnit, value: string) => {
-    const digits = value.replace(/\D/g, "")
+    // `value` is typed in the selected currency; store canonically in VND.
+    const typed = parseAmountInput(value, currencyMeta.decimals)
+    const vnd = typed == null ? "" : String(convertToVnd(typed, currency))
+    setPriceDrafts((prev) => {
+      const next = new Map(prev)
+      next.set(`${code}:${unit}:${currency}`, formatAmountInput(value, localeTag, currencyMeta.decimals))
+      return next
+    })
     onPatch({
       services: draft.services.map((s) =>
         s.service_code === code
-          ? { ...s, prices: { ...s.prices, [unit]: digits } }
+          ? { ...s, prices: { ...s.prices, [unit]: vnd } }
           : s
       ),
     })
@@ -1372,7 +1395,7 @@ function ServicesSection({
   return (
     <SectionCard
       title="Dịch vụ & Giá"
-      subtitle="Chọn dịch vụ cung cấp và nhập giá (VND) cho ít nhất một đơn vị"
+      subtitle={`Chọn dịch vụ cung cấp và nhập giá (${currencyMeta.code}) cho ít nhất một đơn vị`}
     >
       {loading && (
         <p className="py-4 text-center text-sm text-muted-foreground">
@@ -1415,30 +1438,50 @@ function ServicesSection({
             {checked && selected && (
               <div className="space-y-2.5 border-t border-border bg-muted/30 px-4 py-3">
                 <p className="text-xs text-muted-foreground">
-                  Nhập giá (VND) cho ít nhất một đơn vị
+                  Nhập giá ({currencyMeta.code}) cho ít nhất một đơn vị
                 </p>
-                {PRICING_UNITS.map((unit) => (
-                  <div key={unit} className="flex items-center gap-3">
-                    <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-                      {UNIT_LABEL[unit]}
-                    </Label>
-                    <div className="relative flex-1">
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="0"
-                        className="h-11 pr-10 text-sm"
-                        value={formatVnd(selected.prices[unit])}
-                        onChange={(e) =>
-                          setPrice(service.code, unit, e.target.value)
-                        }
-                      />
-                      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
-                        ₫
-                      </span>
+                {PRICING_UNITS.map((unit) => {
+                  const vnd = Number(String(selected.prices[unit]).replace(/\D/g, ""))
+                  const draftKey = `${service.code}:${unit}:${currency}`
+                  const displayValue = priceDrafts.has(draftKey)
+                    ? priceDrafts.get(draftKey)!
+                    : formatAmountInput(
+                        vnd > 0
+                          ? Number(convertVndTo(vnd, currency).toFixed(currencyMeta.decimals))
+                          : undefined,
+                        localeTag,
+                        currencyMeta.decimals,
+                      )
+                  return (
+                    <div key={unit} className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <Label className="w-20 shrink-0 text-xs text-muted-foreground">
+                          {UNIT_LABEL[unit]}
+                        </Label>
+                        <div className="relative flex-1">
+                          <Input
+                            type="text"
+                            inputMode={currencyMeta.decimals > 0 ? "decimal" : "numeric"}
+                            placeholder="0"
+                            className="h-11 pr-10 text-sm"
+                            value={displayValue}
+                            onChange={(e) =>
+                              setPrice(service.code, unit, e.target.value)
+                            }
+                          />
+                          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
+                            {currencyMeta.symbol}
+                          </span>
+                        </div>
+                      </div>
+                      {currency !== "VND" && vnd > 0 && (
+                        <p className="pl-[5.75rem] text-xs text-muted-foreground">
+                          ≈ {formatMoney(vnd, "VND", localeTag)}
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

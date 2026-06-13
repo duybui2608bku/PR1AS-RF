@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation"
 import { Check, CheckCircle2, Loader2, Minus, QrCode, Sparkles, Star, Zap } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { useMyPricing, useBuyPricing } from "@/lib/hooks/use-pricing"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
@@ -67,7 +68,7 @@ type PricingPlanMeta = {
 export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const router = useRouter()
   const t = useTranslations("Pricing")
-  const locale = useLocale()
+  const { format } = useCurrency()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const storedPlan = useAuthStore((s) => s.user?.meta_data?.pricing_plan_code) as
     | PricingPlanCode
@@ -111,11 +112,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
     [packages]
   )
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount)
+  const formatCurrency = (amount: number) => format(amount)
 
   const formatLimit = (value: number | null, unitKey?: string) =>
     value === null

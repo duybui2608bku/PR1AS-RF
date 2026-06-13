@@ -29,6 +29,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { CurrencyOptions } from "@/components/layout/currency-switcher"
 import { Separator } from "@/components/ui/separator"
 import {
   Sidebar,
@@ -407,6 +408,10 @@ function AdminSidebar({
             >
               Admin
             </Badge>
+          </div>
+
+          <div className={cn(collapsed && "md:hidden")}>
+            <CurrencyOptions label="Tiền tệ hiển thị" dropUp />
           </div>
 
           <Button

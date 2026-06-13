@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAdminTransactionStats } from "@/lib/hooks/use-admin-transactions"
 import { useDashboardAnalytics } from "@/lib/hooks/use-dashboard-analytics"
+import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import type {
@@ -53,12 +54,6 @@ const PLAN_GRADIENTS: Record<PricingPlanCode, string> = {
   diamond: "from-emerald-400 to-emerald-600",
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount)
-}
 
 function formatFilterDate(date?: Date) {
   if (!date) return ""
@@ -483,6 +478,7 @@ function PackageBreakdown({
 }
 
 export default function DashboardPage() {
+  const { format: formatCurrency } = useCurrency()
   const user = useAuthStore((state) => state.user)
 
   const greeting = React.useMemo(() => {

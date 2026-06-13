@@ -75,30 +75,27 @@ type SuggestionPricingMatch = {
   priceProximityScore: number;
 };
 
+// Prices may be set in different currencies across workers, so all comparison
+// is done on the normalised VND value (price_vnd) — never the raw `price`.
+const priceVnd = (p: WorkerServicePricing): number =>
+  p.price_vnd && p.price_vnd > 0 ? p.price_vnd : p.price;
+
 const getComparableCurrentPrices = (
   candidatePricing: WorkerServicePricing,
   currentPricing: WorkerServicePricing[]
 ): WorkerServicePricing[] => {
-  const positivePrices = currentPricing.filter((price) => price.price > 0);
+  const positivePrices = currentPricing.filter((price) => priceVnd(price) > 0);
   const exactMatches = positivePrices.filter(
     (price) =>
-      price.currency === candidatePricing.currency &&
       price.unit === candidatePricing.unit &&
       price.duration === candidatePricing.duration
   );
   if (exactMatches.length) return exactMatches;
 
   const sameUnitMatches = positivePrices.filter(
-    (price) =>
-      price.currency === candidatePricing.currency &&
-      price.unit === candidatePricing.unit
+    (price) => price.unit === candidatePricing.unit
   );
   if (sameUnitMatches.length) return sameUnitMatches;
-
-  const sameCurrencyMatches = positivePrices.filter(
-    (price) => price.currency === candidatePricing.currency
-  );
-  if (sameCurrencyMatches.length) return sameCurrencyMatches;
 
   return positivePrices;
 };
@@ -132,8 +129,8 @@ const getBestPricingMatch = (
 
       for (const currentPricing of comparableCurrentPrices) {
         const differenceRatio =
-          Math.abs(candidatePricing.price - currentPricing.price) /
-          Math.max(currentPricing.price, 1);
+          Math.abs(priceVnd(candidatePricing) - priceVnd(currentPricing)) /
+          Math.max(priceVnd(currentPricing), 1);
         const priceProximityScore = Math.max(
           0,
           1 - Math.min(differenceRatio, 1)
@@ -221,6 +218,8 @@ export class WorkerService {
         duration: p.duration,
         price: p.price,
         currency: p.currency,
+        exchange_rate: p.exchange_rate,
+        price_vnd: p.price_vnd,
       })),
       is_active: ws.is_active,
     }));

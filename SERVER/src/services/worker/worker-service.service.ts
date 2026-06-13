@@ -20,6 +20,15 @@ import {
 } from "../../types/worker/worker-service";
 import { UserRole } from "../../types/auth/user.types";
 import { ValidationErrorDetail } from "../../types/common/error.types";
+import {
+  DEFAULT_CURRENCY,
+  getExchangeRate,
+  isSupportedCurrency,
+  toVnd,
+} from "../../constants/currency";
+
+/** Pricing as accepted from the client (computed fields are added server-side). */
+type PricingInput = Omit<WorkerServicePricing, "exchange_rate" | "price_vnd">;
 
 export interface CreateWorkerServicesInput {
   workerId: string;
@@ -56,7 +65,7 @@ class WorkerServiceService {
   }
 
   private normalizePricing(
-    pricing: WorkerServicePricing[],
+    pricing: PricingInput[],
     serviceIndex: number
   ): WorkerServicePricing[] {
     const pricingKeys = new Set<string>();
@@ -75,12 +84,21 @@ class WorkerServiceService {
 
     if (details.length) throw AppError.badRequest(COMMON_MESSAGES.BAD_REQUEST, details);
 
-    return pricing.map((item) => ({
-      unit: item.unit,
-      duration: item.duration,
-      price: Number(item.price),
-      currency: "VND",
-    }));
+    return pricing.map((item) => {
+      const currency = isSupportedCurrency(item.currency)
+        ? item.currency
+        : DEFAULT_CURRENCY;
+      const price = Number(item.price);
+      const exchangeRate = getExchangeRate(currency);
+      return {
+        unit: item.unit,
+        duration: item.duration,
+        price,
+        currency,
+        exchange_rate: exchangeRate,
+        price_vnd: toVnd(price, currency),
+      };
+    });
   }
 
   private async ensureIsWorker(workerId: string): Promise<void> {
