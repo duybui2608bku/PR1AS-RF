@@ -559,11 +559,36 @@ export default function WorkerSetupPage() {
     return items
   }
 
+  // Validate the required fields of a given step. Toasts the first failure.
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 0:
+        if (workLocations.length < 1) { toast.error(t("toast.selectLocation")); return false }
+        if (!dateOfBirth) { toast.error(t("toast.selectDateOfBirth")); return false }
+        if (!gender) { toast.error(t("toast.selectGender")); return false }
+        return true
+      case 1:
+        if (!title.trim()) { toast.error(t("toast.enterTitle")); return false }
+        return true
+      case 2:
+        if (galleryUrls.length < 1) { toast.error(t("toast.addGalleryPhoto")); return false }
+        return true
+      default:
+        return true
+    }
+  }
+
   const handleSubmit = async () => {
-    if (!gender) { toast.error(t("toast.selectGender")); return }
-    if (workLocations.length < 1) { toast.error(t("toast.selectLocation")); return }
+    // Re-validate every step (the user may jump around via the step dots).
+    for (let step = 0; step < TOTAL_STEPS - 1; step++) {
+      if (!validateStep(step)) {
+        setStepDirection(step < currentStep ? "back" : "forward")
+        setCurrentStep(step)
+        return
+      }
+    }
     const servicesPayload = buildServicesPayload()
-    if (!servicesPayload) return
+    if (!servicesPayload) { setCurrentStep(TOTAL_STEPS - 1); return }
     const profilePayload = buildProfilePayload()
     try {
       await updateProfileMutation.mutateAsync(profilePayload)
@@ -578,6 +603,7 @@ export default function WorkerSetupPage() {
   }
 
   const handleNext = () => {
+    if (!validateStep(currentStep)) return
     setStepDirection("forward")
     setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS - 1))
   }
@@ -724,7 +750,9 @@ export default function WorkerSetupPage() {
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">{t("fields.dateOfBirth")}</Label>
+            <Label className="text-sm font-medium">
+              {t("fields.dateOfBirth")} <span className="text-destructive">*</span>
+            </Label>
             <DatePicker
               value={dateOfBirth}
               onChange={setDateOfBirth}
@@ -734,7 +762,9 @@ export default function WorkerSetupPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">{t("fields.gender")}</Label>
+            <Label className="text-sm font-medium">
+              {t("fields.gender")} <span className="text-destructive">*</span>
+            </Label>
             <div className="flex gap-1.5 rounded-xl border border-border bg-muted/40 p-1">
               {(["MALE", "FEMALE", "OTHER"] as WorkerGender[]).map((g) => (
                 <Button
@@ -843,7 +873,9 @@ export default function WorkerSetupPage() {
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">{t("fields.title")}</Label>
+            <Label className="text-sm font-medium">
+              {t("fields.title")} <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -943,7 +975,9 @@ export default function WorkerSetupPage() {
     <div className="space-y-5">
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
-          <CardTitle className="text-base">{t("sections.gallery.title")}</CardTitle>
+          <CardTitle className="text-base">
+            {t("sections.gallery.title")} <span className="text-destructive">*</span>
+          </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t("gallery.summary", { count: galleryUrls.length, max: MAX_GALLERY })}
           </p>

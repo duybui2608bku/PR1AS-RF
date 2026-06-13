@@ -785,6 +785,9 @@
       "selectServiceAndPrice": "Chọn ít nhất một dịch vụ và nhập giá.",
       "selectGender": "Chọn giới tính.",
       "selectLocation": "Chọn ít nhất một khu vực làm việc.",
+      "selectDateOfBirth": "Chọn ngày sinh.",
+      "enterTitle": "Nhập tên nghề / chức danh.",
+      "addGalleryPhoto": "Thêm ít nhất một ảnh vào thư viện.",
       "saveSuccess": "Đã lưu hồ sơ và dịch vụ.",
       "saveError": "Không thể lưu. Vui lòng thử lại."
     },

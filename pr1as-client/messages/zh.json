@@ -785,6 +785,9 @@
       "selectServiceAndPrice": "请选择至少一项服务并输入价格。",
       "selectGender": "请选择性别。",
       "selectLocation": "请选择至少一个工作地区。",
+      "selectDateOfBirth": "请选择出生日期。",
+      "enterTitle": "请输入职业 / 头衔。",
+      "addGalleryPhoto": "请至少上传一张照片。",
       "saveSuccess": "资料和服务已保存。",
       "saveError": "无法保存，请重试。"
     },

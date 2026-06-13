@@ -12,6 +12,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateDeposit, useWalletTransaction } from "@/lib/hooks/use-wallet"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type { DepositPayment } from "@/services/wallet.service"
 import { formatVnd } from "@/components/wallet/wallet-format"
@@ -27,15 +29,18 @@ const AMOUNT_PRESETS = [50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000]
 const MIN_AMOUNT = 100
 const MAX_AMOUNT = 50_000_000
 
-const formatAmountInput = (value: string): string => {
+const formatAmountInput = (value: string, localeTag = "vi-VN"): string => {
   const normalized = value.replace(/[^\d]/g, "")
   if (!normalized) return ""
-  return new Intl.NumberFormat("vi-VN", {
+  return new Intl.NumberFormat(localeTag, {
     maximumFractionDigits: 0,
   }).format(Number.parseInt(normalized, 10))
 }
 
 export function WalletDepositPage() {
+  const t = useTranslations("Wallet")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale] ?? "vi-VN"
   const createDepositMutation = useCreateDeposit()
   const [amount, setAmount] = useState("100000")
   const [payment, setPayment] = useState<DepositPayment | null>(null)
@@ -55,16 +60,14 @@ export function WalletDepositPage() {
 
     if (isPaymentSuccess) {
       notifiedTransactionRef.current = payment.transaction_id
-      toast.success("Nạp tiền thành công. Số dư ví đã được cập nhật.")
+      toast.success(t("depositSuccessToast"))
     }
 
     if (isPaymentFailed) {
       notifiedTransactionRef.current = payment.transaction_id
-      toast.error(
-        "Giao dịch nạp tiền thất bại. Vui lòng kiểm tra lại số tiền chuyển khoản."
-      )
+      toast.error(t("depositFailedToast"))
     }
-  }, [isPaymentFailed, isPaymentSuccess, payment])
+  }, [isPaymentFailed, isPaymentSuccess, payment, t])
 
   const parsedAmount = useMemo(() => {
     const normalized = amount.replace(/[^\d]/g, "")
@@ -72,11 +75,13 @@ export function WalletDepositPage() {
   }, [amount])
 
   const amountError = useMemo(() => {
-    if (!parsedAmount) return "Nhập số tiền"
-    if (parsedAmount < MIN_AMOUNT) return `Tối thiểu ${formatVnd(MIN_AMOUNT)}`
-    if (parsedAmount > MAX_AMOUNT) return `Tối đa ${formatVnd(MAX_AMOUNT)}`
+    if (!parsedAmount) return t("enterAmount")
+    if (parsedAmount < MIN_AMOUNT)
+      return t("minAmount", { amount: formatVnd(MIN_AMOUNT, localeTag) })
+    if (parsedAmount > MAX_AMOUNT)
+      return t("maxAmount", { amount: formatVnd(MAX_AMOUNT, localeTag) })
     return ""
-  }, [parsedAmount])
+  }, [parsedAmount, t, localeTag])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -90,35 +95,37 @@ export function WalletDepositPage() {
         amount: parsedAmount,
       })
       if (!result) {
-        toast.error("Không thể tạo thanh toán.")
+        toast.error(t("cannotCreatePayment"))
         return
       }
       notifiedTransactionRef.current = null
       setPayment(result)
-      toast.success("Đã tạo thanh toán.")
+      toast.success(t("paymentCreated"))
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể tạo thanh toán."))
+      toast.error(getErrorMessage(error, t("cannotCreatePayment")))
     }
   }
 
   const copyText = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value)
-    toast.success(`Đã sao chép ${label}.`)
+    toast.success(t("copied", { label }))
   }
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nạp tiền</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("depositTitle")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Thanh toán qua SePay
+            {t("depositSubtitle")}
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href="/wallet">
             <ArrowLeft className="size-4" />
-            Ví của tôi
+            {t("backToWallet")}
           </Link>
         </Button>
       </div>
@@ -128,17 +135,17 @@ export function WalletDepositPage() {
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <Wallet className="size-5" />
-              Số tiền
+              {t("amount")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="amount">Số tiền nạp</Label>
+                <Label htmlFor="amount">{t("depositAmount")}</Label>
                 <Input
                   id="amount"
                   inputMode="numeric"
-                  value={formatAmountInput(amount)}
+                  value={formatAmountInput(amount, localeTag)}
                   onChange={(event) =>
                     setAmount(event.target.value.replace(/[^\d]/g, ""))
                   }
@@ -166,20 +173,19 @@ export function WalletDepositPage() {
                     size="sm"
                     onClick={() => setAmount(String(preset))}
                   >
-                    {formatAmountInput(String(preset))} VND
+                    {formatAmountInput(String(preset), localeTag)} VND
                   </Button>
                 ))}
               </div>
 
               <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
                 <p className="mb-1 font-semibold">
-                  ⚠️ Chỉ nạp đủ tiền cho gói cước bạn dự định mua
+                  {t("depositWarningTitle")}
                 </p>
                 <p>
-                  Hệ thống hiện <strong>chưa hỗ trợ rút tiền</strong>. Số dư
-                  trong ví chỉ dùng để thanh toán gói cước và dịch vụ trong nền
-                  tảng — tiền nạp dư sẽ bị giữ lại cho đến khi có flow rút
-                  tiền.
+                  {t.rich("depositWarningDesc", {
+                    b: (chunks) => <strong>{chunks}</strong>,
+                  })}
                 </p>
               </div>
 
@@ -195,7 +201,7 @@ export function WalletDepositPage() {
                 ) : (
                   <QrCode className="size-4" />
                 )}
-                Tạo thanh toán
+                {t("createPayment")}
               </Button>
             </form>
           </CardContent>
@@ -205,7 +211,7 @@ export function WalletDepositPage() {
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <QrCode className="size-5" />
-              Thanh toán
+              {t("payment")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -223,26 +229,39 @@ export function WalletDepositPage() {
                 </div>
                 <div className="space-y-3">
                   <PaymentRow
-                    label="Ngân hàng"
+                    label={t("bank")}
                     value={payment.bank_name}
-                    onCopy={() => copyText(payment.bank_name, "ngân hàng")}
-                  />
-                  <PaymentRow
-                    label="Số tài khoản"
-                    value={payment.bank_account_number}
+                    copyAria={t("copyAria", { label: t("bank") })}
                     onCopy={() =>
-                      copyText(payment.bank_account_number, "số tài khoản")
+                      copyText(payment.bank_name, t("copyLabelBank"))
                     }
                   />
                   <PaymentRow
-                    label="Số tiền"
-                    value={formatVnd(payment.amount)}
-                    onCopy={() => copyText(String(payment.amount), "số tiền")}
+                    label={t("accountNumber")}
+                    value={payment.bank_account_number}
+                    copyAria={t("copyAria", { label: t("accountNumber") })}
+                    onCopy={() =>
+                      copyText(
+                        payment.bank_account_number,
+                        t("copyLabelAccount")
+                      )
+                    }
                   />
                   <PaymentRow
-                    label="Nội dung"
+                    label={t("amount")}
+                    value={formatVnd(payment.amount, localeTag)}
+                    copyAria={t("copyAria", { label: t("amount") })}
+                    onCopy={() =>
+                      copyText(String(payment.amount), t("copyLabelAmount"))
+                    }
+                  />
+                  <PaymentRow
+                    label={t("content")}
                     value={payment.payment_content}
-                    onCopy={() => copyText(payment.payment_content, "nội dung")}
+                    copyAria={t("copyAria", { label: t("content") })}
+                    onCopy={() =>
+                      copyText(payment.payment_content, t("copyLabelContent"))
+                    }
                   />
                   <PaymentStatus
                     isChecking={
@@ -254,7 +273,7 @@ export function WalletDepositPage() {
                     isSuccess={isPaymentSuccess}
                   />
                   <Button asChild variant="outline" className="w-full">
-                    <Link href="/wallet">Xem ví</Link>
+                    <Link href="/wallet">{t("viewWallet")}</Link>
                   </Button>
                 </div>
               </div>
@@ -279,11 +298,13 @@ function PaymentStatus({
   isFailed: boolean
   isSuccess: boolean
 }) {
+  const t = useTranslations("Wallet")
+
   if (isSuccess) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
         <CheckCircle2 className="size-4" />
-        <span>Đã nhận tiền và cập nhật ví</span>
+        <span>{t("statusSuccessMsg")}</span>
       </div>
     )
   }
@@ -292,7 +313,7 @@ function PaymentStatus({
     return (
       <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
         <XCircle className="size-4" />
-        <span>Giao dịch thất bại hoặc sai số tiền</span>
+        <span>{t("statusFailedMsg")}</span>
       </div>
     )
   }
@@ -304,7 +325,7 @@ function PaymentStatus({
       ) : (
         <CheckCircle2 className="size-4 text-amber-600 dark:text-amber-400" />
       )}
-      <span>Đang chờ xác nhận giao dịch</span>
+      <span>{t("statusWaiting")}</span>
     </div>
   )
 }
@@ -312,10 +333,12 @@ function PaymentStatus({
 function PaymentRow({
   label,
   value,
+  copyAria,
   onCopy,
 }: {
   label: string
   value: string
+  copyAria: string
   onCopy: () => void
 }) {
   return (
@@ -329,7 +352,7 @@ function PaymentRow({
         variant="ghost"
         size="icon"
         onClick={onCopy}
-        aria-label={`Sao chép ${label}`}
+        aria-label={copyAria}
       >
         <Copy className="size-4" />
       </Button>

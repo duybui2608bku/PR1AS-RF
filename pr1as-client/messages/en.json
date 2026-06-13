@@ -785,6 +785,9 @@
       "selectServiceAndPrice": "Select at least one service and enter a price.",
       "selectGender": "Select gender.",
       "selectLocation": "Select at least one work area.",
+      "selectDateOfBirth": "Select your date of birth.",
+      "enterTitle": "Enter your job title.",
+      "addGalleryPhoto": "Add at least one photo to your gallery.",
       "saveSuccess": "Profile and services saved.",
       "saveError": "Unable to save. Please try again."
     },
