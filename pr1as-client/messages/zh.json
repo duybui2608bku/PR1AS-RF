@@ -519,6 +519,24 @@
     "copyLabelAmount": "金额",
     "copyLabelContent": "转账备注"
   },
+  "Notifications": {
+    "title": "通知",
+    "back": "返回",
+    "markAll": "全部已读",
+    "emptyTitle": "暂无通知",
+    "emptyDesc": "有关预约、消息和钱包的新通知会显示在这里。",
+    "end": "已显示所有通知",
+    "toast": {
+      "markAllSuccess": "所有通知已标记为已读。",
+      "markAllError": "无法将所有通知标记为已读。"
+    },
+    "groups": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "thisWeek": "本周",
+      "older": "更早"
+    }
+  },
   "ClientProfile": {
     "userFallback": "用户",
     "avatarAria": "更新头像",
@@ -582,6 +600,8 @@
       "passwordFailed": "修改密码失败。",
       "passwordSuccess": "密码修改成功。",
       "passwordError": "无法修改密码。",
+      "invalidAvatarType": "仅支持 JPG、PNG、WebP 或 GIF。",
+      "avatarTooLarge": "图片最大为 {max}MB。",
       "avatarFailed": "无法更新头像。",
       "avatarSuccess": "头像更新成功。",
       "avatarUploadError": "图片上传失败，请重试。"

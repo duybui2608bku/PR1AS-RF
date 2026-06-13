@@ -42,7 +42,11 @@ import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handle
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import { uploadImage } from "@/lib/utils/upload-image"
-import { validateImageFile } from "@/lib/utils/validate-upload"
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_IMAGE_SIZE_MB,
+} from "@/lib/utils/validate-upload"
 
 const formatDateTime = (value: string | null | undefined, localeTag: string): string => {
   if (!value) return "—"
@@ -135,9 +139,12 @@ export default function ClientProfilePage() {
     const file = event.target.files?.[0]
     event.target.value = ""
     if (!file) return
-    const validationError = validateImageFile(file)
-    if (validationError) {
-      toast.error(validationError)
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+      toast.error(t("toast.invalidAvatarType"))
+      return
+    }
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      toast.error(t("toast.avatarTooLarge", { max: MAX_IMAGE_SIZE_MB }))
       return
     }
     avatarEditor.start([file], async ([croppedFile]) => {

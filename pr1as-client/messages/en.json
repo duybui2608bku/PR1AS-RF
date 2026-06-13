@@ -519,6 +519,24 @@
     "copyLabelAmount": "amount",
     "copyLabelContent": "transfer note"
   },
+  "Notifications": {
+    "title": "Notifications",
+    "back": "Back",
+    "markAll": "Read all",
+    "emptyTitle": "No notifications yet",
+    "emptyDesc": "New notifications about bookings, messages and wallet activity will appear here.",
+    "end": "All notifications shown",
+    "toast": {
+      "markAllSuccess": "All notifications marked as read.",
+      "markAllError": "Could not mark all notifications as read."
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "older": "Older"
+    }
+  },
   "ClientProfile": {
     "userFallback": "User",
     "avatarAria": "Update avatar",
@@ -582,6 +600,8 @@
       "passwordFailed": "Password change failed.",
       "passwordSuccess": "Password changed successfully.",
       "passwordError": "Unable to change password.",
+      "invalidAvatarType": "Only JPG, PNG, WebP or GIF files are supported.",
+      "avatarTooLarge": "Maximum image size is {max}MB.",
       "avatarFailed": "Unable to update avatar.",
       "avatarSuccess": "Avatar updated successfully.",
       "avatarUploadError": "Image upload failed. Please try again."

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -22,12 +23,13 @@ import {
   Users,
   Wallet,
 } from "lucide-react"
-import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDistanceToNow, isToday, isYesterday, isThisWeek, type Locale } from "date-fns"
+import { enUS, vi, zhCN } from "date-fns/locale"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { type SupportedLocale } from "@/lib/locale"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getActiveRole } from "@/lib/auth/roles"
 import { useSwitchRole } from "@/lib/hooks/use-auth"
@@ -41,6 +43,13 @@ import {
 import type { Notification } from "@/services/notification.service"
 
 type NotifTypeConfig = { icon: React.ElementType; bg: string }
+type DateGroupKey = "today" | "yesterday" | "thisWeek" | "older"
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+}
 
 const NOTIF_TYPE_CONFIG: Record<string, NotifTypeConfig> = {
   "chat.message": { icon: MessageCircle, bg: "bg-blue-500" },
@@ -83,11 +92,11 @@ function getRequiredRole(url: string): "worker" | "client" | null {
 }
 
 function groupByDate(notifications: Notification[]) {
-  const groups: { label: string; items: Notification[] }[] = [
-    { label: "Hôm nay", items: [] },
-    { label: "Hôm qua", items: [] },
-    { label: "Tuần này", items: [] },
-    { label: "Cũ hơn", items: [] },
+  const groups: { key: DateGroupKey; items: Notification[] }[] = [
+    { key: "today", items: [] },
+    { key: "yesterday", items: [] },
+    { key: "thisWeek", items: [] },
+    { key: "older", items: [] },
   ]
   for (const n of notifications) {
     const d = new Date(n.created_at)
@@ -117,10 +126,12 @@ function NotifRow({
   notification,
   onClick,
   isLast,
+  dateLocale,
 }: {
   notification: Notification
   onClick: () => void
   isLast: boolean
+  dateLocale: Locale
 }) {
   const { icon: Icon, bg } = getTypeConfig(notification.type)
   const isUnread = !notification.is_read
@@ -167,7 +178,7 @@ function NotifRow({
           <p className="mt-1.5 text-[12px] font-medium text-muted-foreground/60">
             {formatDistanceToNow(new Date(notification.created_at), {
               addSuffix: true,
-              locale: vi,
+              locale: dateLocale,
             })}
           </p>
         </div>
@@ -189,6 +200,9 @@ function NotifRow({
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations("Notifications")
+  const locale = useLocale() as SupportedLocale
+  const dateLocale = DATE_FNS_LOCALES[locale]
   const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
@@ -244,9 +258,9 @@ export default function NotificationsPage() {
   const handleMarkAll = async () => {
     try {
       await markAllMutation.mutateAsync()
-      toast.success("Đã đánh dấu tất cả là đã đọc.")
+      toast.success(t("toast.markAllSuccess"))
     } catch {
-      toast.error("Không thể đánh dấu tất cả đã đọc.")
+      toast.error(t("toast.markAllError"))
     }
   }
 
@@ -279,11 +293,11 @@ export default function NotificationsPage() {
             onClick={() => router.back()}
           >
             <ArrowLeft className="size-[22px] stroke-[2]" />
-            <span className="hidden sm:inline">Trở về</span>
+            <span className="hidden sm:inline">{t("back")}</span>
           </Button>
 
           {/* Title */}
-          <h1 className="text-center text-[17px] font-semibold leading-none">Thông báo</h1>
+          <h1 className="text-center text-[17px] font-semibold leading-none">{t("title")}</h1>
 
           {/* Mark all */}
           <div className="flex justify-end pr-1">
@@ -300,7 +314,7 @@ export default function NotificationsPage() {
                 ) : (
                   <span className="flex items-center gap-1">
                     <CheckCheck className="size-4" />
-                    Đọc tất cả
+                    {t("markAll")}
                   </span>
                 )}
               </Button>
@@ -344,19 +358,19 @@ export default function NotificationsPage() {
             <div className="mb-5 flex size-24 items-center justify-center rounded-full bg-muted/70">
               <Bell className="size-11 text-muted-foreground/50" />
             </div>
-            <h3 className="text-[18px] font-semibold">Chưa có thông báo</h3>
+            <h3 className="text-[18px] font-semibold">{t("emptyTitle")}</h3>
             <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-              Các thông báo mới về booking, tin nhắn và ví sẽ xuất hiện tại đây.
+              {t("emptyDesc")}
             </p>
           </div>
         ) : (
           <>
             {groups.map((group) => (
-              <section key={group.label}>
+              <section key={group.key}>
                 {/* Section header — iOS sticky label */}
                 <div className="sticky top-0 z-10 bg-background/90 px-4 pb-1.5 pt-4 backdrop-blur-sm">
                   <span className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                    {group.label}
+                    {t(`groups.${group.key}`)}
                   </span>
                 </div>
 
@@ -368,6 +382,7 @@ export default function NotificationsPage() {
                       notification={notif}
                       onClick={() => void handleItemClick(notif)}
                       isLast={idx === group.items.length - 1}
+                      dateLocale={dateLocale}
                     />
                   ))}
                 </div>
@@ -383,7 +398,7 @@ export default function NotificationsPage() {
 
             {!hasNextPage && allNotifications.length > 5 && (
               <p className="py-7 text-center text-[13px] text-muted-foreground/60">
-                Đã hiển thị tất cả thông báo
+                {t("end")}
               </p>
             )}
           </>

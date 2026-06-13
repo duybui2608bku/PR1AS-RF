@@ -519,6 +519,24 @@
     "copyLabelAmount": "số tiền",
     "copyLabelContent": "nội dung"
   },
+  "Notifications": {
+    "title": "Thông báo",
+    "back": "Trở về",
+    "markAll": "Đọc tất cả",
+    "emptyTitle": "Chưa có thông báo",
+    "emptyDesc": "Các thông báo mới về booking, tin nhắn và ví sẽ xuất hiện tại đây.",
+    "end": "Đã hiển thị tất cả thông báo",
+    "toast": {
+      "markAllSuccess": "Đã đánh dấu tất cả là đã đọc.",
+      "markAllError": "Không thể đánh dấu tất cả đã đọc."
+    },
+    "groups": {
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua",
+      "thisWeek": "Tuần này",
+      "older": "Cũ hơn"
+    }
+  },
   "ClientProfile": {
     "userFallback": "Người dùng",
     "avatarAria": "Cập nhật ảnh đại diện",
@@ -582,6 +600,8 @@
       "passwordFailed": "Đổi mật khẩu thất bại.",
       "passwordSuccess": "Đổi mật khẩu thành công.",
       "passwordError": "Không thể đổi mật khẩu.",
+      "invalidAvatarType": "Chỉ hỗ trợ định dạng JPG, PNG, WebP hoặc GIF.",
+      "avatarTooLarge": "Kích thước ảnh tối đa là {max}MB.",
       "avatarFailed": "Không thể cập nhật ảnh đại diện.",
       "avatarSuccess": "Cập nhật ảnh đại diện thành công.",
       "avatarUploadError": "Tải ảnh thất bại. Vui lòng thử lại."
