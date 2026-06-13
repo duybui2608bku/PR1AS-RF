@@ -43,6 +43,8 @@ import type {
 } from "@/services/admin-wallet.service"
 import type { WalletTransactionStatus } from "@/services/wallet.service"
 import { cn } from "@/lib/utils"
+import { useCurrency } from "@/lib/hooks/use-currency"
+import { convertVndTo } from "@/lib/currency"
 
 const PAGE_SIZE = 15
 const ALL_FILTER_VALUE = "all"
@@ -104,13 +106,6 @@ const STATUS_CONFIG: Record<
     className: "bg-muted text-muted-foreground",
     icon: <X className="size-3" />,
   },
-}
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount)
 }
 
 function formatDate(value?: string | null) {
@@ -179,6 +174,7 @@ function BarChart({
 }: {
   data: { date: string; amount: number; label: string }[]
 }) {
+  const { format, currency } = useCurrency()
   const display = data.slice(-30)
   const max = Math.max(...display.map((d) => d.amount), 0)
   const chartWidth = 640
@@ -249,7 +245,7 @@ function BarChart({
               textAnchor="end"
               className="fill-muted-foreground text-[10px] tabular-nums font-semibold"
             >
-              {formatCompactAmount(val)}
+              {formatCompactAmount(convertVndTo(val, currency))}
             </text>
           </g>
         ))}
@@ -273,7 +269,7 @@ function BarChart({
               key={item.date}
               className="text-emerald-500"
             >
-              <title>{`${item.label}: ${formatCurrency(item.amount)}`}</title>
+              <title>{`${item.label}: ${format(item.amount)}`}</title>
               <rect
                 x={x}
                 y={y}
@@ -418,13 +414,14 @@ function TransactionDetailModal({
   tx: AdminTransaction
   onClose: () => void
 }) {
+  const { format } = useCurrency()
   const rows: [string, React.ReactNode][] = [
     ["ID giao dịch", tx.id],
     ["User ID", tx.user_id],
     ["Email người dùng", tx.user?.email ?? "—"],
     ["Họ tên", tx.user?.full_name ?? "—"],
     ["Loại giao dịch", TYPE_LABELS[tx.type]],
-    ["Số tiền", formatCurrency(tx.amount)],
+    ["Số tiền", format(tx.amount)],
     ["Trạng thái", <StatusBadge key="s" status={tx.status} />],
     ["Cổng thanh toán", tx.gateway ?? "—"],
     ["Mã GD cổng", tx.gateway_transaction_id ?? "—"],
@@ -482,6 +479,7 @@ function TableSkeleton() {
 }
 
 export default function AdminTransactionsPage() {
+  const { format: formatCurrency } = useCurrency()
   const [filters, setFilters] = useState<AdminTransactionParams>({
     page: 1,
     limit: PAGE_SIZE,

@@ -1,11 +1,19 @@
 import { Check, Minus, Sparkles, Star, Zap } from "lucide-react"
 import { getTranslations, getLocale } from "next-intl/server"
+import { cookies } from "next/headers"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { PricingPlans } from "@/components/pricing/pricing-plans"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { pricingService, type PricingPackage } from "@/services/pricing.service"
 import { cn } from "@/lib/utils"
+import {
+  CURRENCY_COOKIE_NAME,
+  DEFAULT_CURRENCY,
+  formatMoney,
+  isSupportedCurrency,
+} from "@/lib/currency"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 
 export async function generateMetadata() {
   const t = await getTranslations("Pricing")
@@ -15,18 +23,17 @@ export async function generateMetadata() {
   }
 }
 
-const formatCurrency = (amount: number, locale: string) =>
-  new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount)
-
 const getPackagePrice = (pkg: PricingPackage) =>
   Number.isFinite(pkg.price) ? pkg.price : 0
 
 export default async function PricingPage() {
   const t = await getTranslations("Pricing")
   const locale = await getLocale()
+  const cookieStore = await cookies()
+  const currencyCookie = cookieStore.get(CURRENCY_COOKIE_NAME)?.value
+  const currency = isSupportedCurrency(currencyCookie) ? currencyCookie : DEFAULT_CURRENCY
+  const localeTag = INTL_LOCALE_TAGS[locale as SupportedLocale] ?? "vi-VN"
+  const formatCurrency = (amount: number) => formatMoney(amount, currency, localeTag)
   let packages: PricingPackage[] = []
   let fetchError = false
 
@@ -144,7 +151,7 @@ export default async function PricingPage() {
                       text:
                         getPackagePrice(pkg) === 0
                           ? t("free")
-                          : formatCurrency(getPackagePrice(pkg), locale),
+                          : formatCurrency(getPackagePrice(pkg)),
                     }),
                   },
                   ...FEATURE_ROWS,
@@ -237,7 +244,7 @@ export default async function PricingPage() {
                         >
                           {getPackagePrice(pkg) === 0
                             ? t("free")
-                            : formatCurrency(getPackagePrice(pkg), locale)}
+                            : formatCurrency(getPackagePrice(pkg))}
                         </td>
                       ))}
                     </tr>

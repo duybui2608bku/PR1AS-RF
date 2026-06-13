@@ -133,6 +133,8 @@ export type WorkerGroupedByService = {
       duration?: number
       price: number
       currency: string
+      exchange_rate?: number
+      price_vnd?: number
     }>
     boost?: {
       is_boosted: boolean

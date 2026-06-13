@@ -25,6 +25,7 @@ import * as React from "react"
 import { toast } from "sonner"
 
 import { LocaleSwitcher } from "@/components/layout/locale-switcher"
+import { CurrencyOptions, CurrencySwitcher } from "@/components/layout/currency-switcher"
 import { NotificationBell } from "@/components/layout/notification-bell"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
@@ -404,6 +405,7 @@ export function SiteHeader() {
       ) : null}
       <ThemeToggle />
       <LocaleSwitcher />
+      {!isAuthenticated ? <CurrencySwitcher /> : null}
       {isAuthenticated ? (
         <ErrorBoundary fallback={null}>
           <NotificationBell />
@@ -444,6 +446,8 @@ export function SiteHeader() {
               <div className="px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? t("me")}
               </div>
+              <CurrencyOptions label={t("displayCurrency")} />
+              <div className="my-1 border-t" />
               {userMenuItems.map((item) => (
                 <Link
                   key={item.href}

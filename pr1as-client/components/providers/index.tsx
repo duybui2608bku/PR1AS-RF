@@ -18,6 +18,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useAuthStore, useHasHydrated, type AuthUser } from "@/lib/store/auth-store"
+import { useCurrencyStore } from "@/lib/store/currency-store"
 
 /** GET /api/auth/session với retry — network blip lúc mở app trên mobile không
  *  được phép làm mất phiên (cookie hợp lệ nhưng Zustand trống → UI tưởng logged out).
@@ -75,6 +76,15 @@ function SessionRestoreProvider() {
     return () => { cancelled = true }
   }, [hasHydrated, isAuthenticated, setAuth, setSessionLoaded])
 
+  return null
+}
+
+/** Applies the persisted currency preference (cookie/localStorage) after mount. */
+function CurrencyHydrator() {
+  const hydrate = useCurrencyStore((s) => s.hydrate)
+  React.useEffect(() => {
+    hydrate()
+  }, [hydrate])
   return null
 }
 
@@ -139,6 +149,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TokenForegroundRefresh />
         {/* Sync logout across tabs */}
         <AuthBroadcastListener />
+        {/* Áp dụng tiền tệ đã chọn (cookie/localStorage) sau khi mount */}
+        <CurrencyHydrator />
         {/* Global mobile bottom nav — hiển thị trên mọi trang, kể cả /chat */}
         <MobileBottomNav />
         {/* Theo dõi mạng — mất kết nối thì chuyển sang /offline, có lại thì quay về */}

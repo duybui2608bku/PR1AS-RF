@@ -34,7 +34,8 @@
     "switchToClient": "客户",
     "me": "我",
     "selectLanguage": "选择语言",
-    "boost": "签到 (Boost)"
+    "boost": "签到 (Boost)",
+    "displayCurrency": "显示货币"
   },
   "Footer": {
     "copyright": "版权所有。",
@@ -789,7 +790,7 @@
       "saveError": "无法保存，请重试。"
     },
     "pricing": {
-      "priceHelp": "请至少为一种单位输入 VND 价格"
+      "priceHelp": "请至少为一种单位输入 {currency} 价格"
     },
     "gallery": {
       "primary": "主图",

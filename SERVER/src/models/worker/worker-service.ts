@@ -16,6 +16,8 @@ const pricingSchema = new Schema<WorkerServicePricing>(
     duration: { type: Number, min: 1, required: true },
     price: { type: Number, min: 0.01, required: true },
     currency: { type: String, default: "VND", uppercase: true, trim: true },
+    exchange_rate: { type: Number, min: 0, default: 1 },
+    price_vnd: { type: Number, min: 0, required: true },
   },
   { _id: false }
 );
