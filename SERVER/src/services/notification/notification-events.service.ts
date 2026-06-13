@@ -14,22 +14,39 @@ import { ReportReason, RestrictionFeature } from "../../constants/moderation";
 import type { IBookingDocument } from "../../types/booking";
 import type { IReviewDocument } from "../../types/review";
 import { notificationService } from "./notification.service";
+import { t, Locale } from "../../utils/i18n";
 
-const REPORT_REASON_LABELS_VI: Record<ReportReason, string> = {
-  [ReportReason.SCAM]: "Lừa đảo",
-  [ReportReason.LOW_QUALITY]: "Chất lượng thấp",
-  [ReportReason.HARASSMENT]: "Quấy rối",
-  [ReportReason.FAKE_PROFILE]: "Hồ sơ giả mạo",
-  [ReportReason.OTHER]: "Khác",
+const INTL_LOCALE_MAP: Record<Locale, string> = {
+  vi: "vi-VN",
+  en: "en-US",
+  ko: "ko-KR",
+  zh: "zh-CN",
 };
 
-const RESTRICTION_FEATURE_LABELS_VI: Record<RestrictionFeature, string> = {
-  [RestrictionFeature.POST_CREATE]: "đăng bài",
-  [RestrictionFeature.WORKER_ACTIVITY]: "hoạt động worker",
+const REPORT_REASON_KEYS: Record<ReportReason, string> = {
+  [ReportReason.SCAM]: "notif.reportReason.scam",
+  [ReportReason.LOW_QUALITY]: "notif.reportReason.lowQuality",
+  [ReportReason.HARASSMENT]: "notif.reportReason.harassment",
+  [ReportReason.FAKE_PROFILE]: "notif.reportReason.fakeProfile",
+  [ReportReason.OTHER]: "notif.reportReason.other",
 };
 
-const formatDateTimeVI = (date: Date): string =>
-  new Intl.DateTimeFormat("vi-VN", {
+const RESTRICTION_FEATURE_KEYS: Record<RestrictionFeature, string> = {
+  [RestrictionFeature.POST_CREATE]: "notif.restrictionFeature.postCreate",
+  [RestrictionFeature.WORKER_ACTIVITY]: "notif.restrictionFeature.workerActivity",
+};
+
+async function getRecipientLocale(userId: string): Promise<Locale> {
+  try {
+    const user = await userRepository.findById(userId);
+    return (user?.meta_data?.locale as Locale) ?? "en";
+  } catch {
+    return "en";
+  }
+}
+
+const formatDateTime = (date: Date, locale: Locale): string =>
+  new Intl.DateTimeFormat(INTL_LOCALE_MAP[locale], {
     dateStyle: "short",
     timeStyle: "short",
     timeZone: "Asia/Ho_Chi_Minh",
@@ -37,11 +54,17 @@ const formatDateTimeVI = (date: Date): string =>
 
 const buildRestrictionDescription = (
   feature: RestrictionFeature,
-  endsAt: Date | null | undefined
+  endsAt: Date | null | undefined,
+  locale: Locale
 ): string => {
-  const label = RESTRICTION_FEATURE_LABELS_VI[feature];
-  if (!endsAt) return `Bạn đang bị cấm ${label} vĩnh viễn.`;
-  return `Bạn đang bị cấm ${label} đến ${formatDateTimeVI(new Date(endsAt))}.`;
+  const featureLabel = t(RESTRICTION_FEATURE_KEYS[feature], locale);
+  if (!endsAt) {
+    return t("notif.restriction.permanent", locale, { feature: featureLabel });
+  }
+  return t("notif.restriction.until", locale, {
+    feature: featureLabel,
+    endsAt: formatDateTime(new Date(endsAt), locale),
+  });
 };
 
 const truncate = (value: string, max: number): string =>
@@ -72,55 +95,56 @@ const getBookingDashboardLink = (
   return "/admin/dashboard";
 };
 
-const getBookingStatusNotificationContent = (
-  status: BookingStatus
+const getBookingStatusContent = (
+  status: BookingStatus,
+  locale: Locale
 ): { title: string; body: string } => {
   switch (status) {
     case BookingStatus.CONFIRMED:
       return {
-        title: "Booking đã được xác nhận",
-        body: "Booking của bạn đã được người thực hiện xác nhận.",
+        title: t("notif.booking.status.confirmed.title", locale),
+        body: t("notif.booking.status.confirmed.body", locale),
       };
     case BookingStatus.REJECTED:
       return {
-        title: "Booking bị từ chối",
-        body: "Yêu cầu booking đã bị từ chối.",
+        title: t("notif.booking.status.rejected.title", locale),
+        body: t("notif.booking.status.rejected.body", locale),
       };
     case BookingStatus.IN_PROGRESS:
       return {
-        title: "Booking đang thực hiện",
-        body: "Booking đã bắt đầu và đang được thực hiện.",
+        title: t("notif.booking.status.inProgress.title", locale),
+        body: t("notif.booking.status.inProgress.body", locale),
       };
     case BookingStatus.PENDING_CLIENT_ACCEPTANCE:
       return {
-        title: "Booking chờ xác nhận hoàn thành",
-        body: "Worker đã báo hoàn thành. Vui lòng xác nhận hoặc khiếu nại nếu cần.",
+        title: t("notif.booking.status.pendingAcceptance.title", locale),
+        body: t("notif.booking.status.pendingAcceptance.body", locale),
       };
     case BookingStatus.COMPLETED:
       return {
-        title: "Booking đã hoàn thành",
-        body: "Booking đã hoàn thành thành công.",
+        title: t("notif.booking.status.completed.title", locale),
+        body: t("notif.booking.status.completed.body", locale),
       };
     case BookingStatus.CANCELLED:
       return {
-        title: "Booking đã bị hủy",
-        body: "Booking đã bị hủy.",
+        title: t("notif.booking.status.cancelled.title", locale),
+        body: t("notif.booking.status.cancelled.body", locale),
       };
     case BookingStatus.DISPUTED:
       return {
-        title: "Booking đang tranh chấp",
-        body: "Một khiếu nại đã được mở cho booking này.",
+        title: t("notif.booking.status.disputed.title", locale),
+        body: t("notif.booking.status.disputed.body", locale),
       };
     case BookingStatus.EXPIRED:
       return {
-        title: "Booking đã hết hạn",
-        body: "Booking đã hết hạn.",
+        title: t("notif.booking.status.expired.title", locale),
+        body: t("notif.booking.status.expired.body", locale),
       };
     case BookingStatus.PENDING:
     default:
       return {
-        title: "Trạng thái booking đã cập nhật",
-        body: `Trạng thái booking của bạn hiện là ${status}.`,
+        title: t("notif.booking.status.default.title", locale),
+        body: t("notif.booking.status.default.body", locale, { status }),
       };
   }
 };
@@ -130,14 +154,15 @@ export class NotificationEventService {
     const bookingId = toId(booking._id);
     const workerId = toId(booking.worker_id);
     const clientId = toId(booking.client_id);
+    const locale = await getRecipientLocale(workerId);
 
     await notificationService.notify({
       recipient_ids: [workerId],
       actor_id: clientId,
       type: NotificationType.BOOKING_CREATED,
       category: NotificationCategory.BOOKING,
-      title: "Yêu cầu đặt lịch mới",
-      body: "Bạn vừa nhận được một yêu cầu đặt lịch mới.",
+      title: t("notif.booking.created.title", locale),
+      body: t("notif.booking.created.body", locale),
       data: { booking_id: bookingId },
       link: getBookingDashboardLink(workerId, booking),
       priority: NotificationPriority.HIGH,
@@ -154,16 +179,16 @@ export class NotificationEventService {
     const clientId = toId(booking.client_id);
     const workerId = toId(booking.worker_id);
     const recipients = [clientId, workerId].filter((id) => id !== actorId);
-    const { title, body } = getBookingStatusNotificationContent(status);
 
     if (recipients.length === 0) {
       return;
     }
 
-    // Gửi per-recipient với link theo role: worker → /worker/bookings, client → /client/bookings
     await Promise.all(
-      recipients.map((recipientId) =>
-        notificationService.notify({
+      recipients.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        const { title, body } = getBookingStatusContent(status, locale);
+        return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.BOOKING_STATUS_UPDATED,
@@ -174,8 +199,8 @@ export class NotificationEventService {
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.HIGH,
           dedupe_key: `booking-status:${bookingId}:${status}:${recipientId}`,
-        })
-      )
+        });
+      })
     );
   }
 
@@ -195,20 +220,21 @@ export class NotificationEventService {
     }
 
     await Promise.all(
-      recipients.map((recipientId) =>
-        notificationService.notify({
+      recipients.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.BOOKING_CANCELLED,
           category: NotificationCategory.BOOKING,
-          title: "Booking đã bị hủy",
-          body: `Một booking đã bị hủy bởi ${cancelledBy}.`,
+          title: t("notif.booking.cancelled.title", locale),
+          body: t("notif.booking.cancelled.body", locale, { cancelledBy }),
           data: { booking_id: bookingId, cancelled_by: cancelledBy },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.HIGH,
           dedupe_key: `booking-cancelled:${bookingId}:${recipientId}`,
-        })
-      )
+        });
+      })
     );
   }
 
@@ -223,17 +249,22 @@ export class NotificationEventService {
   ): Promise<void> {
     const bookingId = toId(booking._id);
     const workerId = toId(booking.worker_id);
-    const body =
+    const locale = await getRecipientLocale(workerId);
+
+    const bodyMain = t(
       input.reason === "short_notice_confirmation_timeout"
-        ? "Booking đã hết hạn vì bạn không xác nhận trong thời gian cho phép."
-        : "Booking đã hết hạn vì bạn không xác nhận trước giờ bắt đầu 6 giờ.";
+        ? "notif.booking.autoExpired.body.shortNotice"
+        : "notif.booking.autoExpired.body.confirmationDeadline",
+      locale
+    );
+    const bodySuffix = t("notif.booking.autoExpired.suffix", locale);
 
     await notificationService.notify({
       recipient_ids: [workerId],
       type: NotificationType.BOOKING_STATUS_UPDATED,
       category: NotificationCategory.BOOKING,
-      title: "Cảnh báo: booking đã hết hạn",
-      body: `${body} Vui lòng phản hồi booking đúng hạn để tránh ảnh hưởng uy tín.`,
+      title: t("notif.booking.autoExpired.title", locale),
+      body: `${bodyMain} ${bodySuffix}`,
       data: {
         booking_id: bookingId,
         status: BookingStatus.EXPIRED,
@@ -257,20 +288,21 @@ export class NotificationEventService {
     const recipients = [clientId, workerId].filter((id) => id !== actorId);
 
     await Promise.all(
-      recipients.map((recipientId) =>
-        notificationService.notify({
+      recipients.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.BOOKING_UPDATED,
           category: NotificationCategory.BOOKING,
-          title: "Booking đã được cập nhật",
-          body: "Thông tin booking đã được cập nhật.",
+          title: t("notif.booking.updated.title", locale),
+          body: t("notif.booking.updated.body", locale),
           data: { booking_id: bookingId },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.NORMAL,
           dedupe_key: `booking-updated:${bookingId}:${recipientId}`,
-        })
-      )
+        });
+      })
     );
   }
 
@@ -283,26 +315,31 @@ export class NotificationEventService {
     const workerId = toId(booking.worker_id);
     const startTime = booking.schedule.start_time;
 
-    await notificationService.notify({
-      recipient_ids: [clientId, workerId],
-      type: NotificationType.BOOKING_REMINDER,
-      category: NotificationCategory.BOOKING,
-      title: `Booking starts in ${hoursBeforeStart}h`,
-      body: `Your booking starts at ${startTime.toISOString()}.`,
-      data: {
-        booking_id: bookingId,
-        starts_at: startTime.toISOString(),
-        hours_before_start: hoursBeforeStart,
-      },
-      link: "/notifications",
-      channels: [
-        NotificationChannel.IN_APP,
-        NotificationChannel.EMAIL,
-        NotificationChannel.PUSH,
-      ],
-      priority: NotificationPriority.HIGH,
-      dedupe_key: `booking-reminder:${bookingId}:${hoursBeforeStart}h`,
-    });
+    await Promise.all(
+      [clientId, workerId].map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
+          recipient_ids: [recipientId],
+          type: NotificationType.BOOKING_REMINDER,
+          category: NotificationCategory.BOOKING,
+          title: t("notif.booking.reminder.title", locale, { hours: hoursBeforeStart }),
+          body: t("notif.booking.reminder.body", locale, { startsAt: formatDateTime(startTime, locale) }),
+          data: {
+            booking_id: bookingId,
+            starts_at: startTime.toISOString(),
+            hours_before_start: hoursBeforeStart,
+          },
+          link: "/notifications",
+          channels: [
+            NotificationChannel.IN_APP,
+            NotificationChannel.EMAIL,
+            NotificationChannel.PUSH,
+          ],
+          priority: NotificationPriority.HIGH,
+          dedupe_key: `booking-reminder:${bookingId}:${hoursBeforeStart}h:${recipientId}`,
+        });
+      })
+    );
   }
 
   async disputeCreated(
@@ -319,20 +356,21 @@ export class NotificationEventService {
     }
 
     await Promise.all(
-      recipients.map((recipientId) =>
-        notificationService.notify({
+      recipients.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.DISPUTE_CREATED,
           category: NotificationCategory.DISPUTE,
-          title: "Có khiếu nại booking mới",
-          body: "Một khiếu nại mới đã được tạo cho booking.",
+          title: t("notif.dispute.created.title", locale),
+          body: t("notif.dispute.created.body", locale),
           data: { booking_id: bookingId },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.URGENT,
           dedupe_key: `dispute-created:${bookingId}:${recipientId}`,
-        })
-      )
+        });
+      })
     );
   }
 
@@ -345,37 +383,40 @@ export class NotificationEventService {
     const recipients = [toId(booking.client_id), toId(booking.worker_id)];
 
     await Promise.all(
-      recipients.map((recipientId) =>
-        notificationService.notify({
+      recipients.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.DISPUTE_RESOLVED,
           category: NotificationCategory.DISPUTE,
-          title: "Khiếu nại booking đã được xử lý",
-          body: `Khiếu nại booking đã được xử lý với kết quả: ${resolution}.`,
+          title: t("notif.dispute.resolved.title", locale),
+          body: t("notif.dispute.resolved.body", locale, { resolution }),
           data: { booking_id: bookingId, resolution },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.HIGH,
           dedupe_key: `dispute-resolved:${bookingId}:${resolution}:${recipientId}`,
-        })
-      )
+        });
+      })
     );
   }
 
   async walletEvent(input: {
     userId: string;
     type: NotificationType;
-    title: string;
-    body: string;
+    titleKey: string;
+    bodyKey: string;
+    vars?: Record<string, string | number>;
     data?: Record<string, unknown>;
     dedupeKey: string;
   }): Promise<void> {
+    const locale = await getRecipientLocale(input.userId);
     await notificationService.notify({
       recipient_ids: [input.userId],
       type: input.type,
       category: NotificationCategory.WALLET,
-      title: input.title,
-      body: input.body,
+      title: t(input.titleKey, locale, input.vars),
+      body: t(input.bodyKey, locale, input.vars),
       data: input.data || {},
       link: "/client/wallet",
       priority: NotificationPriority.HIGH,
@@ -440,31 +481,34 @@ export class NotificationEventService {
     conversationGroupId?: string | null;
     isGroup?: boolean;
   }): Promise<void> {
-    await notificationService.notify({
-      recipient_ids: input.recipientIds,
-      actor_id: input.actorId,
-      type: input.isGroup
-        ? NotificationType.CHAT_GROUP_MESSAGE
-        : NotificationType.CHAT_MESSAGE,
-      category: NotificationCategory.CHAT,
-      title: input.isGroup ? "Tin nhắn nhóm mới" : "Tin nhắn mới",
-      body: input.isGroup
-        ? "Bạn có tin nhắn mới trong nhóm."
-        : "Bạn có tin nhắn mới.",
-      data: {
-        message_id: input.messageId,
-        conversation_id: input.conversationId,
-        conversation_group_id: input.conversationGroupId,
-      },
-      link: input.isGroup
-        ? `/chat?conversation_group_id=${input.conversationGroupId || ""}`
-        : input.conversationId
-          ? `/chat?conversation_id=${input.conversationId}`
-          : "/chat",
-      channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
-      priority: NotificationPriority.NORMAL,
-      dedupe_key: `chat-message:${input.messageId}`,
-    });
+    await Promise.all(
+      input.recipientIds.map(async (recipientId) => {
+        const locale = await getRecipientLocale(recipientId);
+        return notificationService.notify({
+          recipient_ids: [recipientId],
+          actor_id: input.actorId,
+          type: input.isGroup
+            ? NotificationType.CHAT_GROUP_MESSAGE
+            : NotificationType.CHAT_MESSAGE,
+          category: NotificationCategory.CHAT,
+          title: t(input.isGroup ? "notif.chat.groupMessage.title" : "notif.chat.message.title", locale),
+          body: t(input.isGroup ? "notif.chat.groupMessage.body" : "notif.chat.message.body", locale),
+          data: {
+            message_id: input.messageId,
+            conversation_id: input.conversationId,
+            conversation_group_id: input.conversationGroupId,
+          },
+          link: input.isGroup
+            ? `/chat?conversation_group_id=${input.conversationGroupId || ""}`
+            : input.conversationId
+              ? `/chat?conversation_id=${input.conversationId}`
+              : "/chat",
+          channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
+          priority: NotificationPriority.NORMAL,
+          dedupe_key: `chat-message:${input.messageId}:${recipientId}`,
+        });
+      })
+    );
   }
 
   async reviewCreated(review: IReviewDocument, actorId: string): Promise<void> {
@@ -473,14 +517,15 @@ export class NotificationEventService {
     const recipientId = actorId === clientId ? workerId : clientId;
     const link =
       recipientId === workerId ? "/worker/bookings" : "/client/bookings";
+    const locale = await getRecipientLocale(recipientId);
 
     await notificationService.notify({
       recipient_ids: [recipientId],
       actor_id: actorId,
       type: NotificationType.REVIEW_CREATED,
       category: NotificationCategory.REVIEW,
-      title: "Đánh giá mới",
-      body: "Một đánh giá mới đã được gửi cho booking của bạn.",
+      title: t("notif.review.created.title", locale),
+      body: t("notif.review.created.body", locale),
       data: {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),
@@ -493,17 +538,18 @@ export class NotificationEventService {
   }
 
   async reputationWarning(userId: string, newScore: number): Promise<void> {
-    const body =
+    const locale = await getRecipientLocale(userId);
+    const bodyKey =
       newScore < 30
-        ? `Điểm uy tín của bạn hiện là ${newScore}/100. Dưới 30 điểm, bạn bị hạn chế một số tính năng.`
-        : `Điểm uy tín của bạn hiện là ${newScore}/100. Hãy hoàn thành booking đúng hạn để duy trì điểm.`;
+        ? "notif.reputation.warning.body.critical"
+        : "notif.reputation.warning.body.normal";
 
     await notificationService.notify({
       recipient_ids: [userId],
       type: NotificationType.REPUTATION_WARNING,
       category: NotificationCategory.REPUTATION,
-      title: "Cảnh báo điểm uy tín",
-      body,
+      title: t("notif.reputation.warning.title", locale),
+      body: t(bodyKey, locale, { score: newScore }),
       data: { reputation_score: newScore },
       link: "/worker/bookings",
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
@@ -525,31 +571,47 @@ export class NotificationEventService {
     } | null;
     adminId: string;
   }): Promise<void> {
-    const reasonLabel = input.reportReason
-      ? REPORT_REASON_LABELS_VI[input.reportReason]
+    const locale = await getRecipientLocale(input.authorId);
+    const reasonKey = input.reportReason
+      ? REPORT_REASON_KEYS[input.reportReason]
       : null;
     const lines = [
-      "Một bài viết của bạn đã bị admin xóa do vi phạm quy định cộng đồng.",
-      `Trích đoạn bài viết: "${truncate(input.postBodyPreview || "", 160)}"`,
+      t("notif.moderation.postDeleted.intro", locale),
+      t("notif.moderation.postDeleted.preview", locale, {
+        excerpt: truncate(input.postBodyPreview || "", 160),
+      }),
     ];
-    if (reasonLabel) lines.push(`Lý do báo cáo: ${reasonLabel}`);
+    if (reasonKey) {
+      lines.push(
+        t("notif.moderation.postDeleted.reason", locale, {
+          reason: t(reasonKey, locale),
+        })
+      );
+    }
     if (input.reportDescription) {
-      lines.push(`Mô tả báo cáo: ${truncate(input.reportDescription, 280)}`);
+      lines.push(
+        t("notif.moderation.postDeleted.description", locale, {
+          description: truncate(input.reportDescription, 280),
+        })
+      );
     }
     if (input.adminNote) {
-      lines.push(`Ghi chú admin: ${truncate(input.adminNote, 280)}`);
+      lines.push(
+        t("notif.moderation.postDeleted.adminNote", locale, {
+          note: truncate(input.adminNote, 280),
+        })
+      );
     }
     if (input.restriction) {
       lines.push(
         buildRestrictionDescription(
           input.restriction.feature,
-          input.restriction.endsAt
+          input.restriction.endsAt,
+          locale
         )
       );
     } else {
-      lines.push(
-        "Hiện chưa áp dụng lệnh cấm đăng bài đối với tài khoản của bạn."
-      );
+      lines.push(t("notif.moderation.postDeleted.noRestriction", locale));
     }
 
     await notificationService.notify({
@@ -557,7 +619,7 @@ export class NotificationEventService {
       actor_id: input.adminId,
       type: NotificationType.MODERATION_POST_DELETED,
       category: NotificationCategory.ADMIN,
-      title: "Bài viết của bạn đã bị admin xóa",
+      title: t("notif.moderation.postDeleted.title", locale),
       body: lines.join("\n"),
       data: {
         post_id: input.postId,
@@ -587,26 +649,43 @@ export class NotificationEventService {
     } | null;
     adminId: string;
   }): Promise<void> {
-    const reasonLabel = REPORT_REASON_LABELS_VI[input.reportReason];
+    const locale = await getRecipientLocale(input.workerId);
+    const reasonKey = REPORT_REASON_KEYS[input.reportReason];
     const lines = [
-      "Báo cáo liên quan đến bạn đã được admin xem xét xong.",
-      `Lý do báo cáo: ${reasonLabel}`,
-      `Mô tả báo cáo: ${truncate(input.reportDescription, 280)}`,
+      t("notif.moderation.reportResolved.intro", locale),
+      t("notif.moderation.reportResolved.reason", locale, {
+        reason: t(reasonKey, locale),
+      }),
+      t("notif.moderation.reportResolved.description", locale, {
+        description: truncate(input.reportDescription, 280),
+      }),
     ];
     if (input.adminNote) {
-      lines.push(`Ghi chú admin: ${truncate(input.adminNote, 280)}`);
+      lines.push(
+        t("notif.moderation.reportResolved.adminNote", locale, {
+          note: truncate(input.adminNote, 280),
+        })
+      );
     }
     if (input.restriction) {
       lines.push(
-        `Kết luận: ${buildRestrictionDescription(input.restriction.feature, input.restriction.endsAt)}`
+        t("notif.moderation.reportResolved.conclusion.sanctioned", locale, {
+          description: buildRestrictionDescription(
+            input.restriction.feature,
+            input.restriction.endsAt,
+            locale
+          ),
+        })
       );
       if (input.restriction.reason) {
-        lines.push(`Lý do cấm: ${truncate(input.restriction.reason, 280)}`);
+        lines.push(
+          t("notif.moderation.reportResolved.restrictionReason", locale, {
+            reason: truncate(input.restriction.reason, 280),
+          })
+        );
       }
     } else {
-      lines.push(
-        "Kết luận: Không có dấu hiệu vi phạm. Tài khoản của bạn không bị áp dụng chế tài."
-      );
+      lines.push(t("notif.moderation.reportResolved.conclusion.clean", locale));
     }
 
     await notificationService.notify({
@@ -615,8 +694,8 @@ export class NotificationEventService {
       type: NotificationType.MODERATION_REPORT_RESOLVED,
       category: NotificationCategory.ADMIN,
       title: input.restriction
-        ? "Báo cáo về bạn đã xử lý — áp dụng chế tài"
-        : "Báo cáo về bạn đã xử lý — không vi phạm",
+        ? t("notif.moderation.reportResolved.title.sanctioned", locale)
+        : t("notif.moderation.reportResolved.title.clean", locale),
       body: lines.join("\n"),
       data: {
         report_id: input.reportId,
@@ -642,23 +721,29 @@ export class NotificationEventService {
     adminId: string;
     restrictionId: string;
   }): Promise<void> {
+    const locale = await getRecipientLocale(input.userId);
+    const featureLabel = t(RESTRICTION_FEATURE_KEYS[input.feature], locale);
     const lines = [
-      buildRestrictionDescription(input.feature, input.endsAt),
-      `Lý do: ${truncate(input.reason || "Vi phạm chính sách cộng đồng", 280)}`,
+      buildRestrictionDescription(input.feature, input.endsAt, locale),
+      t("notif.moderation.restriction.reason", locale, {
+        reason: truncate(
+          input.reason || t("notif.moderation.restriction.defaultReason", locale),
+          280
+        ),
+      }),
     ];
     if (input.reportId) {
-      lines.push(
-        "Lệnh cấm này được áp dụng sau khi admin xử lý báo cáo liên quan."
-      );
+      lines.push(t("notif.moderation.restriction.fromReport", locale));
     }
-    const featureLabel = RESTRICTION_FEATURE_LABELS_VI[input.feature];
 
     await notificationService.notify({
       recipient_ids: [input.userId],
       actor_id: input.adminId,
       type: NotificationType.MODERATION_RESTRICTION_APPLIED,
       category: NotificationCategory.ADMIN,
-      title: `Bạn đã bị cấm ${featureLabel}`,
+      title: t("notif.moderation.restriction.title", locale, {
+        feature: featureLabel,
+      }),
       body: lines.join("\n"),
       data: {
         restriction_id: input.restrictionId,
@@ -681,19 +766,23 @@ export class NotificationEventService {
     adminId: string;
     reason?: string;
   }): Promise<void> {
+    const locale = await getRecipientLocale(input.userId);
     const reasonLine = input.reason
-      ? `Lý do: ${truncate(input.reason, 280)}`
-      : "Lý do: Vi phạm chính sách của hệ thống.";
+      ? t("notif.account.banned.body.reason", locale, {
+          reason: truncate(input.reason, 280),
+        })
+      : t("notif.account.banned.body.defaultReason", locale);
+
     await notificationService.notify({
       recipient_ids: [input.userId],
       actor_id: input.adminId,
       type: NotificationType.ACCOUNT_BANNED,
       category: NotificationCategory.SECURITY,
-      title: "Tài khoản của bạn đã bị khóa",
+      title: t("notif.account.banned.title", locale),
       body: [
-        "Bạn không thể tiếp tục sử dụng tài khoản này.",
+        t("notif.account.banned.body.intro", locale),
         reasonLine,
-        "Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ bộ phận hỗ trợ.",
+        t("notif.account.banned.body.contact", locale),
       ].join("\n"),
       data: { reason: input.reason ?? null },
       link: "/",
@@ -707,13 +796,14 @@ export class NotificationEventService {
     userId: string;
     adminId: string;
   }): Promise<void> {
+    const locale = await getRecipientLocale(input.userId);
     await notificationService.notify({
       recipient_ids: [input.userId],
       actor_id: input.adminId,
       type: NotificationType.ACCOUNT_UNBANNED,
       category: NotificationCategory.SECURITY,
-      title: "Tài khoản của bạn đã được mở khóa",
-      body: "Bạn có thể đăng nhập và sử dụng hệ thống bình thường trở lại.",
+      title: t("notif.account.unbanned.title", locale),
+      body: t("notif.account.unbanned.body", locale),
       data: {},
       link: "/",
       channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
@@ -728,14 +818,15 @@ export class NotificationEventService {
     const recipientId = actorId === clientId ? workerId : clientId;
     const link =
       recipientId === workerId ? "/worker/bookings" : "/client/bookings";
+    const locale = await getRecipientLocale(recipientId);
 
     await notificationService.notify({
       recipient_ids: [recipientId],
       actor_id: actorId,
       type: NotificationType.REVIEW_UPDATED,
       category: NotificationCategory.REVIEW,
-      title: "Đánh giá đã được cập nhật",
-      body: "Một đánh giá về booking của bạn đã được cập nhật.",
+      title: t("notif.review.updated.title", locale),
+      body: t("notif.review.updated.body", locale),
       data: {
         review_id: toId(review._id),
         booking_id: toId(review.booking_id),

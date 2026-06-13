@@ -351,6 +351,556 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "이것이 실수라고 생각되신다면, 빨리 답변하여 지원을 받으세요.",
     zh: "如果您认为这是错误，请尽快回复以获得支持。",
   },
+
+  // ─── Notification titles & bodies ────────────────────────────────────────
+
+  // Booking
+  "notif.booking.created.title": {
+    en: "New booking request",
+    vi: "Yêu cầu đặt lịch mới",
+    ko: "새 예약 요청",
+    zh: "新预约请求",
+  },
+  "notif.booking.created.body": {
+    en: "You have received a new booking request.",
+    vi: "Bạn vừa nhận được một yêu cầu đặt lịch mới.",
+    ko: "새 예약 요청을 받았습니다.",
+    zh: "您收到了新的预约请求。",
+  },
+  "notif.booking.status.confirmed.title": {
+    en: "Booking confirmed",
+    vi: "Booking đã được xác nhận",
+    ko: "예약이 확인되었습니다",
+    zh: "预约已确认",
+  },
+  "notif.booking.status.confirmed.body": {
+    en: "Your booking has been confirmed by the worker.",
+    vi: "Booking của bạn đã được người thực hiện xác nhận.",
+    ko: "예약이 작업자에 의해 확인되었습니다.",
+    zh: "您的预约已被服务者确认。",
+  },
+  "notif.booking.status.rejected.title": {
+    en: "Booking rejected",
+    vi: "Booking bị từ chối",
+    ko: "예약이 거절되었습니다",
+    zh: "预约已拒绝",
+  },
+  "notif.booking.status.rejected.body": {
+    en: "Your booking request has been rejected.",
+    vi: "Yêu cầu booking đã bị từ chối.",
+    ko: "예약 요청이 거절되었습니다.",
+    zh: "您的预约请求已被拒绝。",
+  },
+  "notif.booking.status.inProgress.title": {
+    en: "Booking in progress",
+    vi: "Booking đang thực hiện",
+    ko: "예약이 진행 중입니다",
+    zh: "预约进行中",
+  },
+  "notif.booking.status.inProgress.body": {
+    en: "The booking has started and is being performed.",
+    vi: "Booking đã bắt đầu và đang được thực hiện.",
+    ko: "예약이 시작되어 진행 중입니다.",
+    zh: "预约已开始并正在执行。",
+  },
+  "notif.booking.status.pendingAcceptance.title": {
+    en: "Awaiting completion confirmation",
+    vi: "Booking chờ xác nhận hoàn thành",
+    ko: "완료 확인 대기 중",
+    zh: "待确认完成",
+  },
+  "notif.booking.status.pendingAcceptance.body": {
+    en: "The worker has reported completion. Please confirm or dispute if needed.",
+    vi: "Worker đã báo hoàn thành. Vui lòng xác nhận hoặc khiếu nại nếu cần.",
+    ko: "작업자가 완료를 보고했습니다. 확인하거나 이의를 제기하세요.",
+    zh: "服务者已报告完成。请确认或提出异议。",
+  },
+  "notif.booking.status.completed.title": {
+    en: "Booking completed",
+    vi: "Booking đã hoàn thành",
+    ko: "예약이 완료되었습니다",
+    zh: "预约已完成",
+  },
+  "notif.booking.status.completed.body": {
+    en: "The booking has been completed successfully.",
+    vi: "Booking đã hoàn thành thành công.",
+    ko: "예약이 성공적으로 완료되었습니다.",
+    zh: "预约已成功完成。",
+  },
+  "notif.booking.status.cancelled.title": {
+    en: "Booking cancelled",
+    vi: "Booking đã bị hủy",
+    ko: "예약이 취소되었습니다",
+    zh: "预约已取消",
+  },
+  "notif.booking.status.cancelled.body": {
+    en: "The booking has been cancelled.",
+    vi: "Booking đã bị hủy.",
+    ko: "예약이 취소되었습니다.",
+    zh: "预约已取消。",
+  },
+  "notif.booking.status.disputed.title": {
+    en: "Booking disputed",
+    vi: "Booking đang tranh chấp",
+    ko: "예약 분쟁 중",
+    zh: "预约争议中",
+  },
+  "notif.booking.status.disputed.body": {
+    en: "A dispute has been opened for this booking.",
+    vi: "Một khiếu nại đã được mở cho booking này.",
+    ko: "이 예약에 대한 분쟁이 접수되었습니다.",
+    zh: "此预约已开启争议。",
+  },
+  "notif.booking.status.expired.title": {
+    en: "Booking expired",
+    vi: "Booking đã hết hạn",
+    ko: "예약이 만료되었습니다",
+    zh: "预约已过期",
+  },
+  "notif.booking.status.expired.body": {
+    en: "The booking has expired.",
+    vi: "Booking đã hết hạn.",
+    ko: "예약이 만료되었습니다.",
+    zh: "预约已过期。",
+  },
+  "notif.booking.status.default.title": {
+    en: "Booking status updated",
+    vi: "Trạng thái booking đã cập nhật",
+    ko: "예약 상태가 업데이트되었습니다",
+    zh: "预约状态已更新",
+  },
+  "notif.booking.status.default.body": {
+    en: "Your booking status is now {status}.",
+    vi: "Trạng thái booking của bạn hiện là {status}.",
+    ko: "현재 예약 상태는 {status}입니다.",
+    zh: "您的预约状态现在为 {status}。",
+  },
+  "notif.booking.cancelled.title": {
+    en: "Booking cancelled",
+    vi: "Booking đã bị hủy",
+    ko: "예약이 취소되었습니다",
+    zh: "预约已取消",
+  },
+  "notif.booking.cancelled.body": {
+    en: "A booking has been cancelled by {cancelledBy}.",
+    vi: "Một booking đã bị hủy bởi {cancelledBy}.",
+    ko: "예약이 {cancelledBy}에 의해 취소되었습니다.",
+    zh: "预约已由 {cancelledBy} 取消。",
+  },
+  "notif.booking.autoExpired.title": {
+    en: "Warning: booking expired",
+    vi: "Cảnh báo: booking đã hết hạn",
+    ko: "경고: 예약 만료됨",
+    zh: "警告：预约已过期",
+  },
+  "notif.booking.autoExpired.body.shortNotice": {
+    en: "The booking expired because you did not confirm within the allowed time.",
+    vi: "Booking đã hết hạn vì bạn không xác nhận trong thời gian cho phép.",
+    ko: "허용 시간 내에 확인하지 않아 예약이 만료되었습니다.",
+    zh: "由于您未在规定时间内确认，预约已过期。",
+  },
+  "notif.booking.autoExpired.body.confirmationDeadline": {
+    en: "The booking expired because you did not confirm 6 hours before the start time.",
+    vi: "Booking đã hết hạn vì bạn không xác nhận trước giờ bắt đầu 6 giờ.",
+    ko: "시작 6시간 전에 확인하지 않아 예약이 만료되었습니다.",
+    zh: "由于您未在开始前6小时确认，预约已过期。",
+  },
+  "notif.booking.autoExpired.suffix": {
+    en: "Please respond to bookings on time to avoid affecting your reputation.",
+    vi: "Vui lòng phản hồi booking đúng hạn để tránh ảnh hưởng uy tín.",
+    ko: "평판에 영향을 미치지 않도록 예약에 제때 응답하세요.",
+    zh: "请按时响应预约，以免影响您的信誉。",
+  },
+  "notif.booking.updated.title": {
+    en: "Booking updated",
+    vi: "Booking đã được cập nhật",
+    ko: "예약이 업데이트되었습니다",
+    zh: "预约已更新",
+  },
+  "notif.booking.updated.body": {
+    en: "Booking information has been updated.",
+    vi: "Thông tin booking đã được cập nhật.",
+    ko: "예약 정보가 업데이트되었습니다.",
+    zh: "预约信息已更新。",
+  },
+  "notif.booking.reminder.title": {
+    en: "Booking starts in {hours}h",
+    vi: "Booking bắt đầu trong {hours}h",
+    ko: "{hours}시간 후 예약 시작",
+    zh: "预约将在 {hours} 小时后开始",
+  },
+  "notif.booking.reminder.body": {
+    en: "Your booking starts at {startsAt}.",
+    vi: "Booking của bạn bắt đầu lúc {startsAt}.",
+    ko: "예약이 {startsAt}에 시작됩니다.",
+    zh: "您的预约将于 {startsAt} 开始。",
+  },
+
+  // Dispute
+  "notif.dispute.created.title": {
+    en: "New booking dispute",
+    vi: "Có khiếu nại booking mới",
+    ko: "새 예약 분쟁",
+    zh: "新预约争议",
+  },
+  "notif.dispute.created.body": {
+    en: "A new dispute has been created for the booking.",
+    vi: "Một khiếu nại mới đã được tạo cho booking.",
+    ko: "예약에 대한 새 분쟁이 생성되었습니다.",
+    zh: "预约已创建新争议。",
+  },
+  "notif.dispute.resolved.title": {
+    en: "Booking dispute resolved",
+    vi: "Khiếu nại booking đã được xử lý",
+    ko: "예약 분쟁 해결됨",
+    zh: "预约争议已解决",
+  },
+  "notif.dispute.resolved.body": {
+    en: "The booking dispute has been resolved with result: {resolution}.",
+    vi: "Khiếu nại booking đã được xử lý với kết quả: {resolution}.",
+    ko: "예약 분쟁이 {resolution}(으)로 해결되었습니다.",
+    zh: "预约争议已以 {resolution} 结果解决。",
+  },
+
+  // Chat
+  "notif.chat.message.title": {
+    en: "New message",
+    vi: "Tin nhắn mới",
+    ko: "새 메시지",
+    zh: "新消息",
+  },
+  "notif.chat.message.body": {
+    en: "You have a new message.",
+    vi: "Bạn có tin nhắn mới.",
+    ko: "새 메시지가 있습니다.",
+    zh: "您有一条新消息。",
+  },
+  "notif.chat.groupMessage.title": {
+    en: "New group message",
+    vi: "Tin nhắn nhóm mới",
+    ko: "새 그룹 메시지",
+    zh: "新群组消息",
+  },
+  "notif.chat.groupMessage.body": {
+    en: "You have a new message in the group.",
+    vi: "Bạn có tin nhắn mới trong nhóm.",
+    ko: "그룹에 새 메시지가 있습니다.",
+    zh: "群组中有新消息。",
+  },
+
+  // Review
+  "notif.review.created.title": {
+    en: "New review",
+    vi: "Đánh giá mới",
+    ko: "새 리뷰",
+    zh: "新评价",
+  },
+  "notif.review.created.body": {
+    en: "A new review has been submitted for your booking.",
+    vi: "Một đánh giá mới đã được gửi cho booking của bạn.",
+    ko: "예약에 새 리뷰가 제출되었습니다.",
+    zh: "您的预约收到了新评价。",
+  },
+  "notif.review.updated.title": {
+    en: "Review updated",
+    vi: "Đánh giá đã được cập nhật",
+    ko: "리뷰가 업데이트되었습니다",
+    zh: "评价已更新",
+  },
+  "notif.review.updated.body": {
+    en: "A review for your booking has been updated.",
+    vi: "Một đánh giá về booking của bạn đã được cập nhật.",
+    ko: "예약 리뷰가 업데이트되었습니다.",
+    zh: "您的预约评价已更新。",
+  },
+
+  // Reputation
+  "notif.reputation.warning.title": {
+    en: "Reputation score warning",
+    vi: "Cảnh báo điểm uy tín",
+    ko: "평판 점수 경고",
+    zh: "信誉分数警告",
+  },
+  "notif.reputation.warning.body.critical": {
+    en: "Your reputation score is {score}/100. Below 30, some features are restricted.",
+    vi: "Điểm uy tín của bạn hiện là {score}/100. Dưới 30 điểm, bạn bị hạn chế một số tính năng.",
+    ko: "평판 점수가 {score}/100입니다. 30점 미만이면 일부 기능이 제한됩니다.",
+    zh: "您的信誉分数为 {score}/100。低于30分时，部分功能将受限。",
+  },
+  "notif.reputation.warning.body.normal": {
+    en: "Your reputation score is {score}/100. Complete bookings on time to maintain your score.",
+    vi: "Điểm uy tín của bạn hiện là {score}/100. Hãy hoàn thành booking đúng hạn để duy trì điểm.",
+    ko: "평판 점수가 {score}/100입니다. 예약을 제때 완료하여 점수를 유지하세요.",
+    zh: "您的信誉分数为 {score}/100。请按时完成预约以维持分数。",
+  },
+
+  // Report reasons
+  "notif.reportReason.scam": {
+    en: "Scam",
+    vi: "Lừa đảo",
+    ko: "사기",
+    zh: "诈骗",
+  },
+  "notif.reportReason.lowQuality": {
+    en: "Low quality",
+    vi: "Chất lượng thấp",
+    ko: "저품질",
+    zh: "低质量",
+  },
+  "notif.reportReason.harassment": {
+    en: "Harassment",
+    vi: "Quấy rối",
+    ko: "괴롭힘",
+    zh: "骚扰",
+  },
+  "notif.reportReason.fakeProfile": {
+    en: "Fake profile",
+    vi: "Hồ sơ giả mạo",
+    ko: "허위 프로필",
+    zh: "虚假资料",
+  },
+  "notif.reportReason.other": {
+    en: "Other",
+    vi: "Khác",
+    ko: "기타",
+    zh: "其他",
+  },
+
+  // Restriction feature labels
+  "notif.restrictionFeature.postCreate": {
+    en: "post creation",
+    vi: "đăng bài",
+    ko: "게시물 작성",
+    zh: "发帖",
+  },
+  "notif.restrictionFeature.workerActivity": {
+    en: "worker activity",
+    vi: "hoạt động worker",
+    ko: "워커 활동",
+    zh: "工作者活动",
+  },
+
+  // Restriction descriptions
+  "notif.restriction.permanent": {
+    en: "You are permanently banned from {feature}.",
+    vi: "Bạn đang bị cấm {feature} vĩnh viễn.",
+    ko: "{feature}이/가 영구적으로 금지되었습니다.",
+    zh: "您已被永久禁止{feature}。",
+  },
+  "notif.restriction.until": {
+    en: "You are banned from {feature} until {endsAt}.",
+    vi: "Bạn đang bị cấm {feature} đến {endsAt}.",
+    ko: "{endsAt}까지 {feature}이/가 금지되었습니다.",
+    zh: "您被禁止{feature}直到 {endsAt}。",
+  },
+
+  // Moderation — post deleted
+  "notif.moderation.postDeleted.title": {
+    en: "Your post has been deleted by admin",
+    vi: "Bài viết của bạn đã bị admin xóa",
+    ko: "관리자에 의해 게시물이 삭제되었습니다",
+    zh: "您的帖子已被管理员删除",
+  },
+  "notif.moderation.postDeleted.intro": {
+    en: "One of your posts was deleted by admin for violating community guidelines.",
+    vi: "Một bài viết của bạn đã bị admin xóa do vi phạm quy định cộng đồng.",
+    ko: "커뮤니티 가이드라인 위반으로 게시물이 관리자에 의해 삭제되었습니다.",
+    zh: "您的一篇帖子因违反社区准则被管理员删除。",
+  },
+  "notif.moderation.postDeleted.preview": {
+    en: "Post excerpt: \"{excerpt}\"",
+    vi: "Trích đoạn bài viết: \"{excerpt}\"",
+    ko: "게시물 발췌: \"{excerpt}\"",
+    zh: "帖子摘录：\"{excerpt}\"",
+  },
+  "notif.moderation.postDeleted.reason": {
+    en: "Report reason: {reason}",
+    vi: "Lý do báo cáo: {reason}",
+    ko: "신고 이유: {reason}",
+    zh: "举报原因：{reason}",
+  },
+  "notif.moderation.postDeleted.description": {
+    en: "Report description: {description}",
+    vi: "Mô tả báo cáo: {description}",
+    ko: "신고 설명: {description}",
+    zh: "举报描述：{description}",
+  },
+  "notif.moderation.postDeleted.adminNote": {
+    en: "Admin note: {note}",
+    vi: "Ghi chú admin: {note}",
+    ko: "관리자 메모: {note}",
+    zh: "管理员备注：{note}",
+  },
+  "notif.moderation.postDeleted.noRestriction": {
+    en: "No posting ban has been applied to your account yet.",
+    vi: "Hiện chưa áp dụng lệnh cấm đăng bài đối với tài khoản của bạn.",
+    ko: "현재 계정에 게시물 금지가 적용되지 않았습니다.",
+    zh: "目前未对您的账户执行发帖禁令。",
+  },
+
+  // Moderation — worker report resolved
+  "notif.moderation.reportResolved.title.sanctioned": {
+    en: "Report about you resolved — sanctions applied",
+    vi: "Báo cáo về bạn đã xử lý — áp dụng chế tài",
+    ko: "귀하에 대한 신고 처리 완료 — 제재 적용됨",
+    zh: "关于您的举报已处理 — 已施加制裁",
+  },
+  "notif.moderation.reportResolved.title.clean": {
+    en: "Report about you resolved — no violation",
+    vi: "Báo cáo về bạn đã xử lý — không vi phạm",
+    ko: "귀하에 대한 신고 처리 완료 — 위반 없음",
+    zh: "关于您的举报已处理 — 无违规",
+  },
+  "notif.moderation.reportResolved.intro": {
+    en: "A report involving you has been reviewed by admin.",
+    vi: "Báo cáo liên quan đến bạn đã được admin xem xét xong.",
+    ko: "귀하와 관련된 신고가 관리자에 의해 검토되었습니다.",
+    zh: "涉及您的举报已由管理员审核。",
+  },
+  "notif.moderation.reportResolved.reason": {
+    en: "Report reason: {reason}",
+    vi: "Lý do báo cáo: {reason}",
+    ko: "신고 이유: {reason}",
+    zh: "举报原因：{reason}",
+  },
+  "notif.moderation.reportResolved.description": {
+    en: "Report description: {description}",
+    vi: "Mô tả báo cáo: {description}",
+    ko: "신고 설명: {description}",
+    zh: "举报描述：{description}",
+  },
+  "notif.moderation.reportResolved.adminNote": {
+    en: "Admin note: {note}",
+    vi: "Ghi chú admin: {note}",
+    ko: "관리자 메모: {note}",
+    zh: "管理员备注：{note}",
+  },
+  "notif.moderation.reportResolved.conclusion.clean": {
+    en: "Conclusion: No violation found. No sanctions have been applied to your account.",
+    vi: "Kết luận: Không có dấu hiệu vi phạm. Tài khoản của bạn không bị áp dụng chế tài.",
+    ko: "결론: 위반 사항 없음. 계정에 제재가 적용되지 않았습니다.",
+    zh: "结论：未发现违规行为。您的账户未受到任何制裁。",
+  },
+  "notif.moderation.reportResolved.conclusion.sanctioned": {
+    en: "Conclusion: {description}",
+    vi: "Kết luận: {description}",
+    ko: "결론: {description}",
+    zh: "结论：{description}",
+  },
+  "notif.moderation.reportResolved.restrictionReason": {
+    en: "Ban reason: {reason}",
+    vi: "Lý do cấm: {reason}",
+    ko: "금지 이유: {reason}",
+    zh: "禁令原因：{reason}",
+  },
+
+  // Moderation — restriction applied
+  "notif.moderation.restriction.title": {
+    en: "You have been banned from {feature}",
+    vi: "Bạn đã bị cấm {feature}",
+    ko: "{feature}이/가 금지되었습니다",
+    zh: "您已被禁止{feature}",
+  },
+  "notif.moderation.restriction.reason": {
+    en: "Reason: {reason}",
+    vi: "Lý do: {reason}",
+    ko: "이유: {reason}",
+    zh: "原因：{reason}",
+  },
+  "notif.moderation.restriction.fromReport": {
+    en: "This ban was applied after admin reviewed a related report.",
+    vi: "Lệnh cấm này được áp dụng sau khi admin xử lý báo cáo liên quan.",
+    ko: "이 금지는 관련 신고를 관리자가 검토한 후 적용되었습니다.",
+    zh: "此禁令是在管理员审核相关举报后施加的。",
+  },
+  "notif.moderation.restriction.defaultReason": {
+    en: "Community policy violation",
+    vi: "Vi phạm chính sách cộng đồng",
+    ko: "커뮤니티 정책 위반",
+    zh: "社区政策违规",
+  },
+
+  // Account
+  "notif.account.banned.title": {
+    en: "Your account has been locked",
+    vi: "Tài khoản của bạn đã bị khóa",
+    ko: "계정이 잠겼습니다",
+    zh: "您的账户已被锁定",
+  },
+  "notif.account.banned.body.intro": {
+    en: "You can no longer use this account.",
+    vi: "Bạn không thể tiếp tục sử dụng tài khoản này.",
+    ko: "이 계정을 더 이상 사용할 수 없습니다.",
+    zh: "您无法再使用此账户。",
+  },
+  "notif.account.banned.body.reason": {
+    en: "Reason: {reason}",
+    vi: "Lý do: {reason}",
+    ko: "이유: {reason}",
+    zh: "原因：{reason}",
+  },
+  "notif.account.banned.body.defaultReason": {
+    en: "Reason: Violation of system policy.",
+    vi: "Lý do: Vi phạm chính sách của hệ thống.",
+    ko: "이유: 시스템 정책 위반.",
+    zh: "原因：违反系统政策。",
+  },
+  "notif.account.banned.body.contact": {
+    en: "If you believe this is a mistake, please contact support.",
+    vi: "Nếu bạn cho rằng đây là nhầm lẫn, vui lòng liên hệ bộ phận hỗ trợ.",
+    ko: "이것이 실수라고 생각되면 지원팀에 문의하세요.",
+    zh: "如果您认为这是错误，请联系客服。",
+  },
+  "notif.account.unbanned.title": {
+    en: "Your account has been unlocked",
+    vi: "Tài khoản của bạn đã được mở khóa",
+    ko: "계정이 잠금 해제되었습니다",
+    zh: "您的账户已解锁",
+  },
+  "notif.account.unbanned.body": {
+    en: "You can log in and use the system normally again.",
+    vi: "Bạn có thể đăng nhập và sử dụng hệ thống bình thường trở lại.",
+    ko: "다시 정상적으로 로그인하고 시스템을 사용할 수 있습니다.",
+    zh: "您可以再次正常登录和使用系统。",
+  },
+
+  // Wallet
+  "notif.wallet.depositFailed.title": {
+    en: "Deposit failed",
+    vi: "Nạp tiền thất bại",
+    ko: "충전 실패",
+    zh: "充值失败",
+  },
+  "notif.wallet.depositFailed.body": {
+    en: "The transferred amount does not match the requested deposit amount.",
+    vi: "Số tiền chuyển không khớp với số tiền yêu cầu nạp.",
+    ko: "이체된 금액이 요청한 충전 금액과 일치하지 않습니다.",
+    zh: "转账金额与请求充值金额不符。",
+  },
+  "notif.wallet.depositSuccess.title": {
+    en: "Deposit successful",
+    vi: "Nạp tiền thành công",
+    ko: "충전 성공",
+    zh: "充值成功",
+  },
+  "notif.wallet.depositSuccess.body": {
+    en: "Your wallet balance has been updated.",
+    vi: "Số dư ví của bạn đã được cập nhật.",
+    ko: "지갑 잔액이 업데이트되었습니다.",
+    zh: "您的钱包余额已更新。",
+  },
+  "notif.wallet.planActivated.title": {
+    en: "Pricing plan activated",
+    vi: "Gói cước đã được kích hoạt",
+    ko: "요금제가 활성화되었습니다",
+    zh: "套餐已激活",
+  },
+  "notif.wallet.planActivated.body": {
+    en: "Your {plan} plan has been activated successfully.",
+    vi: "Gói {plan} của bạn đã được kích hoạt thành công.",
+    ko: "{plan} 요금제가 성공적으로 활성화되었습니다.",
+    zh: "您的 {plan} 套餐已成功激活。",
+  },
 };
 
 export function t(key: string, locale: Locale = "en", vars?: Record<string, string | number>): string {

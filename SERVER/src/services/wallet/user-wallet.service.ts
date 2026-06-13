@@ -257,8 +257,8 @@ export class UserWalletService {
         .walletEvent({
           userId: String(transaction.user_id),
           type: NotificationType.WALLET_DEPOSIT_FAILED,
-          title: "Nạp tiền thất bại",
-          body: "Số tiền chuyển không khớp với số tiền yêu cầu nạp.",
+          titleKey: "notif.wallet.depositFailed.title",
+          bodyKey: "notif.wallet.depositFailed.body",
           data: { transaction_id: transaction._id.toString() },
           dedupeKey: `wallet-deposit-failed:${transaction._id.toString()}`,
         })
@@ -343,8 +343,8 @@ export class UserWalletService {
       .walletEvent({
         userId,
         type: NotificationType.WALLET_DEPOSIT_SUCCESS,
-        title: "Nạp tiền thành công",
-        body: `Số dư ví của bạn đã được cập nhật.`,
+        titleKey: "notif.wallet.depositSuccess.title",
+        bodyKey: "notif.wallet.depositSuccess.body",
         data: {
           transaction_id: transaction._id.toString(),
           amount: transaction.amount,
@@ -396,8 +396,9 @@ export class UserWalletService {
         .walletEvent({
           userId,
           type: NotificationType.WALLET_DEPOSIT_SUCCESS,
-          title: "Gói cước đã được kích hoạt",
-          body: `Gói ${meta.target_plan_code} của bạn đã được kích hoạt thành công.`,
+          titleKey: "notif.wallet.planActivated.title",
+          bodyKey: "notif.wallet.planActivated.body",
+          vars: { plan: meta.target_plan_code },
           data: { transaction_id: transactionId, plan: meta.target_plan_code },
           dedupeKey: `pricing-activated:${transactionId}`,
         })
