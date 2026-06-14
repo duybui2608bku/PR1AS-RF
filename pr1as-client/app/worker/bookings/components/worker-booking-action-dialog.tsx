@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,8 +29,6 @@ import {
   type UpdateBookingPayload,
   type UpdateBookingStatusPayload,
 } from "@/types/booking"
-
-import { bookingStatusLabel, cancellationReasonLabel } from "../format"
 
 export type WorkerBookingAction =
   | {
@@ -83,6 +82,9 @@ export function WorkerBookingActionDialog({
   onResponseSubmit,
   onCancelSubmit,
 }: WorkerBookingActionDialogProps) {
+  const t = useTranslations("WorkerBookings.actionDialog")
+  const tStatus = useTranslations("Bookings.statusLabels")
+  const tCancellation = useTranslations("Bookings.cancellationReasons")
   const [workerResponse, setWorkerResponse] = React.useState("")
   const [cancelReason, setCancelReason] = React.useState<CancellationReason>(
     CancellationReason.WORKER_UNAVAILABLE
@@ -145,7 +147,7 @@ export function WorkerBookingActionDialog({
         {action.type === "cancel" ? (
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="worker-cancel-reason">Lý do</Label>
+              <Label htmlFor="worker-cancel-reason">{t("reason")}</Label>
               <Select
                 value={cancelReason}
                 onValueChange={(value) =>
@@ -157,24 +159,24 @@ export function WorkerBookingActionDialog({
                   id="worker-cancel-reason"
                   className="h-10 w-full data-[size=default]:h-10"
                 >
-                  <SelectValue placeholder="Chọn lý do hủy" />
+                  <SelectValue placeholder={t("reasonPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {WORKER_CANCEL_REASONS.map((reason) => (
                     <SelectItem key={reason} value={reason}>
-                      {cancellationReasonLabel[reason]}
+                      {tCancellation(reason)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="worker-cancel-notes">Ghi chú</Label>
+              <Label htmlFor="worker-cancel-notes">{t("notes")}</Label>
               <Textarea
                 id="worker-cancel-notes"
                 maxLength={CANCEL_NOTES_MAX_LENGTH}
                 rows={4}
-                placeholder="Nhập ghi chú cho khách hàng"
+                placeholder={t("notesPlaceholder")}
                 value={cancelNotes}
                 onChange={(event) => setCancelNotes(event.target.value)}
                 disabled={loading}
@@ -187,8 +189,8 @@ export function WorkerBookingActionDialog({
         ) : (
           <div className="grid gap-2">
             <Label htmlFor="worker-response">
-              Phản hồi cho khách hàng
-              <span className="text-muted-foreground"> (tùy chọn)</span>
+              {t("responseLabel")}
+              <span className="text-muted-foreground"> {t("optional")}</span>
             </Label>
             <Textarea
               id="worker-response"
@@ -196,8 +198,10 @@ export function WorkerBookingActionDialog({
               rows={4}
               placeholder={
                 action.type === "response"
-                  ? "Nhập phản hồi hiển thị cho khách hàng"
-                  : `Cập nhật khi chuyển sang "${bookingStatusLabel[action.status]}"`
+                  ? t("responsePlaceholder")
+                  : t("statusResponsePlaceholder", {
+                      status: tStatus(action.status),
+                    })
               }
               value={workerResponse}
               onChange={(event) => setWorkerResponse(event.target.value)}
@@ -215,7 +219,7 @@ export function WorkerBookingActionDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Đóng
+            {t("close")}
           </Button>
           <Button
             variant={action.destructive ? "destructive" : "default"}

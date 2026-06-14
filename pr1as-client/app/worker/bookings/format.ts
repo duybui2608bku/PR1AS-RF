@@ -1,21 +1,5 @@
-import {
-  BookingStatus,
-  CancellationReason,
-  CancelledBy,
-  type Booking,
-} from "@/types/booking"
-
-export const bookingStatusLabel: Record<BookingStatus, string> = {
-  [BookingStatus.PENDING]: "Chờ xác nhận",
-  [BookingStatus.CONFIRMED]: "Đã xác nhận",
-  [BookingStatus.IN_PROGRESS]: "Đang thực hiện",
-  [BookingStatus.PENDING_CLIENT_ACCEPTANCE]: "Chờ khách xác nhận",
-  [BookingStatus.COMPLETED]: "Hoàn thành",
-  [BookingStatus.CANCELLED]: "Đã hủy",
-  [BookingStatus.REJECTED]: "Bị từ chối",
-  [BookingStatus.DISPUTED]: "Đang khiếu nại",
-  [BookingStatus.EXPIRED]: "Đã hết hạn",
-}
+import { BookingStatus, type Booking } from "@/types/booking"
+import { DEFAULT_LOCALE, pickLocalized } from "@/lib/locale"
 
 export const bookingStatusBadgeClass: Record<BookingStatus, string> = {
   [BookingStatus.PENDING]:
@@ -36,27 +20,14 @@ export const bookingStatusBadgeClass: Record<BookingStatus, string> = {
   [BookingStatus.EXPIRED]: "border-muted bg-muted text-muted-foreground",
 }
 
-export const cancellationReasonLabel: Record<CancellationReason, string> = {
-  [CancellationReason.CLIENT_REQUEST]: "Khách hàng yêu cầu",
-  [CancellationReason.WORKER_UNAVAILABLE]: "Worker không có sẵn",
-  [CancellationReason.SCHEDULE_CONFLICT]: "Trùng lịch",
-  [CancellationReason.EMERGENCY]: "Khẩn cấp",
-  [CancellationReason.POLICY_VIOLATION]: "Vi phạm chính sách",
-  [CancellationReason.OTHER]: "Khác",
-}
-
-export const cancelledByLabel: Record<CancelledBy, string> = {
-  [CancelledBy.CLIENT]: "Khách hàng",
-  [CancelledBy.WORKER]: "Worker",
-  [CancelledBy.ADMIN]: "Quản trị viên",
-  [CancelledBy.SYSTEM]: "Hệ thống",
-}
-
-export const formatDateTime = (value?: string | null): string => {
+export const formatDateTime = (
+  value?: string | null,
+  localeTag = "vi-VN"
+): string => {
   if (!value) return "-"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "-"
-  return date.toLocaleString("vi-VN", {
+  return date.toLocaleString(localeTag, {
     hour: "2-digit",
     minute: "2-digit",
     day: "2-digit",
@@ -97,13 +68,16 @@ export const getClientName = (client: Booking["client_id"]): string => {
   return client.full_name || client.email || "-"
 }
 
-export const getServiceLabel = (booking: Booking): string => {
+export const getServiceLabel = (
+  booking: Booking,
+  locale: string = DEFAULT_LOCALE
+): string => {
   const service = booking.service_id
   if (!service || typeof service === "string") return booking.service_code
   const name = service.name
   if (typeof name === "string") return name
   if (name && typeof name === "object") {
-    return name.vi || name.en || service.code || booking.service_code
+    return pickLocalized(name, locale) || service.code || booking.service_code
   }
   return service.code || booking.service_code
 }

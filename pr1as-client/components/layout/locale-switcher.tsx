@@ -19,10 +19,13 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/locale"
+import { authService } from "@/services/auth.service"
+import { useAuthStore } from "@/lib/store/auth-store"
 
 export function LocaleSwitcher() {
   const router = useRouter()
   const currentLocale = useLocale() as SupportedLocale
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   // On mount, sync localStorage → cookie if they differ (e.g. first visit after
   // the user previously set a preference but the cookie expired).
@@ -50,6 +53,13 @@ export function LocaleSwitcher() {
       // ignore storage errors
     }
     document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    // Persist the choice on the user record (best-effort) so emails are sent in
+    // the language the user picked. Anonymous visitors only get the cookie.
+    if (isAuthenticated) {
+      authService.updateLocale(locale).catch(() => {
+        // non-blocking: the UI language still switches via cookie + refresh
+      })
+    }
     router.refresh()
   }
 

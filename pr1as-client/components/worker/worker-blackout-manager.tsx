@@ -1,8 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { addMonths, format, isBefore, parseISO, startOfDay } from "date-fns"
-import { vi } from "date-fns/locale"
+import {
+  addMonths,
+  format,
+  isBefore,
+  parseISO,
+  startOfDay,
+  type Locale,
+} from "date-fns"
+import { enUS, vi, zhCN } from "date-fns/locale"
 import {
   AlertCircle,
   CalendarOff,
@@ -11,6 +18,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
@@ -42,6 +50,7 @@ import {
   useDeleteBlackout,
   useMyBlackouts,
 } from "@/lib/hooks/use-worker"
+import { type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import type { WorkerBlackoutItem } from "@/types"
@@ -50,6 +59,14 @@ const REASON_MAX = 500
 const WINDOW_MONTHS_AHEAD = 6
 const WINDOW_DAYS_BACK = 30
 
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+}
+
+type Translator = ReturnType<typeof useTranslations>
+
 const toDateInputValue = (date: Date) => format(date, "yyyy-MM-dd")
 
 const parseBlackoutDate = (value: string) => {
@@ -57,7 +74,11 @@ const parseBlackoutDate = (value: string) => {
   return Number.isNaN(date.getTime()) ? new Date(value) : date
 }
 
-const formatRange = (item: WorkerBlackoutItem) => {
+const formatRange = (
+  item: WorkerBlackoutItem,
+  t: Translator,
+  locale: Locale
+) => {
   const start = parseBlackoutDate(item.start_time)
   const end = parseBlackoutDate(item.end_time)
   const startsAtMidnight =
@@ -74,13 +95,14 @@ const formatRange = (item: WorkerBlackoutItem) => {
       start.getMonth() === inclusiveEnd.getMonth() &&
       start.getDate() === inclusiveEnd.getDate()
     if (sameDay) {
-      return `Cả ngày ${format(start, "EEEE, dd/MM/yyyy", { locale: vi })}`
+      return t("range.allDaySingle", {
+        date: format(start, "EEEE, dd/MM/yyyy", { locale }),
+      })
     }
-    return `${format(start, "dd/MM/yyyy", { locale: vi })} → ${format(
-      inclusiveEnd,
-      "dd/MM/yyyy",
-      { locale: vi }
-    )} (cả ngày)`
+    return t("range.allDayRange", {
+      start: format(start, "dd/MM/yyyy", { locale }),
+      end: format(inclusiveEnd, "dd/MM/yyyy", { locale }),
+    })
   }
 
   const sameDay =
@@ -89,16 +111,17 @@ const formatRange = (item: WorkerBlackoutItem) => {
     start.getDate() === end.getDate()
 
   if (sameDay) {
-    return `${format(start, "EEEE, dd/MM/yyyy · HH:mm", {
-      locale: vi,
-    })} – ${format(end, "HH:mm", { locale: vi })}`
+    return t("range.timedSameDay", {
+      date: format(start, "EEEE, dd/MM/yyyy", { locale }),
+      start: format(start, "HH:mm", { locale }),
+      end: format(end, "HH:mm", { locale }),
+    })
   }
 
-  return `${format(start, "dd/MM/yyyy HH:mm", { locale: vi })} → ${format(
-    end,
-    "dd/MM/yyyy HH:mm",
-    { locale: vi }
-  )}`
+  return t("range.timedRange", {
+    start: format(start, "dd/MM/yyyy HH:mm", { locale }),
+    end: format(end, "dd/MM/yyyy HH:mm", { locale }),
+  })
 }
 
 type FormState = {
@@ -128,14 +151,14 @@ type AddDialogProps = {
 }
 
 function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
+  const t = useTranslations("WorkerBookingSchedule.blackouts")
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Thêm ngày nghỉ</DialogTitle>
-          <DialogDescription>
-            Khoảng thời gian này sẽ chặn khách đặt lịch với bạn.
-          </DialogDescription>
+          <DialogTitle>{t("addTitle")}</DialogTitle>
+          <DialogDescription>{t("addDescription")}</DialogDescription>
         </DialogHeader>
         {/* Mount mới mỗi lần mở để form luôn reset (tránh setState trong effect) */}
         {open ? <AddBlackoutForm onClose={() => onOpenChange(false)} /> : null}
@@ -145,6 +168,7 @@ function AddBlackoutDialog({ open, onOpenChange }: AddDialogProps) {
 }
 
 function AddBlackoutForm({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("WorkerBookingSchedule.blackouts")
   const [form, setForm] = React.useState<FormState>(emptyForm)
   const [error, setError] = React.useState<string | null>(null)
   const createMutation = useCreateBlackout()
@@ -158,7 +182,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
     setError(null)
 
     if (!form.startDate || !form.endDate) {
-      setError("Vui lòng chọn ngày bắt đầu và ngày kết thúc.")
+      setError(t("errors.missingDates"))
       return
     }
 
@@ -174,7 +198,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
       endDate = new Date(inclusiveEnd.getTime() + 24 * 60 * 60 * 1000)
     } else {
       if (!form.startTime || !form.endTime) {
-        setError("Vui lòng chọn giờ bắt đầu và giờ kết thúc.")
+        setError(t("errors.missingTimes"))
         return
       }
       startDate = new Date(`${startKey}T${form.startTime}:00`)
@@ -182,23 +206,23 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
     }
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Thời gian không hợp lệ.")
+      setError(t("errors.invalidTime"))
       return
     }
 
     if (endDate.getTime() <= startDate.getTime()) {
-      setError("Thời gian kết thúc phải sau thời gian bắt đầu.")
+      setError(t("errors.endAfterStart"))
       return
     }
 
     if (isBefore(startDate, startOfDay(new Date()))) {
-      setError("Không thể đặt ngày nghỉ trong quá khứ.")
+      setError(t("errors.pastDate"))
       return
     }
 
     const reason = form.reason.trim()
     if (reason.length > REASON_MAX) {
-      setError(`Lý do không được vượt quá ${REASON_MAX} ký tự.`)
+      setError(t("errors.reasonTooLong", { max: REASON_MAX }))
       return
     }
 
@@ -208,10 +232,10 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
         end_time: endDate.toISOString(),
         reason: reason || undefined,
       })
-      toast.success("Đã thêm ngày nghỉ.")
+      toast.success(t("addSuccess"))
       onClose()
     } catch (err) {
-      const message = getErrorMessage(err, "Không thể thêm ngày nghỉ.")
+      const message = getErrorMessage(err, t("addError"))
       setError(message)
       toast.error(message)
     }
@@ -221,7 +245,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label>Từ ngày</Label>
+          <Label>{t("fromDate")}</Label>
           <DatePicker
             value={form.startDate}
             fromDate={startOfDay(new Date())}
@@ -234,7 +258,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Đến ngày</Label>
+          <Label>{t("toDate")}</Label>
           <DatePicker
             value={form.endDate}
             fromDate={form.startDate ?? startOfDay(new Date())}
@@ -248,13 +272,13 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
           checked={form.allDay}
           onCheckedChange={(value) => update("allDay", value === true)}
         />
-        Nghỉ cả ngày
+        {t("allDay")}
       </label>
 
       {form.allDay ? null : (
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="blackout-start-time">Giờ bắt đầu</Label>
+            <Label htmlFor="blackout-start-time">{t("startTime")}</Label>
             <Input
               id="blackout-start-time"
               type="time"
@@ -264,7 +288,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="blackout-end-time">Giờ kết thúc</Label>
+            <Label htmlFor="blackout-end-time">{t("endTime")}</Label>
             <Input
               id="blackout-end-time"
               type="time"
@@ -277,12 +301,12 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor="blackout-reason">Lý do (tuỳ chọn)</Label>
+        <Label htmlFor="blackout-reason">{t("reasonLabel")}</Label>
         <Textarea
           id="blackout-reason"
           value={form.reason}
           onChange={(e) => update("reason", e.target.value)}
-          placeholder="Ví dụ: nghỉ phép, đi công tác..."
+          placeholder={t("reasonPlaceholder")}
           maxLength={REASON_MAX}
           rows={3}
         />
@@ -305,13 +329,13 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           disabled={createMutation.isPending}
         >
-          Huỷ
+          {t("cancel")}
         </Button>
         <Button type="submit" disabled={createMutation.isPending}>
           {createMutation.isPending ? (
             <Loader2 className="size-4 animate-spin" />
           ) : null}
-          Lưu
+          {t("save")}
         </Button>
       </DialogFooter>
     </form>
@@ -319,6 +343,9 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
 }
 
 export function WorkerBlackoutManager() {
+  const t = useTranslations("WorkerBookingSchedule.blackouts")
+  const locale = useLocale() as SupportedLocale
+  const dateFnsLocale = DATE_FNS_LOCALES[locale]
   const range = React.useMemo(() => {
     const now = new Date()
     const start = new Date(now)
@@ -332,6 +359,10 @@ export function WorkerBlackoutManager() {
 
   const blackoutsQuery = useMyBlackouts(range)
   const deleteMutation = useDeleteBlackout()
+  const formatBlackoutRange = React.useCallback(
+    (item: WorkerBlackoutItem) => formatRange(item, t, dateFnsLocale),
+    [dateFnsLocale, t]
+  )
 
   const [addOpen, setAddOpen] = React.useState(false)
   const [pendingDelete, setPendingDelete] =
@@ -358,10 +389,10 @@ export function WorkerBlackoutManager() {
     if (!pendingDelete) return
     try {
       await deleteMutation.mutateAsync(pendingDelete.id)
-      toast.success("Đã xoá ngày nghỉ.")
+      toast.success(t("deleteSuccess"))
       setPendingDelete(null)
     } catch (err) {
-      toast.error(getErrorMessage(err, "Không thể xoá ngày nghỉ."))
+      toast.error(getErrorMessage(err, t("deleteError")))
     }
   }
 
@@ -371,11 +402,10 @@ export function WorkerBlackoutManager() {
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <CalendarOff className="size-5" />
-            Ngày nghỉ của bạn
+            {t("title")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Đánh dấu các ngày/khung giờ bạn không nhận booking. Khách sẽ không
-            thể đặt lịch trong khoảng này.
+            {t("description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -391,7 +421,7 @@ export function WorkerBlackoutManager() {
             ) : (
               <RefreshCw className="size-4" />
             )}
-            Làm mới
+            {t("refresh")}
           </Button>
           <Button
             size="sm"
@@ -399,7 +429,7 @@ export function WorkerBlackoutManager() {
             onClick={() => setAddOpen(true)}
           >
             <Plus className="size-4" />
-            Thêm ngày nghỉ
+            {t("addButton")}
           </Button>
         </div>
       </div>
@@ -412,39 +442,43 @@ export function WorkerBlackoutManager() {
         <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-2xl border bg-card px-4 text-center shadow-sm">
           <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
           <div>
-            <p className="font-medium">Không tải được danh sách ngày nghỉ</p>
+            <p className="font-medium">{t("loadErrorTitle")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Vui lòng thử lại.
+              {t("loadErrorDescription")}
             </p>
           </div>
           <Button variant="outline" onClick={() => blackoutsQuery.refetch()}>
-            Thử lại
+            {t("tryAgain")}
           </Button>
         </div>
       ) : items.length === 0 ? (
         <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-2xl border bg-card px-4 text-center shadow-sm">
           <CalendarOff className="size-9 text-muted-foreground" />
-          <p className="font-medium">Chưa có ngày nghỉ nào</p>
+          <p className="font-medium">{t("emptyTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            Thêm ngày nghỉ để chặn khách đặt lịch trong khoảng thời gian đó.
+            {t("emptyDescription")}
           </p>
         </div>
       ) : (
         <div className="space-y-5">
           <BlackoutSection
-            title="Sắp tới"
+            title={t("upcoming")}
             items={upcoming}
             onDelete={setPendingDelete}
+            formatRange={formatBlackoutRange}
+            deleteAria={t("deleteAria")}
             deletingId={
               deleteMutation.isPending ? deleteMutation.variables : null
             }
-            emptyText="Không có ngày nghỉ sắp tới."
+            emptyText={t("emptyUpcoming")}
           />
           {past.length > 0 ? (
             <BlackoutSection
-              title="Đã qua"
+              title={t("past")}
               items={past}
               onDelete={setPendingDelete}
+              formatRange={formatBlackoutRange}
+              deleteAria={t("deleteAria")}
               deletingId={
                 deleteMutation.isPending ? deleteMutation.variables : null
               }
@@ -464,17 +498,16 @@ export function WorkerBlackoutManager() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá ngày nghỉ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete ? formatRange(pendingDelete) : ""}
+              {pendingDelete ? formatBlackoutRange(pendingDelete) : ""}
               <br />
-              Khách có thể bắt đầu đặt lịch trong khoảng thời gian này sau khi
-              xoá.
+              {t("deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteMutation.isPending}>
-              Huỷ
+              {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
@@ -487,7 +520,7 @@ export function WorkerBlackoutManager() {
               {deleteMutation.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : null}
-              Xoá
+              {t("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -500,6 +533,8 @@ type SectionProps = {
   title: string
   items: WorkerBlackoutItem[]
   onDelete: (item: WorkerBlackoutItem) => void
+  formatRange: (item: WorkerBlackoutItem) => string
+  deleteAria: string
   deletingId: string | null | undefined
   muted?: boolean
   emptyText?: string
@@ -509,6 +544,8 @@ function BlackoutSection({
   title,
   items,
   onDelete,
+  formatRange,
+  deleteAria,
   deletingId,
   muted,
   emptyText,
@@ -561,7 +598,7 @@ function BlackoutSection({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Xoá ngày nghỉ"
+                  aria-label={deleteAria}
                   onClick={() => onDelete(item)}
                   disabled={deletingId === item.id}
                   className="size-9 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"

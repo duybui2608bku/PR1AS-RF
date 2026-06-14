@@ -1027,8 +1027,26 @@
     "notFoundDescription": "您正在寻找的页面可能已被移动或删除。"
   },
   "SEO": {
+    "keywords": "PR1AS, 服务预约, 自由职业者, 在线预约, 工作者市场",
+    "appDescription": "PR1AS 连接客户与值得信赖的工作者和自由职业者，帮助查找服务、预约、管理订单并在线付款。",
     "servicesTitle": "查找服务和工作者",
-    "servicesDescription": "寻找合适的工作者，按服务和地区过滤，查看个人资料并在线预约 PR1AS。"
+    "servicesDescription": "寻找合适的工作者，按服务和地区过滤，查看个人资料并在线预约 PR1AS。",
+    "postsTitle": "动态",
+    "postsDescription": "最新帖子、项目创意、热门话题标签，与 PR1AS 社区互动。",
+    "termsTitle": "服务条款",
+    "termsDescription": "PR1AS 服务条款，涵盖账户、预约、付款、服务套餐及用户责任。",
+    "privacyTitle": "隐私政策",
+    "privacyDescription": "PR1AS 隐私政策，说明我们如何收集、使用、共享和保护用户的个人信息。",
+    "workerProfileTitle": "工作者资料",
+    "workerProfileDescription": "在 PR1AS 上查看工作者资料、服务、评价、排班并在线预约。",
+    "chatTitle": "聊天",
+    "clientTitle": "客户专区",
+    "dashboardTitle": "管理后台",
+    "disputesTitle": "纠纷",
+    "accountTitle": "账户",
+    "workerSetupTitle": "工作者设置",
+    "workerScheduleTitle": "工作排班",
+    "workerBookingsTitle": "工作者预约"
   },
   "Home": {
     "heroLocationLabel": "地点",
@@ -1086,29 +1104,29 @@
     "workerNotFound": "未找到该预约的工作者。",
     "complaintGroupError": "无法打开投诉群组。",
     "statusLabels": {
-      "PENDING": "待处理",
-      "REJECTED": "已拒绝",
-      "CONFIRMED": "已确认",
-      "IN_PROGRESS": "进行中",
-      "PENDING_CLIENT_ACCEPTANCE": "等待客户接受",
-      "COMPLETED": "已完成",
-      "CANCELLED": "已取消",
-      "DISPUTED": "有争议",
-      "EXPIRED": "已过期"
+      "pending": "待处理",
+      "rejected": "已拒绝",
+      "confirmed": "已确认",
+      "in_progress": "进行中",
+      "pending_client_acceptance": "等待客户接受",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "disputed": "有争议",
+      "expired": "已过期"
     },
     "cancellationReasons": {
-      "CLIENT_REQUEST": "客户请求",
-      "WORKER_UNAVAILABLE": "工作者不可用",
-      "SCHEDULE_CONFLICT": "时间冲突",
-      "EMERGENCY": "紧急情况",
-      "POLICY_VIOLATION": "违反政策",
-      "OTHER": "其他"
+      "client_request": "客户请求",
+      "worker_unavailable": "工作者不可用",
+      "schedule_conflict": "时间冲突",
+      "emergency": "紧急情况",
+      "policy_violation": "违反政策",
+      "other": "其他"
     },
     "cancelledBy": {
-      "CLIENT": "客户",
-      "WORKER": "工作者",
-      "ADMIN": "管理员",
-      "SYSTEM": "系统"
+      "client": "客户",
+      "worker": "工作者",
+      "admin": "管理员",
+      "system": "系统"
     },
     "disputeReasons": {
       "SERVICE_NOT_AS_DESCRIBED": "服务与描述不符",
@@ -1128,6 +1146,243 @@
       "notesPlaceholder": "描述取消原因 (最多 500 个字符)",
       "confirmButton": "确认取消",
       "errorSelectReason": "请选择取消原因。"
+    }
+  },
+  "WorkerBookings": {
+    "title": "接单预约",
+    "allStatus": "所有状态",
+    "status": "状态",
+    "statusPlaceholder": "选择状态",
+    "serviceCode": "服务代码",
+    "serviceCodePlaceholder": "例如：CLEANING",
+    "dateRange": "日期范围",
+    "resetFilters": "清除筛选",
+    "search": "搜索",
+    "advancedFilters": "高级筛选",
+    "reset": "重置",
+    "apply": "应用",
+    "close": "关闭",
+    "listTitle": "预约列表",
+    "refreshList": "刷新列表",
+    "loadError": "无法加载工作者预约列表",
+    "tryAgain": "重试",
+    "noBookings": "暂无预约",
+    "service": "服务",
+    "customer": "客户",
+    "appointment": "预约时间",
+    "notes": "备注",
+    "actions": "操作",
+    "duration": "时长：{hours} 小时",
+    "responsePrefix": "回复：",
+    "prev": "上一页",
+    "next": "下一页",
+    "noActions": "无可用操作",
+    "selectAction": "选择操作",
+    "selectActionAria": "选择预约操作",
+    "complaintGroup": "投诉群组",
+    "openComplaintGroup": "打开投诉群组",
+    "complaintGroupError": "无法打开投诉群组。",
+    "customerNotes": "客户备注",
+    "yourResponse": "您的回复",
+    "statusActions": {
+      "confirm": {
+        "title": "确认预约",
+        "description": "预约将变为已确认状态。",
+        "confirm": "确认"
+      },
+      "reject": {
+        "title": "拒绝预约",
+        "description": "预约将被拒绝，且无法继续处理。",
+        "confirm": "拒绝"
+      },
+      "start": {
+        "title": "开始预约",
+        "description": "预约将变为进行中状态。",
+        "confirm": "开始"
+      },
+      "sendCompletion": {
+        "title": "发送完成确认",
+        "description": "预约将等待客户确认完成。",
+        "confirm": "发送确认"
+      },
+      "complete": {
+        "title": "完成预约",
+        "description": "确认该预约已为客户完成。",
+        "confirm": "完成"
+      },
+      "update": {
+        "title": "更新预约",
+        "description": "预约状态将被更新。",
+        "confirm": "更新"
+      },
+      "cancel": {
+        "title": "取消预约",
+        "description": "请选择取消原因，让客户了解情况。",
+        "confirm": "确认取消"
+      },
+      "response": {
+        "title": "更新回复",
+        "description": "此回复将显示在客户的预约中。",
+        "confirm": "保存回复"
+      }
+    },
+    "actionDialog": {
+      "reason": "原因",
+      "reasonPlaceholder": "选择取消原因",
+      "notes": "备注",
+      "notesPlaceholder": "输入给客户的备注",
+      "responseLabel": "给客户的回复",
+      "optional": "（可选）",
+      "responsePlaceholder": "输入将显示给客户的回复",
+      "statusResponsePlaceholder": "切换到“{status}”时更新",
+      "close": "关闭"
+    },
+    "actionSheet": {
+      "description": "预约操作",
+      "cancel": "取消"
+    }
+  },
+  "WorkerBoost": {
+    "page": {
+      "title": "资料 Boost",
+      "description": "使用累计积分提升您的资料在搜索结果中的排名",
+      "currentPoints": "当前积分",
+      "dailyCheckIn": "每日签到",
+      "earnTitle": "如何赚取积分：",
+      "earnDaily": "• 每日签到：<strong>+5 积分</strong>",
+      "earnWeekly": "• 连续 7 天签到：<strong>+25 奖励积分</strong>",
+      "earnMonthly": "• 连续 30 天签到：<strong>+100 奖励积分</strong>",
+      "earnGold": "• 订阅 / 续费 Gold：<strong>+50 积分</strong>",
+      "earnDiamond": "• 订阅 / 续费 Diamond：<strong>+150 积分</strong>",
+      "activateBoost": "启用 Boost"
+    },
+    "attendance": {
+      "alreadyCheckedIn": "您今天已经签到过了",
+      "pointsEarned": "+{points} 积分",
+      "streakBonus": "(+{points} 连签奖励)",
+      "monthlyBonus": "(+{points} 月度奖励！)",
+      "success": "签到成功！{details}",
+      "error": "无法签到，请稍后再试",
+      "streakLabel": "签到连续天数：",
+      "streakValue": "{days} 天",
+      "balanceLabel": "积分：",
+      "checkedInButton": "已签到",
+      "checkInButton": "签到"
+    },
+    "panel": {
+      "featuredBadge": "精选",
+      "basicBadge": "基础",
+      "points": "{count} 积分",
+      "hours": "{count} 小时",
+      "notEnoughPointsDetail": "积分不足（还需要 {points} 积分）",
+      "activeButton": "已有 Boost 生效",
+      "notEnoughPointsButton": "积分不足",
+      "activateButton": "启用",
+      "activationSuccess": "{type} Boost 已启用！有效期至 {expiresAt}",
+      "activationError": "无法启用 boost",
+      "activeBoost": "Boost 生效中：{type}",
+      "expires": "到期时间 {time}",
+      "basicTitle": "基础 Boost",
+      "basicDescription": "您的资料会出现在搜索结果的优先位置，并显示“活跃”徽章。",
+      "featuredTitle": "精选 Boost",
+      "featuredDescription": "您的资料会固定在结果顶部，带有醒目的金色边框和“精选”徽章。",
+      "historyTitle": "最近积分记录",
+      "loading": "加载中...",
+      "emptyHistory": "暂无积分交易记录",
+      "reasons": {
+        "attendance": "每日签到",
+        "attendanceStreakBonus": "签到连签奖励",
+        "attendanceMonthlyBonus": "30 天连签奖励",
+        "goldPackage": "订阅 Gold 套餐",
+        "diamondPackage": "订阅 Diamond 套餐",
+        "boostSpend": "启用 Boost",
+        "adminAdjust": "管理员调整"
+      }
+    }
+  },
+  "WorkerBookingSchedule": {
+    "title": "工作日程",
+    "bookingList": "预约列表",
+    "tabs": {
+      "bookings": "预约日程",
+      "blackouts": "休息日"
+    },
+    "previousMonth": "上个月",
+    "nextMonth": "下个月",
+    "today": "今天",
+    "refresh": "刷新",
+    "stats": {
+      "thisMonth": "本月",
+      "needsAction": "待处理",
+      "today": "今天",
+      "monthBookings": "本月预约",
+      "activeBookings": "当前待处理"
+    },
+    "duration": {
+      "hourShort": "小时",
+      "minuteShort": "分"
+    },
+    "weekdays": {
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六",
+      "sun": "周日"
+    },
+    "loadErrorTitle": "无法加载预约日程",
+    "loadErrorDescription": "请重试或检查 API 连接。",
+    "tryAgain": "重试",
+    "moreBookings": "+{count} 个其他预约",
+    "emptyMonth": "本月暂无预约",
+    "bookingCount": "{count} 个预约",
+    "blackouts": {
+      "title": "您的休息日",
+      "description": "标记您无法接单的日期或时间段。客户在这些时间内无法预约您。",
+      "refresh": "刷新",
+      "addButton": "添加休息日",
+      "loadErrorTitle": "无法加载休息日列表",
+      "loadErrorDescription": "请重试。",
+      "tryAgain": "重试",
+      "emptyTitle": "暂无休息日",
+      "emptyDescription": "添加休息日，以阻止客户在该时间段预约您。",
+      "upcoming": "即将到来",
+      "past": "已过去",
+      "emptyUpcoming": "暂无即将到来的休息日。",
+      "addTitle": "添加休息日",
+      "addDescription": "此时间段会阻止客户预约您。",
+      "fromDate": "开始日期",
+      "toDate": "结束日期",
+      "allDay": "全天休息",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "reasonLabel": "原因（可选）",
+      "reasonPlaceholder": "例如：休假、出差...",
+      "cancel": "取消",
+      "save": "保存",
+      "delete": "删除",
+      "deleteAria": "删除休息日",
+      "deleteTitle": "删除休息日？",
+      "deleteDescription": "删除后，客户可以重新预约该时间段。",
+      "addSuccess": "已添加休息日。",
+      "addError": "无法添加休息日。",
+      "deleteSuccess": "已删除休息日。",
+      "deleteError": "无法删除休息日。",
+      "errors": {
+        "missingDates": "请选择开始日期和结束日期。",
+        "missingTimes": "请选择开始时间和结束时间。",
+        "invalidTime": "时间范围无效。",
+        "endAfterStart": "结束时间必须晚于开始时间。",
+        "pastDate": "不能设置过去的休息日。",
+        "reasonTooLong": "原因不能超过 {max} 个字符。"
+      },
+      "range": {
+        "allDaySingle": "{date} 全天",
+        "allDayRange": "{start} → {end}（全天）",
+        "timedSameDay": "{date} · {start} – {end}",
+        "timedRange": "{start} → {end}"
+      }
     }
   },
   "Pricing": {

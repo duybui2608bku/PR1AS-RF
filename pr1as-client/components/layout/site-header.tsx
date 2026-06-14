@@ -25,7 +25,6 @@ import { usePathname, useRouter } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 
-import { CurrencyOptions } from "@/components/layout/currency-switcher"
 import { MobilePrefsSheet, PrefsPanel } from "@/components/layout/mobile-prefs-sheet"
 import { NotificationBell } from "@/components/layout/notification-bell"
 import { ErrorBoundary } from "@/components/providers/error-boundary"
@@ -473,7 +472,6 @@ export function SiteHeader() {
               <div className="px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? t("me")}
               </div>
-              <CurrencyOptions label={t("displayCurrency")} />
               <div className="my-1 border-t" />
               {userMenuItems.map((item) => (
                 <Link

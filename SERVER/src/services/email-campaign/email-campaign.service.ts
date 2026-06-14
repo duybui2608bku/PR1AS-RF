@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { emailCampaignRepository } from "../../repositories/email-campaign/email-campaign.repository";
 import {
   EMAIL_CAMPAIGN_MESSAGES,
+  EmailCampaignLocale,
   EmailCampaignStatus,
   EmailSendLogStatus,
 } from "../../constants/email-campaign";
@@ -15,9 +16,24 @@ import type {
   CreateCampaignInput,
   UpdateCampaignInput,
   IEmailCampaignDocument,
+  LocalizedEmailContent,
 } from "../../types/email-campaign";
 
 const BATCH_SIZE = 20;
+
+/**
+ * Returns the content authored for `locale`, falling back to the campaign's
+ * default locale when that translation was left blank.
+ */
+function pickContent(
+  field: LocalizedEmailContent,
+  locale: EmailCampaignLocale,
+  defaultLocale: EmailCampaignLocale
+): string {
+  const value = field[locale];
+  if (value && value.trim() !== "") return value;
+  return field[defaultLocale] ?? "";
+}
 
 export class EmailCampaignService {
   async createCampaign(createdBy: string, input: CreateCampaignInput) {
@@ -103,18 +119,24 @@ export class EmailCampaignService {
     campaign: IEmailCampaignDocument
   ): Promise<void> {
     const recipients = await emailCampaignRepository.getRecipientEmails(
-      campaign.audience
+      campaign.audience,
+      campaign.default_locale
     );
 
-    await emailCampaignRepository.updateStatus(id, EmailCampaignStatus.SENDING, {
-      total_recipients: recipients.length,
-    });
+    await emailCampaignRepository.updateStatus(
+      id,
+      EmailCampaignStatus.SENDING,
+      {
+        total_recipients: recipients.length,
+      }
+    );
 
     await emailCampaignRepository.createSendLogs(
       recipients.map((r) => ({
         campaign_id: campaign._id as Types.ObjectId,
         recipient_id: r._id,
         recipient_email: r.email,
+        locale: r.locale,
       }))
     );
 
@@ -128,10 +150,19 @@ export class EmailCampaignService {
       await Promise.all(
         batch.map(async (log) => {
           try {
+            const locale = log.locale as EmailCampaignLocale;
             await nodemailerUtils({
               email: log.recipient_email,
-              subject: campaign.subject,
-              html: campaign.html_content,
+              subject: pickContent(
+                campaign.subject,
+                locale,
+                campaign.default_locale
+              ),
+              html: pickContent(
+                campaign.html_content,
+                locale,
+                campaign.default_locale
+              ),
             });
             await emailCampaignRepository.updateSendLog(
               log._id as Types.ObjectId,
@@ -148,7 +179,9 @@ export class EmailCampaignService {
               { error_message: message }
             );
             failedCount++;
-            logger.warn(`Email send failed to ${log.recipient_email}: ${message}`);
+            logger.warn(
+              `Email send failed to ${log.recipient_email}: ${message}`
+            );
           }
         })
       );
@@ -178,7 +211,12 @@ export class EmailCampaignService {
 
   async listSendLogs(query: EmailSendLogQuery) {
     const { logs, total } = await emailCampaignRepository.listSendLogs(query);
-    return PaginationHelper.formatResponse(logs, query.page, query.limit, total);
+    return PaginationHelper.formatResponse(
+      logs,
+      query.page,
+      query.limit,
+      total
+    );
   }
 
   async processScheduledCampaigns(): Promise<void> {

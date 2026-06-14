@@ -26,6 +26,12 @@ export const updateLastActiveRoleSchema = z.object({
   }),
 });
 
+// Persists the user's chosen UI language so transactional and marketing
+// emails can be delivered in that language (see meta_data.locale).
+export const updateLocaleSchema = z.object({
+  locale: z.enum(["vi", "en", "zh"]),
+});
+
 const isoDateString = z
   .string()
   .refine((val) => !Number.isNaN(new Date(val).getTime()), {
@@ -58,6 +64,7 @@ export type UpdateUserStatusSchemaType = z.infer<typeof updateUserStatusSchema>;
 export type UpdateLastActiveRoleSchemaType = z.infer<
   typeof updateLastActiveRoleSchema
 >;
+export type UpdateLocaleSchemaType = z.infer<typeof updateLocaleSchema>;
 export const updateWorkerProfileSchema = z.object({
   worker_profile: z.object({
     date_of_birth: z

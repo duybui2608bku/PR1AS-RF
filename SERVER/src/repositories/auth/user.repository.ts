@@ -321,6 +321,17 @@ export class UserRepository {
     return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
   }
 
+  async updateLocale(
+    id: string,
+    locale: string
+  ): Promise<IUserDocument | null> {
+    return User.findByIdAndUpdate(
+      id,
+      { "meta_data.locale": locale },
+      { new: true }
+    );
+  }
+
   async updateWorkerProfile(
     id: string,
     profileFields: Record<string, unknown>,

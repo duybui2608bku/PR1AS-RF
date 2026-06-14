@@ -57,16 +57,44 @@ import {
   useSendEmailCampaign,
   useCancelEmailCampaign,
 } from "@/lib/hooks/use-email-campaign"
-import type {
-  EmailCampaign,
-  EmailCampaignAudience,
-  EmailCampaignStatus,
-  EmailSendLog,
-  EmailSendLogStatus,
-  CreateCampaignInput,
+import {
+  EMAIL_CAMPAIGN_LOCALES,
+  type EmailCampaign,
+  type EmailCampaignAudience,
+  type EmailCampaignLocale,
+  type EmailCampaignStatus,
+  type EmailSendLog,
+  type EmailSendLogStatus,
+  type CreateCampaignInput,
+  type LocalizedEmailContent,
 } from "@/services/email-campaign.service"
 
 const ALL = "all"
+
+const localeLabels: Record<EmailCampaignLocale, string> = {
+  vi: "Tiếng Việt",
+  en: "English",
+  zh: "中文",
+}
+
+/** Best string for a locale, falling back to the default then any non-empty. */
+function pickLocalized(
+  field: LocalizedEmailContent | undefined,
+  locale: EmailCampaignLocale,
+  fallback: EmailCampaignLocale
+): string {
+  if (!field) return ""
+  const order: EmailCampaignLocale[] = [
+    locale,
+    fallback,
+    ...EMAIL_CAMPAIGN_LOCALES,
+  ]
+  for (const key of order) {
+    const value = field[key]
+    if (value && value.trim() !== "") return value
+  }
+  return ""
+}
 
 const audienceOptions: Array<{ value: EmailCampaignAudience; label: string }> =
   [
@@ -155,16 +183,18 @@ function successRate(campaign: EmailCampaign): string {
 
 type FormState = {
   name: string
-  subject: string
-  html_content: string
+  subject: LocalizedEmailContent
+  html_content: LocalizedEmailContent
+  default_locale: EmailCampaignLocale
   audience: EmailCampaignAudience
   scheduled_at: string
 }
 
 const defaultForm: FormState = {
   name: "",
-  subject: "",
-  html_content: "",
+  subject: { vi: "", en: "", zh: "" },
+  html_content: { vi: "", en: "", zh: "" },
+  default_locale: "vi",
   audience: "all",
   scheduled_at: "",
 }
@@ -181,18 +211,50 @@ function CampaignForm({
   onCancel: () => void
 }) {
   const [form, setForm] = useState<FormState>(initial ?? defaultForm)
+  const [activeLocale, setActiveLocale] = useState<EmailCampaignLocale>(
+    initial?.default_locale ?? "vi"
+  )
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  function setLocalized(
+    key: "subject" | "html_content",
+    locale: EmailCampaignLocale,
+    value: string
+  ) {
+    setForm((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], [locale]: value },
+    }))
+  }
+
+  function trimLocalized(field: LocalizedEmailContent): LocalizedEmailContent {
+    return {
+      vi: (field.vi ?? "").trim(),
+      en: (field.en ?? "").trim(),
+      zh: (field.zh ?? "").trim(),
+    }
+  }
+
   const scheduled = parseScheduled(form.scheduled_at)
+
+  // The default locale must always carry content — it's the fallback every
+  // recipient without a matching translation receives.
+  const defaultSubjectFilled = Boolean(
+    (form.subject[form.default_locale] ?? "").trim()
+  )
+  const defaultContentFilled = Boolean(
+    (form.html_content[form.default_locale] ?? "").trim()
+  )
 
   function handleSubmit() {
     onSubmit({
       name: form.name.trim(),
-      subject: form.subject.trim(),
-      html_content: form.html_content.trim(),
+      subject: trimLocalized(form.subject),
+      html_content: trimLocalized(form.html_content),
+      default_locale: form.default_locale,
       audience: form.audience,
       scheduled_at: form.scheduled_at ? form.scheduled_at : null,
     })
@@ -210,34 +272,49 @@ function CampaignForm({
           disabled={isPending}
         />
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="ec-subject">Tiêu đề email</Label>
-        <Input
-          id="ec-subject"
-          value={form.subject}
-          onChange={(e) => set("subject", e.target.value)}
-          placeholder="Tiêu đề hiển thị trong hộp thư"
-          disabled={isPending}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="ec-audience">Đối tượng</Label>
-        <Select
-          value={form.audience}
-          onValueChange={(v) => set("audience", v as EmailCampaignAudience)}
-          disabled={isPending}
-        >
-          <SelectTrigger id="ec-audience" className="h-9 w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {audienceOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="ec-audience">Đối tượng</Label>
+          <Select
+            value={form.audience}
+            onValueChange={(v) => set("audience", v as EmailCampaignAudience)}
+            disabled={isPending}
+          >
+            <SelectTrigger id="ec-audience" className="h-9 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {audienceOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="ec-default-locale">Ngôn ngữ mặc định (dự phòng)</Label>
+          <Select
+            value={form.default_locale}
+            onValueChange={(v) => {
+              const locale = v as EmailCampaignLocale
+              set("default_locale", locale)
+              setActiveLocale(locale)
+            }}
+            disabled={isPending}
+          >
+            <SelectTrigger id="ec-default-locale" className="h-9 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EMAIL_CAMPAIGN_LOCALES.map((locale) => (
+                <SelectItem key={locale} value={locale}>
+                  {localeLabels[locale]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="space-y-1.5">
         <Label>Lên lịch gửi (tùy chọn)</Label>
@@ -278,18 +355,69 @@ function CampaignForm({
           Để trống nếu muốn lưu bản nháp và gửi thủ công.
         </p>
       </div>
-      <div className="space-y-1.5">
-        <Label>Nội dung email</Label>
-        <TipTapEditor
-          value={form.html_content}
-          onChange={(html) => set("html_content", html)}
-          placeholder="Soạn nội dung email... Dùng thanh công cụ để định dạng hoặc chuyển sang chế độ HTML."
-          minHeight="240px"
-        />
+
+      <div className="space-y-2">
+        <Label>Nội dung email theo ngôn ngữ</Label>
         <p className="text-xs text-muted-foreground">
-          Định dạng trực quan hoặc bấm nút HTML để dán mã HTML tùy chỉnh.
+          Mỗi người dùng nhận email theo ngôn ngữ họ đã chọn. Ngôn ngữ chưa soạn
+          sẽ tự động dùng nội dung của ngôn ngữ mặc định.
         </p>
+        <Tabs
+          value={activeLocale}
+          onValueChange={(v) => setActiveLocale(v as EmailCampaignLocale)}
+          className="gap-3"
+        >
+          <TabsList className="w-full">
+            {EMAIL_CAMPAIGN_LOCALES.map((locale) => {
+              const filled = Boolean((form.subject[locale] ?? "").trim())
+              return (
+                <TabsTrigger key={locale} value={locale} className="gap-1.5">
+                  {localeLabels[locale]}
+                  {locale === form.default_locale ? (
+                    <Badge variant="secondary" className="px-1 py-0 text-[10px]">
+                      Mặc định
+                    </Badge>
+                  ) : filled ? (
+                    <CheckCircle className="size-3 text-green-600" />
+                  ) : null}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+          {EMAIL_CAMPAIGN_LOCALES.map((locale) => (
+            <TabsContent key={locale} value={locale} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor={`ec-subject-${locale}`}>
+                  Tiêu đề email ({localeLabels[locale]})
+                </Label>
+                <Input
+                  id={`ec-subject-${locale}`}
+                  value={form.subject[locale] ?? ""}
+                  onChange={(e) => setLocalized("subject", locale, e.target.value)}
+                  placeholder="Tiêu đề hiển thị trong hộp thư"
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Nội dung ({localeLabels[locale]})</Label>
+                <TipTapEditor
+                  value={form.html_content[locale] ?? ""}
+                  onChange={(html) => setLocalized("html_content", locale, html)}
+                  placeholder="Soạn nội dung email... Dùng thanh công cụ để định dạng hoặc chuyển sang chế độ HTML."
+                  minHeight="240px"
+                />
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+        {(!defaultSubjectFilled || !defaultContentFilled) && form.name ? (
+          <p className="text-xs text-destructive">
+            Vui lòng nhập tiêu đề và nội dung cho ngôn ngữ mặc định (
+            {localeLabels[form.default_locale]}).
+          </p>
+        ) : null}
       </div>
+
       <DialogFooter>
         <Button variant="outline" onClick={onCancel} disabled={isPending}>
           Hủy
@@ -299,8 +427,8 @@ function CampaignForm({
           disabled={
             isPending ||
             !form.name.trim() ||
-            !form.subject.trim() ||
-            !form.html_content.trim()
+            !defaultSubjectFilled ||
+            !defaultContentFilled
           }
         >
           {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
@@ -312,20 +440,52 @@ function CampaignForm({
 }
 
 function EmailContentPreview({ campaign }: { campaign: EmailCampaign }) {
+  const fallback = campaign.default_locale ?? "vi"
+  const [locale, setLocale] = useState<EmailCampaignLocale>(fallback)
+  const subject = campaign.subject?.[locale] ?? ""
+  const html = campaign.html_content?.[locale] ?? ""
+  const usesFallback = !subject.trim() && !html.trim() && locale !== fallback
+  const shownSubject = pickLocalized(campaign.subject, locale, fallback)
+  const shownHtml = pickLocalized(campaign.html_content, locale, fallback)
+
   return (
     <div className="space-y-3">
+      <Tabs
+        value={locale}
+        onValueChange={(v) => setLocale(v as EmailCampaignLocale)}
+        className="gap-3"
+      >
+        <TabsList className="w-full">
+          {EMAIL_CAMPAIGN_LOCALES.map((l) => (
+            <TabsTrigger key={l} value={l} className="gap-1.5">
+              {localeLabels[l]}
+              {l === fallback ? (
+                <Badge variant="secondary" className="px-1 py-0 text-[10px]">
+                  Mặc định
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      {usesFallback ? (
+        <p className="text-xs text-muted-foreground">
+          Chưa có bản dịch riêng cho {localeLabels[locale]} — đang hiển thị nội
+          dung ngôn ngữ mặc định ({localeLabels[fallback]}).
+        </p>
+      ) : null}
       <div className="rounded-lg border bg-muted/30 p-3">
         <p className="text-xs text-muted-foreground">Tiêu đề email</p>
-        <p className="font-medium">{campaign.subject || "-"}</p>
+        <p className="font-medium">{shownSubject || "-"}</p>
       </div>
       <div className="overflow-hidden rounded-lg border">
         <div className="border-b bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
           Xem trước nội dung
         </div>
-        {campaign.html_content ? (
+        {shownHtml ? (
           <iframe
             title="Xem trước nội dung email"
-            srcDoc={campaign.html_content}
+            srcDoc={shownHtml}
             sandbox=""
             className="h-[360px] w-full bg-white"
           />
@@ -424,6 +584,7 @@ function SendLogsDrawer({ campaign }: { campaign: EmailCampaign }) {
           <thead className="sticky top-0 bg-muted/80 backdrop-blur">
             <tr>
               <th className="px-3 py-2 text-left text-xs">Email</th>
+              <th className="px-3 py-2 text-left text-xs">Ngôn ngữ</th>
               <th className="px-3 py-2 text-left text-xs">Trạng thái</th>
               <th className="px-3 py-2 text-left text-xs">Thời gian gửi</th>
               <th className="px-3 py-2 text-left text-xs">Lỗi</th>
@@ -432,13 +593,13 @@ function SendLogsDrawer({ campaign }: { campaign: EmailCampaign }) {
           <tbody>
             {logsQuery.isLoading ? (
               <tr>
-                <td colSpan={4} className="py-8 text-center">
+                <td colSpan={5} className="py-8 text-center">
                   <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />
                 </td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
                   Không có log phù hợp.
                 </td>
               </tr>
@@ -446,6 +607,9 @@ function SendLogsDrawer({ campaign }: { campaign: EmailCampaign }) {
               logs.map((log: EmailSendLog) => (
                 <tr key={log.id ?? log._id} className="border-b last:border-b-0">
                   <td className="px-3 py-2 text-sm">{log.recipient_email}</td>
+                  <td className="px-3 py-2 text-sm text-muted-foreground">
+                    {log.locale ? localeLabels[log.locale] : "-"}
+                  </td>
                   <td className="px-3 py-2">
                     <Badge variant={logStatusBadge[log.status].variant} className="gap-1">
                       {log.status === "sent" ? (
@@ -714,7 +878,11 @@ export default function EmailCampaignsPage() {
                       <td className="px-4 py-3">
                         <p className="font-medium">{campaign.name}</p>
                         <p className="text-xs text-muted-foreground line-clamp-1">
-                          {campaign.subject}
+                          {pickLocalized(
+                            campaign.subject,
+                            campaign.default_locale,
+                            campaign.default_locale
+                          )}
                         </p>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -880,8 +1048,17 @@ export default function EmailCampaignsPage() {
             <CampaignForm
               initial={{
                 name: editTarget.name,
-                subject: editTarget.subject,
-                html_content: editTarget.html_content,
+                subject: {
+                  vi: editTarget.subject?.vi ?? "",
+                  en: editTarget.subject?.en ?? "",
+                  zh: editTarget.subject?.zh ?? "",
+                },
+                html_content: {
+                  vi: editTarget.html_content?.vi ?? "",
+                  en: editTarget.html_content?.en ?? "",
+                  zh: editTarget.html_content?.zh ?? "",
+                },
+                default_locale: editTarget.default_locale ?? "vi",
                 audience: editTarget.audience,
                 scheduled_at: editTarget.scheduled_at
                   ? new Date(editTarget.scheduled_at).toISOString().slice(0, 16)
@@ -915,7 +1092,15 @@ export default function EmailCampaignsPage() {
           </DialogHeader>
           <div className="rounded-lg border bg-muted/30 p-3">
             <p className="font-medium">{sendTarget?.name}</p>
-            <p className="text-sm text-muted-foreground">{sendTarget?.subject}</p>
+            <p className="text-sm text-muted-foreground">
+              {sendTarget
+                ? pickLocalized(
+                    sendTarget.subject,
+                    sendTarget.default_locale,
+                    sendTarget.default_locale
+                  )
+                : ""}
+            </p>
           </div>
           <DialogFooter>
             <Button

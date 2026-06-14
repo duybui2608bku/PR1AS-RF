@@ -40,6 +40,9 @@ export const authService = {
     )
     return data
   },
+  updateLocale: async (locale: string) => {
+    await api.patch("/auth/locale", { locale })
+  },
   deleteAccount: async (payload: DeleteAccountPayload) => {
     const response = await api.delete<{
       success: boolean

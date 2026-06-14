@@ -1,14 +1,27 @@
 import { Document, Types } from "mongoose";
 import {
   EmailCampaignAudience,
+  EmailCampaignLocale,
   EmailCampaignStatus,
   EmailSendLogStatus,
 } from "../constants/email-campaign";
 
+/**
+ * Subject / body authored per supported locale. The campaign's
+ * `default_locale` entry is always required; the others are optional and
+ * fall back to the default at delivery time.
+ */
+export interface LocalizedEmailContent {
+  vi?: string;
+  en?: string;
+  zh?: string;
+}
+
 export interface IEmailCampaign {
   name: string;
-  subject: string;
-  html_content: string;
+  subject: LocalizedEmailContent;
+  html_content: LocalizedEmailContent;
+  default_locale: EmailCampaignLocale;
   audience: EmailCampaignAudience;
   status: EmailCampaignStatus;
   scheduled_at: Date | null;
@@ -27,6 +40,8 @@ export interface IEmailSendLog {
   campaign_id: Types.ObjectId;
   recipient_id: Types.ObjectId | null;
   recipient_email: string;
+  /** Locale the email was actually rendered in for this recipient. */
+  locale: EmailCampaignLocale;
   status: EmailSendLogStatus;
   sent_at: Date | null;
   error_message: string | null;
@@ -55,16 +70,18 @@ export interface EmailSendLogQuery {
 
 export interface CreateCampaignInput {
   name: string;
-  subject: string;
-  html_content: string;
+  subject: LocalizedEmailContent;
+  html_content: LocalizedEmailContent;
+  default_locale: EmailCampaignLocale;
   audience: EmailCampaignAudience;
   scheduled_at?: Date | null;
 }
 
 export interface UpdateCampaignInput {
   name?: string;
-  subject?: string;
-  html_content?: string;
+  subject?: LocalizedEmailContent;
+  html_content?: LocalizedEmailContent;
+  default_locale?: EmailCampaignLocale;
   audience?: EmailCampaignAudience;
   scheduled_at?: Date | null;
 }

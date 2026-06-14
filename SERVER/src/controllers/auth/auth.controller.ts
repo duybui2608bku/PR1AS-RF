@@ -12,6 +12,7 @@ import {
 import { accountDeletionService } from "../../services/auth/account-deletion.service";
 import {
   updateLastActiveRoleSchema,
+  updateLocaleSchema,
   updateWorkerProfileSchema,
   updateBasicProfileSchema,
   becomeWorkerSchema,
@@ -32,15 +33,10 @@ import {
 import { userService } from "../../services/user/user.service";
 import { config } from "../../config";
 
-// 7 ngày tính bằng milliseconds — khớp với JWT_EXPIRE và JWT_REFRESH_EXPIRE trong .env
 const ACCESS_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getCookieOptions(isProduction: boolean) {
-  // Production thường deploy backend và frontend trên KHÁC DOMAIN (cross-site).
-  // SameSite=Lax chặn cookie trong cross-site XHR → /auth/me trả về 401 dù vừa login.
-  // SameSite=None + Secure=true là giải pháp chuẩn cho cross-site credential sharing.
-  // Dev dùng SameSite=Lax vì localhost:3000 ↔ localhost:3052 là same-site, không cần None.
   if (isProduction) {
     return { sameSite: "none" as const, secure: true };
   }
@@ -60,7 +56,6 @@ function setAuthCookies(res: Response, token: string, refreshToken: string): voi
     httpOnly: true,
     ...cookieOpts,
     maxAge: REFRESH_TOKEN_MAX_AGE_MS,
-    // Giới hạn cookie chỉ gửi đến refresh endpoint — tăng bảo mật
     path: "/api/auth/refresh-token",
   });
 }
@@ -68,7 +63,6 @@ function setAuthCookies(res: Response, token: string, refreshToken: string): voi
 function clearAuthCookies(res: Response): void {
   const isProduction = config.nodeEnv === "production";
   const cookieOpts = getCookieOptions(isProduction);
-  // Options phải khớp khi clear, đặc biệt secure + sameSite để browser nhận diện đúng cookie
   res.clearCookie("token", { path: "/", ...cookieOpts });
   res.clearCookie("refreshToken", { path: "/api/auth/refresh-token", ...cookieOpts });
 }
@@ -96,7 +90,6 @@ export class AuthController {
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
-    // Đọc từ cookie (ưu tiên) hoặc từ body (backward compat với mobile clients)
     const refreshToken = (req.cookies as Record<string, string | undefined>).refreshToken ?? req.body.refreshToken;
     if (!refreshToken)
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
@@ -130,6 +123,24 @@ export class AuthController {
       res,
       { user: toPublicUser(updatedUser) },
       USER_MESSAGES.ROLE_UPDATED,
+      req
+    );
+  }
+
+  async updateLocale(req: AuthRequest, res: Response): Promise<void> {
+    const body = validateWithSchema(
+      updateLocaleSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const updatedUser = await userService.updateLocale(
+      extractUserIdFromRequest(req),
+      body.locale
+    );
+    R.success(
+      res,
+      { user: toPublicUser(updatedUser) },
+      AUTH_MESSAGES.PROFILE_UPDATED,
       req
     );
   }
@@ -265,7 +276,6 @@ export class AuthController {
   }
 
   async googleLogin(req: Request, res: Response): Promise<void> {
-    // Accept `id_token` (canonical) or `credential` (name used by Google Identity Services SDK).
     const idToken: unknown = req.body?.id_token ?? req.body?.credential;
     if (!idToken || typeof idToken !== "string") {
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);

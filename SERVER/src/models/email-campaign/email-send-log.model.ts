@@ -1,5 +1,9 @@
 import mongoose, { Schema } from "mongoose";
-import { EmailSendLogStatus } from "../../constants/email-campaign";
+import {
+  DEFAULT_CAMPAIGN_LOCALE,
+  EMAIL_CAMPAIGN_LOCALES,
+  EmailSendLogStatus,
+} from "../../constants/email-campaign";
 import { modelsName } from "../models.name";
 import { IEmailSendLogDocument } from "../../types/email-campaign";
 
@@ -23,6 +27,11 @@ const emailSendLogSchema = new Schema<IEmailSendLogDocument>(
       lowercase: true,
       trim: true,
       index: true,
+    },
+    locale: {
+      type: String,
+      enum: EMAIL_CAMPAIGN_LOCALES,
+      default: DEFAULT_CAMPAIGN_LOCALE,
     },
     status: {
       type: String,

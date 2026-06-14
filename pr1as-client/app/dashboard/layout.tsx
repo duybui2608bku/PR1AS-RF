@@ -1,9 +1,14 @@
+import { getTranslations } from "next-intl/server"
+
 import { AdminDashboardShell } from "@/components/layout/admin-dashboard-shell"
 import { privateRouteMetadata } from "@/lib/seo"
 
-export const metadata = {
-  ...privateRouteMetadata,
-  title: "Quản trị",
+export async function generateMetadata() {
+  const t = await getTranslations("SEO")
+  return {
+    ...privateRouteMetadata,
+    title: t("dashboardTitle"),
+  }
 }
 
 export default function DashboardLayout({

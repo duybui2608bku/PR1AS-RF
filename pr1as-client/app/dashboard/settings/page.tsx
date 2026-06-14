@@ -4,17 +4,16 @@ import { useEffect, useRef, useState } from "react"
 import {
   AlertTriangle,
   AtSign,
-  GitBranch,
+  Camera,
   Globe,
   ImageIcon,
   Link2,
   Loader2,
-  MessageCircle,
+  Music2,
   Power,
   RotateCcw,
   Save,
   Search,
-  Send,
   Settings,
   Share2,
   ShieldAlert,
@@ -48,14 +47,21 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { TipTapEditor } from "@/components/ui/tiptap-editor"
 import {
   useSiteSettings,
   useUpdateSiteSettings,
   useResetSiteSettings,
   useToggleMaintenanceMode,
 } from "@/lib/hooks/use-site-settings"
-import type { SiteSettings } from "@/services/site-settings.service"
+import type {
+  LocalizedSettingText,
+  SiteSettings,
+} from "@/services/site-settings.service"
+import {
+  LOCALE_LABELS,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/locale"
 import { uploadImage } from "@/lib/utils/upload-image"
 import { validateImageFile } from "@/lib/utils/validate-upload"
 
@@ -71,7 +77,10 @@ type SeoDraft = Pick<
   "siteUrl" | "contactEmail" | "ogImageUrl" | "keywords" | "twitterHandle"
 >
 
-type SocialDraft = Pick<SiteSettings, "facebook" | "twitter" | "zalo" | "github">
+type SocialDraft = Pick<
+  SiteSettings,
+  "facebook" | "tiktok" | "thread" | "instagram"
+>
 
 type SocialKey = keyof SocialDraft
 
@@ -94,22 +103,22 @@ const SOCIAL_LINKS: SocialLinkConfig[] = [
     placeholder: "https://facebook.com/pr1as",
   },
   {
-    key: "twitter",
-    label: "Twitter / X",
-    Icon: Send,
-    placeholder: "https://twitter.com/pr1as",
+    key: "tiktok",
+    label: "TikTok",
+    Icon: Music2,
+    placeholder: "https://www.tiktok.com/@pr1as",
   },
   {
-    key: "zalo",
-    label: "Zalo OA",
-    Icon: MessageCircle,
-    placeholder: "https://zalo.me/0909090909",
+    key: "thread",
+    label: "Threads",
+    Icon: AtSign,
+    placeholder: "https://www.threads.net/@pr1as",
   },
   {
-    key: "github",
-    label: "GitHub",
-    Icon: GitBranch,
-    placeholder: "https://github.com/pr1as",
+    key: "instagram",
+    label: "Instagram",
+    Icon: Camera,
+    placeholder: "https://www.instagram.com/pr1as",
   },
 ]
 
@@ -142,9 +151,9 @@ function toSeoDraft(s: SiteSettings): SeoDraft {
 function toSocialDraft(s: SiteSettings): SocialDraft {
   return {
     facebook: s.facebook,
-    twitter: s.twitter,
-    zalo: s.zalo,
-    github: s.github,
+    tiktok: s.tiktok,
+    thread: s.thread,
+    instagram: s.instagram,
   }
 }
 
@@ -269,6 +278,55 @@ function FieldRow({
   )
 }
 
+function LocalizedTextField({
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+  rows = 4,
+}: {
+  value: LocalizedSettingText
+  onChange: (next: LocalizedSettingText) => void
+  placeholder?: string
+  maxLength?: number
+  rows?: number
+}) {
+  const [loc, setLoc] = useState<SupportedLocale>("vi")
+
+  return (
+    <div className="grid gap-2">
+      <div className="flex flex-wrap gap-1.5">
+        {SUPPORTED_LOCALES.map((l) => (
+          <Button
+            key={l}
+            type="button"
+            size="sm"
+            variant={loc === l ? "default" : "outline"}
+            onClick={() => setLoc(l)}
+          >
+            {LOCALE_LABELS[l]}
+            {value[l]?.trim() ? null : (
+              <span className="ml-1 text-xs opacity-70">•</span>
+            )}
+          </Button>
+        ))}
+      </div>
+      <Textarea
+        rows={rows}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        value={value[loc]}
+        onChange={(e) => onChange({ ...value, [loc]: e.target.value })}
+      />
+      {maxLength ? (
+        <p className="text-right text-xs text-muted-foreground">
+          {value[loc].length}/{maxLength}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 function UnsavedBadge({ dirty }: { dirty: boolean }) {
   if (!dirty) return null
   return (
@@ -337,7 +395,7 @@ export default function AdminSettingsPage() {
   const [identityDraft, setIdentityDraft] = useState<IdentityDraft>({
     name: "",
     shortName: "",
-    description: "",
+    description: { vi: "", en: "", zh: "" },
     logoUrl: "",
     faviconUrl: "",
   })
@@ -345,14 +403,14 @@ export default function AdminSettingsPage() {
     siteUrl: "",
     contactEmail: "",
     ogImageUrl: "",
-    keywords: "",
+    keywords: { vi: "", en: "", zh: "" },
     twitterHandle: "",
   })
   const [socialDraft, setSocialDraft] = useState<SocialDraft>({
     facebook: "",
-    twitter: "",
-    zalo: "",
-    github: "",
+    tiktok: "",
+    thread: "",
+    instagram: "",
   })
   const [maintenanceDraft, setMaintenanceDraft] = useState<MaintenanceDraft>({
     maintenanceMode: false,
@@ -482,22 +540,17 @@ export default function AdminSettingsPage() {
 
                 <FieldRow
                   label="Mô tả trang"
-                  hint="Hiển thị trong kết quả tìm kiếm (meta description), khuyến nghị 120–160 ký tự."
+                  hint="Hiển thị trong kết quả tìm kiếm (meta description), khuyến nghị 120–160 ký tự. Cấu hình riêng cho từng ngôn ngữ."
                 >
-                  <TipTapEditor
+                  <LocalizedTextField
                     value={identityDraft.description}
+                    maxLength={300}
+                    rows={4}
                     placeholder="Nhập mô tả trang..."
-                    minHeight="120px"
-                    onChange={(html) =>
-                      setIdentityDraft((d) => ({
-                        ...d,
-                        description: html,
-                      }))
+                    onChange={(description) =>
+                      setIdentityDraft((d) => ({ ...d, description }))
                     }
                   />
-                  <p className="text-right text-xs text-muted-foreground">
-                    {identityDraft.description.length} ký tự
-                  </p>
                 </FieldRow>
 
                 <Separator />
@@ -616,17 +669,15 @@ export default function AdminSettingsPage() {
 
                 <FieldRow
                   label="Từ khóa (Keywords)"
-                  hint="Phân cách bằng dấu phẩy. Dùng cho thẻ meta keywords."
+                  hint="Phân cách bằng dấu phẩy. Dùng cho thẻ meta keywords. Cấu hình riêng cho từng ngôn ngữ."
                 >
-                  <TipTapEditor
+                  <LocalizedTextField
                     value={seoDraft.keywords}
+                    maxLength={500}
+                    rows={3}
                     placeholder="PR1AS, booking dịch vụ, freelancer Việt Nam"
-                    minHeight="120px"
-                    onChange={(html) =>
-                      setSeoDraft((d) => ({
-                        ...d,
-                        keywords: html,
-                      }))
+                    onChange={(keywords) =>
+                      setSeoDraft((d) => ({ ...d, keywords }))
                     }
                   />
                 </FieldRow>

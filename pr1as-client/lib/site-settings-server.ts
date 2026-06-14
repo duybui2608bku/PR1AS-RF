@@ -7,31 +7,32 @@ function buildDefaults(): SiteSettings {
   return {
     name: siteConfig.name,
     shortName: siteConfig.shortName,
-    description: siteConfig.description,
+    description: {
+      vi: siteConfig.description,
+      en: "PR1AS connects customers with trusted workers and freelancers to find services, book appointments, manage bookings and pay online.",
+      zh: "PR1AS 连接客户与值得信赖的工作者和自由职业者，帮助查找服务、预约、管理订单并在线付款。",
+    },
     logoUrl: "",
     faviconUrl: "",
     siteUrl: siteConfig.url,
     contactEmail: siteConfig.contactEmail,
     ogImageUrl: "",
-    keywords:
-      "PR1AS, booking dịch vụ, freelancer Việt Nam, đặt lịch dịch vụ, worker marketplace",
+    keywords: {
+      vi: "PR1AS, booking dịch vụ, freelancer Việt Nam, đặt lịch dịch vụ, worker marketplace",
+      en: "PR1AS, service booking, freelancers, online booking, worker marketplace",
+      zh: "PR1AS, 服务预约, 自由职业者, 在线预约, 工作者市场",
+    },
     twitterHandle: "",
     facebook: siteConfig.links.facebook,
-    twitter: siteConfig.links.twitter,
-    zalo: siteConfig.links.zalo,
-    github: siteConfig.links.github,
+    tiktok: siteConfig.links.tiktok,
+    thread: siteConfig.links.thread,
+    instagram: siteConfig.links.instagram,
     maintenanceMode: false,
     maintenanceMessage:
       "Hệ thống đang được bảo trì và nâng cấp. Vui lòng quay lại sau.",
   }
 }
 
-/**
- * Server-side fetch of site settings for use in `generateMetadata` / server
- * components. Uses a plain `fetch` (not the client axios instance, which reads
- * the auth token from the Zustand store) and short-lived ISR caching so admin
- * changes to logo/favicon/name propagate without a redeploy.
- */
 export async function getServerSiteSettings(): Promise<SiteSettings> {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3052/api"

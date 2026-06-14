@@ -1027,8 +1027,26 @@
     "notFoundDescription": "The page you are looking for might have been moved or deleted."
   },
   "SEO": {
+    "keywords": "PR1AS, service booking, freelancers, online booking, worker marketplace",
+    "appDescription": "PR1AS connects customers with trusted workers and freelancers to find services, book appointments, manage bookings and pay online.",
     "servicesTitle": "Find services and workers",
-    "servicesDescription": "Find the right worker, filter by service and region, view profiles and book online on PR1AS."
+    "servicesDescription": "Find the right worker, filter by service and region, view profiles and book online on PR1AS.",
+    "postsTitle": "Feed",
+    "postsDescription": "Latest posts, project ideas, trending hashtags and connect with the PR1AS community.",
+    "termsTitle": "Terms of Service",
+    "termsDescription": "PR1AS terms of service covering accounts, bookings, payments, service plans and user responsibilities.",
+    "privacyTitle": "Privacy Policy",
+    "privacyDescription": "PR1AS privacy policy on how we collect, use, share and protect users' personal information.",
+    "workerProfileTitle": "Worker profile",
+    "workerProfileDescription": "View worker profile, services, reviews, schedule and book online on PR1AS.",
+    "chatTitle": "Chat",
+    "clientTitle": "Client area",
+    "dashboardTitle": "Admin",
+    "disputesTitle": "Disputes",
+    "accountTitle": "Account",
+    "workerSetupTitle": "Worker setup",
+    "workerScheduleTitle": "Work schedule",
+    "workerBookingsTitle": "Worker bookings"
   },
   "Home": {
     "heroLocationLabel": "Location",
@@ -1086,29 +1104,29 @@
     "workerNotFound": "Worker not found for this booking.",
     "complaintGroupError": "Could not open complaint group.",
     "statusLabels": {
-      "PENDING": "Pending",
-      "REJECTED": "Rejected",
-      "CONFIRMED": "Confirmed",
-      "IN_PROGRESS": "In Progress",
-      "PENDING_CLIENT_ACCEPTANCE": "Waiting for acceptance",
-      "COMPLETED": "Completed",
-      "CANCELLED": "Cancelled",
-      "DISPUTED": "Disputed",
-      "EXPIRED": "Expired"
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "confirmed": "Confirmed",
+      "in_progress": "In Progress",
+      "pending_client_acceptance": "Waiting for acceptance",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed",
+      "expired": "Expired"
     },
     "cancellationReasons": {
-      "CLIENT_REQUEST": "Client request",
-      "WORKER_UNAVAILABLE": "Worker unavailable",
-      "SCHEDULE_CONFLICT": "Schedule conflict",
-      "EMERGENCY": "Emergency",
-      "POLICY_VIOLATION": "Policy violation",
-      "OTHER": "Other"
+      "client_request": "Client request",
+      "worker_unavailable": "Worker unavailable",
+      "schedule_conflict": "Schedule conflict",
+      "emergency": "Emergency",
+      "policy_violation": "Policy violation",
+      "other": "Other"
     },
     "cancelledBy": {
-      "CLIENT": "Client",
-      "WORKER": "Worker",
-      "ADMIN": "Admin",
-      "SYSTEM": "System"
+      "client": "Client",
+      "worker": "Worker",
+      "admin": "Admin",
+      "system": "System"
     },
     "disputeReasons": {
       "SERVICE_NOT_AS_DESCRIBED": "Service not as described",
@@ -1128,6 +1146,243 @@
       "notesPlaceholder": "Describe the reason for cancellation (max 500 characters)",
       "confirmButton": "Confirm Cancellation",
       "errorSelectReason": "Please select a cancellation reason."
+    }
+  },
+  "WorkerBookings": {
+    "title": "Work bookings",
+    "allStatus": "All statuses",
+    "status": "Status",
+    "statusPlaceholder": "Select status",
+    "serviceCode": "Service code",
+    "serviceCodePlaceholder": "E.g. CLEANING",
+    "dateRange": "Date range",
+    "resetFilters": "Clear filters",
+    "search": "Search",
+    "advancedFilters": "Advanced filters",
+    "reset": "Reset",
+    "apply": "Apply",
+    "close": "Close",
+    "listTitle": "Booking list",
+    "refreshList": "Refresh list",
+    "loadError": "Could not load worker booking list",
+    "tryAgain": "Try again",
+    "noBookings": "No bookings yet",
+    "service": "Service",
+    "customer": "Customer",
+    "appointment": "Appointment",
+    "notes": "Notes",
+    "actions": "Actions",
+    "duration": "Duration: {hours} hours",
+    "responsePrefix": "Response:",
+    "prev": "Prev",
+    "next": "Next",
+    "noActions": "No actions",
+    "selectAction": "Select action",
+    "selectActionAria": "Select booking action",
+    "complaintGroup": "Complaint group",
+    "openComplaintGroup": "Open complaint group",
+    "complaintGroupError": "Could not open complaint group.",
+    "customerNotes": "Customer notes",
+    "yourResponse": "Your response",
+    "statusActions": {
+      "confirm": {
+        "title": "Confirm booking",
+        "description": "This booking will move to confirmed status.",
+        "confirm": "Confirm"
+      },
+      "reject": {
+        "title": "Reject booking",
+        "description": "This booking will be rejected and cannot continue.",
+        "confirm": "Reject"
+      },
+      "start": {
+        "title": "Start booking",
+        "description": "This booking will move to in-progress status.",
+        "confirm": "Start"
+      },
+      "sendCompletion": {
+        "title": "Send completion confirmation",
+        "description": "This booking will wait for the customer to confirm completion.",
+        "confirm": "Send confirmation"
+      },
+      "complete": {
+        "title": "Complete booking",
+        "description": "Confirm that this booking has been completed for the customer.",
+        "confirm": "Complete"
+      },
+      "update": {
+        "title": "Update booking",
+        "description": "The booking status will be updated.",
+        "confirm": "Update"
+      },
+      "cancel": {
+        "title": "Cancel booking",
+        "description": "Please choose a cancellation reason so the customer understands the situation.",
+        "confirm": "Confirm cancellation"
+      },
+      "response": {
+        "title": "Update response",
+        "description": "This response will be shown to the customer in the booking.",
+        "confirm": "Save response"
+      }
+    },
+    "actionDialog": {
+      "reason": "Reason",
+      "reasonPlaceholder": "Select cancellation reason",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter a note for the customer",
+      "responseLabel": "Response to customer",
+      "optional": "(optional)",
+      "responsePlaceholder": "Enter the response shown to the customer",
+      "statusResponsePlaceholder": "Update when moving to \"{status}\"",
+      "close": "Close"
+    },
+    "actionSheet": {
+      "description": "Booking actions",
+      "cancel": "Cancel"
+    }
+  },
+  "WorkerBoost": {
+    "page": {
+      "title": "Profile Boost",
+      "description": "Use earned points to lift your profile higher in search results",
+      "currentPoints": "Current points",
+      "dailyCheckIn": "Daily check-in",
+      "earnTitle": "How to earn points:",
+      "earnDaily": "• Daily check-in: <strong>+5 points</strong>",
+      "earnWeekly": "• 7-day streak: <strong>+25 bonus points</strong>",
+      "earnMonthly": "• 30-day streak: <strong>+100 bonus points</strong>",
+      "earnGold": "• Subscribe / renew Gold: <strong>+50 points</strong>",
+      "earnDiamond": "• Subscribe / renew Diamond: <strong>+150 points</strong>",
+      "activateBoost": "Activate Boost"
+    },
+    "attendance": {
+      "alreadyCheckedIn": "You have already checked in today",
+      "pointsEarned": "+{points} points",
+      "streakBonus": "(+{points} streak bonus)",
+      "monthlyBonus": "(+{points} monthly bonus!)",
+      "success": "Check-in successful! {details}",
+      "error": "Unable to check in. Please try again later",
+      "streakLabel": "Check-in streak:",
+      "streakValue": "{days} days",
+      "balanceLabel": "Points:",
+      "checkedInButton": "Checked in",
+      "checkInButton": "Check in"
+    },
+    "panel": {
+      "featuredBadge": "Featured",
+      "basicBadge": "Basic",
+      "points": "{count} points",
+      "hours": "{count} hours",
+      "notEnoughPointsDetail": "Not enough points (need {points} more)",
+      "activeButton": "Boost already active",
+      "notEnoughPointsButton": "Not enough points",
+      "activateButton": "Activate",
+      "activationSuccess": "{type} Boost activated! Valid until {expiresAt}",
+      "activationError": "Unable to activate boost",
+      "activeBoost": "Boost active: {type}",
+      "expires": "Expires {time}",
+      "basicTitle": "Basic Boost",
+      "basicDescription": "Your profile appears in priority search positions and shows the 'Active' badge.",
+      "featuredTitle": "Featured Boost",
+      "featuredDescription": "Your profile stays at the top of results with a highlighted gold border and 'Featured' badge.",
+      "historyTitle": "Recent point history",
+      "loading": "Loading...",
+      "emptyHistory": "No point transactions yet",
+      "reasons": {
+        "attendance": "Daily check-in",
+        "attendanceStreakBonus": "Check-in streak bonus",
+        "attendanceMonthlyBonus": "30-day streak bonus",
+        "goldPackage": "Gold package subscription",
+        "diamondPackage": "Diamond package subscription",
+        "boostSpend": "Boost activation",
+        "adminAdjust": "Admin adjustment"
+      }
+    }
+  },
+  "WorkerBookingSchedule": {
+    "title": "Work schedule",
+    "bookingList": "Booking list",
+    "tabs": {
+      "bookings": "Booking schedule",
+      "blackouts": "Days off"
+    },
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "refresh": "Refresh",
+    "stats": {
+      "thisMonth": "This month",
+      "needsAction": "Needs action",
+      "today": "Today",
+      "monthBookings": "Bookings this month",
+      "activeBookings": "Currently needs action"
+    },
+    "duration": {
+      "hourShort": "h",
+      "minuteShort": "m"
+    },
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "loadErrorTitle": "Could not load booking schedule",
+    "loadErrorDescription": "Please try again or check the API connection.",
+    "tryAgain": "Try again",
+    "moreBookings": "+{count} more bookings",
+    "emptyMonth": "No bookings this month",
+    "bookingCount": "{count} bookings",
+    "blackouts": {
+      "title": "Your days off",
+      "description": "Mark days or time ranges when you cannot accept bookings. Customers cannot book you during these periods.",
+      "refresh": "Refresh",
+      "addButton": "Add day off",
+      "loadErrorTitle": "Could not load days off",
+      "loadErrorDescription": "Please try again.",
+      "tryAgain": "Try again",
+      "emptyTitle": "No days off yet",
+      "emptyDescription": "Add days off to block customers from booking you during that time.",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "emptyUpcoming": "No upcoming days off.",
+      "addTitle": "Add day off",
+      "addDescription": "This time range will block customers from booking you.",
+      "fromDate": "From date",
+      "toDate": "To date",
+      "allDay": "All day",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "For example: vacation, business trip...",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "deleteAria": "Delete day off",
+      "deleteTitle": "Delete day off?",
+      "deleteDescription": "Customers can start booking this time range again after it is deleted.",
+      "addSuccess": "Day off added.",
+      "addError": "Unable to add day off.",
+      "deleteSuccess": "Day off deleted.",
+      "deleteError": "Unable to delete day off.",
+      "errors": {
+        "missingDates": "Please select a start date and end date.",
+        "missingTimes": "Please select a start time and end time.",
+        "invalidTime": "Invalid time range.",
+        "endAfterStart": "End time must be after start time.",
+        "pastDate": "Cannot set a day off in the past.",
+        "reasonTooLong": "Reason cannot exceed {max} characters."
+      },
+      "range": {
+        "allDaySingle": "All day {date}",
+        "allDayRange": "{start} → {end} (all day)",
+        "timedSameDay": "{date} · {start} – {end}",
+        "timedRange": "{start} → {end}"
+      }
     }
   },
   "Pricing": {

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { SlidersHorizontal } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { DateRange } from "react-day-picker"
 
 import {
@@ -45,6 +46,7 @@ export function WorkerBookingsMobileFilters({
   onApply,
   onReset,
 }: WorkerBookingsMobileFiltersProps) {
+  const t = useTranslations("WorkerBookings")
   const [open, setOpen] = React.useState(false)
 
   const handleApply = () => {
@@ -63,7 +65,7 @@ export function WorkerBookingsMobileFilters({
         <BottomSheetTrigger asChild>
           <button
             type="button"
-            aria-label="Bộ lọc nâng cao"
+            aria-label={t("advancedFilters")}
             className="relative flex size-10 shrink-0 items-center justify-center rounded-full border bg-card text-foreground transition-colors active:scale-95"
           >
             <SlidersHorizontal className="size-4" />
@@ -79,21 +81,23 @@ export function WorkerBookingsMobileFilters({
           className="pb-[max(1.25rem,env(safe-area-inset-bottom))]"
         >
           <div className="px-5 pb-3 text-center">
-            <BottomSheetTitle>Bộ lọc nâng cao</BottomSheetTitle>
+            <BottomSheetTitle>{t("advancedFilters")}</BottomSheetTitle>
           </div>
           <div className="grid gap-4 px-5">
             <div className="grid gap-2">
-              <Label htmlFor="worker-mobile-filter-service">Mã dịch vụ</Label>
+              <Label htmlFor="worker-mobile-filter-service">
+                {t("serviceCode")}
+              </Label>
               <Input
                 id="worker-mobile-filter-service"
                 value={serviceCode}
                 maxLength={40}
-                placeholder="VD: CLEANING"
+                placeholder={t("serviceCodePlaceholder")}
                 onChange={(event) => onServiceCodeChange(event.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label>Khoảng ngày</Label>
+              <Label>{t("dateRange")}</Label>
               <DateRangePicker
                 value={dateRange}
                 onChange={onDateRangeChange}
@@ -104,13 +108,13 @@ export function WorkerBookingsMobileFilters({
           </div>
           <div className="mt-5 flex gap-2 px-5">
             <Button variant="outline" className="flex-1" onClick={handleReset}>
-              Đặt lại
+              {t("reset")}
             </Button>
             <Button className="flex-1" onClick={handleApply}>
-              Áp dụng
+              {t("apply")}
             </Button>
           </div>
-          <BottomSheetClose className="sr-only">Đóng</BottomSheetClose>
+          <BottomSheetClose className="sr-only">{t("close")}</BottomSheetClose>
         </BottomSheetContent>
       </BottomSheet>
 

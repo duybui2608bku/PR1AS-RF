@@ -18,6 +18,18 @@ export type EmailCampaignAudience = "all" | "clients" | "workers"
 
 export type EmailSendLogStatus = "pending" | "sent" | "failed"
 
+/** Locales a campaign can be authored in (mirrors the platform UI locales). */
+export type EmailCampaignLocale = "vi" | "en" | "zh"
+
+export const EMAIL_CAMPAIGN_LOCALES: EmailCampaignLocale[] = ["vi", "en", "zh"]
+
+/** Subject / body authored per locale; only `default_locale` is guaranteed. */
+export type LocalizedEmailContent = {
+  vi?: string
+  en?: string
+  zh?: string
+}
+
 export type EmailCampaignCreator = {
   _id?: string
   id?: string
@@ -30,8 +42,9 @@ export type EmailCampaign = {
   id: string
   _id?: string
   name: string
-  subject: string
-  html_content: string
+  subject: LocalizedEmailContent
+  html_content: LocalizedEmailContent
+  default_locale: EmailCampaignLocale
   audience: EmailCampaignAudience
   status: EmailCampaignStatus
   scheduled_at: string | null
@@ -50,6 +63,7 @@ export type EmailSendLog = {
   campaign_id: string
   recipient_id: EmailCampaignCreator | null
   recipient_email: string
+  locale: EmailCampaignLocale
   status: EmailSendLogStatus
   sent_at: string | null
   error_message: string | null
@@ -70,8 +84,9 @@ export type PaginatedResult<T> = {
 
 export type CreateCampaignInput = {
   name: string
-  subject: string
-  html_content: string
+  subject: LocalizedEmailContent
+  html_content: LocalizedEmailContent
+  default_locale: EmailCampaignLocale
   audience: EmailCampaignAudience
   scheduled_at?: string | null
 }

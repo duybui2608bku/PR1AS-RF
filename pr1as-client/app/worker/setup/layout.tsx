@@ -1,8 +1,13 @@
+import { getTranslations } from "next-intl/server"
+
 import { privateRouteMetadata } from "@/lib/seo"
 
-export const metadata = {
-  ...privateRouteMetadata,
-  title: "Thiết lập worker",
+export async function generateMetadata() {
+  const t = await getTranslations("SEO")
+  return {
+    ...privateRouteMetadata,
+    title: t("workerSetupTitle"),
+  }
 }
 
 export default function WorkerSetupLayout({

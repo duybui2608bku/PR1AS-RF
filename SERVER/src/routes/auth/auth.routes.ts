@@ -102,6 +102,13 @@ router.patch(
   )
 );
 
+router.patch(
+  "/locale",
+  authenticate,
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(authController.updateLocale.bind(authController))
+);
+
 router.post(
   "/forgot-password",
   emailActionLimiter,

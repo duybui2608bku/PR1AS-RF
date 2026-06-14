@@ -137,7 +137,7 @@ export default function PostsPage() {
   const feedParams = hashtag ? { hashtag } : {}
 
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <AnnouncementRenderer placement="home_worker_popup" />
       <AnnouncementRenderer placement="home_worker_banner" />
 
@@ -160,11 +160,11 @@ export default function PostsPage() {
                 aria-selected={activeTab === tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "relative flex-1 py-2.5 text-sm font-medium transition-colors whitespace-nowrap text-center",
+                  "relative flex-1 py-2.5 text-center text-sm font-medium whitespace-nowrap transition-colors",
                   "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors",
                   activeTab === tab.key
                     ? "text-foreground after:bg-foreground"
-                    : "text-muted-foreground hover:text-foreground after:bg-transparent"
+                    : "text-muted-foreground after:bg-transparent hover:text-foreground"
                 )}
               >
                 {tab.label}

@@ -1,9 +1,12 @@
 import { Types } from "mongoose";
 import { EmailCampaign, EmailSendLog } from "../../models/email-campaign";
 import {
+  DEFAULT_CAMPAIGN_LOCALE,
   EmailCampaignAudience,
+  EmailCampaignLocale,
   EmailCampaignStatus,
   EmailSendLogStatus,
+  resolveCampaignLocale,
 } from "../../constants/email-campaign";
 import type {
   IEmailCampaignDocument,
@@ -27,6 +30,7 @@ export class EmailCampaignRepository {
       name: input.name,
       subject: input.subject,
       html_content: input.html_content,
+      default_locale: input.default_locale,
       audience: input.audience,
       status: input.scheduled_at
         ? EmailCampaignStatus.SCHEDULED
@@ -42,10 +46,7 @@ export class EmailCampaignRepository {
   }
 
   async findById(id: string): Promise<IEmailCampaignDocument | null> {
-    return EmailCampaign.findById(id).populate(
-      "created_by",
-      CREATOR_FIELDS
-    );
+    return EmailCampaign.findById(id).populate("created_by", CREATOR_FIELDS);
   }
 
   async update(
@@ -57,6 +58,8 @@ export class EmailCampaignRepository {
     if (input.subject !== undefined) patch.subject = input.subject;
     if (input.html_content !== undefined)
       patch.html_content = input.html_content;
+    if (input.default_locale !== undefined)
+      patch.default_locale = input.default_locale;
     if (input.audience !== undefined) patch.audience = input.audience;
     if (input.scheduled_at !== undefined) {
       patch.scheduled_at = input.scheduled_at;
@@ -129,8 +132,11 @@ export class EmailCampaignRepository {
     });
   }
 
-  async getRecipientEmails(audience: EmailCampaignAudience): Promise<
-    Array<{ _id: Types.ObjectId; email: string }>
+  async getRecipientEmails(
+    audience: EmailCampaignAudience,
+    fallbackLocale: EmailCampaignLocale = DEFAULT_CAMPAIGN_LOCALE
+  ): Promise<
+    Array<{ _id: Types.ObjectId; email: string; locale: EmailCampaignLocale }>
   > {
     const filter: Record<string, unknown> = {
       deleted_at: null,
@@ -143,7 +149,18 @@ export class EmailCampaignRepository {
       filter.roles = { $in: [UserRole.WORKER] };
     }
 
-    return User.find(filter).select("_id email").lean();
+    const users = await User.find(filter)
+      .select("_id email meta_data.locale")
+      .lean();
+
+    return users.map((u) => ({
+      _id: u._id as Types.ObjectId,
+      email: u.email as string,
+      locale: resolveCampaignLocale(
+        (u.meta_data as { locale?: string } | undefined)?.locale,
+        fallbackLocale
+      ),
+    }));
   }
 
   async createSendLogs(
@@ -151,6 +168,7 @@ export class EmailCampaignRepository {
       campaign_id: Types.ObjectId;
       recipient_id: Types.ObjectId | null;
       recipient_email: string;
+      locale: EmailCampaignLocale;
     }>
   ): Promise<void> {
     const now = new Date();

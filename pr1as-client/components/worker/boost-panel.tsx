@@ -4,14 +4,23 @@ import * as React from "react"
 import { Zap, Star, Clock, Coins, Loader2, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDistanceToNow, type Locale } from "date-fns"
+import { enUS, vi, zhCN } from "date-fns/locale"
+import { useLocale, useTranslations } from "next-intl"
+
 import { boostService, type BoostType } from "@/services/boost.service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { queryKeys } from "@/lib/query-keys"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+}
 
 interface BoostCardProps {
   title: string
@@ -38,6 +47,7 @@ function BoostCard({
   onActivate,
   isPending,
 }: BoostCardProps) {
+  const t = useTranslations("WorkerBoost.panel")
   const isFeatured = tier === 1
   const canAfford = balance >= cost
   const disabled = isPending || isActiveBoost || !canAfford
@@ -60,8 +70,11 @@ function BoostCard({
             )}
             {title}
           </CardTitle>
-          <Badge variant={isFeatured ? "default" : "secondary"} className="text-xs">
-            {isFeatured ? "Nổi bật" : "Cơ bản"}
+          <Badge
+            variant={isFeatured ? "default" : "secondary"}
+            className="text-xs"
+          >
+            {isFeatured ? t("featuredBadge") : t("basicBadge")}
           </Badge>
         </div>
       </CardHeader>
@@ -70,15 +83,17 @@ function BoostCard({
         <div className="flex items-center gap-4 text-sm">
           <span className="flex items-center gap-1 font-medium">
             <Coins className="h-4 w-4 text-amber-500" />
-            {cost} điểm
+            {t("points", { count: cost })}
           </span>
           <span className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-4 w-4" />
-            {durationHours} giờ
+            {t("hours", { count: durationHours })}
           </span>
         </div>
         {!canAfford && (
-          <p className="text-xs text-destructive">Không đủ điểm (cần thêm {cost - balance} điểm)</p>
+          <p className="text-xs text-destructive">
+            {t("notEnoughPointsDetail", { points: cost - balance })}
+          </p>
         )}
         <Button
           size="sm"
@@ -88,7 +103,11 @@ function BoostCard({
           onClick={() => onActivate(boostType)}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isActiveBoost ? "Đang có boost chạy" : !canAfford ? "Không đủ điểm" : "Kích hoạt"}
+          {isActiveBoost
+            ? t("activeButton")
+            : !canAfford
+              ? t("notEnoughPointsButton")
+              : t("activateButton")}
         </Button>
       </CardContent>
     </Card>
@@ -96,6 +115,10 @@ function BoostCard({
 }
 
 export function BoostPanel() {
+  const t = useTranslations("WorkerBoost.panel")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale]
+  const dateFnsLocale = DATE_FNS_LOCALES[locale]
   const queryClient = useQueryClient()
 
   const { data: pointsData, isLoading: pointsLoading } = useQuery({
@@ -103,11 +126,30 @@ export function BoostPanel() {
     queryFn: () => boostService.getPoints(10, 0),
   })
 
-  const { data: statusData, isLoading: statusLoading } = useQuery({
+  const { data: statusData } = useQuery({
     queryKey: queryKeys.boostStatus,
     queryFn: () => boostService.getStatus(),
     refetchInterval: 30_000,
   })
+
+  const reasonLabels = React.useMemo<Record<string, string>>(
+    () => ({
+      attendance: t("reasons.attendance"),
+      attendance_streak_bonus: t("reasons.attendanceStreakBonus"),
+      attendance_monthly_bonus: t("reasons.attendanceMonthlyBonus"),
+      gold_package: t("reasons.goldPackage"),
+      diamond_package: t("reasons.diamondPackage"),
+      boost_spend: t("reasons.boostSpend"),
+      admin_adjust: t("reasons.adminAdjust"),
+    }),
+    [t]
+  )
+
+  const getBoostTypeLabel = React.useCallback(
+    (boostType: BoostType | null | undefined) =>
+      boostType === "featured" ? t("featuredBadge") : t("basicBadge"),
+    [t]
+  )
 
   const { mutate: activate, isPending } = useMutation({
     mutationFn: (boostType: BoostType) => boostService.activateBoost(boostType),
@@ -115,12 +157,14 @@ export function BoostPanel() {
       queryClient.invalidateQueries({ queryKey: queryKeys.boostPoints })
       queryClient.invalidateQueries({ queryKey: queryKeys.boostStatus })
       toast.success(
-        `Boost ${result.boost_type === "featured" ? "Nổi bật" : "Cơ bản"} đã kích hoạt! Còn hiệu lực đến ${new Date(result.expires_at).toLocaleString("vi-VN")}`
+        t("activationSuccess", {
+          type: getBoostTypeLabel(result.boost_type),
+          expiresAt: new Date(result.expires_at).toLocaleString(localeTag),
+        })
       )
     },
     onError: (err: unknown) => {
-      const msg =
-        err instanceof Error ? err.message : "Không thể kích hoạt boost"
+      const msg = err instanceof Error ? err.message : t("activationError")
       toast.error(msg)
     },
   })
@@ -139,16 +183,16 @@ export function BoostPanel() {
             <TrendingUp className="h-5 w-5 text-green-600" />
             <div>
               <p className="text-sm font-semibold text-green-800 dark:text-green-300">
-                Boost đang chạy:{" "}
-                <span className="capitalize">
-                  {status.boost_type === "featured" ? "Nổi bật" : "Cơ bản"}
-                </span>
+                {t("activeBoost", {
+                  type: getBoostTypeLabel(status.boost_type),
+                })}
               </p>
               <p className="text-xs text-green-700 dark:text-green-400">
-                Hết hạn{" "}
-                {formatDistanceToNow(new Date(status.expires_at), {
-                  addSuffix: true,
-                  locale: vi,
+                {t("expires", {
+                  time: formatDistanceToNow(new Date(status.expires_at), {
+                    addSuffix: true,
+                    locale: dateFnsLocale,
+                  }),
                 })}
               </p>
             </div>
@@ -159,8 +203,8 @@ export function BoostPanel() {
       {/* Boost options */}
       <div className="grid gap-4 sm:grid-cols-2">
         <BoostCard
-          title="Boost Cơ bản"
-          description="Hồ sơ xuất hiện ở vị trí ưu tiên trong kết quả tìm kiếm, hiển thị badge 'Đang hoạt động'."
+          title={t("basicTitle")}
+          description={t("basicDescription")}
           cost={50}
           durationHours={6}
           boostType="basic"
@@ -171,8 +215,8 @@ export function BoostPanel() {
           isPending={isPending}
         />
         <BoostCard
-          title="Boost Nổi bật"
-          description="Hồ sơ luôn đứng đầu kết quả, viền vàng nổi bật và badge 'Nổi bật' thu hút client."
+          title={t("featuredTitle")}
+          description={t("featuredDescription")}
           cost={400}
           durationHours={72}
           boostType="featured"
@@ -188,11 +232,11 @@ export function BoostPanel() {
 
       {/* Point history */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold">Lịch sử điểm gần đây</h3>
+        <h3 className="mb-3 text-sm font-semibold">{t("historyTitle")}</h3>
         {pointsLoading ? (
-          <p className="text-sm text-muted-foreground">Đang tải…</p>
+          <p className="text-sm text-muted-foreground">{t("loading")}</p>
         ) : pointsData?.history.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Chưa có giao dịch điểm nào</p>
+          <p className="text-sm text-muted-foreground">{t("emptyHistory")}</p>
         ) : (
           <div className="space-y-2">
             {pointsData?.history.map((item) => (
@@ -201,22 +245,28 @@ export function BoostPanel() {
                 className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
               >
                 <div>
-                  <span className="font-medium">{reasonLabel(item.reason)}</span>
+                  <span className="font-medium">
+                    {reasonLabels[item.reason] ?? item.reason}
+                  </span>
                   {item.meta.admin_note && (
-                    <p className="text-xs text-muted-foreground">{item.meta.admin_note}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.meta.admin_note}
+                    </p>
                   )}
                 </div>
                 <div className="text-right">
                   <span
                     className={
-                      item.delta > 0 ? "font-semibold text-green-600" : "font-semibold text-red-500"
+                      item.delta > 0
+                        ? "font-semibold text-green-600"
+                        : "font-semibold text-red-500"
                     }
                   >
                     {item.delta > 0 ? "+" : ""}
                     {item.delta}
                   </span>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(item.created_at).toLocaleDateString("vi-VN")}
+                    {new Date(item.created_at).toLocaleDateString(localeTag)}
                   </p>
                 </div>
               </div>
@@ -226,17 +276,4 @@ export function BoostPanel() {
       </div>
     </div>
   )
-}
-
-function reasonLabel(reason: string): string {
-  const map: Record<string, string> = {
-    attendance: "Điểm danh hàng ngày",
-    attendance_streak_bonus: "Bonus chuỗi điểm danh",
-    attendance_monthly_bonus: "Bonus 30 ngày liên tiếp",
-    gold_package: "Đăng ký gói Gold",
-    diamond_package: "Đăng ký gói Diamond",
-    boost_spend: "Kích hoạt Boost",
-    admin_adjust: "Điều chỉnh bởi Admin",
-  }
-  return map[reason] ?? reason
 }

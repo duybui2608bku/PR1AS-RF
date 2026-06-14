@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { AtSign, Camera, Music2, Share2 } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
 import { footerNav } from "@/config/nav"
@@ -9,31 +10,24 @@ import { cn } from "@/lib/utils"
 
 const socialLinks = [
   {
-    label: "Zalo",
-    href: siteConfig.links.zalo,
-    icon: (
-      <span aria-hidden="true" className="text-[10px] leading-none font-bold">
-        Zalo
-      </span>
-    ),
-  },
-  {
     label: "Facebook",
     href: siteConfig.links.facebook,
-    icon: (
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="size-4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      >
-        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-      </svg>
-    ),
+    icon: <Share2 aria-hidden="true" className="size-4" />,
+  },
+  {
+    label: "TikTok",
+    href: siteConfig.links.tiktok,
+    icon: <Music2 aria-hidden="true" className="size-4" />,
+  },
+  {
+    label: "Threads",
+    href: siteConfig.links.thread,
+    icon: <AtSign aria-hidden="true" className="size-4" />,
+  },
+  {
+    label: "Instagram",
+    href: siteConfig.links.instagram,
+    icon: <Camera aria-hidden="true" className="size-4" />,
   },
 ] as const
 

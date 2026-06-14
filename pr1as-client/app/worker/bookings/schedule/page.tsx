@@ -15,8 +15,9 @@ import {
   startOfMonth,
   startOfWeek,
   subMonths,
+  type Locale,
 } from "date-fns"
-import { vi } from "date-fns/locale"
+import { enUS, vi, zhCN } from "date-fns/locale"
 import {
   AlertCircle,
   CalendarDays,
@@ -28,25 +29,21 @@ import {
   RefreshCw,
   User,
 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WorkerBlackoutManager } from "@/components/worker/worker-blackout-manager"
 import { useWorkerBookingSchedule } from "@/lib/hooks/use-bookings"
+import { type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
 
 import {
   bookingStatusBadgeClass,
-  bookingStatusLabel,
   getBookingId,
   getClientName,
   getServiceLabel,
@@ -54,15 +51,13 @@ import {
 } from "../format"
 
 const WEEK_STARTS_ON = 1
-const WEEKDAY_LABELS = [
-  "Thứ 2",
-  "Thứ 3",
-  "Thứ 4",
-  "Thứ 5",
-  "Thứ 6",
-  "Thứ 7",
-  "CN",
-]
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const
+
+const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+}
 
 const toDateKey = (date: Date) => format(date, "yyyy-MM-dd")
 
@@ -77,7 +72,10 @@ const formatTime = (value: string) => {
   return format(date, "HH:mm")
 }
 
-const formatDuration = (booking: Booking) => {
+const formatDuration = (
+  booking: Booking,
+  units: { hour: string; minute: string }
+) => {
   const start = parseBookingDate(booking.schedule.start_time)
   const end = parseBookingDate(booking.schedule.end_time)
   const minutes = differenceInMinutes(end, start)
@@ -86,13 +84,13 @@ const formatDuration = (booking: Booking) => {
     const hours = Math.floor(minutes / 60)
     const remainingMinutes = minutes % 60
     if (hours > 0 && remainingMinutes > 0) {
-      return `${hours}h ${remainingMinutes}m`
+      return `${hours}${units.hour} ${remainingMinutes}${units.minute}`
     }
-    if (hours > 0) return `${hours}h`
-    return `${remainingMinutes}m`
+    if (hours > 0) return `${hours}${units.hour}`
+    return `${remainingMinutes}${units.minute}`
   }
 
-  return `${booking.schedule.duration_hours}h`
+  return `${booking.schedule.duration_hours}${units.hour}`
 }
 
 const getDisplayStatus = (booking: Booking) =>
@@ -118,9 +116,13 @@ const buildCalendarDays = (month: Date) => {
 
 function BookingPill({
   booking,
+  locale,
+  durationUnits,
   compact = false,
 }: {
   booking: Booking
+  locale: SupportedLocale
+  durationUnits: { hour: string; minute: string }
   compact?: boolean
 }) {
   const displayStatus = getDisplayStatus(booking)
@@ -138,11 +140,11 @@ function BookingPill({
           {formatTime(booking.schedule.start_time)}
         </span>
         <span className="shrink-0 text-[11px] opacity-80">
-          {formatDuration(booking)}
+          {formatDuration(booking, durationUnits)}
         </span>
       </div>
       <div className="mt-1 truncate text-xs font-medium">
-        {getServiceLabel(booking)}
+        {getServiceLabel(booking, locale)}
       </div>
       {compact ? null : (
         <div className="mt-1 flex items-center gap-1 truncate text-[11px] opacity-80">
@@ -155,6 +157,21 @@ function BookingPill({
 }
 
 export default function WorkerBookingSchedulePage() {
+  const t = useTranslations("WorkerBookingSchedule")
+  const tStatus = useTranslations("Bookings.statusLabels")
+  const locale = useLocale() as SupportedLocale
+  const dateFnsLocale = DATE_FNS_LOCALES[locale]
+  const durationUnits = React.useMemo(
+    () => ({
+      hour: t("duration.hourShort"),
+      minute: t("duration.minuteShort"),
+    }),
+    [t]
+  )
+  const weekdayLabels = React.useMemo(
+    () => WEEKDAY_KEYS.map((key) => t(`weekdays.${key}`)),
+    [t]
+  )
   const [month, setMonth] = React.useState(() => startOfMonth(new Date()))
 
   const calendarDays = React.useMemo(() => buildCalendarDays(month), [month])
@@ -213,7 +230,7 @@ export default function WorkerBookingSchedulePage() {
   })
 
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <AuthGuard>
         <Tabs
           defaultValue="bookings"
@@ -224,18 +241,25 @@ export default function WorkerBookingSchedulePage() {
               <div className="flex flex-row items-center justify-between gap-3">
                 <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
                   <CalendarDays className="size-7" />
-                  Lịch làm việc
+                  {t("title")}
                 </h1>
-                <Button variant="outline" size="sm" asChild className="shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="shrink-0"
+                >
                   <Link href="/worker/bookings">
                     <List className="size-4" />
-                    <span className="hidden sm:inline">Danh sách booking</span>
+                    <span className="hidden sm:inline">{t("bookingList")}</span>
                   </Link>
                 </Button>
               </div>
               <TabsList>
-                <TabsTrigger value="bookings">Lịch booking</TabsTrigger>
-                <TabsTrigger value="blackouts">Ngày nghỉ</TabsTrigger>
+                <TabsTrigger value="bookings">{t("tabs.bookings")}</TabsTrigger>
+                <TabsTrigger value="blackouts">
+                  {t("tabs.blackouts")}
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
@@ -249,18 +273,18 @@ export default function WorkerBookingSchedulePage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Tháng trước"
+                  aria-label={t("previousMonth")}
                   onClick={() => setMonth((value) => subMonths(value, 1))}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 <span className="flex-1 text-center text-base font-semibold capitalize lg:flex-none lg:px-2 lg:text-lg">
-                  {format(month, "MMMM yyyy", { locale: vi })}
+                  {format(month, "MMMM yyyy", { locale: dateFnsLocale })}
                 </span>
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Tháng sau"
+                  aria-label={t("nextMonth")}
                   onClick={() => setMonth((value) => addMonths(value, 1))}
                 >
                   <ChevronRight className="size-4" />
@@ -273,7 +297,7 @@ export default function WorkerBookingSchedulePage() {
                   className="flex-1 lg:flex-none"
                   onClick={() => setMonth(startOfMonth(new Date()))}
                 >
-                  Hôm nay
+                  {t("today")}
                 </Button>
                 <Button
                   variant="outline"
@@ -287,7 +311,7 @@ export default function WorkerBookingSchedulePage() {
                   ) : (
                     <RefreshCw className="size-4" />
                   )}
-                  Làm mới
+                  {t("refresh")}
                 </Button>
               </div>
             </div>
@@ -300,23 +324,23 @@ export default function WorkerBookingSchedulePage() {
                     {monthBookings.length}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    Tháng này
+                    {t("stats.thisMonth")}
                   </span>
                 </div>
                 <div className="rounded-2xl border bg-card px-3 py-3 text-center shadow-sm">
-                  <span className="block text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                  <span className="block text-2xl font-bold text-amber-600 tabular-nums dark:text-amber-400">
                     {activeBookings.length}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    Cần xử lý
+                    {t("stats.needsAction")}
                   </span>
                 </div>
                 <div className="rounded-2xl border bg-card px-3 py-3 text-center shadow-sm">
-                  <span className="block text-2xl font-bold tabular-nums text-primary">
+                  <span className="block text-2xl font-bold text-primary tabular-nums">
                     {todayBookings.length}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    Hôm nay
+                    {t("stats.today")}
                   </span>
                 </div>
               </div>
@@ -324,191 +348,205 @@ export default function WorkerBookingSchedulePage() {
             {/* Desktop: 3-card grid */}
             <div className="container mx-auto hidden grid-cols-3 gap-4 px-4 pb-4 md:grid">
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="text-sm text-muted-foreground">Booking trong tháng</div>
-                <div className="mt-1 text-2xl font-semibold">{monthBookings.length}</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("stats.monthBookings")}
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {monthBookings.length}
+                </div>
               </div>
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="text-sm text-muted-foreground">Đang cần xử lý</div>
-                <div className="mt-1 text-2xl font-semibold">{activeBookings.length}</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("stats.activeBookings")}
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {activeBookings.length}
+                </div>
               </div>
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="text-sm text-muted-foreground">Hôm nay</div>
-                <div className="mt-1 text-2xl font-semibold">{todayBookings.length}</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("stats.today")}
+                </div>
+                <div className="mt-1 text-2xl font-semibold">
+                  {todayBookings.length}
+                </div>
               </div>
             </div>
 
-          <div className="container mx-auto flex flex-1 flex-col px-4 pb-6">
-            {bookingsQuery.isLoading ? (
-              <div className="flex min-h-[420px] flex-1 items-center justify-center rounded-md border bg-background">
-                <Loader2 className="size-9 animate-spin text-muted-foreground" />
-              </div>
-            ) : bookingsQuery.isError ? (
-              <div className="flex min-h-[420px] flex-1 flex-col items-center justify-center gap-3 rounded-md border bg-background px-4 text-center">
-                <AlertCircle className="size-10 text-red-600 dark:text-red-400" />
-                <div>
-                  <p className="font-medium">Không tải được lịch booking</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Vui lòng thử lại hoặc kiểm tra kết nối API.
-                  </p>
+            <div className="container mx-auto flex flex-1 flex-col px-4 pb-6">
+              {bookingsQuery.isLoading ? (
+                <div className="flex min-h-[420px] flex-1 items-center justify-center rounded-md border bg-background">
+                  <Loader2 className="size-9 animate-spin text-muted-foreground" />
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => bookingsQuery.refetch()}
-                >
-                  Thử lại
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="hidden flex-1 overflow-hidden rounded-md border bg-background lg:flex lg:flex-col">
-                  <div className="grid grid-cols-7 border-b bg-muted/40">
-                    {WEEKDAY_LABELS.map((label) => (
-                      <div
-                        key={label}
-                        className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase"
-                      >
-                        {label}
-                      </div>
-                    ))}
+              ) : bookingsQuery.isError ? (
+                <div className="flex min-h-[420px] flex-1 flex-col items-center justify-center gap-3 rounded-md border bg-background px-4 text-center">
+                  <AlertCircle className="size-10 text-red-600 dark:text-red-400" />
+                  <div>
+                    <p className="font-medium">{t("loadErrorTitle")}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t("loadErrorDescription")}
+                    </p>
                   </div>
-                  <div className="grid flex-1 auto-rows-fr grid-cols-7">
-                    {calendarDays.map((day) => {
-                      const key = toDateKey(day)
-                      const dayBookings = bookingsByDay.get(key) ?? []
-                      const visibleBookings = dayBookings.slice(0, 3)
-                      const hiddenCount =
-                        dayBookings.length - visibleBookings.length
-
-                      return (
+                  <Button
+                    variant="outline"
+                    onClick={() => bookingsQuery.refetch()}
+                  >
+                    {t("tryAgain")}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="hidden flex-1 overflow-hidden rounded-md border bg-background lg:flex lg:flex-col">
+                    <div className="grid grid-cols-7 border-b bg-muted/40">
+                      {weekdayLabels.map((label) => (
                         <div
-                          key={key}
-                          className={cn(
-                            "min-h-36 border-r border-b p-2 last:border-r-0",
-                            !isSameMonth(day, month) &&
-                              "bg-muted/30 text-muted-foreground"
-                          )}
+                          key={label}
+                          className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase"
                         >
-                          <div className="mb-2 flex items-center justify-between">
-                            <span
-                              className={cn(
-                                "flex size-7 items-center justify-center rounded-full text-sm font-medium",
-                                isToday(day) &&
-                                  "bg-primary text-primary-foreground"
-                              )}
-                            >
-                              {format(day, "d")}
-                            </span>
-                            {dayBookings.length > 0 ? (
-                              <Badge variant="outline">
-                                {dayBookings.length}
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <div className="space-y-1.5">
-                            {visibleBookings.map((booking) => (
-                              <BookingPill
-                                key={getBookingId(booking)}
-                                booking={booking}
-                              />
-                            ))}
-                            {hiddenCount > 0 ? (
-                              <div className="rounded-md border border-dashed px-2 py-1 text-xs text-muted-foreground">
-                                +{hiddenCount} booking khác
-                              </div>
-                            ) : null}
-                          </div>
+                          {label}
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-4 lg:hidden">
-                  {monthBookings.length === 0 ? (
-                    <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border bg-card px-4 text-center shadow-sm">
-                      <CalendarDays className="size-10 text-muted-foreground" />
-                      <p className="mt-3 text-sm font-medium">
-                        Chưa có booking trong tháng này
-                      </p>
+                      ))}
                     </div>
-                  ) : (
-                    calendarDays.map((day) => {
-                      if (!isSameMonth(day, month)) return null
-                      const key = toDateKey(day)
-                      const dayBookings = bookingsByDay.get(key) ?? []
-                      if (dayBookings.length === 0) return null
+                    <div className="grid flex-1 auto-rows-fr grid-cols-7">
+                      {calendarDays.map((day) => {
+                        const key = toDateKey(day)
+                        const dayBookings = bookingsByDay.get(key) ?? []
+                        const visibleBookings = dayBookings.slice(0, 3)
+                        const hiddenCount =
+                          dayBookings.length - visibleBookings.length
 
-                      return (
-                        <section key={key}>
-                          <div className="mb-2 flex items-center justify-between px-1">
-                            <h2 className="text-sm font-semibold capitalize">
-                              {format(day, "EEEE, dd/MM", { locale: vi })}
-                            </h2>
-                            {isToday(day) ? (
-                              <Badge>Hôm nay</Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">
-                                {dayBookings.length} booking
-                              </span>
+                        return (
+                          <div
+                            key={key}
+                            className={cn(
+                              "min-h-36 border-r border-b p-2 last:border-r-0",
+                              !isSameMonth(day, month) &&
+                                "bg-muted/30 text-muted-foreground"
                             )}
-                          </div>
-                          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-                            {dayBookings.map((booking, index) => (
-                              <Link
-                                key={getBookingId(booking)}
-                                href="/worker/bookings"
+                          >
+                            <div className="mb-2 flex items-center justify-between">
+                              <span
                                 className={cn(
-                                  "flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-accent active:bg-accent/70",
-                                  index < dayBookings.length - 1 && "border-b"
+                                  "flex size-7 items-center justify-center rounded-full text-sm font-medium",
+                                  isToday(day) &&
+                                    "bg-primary text-primary-foreground"
                                 )}
                               >
-                                <div className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-muted py-1.5">
-                                  <span className="text-sm font-semibold tabular-nums">
-                                    {formatTime(booking.schedule.start_time)}
-                                  </span>
-                                  <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                    <Clock3 className="size-2.5" />
-                                    {formatDuration(booking)}
-                                  </span>
+                                {format(day, "d")}
+                              </span>
+                              {dayBookings.length > 0 ? (
+                                <Badge variant="outline">
+                                  {dayBookings.length}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <div className="space-y-1.5">
+                              {visibleBookings.map((booking) => (
+                                <BookingPill
+                                  key={getBookingId(booking)}
+                                  booking={booking}
+                                  locale={locale}
+                                  durationUnits={durationUnits}
+                                />
+                              ))}
+                              {hiddenCount > 0 ? (
+                                <div className="rounded-md border border-dashed px-2 py-1 text-xs text-muted-foreground">
+                                  {t("moreBookings", { count: hiddenCount })}
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="truncate text-sm font-medium">
-                                    {getServiceLabel(booking)}
-                                  </div>
-                                  <div className="mt-1 flex items-center gap-2">
-                                    <span
-                                      className={cn(
-                                        "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                                        bookingStatusBadgeClass[
-                                          getDisplayStatus(booking)
-                                        ]
-                                      )}
-                                    >
-                                      {
-                                        bookingStatusLabel[
-                                          getDisplayStatus(booking)
-                                        ]
-                                      }
-                                    </span>
-                                    <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-                                      <User className="size-3 shrink-0" />
-                                      <span className="truncate">
-                                        {getClientName(booking.client_id)}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </div>
-                                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                              </Link>
-                            ))}
+                              ) : null}
+                            </div>
                           </div>
-                        </section>
-                      )
-                    })
-                  )}
-                </div>
-              </>
-            )}
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 lg:hidden">
+                    {monthBookings.length === 0 ? (
+                      <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border bg-card px-4 text-center shadow-sm">
+                        <CalendarDays className="size-10 text-muted-foreground" />
+                        <p className="mt-3 text-sm font-medium">
+                          {t("emptyMonth")}
+                        </p>
+                      </div>
+                    ) : (
+                      calendarDays.map((day) => {
+                        if (!isSameMonth(day, month)) return null
+                        const key = toDateKey(day)
+                        const dayBookings = bookingsByDay.get(key) ?? []
+                        if (dayBookings.length === 0) return null
+
+                        return (
+                          <section key={key}>
+                            <div className="mb-2 flex items-center justify-between px-1">
+                              <h2 className="text-sm font-semibold capitalize">
+                                {format(day, "EEEE, dd/MM", {
+                                  locale: dateFnsLocale,
+                                })}
+                              </h2>
+                              {isToday(day) ? (
+                                <Badge>{t("today")}</Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  {t("bookingCount", {
+                                    count: dayBookings.length,
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                              {dayBookings.map((booking, index) => (
+                                <Link
+                                  key={getBookingId(booking)}
+                                  href="/worker/bookings"
+                                  className={cn(
+                                    "flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-accent active:bg-accent/70",
+                                    index < dayBookings.length - 1 && "border-b"
+                                  )}
+                                >
+                                  <div className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-muted py-1.5">
+                                    <span className="text-sm font-semibold tabular-nums">
+                                      {formatTime(booking.schedule.start_time)}
+                                    </span>
+                                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                      <Clock3 className="size-2.5" />
+                                      {formatDuration(booking, durationUnits)}
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="truncate text-sm font-medium">
+                                      {getServiceLabel(booking, locale)}
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-2">
+                                      <span
+                                        className={cn(
+                                          "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                                          bookingStatusBadgeClass[
+                                            getDisplayStatus(booking)
+                                          ]
+                                        )}
+                                      >
+                                        {tStatus(getDisplayStatus(booking))}
+                                      </span>
+                                      <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                                        <User className="size-3 shrink-0" />
+                                        <span className="truncate">
+                                          {getClientName(booking.client_id)}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                                </Link>
+                              ))}
+                            </div>
+                          </section>
+                        )
+                      })
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
 

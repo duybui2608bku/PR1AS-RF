@@ -4,12 +4,15 @@ import * as React from "react"
 import { Flame, CheckCircle2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
+
 import { boostService } from "@/services/boost.service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { queryKeys } from "@/lib/query-keys"
 
 export function AttendanceWidget() {
+  const t = useTranslations("WorkerBoost.attendance")
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({
@@ -24,15 +27,21 @@ export function AttendanceWidget() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.boostPoints })
       if (result.already_checked_in) {
-        toast.info("Bạn đã điểm danh hôm nay rồi")
+        toast.info(t("alreadyCheckedIn"))
         return
       }
-      const parts: string[] = [`+${result.points_earned} điểm`]
-      if (result.streak_bonus_earned > 0) parts.push(`(+${result.streak_bonus_earned} streak bonus)`)
-      if (result.monthly_bonus_earned > 0) parts.push(`(+${result.monthly_bonus_earned} monthly bonus!)`)
-      toast.success(`Điểm danh thành công! ${parts.join(" ")}`)
+      const parts: string[] = [
+        t("pointsEarned", { points: result.points_earned }),
+      ]
+      if (result.streak_bonus_earned > 0) {
+        parts.push(t("streakBonus", { points: result.streak_bonus_earned }))
+      }
+      if (result.monthly_bonus_earned > 0) {
+        parts.push(t("monthlyBonus", { points: result.monthly_bonus_earned }))
+      }
+      toast.success(t("success", { details: parts.join(" ") }))
     },
-    onError: () => toast.error("Không thể điểm danh, thử lại sau"),
+    onError: () => toast.error(t("error")),
   })
 
   const today = new Date().toDateString()
@@ -50,12 +59,20 @@ export function AttendanceWidget() {
           </div>
           <div>
             <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
-              Chuỗi điểm danh:{" "}
-              <span className="font-bold">{isLoading ? "…" : (wallet?.attendance_streak ?? 0)} ngày</span>
+              {t("streakLabel")}{" "}
+              <span className="font-bold">
+                {isLoading
+                  ? "..."
+                  : t("streakValue", {
+                      days: wallet?.attendance_streak ?? 0,
+                    })}
+              </span>
             </p>
             <p className="text-xs text-orange-700 dark:text-orange-300">
-              Số điểm:{" "}
-              <span className="font-semibold">{isLoading ? "…" : (wallet?.balance ?? 0)}</span>
+              {t("balanceLabel")}{" "}
+              <span className="font-semibold">
+                {isLoading ? "..." : (wallet?.balance ?? 0)}
+              </span>
             </p>
           </div>
         </div>
@@ -76,7 +93,7 @@ export function AttendanceWidget() {
           ) : checkedInToday ? (
             <CheckCircle2 className="mr-1 h-4 w-4" />
           ) : null}
-          {checkedInToday ? "Đã điểm danh" : "Điểm danh"}
+          {checkedInToday ? t("checkedInButton") : t("checkInButton")}
         </Button>
       </CardContent>
     </Card>

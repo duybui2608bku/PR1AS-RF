@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server"
+
 import { createPageMetadata } from "@/lib/seo"
 
 type WorkerProfileLayoutProps = {
@@ -10,11 +12,11 @@ type WorkerProfileMetadataProps = {
 
 export async function generateMetadata({ params }: WorkerProfileMetadataProps) {
   const { id } = await params
+  const t = await getTranslations("SEO")
 
   return createPageMetadata({
-    title: "Hồ sơ worker",
-    description:
-      "Xem hồ sơ worker, dịch vụ, đánh giá, lịch làm việc và đặt booking trực tuyến trên PR1AS.",
+    title: t("workerProfileTitle"),
+    description: t("workerProfileDescription"),
     path: `/worker/${id}`,
   })
 }

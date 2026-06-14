@@ -31,9 +31,12 @@ export default async function PricingPage() {
   const locale = await getLocale()
   const cookieStore = await cookies()
   const currencyCookie = cookieStore.get(CURRENCY_COOKIE_NAME)?.value
-  const currency = isSupportedCurrency(currencyCookie) ? currencyCookie : DEFAULT_CURRENCY
+  const currency = isSupportedCurrency(currencyCookie)
+    ? currencyCookie
+    : DEFAULT_CURRENCY
   const localeTag = INTL_LOCALE_TAGS[locale as SupportedLocale] ?? "vi-VN"
-  const formatCurrency = (amount: number) => formatMoney(amount, currency, localeTag)
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, currency, localeTag)
   let packages: PricingPackage[] = []
   let fetchError = false
 
@@ -111,7 +114,7 @@ export default async function PricingPage() {
   ]
 
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       {/* ── Hero ── */}
       <section className="container mx-auto px-4 py-10 md:py-20">
         <div className="mx-auto max-w-2xl text-center">

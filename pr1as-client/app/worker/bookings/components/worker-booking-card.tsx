@@ -10,13 +10,14 @@ import {
   Quote,
   User2,
 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
 
 import {
   bookingStatusBadgeClass,
-  bookingStatusLabel,
   formatDateTime,
   getClientName,
   getServiceLabel,
@@ -36,6 +37,10 @@ export function WorkerBookingCard({
   actionLoading,
   onOpenActions,
 }: WorkerBookingCardProps) {
+  const t = useTranslations("WorkerBookings")
+  const tStatus = useTranslations("Bookings.statusLabels")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale] ?? INTL_LOCALE_TAGS.vi
   const expired = isBookingExpired(
     booking.schedule,
     booking.status,
@@ -48,7 +53,7 @@ export function WorkerBookingCard({
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0 flex-1">
           <p className="truncate text-base leading-tight font-semibold">
-            {getServiceLabel(booking)}
+            {getServiceLabel(booking, locale)}
           </p>
           <p className="mt-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
             {booking.service_code}
@@ -60,29 +65,29 @@ export function WorkerBookingCard({
             bookingStatusBadgeClass[displayStatus]
           )}
         >
-          {bookingStatusLabel[displayStatus]}
+          {tStatus(displayStatus)}
         </span>
       </div>
 
       <div className="mt-3 space-y-3 px-4">
-        <InfoRow icon={User2} label="Khách hàng">
+        <InfoRow icon={User2} label={t("customer")}>
           <span className="font-medium">
             {getClientName(booking.client_id)}
           </span>
         </InfoRow>
 
-        <InfoRow icon={CalendarDays} label="Lịch hẹn">
+        <InfoRow icon={CalendarDays} label={t("appointment")}>
           <span className="font-medium">
-            {formatDateTime(booking.schedule.start_time)}
+            {formatDateTime(booking.schedule.start_time, localeTag)}
           </span>
           <span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <Clock3 className="size-3" />
-            Thời lượng {booking.schedule.duration_hours} giờ
+            {t("duration", { hours: booking.schedule.duration_hours })}
           </span>
         </InfoRow>
 
         {booking.client_notes ? (
-          <InfoRow icon={Quote} label="Ghi chú khách hàng">
+          <InfoRow icon={Quote} label={t("customerNotes")}>
             <span className="whitespace-pre-wrap text-muted-foreground">
               {booking.client_notes}
             </span>
@@ -90,7 +95,7 @@ export function WorkerBookingCard({
         ) : null}
 
         {booking.worker_response ? (
-          <InfoRow icon={MessageSquare} label="Phản hồi của bạn">
+          <InfoRow icon={MessageSquare} label={t("yourResponse")}>
             <span className="whitespace-pre-wrap text-muted-foreground">
               {booking.worker_response}
             </span>
@@ -109,14 +114,14 @@ export function WorkerBookingCard({
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <>
-              Hành động
+              {t("actions")}
               <ChevronRight className="size-4" />
             </>
           )}
         </button>
       ) : (
         <div className="mt-3.5 border-t py-3.5 text-center text-sm text-muted-foreground">
-          Không có hành động
+          {t("noActions")}
         </div>
       )}
     </div>

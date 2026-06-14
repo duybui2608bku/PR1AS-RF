@@ -1027,8 +1027,26 @@
     "notFoundDescription": "Trang bạn đang tìm có thể đã được chuyển hoặc xóa."
   },
   "SEO": {
+    "keywords": "PR1AS, booking dịch vụ, freelancer Việt Nam, đặt lịch dịch vụ, worker marketplace",
+    "appDescription": "PR1AS kết nối khách hàng với worker và freelancer uy tín để tìm dịch vụ, đặt lịch, quản lý booking và thanh toán trực tuyến.",
     "servicesTitle": "Tìm dịch vụ và worker",
-    "servicesDescription": "Tìm kiếm worker phù hợp, lọc theo dịch vụ và khu vực, xem hồ sơ và đặt lịch trực tuyến trên PR1AS."
+    "servicesDescription": "Tìm kiếm worker phù hợp, lọc theo dịch vụ và khu vực, xem hồ sơ và đặt lịch trực tuyến trên PR1AS.",
+    "postsTitle": "Bảng tin",
+    "postsDescription": "Cập nhật bài viết, ý tưởng dự án, hashtag nổi bật và kết nối cộng đồng người dùng PR1AS.",
+    "termsTitle": "Điều khoản sử dụng",
+    "termsDescription": "Điều khoản sử dụng PR1AS cho tài khoản, đặt lịch, thanh toán, gói dịch vụ và trách nhiệm của người dùng.",
+    "privacyTitle": "Chính sách bảo mật",
+    "privacyDescription": "Chính sách bảo mật của PR1AS về cách thu thập, sử dụng, chia sẻ và bảo vệ thông tin cá nhân của người dùng.",
+    "workerProfileTitle": "Hồ sơ worker",
+    "workerProfileDescription": "Xem hồ sơ worker, dịch vụ, đánh giá, lịch làm việc và đặt booking trực tuyến trên PR1AS.",
+    "chatTitle": "Chat",
+    "clientTitle": "Khu vực khách hàng",
+    "dashboardTitle": "Quản trị",
+    "disputesTitle": "Tranh chấp",
+    "accountTitle": "Tài khoản",
+    "workerSetupTitle": "Thiết lập worker",
+    "workerScheduleTitle": "Lịch làm việc",
+    "workerBookingsTitle": "Booking worker"
   },
   "Home": {
     "heroLocationLabel": "Địa điểm",
@@ -1086,29 +1104,29 @@
     "workerNotFound": "Không tìm thấy thợ của booking.",
     "complaintGroupError": "Không thể mở nhóm khiếu nại.",
     "statusLabels": {
-      "PENDING": "Đang chờ",
-      "REJECTED": "Đã từ chối",
-      "CONFIRMED": "Đã xác nhận",
-      "IN_PROGRESS": "Đang thực hiện",
-      "PENDING_CLIENT_ACCEPTANCE": "Chờ khách xác nhận",
-      "COMPLETED": "Đã hoàn thành",
-      "CANCELLED": "Đã hủy",
-      "DISPUTED": "Khiếu nại",
-      "EXPIRED": "Hết hạn"
+      "pending": "Đang chờ",
+      "rejected": "Đã từ chối",
+      "confirmed": "Đã xác nhận",
+      "in_progress": "Đang thực hiện",
+      "pending_client_acceptance": "Chờ khách xác nhận",
+      "completed": "Đã hoàn thành",
+      "cancelled": "Đã hủy",
+      "disputed": "Khiếu nại",
+      "expired": "Hết hạn"
     },
     "cancellationReasons": {
-      "CLIENT_REQUEST": "Khách hàng yêu cầu",
-      "WORKER_UNAVAILABLE": "Thợ không có sẵn",
-      "SCHEDULE_CONFLICT": "Trùng lịch",
-      "EMERGENCY": "Khẩn cấp",
-      "POLICY_VIOLATION": "Vi phạm chính sách",
-      "OTHER": "Khác"
+      "client_request": "Khách hàng yêu cầu",
+      "worker_unavailable": "Thợ không có sẵn",
+      "schedule_conflict": "Trùng lịch",
+      "emergency": "Khẩn cấp",
+      "policy_violation": "Vi phạm chính sách",
+      "other": "Khác"
     },
     "cancelledBy": {
-      "CLIENT": "Khách hàng",
-      "WORKER": "Thợ",
-      "ADMIN": "Quản trị viên",
-      "SYSTEM": "Hệ thống"
+      "client": "Khách hàng",
+      "worker": "Thợ",
+      "admin": "Quản trị viên",
+      "system": "Hệ thống"
     },
     "disputeReasons": {
       "SERVICE_NOT_AS_DESCRIBED": "Dịch vụ không đúng mô tả",
@@ -1128,6 +1146,243 @@
       "notesPlaceholder": "Mô tả thêm lý do hủy (tối đa 500 ký tự)",
       "confirmButton": "Xác nhận hủy",
       "errorSelectReason": "Vui lòng chọn lý do hủy."
+    }
+  },
+  "WorkerBookings": {
+    "title": "Booking nhận việc",
+    "allStatus": "Tất cả trạng thái",
+    "status": "Trạng thái",
+    "statusPlaceholder": "Chọn trạng thái",
+    "serviceCode": "Mã dịch vụ",
+    "serviceCodePlaceholder": "VD: CLEANING",
+    "dateRange": "Khoảng ngày",
+    "resetFilters": "Xóa bộ lọc",
+    "search": "Tìm kiếm",
+    "advancedFilters": "Bộ lọc nâng cao",
+    "reset": "Đặt lại",
+    "apply": "Áp dụng",
+    "close": "Đóng",
+    "listTitle": "Danh sách booking",
+    "refreshList": "Làm mới danh sách",
+    "loadError": "Không tải được danh sách booking worker",
+    "tryAgain": "Thử lại",
+    "noBookings": "Chưa có booking nào",
+    "service": "Dịch vụ",
+    "customer": "Khách hàng",
+    "appointment": "Lịch hẹn",
+    "notes": "Ghi chú",
+    "actions": "Hành động",
+    "duration": "Thời lượng: {hours} giờ",
+    "responsePrefix": "Phản hồi:",
+    "prev": "Trước",
+    "next": "Sau",
+    "noActions": "Không có hành động",
+    "selectAction": "Chọn hành động",
+    "selectActionAria": "Chọn hành động booking",
+    "complaintGroup": "Nhóm khiếu nại",
+    "openComplaintGroup": "Mở nhóm khiếu nại",
+    "complaintGroupError": "Không thể mở nhóm khiếu nại.",
+    "customerNotes": "Ghi chú khách hàng",
+    "yourResponse": "Phản hồi của bạn",
+    "statusActions": {
+      "confirm": {
+        "title": "Xác nhận booking",
+        "description": "Booking sẽ chuyển sang trạng thái đã xác nhận.",
+        "confirm": "Xác nhận"
+      },
+      "reject": {
+        "title": "Từ chối booking",
+        "description": "Booking sẽ bị từ chối và không thể tiếp tục xử lý.",
+        "confirm": "Từ chối"
+      },
+      "start": {
+        "title": "Bắt đầu booking",
+        "description": "Booking sẽ chuyển sang trạng thái đang thực hiện.",
+        "confirm": "Bắt đầu"
+      },
+      "sendCompletion": {
+        "title": "Gửi xác nhận hoàn thành",
+        "description": "Booking sẽ chuyển sang trạng thái chờ khách hàng xác nhận hoàn thành.",
+        "confirm": "Gửi xác nhận"
+      },
+      "complete": {
+        "title": "Hoàn thành booking",
+        "description": "Xác nhận booking đã hoàn thành cho khách hàng.",
+        "confirm": "Hoàn thành"
+      },
+      "update": {
+        "title": "Cập nhật booking",
+        "description": "Trạng thái booking sẽ được cập nhật.",
+        "confirm": "Cập nhật"
+      },
+      "cancel": {
+        "title": "Hủy booking",
+        "description": "Vui lòng chọn lý do hủy để khách hàng nắm được tình trạng.",
+        "confirm": "Xác nhận hủy"
+      },
+      "response": {
+        "title": "Cập nhật phản hồi",
+        "description": "Phản hồi này sẽ hiển thị cho khách hàng trong booking.",
+        "confirm": "Lưu phản hồi"
+      }
+    },
+    "actionDialog": {
+      "reason": "Lý do",
+      "reasonPlaceholder": "Chọn lý do hủy",
+      "notes": "Ghi chú",
+      "notesPlaceholder": "Nhập ghi chú cho khách hàng",
+      "responseLabel": "Phản hồi cho khách hàng",
+      "optional": "(tùy chọn)",
+      "responsePlaceholder": "Nhập phản hồi hiển thị cho khách hàng",
+      "statusResponsePlaceholder": "Cập nhật khi chuyển sang \"{status}\"",
+      "close": "Đóng"
+    },
+    "actionSheet": {
+      "description": "Hành động booking",
+      "cancel": "Hủy"
+    }
+  },
+  "WorkerBoost": {
+    "page": {
+      "title": "Boost Hồ sơ",
+      "description": "Dùng điểm tích lũy để nâng thứ hạng hồ sơ trong kết quả tìm kiếm",
+      "currentPoints": "Số điểm hiện tại",
+      "dailyCheckIn": "Điểm danh hàng ngày",
+      "earnTitle": "Cách kiếm điểm:",
+      "earnDaily": "• Điểm danh mỗi ngày: <strong>+5 điểm</strong>",
+      "earnWeekly": "• Chuỗi 7 ngày liên tiếp: <strong>+25 điểm bonus</strong>",
+      "earnMonthly": "• Chuỗi 30 ngày liên tiếp: <strong>+100 điểm bonus</strong>",
+      "earnGold": "• Đăng ký / gia hạn gói Gold: <strong>+50 điểm</strong>",
+      "earnDiamond": "• Đăng ký / gia hạn gói Diamond: <strong>+150 điểm</strong>",
+      "activateBoost": "Kích hoạt Boost"
+    },
+    "attendance": {
+      "alreadyCheckedIn": "Bạn đã điểm danh hôm nay rồi",
+      "pointsEarned": "+{points} điểm",
+      "streakBonus": "(+{points} điểm bonus chuỗi)",
+      "monthlyBonus": "(+{points} điểm bonus tháng!)",
+      "success": "Điểm danh thành công! {details}",
+      "error": "Không thể điểm danh, thử lại sau",
+      "streakLabel": "Chuỗi điểm danh:",
+      "streakValue": "{days} ngày",
+      "balanceLabel": "Số điểm:",
+      "checkedInButton": "Đã điểm danh",
+      "checkInButton": "Điểm danh"
+    },
+    "panel": {
+      "featuredBadge": "Nổi bật",
+      "basicBadge": "Cơ bản",
+      "points": "{count} điểm",
+      "hours": "{count} giờ",
+      "notEnoughPointsDetail": "Không đủ điểm (cần thêm {points} điểm)",
+      "activeButton": "Đang có boost chạy",
+      "notEnoughPointsButton": "Không đủ điểm",
+      "activateButton": "Kích hoạt",
+      "activationSuccess": "Boost {type} đã kích hoạt! Còn hiệu lực đến {expiresAt}",
+      "activationError": "Không thể kích hoạt boost",
+      "activeBoost": "Boost đang chạy: {type}",
+      "expires": "Hết hạn {time}",
+      "basicTitle": "Boost Cơ bản",
+      "basicDescription": "Hồ sơ xuất hiện ở vị trí ưu tiên trong kết quả tìm kiếm, hiển thị badge 'Đang hoạt động'.",
+      "featuredTitle": "Boost Nổi bật",
+      "featuredDescription": "Hồ sơ luôn đứng đầu kết quả, viền vàng nổi bật và badge 'Nổi bật' thu hút client.",
+      "historyTitle": "Lịch sử điểm gần đây",
+      "loading": "Đang tải...",
+      "emptyHistory": "Chưa có giao dịch điểm nào",
+      "reasons": {
+        "attendance": "Điểm danh hàng ngày",
+        "attendanceStreakBonus": "Bonus chuỗi điểm danh",
+        "attendanceMonthlyBonus": "Bonus 30 ngày liên tiếp",
+        "goldPackage": "Đăng ký gói Gold",
+        "diamondPackage": "Đăng ký gói Diamond",
+        "boostSpend": "Kích hoạt Boost",
+        "adminAdjust": "Điều chỉnh bởi Admin"
+      }
+    }
+  },
+  "WorkerBookingSchedule": {
+    "title": "Lịch làm việc",
+    "bookingList": "Danh sách booking",
+    "tabs": {
+      "bookings": "Lịch booking",
+      "blackouts": "Ngày nghỉ"
+    },
+    "previousMonth": "Tháng trước",
+    "nextMonth": "Tháng sau",
+    "today": "Hôm nay",
+    "refresh": "Làm mới",
+    "stats": {
+      "thisMonth": "Tháng này",
+      "needsAction": "Cần xử lý",
+      "today": "Hôm nay",
+      "monthBookings": "Booking trong tháng",
+      "activeBookings": "Đang cần xử lý"
+    },
+    "duration": {
+      "hourShort": "h",
+      "minuteShort": "m"
+    },
+    "weekdays": {
+      "mon": "Thứ 2",
+      "tue": "Thứ 3",
+      "wed": "Thứ 4",
+      "thu": "Thứ 5",
+      "fri": "Thứ 6",
+      "sat": "Thứ 7",
+      "sun": "CN"
+    },
+    "loadErrorTitle": "Không tải được lịch booking",
+    "loadErrorDescription": "Vui lòng thử lại hoặc kiểm tra kết nối API.",
+    "tryAgain": "Thử lại",
+    "moreBookings": "+{count} booking khác",
+    "emptyMonth": "Chưa có booking trong tháng này",
+    "bookingCount": "{count} booking",
+    "blackouts": {
+      "title": "Ngày nghỉ của bạn",
+      "description": "Đánh dấu các ngày/khung giờ bạn không nhận booking. Khách sẽ không thể đặt lịch trong khoảng này.",
+      "refresh": "Làm mới",
+      "addButton": "Thêm ngày nghỉ",
+      "loadErrorTitle": "Không tải được danh sách ngày nghỉ",
+      "loadErrorDescription": "Vui lòng thử lại.",
+      "tryAgain": "Thử lại",
+      "emptyTitle": "Chưa có ngày nghỉ nào",
+      "emptyDescription": "Thêm ngày nghỉ để chặn khách đặt lịch trong khoảng thời gian đó.",
+      "upcoming": "Sắp tới",
+      "past": "Đã qua",
+      "emptyUpcoming": "Không có ngày nghỉ sắp tới.",
+      "addTitle": "Thêm ngày nghỉ",
+      "addDescription": "Khoảng thời gian này sẽ chặn khách đặt lịch với bạn.",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "allDay": "Nghỉ cả ngày",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "reasonLabel": "Lý do (tuỳ chọn)",
+      "reasonPlaceholder": "Ví dụ: nghỉ phép, đi công tác...",
+      "cancel": "Huỷ",
+      "save": "Lưu",
+      "delete": "Xoá",
+      "deleteAria": "Xoá ngày nghỉ",
+      "deleteTitle": "Xoá ngày nghỉ?",
+      "deleteDescription": "Khách có thể bắt đầu đặt lịch trong khoảng thời gian này sau khi xoá.",
+      "addSuccess": "Đã thêm ngày nghỉ.",
+      "addError": "Không thể thêm ngày nghỉ.",
+      "deleteSuccess": "Đã xoá ngày nghỉ.",
+      "deleteError": "Không thể xoá ngày nghỉ.",
+      "errors": {
+        "missingDates": "Vui lòng chọn ngày bắt đầu và ngày kết thúc.",
+        "missingTimes": "Vui lòng chọn giờ bắt đầu và giờ kết thúc.",
+        "invalidTime": "Thời gian không hợp lệ.",
+        "endAfterStart": "Thời gian kết thúc phải sau thời gian bắt đầu.",
+        "pastDate": "Không thể đặt ngày nghỉ trong quá khứ.",
+        "reasonTooLong": "Lý do không được vượt quá {max} ký tự."
+      },
+      "range": {
+        "allDaySingle": "Cả ngày {date}",
+        "allDayRange": "{start} → {end} (cả ngày)",
+        "timedSameDay": "{date} · {start} – {end}",
+        "timedRange": "{start} → {end}"
+      }
     }
   },
   "Pricing": {

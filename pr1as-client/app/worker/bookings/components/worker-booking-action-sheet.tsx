@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ChevronRight, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 import {
   BottomSheet,
@@ -34,12 +35,14 @@ export function WorkerBookingActionSheet({
   items,
   onOpenChange,
 }: WorkerBookingActionSheetProps) {
+  const t = useTranslations("WorkerBookings.actionSheet")
+
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="px-5 pb-2 text-center">
           <BottomSheetDescription className="text-xs">
-            Hành động booking
+            {t("description")}
           </BottomSheetDescription>
           <BottomSheetTitle className="truncate text-sm">
             {title}
@@ -92,7 +95,7 @@ export function WorkerBookingActionSheet({
               type="button"
               className="h-12 w-full rounded-2xl border bg-card text-base font-semibold transition-colors hover:bg-accent active:scale-[0.99]"
             >
-              Huỷ
+              {t("cancel")}
             </button>
           </BottomSheetClose>
         </div>

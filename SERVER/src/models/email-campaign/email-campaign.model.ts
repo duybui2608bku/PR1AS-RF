@@ -1,16 +1,44 @@
 import mongoose, { Schema } from "mongoose";
 import {
+  DEFAULT_CAMPAIGN_LOCALE,
+  EMAIL_CAMPAIGN_LOCALES,
   EmailCampaignAudience,
   EmailCampaignStatus,
 } from "../../constants/email-campaign";
 import { modelsName } from "../models.name";
 import { IEmailCampaignDocument } from "../../types/email-campaign";
 
+// Per-locale subject / body. Stored as a plain sub-document so each language
+// is an optional field; only the campaign's default_locale is guaranteed.
+const localizedSubjectSchema = new Schema(
+  {
+    vi: { type: String, trim: true, maxlength: 500, default: "" },
+    en: { type: String, trim: true, maxlength: 500, default: "" },
+    zh: { type: String, trim: true, maxlength: 500, default: "" },
+  },
+  { _id: false }
+);
+
+const localizedHtmlSchema = new Schema(
+  {
+    vi: { type: String, default: "" },
+    en: { type: String, default: "" },
+    zh: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const emailCampaignSchema = new Schema<IEmailCampaignDocument>(
   {
     name: { type: String, required: true, trim: true, maxlength: 200 },
-    subject: { type: String, required: true, trim: true, maxlength: 500 },
-    html_content: { type: String, required: true },
+    subject: { type: localizedSubjectSchema, required: true },
+    html_content: { type: localizedHtmlSchema, required: true },
+    default_locale: {
+      type: String,
+      enum: EMAIL_CAMPAIGN_LOCALES,
+      default: DEFAULT_CAMPAIGN_LOCALE,
+      required: true,
+    },
     audience: {
       type: String,
       enum: Object.values(EmailCampaignAudience),

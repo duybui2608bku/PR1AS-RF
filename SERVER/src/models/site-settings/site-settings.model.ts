@@ -3,6 +3,16 @@ import { modelsName } from "../models.name";
 import { SITE_SETTINGS_DEFAULTS } from "../../constants/site-settings";
 import { ISiteSettingsDocument } from "../../types/site-settings";
 
+const localizedTextSchema = (maxlength: number) =>
+  new Schema(
+    {
+      vi: { type: String, trim: true, maxlength, default: "" },
+      en: { type: String, trim: true, maxlength, default: "" },
+      zh: { type: String, trim: true, maxlength, default: "" },
+    },
+    { _id: false }
+  );
+
 const siteSettingsSchema = new Schema<ISiteSettingsDocument>(
   {
     name: {
@@ -20,10 +30,8 @@ const siteSettingsSchema = new Schema<ISiteSettingsDocument>(
       default: SITE_SETTINGS_DEFAULTS.shortName,
     },
     description: {
-      type: String,
-      trim: true,
-      maxlength: 300,
-      default: SITE_SETTINGS_DEFAULTS.description,
+      type: localizedTextSchema(300),
+      default: () => ({ ...SITE_SETTINGS_DEFAULTS.description }),
     },
     logoUrl: { type: String, trim: true, maxlength: 500, default: "" },
     faviconUrl: { type: String, trim: true, maxlength: 500, default: "" },
@@ -41,10 +49,8 @@ const siteSettingsSchema = new Schema<ISiteSettingsDocument>(
     },
     ogImageUrl: { type: String, trim: true, maxlength: 500, default: "" },
     keywords: {
-      type: String,
-      trim: true,
-      maxlength: 500,
-      default: SITE_SETTINGS_DEFAULTS.keywords,
+      type: localizedTextSchema(500),
+      default: () => ({ ...SITE_SETTINGS_DEFAULTS.keywords }),
     },
     twitterHandle: { type: String, trim: true, maxlength: 50, default: "" },
     facebook: {
@@ -53,23 +59,23 @@ const siteSettingsSchema = new Schema<ISiteSettingsDocument>(
       maxlength: 500,
       default: SITE_SETTINGS_DEFAULTS.facebook,
     },
-    twitter: {
+    tiktok: {
       type: String,
       trim: true,
       maxlength: 500,
-      default: SITE_SETTINGS_DEFAULTS.twitter,
+      default: SITE_SETTINGS_DEFAULTS.tiktok,
     },
-    zalo: {
+    thread: {
       type: String,
       trim: true,
       maxlength: 500,
-      default: SITE_SETTINGS_DEFAULTS.zalo,
+      default: SITE_SETTINGS_DEFAULTS.thread,
     },
-    github: {
+    instagram: {
       type: String,
       trim: true,
       maxlength: 500,
-      default: SITE_SETTINGS_DEFAULTS.github,
+      default: SITE_SETTINGS_DEFAULTS.instagram,
     },
     maintenanceMode: {
       type: Boolean,

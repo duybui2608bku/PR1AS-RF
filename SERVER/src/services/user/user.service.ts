@@ -215,6 +215,12 @@ export class UserService {
     return user;
   }
 
+  async updateLocale(userId: string, locale: string): Promise<IUserDocument> {
+    const user = await userRepository.updateLocale(userId, locale);
+    if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    return user;
+  }
+
   async getAllUsers(
     query: GetUsersQuery & { skip: number }
   ): Promise<{ users: IUserDocument[]; total: number }> {

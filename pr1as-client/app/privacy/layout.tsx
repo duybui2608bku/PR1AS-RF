@@ -1,11 +1,15 @@
+import { getTranslations } from "next-intl/server"
+
 import { createPageMetadata } from "@/lib/seo"
 
-export const metadata = createPageMetadata({
-  title: "Chính sách bảo mật",
-  description:
-    "Chính sách bảo mật của PR1AS về cách thu thập, sử dụng, chia sẻ và bảo vệ thông tin cá nhân của người dùng.",
-  path: "/privacy",
-})
+export async function generateMetadata() {
+  const t = await getTranslations("SEO")
+  return createPageMetadata({
+    title: t("privacyTitle"),
+    description: t("privacyDescription"),
+    path: "/privacy",
+  })
+}
 
 export default function PrivacyLayout({
   children,

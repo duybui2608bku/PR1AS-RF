@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next"
 import { Montserrat, Geist_Mono } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
-import { getLocale, getMessages } from "next-intl/server"
+import { getLocale, getMessages, getTranslations } from "next-intl/server"
 
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import { siteConfig } from "@/config/site"
-import { defaultKeywords } from "@/lib/seo"
+import { OG_LOCALE_TAGS, getLocalizedKeywords } from "@/lib/seo"
+import { DEFAULT_LOCALE, pickLocalized, type SupportedLocale } from "@/lib/locale"
 import { getServerSiteSettings } from "@/lib/site-settings-server"
 import { cn } from "@/lib/utils"
 
@@ -14,16 +15,25 @@ const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-sans" })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getServerSiteSettings()
+  const [settings, locale, localizedKeywords, t] = await Promise.all([
+    getServerSiteSettings(),
+    getLocale(),
+    getLocalizedKeywords(),
+    getTranslations("SEO"),
+  ])
 
+  const ogLocale =
+    OG_LOCALE_TAGS[locale as SupportedLocale] ?? OG_LOCALE_TAGS[DEFAULT_LOCALE]
   const name = settings.name || siteConfig.name
-  const description = settings.description || siteConfig.description
+  const description =
+    pickLocalized(settings.description, locale) || t("appDescription")
   const siteUrl = settings.siteUrl || siteConfig.url
   const favicon = settings.faviconUrl || "/favicon.ico"
   const ogImage = settings.ogImageUrl || siteConfig.ogImage
-  const keywords = settings.keywords
-    ? settings.keywords.split(",").map((k) => k.trim()).filter(Boolean)
-    : defaultKeywords
+  const settingsKeywords = pickLocalized(settings.keywords, locale)
+  const keywords = settingsKeywords
+    ? settingsKeywords.split(",").map((k) => k.trim()).filter(Boolean)
+    : localizedKeywords
 
   return {
     title: {
@@ -50,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: siteUrl,
       siteName: name,
       images: [{ url: ogImage }],
-      locale: "vi_VN",
+      locale: ogLocale,
       type: "website",
     },
     twitter: {

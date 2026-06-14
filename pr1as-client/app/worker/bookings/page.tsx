@@ -14,6 +14,7 @@ import {
   Search,
   XCircle,
 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import type { DateRange } from "react-day-picker"
 
@@ -46,6 +47,7 @@ import {
   useUpdateBookingStatus,
 } from "@/lib/hooks/use-bookings"
 import { useCreateComplaintConversation } from "@/lib/hooks/use-chat"
+import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import {
@@ -69,7 +71,6 @@ import { WorkerBookingCard } from "./components/worker-booking-card"
 import { WorkerBookingsMobileFilters } from "./components/worker-bookings-mobile-filters"
 import {
   bookingStatusBadgeClass,
-  bookingStatusLabel,
   formatDateTime,
   getBookingId,
   getClientName,
@@ -79,142 +80,124 @@ import {
 
 const PAGE_SIZE = 10
 
-const STATUS_OPTIONS: { value: "all" | BookingStatus; label: string }[] = [
-  { value: "all", label: "Tất cả trạng thái" },
-  {
-    value: BookingStatus.PENDING,
-    label: bookingStatusLabel[BookingStatus.PENDING],
-  },
-  {
-    value: BookingStatus.CONFIRMED,
-    label: bookingStatusLabel[BookingStatus.CONFIRMED],
-  },
-  {
-    value: BookingStatus.IN_PROGRESS,
-    label: bookingStatusLabel[BookingStatus.IN_PROGRESS],
-  },
-  {
-    value: BookingStatus.PENDING_CLIENT_ACCEPTANCE,
-    label: bookingStatusLabel[BookingStatus.PENDING_CLIENT_ACCEPTANCE],
-  },
-  {
-    value: BookingStatus.COMPLETED,
-    label: bookingStatusLabel[BookingStatus.COMPLETED],
-  },
-  {
-    value: BookingStatus.CANCELLED,
-    label: bookingStatusLabel[BookingStatus.CANCELLED],
-  },
-  {
-    value: BookingStatus.REJECTED,
-    label: bookingStatusLabel[BookingStatus.REJECTED],
-  },
-  {
-    value: BookingStatus.DISPUTED,
-    label: bookingStatusLabel[BookingStatus.DISPUTED],
-  },
-  {
-    value: BookingStatus.EXPIRED,
-    label: bookingStatusLabel[BookingStatus.EXPIRED],
-  },
+type WorkerBookingsTranslator = ReturnType<typeof useTranslations>
+
+const BOOKING_STATUS_OPTIONS: BookingStatus[] = [
+  BookingStatus.PENDING,
+  BookingStatus.CONFIRMED,
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+  BookingStatus.COMPLETED,
+  BookingStatus.CANCELLED,
+  BookingStatus.REJECTED,
+  BookingStatus.DISPUTED,
+  BookingStatus.EXPIRED,
 ]
 
-const buildStatusAction = (status: BookingStatus): WorkerBookingAction => {
+const buildStatusAction = (
+  status: BookingStatus,
+  t: WorkerBookingsTranslator
+): WorkerBookingAction => {
   switch (status) {
     case BookingStatus.CONFIRMED:
       return {
         type: "status",
         status,
-        title: "Xác nhận booking",
-        description: "Booking sẽ chuyển sang trạng thái đã xác nhận.",
-        confirmLabel: "Xác nhận",
+        title: t("statusActions.confirm.title"),
+        description: t("statusActions.confirm.description"),
+        confirmLabel: t("statusActions.confirm.confirm"),
       }
     case BookingStatus.REJECTED:
       return {
         type: "status",
         status,
-        title: "Từ chối booking",
-        description: "Booking sẽ bị từ chối và không thể tiếp tục xử lý.",
-        confirmLabel: "Từ chối",
+        title: t("statusActions.reject.title"),
+        description: t("statusActions.reject.description"),
+        confirmLabel: t("statusActions.reject.confirm"),
         destructive: true,
       }
     case BookingStatus.IN_PROGRESS:
       return {
         type: "status",
         status,
-        title: "Bắt đầu booking",
-        description: "Booking sẽ chuyển sang trạng thái đang thực hiện.",
-        confirmLabel: "Bắt đầu",
+        title: t("statusActions.start.title"),
+        description: t("statusActions.start.description"),
+        confirmLabel: t("statusActions.start.confirm"),
       }
     case BookingStatus.PENDING_CLIENT_ACCEPTANCE:
       return {
         type: "status",
         status,
-        title: "Gửi xác nhận hoàn thành",
-        description:
-          "Booking sẽ chuyển sang trạng thái chờ khách hàng xác nhận hoàn thành.",
-        confirmLabel: "Gửi xác nhận",
+        title: t("statusActions.sendCompletion.title"),
+        description: t("statusActions.sendCompletion.description"),
+        confirmLabel: t("statusActions.sendCompletion.confirm"),
       }
     case BookingStatus.COMPLETED:
       return {
         type: "status",
         status,
-        title: "Hoàn thành booking",
-        description: "Xác nhận booking đã hoàn thành cho khách hàng.",
-        confirmLabel: "Hoàn thành",
+        title: t("statusActions.complete.title"),
+        description: t("statusActions.complete.description"),
+        confirmLabel: t("statusActions.complete.confirm"),
       }
     default:
       return {
         type: "status",
         status,
-        title: "Cập nhật booking",
-        description: "Trạng thái booking sẽ được cập nhật.",
-        confirmLabel: "Cập nhật",
+        title: t("statusActions.update.title"),
+        description: t("statusActions.update.description"),
+        confirmLabel: t("statusActions.update.confirm"),
       }
   }
 }
 
-const cancelAction: WorkerBookingAction = {
+const buildCancelAction = (
+  t: WorkerBookingsTranslator
+): WorkerBookingAction => ({
   type: "cancel",
-  title: "Hủy booking",
-  description: "Vui lòng chọn lý do hủy để khách hàng nắm được tình trạng.",
-  confirmLabel: "Xác nhận hủy",
+  title: t("statusActions.cancel.title"),
+  description: t("statusActions.cancel.description"),
+  confirmLabel: t("statusActions.cancel.confirm"),
   destructive: true,
-}
+})
 
-const buildResponseAction = (booking: Booking): WorkerBookingAction => ({
+const buildResponseAction = (
+  booking: Booking,
+  t: WorkerBookingsTranslator
+): WorkerBookingAction => ({
   type: "response",
-  title: "Cập nhật phản hồi",
-  description: "Phản hồi này sẽ hiển thị cho khách hàng trong booking.",
-  confirmLabel: "Lưu phản hồi",
+  title: t("statusActions.response.title"),
+  description: t("statusActions.response.description"),
+  confirmLabel: t("statusActions.response.confirm"),
   initialResponse: booking.worker_response ?? "",
 })
 
 function getAvailableActions(
   booking: Booking,
-  expired: boolean
+  expired: boolean,
+  t: WorkerBookingsTranslator
 ): WorkerBookingAction[] {
   if (expired) return []
 
   switch (booking.status) {
     case BookingStatus.PENDING:
       return [
-        buildStatusAction(BookingStatus.CONFIRMED),
-        buildStatusAction(BookingStatus.REJECTED),
-        buildResponseAction(booking),
-        cancelAction,
+        buildStatusAction(BookingStatus.CONFIRMED, t),
+        buildStatusAction(BookingStatus.REJECTED, t),
+        buildResponseAction(booking, t),
+        buildCancelAction(t),
       ]
     case BookingStatus.CONFIRMED:
       return [
-        buildStatusAction(BookingStatus.IN_PROGRESS),
-        buildResponseAction(booking),
-        cancelAction,
+        buildStatusAction(BookingStatus.IN_PROGRESS, t),
+        buildResponseAction(booking, t),
+        buildCancelAction(t),
       ]
     case BookingStatus.IN_PROGRESS:
       return [
-        buildStatusAction(BookingStatus.PENDING_CLIENT_ACCEPTANCE),
-        buildResponseAction(booking),
-        cancelAction,
+        buildStatusAction(BookingStatus.PENDING_CLIENT_ACCEPTANCE, t),
+        buildResponseAction(booking, t),
+        buildCancelAction(t),
       ]
     default:
       return []
@@ -235,8 +218,11 @@ function getActionValue(action: WorkerBookingAction) {
 
 export default function WorkerBookingsPage() {
   const router = useRouter()
+  const t = useTranslations("WorkerBookings")
+  const tStatus = useTranslations("Bookings.statusLabels")
+  const locale = useLocale() as SupportedLocale
+  const localeTag = INTL_LOCALE_TAGS[locale] ?? INTL_LOCALE_TAGS.vi
   const [page, setPage] = React.useState(1)
-  // UI state (chưa apply)
   const [statusInput, setStatusInput] = React.useState<"all" | BookingStatus>(
     "all"
   )
@@ -244,7 +230,6 @@ export default function WorkerBookingsPage() {
   const [dateRangeInput, setDateRangeInput] = React.useState<
     DateRange | undefined
   >(undefined)
-  // Applied state (dùng trong query)
   const [statusFilter, setStatusFilter] = React.useState<"all" | BookingStatus>(
     "all"
   )
@@ -260,6 +245,19 @@ export default function WorkerBookingsPage() {
   const [complaintLoadingId, setComplaintLoadingId] = React.useState<
     string | null
   >(null)
+
+  const statusOptions = React.useMemo<
+    { value: "all" | BookingStatus; label: string }[]
+  >(
+    () => [
+      { value: "all", label: t("allStatus") },
+      ...BOOKING_STATUS_OPTIONS.map((status) => ({
+        value: status,
+        label: tStatus(status),
+      })),
+    ],
+    [t, tStatus]
+  )
 
   const query = React.useMemo<BookingListQuery>(
     () => ({
@@ -308,7 +306,6 @@ export default function WorkerBookingsPage() {
     setPage(1)
   }
 
-  // Mobile: chip áp dụng ngay trạng thái
   const handleMobileStatusChange = (value: "all" | BookingStatus) => {
     setStatusInput(value)
     setStatusFilter(value)
@@ -352,7 +349,7 @@ export default function WorkerBookingsPage() {
       const conversation = await complaintMutation.mutateAsync(bookingId)
       router.push(`/chat/group?group=${conversation._id}`)
     } catch (error) {
-      toast.error(getErrorMessage(error, "Không thể mở nhóm khiếu nại."))
+      toast.error(getErrorMessage(error, t("complaintGroupError")))
     } finally {
       setComplaintLoadingId(null)
     }
@@ -365,7 +362,7 @@ export default function WorkerBookingsPage() {
       booking.status,
       booking.created_at
     )
-    const actions = getAvailableActions(booking, expired)
+    const actions = getAvailableActions(booking, expired, t)
     const complaintLoading = complaintLoadingId === bookingId
     const hasComplaintAction = booking.status === BookingStatus.DISPUTED
     const hasActions = hasComplaintAction || actions.length > 0
@@ -375,10 +372,10 @@ export default function WorkerBookingsPage() {
         <div className="flex justify-end">
           <Select disabled value="none">
             <SelectTrigger className="h-9 w-full min-w-40 text-muted-foreground data-[size=default]:h-9 md:w-44">
-              <SelectValue placeholder="Không có hành động" />
+              <SelectValue placeholder={t("noActions")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Không có hành động</SelectItem>
+              <SelectItem value="none">{t("noActions")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -408,13 +405,13 @@ export default function WorkerBookingsPage() {
           disabled={complaintLoading}
         >
           <SelectTrigger
-            aria-label="Chọn hành động booking"
+            aria-label={t("selectActionAria")}
             className="h-9 w-full min-w-40 cursor-pointer px-3 data-[size=default]:h-9 md:w-44"
           >
             {complaintLoading ? (
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : null}
-            <SelectValue placeholder="Chọn hành động" />
+            <SelectValue placeholder={t("selectAction")} />
           </SelectTrigger>
           <SelectContent align="end" className="min-w-52">
             {hasComplaintAction ? (
@@ -423,7 +420,7 @@ export default function WorkerBookingsPage() {
                 className="cursor-pointer py-2 pr-8 pl-2.5"
               >
                 <MessageSquare className="size-4" />
-                Nhóm khiếu nại
+                {t("complaintGroup")}
               </SelectItem>
             ) : null}
             {actions.map((action) => {
@@ -463,7 +460,7 @@ export default function WorkerBookingsPage() {
     if (booking.status === BookingStatus.DISPUTED) {
       sheetItems.push({
         key: "complaint",
-        label: "Mở nhóm khiếu nại",
+        label: t("openComplaintGroup"),
         icon: MessageSquare,
         loading: complaintLoadingId === bookingId,
         onSelect: () => {
@@ -472,7 +469,7 @@ export default function WorkerBookingsPage() {
         },
       })
     }
-    getAvailableActions(booking, expired).forEach((action) => {
+    getAvailableActions(booking, expired, t).forEach((action) => {
       sheetItems.push({
         key: getActionValue(action),
         label: action.confirmLabel,
@@ -487,20 +484,20 @@ export default function WorkerBookingsPage() {
   }
 
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <AuthGuard>
         <div className="container mx-auto px-4 py-6 md:py-8">
           <div className="mb-5 md:mb-6">
             <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight md:text-3xl">
               <CalendarCheck2 className="size-6 md:size-7" />
-              Booking nhận việc
+              {t("title")}
             </h1>
           </div>
 
           <Card className="mb-5 hidden md:block">
             <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1.5fr_auto]">
               <div className="grid gap-2">
-                <Label htmlFor="worker-filter-status">Trạng thái</Label>
+                <Label htmlFor="worker-filter-status">{t("status")}</Label>
                 <Select
                   value={statusInput}
                   onValueChange={(value) => {
@@ -511,10 +508,10 @@ export default function WorkerBookingsPage() {
                     id="worker-filter-status"
                     className="h-10 w-full data-[size=default]:h-10"
                   >
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder={t("statusPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_OPTIONS.map((option) => (
+                    {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -523,12 +520,14 @@ export default function WorkerBookingsPage() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="worker-filter-service">Mã dịch vụ</Label>
+                <Label htmlFor="worker-filter-service">
+                  {t("serviceCode")}
+                </Label>
                 <Input
                   id="worker-filter-service"
                   value={serviceCodeInput}
                   maxLength={40}
-                  placeholder="VD: CLEANING"
+                  placeholder={t("serviceCodePlaceholder")}
                   onChange={(event) => setServiceCodeInput(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") handleApplyFilters()
@@ -536,7 +535,7 @@ export default function WorkerBookingsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Khoảng ngày</Label>
+                <Label>{t("dateRange")}</Label>
                 <DateRangePicker
                   value={dateRangeInput}
                   onChange={setDateRangeInput}
@@ -552,26 +551,25 @@ export default function WorkerBookingsPage() {
                         variant="outline"
                         size="icon"
                         onClick={handleResetFilters}
-                        aria-label="Xoá bộ lọc"
+                        aria-label={t("resetFilters")}
                       >
                         <FilterX className="size-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Xoá bộ lọc</TooltipContent>
+                    <TooltipContent>{t("resetFilters")}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <Button className="flex-1" onClick={handleApplyFilters}>
                   <Search className="size-4" />
-                  Tìm kiếm
+                  {t("search")}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Mobile: bộ lọc nhanh + danh sách dạng card */}
           <div className="md:hidden">
             <WorkerBookingsMobileFilters
-              statusOptions={STATUS_OPTIONS}
+              statusOptions={statusOptions}
               statusValue={statusFilter}
               onStatusChange={handleMobileStatusChange}
               serviceCode={serviceCodeInput}
@@ -585,7 +583,7 @@ export default function WorkerBookingsPage() {
 
             <div className="mt-4 mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold">Danh sách booking</span>
+                <span className="text-sm font-semibold">{t("listTitle")}</span>
                 <Badge variant="outline">{total}</Badge>
               </div>
               <Button
@@ -594,7 +592,7 @@ export default function WorkerBookingsPage() {
                 className="size-8"
                 onClick={() => bookingsQuery.refetch()}
                 disabled={bookingsQuery.isFetching}
-                aria-label="Làm mới danh sách"
+                aria-label={t("refreshList")}
               >
                 <RefreshCw
                   className={cn(
@@ -612,21 +610,19 @@ export default function WorkerBookingsPage() {
             ) : bookingsQuery.isError ? (
               <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
                 <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
-                <p className="text-sm font-medium">
-                  Không tải được danh sách booking worker
-                </p>
+                <p className="text-sm font-medium">{t("loadError")}</p>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => bookingsQuery.refetch()}
                 >
-                  Thử lại
+                  {t("tryAgain")}
                 </Button>
               </div>
             ) : bookings.length === 0 ? (
               <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
                 <CalendarCheck2 className="size-9 text-muted-foreground" />
-                <p className="text-sm font-medium">Chưa có booking nào</p>
+                <p className="text-sm font-medium">{t("noBookings")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -637,7 +633,7 @@ export default function WorkerBookingsPage() {
                     booking.status,
                     booking.created_at
                   )
-                  const actions = getAvailableActions(booking, expired)
+                  const actions = getAvailableActions(booking, expired, t)
                   const hasActions =
                     booking.status === BookingStatus.DISPUTED ||
                     actions.length > 0
@@ -658,7 +654,7 @@ export default function WorkerBookingsPage() {
           <Card className="hidden md:block">
             <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-base">Danh sách booking</CardTitle>
+                <CardTitle className="text-base">{t("listTitle")}</CardTitle>
                 <Badge variant="outline">{total}</Badge>
               </div>
               <TooltipProvider>
@@ -670,7 +666,7 @@ export default function WorkerBookingsPage() {
                       className="size-8"
                       onClick={() => bookingsQuery.refetch()}
                       disabled={bookingsQuery.isFetching}
-                      aria-label="Làm mới danh sách"
+                      aria-label={t("refreshList")}
                     >
                       <RefreshCw
                         className={cn(
@@ -680,7 +676,7 @@ export default function WorkerBookingsPage() {
                       />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Làm mới</TooltipContent>
+                  <TooltipContent>{t("refreshList")}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </CardHeader>
@@ -692,106 +688,114 @@ export default function WorkerBookingsPage() {
               ) : bookingsQuery.isError ? (
                 <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
                   <AlertCircle className="size-9 text-red-600 dark:text-red-400" />
-                  <p className="text-sm font-medium">
-                    Không tải được danh sách booking worker
-                  </p>
+                  <p className="text-sm font-medium">{t("loadError")}</p>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => bookingsQuery.refetch()}
                   >
-                    Thử lại
+                    {t("tryAgain")}
                   </Button>
                 </div>
               ) : bookings.length === 0 ? (
                 <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
                   <CalendarCheck2 className="size-9 text-muted-foreground" />
-                  <p className="text-sm font-medium">Chưa có booking nào</p>
+                  <p className="text-sm font-medium">{t("noBookings")}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table className="min-w-[980px]">
-                      <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Dịch vụ</th>
-                          <th className="px-4 py-3 font-medium">Khách hàng</th>
-                          <th className="px-4 py-3 font-medium">Lịch hẹn</th>
-                          <th className="px-4 py-3 font-medium">Trạng thái</th>
-                          <th className="px-4 py-3 font-medium">Ghi chú</th>
-                          <th className="px-4 py-3 text-right font-medium">
-                            Hành động
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bookings.map((booking) => {
-                          const expired = isBookingExpired(
-                            booking.schedule,
-                            booking.status,
-                            booking.created_at
-                          )
-                          const displayStatus = expired
-                            ? BookingStatus.EXPIRED
-                            : booking.status
+                    <thead className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">
+                          {t("service")}
+                        </th>
+                        <th className="px-4 py-3 font-medium">
+                          {t("customer")}
+                        </th>
+                        <th className="px-4 py-3 font-medium">
+                          {t("appointment")}
+                        </th>
+                        <th className="px-4 py-3 font-medium">{t("status")}</th>
+                        <th className="px-4 py-3 font-medium">{t("notes")}</th>
+                        <th className="px-4 py-3 text-right font-medium">
+                          {t("actions")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookings.map((booking) => {
+                        const expired = isBookingExpired(
+                          booking.schedule,
+                          booking.status,
+                          booking.created_at
+                        )
+                        const displayStatus = expired
+                          ? BookingStatus.EXPIRED
+                          : booking.status
 
-                          return (
-                            <tr
-                              key={getBookingId(booking)}
-                              className="border-b align-top last:border-b-0"
-                            >
-                              <td className="px-4 py-3">
-                                <div className="font-medium">
-                                  {getServiceLabel(booking)}
+                        return (
+                          <tr
+                            key={getBookingId(booking)}
+                            className="border-b align-top last:border-b-0"
+                          >
+                            <td className="px-4 py-3">
+                              <div className="font-medium">
+                                {getServiceLabel(booking, locale)}
+                              </div>
+                              <div className="text-xs text-muted-foreground uppercase">
+                                {booking.service_code}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {getClientName(booking.client_id)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div>
+                                {formatDateTime(
+                                  booking.schedule.start_time,
+                                  localeTag
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {t("duration", {
+                                  hours: booking.schedule.duration_hours,
+                                })}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
+                                  bookingStatusBadgeClass[displayStatus]
+                                )}
+                              >
+                                {tStatus(displayStatus)}
+                              </span>
+                            </td>
+                            <td className="max-w-[260px] px-4 py-3 text-sm text-muted-foreground">
+                              <div className="space-y-2">
+                                <div className="line-clamp-3 whitespace-pre-wrap">
+                                  {booking.client_notes || "-"}
                                 </div>
-                                <div className="text-xs text-muted-foreground uppercase">
-                                  {booking.service_code}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                {getClientName(booking.client_id)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <div>
-                                  {formatDateTime(booking.schedule.start_time)}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Thời lượng: {booking.schedule.duration_hours}{" "}
-                                  giờ
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={cn(
-                                    "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium",
-                                    bookingStatusBadgeClass[displayStatus]
-                                  )}
-                                >
-                                  {bookingStatusLabel[displayStatus]}
-                                </span>
-                              </td>
-                              <td className="max-w-[260px] px-4 py-3 text-sm text-muted-foreground">
-                                <div className="space-y-2">
-                                  <div className="line-clamp-3 whitespace-pre-wrap">
-                                    {booking.client_notes || "-"}
+                                {booking.worker_response ? (
+                                  <div className="line-clamp-3 border-t pt-2 whitespace-pre-wrap">
+                                    <span className="font-medium text-foreground">
+                                      {t("responsePrefix")}{" "}
+                                    </span>
+                                    {booking.worker_response}
                                   </div>
-                                  {booking.worker_response ? (
-                                    <div className="line-clamp-3 border-t pt-2 whitespace-pre-wrap">
-                                      <span className="font-medium text-foreground">
-                                        Phản hồi:{" "}
-                                      </span>
-                                      {booking.worker_response}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                {renderActionSelect(booking)}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </Table>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {renderActionSelect(booking)}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -805,7 +809,7 @@ export default function WorkerBookingsPage() {
                 onClick={() => setPage((value) => Math.max(1, value - 1))}
                 disabled={!canGoBack}
               >
-                Trước
+                {t("prev")}
               </Button>
               <span className="text-sm text-muted-foreground">
                 {page}/{Math.max(totalPages, 1)}
@@ -816,7 +820,7 @@ export default function WorkerBookingsPage() {
                 onClick={() => setPage((value) => value + 1)}
                 disabled={!canGoNext}
               >
-                Sau
+                {t("next")}
               </Button>
             </div>
           ) : null}
@@ -838,7 +842,7 @@ export default function WorkerBookingsPage() {
 
           <WorkerBookingActionSheet
             open={Boolean(sheetBooking)}
-            title={sheetBooking ? getServiceLabel(sheetBooking) : ""}
+            title={sheetBooking ? getServiceLabel(sheetBooking, locale) : ""}
             items={sheetItems}
             onOpenChange={(open) => {
               if (!open) setSheetBooking(null)
