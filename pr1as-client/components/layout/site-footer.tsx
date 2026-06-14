@@ -2,8 +2,13 @@
 
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { AtSign, Camera, Music2, Share2 } from "lucide-react"
 
+import {
+  FacebookIcon,
+  InstagramIcon,
+  ThreadsIcon,
+  TikTokIcon,
+} from "@/components/icons/brand-icons"
 import { siteConfig } from "@/config/site"
 import { footerNav } from "@/config/nav"
 import { cn } from "@/lib/utils"
@@ -12,22 +17,22 @@ const socialLinks = [
   {
     label: "Facebook",
     href: siteConfig.links.facebook,
-    icon: <Share2 aria-hidden="true" className="size-4" />,
+    icon: <FacebookIcon aria-hidden="true" className="size-4" />,
   },
   {
     label: "TikTok",
     href: siteConfig.links.tiktok,
-    icon: <Music2 aria-hidden="true" className="size-4" />,
+    icon: <TikTokIcon aria-hidden="true" className="size-4" />,
   },
   {
     label: "Threads",
     href: siteConfig.links.thread,
-    icon: <AtSign aria-hidden="true" className="size-4" />,
+    icon: <ThreadsIcon aria-hidden="true" className="size-4" />,
   },
   {
     label: "Instagram",
     href: siteConfig.links.instagram,
-    icon: <Camera aria-hidden="true" className="size-4" />,
+    icon: <InstagramIcon aria-hidden="true" className="size-4" />,
   },
 ] as const
 

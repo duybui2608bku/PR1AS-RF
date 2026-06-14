@@ -30,6 +30,7 @@ export const AUTH_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
   LOGIN_REQUIRED: "Login required",
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
+  OLD_PASSWORD_REQUIRED: "Current password is required to change your password",
   PASSWORD_CHANGE_SUCCESS: "Password changed successfully",
   RESET_TOKEN_REQUIRED: "Reset token is required",
   RESET_TOKEN_INVALID: "Invalid or expired reset token",

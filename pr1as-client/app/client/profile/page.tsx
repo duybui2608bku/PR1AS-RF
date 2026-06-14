@@ -34,7 +34,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { isPasswordStrong } from "@/lib/auth/password.utils"
-import { useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
+import { useDeletionStatus, useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -81,6 +81,8 @@ export default function ClientProfilePage() {
   const localeTag = INTL_LOCALE_TAGS[locale]
   const user = useAuthStore((s) => s.user)
   const meQuery = useMe()
+  const authStatusQuery = useDeletionStatus(true)
+  const hasPassword = authStatusQuery.data?.has_password ?? true
   const updateProfileMutation = useUpdateBasicProfile()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -91,7 +93,6 @@ export default function ClientProfilePage() {
   const displayName = profileData?.full_name ?? t("userFallback")
   const reputationScore = getReputationScore(profileData?.meta_data?.reputation_score)
 
-  // Lưu một field cơ bản (tên / sđt). API cập nhật từng phần nên chỉ gửi field đổi.
   const saveBasic = async (payload: {
     full_name?: string | null
     phone?: string | null
@@ -118,16 +119,20 @@ export default function ClientProfilePage() {
       toast.error(t("toast.passwordWeak"))
       return false
     }
+
+    const isSettingFirstPassword = !hasPassword
     try {
       const response = await updateProfileMutation.mutateAsync({
-        old_password: oldPassword,
         password: newPassword,
+        ...(isSettingFirstPassword ? {} : { old_password: oldPassword }),
       })
       if (!response.success) {
         toast.error(localizeServerMessage(response.message, t("toast.passwordFailed")))
         return false
       }
-      toast.success(t("toast.passwordSuccess"))
+      toast.success(
+        t(isSettingFirstPassword ? "toast.passwordSetSuccess" : "toast.passwordSuccess"),
+      )
       return true
     } catch (error) {
       toast.error(getErrorMessage(error, t("toast.passwordError")))
@@ -317,6 +322,7 @@ export default function ClientProfilePage() {
           </CardHeader>
           <CardContent className="text-sm">
             <PasswordEditRow
+              hasPassword={hasPassword}
               disabled={updateProfileMutation.isPending}
               onSave={savePassword}
             />
@@ -502,11 +508,13 @@ function EditableField({
   )
 }
 
-/** Đổi mật khẩu tại chỗ — mở rộng inline thay vì mở modal. */
+
 function PasswordEditRow({
+  hasPassword,
   onSave,
   disabled,
 }: {
+  hasPassword: boolean
   onSave: (oldPassword: string, newPassword: string) => Promise<boolean>
   disabled?: boolean
 }) {
@@ -528,7 +536,10 @@ function PasswordEditRow({
     setEditing(false)
     reset()
   }
-  const canSave = oldPassword.length > 0 && newPassword.length >= 8 && !saving
+  const canSave =
+    (hasPassword ? oldPassword.length > 0 : true) &&
+    newPassword.length >= 8 &&
+    !saving
 
   const save = async () => {
     if (!canSave) return
@@ -549,12 +560,14 @@ function PasswordEditRow({
           <span>{t("fields.password")}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="font-medium tracking-widest">••••••••</span>
+          <span className={cn("font-medium", hasPassword ? "tracking-widest" : "text-muted-foreground")}>
+            {hasPassword ? "••••••••" : t("fields.passwordNotSet")}
+          </span>
           <button
             type="button"
             onClick={() => setEditing(true)}
             disabled={disabled}
-            aria-label={t("actions.changePassword")}
+            aria-label={hasPassword ? t("actions.changePassword") : t("actions.setPassword")}
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground active:scale-90 disabled:opacity-50"
           >
             <PencilLine className="size-4" />
@@ -566,32 +579,38 @@ function PasswordEditRow({
 
   return (
     <div className="space-y-3">
-      <div className="space-y-1.5">
-        <span className="text-muted-foreground">{t("fields.currentPassword")}</span>
-        <InputGroup className="h-10">
-          <InputGroupInput
-            type={showOld ? "text" : "password"}
-            value={oldPassword}
-            onChange={(event) => setOldPassword(event.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-            maxLength={128}
-            className="text-base"
-          />
-          <InputGroupAddon>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={() => setShowOld((prev) => !prev)}
-              aria-label={showOld ? t("actions.hideCurrentPassword") : t("actions.showCurrentPassword")}
-            >
-              {showOld ? <EyeOff /> : <Eye />}
-            </Button>
-          </InputGroupAddon>
-        </InputGroup>
-      </div>
+      {hasPassword ? (
+        <div className="space-y-1.5">
+          <span className="text-muted-foreground">{t("fields.currentPassword")}</span>
+          <InputGroup className="h-10">
+            <InputGroupInput
+              type={showOld ? "text" : "password"}
+              value={oldPassword}
+              onChange={(event) => setOldPassword(event.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              maxLength={128}
+              className="text-base"
+            />
+            <InputGroupAddon>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => setShowOld((prev) => !prev)}
+                aria-label={showOld ? t("actions.hideCurrentPassword") : t("actions.showCurrentPassword")}
+              >
+                {showOld ? <EyeOff /> : <Eye />}
+              </Button>
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      ) : (
+        <p className="rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
+          {t("security.setPasswordHint")}
+        </p>
+      )}
 
       <div className="space-y-1.5">
         <span className="text-muted-foreground">{t("fields.newPassword")}</span>
@@ -629,7 +648,7 @@ function PasswordEditRow({
         </Button>
         <Button type="button" onClick={() => void save()} disabled={!canSave}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-          {t("actions.savePassword")}
+          {hasPassword ? t("actions.savePassword") : t("actions.setPassword")}
         </Button>
       </div>
     </div>

@@ -618,7 +618,8 @@
       "userId": "ID người dùng",
       "password": "Mật khẩu",
       "currentPassword": "Mật khẩu hiện tại",
-      "newPassword": "Mật khẩu mới"
+      "newPassword": "Mật khẩu mới",
+      "passwordNotSet": "Chưa đặt"
     },
     "placeholders": {
       "fullName": "Nhập họ và tên",
@@ -634,7 +635,8 @@
     },
     "security": {
       "title": "Bảo mật",
-      "description": "Đổi mật khẩu đăng nhập của bạn"
+      "description": "Đổi mật khẩu đăng nhập của bạn",
+      "setPasswordHint": "Tài khoản của bạn đăng nhập bằng Google. Đặt mật khẩu để có thể đăng nhập thêm bằng email."
     },
     "plan": {
       "title": "Gói thành viên",
@@ -652,7 +654,8 @@
       "showNewPassword": "Hiện mật khẩu mới",
       "hideNewPassword": "Ẩn mật khẩu mới",
       "savePassword": "Lưu mật khẩu",
-      "saveChanges": "Lưu thay đổi"
+      "saveChanges": "Lưu thay đổi",
+      "setPassword": "Đặt mật khẩu"
     },
     "toast": {
       "updateFailed": "Cập nhật thất bại.",
@@ -666,7 +669,8 @@
       "avatarTooLarge": "Kích thước ảnh tối đa là {max}MB.",
       "avatarFailed": "Không thể cập nhật ảnh đại diện.",
       "avatarSuccess": "Cập nhật ảnh đại diện thành công.",
-      "avatarUploadError": "Tải ảnh thất bại. Vui lòng thử lại."
+      "avatarUploadError": "Tải ảnh thất bại. Vui lòng thử lại.",
+      "passwordSetSuccess": "Đặt mật khẩu thành công."
     },
     "modal": {
       "title": "Cập nhật hồ sơ",
@@ -1553,5 +1557,13 @@
     "otherProvince": "Chọn tỉnh khác",
     "clear": "Xóa",
     "select": "Chọn"
+  },
+  "ImageEditor": {
+    "title": "Chỉnh sửa ảnh",
+    "flipHorizontal": "Lật ngang",
+    "flipVertical": "Lật dọc",
+    "cancel": "Hủy",
+    "skip": "Bỏ qua",
+    "confirm": "Xác nhận"
   }
 }

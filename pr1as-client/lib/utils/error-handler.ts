@@ -203,6 +203,8 @@ const SERVER_MESSAGE_TRANSLATIONS: Record<string, string> = {
   "Page and limit must be numbers": "Trang và giới hạn phải là số.",
   "Page and limit not found": "Không tìm thấy trang và giới hạn.",
   "Page not found": "Không tìm thấy trang.",
+  "Current password is required to change your password":
+    "Cần nhập mật khẩu hiện tại để đổi mật khẩu.",
   "Password changed successfully": "Đổi mật khẩu thành công.",
   "Password has been reset successfully": "Đặt lại mật khẩu thành công.",
   "Password is required": "Mật khẩu là bắt buộc.",

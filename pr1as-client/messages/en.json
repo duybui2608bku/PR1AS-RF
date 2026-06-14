@@ -618,7 +618,8 @@
       "userId": "User ID",
       "password": "Password",
       "currentPassword": "Current password",
-      "newPassword": "New password"
+      "newPassword": "New password",
+      "passwordNotSet": "Not set"
     },
     "placeholders": {
       "fullName": "Enter full name",
@@ -634,7 +635,8 @@
     },
     "security": {
       "title": "Security",
-      "description": "Change your login password"
+      "description": "Change your login password",
+      "setPasswordHint": "Your account signs in with Google. Set a password to also sign in with email."
     },
     "plan": {
       "title": "Membership plan",
@@ -652,7 +654,8 @@
       "showNewPassword": "Show new password",
       "hideNewPassword": "Hide new password",
       "savePassword": "Save password",
-      "saveChanges": "Save changes"
+      "saveChanges": "Save changes",
+      "setPassword": "Set password"
     },
     "toast": {
       "updateFailed": "Update failed.",
@@ -666,7 +669,8 @@
       "avatarTooLarge": "Maximum image size is {max}MB.",
       "avatarFailed": "Unable to update avatar.",
       "avatarSuccess": "Avatar updated successfully.",
-      "avatarUploadError": "Image upload failed. Please try again."
+      "avatarUploadError": "Image upload failed. Please try again.",
+      "passwordSetSuccess": "Password set successfully."
     },
     "modal": {
       "title": "Update profile",
@@ -1543,5 +1547,13 @@
     "otherProvince": "Select another province",
     "clear": "Clear",
     "select": "Select"
+  },
+  "ImageEditor": {
+    "title": "Edit image",
+    "flipHorizontal": "Flip horizontal",
+    "flipVertical": "Flip vertical",
+    "cancel": "Cancel",
+    "skip": "Skip",
+    "confirm": "Confirm"
   }
 }

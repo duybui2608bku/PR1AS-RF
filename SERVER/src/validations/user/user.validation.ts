@@ -178,18 +178,10 @@ export const updateBasicProfileSchema = z
       ])
       .optional(),
   })
-  .refine(
-    (data) => {
-      if (data.password && !data.old_password) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Old password is required when changing password",
-      path: ["old_password"],
-    }
-  )
+  // NOTE: We intentionally do NOT require `old_password` here. Google-only
+  // accounts have no password yet and must be able to set one for the first
+  // time without an old password. Whether the current password is required is
+  // decided in the service based on the account already having a password_hash.
   .refine(
     (data) => {
       if (data.password && data.old_password) {

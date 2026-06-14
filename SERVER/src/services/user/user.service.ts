@@ -321,18 +321,27 @@ export class UserService {
       // Single DB call: get user with password_hash for verification
       const userWithPassword =
         await userRepository.findByIdWithPassword(userId);
-      if (!userWithPassword || !userWithPassword.password_hash) {
+      if (!userWithPassword) {
         throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
       }
 
-      const isOldPasswordValid = await comparePassword(
-        data.old_password!,
-        userWithPassword.password_hash
-      );
-
-      if (!isOldPasswordValid) {
-        throw AppError.badRequest(AUTH_MESSAGES.OLD_PASSWORD_INCORRECT);
+      if (userWithPassword.password_hash) {
+        // Account already has a password → this is a change, so the current
+        // password must be supplied and must match.
+        if (!data.old_password) {
+          throw AppError.badRequest(AUTH_MESSAGES.OLD_PASSWORD_REQUIRED);
+        }
+        const isOldPasswordValid = await comparePassword(
+          data.old_password,
+          userWithPassword.password_hash
+        );
+        if (!isOldPasswordValid) {
+          throw AppError.badRequest(AUTH_MESSAGES.OLD_PASSWORD_INCORRECT);
+        }
       }
+      // Otherwise the account has no password yet (e.g. registered via Google):
+      // allow setting the first password without an old password so the user can
+      // also sign in with email/password.
 
       password_hash = await hashPassword(data.password);
     }

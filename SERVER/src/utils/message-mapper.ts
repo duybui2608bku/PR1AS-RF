@@ -22,6 +22,7 @@ export const MESSAGE_KEY_MAP: Record<string, string> = {
   [AUTH_MESSAGES.INVALID_CREDENTIALS]: "auth.invalidCredentials",
   [AUTH_MESSAGES.LOGIN_REQUIRED]: "auth.loginRequired",
   [AUTH_MESSAGES.OLD_PASSWORD_INCORRECT]: "auth.oldPasswordIncorrect",
+  [AUTH_MESSAGES.OLD_PASSWORD_REQUIRED]: "auth.oldPasswordRequired",
   [AUTH_MESSAGES.PASSWORD_CHANGE_SUCCESS]: "auth.passwordChangeSuccess",
   [AUTH_MESSAGES.RESET_TOKEN_REQUIRED]: "auth.resetTokenRequired",
   [AUTH_MESSAGES.RESET_TOKEN_INVALID]: "auth.resetTokenInvalid",

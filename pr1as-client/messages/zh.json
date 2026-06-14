@@ -618,7 +618,8 @@
       "userId": "用户 ID",
       "password": "密码",
       "currentPassword": "当前密码",
-      "newPassword": "新密码"
+      "newPassword": "新密码",
+      "passwordNotSet": "未设置"
     },
     "placeholders": {
       "fullName": "输入全名",
@@ -634,7 +635,8 @@
     },
     "security": {
       "title": "安全",
-      "description": "更改你的登录密码"
+      "description": "更改你的登录密码",
+      "setPasswordHint": "你的账户使用 Google 登录。设置密码后也可使用邮箱登录。"
     },
     "plan": {
       "title": "会员套餐",
@@ -652,7 +654,8 @@
       "showNewPassword": "显示新密码",
       "hideNewPassword": "隐藏新密码",
       "savePassword": "保存密码",
-      "saveChanges": "保存修改"
+      "saveChanges": "保存修改",
+      "setPassword": "设置密码"
     },
     "toast": {
       "updateFailed": "更新失败。",
@@ -666,7 +669,8 @@
       "avatarTooLarge": "图片最大为 {max}MB。",
       "avatarFailed": "无法更新头像。",
       "avatarSuccess": "头像更新成功。",
-      "avatarUploadError": "图片上传失败，请重试。"
+      "avatarUploadError": "图片上传失败，请重试。",
+      "passwordSetSuccess": "密码设置成功。"
     },
     "modal": {
       "title": "更新资料",
@@ -1553,5 +1557,13 @@
     "otherProvince": "选择其他省份",
     "clear": "清除",
     "select": "选择"
+  },
+  "ImageEditor": {
+    "title": "编辑图片",
+    "flipHorizontal": "水平翻转",
+    "flipVertical": "垂直翻转",
+    "cancel": "取消",
+    "skip": "跳过",
+    "confirm": "确认"
   }
 }

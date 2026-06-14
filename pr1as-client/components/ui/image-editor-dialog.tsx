@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import Cropper from "react-easy-crop"
 import type { Area, Point } from "react-easy-crop"
 import { FlipHorizontal, FlipVertical, Loader2, RotateCcw } from "lucide-react"
@@ -39,6 +40,7 @@ export function ImageEditorDialog({
   const [flip, setFlip] = useState<FlipState>({ horizontal: false, vertical: false })
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const t = useTranslations("ImageEditor")
 
   useEffect(() => {
     if (!file) {
@@ -78,7 +80,7 @@ export function ImageEditorDialog({
       <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 p-0 sm:max-w-xl">
         <DialogHeader className="px-4 pt-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            Chỉnh sửa ảnh
+            {t("title")}
             {queueInfo && queueInfo.total > 1 && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {queueInfo.current}/{queueInfo.total}
@@ -133,7 +135,7 @@ export function ImageEditorDialog({
               onClick={() => setFlip((f) => ({ ...f, horizontal: !f.horizontal }))}
             >
               <FlipHorizontal className="size-4" />
-              Lật ngang
+              {t("flipHorizontal")}
             </Button>
             <Button
               type="button"
@@ -143,23 +145,23 @@ export function ImageEditorDialog({
               onClick={() => setFlip((f) => ({ ...f, vertical: !f.vertical }))}
             >
               <FlipVertical className="size-4" />
-              Lật dọc
+              {t("flipVertical")}
             </Button>
           </div>
         </div>
 
         <DialogFooter className="px-4 pb-4">
           <Button type="button" variant="ghost" onClick={onCancel} disabled={confirming}>
-            Hủy
+            {t("cancel")}
           </Button>
           {showSkip && (
             <Button type="button" variant="outline" onClick={onSkip} disabled={confirming}>
-              Bỏ qua
+              {t("skip")}
             </Button>
           )}
           <Button type="button" onClick={handleConfirm} disabled={confirming}>
             {confirming && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Xác nhận
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
