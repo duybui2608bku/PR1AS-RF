@@ -53,7 +53,9 @@
     "contact": "Contact",
     "legal": "Legal",
     "privacy": "Privacy Policy",
-    "terms": "Terms of Service"
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "bookingProcess": "How Booking Works"
   },
   "Auth": {
     "loginTitle": "Welcome back",
@@ -449,7 +451,11 @@
     "confirmDeleteDesc": "Enter your current password to confirm. You'll be signed out of all devices right after confirming.",
     "currentPassword": "Current password",
     "passwordPlaceholder": "Enter your password to confirm",
-    "confirmDelete": "Confirm deletion"
+    "confirmDelete": "Confirm deletion",
+    "bookingProcessLabel": "How booking works",
+    "bookingProcessDesc": "Guide to the booking and confirmation flow.",
+    "cookiesLabel": "Cookie Policy",
+    "cookiesDesc": "How we use cookies on the platform."
   },
   "Favorites": {
     "title": "Favorite workers",
@@ -1041,6 +1047,10 @@
     "termsDescription": "PR1AS terms of service covering accounts, bookings, payments, service plans and user responsibilities.",
     "privacyTitle": "Privacy Policy",
     "privacyDescription": "PR1AS privacy policy on how we collect, use, share and protect users' personal information.",
+    "cookiesTitle": "Cookie Policy",
+    "cookiesDescription": "Learn what cookies PR1AS uses and why — including essential, preference and analytics cookies — and how to manage them.",
+    "bookingProcessTitle": "How Booking Works",
+    "bookingProcessDescription": "Understand how booking works on PR1AS, step by step — from finding a worker to confirming and completing a service.",
     "workerProfileTitle": "Worker profile",
     "workerProfileDescription": "View worker profile, services, reviews, schedule and book online on PR1AS.",
     "chatTitle": "Chat",
@@ -1150,7 +1160,12 @@
       "notesPlaceholder": "Describe the reason for cancellation (max 500 characters)",
       "confirmButton": "Confirm Cancellation",
       "errorSelectReason": "Please select a cancellation reason."
-    }
+    },
+    "advancedFilters": "Advanced filters",
+    "dateRange": "Date range",
+    "apply": "Apply",
+    "close": "Close",
+    "guide": "Booking guide"
   },
   "WorkerBookings": {
     "title": "Work bookings",
@@ -1244,7 +1259,8 @@
     "actionSheet": {
       "description": "Booking actions",
       "cancel": "Cancel"
-    }
+    },
+    "guide": "Booking guide"
   },
   "WorkerBoost": {
     "page": {
@@ -1532,6 +1548,165 @@
       "content": "We may update these terms periodically. Any changes will be notified via email or in-app notification. Continued use of the service after changes are applied means you accept the new terms."
     }
   },
+  "Cookies": {
+    "title": "Cookie Policy",
+    "lastUpdated": "Last updated: June 2026",
+    "section1": {
+      "title": "1. What Are Cookies?",
+      "content": "Cookies are small text files that a website stores on your device when you visit. They help the platform remember your actions and preferences (such as login state, language and currency) over a period of time, so you don't have to re-enter them every time you return."
+    },
+    "section2": {
+      "title": "2. Types of Cookies We Use",
+      "items": [
+        "Essential cookies — required for the platform to function, such as keeping you signed in and remembering the role you are currently using.",
+        "Preference cookies — remember your choices like interface language, display currency and light/dark theme.",
+        "Functional cookies — support features such as chat sessions and saved drafts.",
+        "Analytics cookies — help us understand how the platform is used so we can improve it."
+      ]
+    },
+    "section3": {
+      "title": "3. Essential Cookies",
+      "content": "These cookies store your authentication token and the role you are currently active in (client or worker). Without them you cannot stay logged in or use protected areas of the platform. They cannot be turned off through our settings."
+    },
+    "section4": {
+      "title": "4. Preference Cookies",
+      "content": "We use cookies to remember your selected language (Vietnamese, English or Chinese), your preferred display currency and your light or dark theme, so your experience stays consistent across visits."
+    },
+    "section5": {
+      "title": "5. Analytics Cookies",
+      "content": "We may use analytics tools to collect anonymous, aggregated information about how visitors use the platform — for example, which pages are visited most. This helps us improve performance and usability. These cookies do not identify you personally."
+    },
+    "section6": {
+      "title": "6. Third-Party Cookies",
+      "content": "Some features rely on trusted third-party services (such as sign-in providers and payment gateways). These providers may set their own cookies, governed by their respective privacy policies."
+    },
+    "section7": {
+      "title": "7. Managing Your Cookies",
+      "content": "You can control or delete cookies through your browser settings at any time. Please note that disabling essential cookies will prevent you from logging in and using core features of the platform."
+    },
+    "section8": {
+      "title": "8. Changes & Contact",
+      "content": "We may update this Cookie Policy from time to time. Any significant changes will be announced on the platform. If you have questions, please contact us through our support channels."
+    }
+  },
+  "BookingProcess": {
+    "title": "How Booking Works",
+    "intro": "Booking on PR1AS is simple and transparent. Below is each step from finding a worker to completing a service, so you know exactly what to expect.",
+    "rulesTitle": "Good to Know Before You Book",
+    "rules": [
+      {
+        "label": "Earliest booking",
+        "value": "At least 2 hours before the start time."
+      },
+      {
+        "label": "Latest booking",
+        "value": "Up to 30 days in advance."
+      },
+      {
+        "label": "Service duration",
+        "value": "From 1 hour up to 24 hours."
+      },
+      {
+        "label": "Worker confirmation deadline",
+        "value": "Workers confirm no later than 6 hours before the start. For short-notice bookings they have 60 minutes to confirm, otherwise the request expires automatically."
+      }
+    ],
+    "cancelTitle": "Cancellation Policy",
+    "cancelIntro": "How cancellation works depends on the booking status and timing:",
+    "cancelRules": [
+      {
+        "title": "Cancelling while \"Pending\"",
+        "description": "Free of charge and affects no one — the worker has not committed to the slot yet."
+      },
+      {
+        "title": "Early cancellation (more than 24 hours before start)",
+        "description": "No reputation penalty. You can cancel a confirmed booking freely within this window."
+      },
+      {
+        "title": "Late cancellation (within 24 hours of start)",
+        "description": "If the worker had already confirmed, cancelling late reduces your reputation score."
+      },
+      {
+        "title": "After the service has started (\"In Progress\")",
+        "description": "The booking can no longer be cancelled unilaterally. Any issue must go through a complaint so an admin can review it."
+      },
+      {
+        "title": "Worker cancellation",
+        "description": "If a worker cancels a confirmed booking, their reputation score is reduced."
+      }
+    ],
+    "disputeNote": "After a service is completed, you have 3 days to open a complaint. Once that window passes, the result is considered accepted and can no longer be disputed.",
+    "stepsTitle": "Step by Step",
+    "steps": [
+      {
+        "title": "Find a service or worker",
+        "description": "Browse services or worker profiles, compare ratings, prices and availability, then open the profile you are interested in."
+      },
+      {
+        "title": "Send a booking request",
+        "description": "Choose your appointment time, describe what you need and submit the request. Your booking is created with the status \"Pending\" while it awaits the worker's response."
+      },
+      {
+        "title": "Worker confirms or declines",
+        "description": "The worker reviews your request and either confirms or declines it. Requests that are not responded to within the allowed time automatically expire, so you are never left waiting indefinitely."
+      },
+      {
+        "title": "Service is carried out",
+        "description": "Once confirmed, the booking moves to \"In Progress\". You and the worker coordinate directly to complete the work as agreed."
+      },
+      {
+        "title": "Confirm completion",
+        "description": "When the work is done, the worker marks it finished and the booking moves to \"Waiting for acceptance\". You review the result and confirm to mark it \"Completed\"."
+      },
+      {
+        "title": "Leave a review",
+        "description": "After completion, share your rating and feedback. Reviews help other clients choose and help good workers stand out."
+      }
+    ],
+    "paymentTitle": "About Payment",
+    "paymentContent": "PR1AS connects clients and workers but does not hold payment on your behalf. Pricing and payment for each booking are arranged directly between you and the worker. Always agree on the price and terms before the service begins.",
+    "statusesTitle": "Booking Statuses Explained",
+    "statuses": [
+      {
+        "label": "Pending",
+        "description": "Your request has been sent and is waiting for the worker to respond."
+      },
+      {
+        "label": "Confirmed",
+        "description": "The worker accepted your request and the appointment is set."
+      },
+      {
+        "label": "Rejected",
+        "description": "The worker declined the request. You can book another worker."
+      },
+      {
+        "label": "In Progress",
+        "description": "The service is currently being carried out."
+      },
+      {
+        "label": "Waiting for acceptance",
+        "description": "The worker marked the work done; it is waiting for you to confirm."
+      },
+      {
+        "label": "Completed",
+        "description": "The service is finished and confirmed by both sides."
+      },
+      {
+        "label": "Cancelled",
+        "description": "The booking was cancelled by the client or the worker."
+      },
+      {
+        "label": "Disputed",
+        "description": "A complaint has been opened and is being reviewed."
+      },
+      {
+        "label": "Expired",
+        "description": "The request was not responded to in time and expired automatically."
+      }
+    ],
+    "helpTitle": "Need Help?",
+    "helpContent": "If something goes wrong with a booking, you can open a complaint from your bookings list, or contact our support team and we will help resolve it."
+  },
   "Location": {
     "searchProvince": "Search province / city...",
     "searchWard": "Search ward in {province}...",
@@ -1555,5 +1730,12 @@
     "cancel": "Cancel",
     "skip": "Skip",
     "confirm": "Confirm"
+  },
+  "BookingCountdown": {
+    "confirmExpiresIn": "Confirmation expires in {time}",
+    "expired": "Confirmation expired",
+    "unitHour": "h",
+    "unitMinute": "m",
+    "unitSecond": "s"
   }
 }

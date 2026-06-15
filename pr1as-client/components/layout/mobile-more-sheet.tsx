@@ -22,7 +22,6 @@ import {
   BottomSheet,
   BottomSheetContent,
 } from "@/components/ui/bottom-sheet"
-import { CurrencyOptions } from "@/components/layout/currency-switcher"
 import { useLogout } from "@/lib/hooks/use-auth"
 import { useUnreadNotificationCount } from "@/lib/hooks/use-notifications"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -152,8 +151,6 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
               )}
             </button>
           ))}
-          <div className="my-1 border-t" />
-          <CurrencyOptions label={t("displayCurrency")} dropUp />
           <div className="my-1 border-t" />
           <button
             type="button"

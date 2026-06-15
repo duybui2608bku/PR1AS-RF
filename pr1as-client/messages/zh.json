@@ -53,7 +53,9 @@
     "contact": "联系我们",
     "legal": "法律",
     "privacy": "隐私政策",
-    "terms": "服务条款"
+    "terms": "服务条款",
+    "cookies": "Cookie 政策",
+    "bookingProcess": "预约流程"
   },
   "Auth": {
     "loginTitle": "欢迎回来",
@@ -449,7 +451,11 @@
     "confirmDeleteDesc": "输入当前密码以确认。确认后你将从所有设备登出。",
     "currentPassword": "当前密码",
     "passwordPlaceholder": "输入密码以确认",
-    "confirmDelete": "确认删除"
+    "confirmDelete": "确认删除",
+    "bookingProcessLabel": "预约流程",
+    "bookingProcessDesc": "预约与确认流程指南。",
+    "cookiesLabel": "Cookie 政策",
+    "cookiesDesc": "我们如何在平台上使用 Cookie。"
   },
   "Favorites": {
     "title": "收藏的服务者",
@@ -1041,6 +1047,10 @@
     "termsDescription": "PR1AS 服务条款，涵盖账户、预约、付款、服务套餐及用户责任。",
     "privacyTitle": "隐私政策",
     "privacyDescription": "PR1AS 隐私政策，说明我们如何收集、使用、共享和保护用户的个人信息。",
+    "cookiesTitle": "Cookie 政策",
+    "cookiesDescription": "了解 PR1AS 使用哪些 Cookie 及原因——包括必要、偏好和分析 Cookie——以及如何管理它们。",
+    "bookingProcessTitle": "预约流程说明",
+    "bookingProcessDescription": "逐步了解 PR1AS 的预约流程——从寻找工作者到确认并完成服务。",
     "workerProfileTitle": "工作者资料",
     "workerProfileDescription": "在 PR1AS 上查看工作者资料、服务、评价、排班并在线预约。",
     "chatTitle": "聊天",
@@ -1150,7 +1160,12 @@
       "notesPlaceholder": "描述取消原因 (最多 500 个字符)",
       "confirmButton": "确认取消",
       "errorSelectReason": "请选择取消原因。"
-    }
+    },
+    "advancedFilters": "高级筛选",
+    "dateRange": "日期范围",
+    "apply": "应用",
+    "close": "关闭",
+    "guide": "预约指南"
   },
   "WorkerBookings": {
     "title": "接单预约",
@@ -1244,7 +1259,8 @@
     "actionSheet": {
       "description": "预约操作",
       "cancel": "取消"
-    }
+    },
+    "guide": "预约指南"
   },
   "WorkerBoost": {
     "page": {
@@ -1532,6 +1548,165 @@
       "content": "我们可能会定期更新这些条款。任何变更都将通过电子邮件或应用内通知。在变更应用后继续使用服务意味着您接受新条款。"
     }
   },
+  "Cookies": {
+    "title": "Cookie 政策",
+    "lastUpdated": "最后更新：2026 年 6 月",
+    "section1": {
+      "title": "1. 什么是 Cookie？",
+      "content": "Cookie 是网站在您访问时存储在您设备上的小型文本文件。它们帮助平台在一段时间内记住您的操作和偏好（如登录状态、语言和货币），让您无需每次返回都重新输入。"
+    },
+    "section2": {
+      "title": "2. 我们使用的 Cookie 类型",
+      "items": [
+        "必要 Cookie——平台运行所必需，例如保持您的登录状态并记住您当前使用的角色。",
+        "偏好 Cookie——记住您的选择，如界面语言、显示货币和浅色/深色主题。",
+        "功能 Cookie——支持聊天会话和已保存草稿等功能。",
+        "分析 Cookie——帮助我们了解平台的使用情况以便改进。"
+      ]
+    },
+    "section3": {
+      "title": "3. 必要 Cookie",
+      "content": "这些 Cookie 存储您的身份验证令牌以及您当前活跃的角色（客户或工作者）。没有它们，您将无法保持登录或使用受保护的区域。此类 Cookie 无法通过我们的设置关闭。"
+    },
+    "section4": {
+      "title": "4. 偏好 Cookie",
+      "content": "我们使用 Cookie 记住您选择的语言（越南语、英语或中文）、首选显示货币以及浅色或深色主题，让您每次访问的体验保持一致。"
+    },
+    "section5": {
+      "title": "5. 分析 Cookie",
+      "content": "我们可能使用分析工具收集有关访客如何使用平台的匿名、汇总信息——例如哪些页面访问量最高。这有助于我们改进性能和易用性。此类 Cookie 不会识别您的个人身份。"
+    },
+    "section6": {
+      "title": "6. 第三方 Cookie",
+      "content": "部分功能依赖受信任的第三方服务（如登录提供商和支付网关）。这些提供商可能会设置自己的 Cookie，受其各自隐私政策约束。"
+    },
+    "section7": {
+      "title": "7. 管理您的 Cookie",
+      "content": "您可以随时通过浏览器设置控制或删除 Cookie。请注意，禁用必要 Cookie 将导致您无法登录和使用平台的核心功能。"
+    },
+    "section8": {
+      "title": "8. 变更与联系",
+      "content": "我们可能会不时更新本 Cookie 政策。任何重大变更都将在平台上公布。如有疑问，请通过我们的支持渠道与我们联系。"
+    }
+  },
+  "BookingProcess": {
+    "title": "预约流程说明",
+    "intro": "在 PR1AS 上预约简单且透明。以下是从寻找工作者到完成服务的每个步骤，让您清楚了解整个过程。",
+    "rulesTitle": "预约前须知",
+    "rules": [
+      {
+        "label": "最早预约",
+        "value": "至少在开始时间前 2 小时。"
+      },
+      {
+        "label": "最晚预约",
+        "value": "最多提前 30 天。"
+      },
+      {
+        "label": "服务时长",
+        "value": "从 1 小时至 24 小时。"
+      },
+      {
+        "label": "工作者确认期限",
+        "value": "工作者最晚在开始前 6 小时确认。对于临时预约，他们有 60 分钟确认，否则请求将自动过期。"
+      }
+    ],
+    "cancelTitle": "取消政策",
+    "cancelIntro": "取消方式取决于预约状态和时间：",
+    "cancelRules": [
+      {
+        "title": "在\"待处理\"时取消",
+        "description": "免费且不影响任何人——工作者尚未承诺接单。"
+      },
+      {
+        "title": "提前取消（开始前超过 24 小时）",
+        "description": "不扣信誉分。在此期间您可以自由取消已确认的预约。"
+      },
+      {
+        "title": "临时取消（开始前 24 小时内）",
+        "description": "如果工作者已确认，临时取消将降低您的信誉分。"
+      },
+      {
+        "title": "服务已开始后（\"进行中\"）",
+        "description": "预约无法单方面取消。任何问题都必须通过投诉，由管理员审核处理。"
+      },
+      {
+        "title": "工作者取消",
+        "description": "如果工作者取消已确认的预约，其信誉分将被扣除。"
+      }
+    ],
+    "disputeNote": "服务完成后，您有 3 天时间提出投诉。超过该期限后，结果将被视为接受，无法再提出争议。",
+    "stepsTitle": "操作步骤",
+    "steps": [
+      {
+        "title": "寻找服务或工作者",
+        "description": "浏览服务或工作者资料，比较评价、价格和可预约时间，然后打开您感兴趣的资料。"
+      },
+      {
+        "title": "发送预约请求",
+        "description": "选择预约时间，描述您的需求并提交请求。预约将以\"待处理\"状态创建，等待工作者回应。"
+      },
+      {
+        "title": "工作者确认或拒绝",
+        "description": "工作者审核您的请求并确认或拒绝。在规定时间内未回应的请求将自动过期，让您不必无限期等待。"
+      },
+      {
+        "title": "进行服务",
+        "description": "确认后，预约转为\"进行中\"。您与工作者直接协调，按约定完成工作。"
+      },
+      {
+        "title": "确认完成",
+        "description": "工作完成后，工作者标记完成，预约转为\"等待确认\"。您检查结果并确认，标记为\"已完成\"。"
+      },
+      {
+        "title": "留下评价",
+        "description": "完成后，请分享您的评分和反馈。评价帮助其他客户选择，也让优秀的工作者脱颖而出。"
+      }
+    ],
+    "paymentTitle": "关于付款",
+    "paymentContent": "PR1AS 连接客户与工作者，但不代您保管付款。每次预约的价格和付款由您与工作者直接商定。请务必在服务开始前就价格和条款达成一致。",
+    "statusesTitle": "预约状态说明",
+    "statuses": [
+      {
+        "label": "待处理",
+        "description": "请求已发送，正在等待工作者回应。"
+      },
+      {
+        "label": "已确认",
+        "description": "工作者已接受请求，预约已确定。"
+      },
+      {
+        "label": "已拒绝",
+        "description": "工作者拒绝了请求。您可以预约其他工作者。"
+      },
+      {
+        "label": "进行中",
+        "description": "服务正在进行中。"
+      },
+      {
+        "label": "等待确认",
+        "description": "工作者已标记完成；正在等待您确认。"
+      },
+      {
+        "label": "已完成",
+        "description": "服务已完成并由双方确认。"
+      },
+      {
+        "label": "已取消",
+        "description": "预约已被客户或工作者取消。"
+      },
+      {
+        "label": "争议中",
+        "description": "已提出投诉，正在审核中。"
+      },
+      {
+        "label": "已过期",
+        "description": "请求未及时回应，已自动过期。"
+      }
+    ],
+    "helpTitle": "需要帮助？",
+    "helpContent": "如果预约出现问题，您可以从预约列表中提出投诉，或联系我们的支持团队，我们将帮助解决。"
+  },
   "GlobalError": {
     "title": "出错了",
     "description": "抱歉，发生了一些意外。请尝试刷新页面或稍后再试。",
@@ -1565,5 +1740,12 @@
     "cancel": "取消",
     "skip": "跳过",
     "confirm": "确认"
+  },
+  "BookingCountdown": {
+    "confirmExpiresIn": "确认将在 {time} 后过期",
+    "expired": "确认已过期",
+    "unitHour": "时",
+    "unitMinute": "分",
+    "unitSecond": "秒"
   }
 }

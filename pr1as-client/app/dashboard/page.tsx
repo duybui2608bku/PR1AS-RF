@@ -542,17 +542,18 @@ export default function DashboardPage() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full md:w-auto h-9 shadow-2xs font-medium hover:bg-muted"
+          className="h-9 shadow-2xs font-medium hover:bg-muted"
           onClick={() => dashboardQuery.refetch()}
           disabled={dashboardQuery.isFetching}
+          aria-label="Làm mới dữ liệu"
+          title="Làm mới dữ liệu"
         >
           <RefreshCw
             className={cn(
-              "size-4 mr-1.5",
+              "size-4",
               dashboardQuery.isFetching && "animate-spin"
             )}
           />
-          Làm mới dữ liệu
         </Button>
       </div>
 

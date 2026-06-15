@@ -571,6 +571,8 @@ export default function AdminBookingsPage() {
           size="sm"
           onClick={() => analyticsQuery.refetch()}
           disabled={analyticsQuery.isFetching}
+          aria-label="Làm mới"
+          title="Làm mới"
         >
           <RefreshCw
             className={cn(
@@ -578,7 +580,6 @@ export default function AdminBookingsPage() {
               analyticsQuery.isFetching && "animate-spin"
             )}
           />
-          Làm mới
         </Button>
       </div>
 

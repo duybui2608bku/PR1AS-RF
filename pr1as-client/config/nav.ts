@@ -21,6 +21,7 @@ export const footerNav: { title: string; key: string; items: NavItem[] }[] = [
     items: [
       { title: "Tính năng", href: "/features", key: "features" },
       { title: "Bảng giá", href: "/pricing", key: "pricing" },
+      { title: "Cách đặt lịch", href: "/booking-process", key: "bookingProcess" },
     ],
   },
   {
@@ -37,6 +38,7 @@ export const footerNav: { title: string; key: string; items: NavItem[] }[] = [
     items: [
       { title: "Chính sách bảo mật", href: "/privacy", key: "privacy" },
       { title: "Điều khoản sử dụng", href: "/terms", key: "terms" },
+      { title: "Chính sách Cookie", href: "/cookies", key: "cookies" },
     ],
   },
 ]

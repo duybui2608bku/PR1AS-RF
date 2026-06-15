@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react"
 
+import { BookingCountdown } from "@/components/booking/booking-countdown"
 import { Button } from "@/components/ui/button"
 import {
   HoverCard,
@@ -32,6 +33,7 @@ import {
   cancellationReasonLabel,
   cancelledByLabel,
   formatDateTime,
+  getConfirmationDeadline,
   getServiceLabel,
   getWorkerName,
   isBookingExpired,
@@ -67,6 +69,13 @@ export function BookingCard({
     booking.created_at
   )
   const displayStatus = expired ? BookingStatus.EXPIRED : booking.status
+  const confirmDeadline = expired
+    ? null
+    : getConfirmationDeadline(
+        booking.schedule,
+        booking.status,
+        booking.created_at
+      )
   const showCancel = !expired && canCancelBooking(booking.status)
   const showDispute = !expired && canComplainBooking(booking.status)
   const showComplete =
@@ -89,7 +98,7 @@ export function BookingCard({
   }
 
   return (
-    <div className="border-b p-4 last:border-b-0">
+    <div className="rounded-lg border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate font-semibold leading-tight">
@@ -158,6 +167,10 @@ export function BookingCard({
           ) : null}
         </div>
       </div>
+
+      {confirmDeadline ? (
+        <BookingCountdown deadline={confirmDeadline} className="mb-3" />
+      ) : null}
 
       <dl className="grid grid-cols-1 gap-2 text-sm">
         <div className="flex items-start gap-2">

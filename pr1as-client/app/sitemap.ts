@@ -8,6 +8,8 @@ const publicRoutes = [
   { path: "/posts", priority: 0.7, changeFrequency: "daily" as const },
   { path: "/privacy", priority: 0.3, changeFrequency: "monthly" as const },
   { path: "/terms", priority: 0.3, changeFrequency: "monthly" as const },
+  { path: "/cookies", priority: 0.3, changeFrequency: "monthly" as const },
+  { path: "/booking-process", priority: 0.5, changeFrequency: "monthly" as const },
 ] as const
 
 const BUILD_DATE = new Date("2025-05-31")

@@ -14,19 +14,16 @@ import {
 } from "@/components/ui/bottom-sheet"
 import { Button } from "@/components/ui/button"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { type BookingStatus } from "@/types/booking"
 
 type StatusOption = { value: "all" | BookingStatus; label: string }
 
-type WorkerBookingsMobileFiltersProps = {
+type ClientBookingsMobileFiltersProps = {
   statusOptions: StatusOption[]
   statusValue: "all" | BookingStatus
   onStatusChange: (value: "all" | BookingStatus) => void
-  serviceCode: string
-  onServiceCodeChange: (value: string) => void
   dateRange: DateRange | undefined
   onDateRangeChange: (value: DateRange | undefined) => void
   advancedFilterCount: number
@@ -34,19 +31,17 @@ type WorkerBookingsMobileFiltersProps = {
   onReset: () => void
 }
 
-export function WorkerBookingsMobileFilters({
+export function ClientBookingsMobileFilters({
   statusOptions,
   statusValue,
   onStatusChange,
-  serviceCode,
-  onServiceCodeChange,
   dateRange,
   onDateRangeChange,
   advancedFilterCount,
   onApply,
   onReset,
-}: WorkerBookingsMobileFiltersProps) {
-  const t = useTranslations("WorkerBookings")
+}: ClientBookingsMobileFiltersProps) {
+  const t = useTranslations("Bookings")
   const [open, setOpen] = React.useState(false)
 
   const handleApply = () => {
@@ -84,18 +79,6 @@ export function WorkerBookingsMobileFilters({
             <BottomSheetTitle>{t("advancedFilters")}</BottomSheetTitle>
           </div>
           <div className="grid gap-4 px-5">
-            <div className="grid gap-2">
-              <Label htmlFor="worker-mobile-filter-service">
-                {t("serviceCode")}
-              </Label>
-              <Input
-                id="worker-mobile-filter-service"
-                value={serviceCode}
-                maxLength={40}
-                placeholder={t("serviceCodePlaceholder")}
-                onChange={(event) => onServiceCodeChange(event.target.value)}
-              />
-            </div>
             <div className="grid gap-2">
               <Label>{t("dateRange")}</Label>
               <DateRangePicker

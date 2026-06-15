@@ -412,16 +412,16 @@ export function WorkerBlackoutManager() {
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 sm:flex-none"
             onClick={() => blackoutsQuery.refetch()}
             disabled={blackoutsQuery.isFetching}
+            aria-label={t("refresh")}
+            title={t("refresh")}
           >
             {blackoutsQuery.isFetching ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <RefreshCw className="size-4" />
             )}
-            {t("refresh")}
           </Button>
           <Button
             size="sm"

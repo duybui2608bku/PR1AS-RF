@@ -567,13 +567,14 @@ export default function AdminPricingPage() {
           size="sm"
           onClick={() => packagesQuery.refetch()}
           disabled={packagesQuery.isFetching}
+          aria-label="Làm mới"
+          title="Làm mới"
         >
           {packagesQuery.isFetching ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <RefreshCcw className="size-4" />
           )}
-          Làm mới
         </Button>
       </div>
 

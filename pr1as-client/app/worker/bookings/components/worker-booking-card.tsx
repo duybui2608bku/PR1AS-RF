@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 
+import { BookingCountdown } from "@/components/booking/booking-countdown"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
@@ -20,6 +21,7 @@ import {
   bookingStatusBadgeClass,
   formatDateTime,
   getClientName,
+  getConfirmationDeadline,
   getServiceLabel,
   isBookingExpired,
 } from "../format"
@@ -47,10 +49,17 @@ export function WorkerBookingCard({
     booking.created_at
   )
   const displayStatus = expired ? BookingStatus.EXPIRED : booking.status
+  const confirmDeadline = expired
+    ? null
+    : getConfirmationDeadline(
+        booking.schedule,
+        booking.status,
+        booking.created_at
+      )
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div className="flex items-start justify-between gap-3 px-4 pt-4">
+      <div className="flex items-start justify-between gap-3 px-5 pt-5">
         <div className="min-w-0 flex-1">
           <p className="truncate text-base leading-tight font-semibold">
             {getServiceLabel(booking, locale)}
@@ -69,7 +78,13 @@ export function WorkerBookingCard({
         </span>
       </div>
 
-      <div className="mt-3 space-y-3 px-4">
+      {confirmDeadline ? (
+        <div className="mt-2.5 px-5">
+          <BookingCountdown deadline={confirmDeadline} />
+        </div>
+      ) : null}
+
+      <div className="mt-3 space-y-3 px-5">
         <InfoRow icon={User2} label={t("customer")}>
           <span className="font-medium">
             {getClientName(booking.client_id)}

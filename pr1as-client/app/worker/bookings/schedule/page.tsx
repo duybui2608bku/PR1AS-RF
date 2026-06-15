@@ -302,16 +302,16 @@ export default function WorkerBookingSchedulePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 lg:flex-none"
                   onClick={() => bookingsQuery.refetch()}
                   disabled={bookingsQuery.isFetching}
+                  aria-label={t("refresh")}
+                  title={t("refresh")}
                 >
                   {bookingsQuery.isFetching ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <RefreshCw className="size-4" />
                   )}
-                  {t("refresh")}
                 </Button>
               </div>
             </div>

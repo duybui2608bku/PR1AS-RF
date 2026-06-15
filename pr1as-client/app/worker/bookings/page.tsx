@@ -7,6 +7,7 @@ import {
   CalendarCheck2,
   CheckCircle2,
   FilterX,
+  Info,
   Loader2,
   MessageSquare,
   PlayCircle,
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Table } from "@/components/ui/table"
+import { BookingCountdown } from "@/components/booking/booking-countdown"
 import {
   Tooltip,
   TooltipContent,
@@ -74,6 +76,7 @@ import {
   formatDateTime,
   getBookingId,
   getClientName,
+  getConfirmationDeadline,
   getServiceLabel,
   isBookingExpired,
 } from "./format"
@@ -487,11 +490,21 @@ export default function WorkerBookingsPage() {
     <SiteLayout hideFooter>
       <AuthGuard>
         <div className="container mx-auto px-4 py-6 md:py-8">
-          <div className="mb-5 md:mb-6">
+          <div className="mb-5 flex items-center justify-between gap-3 md:mb-6">
             <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight md:text-3xl">
               <CalendarCheck2 className="size-6 md:size-7" />
               {t("title")}
             </h1>
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => router.push("/booking-process")}
+              aria-label={t("guide")}
+              title={t("guide")}
+            >
+              <Info className="size-4" />
+            </Button>
           </div>
 
           <Card className="mb-5 hidden md:block">
@@ -733,6 +746,13 @@ export default function WorkerBookingsPage() {
                         const displayStatus = expired
                           ? BookingStatus.EXPIRED
                           : booking.status
+                        const confirmDeadline = expired
+                          ? null
+                          : getConfirmationDeadline(
+                              booking.schedule,
+                              booking.status,
+                              booking.created_at
+                            )
 
                         return (
                           <tr
@@ -772,6 +792,12 @@ export default function WorkerBookingsPage() {
                               >
                                 {tStatus(displayStatus)}
                               </span>
+                              {confirmDeadline ? (
+                                <BookingCountdown
+                                  deadline={confirmDeadline}
+                                  className="mt-1.5"
+                                />
+                              ) : null}
                             </td>
                             <td className="max-w-[260px] px-4 py-3 text-sm text-muted-foreground">
                               <div className="space-y-2">

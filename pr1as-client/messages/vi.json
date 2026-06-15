@@ -53,7 +53,9 @@
     "contact": "Liên hệ",
     "legal": "Pháp lý",
     "privacy": "Chính sách bảo mật",
-    "terms": "Điều khoản sử dụng"
+    "terms": "Điều khoản sử dụng",
+    "cookies": "Chính sách Cookie",
+    "bookingProcess": "Cách đặt lịch"
   },
   "Auth": {
     "loginTitle": "Chào mừng trở lại",
@@ -449,7 +451,11 @@
     "confirmDeleteDesc": "Nhập mật khẩu hiện tại để xác nhận. Bạn sẽ bị đăng xuất khỏi mọi thiết bị ngay sau khi xác nhận.",
     "currentPassword": "Mật khẩu hiện tại",
     "passwordPlaceholder": "Nhập mật khẩu để xác nhận",
-    "confirmDelete": "Xác nhận xoá"
+    "confirmDelete": "Xác nhận xoá",
+    "bookingProcessLabel": "Cách đặt lịch",
+    "bookingProcessDesc": "Hướng dẫn quy trình đặt lịch và xác nhận.",
+    "cookiesLabel": "Chính sách Cookie",
+    "cookiesDesc": "Cách chúng tôi sử dụng cookie trên nền tảng."
   },
   "Favorites": {
     "title": "Worker yêu thích",
@@ -1041,6 +1047,10 @@
     "termsDescription": "Điều khoản sử dụng PR1AS cho tài khoản, đặt lịch, thanh toán, gói dịch vụ và trách nhiệm của người dùng.",
     "privacyTitle": "Chính sách bảo mật",
     "privacyDescription": "Chính sách bảo mật của PR1AS về cách thu thập, sử dụng, chia sẻ và bảo vệ thông tin cá nhân của người dùng.",
+    "cookiesTitle": "Chính sách Cookie",
+    "cookiesDescription": "Tìm hiểu PR1AS sử dụng những cookie nào và vì sao — gồm cookie thiết yếu, tùy chọn và phân tích — cùng cách quản lý chúng.",
+    "bookingProcessTitle": "Cách đặt lịch hoạt động",
+    "bookingProcessDescription": "Hiểu cách đặt lịch trên PR1AS theo từng bước — từ tìm thợ đến xác nhận và hoàn tất dịch vụ.",
     "workerProfileTitle": "Hồ sơ worker",
     "workerProfileDescription": "Xem hồ sơ worker, dịch vụ, đánh giá, lịch làm việc và đặt booking trực tuyến trên PR1AS.",
     "chatTitle": "Chat",
@@ -1150,7 +1160,12 @@
       "notesPlaceholder": "Mô tả thêm lý do hủy (tối đa 500 ký tự)",
       "confirmButton": "Xác nhận hủy",
       "errorSelectReason": "Vui lòng chọn lý do hủy."
-    }
+    },
+    "advancedFilters": "Bộ lọc nâng cao",
+    "dateRange": "Khoảng ngày",
+    "apply": "Áp dụng",
+    "close": "Đóng",
+    "guide": "Hướng dẫn đặt lịch"
   },
   "WorkerBookings": {
     "title": "Booking nhận việc",
@@ -1244,7 +1259,8 @@
     "actionSheet": {
       "description": "Hành động booking",
       "cancel": "Hủy"
-    }
+    },
+    "guide": "Hướng dẫn đặt lịch"
   },
   "WorkerBoost": {
     "page": {
@@ -1532,6 +1548,165 @@
       "content": "Chúng tôi có thể cập nhật điều khoản này định kỳ. Mọi thay đổi sẽ được thông báo qua email hoặc thông báo trong ứng dụng. Việc tiếp tục sử dụng dịch vụ sau khi thay đổi được áp dụng đồng nghĩa với việc bạn chấp nhận điều khoản mới."
     }
   },
+  "Cookies": {
+    "title": "Chính sách Cookie",
+    "lastUpdated": "Cập nhật lần cuối: tháng 6 năm 2026",
+    "section1": {
+      "title": "1. Cookie là gì?",
+      "content": "Cookie là các tệp văn bản nhỏ được website lưu trên thiết bị của bạn khi bạn truy cập. Chúng giúp nền tảng ghi nhớ thao tác và tùy chọn của bạn (như trạng thái đăng nhập, ngôn ngữ và đơn vị tiền tệ) trong một khoảng thời gian, để bạn không phải nhập lại mỗi lần quay lại."
+    },
+    "section2": {
+      "title": "2. Các loại cookie chúng tôi sử dụng",
+      "items": [
+        "Cookie thiết yếu — cần thiết để nền tảng hoạt động, ví dụ giữ bạn ở trạng thái đăng nhập và ghi nhớ vai trò bạn đang sử dụng.",
+        "Cookie tùy chọn — ghi nhớ lựa chọn của bạn như ngôn ngữ giao diện, đơn vị tiền tệ hiển thị và giao diện sáng/tối.",
+        "Cookie chức năng — hỗ trợ các tính năng như phiên trò chuyện và bản nháp đã lưu.",
+        "Cookie phân tích — giúp chúng tôi hiểu cách nền tảng được sử dụng để cải thiện."
+      ]
+    },
+    "section3": {
+      "title": "3. Cookie thiết yếu",
+      "content": "Những cookie này lưu mã xác thực đăng nhập và vai trò bạn đang hoạt động (khách hàng hoặc thợ). Nếu không có chúng, bạn không thể duy trì đăng nhập hay sử dụng các khu vực cần bảo vệ. Loại cookie này không thể tắt qua phần cài đặt của chúng tôi."
+    },
+    "section4": {
+      "title": "4. Cookie tùy chọn",
+      "content": "Chúng tôi dùng cookie để ghi nhớ ngôn ngữ bạn chọn (Tiếng Việt, Tiếng Anh hoặc Tiếng Trung), đơn vị tiền tệ hiển thị và giao diện sáng/tối, giúp trải nghiệm của bạn nhất quán qua mỗi lần truy cập."
+    },
+    "section5": {
+      "title": "5. Cookie phân tích",
+      "content": "Chúng tôi có thể sử dụng công cụ phân tích để thu thập thông tin ẩn danh, tổng hợp về cách khách truy cập sử dụng nền tảng — ví dụ trang nào được xem nhiều nhất. Điều này giúp chúng tôi cải thiện hiệu năng và trải nghiệm. Cookie này không nhận diện cá nhân bạn."
+    },
+    "section6": {
+      "title": "6. Cookie của bên thứ ba",
+      "content": "Một số tính năng dựa trên các dịch vụ bên thứ ba đáng tin cậy (như nhà cung cấp đăng nhập và cổng thanh toán). Các nhà cung cấp này có thể đặt cookie riêng, tuân theo chính sách bảo mật của họ."
+    },
+    "section7": {
+      "title": "7. Quản lý cookie của bạn",
+      "content": "Bạn có thể kiểm soát hoặc xóa cookie qua cài đặt trình duyệt bất cứ lúc nào. Lưu ý rằng tắt cookie thiết yếu sẽ khiến bạn không thể đăng nhập và sử dụng các tính năng cốt lõi của nền tảng."
+    },
+    "section8": {
+      "title": "8. Thay đổi & Liên hệ",
+      "content": "Chúng tôi có thể cập nhật Chính sách Cookie này theo thời gian. Mọi thay đổi quan trọng sẽ được thông báo trên nền tảng. Nếu có thắc mắc, vui lòng liên hệ với chúng tôi qua các kênh hỗ trợ."
+    }
+  },
+  "BookingProcess": {
+    "title": "Cách đặt lịch hoạt động",
+    "intro": "Đặt lịch trên PR1AS đơn giản và minh bạch. Dưới đây là từng bước từ khi tìm thợ đến khi hoàn tất dịch vụ, để bạn biết chính xác điều gì sẽ diễn ra.",
+    "rulesTitle": "Cần biết trước khi đặt",
+    "rules": [
+      {
+        "label": "Đặt sớm nhất",
+        "value": "Ít nhất 2 giờ trước giờ hẹn."
+      },
+      {
+        "label": "Đặt muộn nhất",
+        "value": "Tối đa 30 ngày trước."
+      },
+      {
+        "label": "Thời lượng dịch vụ",
+        "value": "Từ 1 giờ đến 24 giờ."
+      },
+      {
+        "label": "Thời hạn thợ xác nhận",
+        "value": "Thợ xác nhận chậm nhất 6 giờ trước giờ bắt đầu. Với lịch đặt gấp, thợ có 60 phút để xác nhận, nếu không yêu cầu sẽ tự động hết hạn."
+      }
+    ],
+    "cancelTitle": "Chính sách hủy lịch",
+    "cancelIntro": "Việc hủy lịch phụ thuộc vào trạng thái và thời điểm:",
+    "cancelRules": [
+      {
+        "title": "Hủy khi đang \"Chờ xử lý\"",
+        "description": "Miễn phí và không ảnh hưởng đến ai — thợ chưa cam kết nhận lịch."
+      },
+      {
+        "title": "Hủy sớm (trước giờ hẹn hơn 24 giờ)",
+        "description": "Không bị trừ điểm uy tín. Bạn có thể hủy lịch đã xác nhận thoải mái trong khoảng này."
+      },
+      {
+        "title": "Hủy muộn (trong vòng 24 giờ trước giờ hẹn)",
+        "description": "Nếu thợ đã xác nhận, việc hủy muộn sẽ làm giảm điểm uy tín của bạn."
+      },
+      {
+        "title": "Sau khi dịch vụ đã bắt đầu (\"Đang thực hiện\")",
+        "description": "Lịch không thể bị hủy đơn phương. Mọi vấn đề phải đi qua khiếu nại để quản trị viên phân xử."
+      },
+      {
+        "title": "Thợ hủy lịch",
+        "description": "Nếu thợ hủy một lịch đã xác nhận, điểm uy tín của thợ sẽ bị trừ."
+      }
+    ],
+    "disputeNote": "Sau khi dịch vụ hoàn tất, bạn có 3 ngày để mở khiếu nại. Quá thời hạn này, kết quả được coi là đã chấp nhận và không thể khiếu nại nữa.",
+    "stepsTitle": "Các bước thực hiện",
+    "steps": [
+      {
+        "title": "Tìm dịch vụ hoặc thợ",
+        "description": "Duyệt các dịch vụ hoặc hồ sơ thợ, so sánh đánh giá, giá cả và lịch trống, sau đó mở hồ sơ bạn quan tâm."
+      },
+      {
+        "title": "Gửi yêu cầu đặt lịch",
+        "description": "Chọn thời gian hẹn, mô tả nhu cầu của bạn và gửi yêu cầu. Lịch đặt được tạo với trạng thái \"Chờ xử lý\" trong khi đợi thợ phản hồi."
+      },
+      {
+        "title": "Thợ xác nhận hoặc từ chối",
+        "description": "Thợ xem xét yêu cầu và xác nhận hoặc từ chối. Yêu cầu không được phản hồi trong thời gian quy định sẽ tự động hết hạn để bạn không phải chờ đợi vô thời hạn."
+      },
+      {
+        "title": "Tiến hành dịch vụ",
+        "description": "Sau khi được xác nhận, lịch chuyển sang \"Đang thực hiện\". Bạn và thợ phối hợp trực tiếp để hoàn thành công việc như đã thỏa thuận."
+      },
+      {
+        "title": "Xác nhận hoàn tất",
+        "description": "Khi xong việc, thợ đánh dấu hoàn thành và lịch chuyển sang \"Chờ xác nhận\". Bạn kiểm tra kết quả và xác nhận để chuyển sang \"Hoàn tất\"."
+      },
+      {
+        "title": "Để lại đánh giá",
+        "description": "Sau khi hoàn tất, hãy chia sẻ đánh giá và phản hồi của bạn. Đánh giá giúp khách hàng khác lựa chọn và giúp thợ giỏi nổi bật."
+      }
+    ],
+    "paymentTitle": "Về thanh toán",
+    "paymentContent": "PR1AS kết nối khách hàng và thợ nhưng không giữ tiền thanh toán thay bạn. Giá và việc thanh toán cho mỗi lần đặt lịch được thỏa thuận trực tiếp giữa bạn và thợ. Hãy luôn thống nhất giá và điều khoản trước khi bắt đầu dịch vụ.",
+    "statusesTitle": "Giải thích các trạng thái đặt lịch",
+    "statuses": [
+      {
+        "label": "Chờ xử lý",
+        "description": "Yêu cầu đã được gửi và đang đợi thợ phản hồi."
+      },
+      {
+        "label": "Đã xác nhận",
+        "description": "Thợ đã chấp nhận yêu cầu và lịch hẹn đã được thiết lập."
+      },
+      {
+        "label": "Bị từ chối",
+        "description": "Thợ đã từ chối yêu cầu. Bạn có thể đặt thợ khác."
+      },
+      {
+        "label": "Đang thực hiện",
+        "description": "Dịch vụ đang được tiến hành."
+      },
+      {
+        "label": "Chờ xác nhận",
+        "description": "Thợ đã đánh dấu hoàn thành; đang đợi bạn xác nhận."
+      },
+      {
+        "label": "Hoàn tất",
+        "description": "Dịch vụ đã xong và được cả hai bên xác nhận."
+      },
+      {
+        "label": "Đã hủy",
+        "description": "Lịch đặt đã bị hủy bởi khách hàng hoặc thợ."
+      },
+      {
+        "label": "Đang khiếu nại",
+        "description": "Một khiếu nại đã được mở và đang được xem xét."
+      },
+      {
+        "label": "Hết hạn",
+        "description": "Yêu cầu không được phản hồi kịp thời và đã tự động hết hạn."
+      }
+    ],
+    "helpTitle": "Cần trợ giúp?",
+    "helpContent": "Nếu có vấn đề với lịch đặt, bạn có thể mở khiếu nại từ danh sách lịch đặt của mình, hoặc liên hệ đội ngũ hỗ trợ và chúng tôi sẽ giúp giải quyết."
+  },
   "GlobalError": {
     "title": "Đã có lỗi xảy ra",
     "description": "Chúng tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau.",
@@ -1565,5 +1740,12 @@
     "cancel": "Hủy",
     "skip": "Bỏ qua",
     "confirm": "Xác nhận"
+  },
+  "BookingCountdown": {
+    "confirmExpiresIn": "Hết hạn xác nhận sau {time}",
+    "expired": "Đã hết hạn xác nhận",
+    "unitHour": "g",
+    "unitMinute": "p",
+    "unitSecond": "s"
   }
 }

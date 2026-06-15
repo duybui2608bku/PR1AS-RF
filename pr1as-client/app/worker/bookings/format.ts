@@ -36,6 +36,31 @@ export const formatDateTime = (
   })
 }
 
+/**
+ * Confirmation deadline (ms timestamp) for a PENDING booking, mirroring the
+ * server's expiration logic. Returns null when the booking can no longer
+ * expire by confirmation timeout (any non-PENDING status or invalid schedule).
+ */
+export const getConfirmationDeadline = (
+  schedule: Booking["schedule"],
+  status: BookingStatus,
+  createdAt?: string | null
+): number | null => {
+  if (status !== BookingStatus.PENDING) return null
+  const startTime = new Date(schedule.start_time).getTime()
+  if (Number.isNaN(startTime)) return null
+  const createdTime = createdAt ? new Date(createdAt).getTime() : Number.NaN
+
+  const confirmDeadlineBeforeStartMs = 6 * 60 * 60 * 1000
+  const shortNoticeConfirmMs = 60 * 60 * 1000
+  const beforeStartDeadline = startTime - confirmDeadlineBeforeStartMs
+
+  if (Number.isNaN(createdTime)) return beforeStartDeadline
+  return beforeStartDeadline <= createdTime
+    ? createdTime + shortNoticeConfirmMs
+    : beforeStartDeadline
+}
+
 export const isBookingExpired = (
   schedule: Booking["schedule"],
   status: BookingStatus,

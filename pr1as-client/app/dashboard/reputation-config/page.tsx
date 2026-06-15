@@ -277,13 +277,14 @@ export default function ReputationConfigPage() {
           size="sm"
           onClick={() => configsQuery.refetch()}
           disabled={configsQuery.isFetching}
+          aria-label="Làm mới"
+          title="Làm mới"
         >
           {configsQuery.isFetching ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <RefreshCcw className="size-4" />
           )}
-          Làm mới
         </Button>
       </div>
 

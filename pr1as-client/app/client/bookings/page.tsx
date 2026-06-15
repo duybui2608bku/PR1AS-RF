@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { toast } from "sonner"
+import type { DateRange } from "react-day-picker"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -55,8 +56,11 @@ import {
 } from "@/types/booking"
 import { ReviewType, type ReviewRatingDetails } from "@/types/review"
 
+import { BookingCountdown } from "@/components/booking/booking-countdown"
+
 import { BookingCard } from "./components/booking-card"
 import { CancelBookingDialog } from "./components/cancel-booking-dialog"
+import { ClientBookingsMobileFilters } from "./components/client-bookings-mobile-filters"
 import { DisputeBookingDialog } from "./components/dispute-booking-dialog"
 import { ReviewBookingDialog } from "./components/review-booking-dialog"
 import {
@@ -68,6 +72,7 @@ import {
   cancelledByLabel,
   formatDateTime,
   getBookingId,
+  getConfirmationDeadline,
   getRefId,
   getServiceLabel,
   getWorkerName,
@@ -125,6 +130,9 @@ export default function ClientBookingsPage() {
   )
   const [startDate, setStartDate] = React.useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = React.useState<Date | undefined>(undefined)
+  const [dateRangeInput, setDateRangeInput] = React.useState<
+    DateRange | undefined
+  >(undefined)
 
   const [cancelTarget, setCancelTarget] = React.useState<Booking | null>(null)
   const [disputeTarget, setDisputeTarget] = React.useState<Booking | null>(null)
@@ -166,8 +174,22 @@ export default function ClientBookingsPage() {
     setStatusFilter("all")
     setStartDate(undefined)
     setEndDate(undefined)
+    setDateRangeInput(undefined)
     setPage(1)
   }
+
+  const handleMobileStatusChange = (value: "all" | BookingStatus) => {
+    setStatusFilter(value)
+    setPage(1)
+  }
+
+  const handleApplyMobileFilters = () => {
+    setStartDate(dateRangeInput?.from)
+    setEndDate(dateRangeInput?.to)
+    setPage(1)
+  }
+
+  const advancedFilterCount = startDate || endDate ? 1 : 0
 
   const handleCancelSubmit = async (values: CancelBookingPayload) => {
     if (!cancelTarget) return
@@ -359,31 +381,35 @@ export default function ClientBookingsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <CalendarCheck2 className="size-7" />
-            {t("myBookings")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("manageBookings")}
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
+            size="icon"
+            onClick={() => router.push("/booking-process")}
+            aria-label={t("guide")}
+            title={t("guide")}
+          >
+            <Info className="size-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => bookingsQuery.refetch()}
             disabled={bookingsQuery.isFetching}
+            aria-label={t("refresh")}
+            title={t("refresh")}
           >
             {bookingsQuery.isFetching ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <RefreshCw className="size-4" />
             )}
-            {t("refresh")}
           </Button>
         </div>
       </div>
 
-      <Card className="mb-5">
+      <Card className="mb-5 hidden md:block">
         <CardContent className="grid gap-4 p-5 md:grid-cols-4">
           <div className="grid gap-2">
             <Label htmlFor="filter-status">{t("status")}</Label>
@@ -415,6 +441,7 @@ export default function ClientBookingsPage() {
               value={startDate}
               onChange={(date) => {
                 setStartDate(date)
+                setDateRangeInput((prev) => ({ from: date, to: prev?.to }))
                 setPage(1)
               }}
               toDate={endDate}
@@ -426,6 +453,7 @@ export default function ClientBookingsPage() {
               value={endDate}
               onChange={(date) => {
                 setEndDate(date)
+                setDateRangeInput((prev) => ({ from: prev?.from, to: date }))
                 setPage(1)
               }}
               fromDate={startDate}
@@ -443,8 +471,21 @@ export default function ClientBookingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b bg-muted/30">
+      <div className="mb-4 md:hidden">
+        <ClientBookingsMobileFilters
+          statusOptions={STATUS_OPTIONS}
+          statusValue={statusFilter}
+          onStatusChange={handleMobileStatusChange}
+          dateRange={dateRangeInput}
+          onDateRangeChange={setDateRangeInput}
+          advancedFilterCount={advancedFilterCount}
+          onApply={handleApplyMobileFilters}
+          onReset={handleResetFilters}
+        />
+      </div>
+
+      <Card className="rounded-none border-0 bg-transparent shadow-none md:rounded-xl md:border md:bg-card md:shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b-0 bg-transparent p-0 pb-3 md:border-b md:bg-muted/30 md:p-6">
           <CardTitle className="text-base">{t("listTitle")}</CardTitle>
           <Badge variant="outline">{total}</Badge>
         </CardHeader>
@@ -474,7 +515,7 @@ export default function ClientBookingsPage() {
             </div>
           ) : (
             <>
-              <div className="md:hidden">
+              <div className="flex flex-col gap-3 md:hidden">
                 {bookings.map((booking) => {
                   const bookingId = getBookingId(booking)
                   return (
@@ -522,6 +563,13 @@ export default function ClientBookingsPage() {
                       const displayStatus = expired
                         ? BookingStatus.EXPIRED
                         : booking.status
+                      const confirmDeadline = expired
+                        ? null
+                        : getConfirmationDeadline(
+                            booking.schedule,
+                            booking.status,
+                            booking.created_at
+                          )
                       const bookingId = getBookingId(booking)
 
                       return (
@@ -636,6 +684,12 @@ export default function ClientBookingsPage() {
                                 </HoverCard>
                               ) : null}
                             </div>
+                            {confirmDeadline ? (
+                              <BookingCountdown
+                                deadline={confirmDeadline}
+                                className="mt-1.5"
+                              />
+                            ) : null}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {new Date(booking.created_at).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
