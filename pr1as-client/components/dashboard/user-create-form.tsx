@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useQuery } from "@tanstack/react-query"
 import { useLocale } from "next-intl"
@@ -44,7 +44,11 @@ import {
   parseAmountInput,
 } from "@/lib/currency"
 import { useCurrencyStore } from "@/lib/store/currency-store"
-import { uploadImage } from "@/lib/utils/upload-image"
+import { uploadImage, uploadMultipleImages } from "@/lib/utils/upload-image"
+import {
+  filterValidImageFiles,
+  validateImageFile,
+} from "@/lib/utils/validate-upload"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import {
   getProvinces,
@@ -674,6 +678,11 @@ function AccountSection({ draft, onPatch }: Props) {
 
   const handleAvatar = async (file: File | undefined) => {
     if (!file) return
+    const error = validateImageFile(file)
+    if (error) {
+      toast.error(error)
+      return
+    }
     setUploading(true)
     try {
       const url = await uploadImage(file)
@@ -709,7 +718,10 @@ function AccountSection({ draft, onPatch }: Props) {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleAvatar(e.target.files?.[0])}
+            onChange={(e) => {
+              handleAvatar(e.target.files?.[0])
+              e.target.value = "" // allow re-selecting the same file
+            }}
           />
           <Button
             type="button"
@@ -1011,6 +1023,7 @@ function BasicInfoSection({ draft, onPatch }: Props) {
           }
           placeholder="Chọn ngày sinh"
           toDate={new Date()}
+          captionLayout="dropdown"
         />
       </FieldRow>
 
@@ -1239,25 +1252,72 @@ function IntroductionSection({ draft, onPatch }: Props) {
 // ---------------------------------------------------------------------------
 // Gallery (admin adds manually)
 // ---------------------------------------------------------------------------
+type PendingUpload = { id: string; previewUrl: string }
+
 function GallerySection({ draft, onPatch }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [urlInput, setUrlInput] = useState("")
+  // Instagram-style: show local previews instantly while the upload runs in the
+  // background, then swap them for the CDN urls once the request resolves.
+  const [pending, setPending] = useState<PendingUpload[]>([])
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return
+  // Free object URLs if the component unmounts mid-upload.
+  const pendingRef = useRef<PendingUpload[]>([])
+  useEffect(() => {
+    pendingRef.current = pending
+  }, [pending])
+  useEffect(
+    () => () => pendingRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)),
+    []
+  )
+
+  const usedSlots = draft.gallery_urls.length + pending.length
+  const atMax = usedSlots >= MAX_GALLERY
+
+  const handleFiles = async (fileList: FileList | null) => {
+    const files = Array.from(fileList ?? [])
+    if (inputRef.current) inputRef.current.value = "" // allow re-picking same files
+    if (files.length === 0) return
+
+    const remaining = MAX_GALLERY - usedSlots
+    if (remaining <= 0) return
+    const valid = filterValidImageFiles(files.slice(0, remaining), (msg) =>
+      toast.error(msg)
+    )
+    if (valid.length === 0) return
+
+    // Optimistic previews — appear immediately, no waiting on the network.
+    const batch = valid.map((file) => ({
+      id: uid("pend"),
+      previewUrl: URL.createObjectURL(file),
+      file,
+    }))
+    setPending((prev) => [...prev, ...batch.map(({ id, previewUrl }) => ({ id, previewUrl }))])
     setUploading(true)
+
     try {
-      const urls: string[] = []
-      for (const file of Array.from(files)) {
-        urls.push(await uploadImage(file))
+      const urls = await uploadMultipleImages(valid)
+      if (urls.length > 0) {
+        onPatch({
+          gallery_urls: [...draft.gallery_urls, ...urls].slice(-MAX_GALLERY),
+        })
       }
-      onPatch({
-        gallery_urls: [...draft.gallery_urls, ...urls].slice(-MAX_GALLERY),
-      })
+      if (urls.length === 0) {
+        toast.error("Tải ảnh thất bại.")
+      } else if (urls.length < valid.length) {
+        toast.error(`Chỉ tải được ${urls.length}/${valid.length} ảnh.`)
+      }
     } catch {
       toast.error("Tải ảnh thất bại.")
     } finally {
+      const ids = new Set(batch.map((b) => b.id))
+      setPending((prev) => {
+        prev.forEach((p) => {
+          if (ids.has(p.id)) URL.revokeObjectURL(p.previewUrl)
+        })
+        return prev.filter((p) => !ids.has(p.id))
+      })
       setUploading(false)
     }
   }
@@ -1279,7 +1339,7 @@ function GallerySection({ draft, onPatch }: Props) {
         type="button"
         variant="outline"
         className="h-14 w-full gap-2.5 rounded-xl border-dashed text-base font-medium"
-        disabled={uploading || draft.gallery_urls.length >= MAX_GALLERY}
+        disabled={atMax}
         onClick={() => inputRef.current?.click()}
       >
         {uploading ? (
@@ -1301,9 +1361,7 @@ function GallerySection({ draft, onPatch }: Props) {
           type="button"
           variant="outline"
           className="h-11 shrink-0 rounded-xl"
-          disabled={
-            !urlInput.trim() || draft.gallery_urls.length >= MAX_GALLERY
-          }
+          disabled={!urlInput.trim() || atMax}
           onClick={() => {
             onPatch({
               gallery_urls: [...draft.gallery_urls, urlInput.trim()].slice(
@@ -1317,7 +1375,7 @@ function GallerySection({ draft, onPatch }: Props) {
         </Button>
       </div>
 
-      {draft.gallery_urls.length > 0 && (
+      {(draft.gallery_urls.length > 0 || pending.length > 0) && (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {draft.gallery_urls.map((url, i) => (
             <div
@@ -1344,6 +1402,22 @@ function GallerySection({ draft, onPatch }: Props) {
               >
                 <X className="size-3" />
               </button>
+            </div>
+          ))}
+          {pending.map((p) => (
+            <div
+              key={p.id}
+              className="relative aspect-square overflow-hidden rounded-xl border"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={p.previewUrl}
+                alt=""
+                className="absolute inset-0 size-full object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <Loader2 className="size-5 animate-spin text-white" />
+              </div>
             </div>
           ))}
         </div>

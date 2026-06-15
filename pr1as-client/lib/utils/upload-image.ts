@@ -1,30 +1,52 @@
+// Hard cap on client-side orientation work. Past this we upload the original
+// file: correct rotation is never worth a stuck upload button on a slow phone.
+const ORIENTATION_TIMEOUT_MS = 4000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ])
+}
+
 function readExifOrientation(file: File): Promise<number> {
+  // Never rejects/hangs: any parse error (e.g. a RangeError from an EXIF offset
+  // that points past the 64 KB slice we read — common in real phone photos)
+  // resolves to the neutral orientation (1) so the upload can still proceed.
   return new Promise((resolve) => {
     const reader = new FileReader()
+    reader.onerror = () => resolve(1)
     reader.onload = (e) => {
-      const view = new DataView(e.target!.result as ArrayBuffer)
-      if (view.getUint16(0, false) !== 0xffd8) return resolve(1)
-      let offset = 2
-      while (offset < view.byteLength) {
-        const marker = view.getUint16(offset, false)
-        offset += 2
-        if (marker === 0xffe1) {
-          if (view.getUint32(offset + 2, false) !== 0x45786966) break
-          const little = view.getUint16(offset + 8, false) === 0x4949
-          const ifdOffset = offset + 10 + view.getUint32(offset + 12, little)
-          const tags = view.getUint16(ifdOffset, little)
-          for (let i = 0; i < tags; i++) {
-            const tag = view.getUint16(ifdOffset + 2 + i * 12, little)
-            if (tag === 0x0112) {
-              return resolve(view.getUint16(ifdOffset + 2 + i * 12 + 8, little))
+      try {
+        const view = new DataView(e.target!.result as ArrayBuffer)
+        if (view.getUint16(0, false) !== 0xffd8) return resolve(1)
+        let offset = 2
+        while (offset + 1 < view.byteLength) {
+          const marker = view.getUint16(offset, false)
+          offset += 2
+          if (marker === 0xffe1) {
+            if (view.getUint32(offset + 2, false) !== 0x45786966) break
+            const little = view.getUint16(offset + 8, false) === 0x4949
+            const ifdOffset = offset + 10 + view.getUint32(offset + 12, little)
+            // Bail if the IFD lies past the bytes we actually loaded.
+            if (ifdOffset + 2 > view.byteLength) break
+            const tags = view.getUint16(ifdOffset, little)
+            for (let i = 0; i < tags; i++) {
+              const entry = ifdOffset + 2 + i * 12
+              if (entry + 10 > view.byteLength) break
+              if (view.getUint16(entry, little) === 0x0112) {
+                return resolve(view.getUint16(entry + 8, little))
+              }
             }
+            break
+          } else if ((marker & 0xff00) !== 0xff00) {
+            break
+          } else {
+            offset += view.getUint16(offset, false)
           }
-          break
-        } else if ((marker & 0xff00) !== 0xff00) {
-          break
-        } else {
-          offset += view.getUint16(offset, false)
         }
+      } catch {
+        // Malformed/truncated EXIF — fall through to the neutral default.
       }
       resolve(1)
     }
@@ -32,8 +54,7 @@ function readExifOrientation(file: File): Promise<number> {
   })
 }
 
-async function fixImageOrientation(file: File): Promise<File> {
-  if (!file.type.startsWith("image/jpeg")) return file
+async function fixImageOrientationCore(file: File): Promise<File> {
   const orientation = await readExifOrientation(file)
   if (orientation <= 1) return file
 
@@ -63,6 +84,18 @@ async function fixImageOrientation(file: File): Promise<File> {
       0.92,
     )
   })
+}
+
+// Best-effort: correct EXIF rotation when we can, but ALWAYS return a usable
+// File. Any decode failure or a slow device (timeout) falls back to the
+// original bytes so the upload can never stall on this step.
+async function fixImageOrientation(file: File): Promise<File> {
+  if (!file.type.startsWith("image/jpeg")) return file
+  try {
+    return await withTimeout(fixImageOrientationCore(file), ORIENTATION_TIMEOUT_MS, file)
+  } catch {
+    return file
+  }
 }
 
 export enum UploadErrorCode {
@@ -147,8 +180,11 @@ export async function uploadMultipleImages(
   server: string = UploadConfig.DEFAULT_SERVER
 ): Promise<string[]> {
   const formData = new FormData();
-  for (const file of files) {
-    formData.append(UploadFormField.Images, await fixImageOrientation(file));
+  // Orientation fixes run in parallel — each is independently time-boxed and
+  // falls back to the original file, so one slow/odd photo can't stall the lot.
+  const prepared = await Promise.all(files.map((file) => fixImageOrientation(file)));
+  for (const file of prepared) {
+    formData.append(UploadFormField.Images, file);
   }
   formData.append(UploadFormField.Server, server);
 

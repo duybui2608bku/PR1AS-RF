@@ -56,7 +56,7 @@ import {
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
-import { uploadImage } from "@/lib/utils/upload-image"
+import { uploadMultipleImages } from "@/lib/utils/upload-image"
 import {
   filterAssistanceServicesForWorkerSetup,
   isServiceIncludedInWorkerSetupStep,
@@ -614,10 +614,11 @@ export default function WorkerSetupPage() {
     galleryEditor.start(valid, async (croppedFiles) => {
       setGalleryUploading(true)
       try {
-        const urls: string[] = []
-        for (const file of croppedFiles) {
-          urls.push(await uploadImage(file))
-        }
+        // One batched request (server processes in parallel) instead of a
+        // sequential per-file loop — faster and a single failed file can't
+        // abort the whole batch.
+        const urls = await uploadMultipleImages(croppedFiles)
+        if (urls.length === 0) throw new Error("empty")
         setGalleryUrls((prev) => [...prev, ...urls].slice(-MAX_GALLERY))
       } catch (e) {
         toast.error(getErrorMessage(e, t("toast.uploadFailed")))
