@@ -17,7 +17,14 @@ const DAY_PICKER_LOCALES: Record<string, Locale> = {
   zh: zhCN,
 }
 
-function Calendar({ className, classNames, showOutsideDays = true, locale, ...props }: CalendarProps) {
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  locale,
+  components,
+  ...props
+}: CalendarProps) {
   const appLocale = useLocale()
   const resolvedLocale = locale ?? DAY_PICKER_LOCALES[appLocale] ?? vi
   return (
@@ -86,6 +93,7 @@ function Calendar({ className, classNames, showOutsideDays = true, locale, ...pr
 
           return <Icon className={cn("size-4", className)} />
         },
+        ...components,
       }}
       {...props}
     />
