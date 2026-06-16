@@ -1,111 +1,271 @@
-# Admin User Management — Tạo user (worker/client) thủ công
+# Memory Bank - Admin User Management
 
-> Tài liệu thiết kế / kế hoạch implement. Viết trước khi code.
+## Purpose
 
-## 1. Mục tiêu
+Admin user management lets an admin list users, create client/worker accounts,
+view user detail, edit admin-provisioned users, and change account status.
 
-Cho phép **admin** tạo user trực tiếp từ trang quản trị (`/dashboard/users`) để khởi tạo
-dữ liệu thật cho dự án (local & production), giúp web trông như đã có người dùng/worker thật
-và sẵn sàng vận hành. User do admin tạo **bỏ qua toàn bộ bước xác thực email**.
+The important distinction is `created_by_admin`:
 
-Đặc điểm chốt với người dùng:
-- Định danh đăng nhập = **email** (hệ thống không có field `username`). `full_name` là tên hiển thị.
-- Worker tạo ra phải **hiển thị & bookable ngay** → cần đủ `worker_profile` + ≥1 `WorkerService` (pricing) + `work_locations`.
-- Avatar/gallery: **upload file** (tái dùng `uploadImage`) **hoặc dán URL** (URL phải khớp `MEDIA_ALLOWED_HOSTS`).
-- UX tạo nhiều user: **workspace nhiều "trang/tab"** — mỗi user là 1 trang form đầy đủ; nút "Thêm user"
-  mở trang mới; chuyển qua lại giữa các trang để chỉnh sửa từng user trước khi lưu. (Không làm import CSV ở giai đoạn này.)
+- Accounts created through normal registration or Google login are real user
+  accounts and are mostly read-only from admin edit.
+- Accounts created by admin are marked `created_by_admin: true`, verified
+  immediately, and can be fully edited by admin later.
 
-## 2. Hiện trạng codebase (đã khảo sát)
+Primary source files:
 
-- **Auth/role**: `SERVER/src/middleware/auth.ts` → `adminOnly = authorize(UserRole.ADMIN)`. Roles: `client | worker | admin`.
-- **User model** (`SERVER/src/models/auth/user.model.ts`): `email`(unique), `password_hash`(select:false, bcrypt 10 rounds),
-  `full_name`, `phone`, `avatar`, `roles[]`, `last_active_role`, `status`(enum), `verify_email`,
-  `worker_profile`(subdoc), `client_profile`, `meta_data`(reputation_score=100, pricing_plan_code=standard, onboarding_done).
-  Lưu ý: `coords` có trong type `IUser` nhưng **không có trong schema** → không persist (bỏ qua).
-- **Để worker hiển thị trong listing** (`SERVER/src/repositories/worker/worker-service.repository.ts` aggregate):
-  worker phải `status=ACTIVE`, `worker_profile != null`, và có ≥1 `WorkerService` active trỏ tới `Service` active.
-- **Services đã seed sẵn** (`SERVER/src/scripts/seed-services.ts`, 7 code): VIRTUAL_ASSISTANT, DIRECT_SUPPORT,
-  TRANSLATION, TOUR_GUIDE, PRESENCE, CONNECTION, FORMAL.
-- **work_locations**: `{ province_code:number, ward_code?:number, label_snapshot?:string }`. Mã hành chính VN lấy từ
-  `provinces.open-api.vn/api/v2` (client đã có `pr1as-client/lib/vn-provinces/work-locations-api.ts`).
-  Backend chỉ lưu code + label snapshot, **không phụ thuộc** collection `Location`.
-- **Wallet** (unique theo user) + **WorkerPointWallet** (cho worker) là 2 collection riêng, tạo kèm khi tạo user/worker.
-- **Endpoint admin user hiện có**: `GET /user` (list + filter role/status/search/date, phân trang) và
-  `PATCH /user/:id/status`. Trang `pr1as-client/app/dashboard/users/page.tsx` đã có bảng quản lý + đổi trạng thái.
-- **Validation tham chiếu**: `SERVER/src/validations/user/*` (`updateWorkerProfileSchema`, `avatarUrlSchema`) và
-  `validations/worker/worker-service.validation.ts` (`pricingSchema`: unit∈HOURLY/DAILY/MONTHLY, duration int≥1, price>0, currency→VND).
+- Routes: `SERVER/src/routes/user/user.routes.ts`
+- Controller: `SERVER/src/controllers/user/user.controller.ts`
+- Service: `SERVER/src/services/user/user.service.ts`
+- User repository: `SERVER/src/repositories/auth/user.repository.ts`
+- User model: `SERVER/src/models/auth/user.model.ts`
+- Create validation: `SERVER/src/validations/user/admin-create-user.validation.ts`
+- Update validation: `SERVER/src/validations/user/admin-update-user.validation.ts`
+- Status validation: `SERVER/src/validations/user/user.validation.ts`
+- Worker service repository:
+  `SERVER/src/repositories/worker/worker-service.repository.ts`
+- Frontend users list: `pr1as-client/app/dashboard/users/page.tsx`
+- Frontend create: `pr1as-client/app/dashboard/users/create/page.tsx`
+- Frontend edit: `pr1as-client/app/dashboard/users/[id]/edit/page.tsx`
+- Shared form: `pr1as-client/components/dashboard/user-create-form.tsx`
+- Frontend service/hook: `pr1as-client/services/user.service.ts`,
+  `pr1as-client/lib/hooks/use-users.ts`
 
-## 3. Backend — thay đổi
+## Routes
 
-### 3.1 Endpoint
-`POST /user` (đặt trong `routes/user/user.routes.ts`, nhóm `authenticate, adminOnly`, kèm `csrfProtection`).
-Controller `userController.createUser` → `userService.createUserByAdmin(input)`.
+Mounted under `/api/users`.
 
-### 3.2 Validation — `validations/user/admin-create-user.validation.ts` (Zod)
-```
-adminCreateUserSchema = {
-  email:      z.string().email(),
-  password:   z.string().min(8),                  // admin set, có thể auto-gen ở FE
-  full_name:  z.string().trim().min(1).max(100),
-  phone:      z.string().trim().optional().nullable(),
-  avatar:     z.union([avatarUrlSchema, z.null()]).optional(),
-  roles:      z.array(z.enum([client, worker])).min(1).default([client]),
-  status:     z.nativeEnum(UserStatus).default(ACTIVE),
-  worker_profile?: <reuse shape của updateWorkerProfileSchema.worker_profile, bỏ coords>,
-  worker_services?: z.array({ service_code: string(uppercase), pricing: [pricingSchema] }).min(1),
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/me/post-stats` | Any authenticated user | Return current user's post quota/stats. |
+| `GET` | `/` | Admin | Paginated user list with filters. |
+| `POST` | `/` | Admin + CSRF | Create an admin-provisioned user. |
+| `GET` | `/:id` | Admin | Return user detail plus worker services. |
+| `PUT` | `/:id` | Admin + CSRF | Edit an admin-provisioned user. |
+| `PATCH` | `/:id/status` | Admin + CSRF | Change account status. |
+
+All admin routes use `authenticate` and `adminOnly`.
+
+## User List
+
+`GET /api/users` uses pagination middleware and `getUsersQuerySchema`.
+
+Filters:
+
+| Query | Meaning |
+| --- | --- |
+| `search` | Regex search over `full_name`, `email`, and `phone`. |
+| `role` | Matches `roles`. |
+| `status` | Matches `status`. |
+| `startDate`, `endDate` | Filters `created_at`. |
+| `created_by_admin` | `"true"` for admin-created users, `"false"` for real users. |
+
+Sorting:
+
+- `created_at: -1`.
+
+Response:
+
+- Uses `PaginationHelper.format`.
+- Users are converted through `toPublicUser`.
+
+## Create User Flow
+
+`POST /api/users` validates with `adminCreateUserSchema`.
+
+Base required fields:
+
+| Field | Rule |
+| --- | --- |
+| `email` | Required, lowercased, valid email. |
+| `password` | Required, min/max validation. |
+| `full_name` | Required, non-empty, max full-name limit. |
+| `phone` | Optional nullable phone-like string. |
+| `avatar` | Optional normalized URL or null. |
+| `roles` | Array of `client` and/or `worker`; default `[client]`. |
+| `status` | `active`, `inactive`, or `banned`; default `active`. |
+
+Worker-specific fields:
+
+| Field | Rule |
+| --- | --- |
+| `worker_profile` | Required when `roles` includes `worker`. |
+| `worker_services` | Required and non-empty when `roles` includes `worker`. |
+
+Worker service input:
+
+| Field | Rule |
+| --- | --- |
+| `service_code` | Required, uppercased, must map to an active catalog service. |
+| `pricing` | At least one pricing row. |
+| `pricing[].unit` | `HOURLY`, `DAILY`, or `MONTHLY`. |
+| `pricing[].duration` | Integer >= 1. |
+| `pricing[].price` | Number > 0. |
+| `pricing[].currency` | Optional. Unsupported or missing defaults to VND in service logic. |
+
+Service flow:
+
+1. Normalize email.
+2. Reject duplicate email.
+3. If worker role is requested, ensure roles become `[client, worker]`.
+4. Set `last_active_role = worker` for worker accounts, otherwise `client`.
+5. Resolve every `service_code` to an active service.
+6. Reject duplicate service codes.
+7. Convert pricing to include `currency`, `exchange_rate`, and `price_vnd`.
+8. Hash password.
+9. Create user with `verify_email: true`, `created_by_admin: true`,
+   `onboarding_done: true`, and default locale `vi`.
+10. Create wallet with balance 0.
+11. If worker, create/find point wallet and upsert worker services.
+12. Log `ADMIN_CREATE_USER`.
+
+Important: admin-created accounts skip email verification and can log in
+immediately with the admin-set password.
+
+## Edit User Flow
+
+`PUT /api/users/:id` validates with `adminUpdateUserSchema`.
+
+Allowed edit fields:
+
+- `email` optional.
+- `password` optional.
+- `full_name` required.
+- `phone` optional nullable.
+- `avatar` optional nullable.
+- `roles`.
+- `status`.
+- `worker_profile` if worker.
+- `worker_services` if worker.
+
+Rules:
+
+1. User must exist.
+2. User must have `created_by_admin: true`.
+3. Changing email checks duplicate email.
+4. Existing admin role is preserved even though the form toggles only
+   client/worker.
+5. If worker role is present, roles become at least `[client, worker]`.
+6. If worker role is removed, roles become `[client]` plus preserved `admin`
+   if applicable.
+7. `last_active_role` remains `admin` if it was admin; otherwise worker users
+   become active worker and non-workers become active client.
+8. Worker services are replaced, not merged:
+   - delete all existing worker services,
+   - recreate/upsert submitted services if worker role remains.
+9. Wallet and point-wallet balances are not reset.
+10. User status cache is invalidated.
+11. Log `ADMIN_UPDATE_USER`.
+
+Only admin-provisioned users can be edited. Real registered users should not be
+silently overwritten from this form.
+
+## Status Change Flow
+
+`PATCH /api/users/:id/status` validates with `updateUserStatusSchema`.
+
+Admin can set:
+
+- `active`
+- `inactive`
+- `banned`
+
+Admin cannot directly set:
+
+- `pending_verify`
+- `pending_delete`
+- `deleted`
+
+Side effects when status becomes banned or inactive:
+
+- Clear refresh token.
+- Invalidate user status cache.
+- Disconnect all active sockets.
+- For ban, emit `account:banned` before disconnect.
+- For ban, send account-banned notification and best-effort email.
+
+Side effects when status changes from banned to active:
+
+- Log unban audit.
+- Send account-unbanned notification.
+
+## User Detail
+
+`GET /api/users/:id` returns:
+
+- public user fields through `toPublicUser`.
+- `worker_services` when the user has worker role.
+
+Worker service detail is returned as:
+
+```ts
+{
+  service_code: string
+  pricing: WorkerServicePricing[]
 }
-.superRefine: nếu roles chứa 'worker' ⇒ worker_profile & worker_services bắt buộc.
 ```
 
-### 3.3 Service — `userService.createUserByAdmin`
-1. Check trùng email → 409 nếu tồn tại.
-2. `hashPassword(password)`.
-3. `userRepository.create({ email, password_hash, full_name, phone, avatar, roles,
-   last_active_role: worker?WORKER:CLIENT, status: ACTIVE, verify_email: true,
-   worker_profile: roles⊇worker ? profileFields : null,
-   meta_data.onboarding_done: true })` — **không** sinh email_verification_token.
-4. Tạo `Wallet` (balance 0). Nếu worker: tạo `WorkerPointWallet` + upsert `WorkerService` qua
-   `workerServiceService`/repo (map service_code → service_id, validate service active).
-5. Audit log `event: "ADMIN_CREATE_USER"`.
-6. Trả `toPublicUser(user)`.
-> Cân nhắc transaction/cleanup nếu một bước phụ (wallet/service) lỗi sau khi user đã tạo.
+The edit form needs this because worker service pricing lives in a separate
+collection, not inside the user document.
 
-## 4. Frontend — `pr1as-client`
+## Frontend Behavior
 
-### 4.1 Workspace tạo user (multi-draft)
-- Route mới: `app/dashboard/users/create/page.tsx` (link từ nút "Tạo người dùng" ở trang list).
-- State: danh sách **draft** giữ client-side (Zustand hoặc useState + persist localStorage để không mất khi refresh).
-  Mỗi draft: `{ id, label, status: 'draft'|'saving'|'saved'|'error', error?, form }`.
-- Layout: thanh tab/sidebar liệt kê các draft (email/tên + badge trạng thái) + nút **"+ Thêm user"** tạo draft mới;
-  panel chính render form của draft đang chọn. Chuyển tab không mất dữ liệu các tab khác.
-- Hành động: **Lưu** (POST /user cho draft hiện tại) · **Lưu tất cả** (tuần tự, báo cáo từng draft) ·
-  **Nhân bản** draft · **Xóa** draft. Draft `saved` hiển thị tick xanh.
+Primary UI:
 
-### 4.2 Form mỗi draft
-- **Tài khoản**: email (+ nút auto-gen `worker<n>@...`), password (+ nút auto-gen + copy), full_name, phone,
-  avatar (uploadImage / dán URL), roles (client/worker), status.
-- **Worker** (hiện khi chọn role worker): title, gender, date_of_birth, experience, height/weight, star_sign,
-  lifestyle, hobbies[], quote, introduction, gallery_urls[] (upload/URL), work_locations (dùng lại `vn-provinces`),
-  **services + pricing** (chọn service_code từ 7 service, thêm dòng pricing unit/duration/price).
-- Tiện ích "Điền mẫu" prefill dữ liệu realistic (tên VN, bio, pricing hợp lý) để tạo nhanh.
+- `/dashboard/users`: list and filters.
+- `/dashboard/users/create`: create workspace.
+- `/dashboard/users/[id]/edit`: edit admin-created user.
+- `components/dashboard/user-create-form.tsx`: shared create/edit form.
 
-### 4.3 Service/hook client
-- `services/user.service.ts`: thêm `createUser(payload)` → `POST /user`.
-- Hook `lib/hooks/use-users.ts`: thêm `useCreateUser` (mutation, invalidate list).
-- Mở rộng bảng list: badge `verify_email`, plan, có/không worker_profile (tùy chọn).
+Currency behavior in admin worker pricing:
 
-## 5. An toàn & lưu ý
-- Chỉ `adminOnly` + CSRF. Password tối thiểu 8 ký tự; cân nhắc policy mạnh hơn.
-- Email do admin tạo nên hợp lệ & không gửi mail xác thực (verify_email=true ngay).
-- Avatar/gallery URL phải nằm trong `MEDIA_ALLOWED_HOSTS`; nếu dùng auto-avatar (pravatar/dicebear) phải thêm host.
-- Không đổi schema để thêm `username` (giữ email làm credential) — tránh ảnh hưởng auth/migration.
+- Form stores draft prices canonically in VND.
+- UI displays/accepts values in selected display currency.
+- Before submit, frontend converts VND to selected currency and sends
+  `{ unit, duration, price, currency }`.
+- Backend recomputes `exchange_rate` and `price_vnd`.
 
-## 6. Checklist triển khai
-- [x] BE: `admin-create-user.validation.ts`
-- [x] BE: `userService.createUserByAdmin` (+ wallet/point-wallet/worker-service)
-- [x] BE: `userController.createUser` + route `POST /user` (+ `userRepository.createByAdmin`)
-- [x] FE: `services/user.service.ts` `createUser` + `useCreateUser`
-- [x] FE: route `app/dashboard/users/create/page.tsx` (workspace multi-draft)
-- [x] FE: form component `components/dashboard/user-create-form.tsx` (account + worker + services/pricing + work_locations + upload)
-- [x] FE: nút "Tạo người dùng" ở `app/dashboard/users/page.tsx`
-- [ ] Kiểm thử: tạo worker → hiển thị trong listing & bookable; login bằng email không cần verify.
+Worker role behavior:
+
+- A worker account is also a client so they can switch back to client mode.
+- Creating a worker account also creates a worker point wallet.
+- Worker service rows are required for worker accounts so the worker can appear
+  in discovery and be bookable.
+
+## Data Ownership
+
+| Data | Source of truth |
+| --- | --- |
+| Basic identity/profile | `user` collection. |
+| Worker profile | `user.worker_profile`, with `coords` at root. |
+| Worker services/pricing | `worker_service` collection. |
+| Wallet balance | `wallet` collection. |
+| Worker point wallet | `worker_point_wallet` collection. |
+| Pricing plan | `user.meta_data.pricing_*` plus subscription history. |
+
+## Common Implementation Checklist
+
+When changing admin user management:
+
+1. Update create/update Zod schema.
+2. Update `userService.createUserByAdmin` or `updateUserByAdmin`.
+3. Keep service-code resolution against active catalog services.
+4. Keep duplicate service-code validation.
+5. Keep worker service replacement semantics during edit.
+6. Keep real users protected by `created_by_admin`.
+7. Update frontend form types and payload mapping.
+8. Check currency conversion in admin worker service pricing.
+9. Check status-change side effects and socket/session invalidation.
+
+## Known Implementation Nuances
+
+- `adminUpdateUserSchema` requires `full_name`, roles, and status. It is not a
+  sparse PATCH; it is a full edit payload.
+- `worker_profile.coords` is accepted by validation but stripped before storing
+  admin-created worker profile because `coords` is root-level user data.
+- Admin-created users default to locale `vi`, while normal user default in model
+  is `en`.
+- Update deletes all worker service rows before recreating worker services. If a
+  UI omits an existing service, it is removed.
+- Admin status route is separate from full edit route; both can affect status,
+  but the status route has extra ban/unban side effects.

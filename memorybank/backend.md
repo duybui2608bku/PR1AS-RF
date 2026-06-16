@@ -1,176 +1,224 @@
-# Memory Bank - Backend (SERVER)
+# Memory Bank - Backend
 
-## Tổng quan dự án
+## Overview
 
-PR1AS Server là một ứng dụng backend được xây dựng bằng Node.js + Express + TypeScript với MongoDB làm database. Server hỗ trợ authentication, authorization, real-time communication qua Socket.IO và các tính năng bảo mật.
+The PR1AS backend is an Express and TypeScript API backed by MongoDB through
+Mongoose. It owns authentication, worker marketplace logic, bookings, wallet and
+SePay integration, pricing packages, boosts, chat, notifications, social feed,
+moderation, reputation, reviews, and admin operations.
 
-## Kiến trúc
+Primary entry points:
 
-### Cấu trúc thư mục
+- `SERVER/src/app.ts`
+- `SERVER/src/index.ts`
+- `SERVER/src/routes/index.ts`
 
-```
+## Directory Structure
+
+```txt
 SERVER/
-├── src/
-│   ├── config/          # Cấu hình (database, socket, environment)
-│   ├── constants/       # Hằng số (HTTP status, messages)
-│   ├── controllers/     # Request handlers (xử lý HTTP requests)
-│   ├── middleware/      # Express middleware (auth, errorHandler, pagination)
-│   ├── models/          # Data models (Mongoose schemas)
-│   ├── repositories/    # Data access layer (tương tác với database)
-│   ├── routes/          # API routes (định nghĩa endpoints)
-│   ├── services/       # Business logic layer
-│   ├── types/           # TypeScript type definitions
-│   ├── utils/           # Utility functions (logger, jwt, bcrypt, validation, date, lodash)
-│   ├── validations/     # Request validation schemas (Zod)
-│   └── index.ts         # Entry point
-├── docs/                # Tài liệu API và hướng dẫn
-├── logs/                # Log files (Winston)
-└── dist/                # Compiled JavaScript (TypeScript output)
+  src/
+    app.ts              Express app factory
+    index.ts            server bootstrap and graceful shutdown
+    config/             env, database, Socket.IO
+    constants/          enums and domain constants
+    controllers/        HTTP controllers
+    jobs/               node-cron jobs
+    middleware/         auth, CSRF, rate limit, validation, errors
+    models/             Mongoose schemas
+    repositories/       data access
+    routes/             Express routers
+    scripts/            boot/backfill/seed scripts
+    services/           business logic
+    types/              TypeScript domain types
+    utils/              response, AppError, logger, jwt, helpers
+    validations/        Zod schemas
+  dist/
+  logs/
 ```
 
-## Công nghệ sử dụng
+## Runtime Bootstrap
 
-### Core Dependencies
+`SERVER/src/index.ts` performs startup in this order:
 
-- **express** (^4.18.2) - Web framework
-- **typescript** (^5.3.2) - TypeScript compiler
-- **dotenv** (^16.3.1) - Environment variables
-- **mongoose** (^9.0.2) - MongoDB ODM
-- **mongodb** (^6.3.0) - MongoDB driver
+1. Load env through `dotenv/config`.
+2. Create Express app.
+3. Create HTTP server.
+4. Initialize Socket.IO on the HTTP server.
+5. Connect MongoDB.
+6. Sync Mongoose indexes.
+7. Seed default reputation config.
+8. Seed service catalog.
+9. Start cron jobs.
+10. Listen on configured port.
 
-### Authentication & Security
+On `SIGTERM` or `SIGINT`, the server stops jobs, closes HTTP server, closes DB,
+and exits.
 
-- **jsonwebtoken** (^9.0.2) - JWT authentication
-- **bcrypt** (^5.1.1) - Password hashing
-- **helmet** (^7.1.0) - Security headers
-- **cors** (^2.8.5) - Cross-Origin Resource Sharing
-- **express-rate-limit** (^7.1.5) - Rate limiting
-- **cookie-parser** (^1.4.6) - Cookie parsing
+## Express App
 
-### Validation
+`SERVER/src/app.ts` configures:
 
-- **zod** (^3.22.4) - Schema validation (type-safe)
-- **express-validator** (^7.0.1) - Express validation middleware
-- **class-validator** (^0.14.0) - Decorator-based validation
-- **class-transformer** (^0.5.1) - Object transformation
+- Helmet security headers and CSP/HSTS options from config.
+- CORS with credentials and configured origins/methods.
+- JSON parser with `rawBody` capture for webhook signature verification.
+- URL-encoded parser.
+- cookie-parser.
+- input sanitization middleware.
+- compression.
+- Morgan request logging.
+- `GET /health`.
+- `/api` route mount.
+- not-found and error handlers.
 
-### Real-time & Utilities
+Important:
 
-- **socket.io** (^4.6.1) - Real-time bidirectional communication
-- **dayjs** (^1.11.10) - Date manipulation
-- **lodash** (^4.17.21) - Utility library
-- **winston** (^3.11.0) - Logging
-- **morgan** (^1.10.0) - HTTP request logger
-- **compression** (^1.7.4) - Response compression
+- `rawBody` exists because SePay webhook signature verification needs the exact
+  request body.
+- `/health` is outside `/api`.
 
-## Kiến trúc Layers
+## Layering Pattern
 
-### 1. Routes Layer (`src/routes/`)
+Most modules follow this stack:
 
-- Định nghĩa API endpoints
-- Kết nối với controllers
-- Áp dụng middleware (auth, validation)
-- Ví dụ: `/api/auth`, `/api/users`, `/api/services`
-
-### 2. Controllers Layer (`src/controllers/`)
-
-- Xử lý HTTP requests/responses
-- Gọi services để thực hiện business logic
-- Trả về response thông qua `R.success()` hoặc `R.error()`
-- Sử dụng `asyncHandler` để xử lý async errors
-
-### 3. Services Layer (`src/services/`)
-
-- Chứa business logic
-- Tương tác với repositories
-- Xử lý validation và transformation
-- Không trực tiếp tương tác với HTTP layer
-
-### 4. Repositories Layer (`src/repositories/`)
-
-- Data access layer
-- Tương tác trực tiếp với database (Mongoose)
-- CRUD operations
-- Query building
-
-### 5. Models Layer (`src/models/`)
-
-- Mongoose schemas
-- Định nghĩa cấu trúc dữ liệu
-- Validation rules
-- Indexes và relationships
-
-## Authentication & Authorization
-
-### JWT Authentication
-
-- **Access Token**: JWT với thời gian hết hạn ngắn (mặc định: 15m)
-- **Refresh Token**: JWT với thời gian hết hạn dài (mặc định: 7d)
-- Token được lưu trong cookies hoặc Authorization header (Bearer token)
-
-### Middleware
-
-- `authenticate`: Xác thực JWT token, kiểm tra user status
-- `authorize(...roles)`: Kiểm tra quyền dựa trên roles
-- Shortcuts: `adminOnly`, `workerOnly`, `clientOnly`
-
-### User Roles
-
-- `ADMIN`: Quản trị viên
-- `WORKER`: Người lao động
-- `CLIENT`: Khách hàng
-
-### User Status
-
-- `ACTIVE`: Hoạt động
-- `BANNED`: Bị cấm
-- `INACTIVE`: Không hoạt động
-
-### User Model Schema
-
-```typescript
-{
-  email: String (unique, required, indexed, lowercase)
-  password_hash: String (required)
-  avatar: String (optional)
-  full_name: String (optional)
-  phone: String (optional)
-  roles: Array<UserRole> (default: [CLIENT])
-  last_active_role: UserRole (default: CLIENT)
-  status: UserStatus (default: ACTIVE)
-  verify_email: Boolean (default: false)
-  worker_profile: {
-    date_of_birth: Date
-    gender: MALE | FEMALE | OTHER
-    height_cm: Number
-    weight_kg: Number
-    star_sign: String
-    lifestyle: String
-    hobbies: Array<String>
-    quote: String
-    introduction: String
-    gallery_urls: Array<String>
-  }
-  client_profile: {
-    company_name: String
-    website: String
-    total_spent: Number
-  }
-  coords: {
-    latitude: Number
-    longitude: Number
-  }
-  refresh_token_hash: String (hashed, not selected)
-  created_at: Date
-  last_login: Date
-}
+```txt
+routes -> middleware -> controller -> service -> repository -> model
 ```
 
-## API Response Format
+Layer responsibilities:
 
-Tất cả API responses sử dụng format chuẩn:
+| Layer | Responsibility |
+| --- | --- |
+| Routes | Path definitions and route-specific middleware. |
+| Middleware | Authentication, role guard, CSRF, rate limit, validation, pagination. |
+| Controllers | Translate HTTP request/response to service calls. |
+| Services | Business rules, status machines, notifications, side effects. |
+| Repositories | Queries, writes, aggregations. |
+| Models | Mongoose schema, indexes, transforms. |
 
-```typescript
+Rules:
+
+- Keep business decisions in services, not controllers.
+- Use repositories for repeated data access.
+- Use Zod validation for route input when available.
+- Mutations that change protected state should use CSRF unless intentionally
+  exempted.
+- Role/security checks must exist server-side.
+
+## API Mounts
+
+Mounted in `SERVER/src/routes/index.ts`:
+
+| Mount | Module |
+| --- | --- |
+| `/csrf-token` | CSRF token issuance. |
+| `/auth` | Authentication and account lifecycle. |
+| `/users` | Admin user management and self post stats. |
+| `/services` | Service catalog reads. |
+| `/worker/services` | Worker service offerings. |
+| `/workers` | Worker discovery, favorites, blackouts, schedule. |
+| `/chat` | Direct and group chat. |
+| `/wallet` | User wallet and SePay webhook. |
+| `/admin/wallet` | Admin wallet reporting. |
+| `/admin/dashboard` | Dashboard analytics. |
+| `/bookings` | Booking lifecycle and disputes. |
+| `/reviews` | Reviews and worker replies. |
+| `/notifications` | Notification center, preferences, push. |
+| `/pricing` | Pricing packages and subscription purchase. |
+| `/posts` | Social feed posts and registrations. |
+| `/comments` | Comment update/delete. |
+| `/hashtags` | Hashtag discovery. |
+| `/reactions` | Reaction summary/upsert/remove. |
+| `/moderation` | Blocks, reports, restrictions. |
+| `/reputation` | User reputation history. |
+| `/admin/reputation-config` | Admin reputation config. |
+| `/feedback` | Feedback and admin triage. |
+| `/site-settings` | Public/admin site settings. |
+| `/admin/email-campaigns` | Admin email campaigns. |
+| `/announcements` | Placement announcements. |
+| `/admin/announcements` | Admin announcement CRUD. |
+| `/boost` | Worker boost operations. |
+| `/admin/boost` | Admin boost config. |
+
+See [api-reference.md](./api-reference.md).
+
+## Authentication Middleware
+
+Auth middleware accepts:
+
+- `Authorization: Bearer <token>`,
+- access token cookie.
+
+Core middleware:
+
+| Middleware | Meaning |
+| --- | --- |
+| `authenticate` | Requires a valid active user. |
+| `optionalAuthenticate` | Adds user context when a token is valid. |
+| `authorize(...roles)` | Requires a role. |
+| `adminOnly` | Admin role shortcut. |
+| `workerOnly` | Worker role shortcut. |
+| `clientOnly` | Client role shortcut. |
+
+Important behavior:
+
+- Mutating methods re-check fresh account status.
+- Safe reads can use JWT snapshot where middleware allows.
+- Client route guards are not a security boundary.
+
+See [auth.md](./auth.md).
+
+## CSRF
+
+Route:
+
+```txt
+GET /api/csrf-token
+```
+
+The response returns the token in the configured response header and body.
+Protected mutations spread `...csrfProtection`.
+
+Common CSRF-protected mutations:
+
+- auth login/register/logout/token/account/profile mutations,
+- wallet deposit,
+- pricing upgrade/buy/package admin mutations,
+- worker blackout create/delete,
+- post/comment/reaction mutations,
+- moderation block/report/admin mutations,
+- admin announcements/email/settings/user mutations.
+
+Webhook routes such as SePay webhook do not use user CSRF and instead use
+signature verification.
+
+## Rate Limiting
+
+Configured in `SERVER/src/middleware/rateLimiter.ts`.
+
+Notable limiters:
+
+- `authLimiter`
+- `refreshTokenLimiter`
+- `emailActionLimiter`
+- `tokenActionLimiter`
+- `tokenAttemptLimiter`
+- `bookingCreateLimiter`
+- `chatSendLimiter`
+- `groupComplaintLimiter`
+- `adminContactLimiter`
+- `postCreateLimiter`
+
+When adding high-impact public or user-triggered mutation routes, check whether
+an existing limiter applies.
+
+## Response Envelope
+
+All controllers should return through `R.success`/`R.error`.
+
+Shape:
+
+```ts
 {
   success: boolean;
   statusCode: number;
@@ -180,250 +228,207 @@ Tất cả API responses sử dụng format chuẩn:
     code: string;
     message: string;
     details?: { field: string; message: string }[];
-    stack?: string; // Chỉ trong development
+    stack?: string;
   };
 }
 ```
 
-### Response Helpers (`src/utils/response.ts`)
-
-- `R.success(res, data, message)`: Success response
-- `R.error(res, error, statusCode)`: Error response
+Production should not expose stack traces.
 
 ## Error Handling
 
-### AppError Class (`src/utils/AppError.ts`)
+Use:
 
-- Custom error class với status code và message
-- Static methods: `badRequest()`, `unauthorized()`, `forbidden()`, `notFound()`, `internalServerError()`
+- `AppError` for expected domain errors,
+- `asyncHandler` around async controllers,
+- `errorHandler` as final Express middleware,
+- `notFoundHandler` for unknown routes.
 
-### Error Handler Middleware (`src/middleware/errorHandler.ts`)
+Avoid throwing generic `Error` for user-facing validation/business failures when
+an `AppError` or module error code exists.
 
-- Xử lý tất cả errors
-- Logging errors với Winston
-- Trả về formatted error response
-- 404 handler cho routes không tồn tại
+## Database and Indexes
 
-## Validation
+Database:
 
-### Request Validation
+- MongoDB through Mongoose.
+- Connection setup in `SERVER/src/config/database.ts`.
+- Index sync runs at startup.
 
-- Sử dụng Zod schemas trong `src/validations/`
-- Validate trong routes trước khi vào controllers
-- Trả về detailed validation errors nếu fail
+Schema rules:
 
-### Example Validation Schema
+- Keep important uniqueness and query indexes in schemas.
+- Use partial unique indexes for optional unique fields.
+- Put schedule/conflict guard indexes close to the owning model.
+- For append/audit history, prefer insert-only records rather than mutating old
+  history rows.
 
-```typescript
-import { z } from "zod";
+Examples:
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-```
+- Booking has schedule/status indexes and a partial unique index for active
+  worker/start-time collisions.
+- Notification has TTL cleanup and partial dedupe index.
+- Wallet transactions use partial uniqueness for SePay transaction ids.
+- Pricing package code is the source for subscription plans.
 
-## Database
+## Background Jobs
 
-### MongoDB Connection (`src/config/database.ts`)
+Started in `index.ts`:
 
-- Kết nối MongoDB qua Mongoose
-- Connection pooling
-- Graceful shutdown handling
+| Job | Module | Purpose |
+| --- | --- | --- |
+| `booking-expiration.job.ts` | Booking | Expire stale pending bookings. |
+| `booking-reminder.job.ts` | Booking | Upcoming booking reminders. |
+| `reputation-recovery.job.ts` | Reputation | Daily/periodic score recovery. |
+| `moderation-resolution-notify.job.ts` | Moderation | Deferred worker report resolution notifications. |
+| `plan-expiration.job.ts` | Pricing | Downgrade expired subscriptions. |
+| `account-deletion.job.ts` | Auth | Purge accounts after deletion grace period. |
+| `wallet-reconciliation.job.ts` | Wallet | Compare wallet balances and ledger totals. |
+| `email-campaign.job.ts` | Admin ops | Start due scheduled campaigns. |
 
-### Environment Variables
-
-- `MONGODB_URI`: MongoDB connection string
-- `DB_NAME`: Database name (mặc định: "pr1as")
-
-## Logging
-
-### Winston Logger (`src/utils/logger.ts`)
-
-- Log levels: error, warn, info, debug
-- File logging: `logs/error.log`, `logs/combined.log`
-- Console logging trong development
-- Format: JSON trong production, readable trong development
-
-### Morgan HTTP Logger
-
-- Format: "dev" trong development, "combined" trong production
-- Logs tất cả HTTP requests
+Use job locks where duplicate execution across instances would be harmful.
 
 ## Socket.IO
 
-### Configuration (`src/config/socket.ts`)
+Configured in:
 
-- Real-time bidirectional communication
-- Ping timeout: 60 seconds (có thể config)
-- CORS configuration
+- `SERVER/src/config/socket.ts`
+- `SERVER/src/config/socket.handlers.ts`
 
-## Environment Variables
+Main usages:
 
-### Required Variables
+- direct chat rooms,
+- group/booking complaint rooms,
+- notification delivery,
+- unread-count updates,
+- online/disconnect handling for admin/user status side effects.
 
-```env
-PORT=3000
-NODE_ENV=development|production
-MONGODB_URI=mongodb://localhost:27017
-DB_NAME=pr1as
-JWT_SECRET=your-secret-key
-JWT_EXPIRE=15m
-JWT_REFRESH_SECRET=your-refresh-secret
-JWT_REFRESH_EXPIRE=7d
-CORS_ORIGIN=http://localhost:3000
-```
+Service code emits through the socket layer but should keep durable state in
+MongoDB first.
 
-### Optional Variables
+## Payments and Wallet
 
-```env
-CORS_METHODS=GET,POST,PUT,DELETE,PATCH
-CORS_CREDENTIALS=true
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=100
-MORGAN_FORMAT=dev
-SOCKET_PING_TIMEOUT=60000
-LOG_DIR=logs
-ERROR_LOG_FILE=error.log
-COMBINED_LOG_FILE=combined.log
-```
+Wallet deposits use SePay QR/bank transfer.
 
-## API Routes
+Important backend rules:
 
-### Base Path: `/api`
+- `rawBody` is captured before parsing effects matter.
+- Webhook signature is verified before transaction lookup/update.
+- Webhook completion is idempotent.
+- Amount mismatch marks transaction failed and sends notification.
+- Successful pricing QR payments call pricing upgrade asynchronously with an
+  idempotency key.
 
-- `/api/auth` - Authentication endpoints
+There is no booking escrow or automatic booking payment release. Booking does
+not debit wallet balance.
 
-  - `POST /register` - User registration
-  - `POST /login` - User login
-  - `POST /logout` - User logout
-  - `POST /refresh` - Refresh access token
-  - `GET /me` - Get current user info
+See [wallet.md](./wallet.md) and [booking.md](./booking.md).
 
-- `/api/users` - User management endpoints
+## Pricing
 
-  - `GET /` - List users (with pagination)
-  - `GET /:id` - Get user by ID
-  - `PUT /:id` - Update user
-  - `DELETE /:id` - Delete user
+Pricing packages are database-backed:
 
-- `/api/services` - Service endpoints
+- model: `PricingPackage`,
+- public route: `/api/pricing/packages`,
+- admin routes: `/api/pricing/packages/admin*`,
+- current user route: `/api/pricing/me`,
+- purchase routes: `/api/pricing/upgrade` and `/api/pricing/buy`.
 
-  - `GET /` - List services
-  - `GET /:id` - Get service by ID
-  - `POST /` - Create service (requires auth)
-  - `PUT /:id` - Update service
-  - `DELETE /:id` - Delete service
+Do not hard-code package prices/features in docs, services, or client business
+logic when the database is the source.
 
-- `/api/worker/services` - Worker service management
+See [pricing.md](./pricing.md).
 
-  - Worker-specific service endpoints
+## Multi-Currency
 
-- `/api/wallet` - Wallet endpoints
+Backend source: `SERVER/src/constants/currency.ts`.
 
-  - `POST /deposit` - Create deposit transaction
-  - `GET /deposit/callback` - Verify payment callback
-  - `GET /balance` - Get wallet balance
-  - `GET /transactions` - Get transaction history
+Rules:
 
-- `/api/chat` - Chat/Messaging endpoints
+- VND is platform base currency.
+- Worker service pricing stores original currency and VND snapshot.
+- Backend computes `exchange_rate` and `price_vnd`.
+- Wallet, SePay, pricing packages, and boost point operations stay VND/source
+  units; frontend may convert for display.
 
-  - `POST /messages` - Send message
-  - `GET /messages` - Get messages
-  - `GET /conversations` - Get conversations
-  - `GET /conversations/:id` - Get conversation details
-  - `PATCH /messages/read` - Mark messages as read
-  - `GET /messages/unread` - Get unread count
-  - `DELETE /messages/:id` - Delete message
+See [multi-currency.md](./multi-currency.md).
 
-- `/api/notifications` - Notification endpoints
+## Validation
 
-  - `GET /` - List notifications with pagination and filters
-  - `GET /unread-count` - Get unread notification count
-  - `PATCH /:id/read` - Mark notification as read
-  - `PATCH /read-all` - Mark all notifications as read
-  - `GET /preferences` - Get notification preferences
-  - `PATCH /preferences` - Update notification preferences
-  - `GET /push-public-key` - Get Web Push public VAPID key
-  - `POST /push-subscriptions` - Save browser push subscription
-  - `DELETE /push-subscriptions/:id` - Deactivate push subscription
+Validation files live in `SERVER/src/validations/<module>/`.
 
-- `/health` - Health check endpoint (không có prefix `/api`)
+Use Zod for:
 
-## Quy ước Coding
+- body shape,
+- query shape,
+- enum values,
+- limits/lengths,
+- date constraints,
+- ObjectId string format where applicable.
 
-### Naming Conventions
+Some older/admin modules validate inline in controllers. When extending those,
+prefer preserving local style unless extracting validation improves clarity.
 
-- **Files**: kebab-case (ví dụ: `user.controller.ts`)
-- **Classes**: PascalCase (ví dụ: `UserController`)
-- **Functions/Variables**: camelCase (ví dụ: `getUserById`)
-- **Constants**: UPPER_SNAKE_CASE (ví dụ: `MAX_RETRY_COUNT`)
+## Coding Conventions
 
-### File Structure
-
-- Mỗi module có folder riêng trong mỗi layer
-- Export qua `index.ts` trong mỗi folder
-- Types được định nghĩa trong `src/types/`
-
-### Error Handling
-
-- Luôn sử dụng `asyncHandler` cho async route handlers
-- Throw `AppError` thay vì throw Error thông thường
-- Let error handler middleware xử lý errors
-
-### Response Format
-
-- Luôn sử dụng `R.success()` hoặc `R.error()` từ `src/utils/response.ts`
-- Không trả về response trực tiếp từ controllers
+- Files: kebab-case.
+- Classes/types: PascalCase.
+- Functions/variables: camelCase.
+- Constants/enums: UPPER_SNAKE_CASE or enum-style constants matching existing
+  module style.
+- Re-export from module `index.ts` when a module already follows that pattern.
+- Keep route paths and payload fields stable unless migration is intentional.
+- Add comments only where the rule is non-obvious.
 
 ## Scripts
 
+From `SERVER/`:
+
 ```bash
-npm run dev      # Development mode với hot reload
-npm run build    # Build TypeScript to JavaScript
-npm start        # Start production server
-npm run lint     # Lint code
-npm run lint:fix # Fix linting errors
-npm run format   # Format code với Prettier
-npm test         # Run tests
+npm run dev
+npm run build
+npm start
+npm run lint
+npm run format
+npm run format:check
+npm run backfill:pricing-vnd
+npm test
 ```
 
-## Security Features
+On Windows automation, prefer `npm.cmd`.
 
-1. **Helmet**: Security headers
-2. **CORS**: Cross-origin resource sharing configuration
-3. **Rate Limiting**: Prevent abuse
-4. **JWT Authentication**: Secure token-based auth
-5. **Password Hashing**: bcrypt với salt rounds
-6. **Input Validation**: Zod schemas
-7. **Error Handling**: Không expose sensitive info trong production
+## Environment
 
-## Payment Integration
+Core:
 
-### VNPay Integration
-- Payment gateway cho deposit transactions
-- Service: `src/services/vnpay/vnpay.service.ts`
-- Configuration trong environment variables
-- Payment URL building và verification
-- Xem chi tiết: `memorybank/wallet.md`
+```env
+PORT=3000
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017
+DB_NAME=pr1as
+JWT_SECRET=...
+JWT_EXPIRE=15m
+JWT_REFRESH_SECRET=...
+JWT_REFRESH_EXPIRE=7d
+CORS_ORIGIN=http://localhost:3001
+```
 
-## Real-time Communication
+Feature-specific:
 
-### Socket.IO
-- Real-time messaging cho chat system
-- Event-based communication
-- Connection management
-- Xem chi tiết: `memorybank/chat.md`
+- SMTP/Nodemailer values for email.
+- VAPID keys for web push.
+- Google OAuth client id.
+- SePay bank account/name/webhook secret.
+- CORS/security tuning values.
 
-## Development Guidelines
+## Backend Change Checklist
 
-1. Luôn sử dụng TypeScript strict mode
-2. Validate tất cả inputs với Zod
-3. Sử dụng async/await thay vì callbacks
-4. Log errors với Winston
-5. Handle errors properly với AppError
-6. Test API endpoints với proper error cases
-7. Document API changes trong `docs/`
-8. Follow repository pattern cho data access
-9. Use service layer cho business logic
-10. Implement proper error handling và validation
+- Add or update route in the correct module router.
+- Confirm `routes/index.ts` mount if adding a new module.
+- Add auth/role/CSRF/rate limit middleware.
+- Validate request inputs.
+- Keep service-layer business rules authoritative.
+- Add/update model indexes for new query or uniqueness requirements.
+- Emit notifications through notification event service when relevant.
+- Update client service/hook types when API contracts change.
+- Update module memory doc and [api-reference.md](./api-reference.md).

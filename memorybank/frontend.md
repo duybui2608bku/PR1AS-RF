@@ -1,169 +1,145 @@
-# Memory Bank - Frontend (CLIENT)
+# Memory Bank - Frontend
 
-## Tổng quan dự án
+## Overview
 
-PR1AS Client là một ứng dụng frontend được xây dựng bằng Next.js 16 (App Router) + React 19 + TypeScript. Ứng dụng giữ nền tảng i18n nhưng hiện tạm khóa tiếng Việt (vi), theme switching, state management với Zustand, và tích hợp với Ant Design UI library.
+`pr1as-client/` is a Next.js 16 App Router application using React 19,
+TypeScript, shadcn/ui, Radix primitives, Tailwind CSS, TanStack Query, Zustand,
+next-intl, axios, and socket.io-client.
 
-## Kiến trúc
+The frontend is not a standalone source of business truth. It reads and mutates
+through the backend API and should mirror backend constraints without replacing
+server-side authorization or validation.
 
-### Cấu trúc thư mục
+## Directory Structure
 
+```txt
+pr1as-client/
+  app/
+    (auth)/              login, register, reset, verify
+    api/                 Next route handlers/proxy helpers where needed
+    booking-process/     public booking guide
+    chat/                shared chat route
+    client/              client profile, bookings, wallet, favorites, blocked
+    cookies/             public policy
+    dashboard/           admin dashboard
+    maintenance/         maintenance page
+    notifications/       notification center
+    offline/             offline page
+    posts/               social feed
+    pricing/             subscription pricing page
+    privacy/             public policy
+    services/            worker discovery/search
+    settings/            user settings
+    terms/               public policy
+    wallet/              shared wallet
+    worker/              worker profile, setup, bookings, schedule, boost
+    layout.tsx
+    template.tsx
+    page.tsx
+    globals.css
+  components/
+    ui/                  shadcn/ui primitives
+    layout/              header, footer, mobile nav, sheets
+    auth/
+    booking/
+    chat/
+    dashboard/
+    hero/
+    home/
+    post/
+    pricing/
+    wallet/
+    worker/
+    announcement/
+    providers/
+  services/              axios API clients by backend module
+  lib/
+    hooks/               React Query and UI hooks
+    store/               Zustand stores
+    auth/
+    navigation/
+    worker/
+    home/
+    vn-provinces/
+    axios.ts
+    chat-socket.ts
+    currency.ts
+    locale.ts
+    query-client.ts
+    query-keys.ts
+    site-settings-server.ts
+  messages/              en.json, vi.json, zh.json
+  public/                assets and service worker
+  types/
+  middleware.ts
 ```
-CLIENT/
-├── app/                 # Next.js App Router
-│   ├── admin/           # Admin routes
-│   ├── auth/            # Authentication routes (login, register)
-│   ├── worker/          # Worker routes
-│   ├── components/      # Page-level components
-│   ├── data/            # Mock data
-│   ├── layout.tsx       # Root layout
-│   └── page.tsx         # Home page
-├── lib/                 # Core libraries và utilities
-│   ├── axios/           # API client configuration
-│   ├── components/      # Reusable components
-│   ├── hooks/           # Custom React hooks
-│   ├── providers/       # Context providers
-│   ├── stores/          # Zustand stores (state management)
-│   ├── types/           # TypeScript types
-│   └── utils/           # Utility functions
-├── messages/            # i18n translation files
-│   ├── en.json
-│   ├── ko.json
-│   ├── vi.json
-│   └── zh.json
-├── styles/              # Global styles (SCSS)
-├── i18n/                # i18n configuration
-├── public/              # Static assets
-└── docs/                # Documentation
-```
 
-## Công nghệ sử dụng
+## Main Stack
 
-### Core Dependencies
-- **next** (16.1.0) - React framework với App Router
-- **react** (19.2.3) - UI library
-- **react-dom** (19.2.3) - React DOM renderer
-- **typescript** (^5) - TypeScript compiler
+| Area | Libraries |
+| --- | --- |
+| Framework | Next.js 16 App Router, React 19 |
+| Language | TypeScript |
+| UI | shadcn/ui, Radix, Tailwind CSS, lucide-react |
+| Server state | TanStack Query |
+| Client state | Zustand |
+| HTTP | axios |
+| Realtime | socket.io-client |
+| i18n | next-intl |
+| Auth helpers | jose in middleware, backend cookies |
+| Rich text | TipTap, react-markdown, remark-gfm |
+| Dates | date-fns, react-day-picker |
+| Toasts | sonner |
+| Theme | next-themes |
 
-### UI & Styling
-- **antd** (^6.1.1) - Ant Design component library
-- **@ant-design/nextjs-registry** (^1.3.0) - Ant Design Next.js integration
-- **sass** (^1.97.0) - SCSS preprocessor
-- **tailwindcss** (^4) - Utility-first CSS framework
-- **@tailwindcss/postcss** (^4) - PostCSS plugin
+## Routing Model
 
-### State Management & Data Fetching
-- **zustand** (^5.0.9) - Lightweight state management
-- **@tanstack/react-query** (^5.90.12) - Server state management
-- **@tanstack/react-query-devtools** (^5.91.1) - React Query devtools
+Key route groups:
 
-### Internationalization
-- **next-intl** (^4.6.1) - Next.js i18n
-- **i18next** (^25.7.3) - i18n framework
-- **react-i18next** (^16.5.0) - React bindings cho i18next
-- **i18next-browser-languagedetector** (^8.2.0) - Language detection
+| Area | Routes |
+| --- | --- |
+| Public | `/`, `/services`, `/posts`, `/pricing`, `/privacy`, `/terms`, `/cookies`, `/booking-process` |
+| Auth | `/(auth)/login`, `/(auth)/register`, `/(auth)/reset-password`, `/(auth)/verify-email` |
+| Client | `/client/profile`, `/client/bookings`, `/client/wallet`, `/client/favorites`, `/client/blocked` |
+| Worker | `/worker/setup`, `/worker/[id]`, `/worker/bookings`, `/worker/bookings/schedule`, `/worker/boost` |
+| Shared auth | `/chat`, `/notifications`, `/settings`, `/wallet` |
+| Admin | `/dashboard` and dashboard subroutes |
+| Ops | `/maintenance`, `/offline` |
 
-### HTTP Client
-- **axios** (^1.13.2) - HTTP client với interceptors
+`middleware.ts` handles locale/auth gating. Server API routes still enforce real
+authorization.
 
-### Utilities
-- **dayjs** (^1.11.19) - Date manipulation
-- **lodash** (^4.17.21) - Utility library
-- **zod** (^4.2.1) - Schema validation
-- **use-debounce** (^10.0.6) - Debounce hook
-- **next-nprogress-bar** (^2.4.7) - Progress bar
+## Providers
 
-## Kiến trúc Layers
+Provider composition lives under `components/providers/`.
 
-### 1. App Router (`app/`)
-- Next.js 16 App Router structure
-- File-based routing
-- Layouts và nested layouts
-- Server Components mặc định
-- Client Components với `"use client"`
+Expected provider responsibilities:
 
-### 2. Components (`lib/components/`)
-- Reusable UI components
-- Ant Design components wrappers
-- Theme-aware components
-- Error boundaries
+- Query client.
+- Theme.
+- i18n context from Next/next-intl.
+- Auth/session hydration.
+- Currency hydration.
+- Socket/notification effects where applicable.
+- Error boundary wrappers.
 
-### 3. Hooks (`lib/hooks/`)
-- Custom React hooks
-- API hooks (`use-api.ts`)
-- Auth hooks (`use-auth.ts`)
-- Theme hooks (`use-theme.ts`)
-- i18n hooks (`use-i18n.ts`)
-- Currency hooks (`use-currency.ts`)
-- Error handling hooks (`use-error-handler.ts`)
-
-### 4. Stores (`lib/stores/`)
-- Zustand stores cho global state
-- Persisted stores với localStorage
-- Stores: `auth.store.ts`, `theme.store.ts`, `locale.store.ts`, `currency.store.ts`
-
-### 5. Providers (`lib/providers/`)
-- React Context providers
-- Ant Design provider (`antd-provider.tsx`)
-- i18n provider (`i18n-provider.tsx`)
-- React Query provider (`query-provider.tsx`)
-- Combined providers (`index.tsx`)
-
-### 6. Utils (`lib/utils/`)
-- Error handling utilities
-- i18n helpers
-- General utilities
-
-## State Management
-
-### Zustand Stores
-
-#### Auth Store (`lib/stores/auth.store.ts`)
-- User information
-- Authentication token
-- Login/logout actions
-- Persisted với localStorage
-- Lắng nghe custom events từ axios interceptor
-
-#### Theme Store (`lib/stores/theme.store.ts`)
-- Theme mode (light/dark)
-- Theme persistence
-
-#### Locale Store (`lib/stores/locale.store.ts`)
-- Current language locked to `vi`
-- Language switching state retained but disabled in UI
-
-#### Currency Store (`lib/stores/currency.store.ts`)
-- Current currency locked to `VND`
-- Currency selection state retained but disabled in UI
-
-### React Query
-- Server state management
-- Caching và refetching
-- Optimistic updates
-- Error handling
+Avoid adding ad hoc top-level providers unless the state is genuinely global.
 
 ## API Client
 
-### Axios Configuration (`lib/axios/config.ts`)
+File: `pr1as-client/lib/axios.ts`.
 
-#### Base Configuration
-- Base URL: `process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api"`
-- Timeout: 30 seconds
-- Credentials: `withCredentials: true`
+Rules:
 
-#### Request Interceptor
-- Tự động thêm JWT token vào Authorization header
-- Token được lấy từ localStorage
+- Base URL uses `NEXT_PUBLIC_API_URL`, defaulting to backend `/api` in local dev.
+- `withCredentials` is enabled for backend cookies.
+- Request interceptor attaches CSRF for mutating requests.
+- Response interceptor handles common error surfacing and session expiry.
+- Service files in `pr1as-client/services/` should wrap endpoints.
 
-#### Response Interceptor
-- Xử lý 401 errors (unauthorized)
-- Tự động logout và redirect về login
-- Hiển thị error notifications
-- Skip notifications với flag `skipErrorNotification`
+Response envelope:
 
-#### API Response Format
-```typescript
+```ts
 interface ApiResponse<T> {
   success: boolean;
   statusCode: number;
@@ -177,345 +153,281 @@ interface ApiResponse<T> {
 }
 ```
 
-## Authentication Flow
+## Service Clients
 
-### Login Process
-1. User submits login form
-2. API call đến `/api/auth/login`
-3. Store token và user info trong Zustand store
-4. Save token vào localStorage
-5. Redirect to dashboard/home
+Current service files include:
 
-### Logout Process
-1. Clear Zustand store
-2. Remove token từ localStorage
-3. Redirect to login page
-4. Axios interceptor cũng có thể trigger logout khi nhận 401
+- `auth.service.ts`
+- `user.service.ts`
+- `service.service.ts`
+- `worker.service.ts`
+- `worker-profile.service.ts`
+- `booking.service.ts`
+- `review.service.ts`
+- `wallet.service.ts`
+- `admin-wallet.service.ts`
+- `pricing.service.ts`
+- `boost.service.ts`
+- `chat.service.ts`
+- `notification.service.ts`
+- `post.service.ts`
+- `post-registration.service.ts`
+- `comment.service.ts`
+- `reaction.service.ts`
+- `hashtag.service.ts`
+- `moderation.service.ts`
+- `reputation.service.ts`
+- `reputation-config.service.ts`
+- `announcement.service.ts`
+- `feedback.service.ts`
+- `email-campaign.service.ts`
+- `dashboard.service.ts`
+- `site-settings.service.ts`
 
-### Token Management
-- Token được lưu trong localStorage
-- Token được tự động thêm vào requests qua axios interceptor
-- Token được sync giữa Zustand store và localStorage
+Use these clients from hooks/components instead of raw axios calls unless there
+is a clear local precedent.
 
-## Internationalization (i18n)
+## Hooks
 
-### Supported Languages
-- Vietnamese (vi) - Default and currently active
-- English (en), Korean (ko), Chinese (zh) - Translation files retained for future unlock
+Hooks live mainly in `pr1as-client/lib/hooks/`.
 
-### Translation Files
-- Location: `messages/{locale}.json`
-- Format: JSON với nested keys
-- Comprehensive translations cho:
-  - Common UI elements (buttons, labels, messages)
-  - Error messages (network, HTTP, validation)
-  - Authentication flows
-  - Profile management
-  - Worker setup process
-  - Privacy policy và Terms of service
-  - Home page content
+Patterns:
 
-### Usage
-- Hook: `useI18n()` từ `lib/hooks/use-i18n.ts`
-- Component: `useTranslations()` từ next-intl
-- `locale.store.ts` hiện ép `vi`; language switching UI đang ẩn để mở lại sau
+- React Query hooks wrap service clients for server state.
+- Mutation hooks invalidate exact query keys.
+- UI hooks handle viewport, click-outside, sockets, currency, and local browser
+  behavior.
+- Keep query keys centralized in `lib/query-keys.ts` when possible.
 
-## Theming
+Important hooks by domain:
 
-### Theme System
-- Light/Dark mode
-- Ant Design theme integration
-- CSS variables
-- Persisted với localStorage
+- auth: `use-auth.ts`
+- worker/discovery/setup: worker hooks and setup hooks
+- booking: `use-bookings.ts`
+- wallet: `use-wallet.ts`
+- chat: `use-chat.ts`, `use-chat-socket.ts`
+- notifications: `use-notifications.ts`
+- feed: `use-posts.ts`, `use-comments.ts`, `use-reactions.ts`
+- pricing/boost/reputation/moderation/admin ops: matching domain hooks
 
-### Theme Store
-- `useTheme()` hook
-- Theme toggle component
-- Auto-sync với system preference
+## Zustand Stores
+
+Important stores:
+
+| Store | Meaning |
+| --- | --- |
+| `auth-store.ts` | Current user, auth loaded flag, session state. |
+| `auth-dialog-store.ts` | Login/register dialog visibility. |
+| `currency-store.ts` | Selected display currency, cookie/localStorage persistence. |
+| `services-header-store.ts` | `/services` header/search portal state. |
+| `ui-store.ts` | Shared UI state such as mobile header visibility. |
+
+Use Zustand for client-only cross-component state. Use React Query for data that
+comes from the backend.
+
+## Authentication Frontend Flow
+
+1. Login/register/Google calls backend auth endpoints.
+2. Backend sets HTTP-only cookies.
+3. Client stores returned user in `auth-store`.
+4. Axios sends cookies with requests.
+5. Next middleware and role helpers guide navigation.
+6. Backend middleware remains authoritative.
+7. Logout clears backend cookies and local auth state.
+
+Role switching:
+
+- Header calls the auth switch-role mutation.
+- If a client lacks worker role, switching to worker routes to `/worker/setup`.
+- Role default routes come from `lib/navigation/role-routes.ts`.
+
+See [auth.md](./auth.md) and [site-header.md](./site-header.md).
+
+## Internationalization
+
+Locales:
+
+- `en`
+- `vi`
+- `zh`
+
+Rules:
+
+- User-visible text should use next-intl messages.
+- Translation files live in `messages/*.json`.
+- Authenticated locale changes should update backend `meta_data.locale`.
+- Notification text is localized backend-side, so frontend should render the
+  provided title/body rather than re-translating notification payloads.
+
+## Multi-Currency Frontend
+
+Files:
+
+- `lib/currency.ts`
+- `lib/store/currency-store.ts`
+- `lib/hooks/use-currency.ts`
+
+Rules:
+
+- The selected currency is a display/input preference.
+- Platform money source values remain VND.
+- Worker setup inputs use selected currency, but backend recomputes VND
+  snapshots.
+- Public displays should format source VND values through `formatMoney`.
+- Wallet and SePay operations must submit VND amounts.
+
+See [multi-currency.md](./multi-currency.md).
+
+## Site Header
+
+The shared header:
+
+- reads branding from site settings,
+- resolves role-aware menu links,
+- supports role switching,
+- shows preferences,
+- shows notification bell,
+- hides on mobile scroll,
+- changes into an expandable services header on `/services`.
+
+The `/services` filter form is portaled from page content into the header slot.
+
+See [site-header.md](./site-header.md).
+
+## Worker Setup
+
+Worker setup collects:
+
+- profile details,
+- work locations,
+- gallery and introduction,
+- services,
+- pricing tiers.
+
+Important:
+
+- Service ids must come from active backend service catalog values.
+- Pricing uses selected currency for input but backend computes `price_vnd`.
+- Existing unchanged pricing rows are preserved to avoid rounding drift.
+- Worker role/onboarding/profile state should stay aligned with auth response.
+
+See [worker.md](./worker.md).
+
+## Booking Frontend
+
+Main surfaces:
+
+- create dialog: `components/worker/book-worker-dialog.tsx`,
+- client booking pages under `app/client/bookings/*`,
+- worker booking pages under `app/worker/bookings/*`.
+
+UI must reflect backend status machine:
+
+- create pending booking,
+- worker confirm/reject,
+- worker start,
+- worker mark complete into pending client acceptance,
+- client accept or dispute,
+- participant/admin cancellation rules,
+- admin dispute resolution.
+
+Do not add wallet payment behavior to booking UI unless the backend booking
+module is explicitly changed.
+
+See [booking.md](./booking.md).
+
+## Realtime
+
+Socket client:
+
+- `pr1as-client/lib/chat-socket.ts`
+
+Realtime surfaces:
+
+- direct chat,
+- group/complaint chat,
+- notifications,
+- unread counts.
+
+State updates should keep durable backend data as source of truth. Socket events
+should update query caches and visible UI, not replace persistence.
+
+## Admin Dashboard
+
+Dashboard pages use:
+
+- admin route guards,
+- domain-specific service clients,
+- admin-only backend endpoints,
+- dashboard hooks and table components.
+
+Important admin modules:
+
+- users,
+- bookings/disputes,
+- transactions/wallet,
+- pricing packages,
+- reputation config,
+- moderation reports/restrictions,
+- announcements,
+- email campaigns,
+- feedback,
+- site settings,
+- dashboard analytics.
+
+Server-side admin checks are still required on all admin endpoints.
+
+## UI Conventions
+
+- Use existing shadcn/ui primitives from `components/ui/`.
+- Use lucide icons for actions.
+- Use domain folders for feature components.
+- Avoid hard-coded visible copy; add translations.
+- Keep cards for repeated items, modals, or genuinely framed tools.
+- Preserve existing page structure for small feature changes.
+- Prefer dense, operational dashboard layouts over marketing-style pages for
+  admin/productivity views.
 
 ## Error Handling
 
-### Error Handler (`lib/utils/error-handler.ts`)
-- Centralized error handling
-- Error type detection
-- Notification display
-- Error logging
+- Route-level error UI: `app/error.tsx`.
+- Global error UI: `app/global-error.tsx`.
+- API errors surface through axios interceptor and `sonner`.
+- Domain mutations can show more specific toasts when useful.
+- Keep backend error messages/codes as the primary contract.
 
-### Error Types
-- Network errors
-- Validation errors
-- Server errors (4xx, 5xx)
-- Unauthorized (401)
+## Performance Notes
 
-### Error Boundary (`lib/components/error-boundary.tsx`)
-- React Error Boundary component
-- Fallback UI
-- Error reporting
-
-## Styling
-
-### SCSS
-- Global styles: `app/globals.scss`
-- Variables: `styles/_variables.scss`
-- Reset: `styles/_reset.scss`
-
-### Tailwind CSS
-- Utility-first CSS
-- PostCSS integration
-- Custom configuration
-
-### Ant Design
-- Component library
-- Theme customization
-- Responsive design
-
-## Custom Hooks
-
-### `use-api.ts`
-- API call wrapper
-- Error handling
-- Loading states
-
-### `use-auth.ts`
-- Authentication state
-- Login/logout functions
-- User information
-- Auth guard functionality
-
-### `use-theme.ts`
-- Theme state
-- Theme toggle function
-- System preference detection
-
-### `use-i18n.ts`
-- i18n utilities
-- Translation functions
-- Language switching
-
-### `use-currency.ts`
-- Currency state
-- Currency conversion
-- Currency formatting
-
-### `use-error-handler.ts`
-- Error handling utilities
-- Error notifications
-- Error type detection
-
-## Key Components
-
-### `AvatarUpload` (`app/components/avatar-upload.tsx`)
-- Avatar upload component
-- Image cropping với antd-img-crop
-- Preview functionality
-
-### `Header` (`app/components/header.tsx`)
-- Main navigation header
-- Theme toggle
-- User menu
-- "Become Worker" button
-
-### `Footer` (`app/components/footer.tsx`)
-- Site footer
-- Links và company information
-
-### `AuthGuard` (`lib/components/auth-guard.tsx`)
-- Route protection component
-- Redirects unauthenticated users
-- Role-based access control
-
-### `ErrorBoundary` (`lib/components/error-boundary.tsx`)
-- React Error Boundary
-- Fallback UI
-- Error reporting
-
-### `LanguageSwitcher` (`lib/components/language-switcher.tsx`)
-- Language selection dropdown retained for future unlock
-- Currently not rendered in header/admin UI while app is locked to Vietnamese
-
-### `ThemeToggle` (`lib/components/theme-toggle.tsx`)
-- Theme switching button
-- Light/Dark mode toggle
-
-## Wallet Integration
-
-### Wallet API (`lib/api/wallet.api.ts`)
-- Deposit với VNPay
-- Balance management
-- Transaction history
-- Currency display and transaction flows are currently locked to VND
-- Payment callback handling
-
-### Wallet Pages
-- Deposit page với preset amounts
-- Payment callback page
-- Balance display
-
-Xem chi tiết: `memorybank/wallet.md`
-
-## Chat/Messaging Integration
-
-### Socket.IO Client (`lib/socket/`)
-- Real-time messaging
-- Event handling
-- Connection management
-
-### Chat API (`lib/api/chat.api.ts`)
-- Send/receive messages
-- Conversations management
-- Read receipts
-- Unread count
-
-### Chat Pages
-- Chat interface với conversation list
-- Message view với real-time updates
-
-Xem chi tiết: `memorybank/chat.md`
-
-## Notification Integration
-
-### Notification API (`lib/api/notification.api.ts`)
-- List notifications, unread count, mark read/read all
-- Preferences cho `in_app`, `email`, `push`
-- Push public key và push subscription lifecycle
-
-### Notification UI
-- Global provider lắng nghe Socket.IO events và hiển thị realtime toast
-- Header notification badge/popover
-- `/notifications` notification center với list và preferences
-
-Xem chi tiết: `memorybank/notification.md`
-
-## Environment Variables
-
-### Required Variables
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
-```
-
-### Optional Variables
-```env
-NEXT_PUBLIC_APP_NAME=PR1AS
-NEXT_PUBLIC_DEFAULT_LOCALE=vi
-```
-
-## Routing
-
-### App Router Structure
-- `/` - Home page (public)
-- `/auth/login` - Login page
-- `/auth/register` - Register page
-- `/privacy` - Privacy policy page
-- `/terms` - Terms of service page
-- `/client/profile` - Client profile page
-- `/client/profile/edit` - Edit client profile
-- `/client/wallet/deposit` - Deposit page với VNPay integration
-- `/wallet/deposit/callback` - Payment callback page
-- `/chat` - Chat page với conversation list và message view
-- `/notifications` - Notification center và preferences
-- `/worker/setup` - Worker profile setup (multi-step)
-  - Step 1: Basic information (location, personal details, gallery)
-  - Step 2: Services selection và pricing
-- `/admin/auth/login` - Admin login
-- `/admin/dashboard` - Admin dashboard
-
-### Layouts
-- Root layout: `app/layout.tsx`
-- Admin layout: `app/admin/layout.tsx`
-- Nested layouts support
-
-## Quy ước Coding
-
-### Naming Conventions
-- **Files**: kebab-case (ví dụ: `auth-modal.tsx`)
-- **Components**: PascalCase (ví dụ: `AuthModal`)
-- **Hooks**: camelCase với prefix "use" (ví dụ: `useAuth`)
-- **Stores**: camelCase với suffix "Store" (ví dụ: `authStore`)
-- **Types**: PascalCase (ví dụ: `User`, `ApiResponse`)
-
-### File Structure
-- Components trong `lib/components/`
-- Hooks trong `lib/hooks/`
-- Stores trong `lib/stores/`
-- Types trong `lib/types/`
-- Utils trong `lib/utils/`
-
-### Component Patterns
-- Server Components mặc định
-- Client Components với `"use client"` directive
-- Props typing với TypeScript interfaces
-- Error boundaries cho error handling
-
-### State Management
-- Local state: `useState`
-- Global state: Zustand stores
-- Server state: React Query
-- Form state: Ant Design Form hoặc React Hook Form
+- Keep Server Components as default.
+- Add `"use client"` only when needed.
+- Use React Query caching and invalidation.
+- Dynamically load heavy editor/cropper/chart components when appropriate.
+- Use `next/image` for image rendering.
+- Avoid global state for data that belongs in query cache.
 
 ## Scripts
 
+From `pr1as-client/`:
+
 ```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm start        # Start production server
-npm run lint     # Lint code
+npm run dev
+npm run build
+npm start
+npm run lint
+npm run format
+npm run typecheck
 ```
 
-## Development Guidelines
+On Windows automation, prefer `npm.cmd`.
 
-1. Sử dụng TypeScript strict mode
-2. Server Components mặc định, chỉ dùng Client Components khi cần
-3. Sử dụng Zustand cho global state
-4. Sử dụng React Query cho server state
-5. Handle errors với error boundaries và error handlers
-6. Validate API responses với Zod
-7. Sử dụng Ant Design components
-8. Follow i18n patterns cho tất cả text
-9. Responsive design với Tailwind CSS
-10. Optimize images và assets
+## Frontend Change Checklist
 
-## Performance Optimizations
-
-1. **Next.js Image**: Sử dụng `next/image` cho images
-2. **Code Splitting**: Automatic với Next.js
-3. **Server Components**: Giảm JavaScript bundle size
-4. **React Query**: Caching và deduplication
-5. **Lazy Loading**: Dynamic imports cho heavy components
-6. **Font Optimization**: Next.js font optimization
-7. **Progress Bar**: next-nprogress-bar cho navigation feedback
-
-## Worker Setup Flow
-
-### Step 1: Basic Information
-- Location (with geolocation API)
-- Date of birth
-- Gender selection
-- Height và Weight
-- Star sign selection
-- Lifestyle description
-- Hobbies (tag input)
-- Introduction text
-- Favorite quote
-- Photo gallery (max 10 images, 5MB each)
-
-### Step 2: Services Configuration
-- Category selection (Assistance Services / Companionship Services)
-- Service selection từ available services
-- Pricing configuration:
-  - Multiple pricing tiers per service
-  - Unit selection (hour/day/month)
-  - Duration và Price per unit
-  - Add/remove pricing tiers
-
-### Validation
-- Step 1: All required fields must be filled
-- Step 2: At least one service must be selected với pricing configured
-
-## Security
-
-1. **Environment Variables**: Chỉ expose `NEXT_PUBLIC_*` variables
-2. **XSS Prevention**: React tự động escape
-3. **CSRF Protection**: Cookies với SameSite
-4. **Token Security**: HttpOnly cookies khi có thể
-5. **Input Validation**: Zod schemas
-
+- Use existing service client and hook patterns.
+- Keep backend contracts and enum values exact.
+- Add translations for visible text.
+- Preserve CSRF-aware mutation path through shared axios.
+- Invalidate/query-update exact React Query keys after mutations.
+- Keep role navigation in role helper files where possible.
+- Verify guest/client/worker/admin states when editing shared layout.
+- Update module docs and [api-reference.md](./api-reference.md) for contract
+  changes.

@@ -1,257 +1,424 @@
 # Memory Bank - Wallet System
 
-## Tổng quan
+## Purpose
 
-Hệ thống Wallet cho phép users quản lý số dư và thực hiện các giao dịch nạp tiền qua VNPay. Hệ thống hỗ trợ tracking transactions, balance management và payment gateway integration.
+The wallet module stores user balances, SePay deposit/payment transactions,
+webhook reconciliation, transaction history, admin transaction analytics, and
+the QR-payment path for pricing upgrades.
 
-## Kiến trúc
+The booking module currently does not hold or release booking funds. Wallet is
+mainly used for deposits, pricing QR payments, transaction reporting, and
+balance checks during account deletion.
 
-### Backend Components
+Primary source files:
 
-#### Models (`SERVER/src/models/wallet/`)
-- **Wallet Model**: Lưu trữ số dư của user
-  - `user_id`: String (unique, indexed)
-  - `balance`: Number (min: 0, default: 0)
-  - `updated_at`: Date
+- Routes: `SERVER/src/routes/wallet/wallet.routes.ts`
+- Admin routes: `SERVER/src/routes/wallet/admin-wallet.routes.ts`
+- Controller: `SERVER/src/controllers/wallet/wallet.controller.ts`
+- Admin controller: `SERVER/src/controllers/wallet/admin-wallet.controller.ts`
+- User wallet service: `SERVER/src/services/wallet/user-wallet.service.ts`
+- Admin wallet service: `SERVER/src/services/wallet/admin-wallet.service.ts`
+- Combined service: `SERVER/src/services/wallet/wallet.service.ts`
+- Repositories:
+  `SERVER/src/repositories/wallet/wallet.repository.ts`,
+  `SERVER/src/repositories/wallet/wallet-balance.repository.ts`
+- Models:
+  `SERVER/src/models/wallet/wallet.model.ts`,
+  `SERVER/src/models/wallet/wallet-transaction.model.ts`
+- Constants: `SERVER/src/constants/wallet.ts`
+- Validation: `SERVER/src/validations/wallet/wallet.validation.ts`
+- SePay middleware: `SERVER/src/middleware/sepayWebhook.ts`
+- Reconciliation job: `SERVER/src/jobs/wallet-reconciliation.job.ts`
+- Frontend pages:
+  `pr1as-client/app/wallet/page.tsx`,
+  `pr1as-client/app/wallet/deposit/page.tsx`,
+  `pr1as-client/app/client/wallet/page.tsx`,
+  `pr1as-client/app/client/wallet/deposit/page.tsx`,
+  `pr1as-client/app/dashboard/transactions/page.tsx`
+- Frontend services/hooks:
+  `pr1as-client/services/wallet.service.ts`,
+  `pr1as-client/services/admin-wallet.service.ts`,
+  `pr1as-client/lib/hooks/use-wallet.ts`,
+  `pr1as-client/lib/hooks/use-admin-transactions.ts`
 
-- **WalletTransaction Model**: Lưu trữ lịch sử giao dịch
-  - `user_id`: String (required, indexed)
-  - `type`: TransactionType (DEPOSIT, WITHDRAW, PAYMENT, REFUND)
-  - `amount`: Number (required)
-  - `status`: TransactionStatus (PENDING, SUCCESS, FAILED, CANCELLED)
-  - `gateway`: PaymentGateway (VNPAY)
-  - `gateway_transaction_id`: String
-  - `gateway_response`: Object
-  - `description`: String
-  - `created_at`: Date
-  - `updated_at`: Date
+## Data Model
 
-#### Services (`SERVER/src/services/wallet/`)
+### Wallet
 
-**wallet.service.ts**:
-- `createDepositTransaction()`: Tạo transaction nạp tiền và build VNPay payment URL
-- `verifyDepositPayment()`: Verify payment callback từ VNPay và update balance
-- `getWalletBalance()`: Lấy số dư hiện tại của user (tính toán từ transactions)
-- `getTransactionHistory()`: Lấy lịch sử giao dịch của user với pagination
-- `getAdminTransactionHistory()`: Lấy tất cả transactions (admin only)
+Collection: `wallet`.
 
-#### Repositories (`SERVER/src/repositories/wallet/`)
-- `walletRepository`: CRUD operations cho WalletTransaction
-- `walletBalanceRepository`: CRUD operations cho Wallet balance cache
+| Field | Meaning |
+| --- | --- |
+| `user_id` | Unique user id. |
+| `balance` | Denormalized wallet balance, minimum 0. |
+| `updated_at` | Last balance update. |
 
-#### Controllers (`SERVER/src/controllers/wallet/`)
-- `createDeposit`: POST `/api/wallet/deposit` - Tạo deposit transaction
-- `verifyDepositCallback`: GET `/api/wallet/deposit/callback` - Verify payment callback
-- `getBalance`: GET `/api/wallet/balance` - Lấy số dư
-- `getTransactionHistory`: GET `/api/wallet/transactions` - Lấy lịch sử giao dịch
+The balance document is maintained with atomic credit/deduct operations.
 
-### Frontend Components
+### WalletTransaction
 
-#### API Client (`CLIENT/lib/api/wallet.api.ts`)
-- `createDeposit()`: Tạo deposit request
-- `verifyDepositCallback()`: Verify payment callback
-- `getBalance()`: Lấy số dư
-- `getTransactionHistory()`: Lấy lịch sử giao dịch với filters
+Collection: `wallet_transaction`.
 
-#### Pages (`CLIENT/app/client/wallet/`)
-- `/client/wallet/deposit`: Deposit page với form và preset amounts
-- `/wallet/deposit/callback`: Callback page sau khi payment
+Core fields:
 
-#### Constants (`CLIENT/lib/constants/wallet.ts`)
-- `WALLET_LIMITS`: Min/max deposit amounts
-- `DEPOSIT_AMOUNT_PRESETS`: Preset amounts cho quick deposit
-- `TransactionType`, `TransactionStatus`: Enums
+| Field | Meaning |
+| --- | --- |
+| `user_id` | Owner user id. |
+| `type` | `deposit`, `withdraw`, `payment`, or `refund`. |
+| `amount` | Amount in VND. |
+| `status` | `pending`, `success`, `failed`, or `cancelled`. |
+| `gateway` | Currently `sepay`. |
+| `description` | Human-readable description. |
+| `purpose` | `deposit` or `pricing_upgrade`, nullable. |
+| `purpose_metadata` | Extra purpose data. |
+| `currency` | Defaults to VND. |
+| `created_at`, `updated_at` | Manual timestamps. |
 
-## Payment Gateway Integration
+SePay/payment fields:
 
-### VNPay Integration (`SERVER/src/services/vnpay/`)
+| Field | Meaning |
+| --- | --- |
+| `payment_code` | Generated PRAS payment code. |
+| `payment_content` | Transfer content, currently same as payment code. |
+| `qr_url` | SePay QR image URL. |
+| `bank_account_number`, `bank_name` | Target bank info from config. |
+| `gateway_transaction_id` | String gateway transaction id. |
+| `gateway_response` | Raw webhook payload. |
+| `sepay_transaction_id` | Numeric SePay id, unique partial index. |
+| `sepay_gateway`, `sepay_transaction_date`, `sepay_account_number` | SePay metadata. |
+| `sepay_code`, `sepay_content`, `sepay_transfer_type` | Transfer code/content/type. |
+| `sepay_transfer_amount`, `sepay_accumulated`, `sepay_sub_account` | Amount/account metadata. |
+| `sepay_reference_code`, `sepay_description` | Reference and description. |
 
-**vnpay.service.ts**:
-- `buildDepositPaymentUrl()`: Build VNPay payment URL với các params:
-  - `vnp_Amount`: Amount * 100 (VNPay expects cents)
-  - `vnp_Command`: "pay"
-  - `vnp_CreateDate`: Format YYYYMMDDHHmmss
-  - `vnp_CurrCode`: "VND"
-  - `vnp_IpAddr`: User IP address
-  - `vnp_Locale`: "vn"
-  - `vnp_OrderInfo`: Order description
-  - `vnp_OrderType`: "other"
-  - `vnp_ReturnUrl`: Callback URL
-  - `vnp_TxnRef`: Transaction ID
-  - `vnp_Version`: "2.1.0"
+Important indexes:
 
-- `verifyPaymentReturn()`: Verify payment callback từ VNPay
-  - Checks signature với secure secret
-  - Returns: `isSuccess`, `transactionId`, `responseCode`, `amount`, `gatewayTransactionId`
+- `{ user_id: 1, created_at: -1 }`
+- `payment_code`
+- `gateway_transaction_id`
+- partial unique `sepay_transaction_id_unique`
+- `sepay_reference_code`
+- `{ status: 1, type: 1 }`
 
-### Configuration (`SERVER/src/config/`)
-VNPay config trong environment variables:
-```env
-VNPAY_TMN_CODE=your-tmn-code
-VNPAY_SECURE_SECRET=your-secret-key
-VNPAY_HOST=https://sandbox.vnpayment.vn
-VNPAY_RETURN_URL=http://localhost:3001/wallet/deposit/callback
-VNPAY_TEST_MODE=true
-VNPAY_HASH_ALGORITHM=SHA512
-```
+## Constants and Limits
 
-## Transaction Flow
+Transaction types:
 
-### Deposit Flow
+- `deposit`
+- `withdraw`
+- `payment`
+- `refund`
 
-1. **User initiates deposit**:
-   - Frontend: User nhập amount trên `/client/wallet/deposit`
-   - Validation: Min/Max amount checks
-   - API: `POST /api/wallet/deposit` với `{ amount: number }`
+Statuses:
 
-2. **Create transaction**:
-   - Backend tạo WalletTransaction với status PENDING
-   - Generate transaction ID (MongoDB ObjectId)
-   - Build VNPay payment URL với transaction ID
-   - Return payment URL cho frontend
+- `pending`
+- `success`
+- `failed`
+- `cancelled`
 
-3. **Redirect to VNPay**:
-   - Frontend redirect user đến VNPay payment page
-   - User completes payment trên VNPay
+Limits:
 
-4. **Payment callback**:
-   - VNPay redirect về `/wallet/deposit/callback` với query params
-   - Frontend gọi `GET /api/wallet/deposit/callback` với query params
-   - Backend verify signature và response code
-   - Update transaction status:
-     - SUCCESS: Update balance, save gateway transaction ID
-     - FAILED: Mark transaction as failed
+| Constant | Value |
+| --- | --- |
+| `MIN_DEPOSIT_AMOUNT` | 100 |
+| `MAX_DEPOSIT_AMOUNT` | 50,000,000 |
+| `MIN_WITHDRAW_AMOUNT` | 10,000 |
+| `MAX_WITHDRAW_AMOUNT` | 50,000,000 |
+| `MIN_BALANCE` | 0 |
 
-5. **Balance update**:
-   - Calculate balance từ tất cả SUCCESS transactions
-   - Update Wallet balance cache
-   - Return updated balance
+SePay:
 
-## Transaction Types
+| Constant | Value |
+| --- | --- |
+| QR base | `https://qr.sepay.vn/img` |
+| default code prefix | `PRAS` |
+| suffix length | 10 |
+| max generate attempts | 10 |
 
-- **DEPOSIT**: Nạp tiền vào wallet
-- **WITHDRAW**: Rút tiền (chưa implement)
-- **PAYMENT**: Thanh toán dịch vụ (chưa implement)
-- **REFUND**: Hoàn tiền (chưa implement)
+## User Routes
 
-## Transaction Status
+Mounted under `/api/wallet`.
 
-- **PENDING**: Transaction đang chờ xử lý
-- **SUCCESS**: Transaction thành công
-- **FAILED**: Transaction thất bại
-- **CANCELLED**: Transaction bị hủy
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/deposit/webhook` | SePay signature | Handle SePay webhook. |
+| `GET` | `/deposit/webhook` | No | Health check for webhook endpoint. |
+| `POST` | `/deposit` | Auth + CSRF | Create deposit QR transaction. |
+| `GET` | `/balance` | Auth | Current wallet balance. |
+| `GET` | `/transactions` | Auth | User transaction history. |
+| `GET` | `/transactions/:transactionId` | Auth | User transaction detail. |
 
-## Balance Management
+Webhook route is mounted before `authenticate`.
 
-### Balance Calculation
-Balance được tính toán từ tất cả SUCCESS transactions:
-```typescript
-balance = SUM(amount WHERE type = DEPOSIT AND status = SUCCESS)
-        - SUM(amount WHERE type = WITHDRAW AND status = SUCCESS)
-        - SUM(amount WHERE type = PAYMENT AND status = SUCCESS)
-        + SUM(amount WHERE type = REFUND AND status = SUCCESS)
-```
+## Admin Routes
 
-### Balance Cache
-- Wallet balance được cache trong Wallet model để tăng performance
-- Khi có transaction mới, balance được recalculate và update cache
-- Balance cache được sync với calculated balance khi query
+Mounted under `/api/admin/wallet`. All require `authenticate + adminOnly`.
 
-## API Endpoints
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/transactions` | Admin transaction history. |
+| `GET` | `/stats` | Transaction stats by preset date range. |
+| `GET` | `/top-users` | Top transaction users by preset date range. |
+| `GET` | `/chart` | Chart data by preset date range. |
 
-### POST `/api/wallet/deposit`
-Tạo deposit transaction và get payment URL.
+Date range presets:
 
-**Request**:
-```typescript
-{
-  amount: number; // Min: WALLET_LIMITS.MIN_DEPOSIT_AMOUNT, Max: WALLET_LIMITS.MAX_DEPOSIT_AMOUNT
-}
-```
+- `today`
+- `yesterday`
+- `last_7_days`
+- `last_14_days`
+- `last_30_days`
+- `this_month`
 
-**Response**:
-```typescript
-{
-  payment_url: string;
-  transaction_id: string;
-}
-```
+## Deposit QR Flow
 
-**Auth**: Required (authenticate middleware)
+`POST /api/wallet/deposit`.
 
-### GET `/api/wallet/deposit/callback`
-Verify payment callback từ VNPay.
+Validation:
 
-**Query Params**: VNPay callback params (vnp_TxnRef, vnp_ResponseCode, vnp_Amount, etc.)
+- `amount` integer.
+- min 100.
+- max 50,000,000.
 
-**Response**: Success/Error message
+Flow:
 
-**Auth**: Required (authenticate middleware)
+1. Validate user exists.
+2. Generate unique SePay payment code:
+   - prefix from `config.sepay.paymentCodePrefix` or `PRAS`,
+   - 10-digit random suffix,
+   - retry up to 10 times.
+3. Set `payment_content = payment_code`.
+4. Build QR URL with:
+   - `acc` bank account,
+   - `bank` bank name,
+   - `amount`,
+   - `des` payment content.
+5. Create `WalletTransaction`:
+   - `type: deposit`,
+   - `status: pending`,
+   - `gateway: sepay`,
+   - bank info and QR info,
+   - description `Deposit <amount> - <paymentCode>`.
+6. Return QR/payment info to frontend.
 
-### GET `/api/wallet/balance`
-Lấy số dư hiện tại của user.
+Response includes:
 
-**Response**:
-```typescript
-{
-  balance: number;
-  user_id: string;
-}
-```
+- `payment_url`
+- `qr_url`
+- `transaction_id`
+- `payment_code`
+- `payment_content`
+- `bank_account_number`
+- `bank_name`
+- `amount`
 
-**Auth**: Required (authenticate middleware)
+## Pricing QR Payment Flow
 
-### GET `/api/wallet/transactions`
-Lấy lịch sử giao dịch với pagination và filters.
+Pricing QR purchase uses wallet transaction infrastructure but is triggered from
+pricing service/controller.
 
-**Query Params**:
-- `type`: TransactionType (optional)
-- `status`: TransactionStatus (optional)
-- `page`: number (default: 1)
-- `limit`: number (default: 10)
+`UserWalletService.createPricingPayment(userId, request)`:
 
-**Response**:
-```typescript
-{
-  transactions: WalletTransaction[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-```
+Input:
 
-**Auth**: Required (authenticate middleware)
+| Field | Meaning |
+| --- | --- |
+| `target_plan_code` | Must be `gold` or `diamond`; not `standard`. |
+| `duration_months` | Number of months requested. |
 
-## Security Considerations
+Flow:
 
-1. **CSRF Protection**: Deposit endpoint có CSRF protection
-2. **Amount Validation**: Min/Max limits được validate
-3. **Payment Verification**: VNPay signature được verify để prevent tampering
-4. **Transaction Ownership**: Verify transaction belongs to authenticated user
-5. **Idempotency**: Transaction ID được generate unique để prevent duplicates
+1. Validate target plan code.
+2. Load user.
+3. Ensure default pricing packages exist.
+4. Load active `PricingPackage` from DB.
+5. Compute amount as `package.price * duration_months`.
+6. Generate payment code and QR URL.
+7. Create `WalletTransaction`:
+   - `type: deposit`,
+   - `status: pending`,
+   - `gateway: sepay`,
+   - `purpose: pricing_upgrade`,
+   - `purpose_metadata: { target_plan_code, duration_months }`.
+8. Return QR/payment info plus package display name.
 
-## Error Handling
+Webhook behavior:
 
-### Common Errors
-- `DEPOSIT_AMOUNT_TOO_LOW`: Amount < MIN_DEPOSIT_AMOUNT
-- `DEPOSIT_AMOUNT_TOO_HIGH`: Amount > MAX_DEPOSIT_AMOUNT
-- `WALLET_NOT_FOUND`: User không tồn tại
-- `PAYMENT_VERIFICATION_FAILED`: VNPay signature verification failed
-- `TRANSACTION_NOT_FOUND`: Transaction không tồn tại
-- `TRANSACTION_FAILED`: Payment failed hoặc unauthorized
+- The webhook credits the wallet balance first.
+- If transaction has `purpose = pricing_upgrade`, it asynchronously calls
+  `pricingService.upgradePricing`.
+- Idempotency key is `qr-pay:<transactionId>`.
+- A plan-activated notification is sent on success.
 
-## Future Enhancements
+Important nuance: pricing QR transactions are still stored as `deposit`
+transactions. The `purpose` field tells the app that the successful deposit is
+also intended to upgrade a plan.
 
-- [ ] Withdraw functionality
-- [ ] Payment for services
-- [ ] Refund system
-- [ ] Multiple payment gateways (MoMo, ZaloPay, etc.)
-- [ ] Transaction notifications
-- [ ] Admin transaction management dashboard
-- [ ] Transaction export (CSV/PDF)
-- [ ] Balance history chart
-- [ ] Auto-refund on service cancellation
+## SePay Webhook Flow
 
+`POST /api/wallet/deposit/webhook`.
+
+Validation:
+
+- `id`: positive number.
+- `gateway`: string.
+- `transactionDate`: string.
+- `accountNumber`: string.
+- `code`: nullable string.
+- `content`: string.
+- `transferType`: `in` or `out`.
+- `transferAmount`: nonnegative integer.
+- `accumulated`: nonnegative number.
+- `subAccount`: nullable string.
+- `referenceCode`: string.
+- `description`: string.
+
+Flow:
+
+1. Ignore non-incoming transfers and return success status
+   `ignored_non_incoming`.
+2. Resolve payment code from:
+   - webhook `code`, or
+   - regex match in `content` or `description`.
+3. If no payment code, return `ignored_missing_payment_code`.
+4. Check if SePay transaction id already exists and is successful:
+   return `already_processed`.
+5. Find transaction by existing SePay id or payment code.
+6. If transaction not found, return `ignored_transaction_not_found`.
+7. If transaction already success, return `already_processed`.
+8. If transfer amount does not match transaction amount:
+   - apply webhook metadata,
+   - mark transaction `failed`,
+   - send wallet deposit failed notification,
+   - return `amount_mismatch`.
+9. Start Mongo session transaction.
+10. Atomically finalize wallet transaction from non-success to success.
+11. Atomically credit wallet balance.
+12. End session.
+13. Send wallet deposit success notification.
+14. If purpose is `pricing_upgrade`, trigger pricing activation.
+15. Return processed response with balance.
+
+Idempotency protections:
+
+- Atomic compare-and-set update from status != success to success.
+- Partial unique index on `sepay_transaction_id`.
+- Duplicate key handling returns already processed.
+
+## Balance Calculation
+
+Normal path:
+
+- `wallet.balance` is read from the denormalized wallet document.
+- `atomicCredit` upserts and increments balance.
+- `atomicDeduct` decrements only if `balance >= amount`.
+
+Fallback:
+
+- If wallet row is missing, balance is calculated from successful transactions:
+  - `deposit` and `refund` add,
+  - `withdraw` and `payment` subtract.
+
+Balance is clamped at minimum 0.
+
+## Transaction History
+
+User history:
+
+- Route: `GET /api/wallet/transactions`.
+- Filters: `type`, `status`, `start_date`, `end_date`.
+- User id is forced to the authenticated user.
+- Sorted `created_at: -1`.
+
+Transaction detail:
+
+- Route: `GET /api/wallet/transactions/:transactionId`.
+- Validates ObjectId.
+- Transaction must belong to current user.
+
+Admin history:
+
+- Route: `GET /api/admin/wallet/transactions`.
+- Filters include `user_id`, `type`, `status`, `start_date`, `end_date`.
+- Populates `user_id`.
+
+## Admin Analytics
+
+`AdminWalletService` maps preset date ranges to `startDate` and `endDate` using
+Day.js.
+
+Endpoints:
+
+- stats: aggregate transaction amount/count by type/status.
+- top-users: top users by successful transaction activity, limited to 5.
+- chart: time series data for transaction totals.
+
+Check repository aggregation before changing chart semantics.
+
+## Notifications
+
+Wallet event notification types:
+
+- `wallet.deposit_success`
+- `wallet.deposit_failed`
+
+Pricing activation currently reuses wallet event helper with type
+`wallet.deposit_success`, but title/body keys are plan activation specific.
+
+Wallet reconciliation alerts:
+
+- Sent to first admin.
+- Type: `security.alert`.
+- Channels: in-app and email.
+- Dedupe key per day.
+
+## Frontend Surfaces
+
+User wallet:
+
+- `/wallet`
+- `/wallet/deposit`
+- `/client/wallet`
+- `/client/wallet/deposit`
+- `components/wallet/wallet-page.tsx`
+- `components/wallet/wallet-deposit-page.tsx`
+- `services/wallet.service.ts`
+- `lib/hooks/use-wallet.ts`
+
+Admin wallet:
+
+- `/dashboard/transactions`
+- `services/admin-wallet.service.ts`
+- `lib/hooks/use-admin-transactions.ts`
+
+Currency:
+
+- Wallet amounts are VND base amounts.
+- Some dashboard views display through `useCurrency`, but transaction currency
+  field currently defaults to `VND`.
+
+## Common Implementation Checklist
+
+When changing wallet behavior:
+
+1. Decide whether the transaction should affect balance.
+2. Use atomic wallet operations for balance changes.
+3. Keep webhook idempotency intact.
+4. Store gateway payload and SePay metadata for audit.
+5. Do not process outgoing SePay transfers as deposits.
+6. Keep amount mismatch behavior as failed transaction.
+7. If introducing a new purpose, document webhook side effects.
+8. Update admin aggregations if transaction type semantics change.
+9. Update account deletion blockers if balance semantics change.
+
+## Known Implementation Nuances
+
+- Pricing QR payment creates a `deposit` transaction with
+  `purpose: pricing_upgrade`; do not model it as a separate payment unless the
+  pricing activation flow is updated.
+- Webhook returns `success: true` for ignored events so SePay does not retry
+  irrelevant transfers forever.
+- QR generation requires `SEPAY_BANK_ACCOUNT_NUMBER` and `SEPAY_BANK_NAME`.
+- `payment_code` regex fallback expects the configured prefix plus 3-10
+  digits, while generated default suffix is 10 digits.
+- The booking module docs should not claim wallet escrow exists unless booking
+  fund hold/release is actually implemented.

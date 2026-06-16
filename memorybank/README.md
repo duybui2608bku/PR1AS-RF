@@ -1,122 +1,105 @@
-# Memory Bank - PR1AS Project
+# Memory Bank - PR1AS
 
-Memory Bank là tập hợp tài liệu tổng hợp về kiến trúc, patterns, và implementation details của dự án PR1AS.
+The Memory Bank is the working documentation set for the PR1AS repository. It
+captures the architecture, module flows, API contracts, persistence rules, and
+known implementation nuances that are easy to lose when reading only the UI.
 
-## Cấu trúc Memory Bank
+All documents are written in English. Code, route names, enum values, and field
+names stay exactly as they appear in the project.
 
-### Core Documents
+## Repository Layout
 
-- **[project-overview.md](./project-overview.md)**: Tổng quan về dự án, kiến trúc tổng thể, và các tính năng chính
-- **[backend.md](./backend.md)**: Chi tiết về backend architecture, patterns, và implementation
-- **[frontend.md](./frontend.md)**: Chi tiết về frontend architecture, components, và patterns
-- **[api-reference.md](./api-reference.md)**: Tài liệu API reference đầy đủ cho tất cả endpoints
+```txt
+PR1AS-RF/
+  SERVER/          Backend: Express, TypeScript, MongoDB/Mongoose
+  pr1as-client/    Frontend: Next.js App Router, React, shadcn/ui
+  docs/            User-facing or generated docs
+  memorybank/      This memory bank
+```
 
-### Module-Specific Documents
+Important current facts:
 
-- **[wallet.md](./wallet.md)**: Hệ thống Wallet với VNPay integration
-- **[chat.md](./chat.md)**: Hệ thống Chat/Messaging với Socket.IO
-- **[notification.md](./notification.md)**: Notification system dùng chung với in-app, email và browser push
+- The frontend is `pr1as-client/`, not `CLIENT/`.
+- The UI stack is shadcn/ui, Radix primitives, Tailwind CSS, and lucide icons.
+- Booking is a reservation/scheduling workflow, not an escrow/payment workflow.
+- Pricing packages are database-backed through `PricingPackage`, not hard-coded
+  UI constants.
+- VND is the base currency for platform money; display currency is a preference.
 
-## Cách sử dụng Memory Bank
+## Core Documents
 
-### Cho Developers mới
+- [project-overview.md](./project-overview.md): product scope, architecture,
+  domain map, jobs, environment, and development workflow.
+- [backend.md](./backend.md): backend layering, middleware, routes, jobs,
+  persistence conventions, auth/security, and module ownership.
+- [frontend.md](./frontend.md): Next.js structure, providers, state, service
+  clients, route groups, i18n, currency, realtime, and UI conventions.
+- [api-reference.md](./api-reference.md): REST API routes grouped by mounted
+  backend module.
 
-1. Bắt đầu với `project-overview.md` để hiểu tổng quan dự án
-2. Đọc `backend.md` hoặc `frontend.md` tùy theo phần bạn làm việc
-3. Tham khảo `api-reference.md` khi cần làm việc với APIs
-4. Đọc module-specific docs khi làm việc với các tính năng cụ thể
+## Module Documents
 
-### Khi phát triển tính năng mới
+- [auth.md](./auth.md): registration, login, refresh/logout, Google auth, role
+  switch, account deletion, cookies, and security.
+- [admin-user-management.md](./admin-user-management.md): admin-created users,
+  worker service provisioning, status changes, and editable account rules.
+- [worker.md](./worker.md): worker profile, services, pricing tiers, discovery,
+  favorites, blackouts, schedule, and frontend surfaces.
+- [booking.md](./booking.md): create flow, advance booking rules, status machine,
+  cancellation, disputes, complaint chat, reviews, notifications, and known
+  scheduling nuances.
+- [pricing.md](./pricing.md): database-backed pricing packages, worker
+  subscription state, direct wallet upgrade, SePay QR purchase, expiration, and
+  admin package management.
+- [wallet.md](./wallet.md): wallet balance, transactions, SePay deposits,
+  pricing QR payments, webhook idempotency, reconciliation, and admin analytics.
+- [chat.md](./chat.md): direct chat, complaint group chat, authorization, read
+  states, Socket.IO events, and notification behavior.
+- [notification.md](./notification.md): durable in-app notifications, channel
+  dispatch, preferences, push subscriptions, delivery logs, and event facade.
+- [social-feed.md](./social-feed.md): posts, comments, reactions, hashtags,
+  post registrations, create limits, moderation hooks, and pricing gates.
+- [moderation.md](./moderation.md): user blocks, post/worker reports, admin
+  report review, feature restrictions, deferred worker resolution notices, and
+  enforcement points.
+- [review.md](./review.md): completed-booking review creation, update/delete,
+  worker replies, stats, low-review side effects, and schema nuance.
+- [reputation.md](./reputation.md): score storage, config cache, deductions,
+  warnings, history, and daily recovery.
+- [boost.md](./boost.md): point wallet, attendance, boost activation, discovery
+  ranking, admin config, and frontend hard-coded cost/duration nuance.
+- [multi-currency.md](./multi-currency.md): supported currencies, VND pivot,
+  worker service price snapshots, display conversion, and drift handling.
+- [site-header.md](./site-header.md): standard header, services header, portal
+  search form, role menu, preferences, notifications, and mobile nav.
+- [admin-ops.md](./admin-ops.md): announcements, feedback, email campaigns,
+  site settings, and dashboard analytics.
 
-1. Tham khảo các patterns trong `backend.md` hoặc `frontend.md`
-2. Follow coding conventions và architecture patterns
-3. Update memory bank khi thêm tính năng mới hoặc thay đổi architecture
+## How To Use These Docs
 
-### Khi debug hoặc troubleshoot
+For a new task:
 
-1. Kiểm tra `api-reference.md` để verify API contracts
-2. Tham khảo module-specific docs để hiểu flow
-3. Check error codes và handling patterns
+1. Start with the relevant module document.
+2. Check [api-reference.md](./api-reference.md) for route shape.
+3. Check [backend.md](./backend.md) or [frontend.md](./frontend.md) for local
+   implementation conventions.
+4. Treat source code as authoritative when a doc and code disagree.
 
-## Cập nhật Memory Bank
+For a module change:
 
-### Khi nào cần update
+1. Update the route/controller/service/model as needed.
+2. Update matching frontend service/hook/UI types.
+3. Update the module memory document.
+4. Update [api-reference.md](./api-reference.md) if route or payload contracts
+   changed.
+5. Update [project-overview.md](./project-overview.md) only if the platform map,
+   jobs, or major feature scope changed.
 
-- Thêm tính năng mới hoặc module mới
-- Thay đổi architecture hoặc patterns
-- Thêm/sửa API endpoints
-- Thay đổi database schema
-- Thêm dependencies hoặc công nghệ mới
+## Documentation Standards
 
-### Cách update
-
-1. Update file liên quan trong memory bank
-2. Tạo file mới nếu module/tính năng mới đủ lớn
-3. Update `project-overview.md` để reflect changes
-4. Update `api-reference.md` nếu có API changes
-5. Commit changes với message rõ ràng
-
-## Best Practices
-
-### Documentation Standards
-
-- Sử dụng tiếng Việt cho documentation
-- Code examples và technical terms có thể dùng tiếng Anh
-- Format code blocks với proper syntax highlighting
-- Include examples và use cases khi có thể
-- Link giữa các documents khi có liên quan
-
-### Structure
-
-- Mỗi document nên có:
-  - Tổng quan ngắn gọn
-  - Kiến trúc và components
-  - API/Interface details
-  - Examples và use cases
-  - Security considerations
-  - Future enhancements
-
-### Maintenance
-
-- Review và update memory bank định kỳ
-- Remove outdated information
-- Keep examples up-to-date với codebase
-- Document breaking changes
-
-## Quick Links
-
-### Backend
-- [Backend Architecture](./backend.md)
-- [API Reference](./api-reference.md)
-- [Wallet System](./wallet.md)
-- [Chat System](./chat.md)
-- [Notification System](./notification.md)
-
-### Frontend
-- [Frontend Architecture](./frontend.md)
-- [API Reference](./api-reference.md)
-- [Wallet Integration](./wallet.md#frontend-components)
-- [Chat Integration](./chat.md#frontend-components)
-- [Notification Integration](./notification.md#frontend-components)
-
-### General
-- [Project Overview](./project-overview.md)
-- [API Reference](./api-reference.md)
-
-## Contributing
-
-Khi contribute vào memory bank:
-
-1. **Be thorough**: Include đầy đủ thông tin cần thiết
-2. **Be accurate**: Verify thông tin với codebase
-3. **Be clear**: Sử dụng ngôn ngữ rõ ràng, dễ hiểu
-4. **Be consistent**: Follow format và structure hiện có
-5. **Be helpful**: Include examples và use cases thực tế
-
-## Notes
-
-- Memory bank được maintain song song với codebase
-- Khi có conflict giữa memory bank và code, code là source of truth
-- Memory bank nên được update ngay sau khi code changes
-- Regular reviews giúp keep memory bank accurate và useful
-
+- Prefer exact source paths and enum values.
+- Document flows, conditions, side effects, and known caveats, not only feature
+  names.
+- Avoid hard-coding business facts that are loaded from the database.
+- Keep user-facing workflows aligned with the actual API, not a desired design.
+- Use ASCII text in this folder unless a source identifier requires otherwise.

@@ -2,110 +2,81 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Structure
+## Overview
 
-This is a monorepo with three separate applications:
+PR1AS is a full-stack platform combining a worker/companionship services marketplace, a social posts feed, and an admin dashboard. It is a two-app repo:
 
-```
-PR1AS-RF/
-├── SERVER/          # Express + TypeScript + MongoDB backend (port 3000)
-├── CLIENT/          # Next.js 16 full-featured frontend (port 3001) — has its own CLAUDE.md
-├── pr1as-client/    # Next.js 16 newer client (shadcn/ui, Radix, Tailwind 4)
-└── memorybank/      # Architecture docs in Vietnamese (source of truth for design decisions)
-```
+- **`SERVER/`** — Node.js + Express + TypeScript + MongoDB (Mongoose). REST API + Socket.IO, port `3000`.
+- **`pr1as-client/`** — Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + shadcn/ui. Dev server on port `3001` (server owns 3000; `CORS_ORIGIN` defaults to `http://localhost:3001`).
 
-The `CLIENT/` directory has its own `CLAUDE.md` with detailed guidance — read it when working in that app.
+`memorybank/` contains detailed, per-domain documentation. Start with [memorybank/project-overview.md](memorybank/project-overview.md) and the relevant domain file (e.g. `booking.md`, `wallet.md`, `chat.md`) before deep work. Note: the memory bank can lag the code — verify specific claims against source.
 
----
+## Commands
 
-## SERVER
-
-### Commands (run from `SERVER/`)
-
+### Backend (`SERVER/`)
 ```bash
-npm run dev          # Hot-reload dev server (ts-node-dev)
-npm run build        # Compile TypeScript → dist/
-npm start            # Run compiled output
-npm run lint         # ESLint
-npm run lint:fix     # ESLint with auto-fix
-npm run format       # Prettier write
-npm test             # Jest
+npm run dev            # ts-node-dev hot-reload, src/index.ts
+npm run build          # tsc → dist/
+npm start              # node dist/index.js
+npm run lint           # eslint src --ext .ts   (lint:fix to autofix)
+npm run format         # prettier --write
+npm test               # jest (ts-jest). No spec files exist yet; tests match **/*.(spec|test).ts under src/
+npm run backfill:pricing-vnd   # one-off data migration script
 ```
+Run a single test once specs exist: `npx jest path/to/file.test.ts` or `npx jest -t "name"`.
 
-### Environment (`SERVER/.env`)
-
-```
-PORT=3000
-NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017
-DB_NAME=pr1as
-JWT_SECRET=
-JWT_EXPIRE=15m
-JWT_REFRESH_SECRET=
-JWT_REFRESH_EXPIRE=7d
-CORS_ORIGIN=http://localhost:3001
-FRONTEND_URL=http://localhost:3001
-EMAIL_ACCOUNT=
-GOGGLE_APP_PASSWORD=
-```
-
-### Architecture
-
-**Request pipeline**: Routes → Middleware (auth/validation) → Controllers → Services → Repositories → Mongoose Models
-
-- **Controllers** (`src/controllers/`) — HTTP layer only. Use `asyncHandler` wrapper and return responses via `R.success()` / `R.error()`.
-- **Services** (`src/services/`) — All business logic. No HTTP imports.
-- **Repositories** (`src/repositories/`) — All Mongoose queries live here; services never call Mongoose directly.
-- **Validations** (`src/validations/`) — Zod schemas applied as middleware before controllers.
-- **Jobs** (`src/jobs/`) — `booking-expiration.job.ts` runs on a cron via `node-cron`, started in `index.ts`.
-- **Socket** (`src/config/socket.ts` + `socket.handlers.ts`) — Socket.IO initialized on the HTTP server, shares auth middleware.
-
-Domain modules (routes/controllers/services/repositories all follow the same set): `auth`, `booking`, `chat`, `comment`, `dashboard`, `escrow`, `hashtag`, `notification`, `post`, `pricing`, `reaction`, `review`, `service`, `user`, `wallet`, `worker`.
-
-**Auth**: JWT access token (15 m) + refresh token (7 d, hashed in DB). `authenticate` middleware validates bearer token on protected routes. Passwords hashed with bcrypt.
-
-**Logging**: Winston (`src/utils/logger.ts`), files written to `logs/`.
-
----
-
-## pr1as-client
-
-This is a newer Next.js client being built alongside `CLIENT/`. It uses shadcn/ui + Radix UI instead of Ant Design, and has a simpler feature set.
-
-### Commands (run from `pr1as-client/`)
-
+### Frontend (`pr1as-client/`)
 ```bash
-npm run dev        # Turbopack dev server
-npm run build      # Production build
-npm start          # Production server
-npm run lint       # ESLint
-npm run typecheck  # tsc --noEmit
-npm run format     # Prettier write
+npm run dev            # next dev --turbopack
+npm run build          # next build
+npm run lint           # eslint
+npm run typecheck      # tsc --noEmit   (run this to validate types; build does not block on TS the same way)
+npm run format         # prettier --write
 ```
 
-### Environment (`pr1as-client/.env.local`)
+Each app has its own `package.json` and `node_modules`; `npm install` separately in each.
+
+## Backend architecture
+
+Strict layered flow, organized **by domain module** inside each layer (`auth`, `booking`, `wallet`, `chat`, `post`, `moderation`, `reputation`, `pricing`, `boost`, etc.):
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api   # falls back to this if unset
+Request → routes/ → middleware (auth / csrf / rateLimit / validation)
+        → controllers/ → services/ → repositories/ → models/ (Mongoose) → MongoDB
 ```
 
-### Architecture
+- **Adding a feature** means touching the same module folder across layers: `routes/<module>` → `controllers/<module>` → `services/<module>` (business logic lives here) → `repositories/<module>` (all DB access) → `models/<module>`. Request shapes are validated with **Zod** schemas in `validations/`. Enums/constants per domain live in `constants/`.
+- All routes mount under `/api` via [SERVER/src/routes/index.ts](SERVER/src/routes/index.ts) — this is the canonical API surface map.
+- HTTP responses go through the `R` helper (`utils/response`); use it rather than calling `res.json` directly.
+- `src/index.ts` is the bootstrap: connects DB, `syncAllIndexes()`, seeds defaults (reputation config, services), starts all cron jobs, mounts Socket.IO, and wires graceful shutdown. `src/app.ts` builds the Express app.
 
-**Stack**: Next.js 16 App Router, React 19, TypeScript (strict), Tailwind 4, shadcn/ui + Radix UI, TanStack Query 5, Zustand 5, Socket.IO client, Axios, `date-fns`, Sonner (toasts).
+### Cross-cutting concerns
+- **Auth**: JWT access + refresh with rotation; refresh-token hash stored on the user. Tokens travel in HTTP-only cookies and/or `Authorization: Bearer`. Roles are an array (`ADMIN`/`WORKER`/`CLIENT`) with `last_active_role`; a single account switches active role. Middleware shortcuts: `adminOnly`, `workerOnly`, `clientOnly`.
+- **CSRF**: state-changing requests require a token from `GET /api/csrf-token`.
+- **Realtime**: Socket.IO (`config/socket.ts`) with authenticated handshake — chat (direct + group) and notifications.
+- **Background jobs** (`src/jobs/`, node-cron): booking expiration/reminders, plan expiration, reputation recovery, account-deletion purge, wallet reconciliation, email campaigns, moderation-resolution notifications. Cross-instance concurrency is guarded by a `job-lock` model — preserve that guard when adding jobs.
+- **Logging**: Winston (`utils/logger`).
 
-**Path alias**: `@/` maps to the project root.
+## Frontend architecture
 
-**Directory layout**:
-- `app/` — Next.js pages. Routes: `(auth)`, `chat`, `client`, `dashboard`, `posts`, `pricing`, `services`, `wallet`, `worker`.
-- `components/` — Shared UI components grouped by domain (`auth`, `chat`, `hero`, `home`, `layout`, `post`, `pricing`, `providers`, `ui`, `wallet`, `worker`).
-- `lib/` — Core shared code: `auth/`, `hooks/`, `store/`, `utils/`, `axios.ts`, `constants.ts`, `query-client.ts`, `query-keys.ts`.
-- `services/` — API service modules (one file per domain, e.g. `booking.service.ts`).
-- `config/` — `site.ts` (site metadata, nav links), `nav.ts`.
+Next.js App Router. Data and state conventions:
+- **Server state**: TanStack Query. Hooks in `lib/hooks/use-*.ts` wrap query/mutation logic; query keys are centralized in `lib/query-keys.ts`. API calls go through axios clients in `services/` (shared instance in `lib/axios.ts`).
+- **Client state**: Zustand stores in `lib/store/`.
+- **Realtime**: `socket.io-client` via `lib/chat-socket.ts` and `lib/hooks/use-chat-socket.ts`.
+- **Routing/auth**: `middleware.ts` handles locale + auth gating; role-based route maps in `lib/navigation/`.
+- UI primitives are shadcn/ui (Radix-based) under `components/`.
 
-**Auth**: Cookie-based. `AUTH_COOKIE_NAME` and `ACTIVE_ROLE_COOKIE_NAME` set after login. Axios interceptor (`lib/axios.ts`) reads token from Zustand store and sets `Authorization: Bearer`. On 401, store is cleared and user is redirected to `/login`.
+## Invariants (do not break)
 
-**Middleware** (`middleware.ts`): Protects `/client`, `/chat`, `/posts`, `/dashboard`. Redirects unauthenticated users to `/login`. Workers visiting `/` are redirected to `/posts`.
+- **Multi-currency**: VND is the pivot/base. All stored amounts are normalized to VND; the display layer converts using hard-coded snapshot rates. Source of truth is `SERVER/src/constants/currency.ts`, **mirrored** in `pr1as-client/lib/currency.ts` — change both together. Active currencies: VND, CNY, JPY, KRW, USD.
+- **i18n**: Active locales `en` (default), `vi`, `zh`. Per-user locale lives in `meta_data.locale` (`PATCH /api/auth/locale`); frontend uses `next-intl` with `pr1as-client/messages/{locale}.json`. Add keys to all three locale files.
+- **Payments**: the wallet/top-up gateway is **SePay** (VNPay was removed — do not reintroduce it).
+- **User-generated rich content** must be sanitized with `sanitize-html` before storage/render.
 
-**State**: `lib/store/auth-store.ts` (Zustand, persisted to `auth-storage` cookie).
+## Conventions (from `.cursor/rules/`)
 
-**API calls**: Use the `api` axios instance from `lib/axios.ts`. Service modules in `services/` wrap endpoints. TanStack Query for caching; query keys centralized in `lib/query-keys.ts`.
+- **Commits**: Conventional Commits — `<type>[scope]: <description>`, imperative mood, no trailing period. Types: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`.
+- **Frontend style**: no semicolons; Tailwind classes only (no inline `<style>`/CSS files); early returns; `const` arrow functions with types; event handlers prefixed `handle*` (`handleClick`, `handleKeyDown`); include accessibility attributes.
+- **Backend**: async/await throughout; MVC-style layering as described above.
+
+Both `tsconfig` files run `strict`. The backend also enforces `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noFallthroughCasesInSwitch` — keep imports and params clean or the build fails.
