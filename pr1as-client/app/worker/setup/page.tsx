@@ -932,7 +932,7 @@ export default function WorkerSetupPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-11 w-full gap-2 rounded-xl border-dashed"
+            className="h-11 w-full gap-2 rounded-xl border-dashed sm:h-9 sm:w-auto sm:rounded-full sm:px-4 sm:text-sm"
             disabled={workLocations.length >= WORK_LOCATIONS_MAX}
             onClick={() => {
               setLocationPickerPhase("province")
