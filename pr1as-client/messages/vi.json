@@ -455,7 +455,9 @@
     "bookingProcessLabel": "Cách đặt lịch",
     "bookingProcessDesc": "Hướng dẫn quy trình đặt lịch và xác nhận.",
     "cookiesLabel": "Chính sách Cookie",
-    "cookiesDesc": "Cách chúng tôi sử dụng cookie trên nền tảng."
+    "cookiesDesc": "Cách chúng tôi sử dụng cookie trên nền tảng.",
+    "aboutLabel": "Giới thiệu PR1AS",
+    "aboutDesc": "Chúng tôi làm gì và vì sao bạn nên chọn PR1AS."
   },
   "Favorites": {
     "title": "Worker yêu thích",
@@ -914,6 +916,42 @@
       "defaultClient": "Khách hàng",
       "workerReply": "Phản hồi của worker"
     },
+    "askWorker": {
+      "title": "Hỏi Worker",
+      "subtitle": "Công khai hoặc riêng tư. Chúng tôi sẽ gửi email cho cả bạn và worker.",
+      "nicknameLabel": "Biệt danh (tùy chọn)",
+      "nicknamePlaceholder": "Tên hiển thị của bạn",
+      "emailLabel": "Email",
+      "emailPlaceholder": "ban@example.com",
+      "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+      "questionLabel": "Câu hỏi",
+      "questionPlaceholder": "Ít nhất 5 ký tự. Không để lại LINE, WeChat, Zalo, WhatsApp, số điện thoại hoặc thông tin liên hệ cá nhân khác—để bảo vệ quyền riêng tư của bạn.",
+      "questionMin": "Câu hỏi phải có ít nhất 5 ký tự.",
+      "privacyNote": "Không được phép để lại phương thức liên hệ cá nhân (gồm LINE, WeChat, Zalo, WhatsApp, điện thoại, tin nhắn mạng xã hội, v.v.). Nội dung vi phạm có thể bị gỡ để bảo đảm an toàn cho bạn.",
+      "visibilityLabel": "Hiển thị",
+      "visibilityPublic": "Công khai",
+      "visibilityPublicHint": "Mọi người đều có thể đọc. Tên, email và mọi thông tin liên hệ của bạn không bao giờ bị lộ.",
+      "visibilityPrivate": "Riêng tư",
+      "visibilityPrivateHint": "Chỉ bạn và worker mới thấy nội dung.",
+      "submit": "Gửi câu hỏi",
+      "submitSuccess": "Đã gửi câu hỏi của bạn.",
+      "submitError": "Không thể gửi câu hỏi.",
+      "threadTitle": "Câu hỏi & phản hồi",
+      "loading": "Đang tải câu hỏi…",
+      "empty": "Chưa có câu hỏi nào. Hãy là người đầu tiên hỏi.",
+      "showMore": "Xem thêm",
+      "privateBadge": "Riêng tư",
+      "maskedQuestion": "Tin nhắn riêng tư",
+      "workerReply": "Phản hồi của worker",
+      "answerPlaceholder": "Viết phản hồi của bạn…",
+      "answerSubmit": "Trả lời",
+      "answerEdit": "Sửa phản hồi",
+      "answerUpdate": "Cập nhật phản hồi",
+      "cancel": "Hủy",
+      "answerSuccess": "Đã gửi phản hồi.",
+      "answerUpdateSuccess": "Đã cập nhật phản hồi.",
+      "answerError": "Không thể gửi phản hồi."
+    },
     "services": {
       "title": "Dịch vụ",
       "noPrice": "Chưa có giá",
@@ -1060,7 +1098,9 @@
     "accountTitle": "Tài khoản",
     "workerSetupTitle": "Thiết lập worker",
     "workerScheduleTitle": "Lịch làm việc",
-    "workerBookingsTitle": "Booking worker"
+    "workerBookingsTitle": "Booking worker",
+    "aboutTitle": "Giới thiệu PR1AS — Đặt lịch tin cậy cho worker & freelancer",
+    "aboutDescription": "Tìm hiểu PR1AS là gì, vì sao hàng nghìn người chọn chúng tôi, và những tính năng giúp việc đặt dịch vụ trở nên đơn giản, an toàn và minh bạch."
   },
   "Home": {
     "heroLocationLabel": "Địa điểm",
@@ -1747,5 +1787,80 @@
     "unitHour": "g",
     "unitMinute": "p",
     "unitSecond": "s"
+  },
+  "About": {
+    "title": "Giới thiệu",
+    "hero": {
+      "badge": "Về chúng tôi",
+      "title": "Kết nối mọi người với dịch vụ đáng tin cậy",
+      "subtitle": "PR1AS là nền tảng nơi khách hàng gặp gỡ các worker và freelancer uy tín — khám phá dịch vụ, đặt lịch an tâm và quản lý mọi thứ tại một nơi."
+    },
+    "what": {
+      "title": "PR1AS là gì",
+      "tagline": "Nền tảng dịch vụ đáng tin cậy của bạn",
+      "paragraphs": [
+        "PR1AS là nền tảng toàn diện kết nối khách hàng với các worker và freelancer đã được xác minh, cung cấp đa dạng dịch vụ chuyên nghiệp và đồng hành.",
+        "Từ việc tìm đúng người, đặt lịch, trò chuyện đến thanh toán trực tuyến an toàn, PR1AS đưa mọi bước vào một trải nghiệm liền mạch.",
+        "Chúng tôi được xây dựng dựa trên sự tin cậy, minh bạch và chất lượng — để cả khách hàng lẫn người cung cấp dịch vụ tập trung vào điều quan trọng nhất."
+      ]
+    },
+    "why": {
+      "title": "Vì sao chọn chúng tôi",
+      "subtitle": "Chúng tôi luôn hướng tới trải nghiệm an toàn, công bằng và dễ dàng cho mọi người trên nền tảng.",
+      "items": [
+        {
+          "title": "Xác minh & uy tín",
+          "description": "Mọi người cung cấp dịch vụ đều được kiểm tra danh tính và chất lượng, cùng hệ thống uy tín giữ chuẩn mực cao."
+        },
+        {
+          "title": "Chất lượng đáng tin",
+          "description": "Đánh giá thật, hồ sơ minh bạch và xếp hạng giúp bạn tự tin chọn đúng người."
+        },
+        {
+          "title": "Thanh toán minh bạch",
+          "description": "Giá rõ ràng theo tiền tệ của bạn và nạp tiền trực tuyến an toàn — không phí ẩn, không bất ngờ."
+        },
+        {
+          "title": "Hỗ trợ tận tâm",
+          "description": "Đội ngũ phản hồi nhanh và cơ chế giải quyết tranh chấp luôn đồng hành cùng mỗi lần đặt lịch."
+        }
+      ]
+    },
+    "features": {
+      "title": "Tính năng dịch vụ",
+      "subtitle": "Mọi thứ bạn cần để tìm, đặt và quản lý dịch vụ — đơn giản một cách tinh tế.",
+      "items": [
+        {
+          "title": "Đặt lịch dễ dàng",
+          "description": "Xem lịch trống và đặt người bạn ưng ý chỉ trong vài thao tác."
+        },
+        {
+          "title": "Trò chuyện thời gian thực",
+          "description": "Nhắn tin tức thì để trao đổi chi tiết trước và sau khi đặt lịch."
+        },
+        {
+          "title": "Đánh giá & nhận xét",
+          "description": "Quyết định sáng suốt nhờ phản hồi trung thực từ cộng đồng."
+        },
+        {
+          "title": "Ví an toàn",
+          "description": "Nạp và thanh toán an toàn với ví đa tiền tệ tiện lợi."
+        },
+        {
+          "title": "Thông báo thông minh",
+          "description": "Nắm bắt lịch hẹn, lời nhắc và tin nhắn với cảnh báo kịp thời."
+        },
+        {
+          "title": "Đa ngôn ngữ",
+          "description": "Trải nghiệm PR1AS bằng tiếng Anh, tiếng Việt và tiếng Trung — ở bất cứ đâu."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Sẵn sàng bắt đầu?",
+      "subtitle": "Khám phá cộng đồng và tìm người cung cấp dịch vụ phù hợp với bạn ngay hôm nay.",
+      "primary": "Khám phá ngay",
+      "secondary": "Xem bảng giá"
+    }
   }
 }

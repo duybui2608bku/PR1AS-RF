@@ -13,8 +13,10 @@ import {
 import { ReportReason, RestrictionFeature } from "../../constants/moderation";
 import type { IBookingDocument } from "../../types/booking";
 import type { IReviewDocument } from "../../types/review";
+import type { IWorkerQuestionDocument } from "../../types/worker-question";
 import { notificationService } from "./notification.service";
 import { t, Locale } from "../../utils/i18n";
+import nodemailerUtils from "../../utils/nodemailer";
 
 const INTL_LOCALE_MAP: Record<Locale, string> = {
   vi: "vi-VN",
@@ -33,7 +35,8 @@ const REPORT_REASON_KEYS: Record<ReportReason, string> = {
 
 const RESTRICTION_FEATURE_KEYS: Record<RestrictionFeature, string> = {
   [RestrictionFeature.POST_CREATE]: "notif.restrictionFeature.postCreate",
-  [RestrictionFeature.WORKER_ACTIVITY]: "notif.restrictionFeature.workerActivity",
+  [RestrictionFeature.WORKER_ACTIVITY]:
+    "notif.restrictionFeature.workerActivity",
 };
 
 async function getRecipientLocale(userId: string): Promise<Locale> {
@@ -322,8 +325,12 @@ export class NotificationEventService {
           recipient_ids: [recipientId],
           type: NotificationType.BOOKING_REMINDER,
           category: NotificationCategory.BOOKING,
-          title: t("notif.booking.reminder.title", locale, { hours: hoursBeforeStart }),
-          body: t("notif.booking.reminder.body", locale, { startsAt: formatDateTime(startTime, locale) }),
+          title: t("notif.booking.reminder.title", locale, {
+            hours: hoursBeforeStart,
+          }),
+          body: t("notif.booking.reminder.body", locale, {
+            startsAt: formatDateTime(startTime, locale),
+          }),
           data: {
             booking_id: bookingId,
             starts_at: startTime.toISOString(),
@@ -491,8 +498,18 @@ export class NotificationEventService {
             ? NotificationType.CHAT_GROUP_MESSAGE
             : NotificationType.CHAT_MESSAGE,
           category: NotificationCategory.CHAT,
-          title: t(input.isGroup ? "notif.chat.groupMessage.title" : "notif.chat.message.title", locale),
-          body: t(input.isGroup ? "notif.chat.groupMessage.body" : "notif.chat.message.body", locale),
+          title: t(
+            input.isGroup
+              ? "notif.chat.groupMessage.title"
+              : "notif.chat.message.title",
+            locale
+          ),
+          body: t(
+            input.isGroup
+              ? "notif.chat.groupMessage.body"
+              : "notif.chat.message.body",
+            locale
+          ),
           data: {
             message_id: input.messageId,
             conversation_id: input.conversationId,
@@ -534,6 +551,80 @@ export class NotificationEventService {
       channels: [NotificationChannel.IN_APP, NotificationChannel.PUSH],
       priority: NotificationPriority.NORMAL,
       dedupe_key: `review-created:${toId(review._id)}`,
+    });
+  }
+
+  async workerQuestionCreated(
+    question: IWorkerQuestionDocument
+  ): Promise<void> {
+    const workerId = toId(question.worker_id);
+    const askerId = question.asker_id ? toId(question.asker_id) : null;
+    const locale = await getRecipientLocale(workerId);
+
+    await notificationService.notify({
+      recipient_ids: [workerId],
+      actor_id: askerId,
+      type: NotificationType.WORKER_QUESTION_CREATED,
+      category: NotificationCategory.QUESTION,
+      title: t("notif.workerQuestion.created.title", locale),
+      body: t("notif.workerQuestion.created.body", locale, {
+        excerpt: truncate(question.question, 160),
+      }),
+      data: { question_id: toId(question._id) },
+      link: `/worker/${workerId}`,
+      channels: [
+        NotificationChannel.IN_APP,
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+      ],
+      priority: NotificationPriority.HIGH,
+      dedupe_key: `worker-question-created:${toId(question._id)}`,
+    });
+  }
+
+  async workerQuestionAnswered(
+    question: IWorkerQuestionDocument
+  ): Promise<void> {
+    const workerId = toId(question.worker_id);
+    const answer = question.answer ?? "";
+
+    // Registered asker → standard notification (in-app + email). Guest asker has
+    // no account, so notify() would filter them out; email them directly instead.
+    if (question.asker_id) {
+      const askerId = toId(question.asker_id);
+      const locale = await getRecipientLocale(askerId);
+      await notificationService.notify({
+        recipient_ids: [askerId],
+        actor_id: workerId,
+        type: NotificationType.WORKER_QUESTION_ANSWERED,
+        category: NotificationCategory.QUESTION,
+        title: t("notif.workerQuestion.answered.title", locale),
+        body: t("notif.workerQuestion.answered.body", locale, {
+          answer: truncate(answer, 160),
+        }),
+        data: { question_id: toId(question._id) },
+        link: `/worker/${workerId}`,
+        channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+        priority: NotificationPriority.NORMAL,
+        dedupe_key: `worker-question-answered:${toId(question._id)}`,
+      });
+      return;
+    }
+
+    if (!question.asker_email) {
+      return;
+    }
+
+    const locale: Locale = "en";
+    const html = `
+      <p>${t("notif.workerQuestion.answered.emailIntro", locale)}</p>
+      <p><strong>${t("notif.workerQuestion.answered.emailQuestionLabel", locale)}:</strong><br/>${truncate(question.question, 500)}</p>
+      <p><strong>${t("notif.workerQuestion.answered.emailAnswerLabel", locale)}:</strong><br/>${truncate(answer, 1000)}</p>
+    `;
+    await nodemailerUtils({
+      email: question.asker_email,
+      subject: t("notif.workerQuestion.answered.title", locale),
+      html,
     });
   }
 
@@ -727,7 +818,8 @@ export class NotificationEventService {
       buildRestrictionDescription(input.feature, input.endsAt, locale),
       t("notif.moderation.restriction.reason", locale, {
         reason: truncate(
-          input.reason || t("notif.moderation.restriction.defaultReason", locale),
+          input.reason ||
+            t("notif.moderation.restriction.defaultReason", locale),
           280
         ),
       }),

@@ -96,6 +96,19 @@ export const chatSendLimiter = rateLimit({
   handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
+// "Ask the Worker" question submissions. Public endpoint that triggers an email
+// to the worker, so it must resist guest spam. Keyed per-user, falling back to IP
+// for anonymous askers (the common case here).
+export const questionCreateLimiter = rateLimit({
+  windowMs: 60 * TIME_IN_MS.MINUTE,
+  max: 10,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: userOrIpKey,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
+});
+
 export const emailActionLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
   max: 3,

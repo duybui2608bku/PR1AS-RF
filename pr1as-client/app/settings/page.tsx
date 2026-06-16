@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Ban,
   Bug,
+  Building2,
   CalendarClock,
   CheckCircle2,
   ChevronLeft,
@@ -195,6 +196,12 @@ const infoLinks: Array<{
   icon: React.ComponentType<{ className?: string }>
   external?: boolean
 }> = [
+  {
+    href: "/about",
+    labelKey: "aboutLabel",
+    descriptionKey: "aboutDesc",
+    icon: Building2,
+  },
   {
     href: "/privacy",
     labelKey: "privacyLabel",

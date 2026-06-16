@@ -43,6 +43,7 @@ import { WorkerCalendar } from "@/components/worker/worker-calendar"
 import { WorkerInfoCards } from "@/components/worker/worker-info-cards"
 import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
 import { WorkerReviews } from "@/components/worker/worker-reviews"
+import { WorkerAskQuestion } from "@/components/worker/worker-ask-question"
 import { WorkerServices } from "@/components/worker/worker-services"
 import { WorkerStatCards } from "@/components/worker/worker-stat-cards"
 import { WorkerSuggestions } from "@/components/worker/worker-suggestions"
@@ -226,6 +227,10 @@ export default function WorkerProfilePage({
                     <WorkerStatCards profile={data.worker_profile} />
                     <WorkerInfoCards profile={data.worker_profile} />
                     <WorkerReviews reviews={data.reviews ?? []} />
+                    <WorkerAskQuestion
+                      workerId={data.user.id}
+                      isOwnProfile={isOwnProfile}
+                    />
                   </div>
 
                   {/* Aside — order-1 on mobile (Services + Calendar shown first),

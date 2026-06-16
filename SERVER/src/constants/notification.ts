@@ -14,6 +14,7 @@ export enum NotificationCategory {
   ADMIN = "admin",
   SYSTEM = "system",
   REPUTATION = "reputation",
+  QUESTION = "question",
 }
 
 export enum NotificationPriority {
@@ -47,6 +48,8 @@ export enum NotificationType {
   MODERATION_POST_DELETED = "moderation.post_deleted",
   MODERATION_REPORT_RESOLVED = "moderation.report_resolved",
   MODERATION_RESTRICTION_APPLIED = "moderation.restriction_applied",
+  WORKER_QUESTION_CREATED = "worker_question.created",
+  WORKER_QUESTION_ANSWERED = "worker_question.answered",
 }
 
 export enum NotificationDeliveryStatus {

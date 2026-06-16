@@ -42,4 +42,5 @@ export const modelsName = {
   ATTENDANCE: "attendances",
   WORKER_BOOST: "worker_boosts",
   POST_REGISTRATION: "post_registrations",
+  WORKER_QUESTION: "worker_questions",
 };

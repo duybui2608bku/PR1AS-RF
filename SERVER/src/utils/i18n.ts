@@ -708,10 +708,10 @@ const translations: Record<string, Record<Locale, string>> = {
     zh: "您的一篇帖子因违反社区准则被管理员删除。",
   },
   "notif.moderation.postDeleted.preview": {
-    en: "Post excerpt: \"{excerpt}\"",
-    vi: "Trích đoạn bài viết: \"{excerpt}\"",
-    ko: "게시물 발췌: \"{excerpt}\"",
-    zh: "帖子摘录：\"{excerpt}\"",
+    en: 'Post excerpt: "{excerpt}"',
+    vi: 'Trích đoạn bài viết: "{excerpt}"',
+    ko: '게시물 발췌: "{excerpt}"',
+    zh: '帖子摘录："{excerpt}"',
   },
   "notif.moderation.postDeleted.reason": {
     en: "Report reason: {reason}",
@@ -901,9 +901,57 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "{plan} 요금제가 성공적으로 활성화되었습니다.",
     zh: "您的 {plan} 套餐已成功激活。",
   },
+
+  // Ask the Worker — Q&A
+  "notif.workerQuestion.created.title": {
+    en: "New question on your profile",
+    vi: "Có câu hỏi mới trên hồ sơ của bạn",
+    ko: "프로필에 새 질문이 있습니다",
+    zh: "您的资料收到新提问",
+  },
+  "notif.workerQuestion.created.body": {
+    en: 'Someone asked: "{excerpt}". Reply soon to keep them engaged.',
+    vi: 'Có người hỏi: "{excerpt}". Hãy trả lời sớm để giữ chân khách.',
+    ko: '누군가 질문했습니다: "{excerpt}". 빠르게 답변해 주세요.',
+    zh: '有人提问："{excerpt}"。请尽快回复。',
+  },
+  "notif.workerQuestion.answered.title": {
+    en: "Your question has been answered",
+    vi: "Câu hỏi của bạn đã được trả lời",
+    ko: "질문에 답변이 등록되었습니다",
+    zh: "您的问题已得到回复",
+  },
+  "notif.workerQuestion.answered.body": {
+    en: 'The worker replied: "{answer}".',
+    vi: 'Người thực hiện đã trả lời: "{answer}".',
+    ko: '작업자가 답변했습니다: "{answer}".',
+    zh: '服务者回复："{answer}"。',
+  },
+  "notif.workerQuestion.answered.emailIntro": {
+    en: "The worker has answered the question you asked.",
+    vi: "Người thực hiện đã trả lời câu hỏi mà bạn đã gửi.",
+    ko: "문의하신 질문에 작업자가 답변했습니다.",
+    zh: "服务者已回复您提出的问题。",
+  },
+  "notif.workerQuestion.answered.emailQuestionLabel": {
+    en: "Your question",
+    vi: "Câu hỏi của bạn",
+    ko: "질문 내용",
+    zh: "您的问题",
+  },
+  "notif.workerQuestion.answered.emailAnswerLabel": {
+    en: "Answer",
+    vi: "Câu trả lời",
+    ko: "답변",
+    zh: "回复",
+  },
 };
 
-export function t(key: string, locale: Locale = "en", vars?: Record<string, string | number>): string {
+export function t(
+  key: string,
+  locale: Locale = "en",
+  vars?: Record<string, string | number>
+): string {
   const translation = translations[key];
   if (!translation) return key;
   let result = translation[locale] || translation.en || key;

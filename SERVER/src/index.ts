@@ -42,7 +42,7 @@ import {
   stopEmailCampaignJob,
 } from "./jobs/email-campaign.job";
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
-import { seedServices } from "./scripts/seed-services";
+
 
 
 const app = createApp();
@@ -55,7 +55,6 @@ const startServer = async () => {
     await connectDatabase();
     await syncAllIndexes();
     await reputationConfigService.seedDefaults();
-    await seedServices();
     startBookingExpirationJob();
     startBookingReminderJob();
     startReputationRecoveryJob();

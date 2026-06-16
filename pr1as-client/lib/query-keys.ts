@@ -79,6 +79,11 @@ export const queryKeys = {
       ["reviews", "my", params] as const,
     detail: (id: string) => ["reviews", "detail", id] as const,
   },
+  workerQuestions: {
+    all: ["worker-questions"] as const,
+    byWorker: (workerId: string, params?: Record<string, unknown>) =>
+      ["worker-questions", "worker", workerId, params] as const,
+  },
   workers: {
     all: ["workers"] as const,
     detail: (id: string) => ["workers", "detail", id] as const,

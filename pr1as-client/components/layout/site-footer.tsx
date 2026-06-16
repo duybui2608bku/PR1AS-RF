@@ -1,7 +1,9 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
+import * as React from "react"
 
 import {
   FacebookIcon,
@@ -11,6 +13,8 @@ import {
 } from "@/components/icons/brand-icons"
 import { siteConfig } from "@/config/site"
 import { footerNav } from "@/config/nav"
+import { useSiteSettings } from "@/lib/hooks/use-site-settings"
+import type { LocalizedSettingText } from "@/services/site-settings.service"
 import { cn } from "@/lib/utils"
 
 const socialLinks = [
@@ -38,17 +42,38 @@ const socialLinks = [
 
 export function SiteFooter({ className }: { className?: string }) {
   const t = useTranslations("Footer")
+  const locale = useLocale()
+  const { data: siteSettings } = useSiteSettings()
+
+  const [isMounted, setIsMounted] = React.useState(false)
+  React.useEffect(() => setIsMounted(true), [])
+
+  const brandName = siteSettings?.name || siteConfig.name
+  const brandLogo = siteSettings?.logoUrl
+  const localeKey = locale as keyof LocalizedSettingText
+  const brandDescription =
+    siteSettings?.description?.[localeKey] || siteConfig.description
 
   return (
     <footer className={cn("border-t", className)}>
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="font-semibold">
-              {siteConfig.name}
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+              {isMounted && brandLogo ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={120}
+                  height={32}
+                  className="h-8 w-auto object-contain"
+                />
+              ) : (
+                brandName
+              )}
             </Link>
             <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-              {siteConfig.description}
+              {brandDescription}
             </p>
             <div className="mt-4 flex items-center gap-2">
               {socialLinks.map((item) => (
@@ -87,7 +112,7 @@ export function SiteFooter({ className }: { className?: string }) {
 
         <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t pt-6 text-xs text-muted-foreground md:flex-row">
           <p>
-            &copy; {new Date().getFullYear()} {siteConfig.name}. {t("copyright")}
+            &copy; {new Date().getFullYear()} {brandName}. {t("copyright")}
           </p>
           <p>
             <a

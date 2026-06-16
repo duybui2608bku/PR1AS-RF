@@ -455,7 +455,9 @@
     "bookingProcessLabel": "How booking works",
     "bookingProcessDesc": "Guide to the booking and confirmation flow.",
     "cookiesLabel": "Cookie Policy",
-    "cookiesDesc": "How we use cookies on the platform."
+    "cookiesDesc": "How we use cookies on the platform.",
+    "aboutLabel": "About PR1AS",
+    "aboutDesc": "What we do and why people choose us."
   },
   "Favorites": {
     "title": "Favorite workers",
@@ -914,6 +916,42 @@
       "defaultClient": "Customer",
       "workerReply": "Worker's reply"
     },
+    "askWorker": {
+      "title": "Ask the Worker",
+      "subtitle": "Public or private. We will email both you and the worker.",
+      "nicknameLabel": "Nickname (optional)",
+      "nicknamePlaceholder": "Your display name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "emailInvalid": "Please enter a valid email address.",
+      "questionLabel": "Question",
+      "questionPlaceholder": "At least 5 characters. Do not leave LINE, WeChat, Zalo, WhatsApp, phone numbers, or other personal contact details—to protect your privacy.",
+      "questionMin": "Your question must be at least 5 characters.",
+      "privacyNote": "Personal contact methods (including LINE, WeChat, Zalo, WhatsApp, phone, social DMs, etc.) are not allowed. Content that violates this may be removed for your safety.",
+      "visibilityLabel": "Visibility",
+      "visibilityPublic": "Public",
+      "visibilityPublicHint": "Everyone can read the thread. Your name, email, and any contact details are never exposed.",
+      "visibilityPrivate": "Private",
+      "visibilityPrivateHint": "Only you and the worker can see the content.",
+      "submit": "Submit question",
+      "submitSuccess": "Your question has been sent.",
+      "submitError": "Could not send your question.",
+      "threadTitle": "Questions & replies",
+      "loading": "Loading questions…",
+      "empty": "No questions yet. Be the first to ask.",
+      "showMore": "Show more",
+      "privateBadge": "Private",
+      "maskedQuestion": "Private message",
+      "workerReply": "Worker's reply",
+      "answerPlaceholder": "Write your reply…",
+      "answerSubmit": "Reply",
+      "answerEdit": "Edit reply",
+      "answerUpdate": "Update reply",
+      "cancel": "Cancel",
+      "answerSuccess": "Reply sent.",
+      "answerUpdateSuccess": "Reply updated.",
+      "answerError": "Could not send your reply."
+    },
     "services": {
       "title": "Services",
       "noPrice": "No price yet",
@@ -1060,7 +1098,9 @@
     "accountTitle": "Account",
     "workerSetupTitle": "Worker setup",
     "workerScheduleTitle": "Work schedule",
-    "workerBookingsTitle": "Worker bookings"
+    "workerBookingsTitle": "Worker bookings",
+    "aboutTitle": "About PR1AS — Trusted booking for workers & freelancers",
+    "aboutDescription": "Learn what PR1AS is, why thousands choose us, and the features that make booking trusted service providers simple, safe and transparent."
   },
   "Home": {
     "heroLocationLabel": "Location",
@@ -1737,5 +1777,80 @@
     "unitHour": "h",
     "unitMinute": "m",
     "unitSecond": "s"
+  },
+  "About": {
+    "title": "About Us",
+    "hero": {
+      "badge": "About us",
+      "title": "Connecting people with services they can trust",
+      "subtitle": "PR1AS is the marketplace where clients meet reliable workers and freelancers — discover services, book with confidence, and manage everything in one place."
+    },
+    "what": {
+      "title": "What is PR1AS",
+      "tagline": "Your trusted service marketplace",
+      "paragraphs": [
+        "PR1AS is a full-service platform that connects clients with verified workers and freelancers offering a wide range of professional and companionship services.",
+        "From discovering the right provider to booking, chatting, and paying securely online, PR1AS brings every step of the journey into one seamless experience.",
+        "We are built around trust, transparency and quality — so both clients and service providers can focus on what truly matters."
+      ]
+    },
+    "why": {
+      "title": "Why Choose Us",
+      "subtitle": "We obsess over a safe, fair and effortless experience for everyone on the platform.",
+      "items": [
+        {
+          "title": "Verified & trusted",
+          "description": "Every provider goes through identity and quality checks, with a reputation system that keeps standards high."
+        },
+        {
+          "title": "Quality you can rely on",
+          "description": "Real reviews, transparent profiles and ratings help you choose the right person with confidence."
+        },
+        {
+          "title": "Transparent payments",
+          "description": "Clear pricing in your currency and secure online top-up — no hidden fees, no surprises."
+        },
+        {
+          "title": "Support that cares",
+          "description": "A responsive team and built-in dispute resolution stand behind every booking you make."
+        }
+      ]
+    },
+    "features": {
+      "title": "Our Service Features",
+      "subtitle": "Everything you need to find, book and manage services — beautifully simple.",
+      "items": [
+        {
+          "title": "Easy booking",
+          "description": "Browse availability and book your preferred provider in just a few taps."
+        },
+        {
+          "title": "Real-time chat",
+          "description": "Message providers instantly to align on details before and after your booking."
+        },
+        {
+          "title": "Ratings & reviews",
+          "description": "Make informed choices with honest feedback from the community."
+        },
+        {
+          "title": "Secure wallet",
+          "description": "Top up and pay securely with a multi-currency wallet built for convenience."
+        },
+        {
+          "title": "Smart notifications",
+          "description": "Stay on top of bookings, reminders and messages with timely alerts."
+        },
+        {
+          "title": "Multi-language",
+          "description": "Enjoy PR1AS in English, Vietnamese and Chinese — wherever you are."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "subtitle": "Explore the community and find the right service provider for you today.",
+      "primary": "Explore now",
+      "secondary": "View pricing"
+    }
   }
 }

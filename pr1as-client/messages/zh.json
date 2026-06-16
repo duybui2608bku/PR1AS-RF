@@ -455,7 +455,9 @@
     "bookingProcessLabel": "预约流程",
     "bookingProcessDesc": "预约与确认流程指南。",
     "cookiesLabel": "Cookie 政策",
-    "cookiesDesc": "我们如何在平台上使用 Cookie。"
+    "cookiesDesc": "我们如何在平台上使用 Cookie。",
+    "aboutLabel": "关于 PR1AS",
+    "aboutDesc": "我们做什么，以及人们为何选择我们。"
   },
   "Favorites": {
     "title": "收藏的服务者",
@@ -914,6 +916,42 @@
       "defaultClient": "客户",
       "workerReply": "工作者的回复"
     },
+    "askWorker": {
+      "title": "向工作者提问",
+      "subtitle": "公开或私密。我们会向您和工作者双方发送邮件。",
+      "nicknameLabel": "昵称（可选）",
+      "nicknamePlaceholder": "您的显示名称",
+      "emailLabel": "电子邮件",
+      "emailPlaceholder": "you@example.com",
+      "emailInvalid": "请输入有效的电子邮件地址。",
+      "questionLabel": "问题",
+      "questionPlaceholder": "至少5个字符。请勿留下 LINE、微信、Zalo、WhatsApp、电话号码或其他个人联系方式——以保护您的隐私。",
+      "questionMin": "问题至少需要5个字符。",
+      "privacyNote": "不允许留下个人联系方式（包括 LINE、微信、Zalo、WhatsApp、电话、社交私信等）。违规内容可能会被删除，以保障您的安全。",
+      "visibilityLabel": "可见性",
+      "visibilityPublic": "公开",
+      "visibilityPublicHint": "所有人都可阅读。您的姓名、邮箱及任何联系方式绝不会被公开。",
+      "visibilityPrivate": "私密",
+      "visibilityPrivateHint": "只有您和工作者可以看到内容。",
+      "submit": "提交问题",
+      "submitSuccess": "您的问题已发送。",
+      "submitError": "无法发送您的问题。",
+      "threadTitle": "问题与回复",
+      "loading": "正在加载问题…",
+      "empty": "暂无问题。来做第一个提问的人吧。",
+      "showMore": "查看更多",
+      "privateBadge": "私密",
+      "maskedQuestion": "私密消息",
+      "workerReply": "工作者的回复",
+      "answerPlaceholder": "写下您的回复…",
+      "answerSubmit": "回复",
+      "answerEdit": "编辑回复",
+      "answerUpdate": "更新回复",
+      "cancel": "取消",
+      "answerSuccess": "回复已发送。",
+      "answerUpdateSuccess": "回复已更新。",
+      "answerError": "无法发送您的回复。"
+    },
     "services": {
       "title": "服务",
       "noPrice": "暂无价格",
@@ -1060,7 +1098,9 @@
     "accountTitle": "账户",
     "workerSetupTitle": "工作者设置",
     "workerScheduleTitle": "工作排班",
-    "workerBookingsTitle": "工作者预约"
+    "workerBookingsTitle": "工作者预约",
+    "aboutTitle": "关于 PR1AS — 值得信赖的工作者与自由职业者预约平台",
+    "aboutDescription": "了解 PR1AS 是什么、为何成千上万的人选择我们，以及让预约可信赖服务变得简单、安全、透明的功能。"
   },
   "Home": {
     "heroLocationLabel": "地点",
@@ -1747,5 +1787,80 @@
     "unitHour": "时",
     "unitMinute": "分",
     "unitSecond": "秒"
+  },
+  "About": {
+    "title": "关于我们",
+    "hero": {
+      "badge": "关于我们",
+      "title": "连接人们与值得信赖的服务",
+      "subtitle": "PR1AS 是客户与可靠工作者和自由职业者相遇的平台——发现服务、安心预约，并在一处管理一切。"
+    },
+    "what": {
+      "title": "PR1AS 是什么",
+      "tagline": "您值得信赖的服务平台",
+      "paragraphs": [
+        "PR1AS 是一个全方位平台，将客户与经过验证的工作者和自由职业者连接起来，提供丰富的专业与陪伴服务。",
+        "从找到合适的人、预约、聊天到安全的在线付款，PR1AS 将每一步融入无缝的体验之中。",
+        "我们以信任、透明和品质为核心——让客户与服务提供者都能专注于真正重要的事。"
+      ]
+    },
+    "why": {
+      "title": "为何选择我们",
+      "subtitle": "我们致力于为平台上的每个人带来安全、公平且轻松的体验。",
+      "items": [
+        {
+          "title": "经过验证、值得信赖",
+          "description": "每位服务提供者都经过身份与品质审核，并有信誉系统保持高标准。"
+        },
+        {
+          "title": "可信赖的品质",
+          "description": "真实评价、透明资料与评分，帮助您自信地选择合适的人。"
+        },
+        {
+          "title": "透明付款",
+          "description": "以您的货币清晰定价，安全在线充值——没有隐藏费用，没有意外。"
+        },
+        {
+          "title": "贴心支持",
+          "description": "响应迅速的团队与内置纠纷解决机制，为您的每次预约保驾护航。"
+        }
+      ]
+    },
+    "features": {
+      "title": "我们的服务功能",
+      "subtitle": "查找、预约与管理服务所需的一切——简约而精致。",
+      "items": [
+        {
+          "title": "轻松预约",
+          "description": "浏览空档，只需几下点击即可预约心仪的服务提供者。"
+        },
+        {
+          "title": "实时聊天",
+          "description": "即时联系服务提供者，在预约前后确认细节。"
+        },
+        {
+          "title": "评分与评价",
+          "description": "凭借社区的真实反馈做出明智选择。"
+        },
+        {
+          "title": "安全钱包",
+          "description": "通过便捷的多币种钱包安全充值与付款。"
+        },
+        {
+          "title": "智能通知",
+          "description": "通过及时提醒掌握预约、提醒与消息。"
+        },
+        {
+          "title": "多语言",
+          "description": "以英语、越南语和中文体验 PR1AS——无论您身在何处。"
+        }
+      ]
+    },
+    "cta": {
+      "title": "准备好开始了吗？",
+      "subtitle": "立即探索社区，找到适合您的服务提供者。",
+      "primary": "立即探索",
+      "secondary": "查看价格"
+    }
   }
 }
