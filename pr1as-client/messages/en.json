@@ -1037,6 +1037,14 @@
     "introPostsDesc": "Explore the feed, share posts, and find or offer opportunities within the community.",
     "introBookingTitle": "Book & connect",
     "introBookingDesc": "Book providers, chat in real time, and manage your schedule and wallet — all in one place.",
+    "introWelcomeFeat1": "Trusted",
+    "introWelcomeFeat2": "Verified",
+    "introServicesFeat1": "By location",
+    "introServicesFeat2": "By time",
+    "introPostsFeat1": "Feed",
+    "introPostsFeat2": "New opportunities",
+    "introBookingFeat1": "Live chat",
+    "introBookingFeat2": "Built-in wallet",
     "roleStepTitle": "How will you use PR1AS?"
   },
   "System": {

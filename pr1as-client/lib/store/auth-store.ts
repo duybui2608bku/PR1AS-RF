@@ -6,6 +6,7 @@ import {
   clearActiveRoleCookie,
 } from "@/lib/auth/auth-cookie"
 import { getActiveRole } from "@/lib/auth/roles"
+import { STORAGE_KEYS } from "@/lib/constants"
 
 const LEGACY_AUTH_TOKEN_KEY = "auth_token"
 const LEGACY_AUTH_STORAGE_KEY = "auth-storage"
@@ -16,6 +17,16 @@ const removeLegacyAuthToken = () => {
     // Migrate users with the previous localStorage-persisted store off it —
     // localStorage exposure outlives the tab and is XSS-prone.
     window.localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY)
+  }
+}
+
+// Admin-only drafts hold pending users' emails/passwords; drop them on logout
+// so a session never leaks sensitive data into the next. They now live in
+// sessionStorage; the localStorage removal clears entries left by older builds.
+const clearAdminUserDrafts = () => {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.removeItem(STORAGE_KEYS.adminUserDrafts)
+    window.localStorage.removeItem(STORAGE_KEYS.adminUserDrafts)
   }
 }
 
@@ -117,6 +128,7 @@ export const useAuthStore = create<AuthState>()(
       },
       clearAuth: () => {
         removeLegacyAuthToken()
+        clearAdminUserDrafts()
         clearActiveRoleCookie()
         // Only broadcast if authenticated — prevents cascade loop between tabs
         if (get().isAuthenticated) {
