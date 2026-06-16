@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog"
 import { serviceService } from "@/services/service.service"
 import { useCurrency } from "@/lib/hooks/use-currency"
+import type { ServiceTab } from "@/lib/home/home-search-params"
 import { workerService, type WorkerGroupedByService } from "@/services/worker.service"
 
 type Worker = WorkerGroupedByService["workers"][number]
@@ -260,6 +261,7 @@ type WorkersByServiceListProps = {
   isFetching?: boolean
   appliedFilters?: AppliedFilterChip[]
   onClearAllFilters?: () => void
+  onViewAllService?: (code: string, category: ServiceTab) => void
   favoriteWorkerIds?: Set<string>
   favoritePendingWorkerId?: string | null
   onToggleFavorite?: (workerId: string, favorite: boolean) => void
@@ -368,6 +370,7 @@ export const WorkersByServiceList = ({
   isFetching = false,
   appliedFilters = [],
   onClearAllFilters,
+  onViewAllService,
   favoriteWorkerIds,
   favoritePendingWorkerId,
   onToggleFavorite,
@@ -470,13 +473,19 @@ export const WorkersByServiceList = ({
               </div>
               <div className="ml-auto flex items-center gap-2 shrink-0">
                 <Badge variant="outline">{t("service.workerCount", { count: group.workers.length })}</Badge>
-                <Link
-                  href={`/services?category=${group.service.code}`}
+                <button
+                  type="button"
+                  onClick={() =>
+                    onViewAllService?.(
+                      group.service.code,
+                      group.service.category as ServiceTab,
+                    )
+                  }
                   className="inline-flex items-center justify-center rounded-full w-7 h-7 border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   aria-label={t("service.viewAll", { service: serviceName })}
                 >
                   <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                </button>
               </div>
             </div>
             <div className="

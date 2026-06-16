@@ -165,6 +165,16 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     return () => setSwitchTabCallback(null)
   }, [handleSwitchTab, setSwitchTabCallback])
 
+  const handleViewAllService = React.useCallback(
+    (code: string, category: ServiceTab) => {
+      setApplied((prev) => ({ ...prev, activeTab: category, activeCodes: [code] }))
+      requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      })
+    },
+    [],
+  )
+
   const handleToggleCode = React.useCallback((code: string) => {
     setApplied((prev) => {
       if (code === "ALL") return { ...prev, activeCodes: [] }
@@ -282,6 +292,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
           isFetching={workersQuery.isFetching}
           appliedFilters={appliedFilters}
           onClearAllFilters={handleClearAllFilters}
+          onViewAllService={handleViewAllService}
           favoriteWorkerIds={favoriteWorkerIds}
           favoritePendingWorkerId={
             toggleFavoriteMutation.isPending
