@@ -74,6 +74,8 @@ export function WorkerCalendar({ workerId }: Props) {
         mode="single"
         month={month}
         onMonthChange={setMonth}
+        captionLayout="dropdown"
+        startMonth={startOfMonth(new Date())}
         disabled={[{ before: startOfDay(new Date()) }, ...bookedDays]}
         modifiers={{ booked: bookedDays }}
         modifiersClassNames={{

@@ -249,6 +249,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
           <DatePicker
             value={form.startDate}
             fromDate={startOfDay(new Date())}
+            captionLayout="dropdown"
             onChange={(date) => {
               update("startDate", date)
               if (date && form.endDate && form.endDate < date) {
@@ -262,6 +263,7 @@ function AddBlackoutForm({ onClose }: { onClose: () => void }) {
           <DatePicker
             value={form.endDate}
             fromDate={form.startDate ?? startOfDay(new Date())}
+            captionLayout="dropdown"
             onChange={(date) => update("endDate", date)}
           />
         </div>

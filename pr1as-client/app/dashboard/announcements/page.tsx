@@ -366,6 +366,7 @@ function AnnouncementForm({
                     value={parsedStart.date}
                     onChange={(date) => setField("start_date", buildDateTimeStr(date, parsedStart.time))}
                     placeholder="Chọn ngày bắt đầu"
+                    captionLayout="dropdown"
                     disabled={isPending}
                   />
                 </div>
@@ -402,6 +403,7 @@ function AnnouncementForm({
                     value={parsedEnd.date}
                     onChange={(date) => setField("end_date", buildDateTimeStr(date, parsedEnd.time))}
                     placeholder="Chọn ngày kết thúc"
+                    captionLayout="dropdown"
                     disabled={isPending}
                   />
                 </div>

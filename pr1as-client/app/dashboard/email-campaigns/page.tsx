@@ -325,6 +325,7 @@ function CampaignForm({
               onChange={(date) => set("scheduled_at", buildScheduled(date, scheduled.time))}
               placeholder="Chọn ngày gửi"
               disabled={isPending}
+              captionLayout="dropdown"
               fromDate={new Date(new Date().setHours(0, 0, 0, 0))}
             />
           </div>
