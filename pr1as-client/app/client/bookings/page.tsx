@@ -445,6 +445,7 @@ export default function ClientBookingsPage() {
                 setPage(1)
               }}
               toDate={endDate}
+              captionLayout="dropdown"
             />
           </div>
           <div className="grid gap-2">
@@ -457,6 +458,7 @@ export default function ClientBookingsPage() {
                 setPage(1)
               }}
               fromDate={startDate}
+              captionLayout="dropdown"
             />
           </div>
           <div className="flex items-end">

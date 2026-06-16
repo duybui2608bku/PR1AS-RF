@@ -460,6 +460,7 @@ function SearchDateField({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
+          captionLayout="dropdown"
           buttonClassName="h-auto border-none bg-transparent p-0 text-base shadow-none hover:bg-transparent focus-visible:ring-0 sm:text-sm"
         />
       </div>

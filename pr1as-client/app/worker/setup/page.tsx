@@ -966,6 +966,7 @@ export default function WorkerSetupPage() {
               onChange={setDateOfBirth}
               placeholder={t("placeholders.dateOfBirth")}
               toDate={new Date()}
+              captionLayout="dropdown"
             />
           </div>
 

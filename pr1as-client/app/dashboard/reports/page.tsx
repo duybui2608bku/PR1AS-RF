@@ -1239,6 +1239,7 @@ export default function AdminReportsPage() {
                   onChange={setBanDate}
                   fromDate={new Date()}
                   placeholder="Chọn ngày"
+                  captionLayout="dropdown"
                   buttonClassName="h-9 flex-1"
                 />
                 <Input
