@@ -1037,6 +1037,14 @@
     "introPostsDesc": "浏览动态、发布帖子，并在社区中寻找或提供机会。",
     "introBookingTitle": "预约与连接",
     "introBookingDesc": "预约服务者、实时聊天，并管理您的日程与钱包——一站搞定。",
+    "introWelcomeFeat1": "值得信赖",
+    "introWelcomeFeat2": "已验证",
+    "introServicesFeat1": "按地点",
+    "introServicesFeat2": "按时间",
+    "introPostsFeat1": "动态",
+    "introPostsFeat2": "新机会",
+    "introBookingFeat1": "实时聊天",
+    "introBookingFeat2": "内置钱包",
     "roleStepTitle": "您将如何使用 PR1AS？"
   },
   "System": {

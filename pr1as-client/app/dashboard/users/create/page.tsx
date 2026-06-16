@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
+import { STORAGE_KEYS } from "@/lib/constants"
 import { isAdminUser } from "@/lib/auth/roles"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useCreateUser } from "@/lib/hooks/use-users"
@@ -34,16 +35,18 @@ import {
   type UserDraft,
 } from "@/components/dashboard/user-create-form"
 
-const STORAGE_KEY = "admin-user-drafts"
+const STORAGE_KEY = STORAGE_KEYS.adminUserDrafts
 
 function loadDrafts(): UserDraft[] {
   if (typeof window === "undefined") return []
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    // Drafts hold pending users' emails/passwords, so they live in
+    // sessionStorage — cleared automatically when the tab closes.
+    const raw = window.sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as UserDraft[]
     if (!Array.isArray(parsed) || parsed.length === 0) return []
-    // Any draft caught mid-save when the tab closed is reset to editable.
+    // Any draft caught mid-save when the tab reloaded is reset to editable.
     return parsed.map((d) =>
       d.savedStatus === "saving"
         ? { ...d, savedStatus: "draft" as DraftSaveStatus }
@@ -87,10 +90,17 @@ export default function CreateUsersPage() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [])
 
-  // Persist on every change (after hydration).
+  // Persist on every change (after hydration). Only unsaved drafts are kept —
+  // already-created users carry sensitive data (email/password) we don't want
+  // lingering in storage, and there's nothing left to recover for them.
   useEffect(() => {
     if (!hydrated) return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts))
+    const toPersist = drafts.filter((d) => d.savedStatus !== "saved")
+    if (toPersist.length === 0) {
+      window.sessionStorage.removeItem(STORAGE_KEY)
+      return
+    }
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toPersist))
   }, [drafts, hydrated])
 
   const activeDraft = useMemo(

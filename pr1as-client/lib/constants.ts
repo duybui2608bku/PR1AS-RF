@@ -8,6 +8,7 @@ export const APP_ROUTES = {
 export const STORAGE_KEYS = {
   authStorage: "auth-storage",
   theme: "theme",
+  adminUserDrafts: "admin-user-drafts",
 } as const
 
 export const QUERY_DEFAULTS = {
