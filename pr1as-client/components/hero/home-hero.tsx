@@ -5,15 +5,26 @@ import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 
 import {
+  Bot,
   Briefcase,
+  Camera,
   Crown,
+  Dumbbell,
+  FileText,
+  Gamepad2,
+  GraduationCap,
+  Handshake,
   HeartHandshake,
+  HeartPulse,
   LayoutGrid,
   Languages,
   Laptop,
   type LucideIcon,
   Map,
   MapPin,
+  Music,
+  Palette,
+  Scale,
   Search,
   User,
   UserCog,
@@ -48,6 +59,18 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Briefcase,
   UserCog,
   HeartHandshake,
+  // v2 service catalog icons
+  Bot,
+  Handshake,
+  FileText,
+  HeartPulse,
+  Music,
+  Palette,
+  Gamepad2,
+  GraduationCap,
+  Scale,
+  Dumbbell,
+  Camera,
 }
 
 const resolveIcon = (icon: string | null): LucideIcon => {
@@ -190,8 +213,8 @@ type ServiceTabsProps = {
 }
 
 const SERVICE_TABS: { value: ServiceTab; labelKey: string; icon: LucideIcon }[] = [
-  { value: "ASSISTANCE", labelKey: "Services.assistance", icon: Briefcase },
-  { value: "COMPANIONSHIP", labelKey: "Services.companionship", icon: HeartHandshake },
+  { value: "VIRTUAL", labelKey: "Services.virtual", icon: Bot },
+  { value: "PHYSICAL", labelKey: "Services.physical", icon: Handshake },
 ]
 
 function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {

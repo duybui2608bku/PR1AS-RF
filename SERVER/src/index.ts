@@ -42,6 +42,7 @@ import {
   stopEmailCampaignJob,
 } from "./jobs/email-campaign.job";
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
+import { serviceCatalogMigrationService } from "./services/service/service-catalog-migration.service";
 
 
 
@@ -55,6 +56,7 @@ const startServer = async () => {
     await connectDatabase();
     await syncAllIndexes();
     await reputationConfigService.seedDefaults();
+    await serviceCatalogMigrationService.runOnBoot();
     startBookingExpirationJob();
     startBookingReminderJob();
     startReputationRecoveryJob();

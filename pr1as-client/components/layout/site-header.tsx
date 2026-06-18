@@ -1,13 +1,13 @@
 "use client"
 
 import {
-  Briefcase,
+  Bot,
   CalendarCheck2,
   CalendarDays,
   Crown,
   FileText,
+  Handshake,
   Heart,
-  HeartHandshake,
   Loader2,
   LogOut,
   Menu,
@@ -205,11 +205,11 @@ export function SiteHeader() {
     label: string
     icon: LucideIcon
   }[] = [
-    { value: "ASSISTANCE", label: tServices("assistance"), icon: Briefcase },
+    { value: "VIRTUAL", label: tServices("virtual"), icon: Bot },
     {
-      value: "COMPANIONSHIP",
-      label: tServices("companionship"),
-      icon: HeartHandshake,
+      value: "PHYSICAL",
+      label: tServices("physical"),
+      icon: Handshake,
     },
   ]
 
@@ -622,9 +622,9 @@ export function SiteHeader() {
                   </span>
                   <span className="h-4 w-px shrink-0 bg-border" />
                   <span className="text-muted-foreground">
-                    {activeTab === "COMPANIONSHIP"
-                      ? tServices("companionship")
-                      : tServices("assistance")}
+                    {activeTab === "PHYSICAL"
+                      ? tServices("physical")
+                      : tServices("virtual")}
                   </span>
                   <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Search className="size-3.5" />

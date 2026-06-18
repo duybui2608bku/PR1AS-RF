@@ -126,7 +126,9 @@
     "anyLocation": "Địa điểm bất kỳ",
     "time": "Thời gian",
     "assistance": "Trợ lý",
-    "companionship": "Đồng hành"
+    "companionship": "Đồng hành",
+    "virtual": "Trợ lý ảo",
+    "physical": "Trợ lý thực tế"
   },
   "PostCard": {
     "defaultUser": "Người dùng",
@@ -832,6 +834,10 @@
       "subtitle": "Chọn dịch vụ bạn cung cấp và đặt giá tương ứng",
       "companionshipTitle": "Đồng hành",
       "emptyCompanionship": "Không có dịch vụ đồng hành trong danh mục.",
+      "virtualTitle": "Trợ lý ảo",
+      "physicalTitle": "Trợ lý thực tế",
+      "emptyVirtual": "Không có dịch vụ trợ lý ảo trong danh mục.",
+      "emptyPhysical": "Không có dịch vụ trợ lý thực tế trong danh mục.",
       "requirement": "Chọn ít nhất <strong>1 dịch vụ</strong> và nhập giá cho ít nhất một đơn vị (giờ / ngày / tháng) để hoàn tất hồ sơ."
     },
     "locationPicker": {

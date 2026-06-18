@@ -1,8 +1,8 @@
 import { Document } from "mongoose";
 
 export enum ServiceCategory {
-  ASSISTANCE = "ASSISTANCE",
-  COMPANIONSHIP = "COMPANIONSHIP",
+  VIRTUAL = "VIRTUAL",
+  PHYSICAL = "PHYSICAL",
 }
 
 export enum DressCode {

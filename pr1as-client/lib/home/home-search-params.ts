@@ -3,8 +3,9 @@ import type { WorkersGroupedFilters } from "@/services/worker.service"
 
 export type HomeSearchParamRaw = string | string[] | undefined
 
-// Top-level grouping: ASSISTANCE vs. COMPANIONSHIP. Drives the Airbnb-style icon tabs.
-export type ServiceTab = "ASSISTANCE" | "COMPANIONSHIP"
+// Top-level grouping: VIRTUAL (trợ lý ảo) vs. PHYSICAL (trợ lý thực tế).
+// Drives the Airbnb-style icon tabs.
+export type ServiceTab = "VIRTUAL" | "PHYSICAL"
 
 export type HomeSearchParams = {
   category?: HomeSearchParamRaw
@@ -80,7 +81,7 @@ export const parseHomeSearchParams = (
 
   const rawTab = firstString(raw?.tab)
   const activeTab: ServiceTab =
-    rawTab === "COMPANIONSHIP" ? "COMPANIONSHIP" : "ASSISTANCE"
+    rawTab === "PHYSICAL" ? "PHYSICAL" : "VIRTUAL"
 
   return { activeTab, activeCodes, selectedLocation, scheduledAt }
 }

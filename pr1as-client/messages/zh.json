@@ -126,7 +126,9 @@
     "anyLocation": "任意地点",
     "time": "时间",
     "assistance": "助理",
-    "companionship": "陪伴"
+    "companionship": "陪伴",
+    "virtual": "虚拟助理",
+    "physical": "实体助理"
   },
   "PostCard": {
     "defaultUser": "用户",
@@ -832,6 +834,10 @@
       "subtitle": "选择你提供的服务并设置对应价格",
       "companionshipTitle": "陪伴",
       "emptyCompanionship": "目录中没有陪伴服务。",
+      "virtualTitle": "虚拟助理",
+      "physicalTitle": "实体助理",
+      "emptyVirtual": "目录中没有虚拟助理服务。",
+      "emptyPhysical": "目录中没有实体助理服务。",
       "requirement": "请选择至少 <strong>1 项服务</strong>，并为至少一种单位（小时 / 天 / 月）输入价格以完成资料。"
     },
     "locationPicker": {

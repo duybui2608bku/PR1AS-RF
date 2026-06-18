@@ -312,35 +312,35 @@ const SAMPLE_LOCATIONS: DraftWorkLocation[] = [
 const SAMPLE_SERVICE_SETS: DraftService[][] = [
   [
     {
-      service_code: "TOUR_GUIDE",
+      service_code: "PHYSICAL_ENTERTAINMENT",
       prices: { HOURLY: "", DAILY: "1500000", MONTHLY: "" },
     },
   ],
   [
     {
-      service_code: "PRESENCE",
+      service_code: "VIRTUAL_HEALTH",
       prices: { HOURLY: "300000", DAILY: "1800000", MONTHLY: "" },
     },
   ],
   [
     {
-      service_code: "CONNECTION",
+      service_code: "PHYSICAL_OFFICE_BASIC",
       prices: { HOURLY: "400000", DAILY: "", MONTHLY: "" },
     },
   ],
   [
     {
-      service_code: "TRANSLATION",
+      service_code: "PHYSICAL_NON_PROFESSIONAL",
       prices: { HOURLY: "500000", DAILY: "", MONTHLY: "" },
     },
   ],
   [
     {
-      service_code: "VIRTUAL_ASSISTANT",
+      service_code: "VIRTUAL_OFFICE_BASIC",
       prices: { HOURLY: "", DAILY: "", MONTHLY: "8000000" },
     },
     {
-      service_code: "DIRECT_SUPPORT",
+      service_code: "VIRTUAL_TECH",
       prices: { HOURLY: "350000", DAILY: "", MONTHLY: "" },
     },
   ],

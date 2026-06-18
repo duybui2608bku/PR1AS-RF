@@ -43,4 +43,5 @@ export const modelsName = {
   WORKER_BOOST: "worker_boosts",
   POST_REGISTRATION: "post_registrations",
   WORKER_QUESTION: "worker_questions",
+  MIGRATION: "migrations",
 };

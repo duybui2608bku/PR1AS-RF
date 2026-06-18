@@ -12,6 +12,7 @@
     "format": "prettier --write \"src/**/*.{ts,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,json}\"",
     "backfill:pricing-vnd": "ts-node src/scripts/backfill-pricing-vnd.ts",
+    "migrate:service-catalog": "ts-node src/scripts/migrate-service-catalog.ts",
     "test": "jest"
   },
   "keywords": [],
