@@ -58,9 +58,8 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { uploadMultipleImages } from "@/lib/utils/upload-image"
 import {
-  filterAssistanceServicesForWorkerSetup,
   isServiceIncludedInWorkerSetupStep,
-  splitCompanionshipServices,
+  splitServicesByCategory,
 } from "@/lib/worker/worker-setup-catalog"
 import {
   buildPricingFromUnits,
@@ -355,15 +354,10 @@ export default function WorkerSetupPage() {
 
   const catalog = catalogQuery.data ?? EMPTY_SERVICE_LIST
 
-  const assistanceList = useMemo(
-    () => filterAssistanceServicesForWorkerSetup(catalog),
+  const { virtual: virtualList, physical: physicalList } = useMemo(
+    () => splitServicesByCategory(catalog),
     [catalog]
   )
-
-  const companionshipSplit = useMemo(() => {
-    const list = catalog.filter((s) => s.category === "COMPANIONSHIP")
-    return splitCompanionshipServices(list)
-  }, [catalog])
 
   // Hydrate from server data
   useEffect(() => {
@@ -1327,32 +1321,35 @@ export default function WorkerSetupPage() {
         <CardHeader className="px-4 pt-4 pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <WalletCards className="size-4 text-primary" />
-            {t("services.assistanceTitle")}
+            {t("services.virtualTitle")}
           </CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {t("services.subtitle")}
           </p>
         </CardHeader>
         <CardContent className="space-y-3 px-4 pb-4">
-          {assistanceList.map((s) => renderServiceRow(s))}
+          {virtualList.map((s) => renderServiceRow(s))}
+          {virtualList.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              {t("services.emptyVirtual")}
+            </p>
+          )}
         </CardContent>
       </Card>
 
       <Card className="overflow-hidden rounded-2xl border-border shadow-none">
         <CardHeader className="px-4 pt-4 pb-3">
           <CardTitle className="text-base">
-            {t("services.companionshipTitle")}
+            {t("services.physicalTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 px-4 pb-4">
-          {companionshipSplit.base && renderServiceRow(companionshipSplit.base)}
-          {companionshipSplit.levels.map((s) => renderServiceRow(s))}
-          {!companionshipSplit.base &&
-            companionshipSplit.levels.length === 0 && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                {t("services.emptyCompanionship")}
-              </p>
-            )}
+          {physicalList.map((s) => renderServiceRow(s))}
+          {physicalList.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              {t("services.emptyPhysical")}
+            </p>
+          )}
         </CardContent>
       </Card>
 

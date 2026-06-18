@@ -17,7 +17,7 @@ type ServicesHeaderState = {
 }
 
 export const useServicesHeaderStore = create<ServicesHeaderState>()((set) => ({
-  activeTab: "ASSISTANCE",
+  activeTab: "VIRTUAL",
   selectedLocationLabel: null,
   scheduledAtLabel: null,
   switchTabCallback: null,

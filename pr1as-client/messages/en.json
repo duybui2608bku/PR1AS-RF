@@ -126,7 +126,9 @@
     "anyLocation": "Any location",
     "time": "Time",
     "assistance": "Assistance",
-    "companionship": "Companionship"
+    "companionship": "Companionship",
+    "virtual": "Virtual Assistant",
+    "physical": "On-site Assistant"
   },
   "PostCard": {
     "defaultUser": "User",
@@ -832,6 +834,10 @@
       "subtitle": "Choose the services you provide and set matching prices",
       "companionshipTitle": "Companionship",
       "emptyCompanionship": "No companionship services in the catalog.",
+      "virtualTitle": "Virtual Assistant",
+      "physicalTitle": "On-site Assistant",
+      "emptyVirtual": "No virtual assistant services in the catalog.",
+      "emptyPhysical": "No on-site assistant services in the catalog.",
       "requirement": "Select at least <strong>1 service</strong> and enter a price for at least one unit (hour / day / month) to complete your profile."
     },
     "locationPicker": {

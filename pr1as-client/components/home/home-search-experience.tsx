@@ -64,8 +64,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
 
   const CATEGORY_LABEL: Record<string, string> = React.useMemo(
     () => ({
-      COMPANIONSHIP: t("Services.companionship"),
-      ASSISTANCE: t("Services.assistance"),
+      VIRTUAL: t("Services.virtual"),
+      PHYSICAL: t("Services.physical"),
     }),
     [t],
   )
