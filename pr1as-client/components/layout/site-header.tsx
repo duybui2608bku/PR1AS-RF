@@ -5,7 +5,6 @@ import {
   CalendarCheck2,
   CalendarDays,
   Crown,
-  FileText,
   Handshake,
   Heart,
   Loader2,
@@ -67,7 +66,6 @@ type UserMenuItemDef = {
 
 const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
   { routeKey: "chat", href: "/chat", labelKey: "chat", icon: MessageCircle },
-  { routeKey: "posts", href: "/posts", labelKey: "posts", icon: FileText },
   {
     routeKey: "favorites",
     href: "/client/favorites",
@@ -391,6 +389,31 @@ export function SiteHeader() {
     }
   }
 
+  // Nav chính (Dịch vụ / Bài viết) — luôn hiển thị, không phụ thuộc trạng thái
+  // đăng nhập, và giữ nguyên vị trí cạnh logo ở mọi layout header.
+  const primaryNav = (
+    <nav className="hidden items-center gap-1 md:flex">
+      {[
+        // Worker đang active: ẩn tab Dịch vụ, chỉ còn Bài viết.
+        ...(isWorkerActive ? [] : [{ href: "/services", label: t("services") }]),
+        { href: "/posts", label: t("posts") },
+      ].map((tab) => (
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm transition-colors",
+            pathname === tab.href
+              ? "bg-accent font-medium text-foreground"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          )}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  )
+
   const rightActions = (
     <div className="flex items-center gap-2">
       {isAuthenticated ? (
@@ -533,38 +556,31 @@ export function SiteHeader() {
           {/* Hàng 1: logo + actions. border-b full-width = đường ngăn cách hàng 1/hàng 2 */}
           <div className="border-b">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
-              <Link
-                href={homeHref}
-                className="flex shrink-0 items-center gap-2 justify-self-start font-semibold"
-              >
-                {isMounted && brandLogo ? (
-                  <Image
-                    src={brandLogo}
-                    alt={brandName}
-                    width={120}
-                    height={32}
-                    priority
-                    className="h-8 w-auto object-contain"
-                  />
-                ) : (
-                  brandName
-                )}
-              </Link>
+              <div className="flex items-center gap-6 justify-self-start">
+                <Link
+                  href={homeHref}
+                  className="flex shrink-0 items-center gap-2 font-semibold"
+                >
+                  {isMounted && brandLogo ? (
+                    <Image
+                      src={brandLogo}
+                      alt={brandName}
+                      width={120}
+                      height={32}
+                      priority
+                      className="h-8 w-auto object-contain"
+                    />
+                  ) : (
+                    brandName
+                  )}
+                </Link>
+                {primaryNav}
+              </div>
 
               {/* Center placeholder (desktop) — tab nav & pill đã chuyển xuống hàng dưới */}
               <div className="hidden md:block" />
 
               <div className="flex items-center justify-end gap-1">
-                {!isAuthenticated && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="hidden md:inline-flex"
-                  >
-                    <Link href="/posts">{t("posts")}</Link>
-                  </Button>
-                )}
                 {rightActions}
               </div>
             </div>
@@ -682,27 +698,7 @@ export function SiteHeader() {
                 brandName
               )}
             </Link>
-            {!isAuthenticated && (
-              <nav className="hidden items-center gap-1 md:flex">
-                {[
-                  { href: "/services", label: t("services") },
-                  { href: "/posts", label: t("posts") },
-                ].map((tab) => (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    className={cn(
-                      "rounded-md px-3 py-1.5 text-sm transition-colors",
-                      pathname === tab.href
-                        ? "bg-accent font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                    )}
-                  >
-                    {tab.label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            {primaryNav}
           </div>
           {rightActions}
         </div>

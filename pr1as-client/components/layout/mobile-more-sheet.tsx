@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  Bell,
   CalendarCheck2,
   CalendarDays,
   Crown,
@@ -23,7 +22,6 @@ import {
   BottomSheetContent,
 } from "@/components/ui/bottom-sheet"
 import { useLogout } from "@/lib/hooks/use-auth"
-import { useUnreadNotificationCount } from "@/lib/hooks/use-notifications"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -44,8 +42,6 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const tCommon = useTranslations("Common")
   const user = useAuthStore((s) => s.user)
   const logoutMutation = useLogout()
-  const { data: unreadData } = useUnreadNotificationCount()
-  const unreadCount = unreadData?.unread_count ?? 0
 
   const lastActiveRole = user?.last_active_role
   const fallbackRole =
@@ -75,7 +71,6 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
 
   const menuItems = [
     { href: profileHref, label: t("profile"), icon: User },
-    { href: "/notifications", label: t("notifications"), icon: Bell, badge: unreadCount },
     ...(activeRole === "client"
       ? [{ href: "/client/favorites", label: t("favorites"), icon: Heart }]
       : []),

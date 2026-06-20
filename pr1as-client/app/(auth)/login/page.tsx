@@ -19,7 +19,7 @@ import {
 import { GoogleLogin } from "@react-oauth/google"
 import { isEmailNotVerifiedError } from "@/lib/auth/auth-error.utils"
 import { normalizeEmail } from "@/lib/auth/auth-input.utils"
-import { getActiveRole, isWorkerRoleActive } from "@/lib/auth/roles"
+import { getActiveRole } from "@/lib/auth/roles"
 import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
@@ -47,7 +47,6 @@ export default function LoginPage() {
 
   const isSessionActive = isAuthenticated
   const authenticatedUser = meQuery.data?.data?.user ?? user
-  const isWorker = authenticatedUser && isWorkerRoleActive(authenticatedUser)
   const activeRole = getActiveRole(authenticatedUser)
   const isAdminActive = activeRole === "admin"
   const fromPath = searchParams.get("from")
@@ -55,8 +54,8 @@ export default function LoginPage() {
     fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
   const allowedSafeFrom =
     safeFrom?.startsWith("/dashboard") && !isAdminActive ? null : safeFrom
-  const defaultRedirectTarget = isWorker ? "/posts" : "/"
-  const safeRedirectTarget = isWorker && allowedSafeFrom === "/" ? null : allowedSafeFrom
+  const defaultRedirectTarget = "/about"
+  const safeRedirectTarget = allowedSafeFrom === "/" ? null : allowedSafeFrom
   const redirectTarget =
     authenticatedUser && isAdminActive
       ? (safeRedirectTarget ?? "/dashboard")
