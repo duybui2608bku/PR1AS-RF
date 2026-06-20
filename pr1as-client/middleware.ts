@@ -146,15 +146,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (pathname === "/" && isTokenValid && activeRole === "worker") {
+  // Worker/client (và khách) đều landing mặc định ở /about — rơi xuống
+  // app/page.tsx để redirect sang /about. Chỉ admin có nhánh riêng ở trên.
+
+  // Worker không được vào trang Dịch vụ — kể cả gõ thẳng URL. Đẩy về /posts.
+  if (
+    isTokenValid &&
+    activeRole === "worker" &&
+    (pathname === "/services" || pathname.startsWith("/services/"))
+  ) {
     const url = req.nextUrl.clone()
     url.pathname = "/posts"
-    return NextResponse.redirect(url)
-  }
-
-  if (pathname === "/" && isTokenValid && activeRole === "client") {
-    const url = req.nextUrl.clone()
-    url.pathname = "/services"
+    url.search = ""
     return NextResponse.redirect(url)
   }
 
@@ -184,12 +187,7 @@ export async function middleware(req: NextRequest) {
 
     url.search = ""
     url.pathname =
-      allowedFrom ??
-      (activeRole === "admin"
-        ? "/dashboard"
-        : activeRole === "worker"
-          ? "/posts"
-          : "/")
+      allowedFrom ?? (activeRole === "admin" ? "/dashboard" : "/about")
     return NextResponse.redirect(url)
   }
 

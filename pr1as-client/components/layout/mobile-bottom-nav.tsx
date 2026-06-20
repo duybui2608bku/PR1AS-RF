@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarCheck2, FileText, Home, LogIn, MessageCircle, User } from "lucide-react"
+import { CalendarCheck2, FileText, Handshake, LogIn, MessageCircle, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -73,12 +73,12 @@ export function MobileBottomNav() {
   if (!isAuthenticated) {
     const guestTabs = isSessionLoaded
       ? [
-          { href: "/", label: t("home"), icon: Home, isActive: pathname === "/" },
+          { href: "/services", label: t("services"), icon: Handshake, isActive: pathname === "/services" || pathname.startsWith("/services/") },
           { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
           { href: "/login", label: t("login"), icon: LogIn, isActive: pathname === "/login" },
         ] as const
       : [
-          { href: "/", label: t("home"), icon: Home, isActive: pathname === "/" },
+          { href: "/services", label: t("services"), icon: Handshake, isActive: pathname === "/services" || pathname.startsWith("/services/") },
           { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
         ] as const
 
@@ -126,7 +126,8 @@ export function MobileBottomNav() {
 
   const isPostsActive = pathname === "/posts" || pathname.startsWith("/posts/")
   const isChatActive = pathname === chatHref || pathname.startsWith(chatHref + "/")
-  const isHomeActive = pathname === "/"
+  const isServicesActive =
+    pathname === "/services" || pathname.startsWith("/services/")
   const isBookingsActive =
     pathname === "/worker/bookings" || pathname.startsWith("/worker/bookings/")
 
@@ -162,10 +163,10 @@ export function MobileBottomNav() {
     : [
         {
           type: "link" as const,
-          href: "/",
-          label: t("home"),
-          icon: Home,
-          isActive: isHomeActive,
+          href: "/services",
+          label: t("services"),
+          icon: Handshake,
+          isActive: isServicesActive,
         },
         {
           type: "link" as const,

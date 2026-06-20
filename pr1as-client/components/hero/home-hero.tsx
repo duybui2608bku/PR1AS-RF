@@ -182,6 +182,11 @@ export function HomeHero({
     <>
       <div className="sm:hidden container mx-auto px-4 py-4">
         <div className="space-y-5">
+          <ServiceTabs
+            activeTab={activeTab}
+            onSwitchTab={onSwitchTab}
+            className="justify-center"
+          />
           <MobileSearch
             services={tabServices}
             isLoading={isLoading}
@@ -192,11 +197,6 @@ export function HomeHero({
             scheduledAt={scheduledAt}
             onScheduledAtChange={onScheduledAtChange}
             onSearchSubmit={onSearchSubmit}
-          />
-          <ServiceTabs
-            activeTab={activeTab}
-            onSwitchTab={onSwitchTab}
-            className="justify-center"
           />
         </div>
       </div>

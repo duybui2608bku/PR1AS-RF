@@ -5,7 +5,6 @@ import {
   CalendarCheck2,
   CalendarDays,
   Crown,
-  FileText,
   Handshake,
   Heart,
   Loader2,
@@ -67,7 +66,6 @@ type UserMenuItemDef = {
 
 const USER_MENU_ITEM_DEFS: readonly UserMenuItemDef[] = [
   { routeKey: "chat", href: "/chat", labelKey: "chat", icon: MessageCircle },
-  { routeKey: "posts", href: "/posts", labelKey: "posts", icon: FileText },
   {
     routeKey: "favorites",
     href: "/client/favorites",
@@ -197,8 +195,6 @@ export function SiteHeader() {
     setHeaderExpanded,
     setFilterSlotEl,
   } = useServicesHeaderStore()
-  const showTabNav = isServicesPage && isHeaderExpanded
-  const showCompactPill = isServicesPage && !isHeaderExpanded
 
   const HEADER_SERVICE_TABS: {
     value: ServiceTab
@@ -393,6 +389,31 @@ export function SiteHeader() {
     }
   }
 
+  // Nav chính (Dịch vụ / Bài viết) — luôn hiển thị, không phụ thuộc trạng thái
+  // đăng nhập, và giữ nguyên vị trí cạnh logo ở mọi layout header.
+  const primaryNav = (
+    <nav className="hidden items-center gap-1 md:flex">
+      {[
+        // Worker đang active: ẩn tab Dịch vụ, chỉ còn Bài viết.
+        ...(isWorkerActive ? [] : [{ href: "/services", label: t("services") }]),
+        { href: "/posts", label: t("posts") },
+      ].map((tab) => (
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={cn(
+            "rounded-md px-3 py-1.5 text-sm transition-colors",
+            pathname === tab.href
+              ? "bg-accent font-medium text-foreground"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          )}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  )
+
   const rightActions = (
     <div className="flex items-center gap-2">
       {isAuthenticated ? (
@@ -526,130 +547,50 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b bg-background/80 pt-safe px-safe backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
+        "sticky top-0 z-40 w-full bg-background/80 pt-safe px-safe backdrop-blur transition-transform duration-300 will-change-transform supports-[backdrop-filter]:bg-background/60",
         hidden && "max-md:-translate-y-full"
       )}
     >
       {isServicesPage ? (
         <div ref={servicesHeaderRef}>
-          <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
-            <Link
-              href={homeHref}
-              className="flex shrink-0 items-center gap-2 justify-self-start font-semibold"
-            >
-              {isMounted && brandLogo ? (
-                <Image
-                  src={brandLogo}
-                  alt={brandName}
-                  width={120}
-                  height={32}
-                  priority
-                  className="h-8 w-auto object-contain"
-                />
-              ) : (
-                brandName
-              )}
-            </Link>
-
-            {/* Center */}
-            <div className="hidden items-center justify-center md:flex">
-              {/* Grid stack: tab nav + compact pill overlap in same cell, no absolute toggling */}
-              <div className="grid place-items-center">
-                {/* Tab navigation */}
-                <div
-                  style={{ gridArea: "1/1" }}
-                  className={cn(
-                    "flex items-center gap-14 transition-[opacity,transform] duration-300",
-                    showTabNav
-                      ? "pointer-events-auto translate-y-0 opacity-100"
-                      : "pointer-events-none -translate-y-1 opacity-0"
-                  )}
+          {/* Hàng 1: logo + actions. border-b full-width = đường ngăn cách hàng 1/hàng 2 */}
+          <div className="border-b">
+            <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
+              <div className="flex items-center gap-6 justify-self-start">
+                <Link
+                  href={homeHref}
+                  className="flex shrink-0 items-center gap-2 font-semibold"
                 >
-                  {HEADER_SERVICE_TABS.map((tab, i) => {
-                    const isActive = activeTab === tab.value
-                    return (
-                      <button
-                        key={tab.value}
-                        type="button"
-                        onClick={() => {
-                          triggerTabPop(i)
-                          switchTabCallback?.(tab.value)
-                        }}
-                        aria-pressed={isActive}
-                        className={cn(
-                          "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
-                          isActive
-                            ? "border-foreground text-foreground"
-                            : "border-transparent text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        <span
-                          ref={(el) => {
-                            tabWrapRefs.current[i] = el
-                          }}
-                          className="tab-icon-wrap"
-                        >
-                          <tab.icon
-                            aria-hidden="true"
-                            className="tab-icon-img size-6 select-none"
-                          />
-                        </span>
-                        <span>{tab.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Compact pill */}
-                <button
-                  type="button"
-                  onClick={expandHeader}
-                  style={{ gridArea: "1/1" }}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 shadow-sm",
-                    "text-sm transition-[opacity,transform] duration-300",
-                    showCompactPill
-                      ? "pointer-events-auto scale-100 opacity-100"
-                      : "pointer-events-none scale-95 opacity-0"
+                  {isMounted && brandLogo ? (
+                    <Image
+                      src={brandLogo}
+                      alt={brandName}
+                      width={120}
+                      height={32}
+                      priority
+                      className="h-8 w-auto object-contain"
+                    />
+                  ) : (
+                    brandName
                   )}
-                >
-                  <span className="font-medium text-foreground">
-                    {selectedLocationLabel ?? tServices("anyLocation")}
-                  </span>
-                  <span className="h-4 w-px shrink-0 bg-border" />
-                  <span className="text-muted-foreground">
-                    {scheduledAtLabel ?? tServices("time")}
-                  </span>
-                  <span className="h-4 w-px shrink-0 bg-border" />
-                  <span className="text-muted-foreground">
-                    {activeTab === "PHYSICAL"
-                      ? tServices("physical")
-                      : tServices("virtual")}
-                  </span>
-                  <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Search className="size-3.5" />
-                  </div>
-                </button>
+                </Link>
+                {primaryNav}
+              </div>
+
+              {/* Center placeholder (desktop) — tab nav & pill đã chuyển xuống hàng dưới */}
+              <div className="hidden md:block" />
+
+              <div className="flex items-center justify-end gap-1">
+                {rightActions}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-1">
-              {!isAuthenticated && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="hidden md:inline-flex"
-                >
-                  <Link href="/posts">{t("posts")}</Link>
-                </Button>
-              )}
-              {rightActions}
-            </div>
           </div>
+
+          {/* Hàng 2 — expanded: tab nav + thanh search; collapse lại khi cuộn */}
           <div
             className="hidden overflow-hidden md:block"
             style={{
-              maxHeight: isHeaderExpanded ? "96px" : "0px",
+              maxHeight: isHeaderExpanded ? "160px" : "0px",
               opacity: isHeaderExpanded ? 1 : 0,
               transform: isHeaderExpanded ? "scaleY(1)" : "scaleY(0.75)",
               transformOrigin: "top center",
@@ -658,11 +599,87 @@ export function SiteHeader() {
               pointerEvents: isHeaderExpanded ? "auto" : "none",
             }}
           >
+            {/* Tab navigation */}
+            <div className="flex items-center justify-center gap-14 pt-2">
+              {HEADER_SERVICE_TABS.map((tab, i) => {
+                const isActive = activeTab === tab.value
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => {
+                      triggerTabPop(i)
+                      switchTabCallback?.(tab.value)
+                    }}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "group flex flex-row items-center gap-2 border-b-2 pt-1 pb-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "border-foreground text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <span
+                      ref={(el) => {
+                        tabWrapRefs.current[i] = el
+                      }}
+                      className="tab-icon-wrap"
+                    >
+                      <tab.icon
+                        aria-hidden="true"
+                        className="tab-icon-img size-6 select-none"
+                      />
+                    </span>
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {/* Thanh search (portal slot) */}
             <div ref={filterSlotRef} />
+          </div>
+
+          {/* Hàng 2 — collapsed: viên pill nổi tự do (Dynamic Island) */}
+          <div
+            className="hidden overflow-hidden md:block"
+            style={{
+              maxHeight: isHeaderExpanded ? "0px" : "72px",
+              opacity: isHeaderExpanded ? 0 : 1,
+              transform: isHeaderExpanded ? "scaleY(0.75)" : "scaleY(1)",
+              transformOrigin: "top center",
+              transition:
+                "max-height 0.4s ease-in-out, opacity 0.35s ease-in-out, transform 0.4s ease-in-out",
+              pointerEvents: isHeaderExpanded ? "none" : "auto",
+            }}
+          >
+            <div className="flex justify-center py-2.5">
+              <button
+                type="button"
+                onClick={expandHeader}
+                className="flex items-center gap-2.5 rounded-full border border-border bg-background/95 px-4 py-2 text-sm shadow-lg transition-shadow hover:shadow-md"
+              >
+                <span className="font-medium text-foreground">
+                  {selectedLocationLabel ?? tServices("anyLocation")}
+                </span>
+                <span className="h-4 w-px shrink-0 bg-border" />
+                <span className="text-muted-foreground">
+                  {scheduledAtLabel ?? tServices("time")}
+                </span>
+                <span className="h-4 w-px shrink-0 bg-border" />
+                <span className="text-muted-foreground">
+                  {activeTab === "PHYSICAL"
+                    ? tServices("physical")
+                    : tServices("virtual")}
+                </span>
+                <div className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Search className="size-3.5" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="container mx-auto flex h-14 items-center justify-between px-4">
+        <div className="container mx-auto flex h-14 items-center justify-between border-b px-4">
           <div className="flex items-center gap-6">
             <Link
               href={homeHref}
@@ -681,27 +698,7 @@ export function SiteHeader() {
                 brandName
               )}
             </Link>
-            {!isAuthenticated && (
-              <nav className="hidden items-center gap-1 md:flex">
-                {[
-                  { href: "/services", label: t("services") },
-                  { href: "/posts", label: t("posts") },
-                ].map((tab) => (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    className={cn(
-                      "rounded-md px-3 py-1.5 text-sm transition-colors",
-                      pathname === tab.href
-                        ? "bg-accent font-medium text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                    )}
-                  >
-                    {tab.label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            {primaryNav}
           </div>
           {rightActions}
         </div>
