@@ -55,7 +55,8 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "cookies": "Cookie Policy",
-    "bookingProcess": "How Booking Works"
+    "bookingProcess": "How Booking Works",
+    "legalResponsibility": "Legal Responsibility"
   },
   "Auth": {
     "loginTitle": "Welcome back",
@@ -459,7 +460,9 @@
     "cookiesLabel": "Cookie Policy",
     "cookiesDesc": "How we use cookies on the platform.",
     "aboutLabel": "About PR1AS",
-    "aboutDesc": "What we do and why people choose us."
+    "aboutDesc": "What we do and why people choose us.",
+    "legalRespLabel": "Legal Responsibility",
+    "legalRespDesc": "Responsible legal entity and legal compliance"
   },
   "Favorites": {
     "title": "Favorite workers",
@@ -1114,7 +1117,9 @@
     "workerScheduleTitle": "Work schedule",
     "workerBookingsTitle": "Worker bookings",
     "aboutTitle": "About PR1AS — Trusted booking for workers & freelancers",
-    "aboutDescription": "Learn what PR1AS is, why thousands choose us, and the features that make booking trusted service providers simple, safe and transparent."
+    "aboutDescription": "Learn what PR1AS is, why thousands choose us, and the features that make booking trusted service providers simple, safe and transparent.",
+    "legalResponsibilityTitle": "Legal Responsibility",
+    "legalResponsibilityDescription": "PR1AS accountability principles and legal-compliance status, including the responsible legal entity and the Ministry of Industry and Trade dossier."
   },
   "Home": {
     "heroLocationLabel": "Location",
@@ -1866,5 +1871,31 @@
       "primary": "Explore now",
       "secondary": "View pricing"
     }
+  },
+  "LegalResponsibility": {
+    "title": "Legal Responsibility",
+    "intro": "To protect users' interests and ensure transparency, we publicly disclose our accountability principles and the application's legal-compliance status.",
+    "principlesTitle": "Accountability principles",
+    "principles": [
+      "Legally there must be a legal entity (a directly responsible party) that directly manages, operates and exploits the application.",
+      "There is no disclaimer of responsibility when a civil transaction arises — the application and its owning company or the directly responsible person must explain and prove non-involvement in any violation through documents or concrete evidence."
+    ],
+    "dossierTitle": "Documents submitted to the Ministry of Industry and Trade",
+    "dossier": [
+      "Application for registration of an e-commerce service-providing application.",
+      "A certified copy of the business registration certificate, investment certificate or investment license (for traders).",
+      "Scheme for providing the e-commerce service.",
+      "Operating regulations for the e-commerce service-providing application.",
+      "A sample service contract or cooperation agreement between the enterprise and the traders, organizations or individuals participating in trading, auctions or promotions on that application.",
+      "General transaction conditions applicable to the trading, auction or promotion of goods and services on the application (if any).",
+      "A power of attorney for the person submitting the dossier and receiving the result, if that person is not the legal representative of the enterprise."
+    ]
+  },
+  "LegalResponsibilityModal": {
+    "title": "Legal responsibility & transparency",
+    "description": "The application has a legal entity / directly responsible party that manages and operates it. There is no disclaimer of liability for civil transactions — the operator must explain and prove its position with documents and concrete evidence.",
+    "viewFull": "View details",
+    "dismiss6h": "Hide for 6 hours",
+    "acknowledge": "Got it"
   }
 }

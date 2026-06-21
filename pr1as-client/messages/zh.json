@@ -55,7 +55,8 @@
     "privacy": "隐私政策",
     "terms": "服务条款",
     "cookies": "Cookie 政策",
-    "bookingProcess": "预约流程"
+    "bookingProcess": "预约流程",
+    "legalResponsibility": "法律责任"
   },
   "Auth": {
     "loginTitle": "欢迎回来",
@@ -459,7 +460,9 @@
     "cookiesLabel": "Cookie 政策",
     "cookiesDesc": "我们如何在平台上使用 Cookie。",
     "aboutLabel": "关于 PR1AS",
-    "aboutDesc": "我们做什么，以及人们为何选择我们。"
+    "aboutDesc": "我们做什么，以及人们为何选择我们。",
+    "legalRespLabel": "法律责任",
+    "legalRespDesc": "负责法人及法律合规"
   },
   "Favorites": {
     "title": "收藏的服务者",
@@ -1114,7 +1117,9 @@
     "workerScheduleTitle": "工作排班",
     "workerBookingsTitle": "工作者预约",
     "aboutTitle": "关于 PR1AS — 值得信赖的工作者与自由职业者预约平台",
-    "aboutDescription": "了解 PR1AS 是什么、为何成千上万的人选择我们，以及让预约可信赖服务变得简单、安全、透明的功能。"
+    "aboutDescription": "了解 PR1AS 是什么、为何成千上万的人选择我们，以及让预约可信赖服务变得简单、安全、透明的功能。",
+    "legalResponsibilityTitle": "法律责任",
+    "legalResponsibilityDescription": "PR1AS 的责任原则与法律合规状况，包括负责法人及提交工贸部的备案文件。"
   },
   "Home": {
     "heroLocationLabel": "地点",
@@ -1876,5 +1881,31 @@
       "primary": "立即探索",
       "secondary": "查看价格"
     }
+  },
+  "LegalResponsibility": {
+    "title": "法律责任",
+    "intro": "为保护用户权益并确保透明度，我们公开本应用的责任原则及法律合规状况。",
+    "principlesTitle": "责任原则",
+    "principles": [
+      "法律上必须有法人（直接负责方），即直接管理、运营和开发该应用的单位。",
+      "发生民事交易时不存在免除责任的情形——应用及其主管公司或直接负责人必须以书面或具体证据说明并证明与任何违规行为无关。"
+    ],
+    "dossierTitle": "提交工贸部的文件",
+    "dossier": [
+      "电子商务服务提供应用注册申请书。",
+      "经认证的营业登记证、投资证书或投资许可证副本（针对商户）。",
+      "电子商务服务提供方案。",
+      "电子商务服务提供应用的运营管理规章。",
+      "企业与参与在该应用上买卖、举办拍卖或促销的商户、组织、个人之间的服务合同或合作协议样本。",
+      "适用于在应用上买卖、举办拍卖或促销商品、服务的通用交易条件（如有）。",
+      "若提交并领取结果的人员并非企业的法定代表人，则需提供授权书。"
+    ]
+  },
+  "LegalResponsibilityModal": {
+    "title": "法律责任与透明度",
+    "description": "本应用设有直接负责管理与运营的法人/负责人。发生民事交易时不免除责任——运营方须以书面及具体证据进行说明和证明。",
+    "viewFull": "查看详情",
+    "dismiss6h": "隐藏 6 小时",
+    "acknowledge": "我知道了"
   }
 }

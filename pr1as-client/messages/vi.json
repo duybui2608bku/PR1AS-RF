@@ -55,7 +55,8 @@
     "privacy": "Chính sách bảo mật",
     "terms": "Điều khoản sử dụng",
     "cookies": "Chính sách Cookie",
-    "bookingProcess": "Cách đặt lịch"
+    "bookingProcess": "Cách đặt lịch",
+    "legalResponsibility": "Trách nhiệm pháp lý"
   },
   "Auth": {
     "loginTitle": "Chào mừng trở lại",
@@ -459,7 +460,9 @@
     "cookiesLabel": "Chính sách Cookie",
     "cookiesDesc": "Cách chúng tôi sử dụng cookie trên nền tảng.",
     "aboutLabel": "Giới thiệu PR1AS",
-    "aboutDesc": "Chúng tôi làm gì và vì sao bạn nên chọn PR1AS."
+    "aboutDesc": "Chúng tôi làm gì và vì sao bạn nên chọn PR1AS.",
+    "legalRespLabel": "Trách nhiệm pháp lý",
+    "legalRespDesc": "Pháp nhân chịu trách nhiệm và tuân thủ pháp lý"
   },
   "Favorites": {
     "title": "Worker yêu thích",
@@ -1114,7 +1117,9 @@
     "workerScheduleTitle": "Lịch làm việc",
     "workerBookingsTitle": "Booking worker",
     "aboutTitle": "Giới thiệu PR1AS — Đặt lịch tin cậy cho worker & freelancer",
-    "aboutDescription": "Tìm hiểu PR1AS là gì, vì sao hàng nghìn người chọn chúng tôi, và những tính năng giúp việc đặt dịch vụ trở nên đơn giản, an toàn và minh bạch."
+    "aboutDescription": "Tìm hiểu PR1AS là gì, vì sao hàng nghìn người chọn chúng tôi, và những tính năng giúp việc đặt dịch vụ trở nên đơn giản, an toàn và minh bạch.",
+    "legalResponsibilityTitle": "Trách nhiệm pháp lý",
+    "legalResponsibilityDescription": "Nguyên tắc trách nhiệm và tình trạng tuân thủ pháp lý của PR1AS, gồm pháp nhân chịu trách nhiệm và hồ sơ nộp Bộ Công Thương."
   },
   "Home": {
     "heroLocationLabel": "Địa điểm",
@@ -1876,5 +1881,31 @@
       "primary": "Khám phá ngay",
       "secondary": "Xem bảng giá"
     }
+  },
+  "LegalResponsibility": {
+    "title": "Trách nhiệm pháp lý",
+    "intro": "Để bảo vệ quyền lợi của người dùng và bảo đảm tính minh bạch, chúng tôi công khai nguyên tắc trách nhiệm và tình trạng tuân thủ pháp lý của ứng dụng.",
+    "principlesTitle": "Nguyên tắc trách nhiệm",
+    "principles": [
+      "Về pháp lý phải có pháp nhân (người chịu trách nhiệm trực tiếp), là đơn vị trực tiếp quản lý, vận hành và khai thác ứng dụng.",
+      "Không có việc miễn trừ trách nhiệm khi có phát sinh giao dịch dân sự — ứng dụng và công ty chủ quản hoặc người chịu trách nhiệm trực tiếp phải giải trình và chứng minh không liên quan đến hoạt động vi phạm bằng văn bản hoặc bằng chứng cụ thể."
+    ],
+    "dossierTitle": "Thành phần hồ sơ nộp Bộ Công Thương",
+    "dossier": [
+      "Đơn đăng ký ứng dụng cung cấp dịch vụ thương mại điện tử.",
+      "Bản sao được chứng thực Giấy chứng nhận đăng ký kinh doanh, giấy chứng nhận đầu tư hoặc giấy phép đầu tư (đối với thương nhân).",
+      "Đề án cung cấp dịch vụ thương mại điện tử.",
+      "Quy chế quản lý hoạt động của ứng dụng cung cấp dịch vụ thương mại điện tử.",
+      "Mẫu hợp đồng dịch vụ hoặc thỏa thuận hợp tác giữa doanh nghiệp với thương nhân, tổ chức, cá nhân tham gia mua bán hoặc tổ chức đấu giá, khuyến mại trên ứng dụng đó.",
+      "Các điều kiện giao dịch chung áp dụng cho hoạt động mua bán hoặc tổ chức đấu giá, khuyến mại hàng hóa, dịch vụ trên ứng dụng (nếu có).",
+      "Văn bản ủy quyền cho người đi nộp hồ sơ và nhận kết quả nếu không phải là đại diện theo pháp luật của doanh nghiệp."
+    ]
+  },
+  "LegalResponsibilityModal": {
+    "title": "Trách nhiệm pháp lý & minh bạch",
+    "description": "Ứng dụng có pháp nhân/người chịu trách nhiệm trực tiếp quản lý, vận hành. Không miễn trừ trách nhiệm khi phát sinh giao dịch dân sự — đơn vị chủ quản phải giải trình và chứng minh bằng văn bản, bằng chứng cụ thể.",
+    "viewFull": "Xem chi tiết",
+    "dismiss6h": "Ẩn trong 6 giờ",
+    "acknowledge": "Đã hiểu"
   }
 }

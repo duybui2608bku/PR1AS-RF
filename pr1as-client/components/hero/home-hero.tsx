@@ -415,7 +415,12 @@ function ServicePickerField({
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={8} className="w-64 p-2">
+      <PopoverContent
+        align="start"
+        sideOffset={8}
+        collisionPadding={16}
+        className="flex max-h-[var(--radix-popover-content-available-height)] w-64 flex-col overflow-y-auto p-2"
+      >
         {isLoading ? (
           <div className="flex flex-col gap-1">
             {Array.from({ length: 6 }).map((_, i) => (
