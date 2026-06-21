@@ -24,6 +24,7 @@ import {
   Lock,
   Mail,
   MessageSquarePlus,
+  Scale,
   Send,
   ShieldCheck,
   Star,
@@ -213,6 +214,12 @@ const infoLinks: Array<{
     labelKey: "termsLabel",
     descriptionKey: "termsDesc",
     icon: FileText,
+  },
+  {
+    href: "/legal-responsibility",
+    labelKey: "legalRespLabel",
+    descriptionKey: "legalRespDesc",
+    icon: Scale,
   },
   {
     href: "/cookies",

@@ -39,6 +39,11 @@ export const footerNav: { title: string; key: string; items: NavItem[] }[] = [
       { title: "Chính sách bảo mật", href: "/privacy", key: "privacy" },
       { title: "Điều khoản sử dụng", href: "/terms", key: "terms" },
       { title: "Chính sách Cookie", href: "/cookies", key: "cookies" },
+      {
+        title: "Trách nhiệm pháp lý",
+        href: "/legal-responsibility",
+        key: "legalResponsibility",
+      },
     ],
   },
 ]

@@ -51,6 +51,7 @@ export type AuthUser = {
   avatar?: string | null
   verify_email?: boolean
   created_by_admin?: boolean
+  created_at?: string
   meta_data?: {
     pricing_plan_code?: string | null
     pricing_started_at?: string | null
