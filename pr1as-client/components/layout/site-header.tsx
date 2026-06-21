@@ -392,25 +392,29 @@ export function SiteHeader() {
   // Nav chính (Dịch vụ / Bài viết) — luôn hiển thị, không phụ thuộc trạng thái
   // đăng nhập, và giữ nguyên vị trí cạnh logo ở mọi layout header.
   const primaryNav = (
-    <nav className="hidden items-center gap-1 md:flex">
+    <nav className="hidden items-center rounded-full border border-border bg-muted/40 p-1 md:flex">
       {[
         // Worker đang active: ẩn tab Dịch vụ, chỉ còn Bài viết.
         ...(isWorkerActive ? [] : [{ href: "/services", label: t("services") }]),
         { href: "/posts", label: t("posts") },
-      ].map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm transition-colors",
-            pathname === tab.href
-              ? "bg-accent font-medium text-foreground"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+      ].map((tab) => {
+        const isActive = pathname === tab.href
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              isActive
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+          </Link>
+        )
+      })}
     </nav>
   )
 
