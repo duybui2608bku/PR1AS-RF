@@ -349,9 +349,15 @@ Pricing package fields include:
 
 Current state:
 
-- Pricing purchase can award boost points:
-  - Gold purchase uses `gold_package_points`.
-  - Diamond purchase uses `diamond_package_points`.
+- Pricing purchase awards boost points in `PricingService.upgrade` based on the
+  plan's boost allowance, valued at the featured-boost cost:
+  - `allowance = boost_profile_monthly_limit × featured_boost_cost × duration_months`
+    (allowance is `0` when `boost_profile_enabled` is false or the limit is null).
+  - Plus a flat bonus from `gold_package_points` (Gold) or
+    `diamond_package_points` (Diamond).
+  - Total `delta = allowance + flatBonus`; awarded only when `> 0`, with reason
+    `gold_package`/`diamond_package`. Runs outside the payment transaction so a
+    point-award failure never rolls back the purchase.
 - Backend boost activation does not currently enforce
   `boost_profile_enabled` or `boost_profile_monthly_limit`.
 - Public/admin pricing UI displays those fields as package capabilities.

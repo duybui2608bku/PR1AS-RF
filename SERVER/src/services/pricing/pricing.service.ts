@@ -395,19 +395,34 @@ class PricingService {
       await session.endSession();
     }
 
-    // Award bonus points for Gold/Diamond subscription (outside the atomic
-    // transaction — a point award failure must never roll back the payment)
+    // Award boost points for the purchased plan (outside the atomic
+    // transaction — a point award failure must never roll back the payment).
+    // The plan grants `boost_profile_monthly_limit` boosts per month; each boost
+    // is worth `featured_boost_cost` points, scaled by the number of months
+    // purchased so the user gets exactly enough points to use their allowance.
+    // The legacy flat gold/diamond_package_points config is kept as a bonus on
+    // top of the computed allowance.
     try {
       const config = await boostConfigRepository.get();
-      const pointReason =
-        payload.target_plan_code === PricingPlanCode.GOLD
-          ? PointReason.GOLD_PACKAGE
-          : PointReason.DIAMOND_PACKAGE;
-      const delta =
-        payload.target_plan_code === PricingPlanCode.GOLD
-          ? config.gold_package_points
-          : config.diamond_package_points;
+      const monthlyBoostLimit =
+        targetPackage.features.boost_profile_enabled &&
+        targetPackage.features.boost_profile_monthly_limit
+          ? targetPackage.features.boost_profile_monthly_limit
+          : 0;
+      const allowancePoints =
+        monthlyBoostLimit * config.featured_boost_cost * payload.duration_months;
+      const flatBonus =
+        payload.target_plan_code === PricingPlanCode.DIAMOND
+          ? config.diamond_package_points
+          : payload.target_plan_code === PricingPlanCode.GOLD
+            ? config.gold_package_points
+            : 0;
+      const delta = allowancePoints + flatBonus;
       if (delta > 0) {
+        const pointReason =
+          payload.target_plan_code === PricingPlanCode.DIAMOND
+            ? PointReason.DIAMOND_PACKAGE
+            : PointReason.GOLD_PACKAGE;
         await pointService.award(userId, delta, pointReason);
       }
     } catch (pointErr) {

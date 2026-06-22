@@ -1,8 +1,5 @@
 import { ServiceCategory } from "../types/service/service.type";
 
-// Source of truth for the v2 service catalog (Trợ lý ảo / Trợ lý thực tế).
-// Each non-empty (category × service) cell becomes one Service document whose
-// `code` is `<CATEGORY>_<SLUG>`. Descriptions differ per category.
 
 export interface LocalizedCopy {
   en: string;
@@ -14,7 +11,6 @@ interface CatalogEntry {
   slug: string;
   icon: string;
   name: LocalizedCopy;
-  // Per-category description. Omit a category if the service is not offered there.
   virtual?: LocalizedCopy;
   physical?: LocalizedCopy;
 }
@@ -192,7 +188,6 @@ const buildSeed = (
   description: { ...copy, ko: null },
 });
 
-// Flattened list of every Service document the catalog should contain.
 export const SERVICE_CATALOG_V2: ServiceSeed[] = CATALOG.flatMap((entry) => {
   const seeds: ServiceSeed[] = [];
   if (entry.virtual) {
@@ -204,8 +199,7 @@ export const SERVICE_CATALOG_V2: ServiceSeed[] = CATALOG.flatMap((entry) => {
   return seeds;
 });
 
-// Old (v1) service code → new (v2) service code. Used to remap existing
-// worker_service and booking records so references survive the migration.
+
 export const OLD_TO_NEW_SERVICE_CODE: Record<string, string> = {
   VIRTUAL_ASSISTANT: "VIRTUAL_OFFICE_BASIC",
   DIRECT_SUPPORT: "PHYSICAL_OFFICE_BASIC",
