@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { ChevronDown, Coins } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useCurrency } from "@/lib/hooks/use-currency"
+import { usePrefSwitch } from "@/lib/hooks/use-pref-switch"
 import { CURRENCY_META, SUPPORTED_CURRENCIES } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 
@@ -19,12 +20,13 @@ import { cn } from "@/lib/utils"
  * the picker inside the avatar overlay instead).
  */
 export function CurrencySwitcher() {
-  const { currency, setCurrency } = useCurrency()
+  const { currency, changeCurrency } = usePrefSwitch()
+  const tCurrency = useTranslations("Currency")
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={CURRENCY_META[currency].label}>
+        <Button variant="ghost" size="icon" aria-label={tCurrency(currency)}>
           <Coins className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -32,11 +34,11 @@ export function CurrencySwitcher() {
         {SUPPORTED_CURRENCIES.map((code) => (
           <DropdownMenuItem
             key={code}
-            onClick={() => setCurrency(code)}
+            onClick={() => changeCurrency(code)}
             className={code === currency ? "font-semibold bg-accent" : ""}
           >
             <span className="mr-2">{CURRENCY_META[code].flag}</span>
-            {CURRENCY_META[code].label}
+            {tCurrency(code)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -58,7 +60,8 @@ export function CurrencyOptions({
   /** Open the option list upward — use when placed near the bottom (mobile sheet). */
   dropUp?: boolean
 }) {
-  const { currency, setCurrency } = useCurrency()
+  const { currency, changeCurrency } = usePrefSwitch()
+  const tCurrency = useTranslations("Currency")
   const [open, setOpen] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const meta = CURRENCY_META[currency]
@@ -83,7 +86,7 @@ export function CurrencyOptions({
         >
           <span className="flex items-center gap-2">
             <span>{meta.flag}</span>
-            {meta.label}
+            {tCurrency(currency)}
           </span>
           <ChevronDown
             className={cn(
@@ -104,7 +107,7 @@ export function CurrencyOptions({
                 key={code}
                 type="button"
                 onClick={() => {
-                  setCurrency(code)
+                  changeCurrency(code)
                   setOpen(false)
                 }}
                 className={cn(
@@ -113,7 +116,7 @@ export function CurrencyOptions({
                 )}
               >
                 <span>{CURRENCY_META[code].flag}</span>
-                {CURRENCY_META[code].label}
+                {tCurrency(code)}
               </button>
             ))}
           </div>

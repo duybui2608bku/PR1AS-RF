@@ -1,9 +1,8 @@
 "use client"
 
 import { Check, Monitor, Moon, Sun, type LucideIcon } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { useTheme } from "next-themes"
-import { useRouter } from "next/navigation"
 import * as React from "react"
 
 import {
@@ -12,14 +11,8 @@ import {
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
 import { CURRENCY_META, SUPPORTED_CURRENCIES } from "@/lib/currency"
-import { useCurrency } from "@/lib/hooks/use-currency"
-import {
-  LOCALE_COOKIE_NAME,
-  LOCALE_LABELS,
-  LOCALE_STORAGE_KEY,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/locale"
+import { usePrefSwitch } from "@/lib/hooks/use-pref-switch"
+import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
 /**
@@ -28,27 +21,15 @@ import { cn } from "@/lib/utils"
  */
 export function PrefsPanel() {
   const t = useTranslations("Nav")
-  const currentLocale = useLocale() as SupportedLocale
+  const tCurrency = useTranslations("Currency")
   const { theme, setTheme } = useTheme()
-  const { currency, setCurrency } = useCurrency()
-  const router = useRouter()
+  const { currentLocale, currency, changeLocale, changeCurrency } = usePrefSwitch()
 
   const themeOptions: { value: string; label: string; icon: LucideIcon }[] = [
     { value: "light", label: t("themeLight"), icon: Sun },
     { value: "dark", label: t("themeDark"), icon: Moon },
     { value: "system", label: t("themeSystem"), icon: Monitor },
   ]
-
-  const handleSelectLocale = (locale: SupportedLocale) => {
-    if (locale === currentLocale) return
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-    } catch {
-      // localStorage may be unavailable (e.g. private browsing)
-    }
-    document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
-    router.refresh()
-  }
 
   return (
     <div className="space-y-5">
@@ -92,7 +73,7 @@ export function PrefsPanel() {
               <button
                 key={locale}
                 type="button"
-                onClick={() => handleSelectLocale(locale)}
+                onClick={() => changeLocale(locale)}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-accent",
                   i > 0 && "border-t border-border",
@@ -119,7 +100,7 @@ export function PrefsPanel() {
               <button
                 key={code}
                 type="button"
-                onClick={() => setCurrency(code)}
+                onClick={() => changeCurrency(code)}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-accent",
                   i > 0 && "border-t border-border",
@@ -128,7 +109,7 @@ export function PrefsPanel() {
               >
                 <span className="flex items-center gap-2">
                   <span>{CURRENCY_META[code].flag}</span>
-                  {CURRENCY_META[code].label}
+                  {tCurrency(code)}
                 </span>
                 {isActive && <Check className="size-4 shrink-0" />}
               </button>

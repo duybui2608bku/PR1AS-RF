@@ -41,7 +41,16 @@
     "language": "Ngôn ngữ",
     "themeLight": "Sáng",
     "themeDark": "Tối",
-    "themeSystem": "Hệ thống"
+    "themeSystem": "Hệ thống",
+    "switchingLanguage": "Đang đổi ngôn ngữ…",
+    "switchingCurrency": "Đang cập nhật tiền tệ…"
+  },
+  "Currency": {
+    "VND": "VND – Việt Nam",
+    "CNY": "CNY – Trung Quốc",
+    "JPY": "JPY – Nhật Bản",
+    "KRW": "KRW – Hàn Quốc",
+    "USD": "USD – Mỹ"
   },
   "Footer": {
     "copyright": "Bản quyền thuộc về chúng tôi.",

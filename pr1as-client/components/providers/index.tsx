@@ -16,6 +16,7 @@ import { LegalResponsibilityModal } from "@/components/providers/legal-responsib
 import { BrandingSync } from "@/components/providers/branding-sync"
 import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
+import { PrefLoadingOverlay } from "@/components/layout/pref-loading-overlay"
 import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { useAuthStore, useHasHydrated, type AuthUser } from "@/lib/store/auth-store"
@@ -156,6 +157,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <CurrencyHydrator />
         {/* Global mobile bottom nav — hiển thị trên mọi trang, kể cả /chat */}
         <MobileBottomNav />
+        {/* Overlay loading khi đổi ngôn ngữ / tiền tệ */}
+        <PrefLoadingOverlay />
         {/* Theo dõi mạng — mất kết nối thì chuyển sang /offline, có lại thì quay về */}
         <NetworkStatusWatcher />
         {/* Đăng ký service worker (production) để bật PWA */}

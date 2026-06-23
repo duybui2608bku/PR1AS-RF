@@ -41,7 +41,16 @@
     "language": "语言",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "themeSystem": "系统"
+    "themeSystem": "系统",
+    "switchingLanguage": "正在切换语言…",
+    "switchingCurrency": "正在更新货币…"
+  },
+  "Currency": {
+    "VND": "VND – 越南",
+    "CNY": "CNY – 中国",
+    "JPY": "JPY – 日本",
+    "KRW": "KRW – 韩国",
+    "USD": "USD – 美国"
   },
   "Footer": {
     "copyright": "版权所有。",

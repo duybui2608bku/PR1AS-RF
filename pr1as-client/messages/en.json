@@ -41,7 +41,16 @@
     "language": "Language",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "switchingLanguage": "Switching language…",
+    "switchingCurrency": "Updating currency…"
+  },
+  "Currency": {
+    "VND": "VND – Vietnam",
+    "CNY": "CNY – China",
+    "JPY": "JPY – Japan",
+    "KRW": "KRW – South Korea",
+    "USD": "USD – United States"
   },
   "Footer": {
     "copyright": "All rights reserved.",
