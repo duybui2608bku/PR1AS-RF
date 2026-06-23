@@ -17,7 +17,7 @@ import {
   Users,
   X,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
@@ -392,6 +392,7 @@ function PostMedia({ media }: { media: PostPublic["media"] }) {
 
 export function PostCard({ post }: Props) {
   const t = useTranslations("PostCard")
+  const locale = useLocale()
   const { user, isAuthenticated } = useAuthStore()
   const deleteMutation = useDeletePost()
   const lockMutation = useSetCommentsLock()
@@ -417,7 +418,7 @@ export function PostCard({ post }: Props) {
     menuOpen && isAuthenticated && !canManagePost
   )
   const hasOpenPostReport = Boolean(openPostReportQuery.data)
-  const timeAgo = formatRelativeOrDate(post.created_at)
+  const timeAgo = formatRelativeOrDate(post.created_at, locale)
   const workerHref = post.author.has_worker_profile
     ? `/worker/${post.author.id}`
     : null

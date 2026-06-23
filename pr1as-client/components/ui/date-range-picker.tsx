@@ -1,8 +1,9 @@
 "use client"
 
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { format, type Locale } from "date-fns"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
+import { useLocale } from "next-intl"
 import type { DateRange } from "react-day-picker"
 
 import { Button } from "@/components/ui/button"
@@ -28,12 +29,24 @@ type DateRangePickerProps = {
   id?: string
 }
 
-const formatDate = (d: Date) => format(d, "dd/MM/yyyy", { locale: vi })
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+  ko,
+}
+
+const PLACEHOLDERS: Record<string, string> = {
+  vi: "Chọn khoảng ngày",
+  en: "Select date range",
+  zh: "选择日期范围",
+  ko: "날짜 범위 선택",
+}
 
 export function DateRangePicker({
   value,
   onChange,
-  placeholder = "Chọn khoảng ngày",
+  placeholder,
   disabled,
   className,
   buttonClassName,
@@ -43,6 +56,11 @@ export function DateRangePicker({
   align = "start",
   id,
 }: DateRangePickerProps) {
+  const appLocale = useLocale()
+  const dateLocale = DATE_FNS_LOCALES[appLocale] ?? vi
+  const resolvedPlaceholder = placeholder ?? PLACEHOLDERS[appLocale] ?? PLACEHOLDERS.vi
+  const formatDate = (d: Date) => format(d, "dd/MM/yyyy", { locale: dateLocale })
+
   let disabledDays: CalendarProps["disabled"]
   if (fromDate && toDate) {
     disabledDays = [{ before: fromDate }, { after: toDate }]
@@ -75,7 +93,7 @@ export function DateRangePicker({
               <span className="truncate">{formatDate(value.from)}</span>
             )
           ) : (
-            <span>{placeholder}</span>
+            <span>{resolvedPlaceholder}</span>
           )}
         </Button>
       </PopoverTrigger>

@@ -86,7 +86,13 @@ export function BookingCard({
   const formatLdt = (val?: string | null) => {
     if (!val) return "-"
     return new Date(val).toLocaleString(
-      locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US",
+      locale === "vi"
+        ? "vi-VN"
+        : locale === "zh"
+          ? "zh-CN"
+          : locale === "ko"
+            ? "ko-KR"
+            : "en-US",
       {
         hour: "2-digit",
         minute: "2-digit",
@@ -102,7 +108,7 @@ export function BookingCard({
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate font-semibold leading-tight">
-            {getServiceLabel(booking)}
+            {getServiceLabel(booking, locale)}
           </div>
           <div className="text-xs uppercase text-muted-foreground">
             {booking.service_code}

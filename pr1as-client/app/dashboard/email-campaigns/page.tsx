@@ -75,6 +75,7 @@ const localeLabels: Record<EmailCampaignLocale, string> = {
   vi: "Tiếng Việt",
   en: "English",
   zh: "中文",
+  ko: "한국어",
 }
 
 /** Best string for a locale, falling back to the default then any non-empty. */
@@ -192,8 +193,8 @@ type FormState = {
 
 const defaultForm: FormState = {
   name: "",
-  subject: { vi: "", en: "", zh: "" },
-  html_content: { vi: "", en: "", zh: "" },
+  subject: { vi: "", en: "", zh: "", ko: "" },
+  html_content: { vi: "", en: "", zh: "", ko: "" },
   default_locale: "vi",
   audience: "all",
   scheduled_at: "",

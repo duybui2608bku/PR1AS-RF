@@ -140,7 +140,7 @@ export class ServiceCatalogMigrationService {
       } else {
         if (apply && !newId) {
           logger.warn(
-            `[service-catalog-v2] missing new service for code ${newCode} (mapped from ${oldCode}); skipping`
+            `[${SERVICE_CATALOG_MIGRATION_NAME}] missing new service for code ${newCode} (mapped from ${oldCode}); skipping`
           );
         }
         workerServicesRemapped += await WorkerService.countDocuments({
@@ -162,7 +162,7 @@ export class ServiceCatalogMigrationService {
     }
 
     logger.info(
-      `[service-catalog-v2] ${apply ? "applied" : "dry-run"}: ` +
+      `[${SERVICE_CATALOG_MIGRATION_NAME}] ${apply ? "applied" : "dry-run"}: ` +
         `${SERVICE_CATALOG_V2.length} services upserted, ` +
         `${workerServicesRemapped} worker_service remapped, ` +
         `${bookingsRemapped} bookings remapped, ` +
@@ -190,13 +190,13 @@ export class ServiceCatalogMigrationService {
         return;
       }
 
-      logger.info("[service-catalog-v2] starting migration");
+      logger.info(`[${SERVICE_CATALOG_MIGRATION_NAME}] starting migration`);
       await this.runInternal(true);
       await Migration.create({
         name: SERVICE_CATALOG_MIGRATION_NAME,
         applied_at: new Date(),
       });
-      logger.info("[service-catalog-v2] migration complete");
+      logger.info(`[${SERVICE_CATALOG_MIGRATION_NAME}] migration complete`);
     });
   }
 

@@ -23,15 +23,15 @@ export enum EmailSendLogStatus {
  * Locales an email campaign can be authored in. Mirrors the platform's
  * UI-switchable locales (see pr1as-client `lib/locale.ts` and the
  * site-settings `LocalizedText` shape). Recipients whose `meta_data.locale`
- * is outside this set (e.g. "ko") fall back to the campaign's default locale.
+ * is outside this set fall back to the campaign's default locale.
  */
-export const EMAIL_CAMPAIGN_LOCALES = ["vi", "en", "zh"] as const;
+export const EMAIL_CAMPAIGN_LOCALES = ["vi", "en", "zh", "ko"] as const;
 export type EmailCampaignLocale = (typeof EMAIL_CAMPAIGN_LOCALES)[number];
 export const DEFAULT_CAMPAIGN_LOCALE: EmailCampaignLocale = "vi";
 
 /**
- * Maps an arbitrary user locale (e.g. `meta_data.locale`, which may be "ko" or
- * unset) onto one of the campaign-supported locales, falling back to the
+ * Maps an arbitrary user locale (e.g. `meta_data.locale`, which may be unset)
+ * onto one of the campaign-supported locales, falling back to the
  * campaign's default when there is no authored translation for it.
  */
 export function resolveCampaignLocale(

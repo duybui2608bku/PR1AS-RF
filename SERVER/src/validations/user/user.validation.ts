@@ -29,7 +29,7 @@ export const updateLastActiveRoleSchema = z.object({
 // Persists the user's chosen UI language so transactional and marketing
 // emails can be delivered in that language (see meta_data.locale).
 export const updateLocaleSchema = z.object({
-  locale: z.enum(["vi", "en", "zh"]),
+  locale: z.enum(["vi", "en", "zh", "ko"]),
 });
 
 const isoDateString = z

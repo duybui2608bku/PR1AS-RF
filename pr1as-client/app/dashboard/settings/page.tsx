@@ -395,7 +395,7 @@ export default function AdminSettingsPage() {
   const [identityDraft, setIdentityDraft] = useState<IdentityDraft>({
     name: "",
     shortName: "",
-    description: { vi: "", en: "", zh: "" },
+    description: { vi: "", en: "", zh: "", ko: "" },
     logoUrl: "",
     faviconUrl: "",
   })
@@ -403,7 +403,7 @@ export default function AdminSettingsPage() {
     siteUrl: "",
     contactEmail: "",
     ogImageUrl: "",
-    keywords: { vi: "", en: "", zh: "" },
+    keywords: { vi: "", en: "", zh: "", ko: "" },
     twitterHandle: "",
   })
   const [socialDraft, setSocialDraft] = useState<SocialDraft>({

@@ -17,6 +17,7 @@ export const OG_LOCALE_TAGS: Record<SupportedLocale, string> = {
   vi: "vi_VN",
   en: "en_US",
   zh: "zh_CN",
+  ko: "ko_KR",
 }
 
 /** Fallback keywords used when the SEO translations are unavailable. */

@@ -15,6 +15,7 @@ const localizedSubjectSchema = new Schema(
     vi: { type: String, trim: true, maxlength: 500, default: "" },
     en: { type: String, trim: true, maxlength: 500, default: "" },
     zh: { type: String, trim: true, maxlength: 500, default: "" },
+    ko: { type: String, trim: true, maxlength: 500, default: "" },
   },
   { _id: false }
 );
@@ -24,6 +25,7 @@ const localizedHtmlSchema = new Schema(
     vi: { type: String, default: "" },
     en: { type: String, default: "" },
     zh: { type: String, default: "" },
+    ko: { type: String, default: "" },
   },
   { _id: false }
 );

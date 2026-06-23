@@ -9,6 +9,7 @@ const localizedTextSchema = (maxlength: number) =>
       vi: { type: String, trim: true, maxlength, default: "" },
       en: { type: String, trim: true, maxlength, default: "" },
       zh: { type: String, trim: true, maxlength, default: "" },
+      ko: { type: String, trim: true, maxlength, default: "" },
     },
     { _id: false }
   );

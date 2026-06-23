@@ -9,7 +9,7 @@ import {
   startOfDay,
   type Locale,
 } from "date-fns"
-import { enUS, vi, zhCN } from "date-fns/locale"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import {
   AlertCircle,
   CalendarOff,
@@ -63,6 +63,7 @@ const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
   vi,
   en: enUS,
   zh: zhCN,
+  ko,
 }
 
 type Translator = ReturnType<typeof useTranslations>

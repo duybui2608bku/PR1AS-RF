@@ -581,7 +581,7 @@ export default function ClientBookingsPage() {
                         >
                           <td className="px-4 py-3">
                             <div className="font-medium">
-                              {getServiceLabel(booking)}
+                              {getServiceLabel(booking, locale)}
                             </div>
                             <div className="text-xs text-muted-foreground uppercase">
                               {booking.service_code}
@@ -592,7 +592,7 @@ export default function ClientBookingsPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div>
-                               {!booking.schedule.start_time ? "-" : new Date(booking.schedule.start_time).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+                               {!booking.schedule.start_time ? "-" : new Date(booking.schedule.start_time).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : locale === "ko" ? "ko-KR" : "en-US", {
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 day: "2-digit",
@@ -659,6 +659,8 @@ export default function ClientBookingsPage() {
                                                 ? "vi-VN"
                                                 : locale === "zh"
                                                 ? "zh-CN"
+                                                : locale === "ko"
+                                                ? "ko-KR"
                                                 : "en-US",
                                               {
                                                 hour: "2-digit",
@@ -694,7 +696,7 @@ export default function ClientBookingsPage() {
                             ) : null}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
-                            {new Date(booking.created_at).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+                            {new Date(booking.created_at).toLocaleString(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : locale === "ko" ? "ko-KR" : "en-US", {
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 day: "2-digit",

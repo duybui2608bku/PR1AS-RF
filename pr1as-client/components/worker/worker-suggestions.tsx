@@ -9,7 +9,7 @@ import {
   Star,
   UserRound,
 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useWorkerSuggestions } from "@/lib/hooks/use-worker"
 import { useCurrency } from "@/lib/hooks/use-currency"
+import { pickLocalized } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import type { WorkerServicePricing, WorkerSuggestion } from "@/types"
 
@@ -26,12 +27,10 @@ type Props = {
   limit?: number
 }
 
-const getServiceName = (service: WorkerSuggestion["matched_service"]) =>
-  service.name.vi ??
-  service.name.en ??
-  service.name.zh ??
-  service.name.ko ??
-  service.code
+const getServiceName = (
+  service: WorkerSuggestion["matched_service"],
+  locale: string
+) => pickLocalized(service.name, locale) ?? service.code
 
 const getInitials = (name: string | null) =>
   (name?.trim().charAt(0) || "?").toUpperCase()
@@ -86,6 +85,7 @@ function WorkerSuggestionSkeleton() {
 
 export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
   const t = useTranslations("WorkerProfile")
+  const locale = useLocale()
   const { format } = useCurrency()
   const carouselRef = useRef<HTMLDivElement>(null)
   const {
@@ -157,7 +157,7 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
             className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 xl:mx-0 xl:flex-col xl:overflow-visible xl:px-0 xl:pb-0"
           >
             {suggestions.map((worker) => {
-              const serviceName = getServiceName(worker.matched_service)
+              const serviceName = getServiceName(worker.matched_service, locale)
               const priceGapLabel = getPriceGapLabel(
                 worker.price_difference_percent,
                 t

@@ -64,10 +64,19 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
   }, [isSuccess, isFailed, payment, queryClient, setUser, t])
 
   const formatVnd = (amount: number) =>
-    new Intl.NumberFormat(locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US", {
+    new Intl.NumberFormat(
+      locale === "vi"
+        ? "vi-VN"
+        : locale === "zh"
+          ? "zh-CN"
+          : locale === "ko"
+            ? "ko-KR"
+            : "en-US",
+      {
       style: "currency",
       currency: "VND",
-    }).format(amount)
+      }
+    ).format(amount)
 
   const copyText = async (value: string, labelKey: string) => {
     await navigator.clipboard.writeText(value)

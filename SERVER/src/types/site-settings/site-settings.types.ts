@@ -5,6 +5,7 @@ export interface LocalizedText {
   vi: string;
   en: string;
   zh: string;
+  ko: string;
 }
 
 export interface ISiteSettings {

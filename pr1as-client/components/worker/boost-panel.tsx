@@ -5,7 +5,7 @@ import { Zap, Star, Clock, Coins, Loader2, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceToNow, type Locale } from "date-fns"
-import { enUS, vi, zhCN } from "date-fns/locale"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import { useLocale, useTranslations } from "next-intl"
 
 import { boostService, type BoostType } from "@/services/boost.service"
@@ -20,6 +20,7 @@ const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
   vi,
   en: enUS,
   zh: zhCN,
+  ko,
 }
 
 interface BoostCardProps {

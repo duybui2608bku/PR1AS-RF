@@ -22,12 +22,14 @@ const localizedSubjectSchema = z.object({
   vi: z.string().max(500).optional(),
   en: z.string().max(500).optional(),
   zh: z.string().max(500).optional(),
+  ko: z.string().max(500).optional(),
 });
 
 const localizedHtmlSchema = z.object({
   vi: z.string().optional(),
   en: z.string().optional(),
   zh: z.string().optional(),
+  ko: z.string().optional(),
 });
 
 const nonEmpty = (value?: string): boolean => Boolean(value && value.trim());

@@ -15,6 +15,7 @@ export interface LocalizedEmailContent {
   vi?: string;
   en?: string;
   zh?: string;
+  ko?: string;
 }
 
 export interface IEmailCampaign {

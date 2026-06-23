@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import { Bell, CheckCheck, Loader2 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDistanceToNow, type Locale } from "date-fns"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,13 @@ import {
   useNotificationSocket,
 } from "@/lib/hooks/use-notifications"
 import type { Notification } from "@/services/notification.service"
+
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+  ko,
+}
 
 function getNotificationUrl(notif: Notification): string | null {
   if (notif.type === "chat.message") {
@@ -42,6 +50,8 @@ function getRequiredRole(url: string): "worker" | "client" | null {
 }
 
 export function NotificationBell() {
+  const t = useTranslations("Notifications")
+  const locale = useLocale()
   const [open, setOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -65,9 +75,9 @@ export function NotificationBell() {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllMutation.mutateAsync()
-      toast.success("Đã đánh dấu tất cả là đã đọc.")
+      toast.success(t("toast.markAllSuccess"))
     } catch {
-      toast.error("Không thể đánh dấu tất cả đã đọc.")
+      toast.error(t("toast.markAllError"))
     }
   }
 
@@ -77,7 +87,7 @@ export function NotificationBell() {
         await markAsReadMutation.mutateAsync(notif.id)
       }
     } catch {
-      toast.error("Không thể đánh dấu đã đọc.")
+      toast.error(t("toast.markAllError"))
     }
 
     const url = getNotificationUrl(notif)
@@ -98,7 +108,7 @@ export function NotificationBell() {
   return (
     <>
       {/* Mobile: navigates to full notifications page */}
-      <Link href="/notifications" className="relative md:hidden" aria-label="Thông báo">
+      <Link href="/notifications" className="relative md:hidden" aria-label={t("title")}>
         <Button variant="ghost" size="icon" className="relative" asChild>
           <span>
             <Bell className="size-4" />
@@ -116,7 +126,7 @@ export function NotificationBell() {
       <Button
         variant="ghost"
         size="icon"
-        aria-label="Thông báo"
+        aria-label={t("title")}
         onClick={() => setOpen((v) => !v)}
         className="relative"
       >
@@ -131,7 +141,7 @@ export function NotificationBell() {
       {open ? (
         <div className="bg-background absolute right-0 z-50 mt-2 w-80 rounded-md border shadow-lg">
           <div className="flex items-center justify-between border-b px-4 py-3 cursor-pointer">
-            <h3 className="text-sm font-semibold">Thông báo</h3>
+            <h3 className="text-sm font-semibold">{t("title")}</h3>
             {unreadCount > 0 ? (
               <Button
                 variant="ghost"
@@ -145,7 +155,7 @@ export function NotificationBell() {
                 ) : (
                   <CheckCheck className="size-3" />
                 )}
-                Đọc tất cả
+                {t("markAll")}
               </Button>
             ) : null}
           </div>
@@ -157,13 +167,14 @@ export function NotificationBell() {
               </div>
             ) : notifications.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                Chưa có thông báo nào
+                {t("emptyTitle")}
               </div>
             ) : (
               notifications.map((notif) => (
                 <NotificationItem
                   key={notif.id}
                   notification={notif}
+                  locale={locale}
                   onClick={() => handleItemClick(notif)}
                   isMarking={markAsReadMutation.isPending && markAsReadMutation.variables === notif.id}
                 />
@@ -179,13 +190,17 @@ export function NotificationBell() {
 
 function NotificationItem({
   notification,
+  locale,
   onClick,
   isMarking,
 }: {
   notification: Notification
+  locale: string
   onClick: () => void
   isMarking: boolean
 }) {
+  const dateLocale = DATE_FNS_LOCALES[locale] ?? vi
+
   return (
     <button
       type="button"
@@ -211,7 +226,7 @@ function NotificationItem({
         <p className="mt-1 text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(notification.created_at), {
             addSuffix: true,
-            locale: vi,
+            locale: dateLocale,
           })}
         </p>
       </div>

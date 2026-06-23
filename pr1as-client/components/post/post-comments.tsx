@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   Check,
   ChevronDown,
@@ -290,6 +290,7 @@ function CommentItem({
   onReply: (threadRootId: string, anchorCommentId: string, author: { id: string; name: string | null; hasWorkerProfile: boolean }) => void
 }) {
   const t = useTranslations("PostComments")
+  const locale = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -352,7 +353,7 @@ function CommentItem({
               <span className="text-sm font-semibold">{displayName}</span>
             )}
             <span className="text-xs text-muted-foreground">
-              {formatRelativeOrDate(comment.created_at)}
+              {formatRelativeOrDate(comment.created_at, locale)}
             </span>
           </div>
 

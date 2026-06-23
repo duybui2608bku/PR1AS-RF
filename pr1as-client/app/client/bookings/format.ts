@@ -5,6 +5,7 @@ import {
   DisputeReason,
   type Booking,
 } from "@/types/booking"
+import { DEFAULT_LOCALE, pickLocalized } from "@/lib/locale"
 
 export const formatVnd = (amount: number): string =>
   new Intl.NumberFormat("vi-VN", {
@@ -157,13 +158,16 @@ export const getWorkerName = (worker: Booking["worker_id"]): string => {
   return worker.full_name || worker.email || "-"
 }
 
-export const getServiceLabel = (booking: Booking): string => {
+export const getServiceLabel = (
+  booking: Booking,
+  locale: string = DEFAULT_LOCALE
+): string => {
   const service = booking.service_id
   if (!service || typeof service === "string") return booking.service_code
   const name = service.name
   if (typeof name === "string") return name
   if (name && typeof name === "object") {
-    return name.vi || name.en || service.code || booking.service_code
+    return pickLocalized(name, locale) || service.code || booking.service_code
   }
   return service.code || booking.service_code
 }

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react"
 import { DayPicker, type Locale } from "react-day-picker"
-import { enUS, vi, zhCN } from "react-day-picker/locale"
+import { enUS, ko, vi, zhCN } from "react-day-picker/locale"
 import { useLocale } from "next-intl"
 
 import { buttonVariants } from "@/components/ui/button"
@@ -22,6 +22,7 @@ const DAY_PICKER_LOCALES: Record<string, Locale> = {
   vi,
   en: enUS,
   zh: zhCN,
+  ko,
 }
 
 // Themed month/year selectors shown when captionLayout is a "dropdown" variant.

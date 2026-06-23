@@ -9,8 +9,9 @@ import {
   RotateCcw,
   SlidersHorizontal,
 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDistanceToNow, type Locale } from "date-fns"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
+import { useLocale } from "next-intl"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -60,6 +61,13 @@ import type {
 } from "@/services/moderation.service"
 
 const ALL = "all"
+
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+  vi,
+  en: enUS,
+  zh: zhCN,
+  ko,
+}
 
 const reportStatusOptions: Array<{ value: ReportStatus; label: string }> = [
   { value: "open", label: "Đang mở" },
@@ -277,6 +285,8 @@ function PostPreviewDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const locale = useLocale()
+  const dateLocale = DATE_FNS_LOCALES[locale] ?? vi
   const { data: post, isLoading, error } = useGetPost(
     open && postId ? postId : ""
   )
@@ -316,7 +326,7 @@ function PostPreviewDialog({
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(post.created_at), {
                     addSuffix: true,
-                    locale: vi,
+                    locale: dateLocale,
                   })}
                 </p>
               </div>

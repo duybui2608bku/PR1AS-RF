@@ -73,7 +73,13 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   const formatScheduledLabel = React.useCallback(
     (value: Date): string =>
       value.toLocaleDateString(
-        locale === "vi" ? "vi-VN" : locale === "zh" ? "zh-CN" : "en-US",
+        locale === "vi"
+          ? "vi-VN"
+          : locale === "zh"
+            ? "zh-CN"
+            : locale === "ko"
+              ? "ko-KR"
+              : "en-US",
         {
           day: "2-digit",
           month: "2-digit",

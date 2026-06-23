@@ -19,15 +19,16 @@ export type EmailCampaignAudience = "all" | "clients" | "workers"
 export type EmailSendLogStatus = "pending" | "sent" | "failed"
 
 /** Locales a campaign can be authored in (mirrors the platform UI locales). */
-export type EmailCampaignLocale = "vi" | "en" | "zh"
+export type EmailCampaignLocale = "vi" | "en" | "zh" | "ko"
 
-export const EMAIL_CAMPAIGN_LOCALES: EmailCampaignLocale[] = ["vi", "en", "zh"]
+export const EMAIL_CAMPAIGN_LOCALES: EmailCampaignLocale[] = ["vi", "en", "zh", "ko"]
 
 /** Subject / body authored per locale; only `default_locale` is guaranteed. */
 export type LocalizedEmailContent = {
   vi?: string
   en?: string
   zh?: string
+  ko?: string
 }
 
 export type EmailCampaignCreator = {

@@ -24,7 +24,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek, type Locale } from "date-fns"
-import { enUS, vi, zhCN } from "date-fns/locale"
+import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -49,6 +49,7 @@ const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
   vi,
   en: enUS,
   zh: zhCN,
+  ko,
 }
 
 const NOTIF_TYPE_CONFIG: Record<string, NotifTypeConfig> = {
