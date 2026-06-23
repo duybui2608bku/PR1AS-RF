@@ -19,13 +19,12 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/locale"
-import { authService } from "@/services/auth.service"
-import { useAuthStore } from "@/lib/store/auth-store"
+import { usePrefSwitch } from "@/lib/hooks/use-pref-switch"
 
 export function LocaleSwitcher() {
   const router = useRouter()
   const currentLocale = useLocale() as SupportedLocale
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { changeLocale } = usePrefSwitch()
 
   // On mount, sync localStorage → cookie if they differ (e.g. first visit after
   // the user previously set a preference but the cookie expired).
@@ -45,24 +44,6 @@ export function LocaleSwitcher() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = (locale: SupportedLocale) => {
-    if (locale === currentLocale) return
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-    } catch {
-      // ignore storage errors
-    }
-    document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
-    // Persist the choice on the user record (best-effort) so emails are sent in
-    // the language the user picked. Anonymous visitors only get the cookie.
-    if (isAuthenticated) {
-      authService.updateLocale(locale).catch(() => {
-        // non-blocking: the UI language still switches via cookie + refresh
-      })
-    }
-    router.refresh()
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -74,7 +55,7 @@ export function LocaleSwitcher() {
         {SUPPORTED_LOCALES.map((locale) => (
           <DropdownMenuItem
             key={locale}
-            onClick={() => handleSelect(locale)}
+            onClick={() => changeLocale(locale)}
             className={locale === currentLocale ? "font-semibold bg-accent" : ""}
           >
             {LOCALE_LABELS[locale]}

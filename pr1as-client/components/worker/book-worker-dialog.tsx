@@ -131,7 +131,7 @@ export function BookWorkerDialog({
   const [selectedUnit, setSelectedUnit] = useState<WorkerPricingUnit | "">("")
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [time, setTime] = useState<string>("09:00")
-  const [quantity, setQuantity] = useState<number>(1)
+  const [quantityInput, setQuantityInput] = useState<string>("1")
   const [notes, setNotes] = useState("")
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
   const [now, setNow] = useState(0)
@@ -145,11 +145,16 @@ export function BookWorkerDialog({
       ? selectedUnit
       : availableUnits[0] ?? ""
 
+  const quantity = useMemo(() => {
+    const v = parseInt(quantityInput, 10)
+    return Number.isFinite(v) && v > 0 ? Math.min(v, 1000) : 1
+  }, [quantityInput])
+
   const resetForm = () => {
     setSelectedUnit("")
     setDate(undefined)
     setTime("09:00")
-    setQuantity(1)
+    setQuantityInput("1")
     setNotes("")
     setDatePopoverOpen(false)
     setNow(Date.now())
@@ -377,12 +382,21 @@ export function BookWorkerDialog({
             <Input
               id="book-quantity"
               type="number"
+              inputMode="numeric"
               min={1}
               max={1000}
-              value={quantity}
+              value={quantityInput}
               onChange={(e) => {
-                const v = parseInt(e.target.value, 10)
-                setQuantity(Number.isFinite(v) && v > 0 ? v : 1)
+                const raw = e.target.value
+                if (raw === "" || /^\d+$/.test(raw)) setQuantityInput(raw)
+              }}
+              onBlur={() => {
+                const v = parseInt(quantityInput, 10)
+                setQuantityInput(
+                  Number.isFinite(v) && v > 0
+                    ? String(Math.min(v, 1000))
+                    : "1",
+                )
               }}
             />
             {endDateTime ? (
