@@ -65,6 +65,10 @@ export class GroupChatRepository {
       return null;
     }
 
+    if (!booking.client_id) {
+      return null;
+    }
+
     try {
       const conversation = new ConversationGroup({
         booking_id: new Types.ObjectId(booking_id),

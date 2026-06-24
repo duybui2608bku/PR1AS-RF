@@ -43,6 +43,13 @@ export type BookingUserRef = {
   email?: string
   full_name?: string | null
   avatar?: string | null
+  phone?: string | null
+}
+
+export type BookingGuestContact = {
+  name: string
+  email: string
+  phone?: string | null
 }
 
 export type LocalizedText = {
@@ -106,6 +113,9 @@ export type Booking = {
   service_code: string
   schedule: BookingSchedule
   pricing: BookingPricing
+  guest_contact?: BookingGuestContact | null
+  is_guest?: boolean
+  public_ref?: string | null
   status: BookingStatus
   client_notes: string
   worker_response: string
@@ -125,6 +135,8 @@ export type BookingListQuery = {
   role?: BookingRole
   status?: BookingStatus
   service_code?: string
+  search?: string
+  is_guest?: boolean
   start_date?: string
   end_date?: string
 }
@@ -202,6 +214,7 @@ export type CreateDisputePayload = {
 }
 
 export type CreateBookingPayload = {
+  guest_contact?: BookingGuestContact
   worker_id: string
   worker_service_id: string
   service_id: string
@@ -215,4 +228,8 @@ export type CreateBookingPayload = {
     quantity: number
   }
   client_notes?: string
+}
+
+export type CreateGuestBookingPayload = CreateBookingPayload & {
+  guest_contact: BookingGuestContact
 }

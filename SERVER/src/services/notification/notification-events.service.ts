@@ -80,18 +80,24 @@ const toId = (value: unknown): string => {
   return String(value);
 };
 
+const toOptionalId = (value: unknown): string | null => {
+  if (value == null) return null;
+  const id = toId(value);
+  return id && id !== "null" ? id : null;
+};
+
 const getBookingDashboardLink = (
   recipientId: string,
   booking: IBookingDocument
 ): string => {
-  const clientId = toId(booking.client_id);
+  const clientId = toOptionalId(booking.client_id);
   const workerId = toId(booking.worker_id);
 
   if (recipientId === workerId) {
     return "/worker/bookings";
   }
 
-  if (recipientId === clientId) {
+  if (clientId && recipientId === clientId) {
     return "/client/bookings";
   }
 
@@ -156,12 +162,14 @@ export class NotificationEventService {
   async bookingCreated(booking: IBookingDocument): Promise<void> {
     const bookingId = toId(booking._id);
     const workerId = toId(booking.worker_id);
-    const clientId = toId(booking.client_id);
+    const clientId = toOptionalId(booking.client_id);
     const locale = await getRecipientLocale(workerId);
+    const actorId =
+      clientId ?? (booking.is_guest ? `guest:${booking.public_ref ?? bookingId}` : workerId);
 
     await notificationService.notify({
       recipient_ids: [workerId],
-      actor_id: clientId,
+      actor_id: actorId,
       type: NotificationType.BOOKING_CREATED,
       category: NotificationCategory.BOOKING,
       title: t("notif.booking.created.title", locale),
@@ -179,9 +187,11 @@ export class NotificationEventService {
     actorId: string
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const clientId = toId(booking.client_id);
+    const clientId = toOptionalId(booking.client_id);
     const workerId = toId(booking.worker_id);
-    const recipients = [clientId, workerId].filter((id) => id !== actorId);
+    const recipients = [clientId, workerId].filter(
+      (id): id is string => Boolean(id) && id !== actorId
+    );
 
     if (recipients.length === 0) {
       return;
@@ -213,9 +223,11 @@ export class NotificationEventService {
     cancelledBy: CancelledBy
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const clientId = toId(booking.client_id);
+    const clientId = toOptionalId(booking.client_id);
     const workerId = toId(booking.worker_id);
-    const recipients = [clientId, workerId].filter((id) => id !== actorId);
+    const recipients = [clientId, workerId].filter(
+      (id): id is string => Boolean(id) && id !== actorId
+    );
     const admin = await userRepository.findFirstAdmin();
 
     if (admin?._id) {
@@ -286,9 +298,11 @@ export class NotificationEventService {
     actorId: string
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const clientId = toId(booking.client_id);
+    const clientId = toOptionalId(booking.client_id);
     const workerId = toId(booking.worker_id);
-    const recipients = [clientId, workerId].filter((id) => id !== actorId);
+    const recipients = [clientId, workerId].filter(
+      (id): id is string => Boolean(id) && id !== actorId
+    );
 
     await Promise.all(
       recipients.map(async (recipientId) => {
@@ -314,12 +328,15 @@ export class NotificationEventService {
     hoursBeforeStart: 1 | 24
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const clientId = toId(booking.client_id);
+    const clientId = toOptionalId(booking.client_id);
     const workerId = toId(booking.worker_id);
     const startTime = booking.schedule.start_time;
+    const recipients = [clientId, workerId].filter(
+      (id): id is string => Boolean(id)
+    );
 
     await Promise.all(
-      [clientId, workerId].map(async (recipientId) => {
+      recipients.map(async (recipientId) => {
         const locale = await getRecipientLocale(recipientId);
         return notificationService.notify({
           recipient_ids: [recipientId],
@@ -387,7 +404,10 @@ export class NotificationEventService {
     resolution: DisputeResolution
   ): Promise<void> {
     const bookingId = toId(booking._id);
-    const recipients = [toId(booking.client_id), toId(booking.worker_id)];
+    const recipients = [
+      toOptionalId(booking.client_id),
+      toId(booking.worker_id),
+    ].filter((id): id is string => Boolean(id));
 
     await Promise.all(
       recipients.map(async (recipientId) => {

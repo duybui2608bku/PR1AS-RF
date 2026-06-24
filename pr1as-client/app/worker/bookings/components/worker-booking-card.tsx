@@ -13,6 +13,7 @@ import {
 import { useLocale, useTranslations } from "next-intl"
 
 import { BookingCountdown } from "@/components/booking/booking-countdown"
+import { Badge } from "@/components/ui/badge"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
@@ -20,8 +21,10 @@ import { BookingStatus, type Booking } from "@/types/booking"
 import {
   bookingStatusBadgeClass,
   formatDateTime,
-  getClientName,
+  getBookingCustomerLabel,
+  getBookingCustomerLine,
   getConfirmationDeadline,
+  isGuestBooking,
   getServiceLabel,
   isBookingExpired,
 } from "../format"
@@ -40,6 +43,7 @@ export function WorkerBookingCard({
   onOpenActions,
 }: WorkerBookingCardProps) {
   const t = useTranslations("WorkerBookings")
+  const tQuick = useTranslations("QuickBooking")
   const tStatus = useTranslations("Bookings.statusLabels")
   const locale = useLocale() as SupportedLocale
   const localeTag = INTL_LOCALE_TAGS[locale] ?? INTL_LOCALE_TAGS.vi
@@ -86,8 +90,16 @@ export function WorkerBookingCard({
 
       <div className="mt-3 space-y-3 px-5">
         <InfoRow icon={User2} label={t("customer")}>
-          <span className="font-medium">
-            {getClientName(booking.client_id)}
+          <span className="flex flex-wrap items-center gap-2 font-medium">
+            <span>{getBookingCustomerLabel(booking)}</span>
+            {isGuestBooking(booking) ? (
+              <Badge variant="secondary" className="rounded-full">
+                {tQuick("guestBadge")}
+              </Badge>
+            ) : null}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {getBookingCustomerLine(booking)}
           </span>
         </InfoRow>
 

@@ -15,6 +15,7 @@ import type {
   BookingListQuery,
   CancelBookingPayload,
   CreateBookingPayload,
+  CreateGuestBookingPayload,
   CreateDisputePayload,
   UpdateBookingPayload,
   UpdateBookingStatusPayload,
@@ -79,6 +80,23 @@ export function useCreateBooking() {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, "Không thể tạo booking."))
+    },
+  })
+}
+
+export function useCreateGuestBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateGuestBookingPayload) =>
+      bookingService.createGuestBooking(payload),
+    onSuccess: () => {
+      toast.success("Đã tạo quick booking. Vui lòng chờ worker xác nhận.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.workers.all })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể tạo quick booking."))
     },
   })
 }

@@ -1,7 +1,8 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { bookingService } from "../../services/booking/booking.service";
 import {
   createBookingSchema,
+  createGuestBookingSchema,
   updateBookingStatusSchema,
   cancelBookingReasonSchema,
   updateBookingSchema,
@@ -39,6 +40,16 @@ export class BookingController {
       COMMON_MESSAGES.BAD_REQUEST
     );
     const result = await bookingService.createBooking(userId, data);
+    R.created(res, result, BOOKING_MESSAGES.BOOKING_CREATED, req);
+  }
+
+  async createGuestBooking(req: Request, res: Response): Promise<void> {
+    const data = validateWithSchema(
+      createGuestBookingSchema,
+      req.body,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await bookingService.createGuestBooking(data);
     R.created(res, result, BOOKING_MESSAGES.BOOKING_CREATED, req);
   }
 

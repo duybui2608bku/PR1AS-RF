@@ -60,7 +60,9 @@ export class BookingStatusService extends BookingBaseService {
 
     if (status === BookingStatus.COMPLETED) {
       this.ensureAuthorized(
-        this.isBookingClient(booking, userId),
+        booking.is_guest
+          ? this.isBookingWorker(booking, userId) || roleInfo.isAdmin === true
+          : this.isBookingClient(booking, userId),
         BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
       );
     }

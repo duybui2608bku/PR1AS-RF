@@ -16,10 +16,18 @@ import { Button } from "@/components/ui/button"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { type BookingStatus } from "@/types/booking"
 
 type StatusOption = { value: "all" | BookingStatus; label: string }
+type BookingAudienceFilter = "all" | "guest" | "registered"
 
 type WorkerBookingsMobileFiltersProps = {
   statusOptions: StatusOption[]
@@ -27,6 +35,11 @@ type WorkerBookingsMobileFiltersProps = {
   onStatusChange: (value: "all" | BookingStatus) => void
   serviceCode: string
   onServiceCodeChange: (value: string) => void
+  searchValue: string
+  onSearchValueChange: (value: string) => void
+  guestValue: BookingAudienceFilter
+  onGuestValueChange: (value: BookingAudienceFilter) => void
+  guestLabel: string
   dateRange: DateRange | undefined
   onDateRangeChange: (value: DateRange | undefined) => void
   advancedFilterCount: number
@@ -40,6 +53,11 @@ export function WorkerBookingsMobileFilters({
   onStatusChange,
   serviceCode,
   onServiceCodeChange,
+  searchValue,
+  onSearchValueChange,
+  guestValue,
+  onGuestValueChange,
+  guestLabel,
   dateRange,
   onDateRangeChange,
   advancedFilterCount,
@@ -95,6 +113,36 @@ export function WorkerBookingsMobileFilters({
                 placeholder={t("serviceCodePlaceholder")}
                 onChange={(event) => onServiceCodeChange(event.target.value)}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="worker-mobile-filter-search">{t("search")}</Label>
+              <Input
+                id="worker-mobile-filter-search"
+                value={searchValue}
+                maxLength={120}
+                placeholder={t("search")}
+                onChange={(event) => onSearchValueChange(event.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="worker-mobile-filter-audience">
+                {t("customer")}
+              </Label>
+              <Select
+                value={guestValue}
+                onValueChange={(value) =>
+                  onGuestValueChange(value as BookingAudienceFilter)
+                }
+              >
+                <SelectTrigger id="worker-mobile-filter-audience">
+                  <SelectValue placeholder={t("customer")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allStatus")}</SelectItem>
+                  <SelectItem value="guest">{guestLabel}</SelectItem>
+                  <SelectItem value="registered">{t("customer")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label>{t("dateRange")}</Label>

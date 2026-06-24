@@ -121,11 +121,21 @@ export class GroupChatService {
     const clientId =
       typeof booking.client_id === "object" && booking.client_id?._id
         ? booking.client_id._id.toString()
-        : String(booking.client_id);
+        : booking.client_id
+          ? String(booking.client_id)
+          : null;
     const workerId =
       typeof booking.worker_id === "object" && booking.worker_id?._id
         ? booking.worker_id._id.toString()
         : String(booking.worker_id);
+
+    if (!clientId) {
+      throw new AppError(
+        CHAT_MESSAGES.FAILED_JOIN_CONVERSATION,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
+      );
+    }
 
     const isBookingParticipant =
       sender_id === clientId || sender_id === workerId;
@@ -453,11 +463,21 @@ export class GroupChatService {
     const clientId =
       typeof booking.client_id === "object" && booking.client_id?._id
         ? booking.client_id._id.toString()
-        : String(booking.client_id);
+        : booking.client_id
+          ? String(booking.client_id)
+          : null;
     const workerId =
       typeof booking.worker_id === "object" && booking.worker_id?._id
         ? booking.worker_id._id.toString()
         : String(booking.worker_id);
+
+    if (!clientId) {
+      throw new AppError(
+        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
+      );
+    }
 
     if (user_id !== clientId && user_id !== workerId) {
       throw new AppError(

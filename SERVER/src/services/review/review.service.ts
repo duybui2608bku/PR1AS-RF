@@ -30,6 +30,12 @@ const getRefId = (value: unknown): string => {
   return String(value);
 };
 
+const getOptionalRefId = (value: unknown): string | null => {
+  if (value == null) return null;
+  const id = getRefId(value);
+  return id && id !== "null" ? id : null;
+};
+
 export class ReviewService {
   private async checkBookingExists(
     bookingId: string
@@ -67,8 +73,16 @@ export class ReviewService {
       );
     }
 
-    const bookingClientId = getRefId(booking.client_id);
+    const bookingClientId = getOptionalRefId(booking.client_id);
     const bookingWorkerId = getRefId(booking.worker_id);
+
+    if (!bookingClientId) {
+      throw new AppError(
+        REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.REVIEW_UNAUTHORIZED_ACCESS
+      );
+    }
 
     if (bookingClientId !== userId) {
       throw new AppError(
@@ -100,7 +114,7 @@ export class ReviewService {
 
     const reviewData: CreateReviewInput = {
       ...input,
-      client_id: new Types.ObjectId(userId),
+      client_id: new Types.ObjectId(bookingClientId),
       worker_id: new Types.ObjectId(bookingWorkerId),
     };
 

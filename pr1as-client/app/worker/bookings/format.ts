@@ -1,5 +1,5 @@
-import { BookingStatus, type Booking } from "@/types/booking"
 import { DEFAULT_LOCALE, pickLocalized } from "@/lib/locale"
+import { BookingStatus, type Booking } from "@/types/booking"
 
 export const bookingStatusBadgeClass: Record<BookingStatus, string> = {
   [BookingStatus.PENDING]:
@@ -36,11 +36,6 @@ export const formatDateTime = (
   })
 }
 
-/**
- * Confirmation deadline (ms timestamp) for a PENDING booking, mirroring the
- * server's expiration logic. Returns null when the booking can no longer
- * expire by confirmation timeout (any non-PENDING status or invalid schedule).
- */
 export const getConfirmationDeadline = (
   schedule: Booking["schedule"],
   status: BookingStatus,
@@ -86,6 +81,35 @@ export const isBookingExpired = (
 
 export const getBookingId = (booking: Booking): string =>
   booking.id ?? booking._id
+
+export const isGuestBooking = (booking: Booking): boolean =>
+  Boolean(booking.is_guest || booking.guest_contact)
+
+export const getGuestLabel = (booking: Booking): string => {
+  if (!isGuestBooking(booking) || !booking.guest_contact) return "-"
+  return booking.guest_contact.name || booking.guest_contact.email || "-"
+}
+
+export const getGuestContactLine = (booking: Booking): string => {
+  if (!isGuestBooking(booking) || !booking.guest_contact) return "-"
+  const parts = [booking.guest_contact.email]
+  if (booking.guest_contact.phone) parts.push(booking.guest_contact.phone)
+  return parts.filter(Boolean).join(" | ")
+}
+
+export const getBookingCustomerLabel = (booking: Booking): string => {
+  if (isGuestBooking(booking)) return getGuestLabel(booking)
+  return getClientName(booking.client_id)
+}
+
+export const getBookingCustomerLine = (booking: Booking): string => {
+  if (isGuestBooking(booking)) return getGuestContactLine(booking)
+  if (!booking.client_id) return "-"
+  if (typeof booking.client_id === "string") return booking.client_id
+  return [booking.client_id.email, booking.client_id.phone]
+    .filter(Boolean)
+    .join(" | ")
+}
 
 export const getClientName = (client: Booking["client_id"]): string => {
   if (!client) return "-"

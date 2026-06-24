@@ -83,6 +83,16 @@ export const bookingCreateLimiter = rateLimit({
   handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
+export const guestBookingCreateLimiter = rateLimit({
+  windowMs: 60 * TIME_IN_MS.MINUTE,
+  max: 8,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request): string => `guest:${req.ip ?? "unknown"}`,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
+});
+
 // Chat send endpoints (1:1 and group). Per-user ceiling that comfortably
 // covers a fast human conversation but blocks scripted flooding. 60/minute =
 // average 1 message/second, more than enough for real chat bursts.

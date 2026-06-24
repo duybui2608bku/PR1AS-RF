@@ -75,8 +75,10 @@ import {
   bookingStatusBadgeClass,
   formatDateTime,
   getBookingId,
-  getClientName,
+  getBookingCustomerLabel,
+  getBookingCustomerLine,
   getConfirmationDeadline,
+  isGuestBooking,
   getServiceLabel,
   isBookingExpired,
 } from "./format"
@@ -84,6 +86,7 @@ import {
 const PAGE_SIZE = 10
 
 type WorkerBookingsTranslator = ReturnType<typeof useTranslations>
+type BookingAudienceFilter = "all" | "guest" | "registered"
 
 const BOOKING_STATUS_OPTIONS: BookingStatus[] = [
   BookingStatus.PENDING,
@@ -222,6 +225,7 @@ function getActionValue(action: WorkerBookingAction) {
 export default function WorkerBookingsPage() {
   const router = useRouter()
   const t = useTranslations("WorkerBookings")
+  const tQuick = useTranslations("QuickBooking")
   const tStatus = useTranslations("Bookings.statusLabels")
   const locale = useLocale() as SupportedLocale
   const localeTag = INTL_LOCALE_TAGS[locale] ?? INTL_LOCALE_TAGS.vi
@@ -230,6 +234,9 @@ export default function WorkerBookingsPage() {
     "all"
   )
   const [serviceCodeInput, setServiceCodeInput] = React.useState("")
+  const [searchInput, setSearchInput] = React.useState("")
+  const [guestFilterInput, setGuestFilterInput] =
+    React.useState<BookingAudienceFilter>("all")
   const [dateRangeInput, setDateRangeInput] = React.useState<
     DateRange | undefined
   >(undefined)
@@ -237,6 +244,9 @@ export default function WorkerBookingsPage() {
     "all"
   )
   const [serviceCodeFilter, setServiceCodeFilter] = React.useState("")
+  const [searchFilter, setSearchFilter] = React.useState("")
+  const [guestFilter, setGuestFilter] =
+    React.useState<BookingAudienceFilter>("all")
   const [dateRangeFilter, setDateRangeFilter] = React.useState<
     DateRange | undefined
   >(undefined)
@@ -269,6 +279,9 @@ export default function WorkerBookingsPage() {
       role: "worker",
       status: statusFilter === "all" ? undefined : statusFilter,
       service_code: serviceCodeFilter || undefined,
+      search: searchFilter || undefined,
+      is_guest:
+        guestFilter === "all" ? undefined : guestFilter === "guest",
       start_date: dateRangeFilter?.from
         ? dateRangeFilter.from.toISOString()
         : undefined,
@@ -276,7 +289,7 @@ export default function WorkerBookingsPage() {
         ? dateRangeFilter.to.toISOString()
         : undefined,
     }),
-    [page, statusFilter, serviceCodeFilter, dateRangeFilter]
+    [page, statusFilter, serviceCodeFilter, searchFilter, guestFilter, dateRangeFilter]
   )
 
   const bookingsQuery = useMyBookings(query)
@@ -295,6 +308,8 @@ export default function WorkerBookingsPage() {
   const handleApplyFilters = () => {
     setStatusFilter(statusInput)
     setServiceCodeFilter(serviceCodeInput.trim().toUpperCase())
+    setSearchFilter(searchInput.trim())
+    setGuestFilter(guestFilterInput)
     setDateRangeFilter(dateRangeInput)
     setPage(1)
   }
@@ -304,6 +319,10 @@ export default function WorkerBookingsPage() {
     setStatusFilter("all")
     setServiceCodeInput("")
     setServiceCodeFilter("")
+    setSearchInput("")
+    setSearchFilter("")
+    setGuestFilterInput("all")
+    setGuestFilter("all")
     setDateRangeInput(undefined)
     setDateRangeFilter(undefined)
     setPage(1)
@@ -316,7 +335,10 @@ export default function WorkerBookingsPage() {
   }
 
   const advancedFilterCount =
-    (serviceCodeFilter ? 1 : 0) + (dateRangeFilter?.from ? 1 : 0)
+    (serviceCodeFilter ? 1 : 0) +
+    (searchFilter ? 1 : 0) +
+    (guestFilter !== "all" ? 1 : 0) +
+    (dateRangeFilter?.from ? 1 : 0)
 
   const handleStatusSubmit = async (values: UpdateBookingStatusPayload) => {
     if (!actionTarget) return
@@ -508,7 +530,7 @@ export default function WorkerBookingsPage() {
           </div>
 
           <Card className="mb-5 hidden md:block">
-            <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1.5fr_auto]">
+            <CardContent className="grid gap-4 p-5 md:grid-cols-[1fr_1.2fr_1.1fr_1fr_auto]">
               <div className="grid gap-2">
                 <Label htmlFor="worker-filter-status">{t("status")}</Label>
                 <Select
@@ -546,6 +568,42 @@ export default function WorkerBookingsPage() {
                     if (event.key === "Enter") handleApplyFilters()
                   }}
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="worker-filter-search">{t("search")}</Label>
+                <Input
+                  id="worker-filter-search"
+                  value={searchInput}
+                  maxLength={120}
+                  placeholder={tQuick("searchWorker")}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") handleApplyFilters()
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="worker-filter-audience">
+                  {tQuick("guestBooking")}
+                </Label>
+                <Select
+                  value={guestFilterInput}
+                  onValueChange={(value) =>
+                    setGuestFilterInput(value as BookingAudienceFilter)
+                  }
+                >
+                  <SelectTrigger
+                    id="worker-filter-audience"
+                    className="h-10 w-full data-[size=default]:h-10"
+                  >
+                    <SelectValue placeholder={tQuick("guestBooking")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allStatus")}</SelectItem>
+                    <SelectItem value="guest">{tQuick("guestBadge")}</SelectItem>
+                    <SelectItem value="registered">{t("customer")}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label>{t("dateRange")}</Label>
@@ -587,6 +645,11 @@ export default function WorkerBookingsPage() {
               onStatusChange={handleMobileStatusChange}
               serviceCode={serviceCodeInput}
               onServiceCodeChange={setServiceCodeInput}
+              searchValue={searchInput}
+              onSearchValueChange={setSearchInput}
+              guestValue={guestFilterInput}
+              onGuestValueChange={setGuestFilterInput}
+              guestLabel={tQuick("guestBadge")}
               dateRange={dateRangeInput}
               onDateRangeChange={setDateRangeInput}
               advancedFilterCount={advancedFilterCount}
@@ -768,7 +831,19 @@ export default function WorkerBookingsPage() {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              {getClientName(booking.client_id)}
+                              <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2 font-medium text-foreground">
+                                  <span>{getBookingCustomerLabel(booking)}</span>
+                                  {isGuestBooking(booking) ? (
+                                    <Badge variant="secondary" className="rounded-full">
+                                      {tQuick("guestBadge")}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {getBookingCustomerLine(booking)}
+                                </div>
+                              </div>
                             </td>
                             <td className="px-4 py-3">
                               <div>

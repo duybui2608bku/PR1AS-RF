@@ -44,6 +44,7 @@ import { WorkerInfoCards } from "@/components/worker/worker-info-cards"
 import { WorkerProfileHeader } from "@/components/worker/worker-profile-header"
 import { WorkerReviews } from "@/components/worker/worker-reviews"
 import { WorkerAskQuestion } from "@/components/worker/worker-ask-question"
+import { QuickBookingDialog } from "@/components/worker/quick-booking-dialog"
 import { WorkerServices } from "@/components/worker/worker-services"
 import { WorkerStatCards } from "@/components/worker/worker-stat-cards"
 import { WorkerSuggestions } from "@/components/worker/worker-suggestions"
@@ -77,6 +78,10 @@ export default function WorkerProfilePage({
   const [reportDescriptionError, setReportDescriptionError] = useState("")
   const [reportEvidenceImages, setReportEvidenceImages] = useState<File[]>([])
   const [isReportSubmitting, setIsReportSubmitting] = useState(false)
+  const [quickBookOpen, setQuickBookOpen] = useState(false)
+  const [quickBookServiceId, setQuickBookServiceId] = useState<string | null>(
+    null
+  )
   const evidenceEditor = useImageEditorQueue()
 
   const favoriteIdsQuery = useFavoriteWorkerIds()
@@ -243,6 +248,10 @@ export default function WorkerProfilePage({
                       workerReputationScore={
                         data.user.meta_data?.reputation_score
                       }
+                      onQuickBook={(serviceId) => {
+                        setQuickBookServiceId(serviceId)
+                        setQuickBookOpen(true)
+                      }}
                     />
                     <ErrorBoundary resetKeys={[data.user.id]}>
                       <WorkerCalendar workerId={data.user.id} />
@@ -261,6 +270,19 @@ export default function WorkerProfilePage({
           ) : null}
         </div>
       </div>
+      {data ? (
+        <QuickBookingDialog
+          open={quickBookOpen}
+          onOpenChange={(open) => {
+            setQuickBookOpen(open)
+            if (!open) setQuickBookServiceId(null)
+          }}
+          workerId={data.user.id}
+          workerName={data.user.full_name ?? t("header.notUpdated")}
+          services={data.services ?? []}
+          initialServiceId={quickBookServiceId}
+        />
+      ) : null}
       <Dialog open={reportOpen} onOpenChange={handleReportDialogOpenChange}>
         <DialogContent>
           <DialogHeader>

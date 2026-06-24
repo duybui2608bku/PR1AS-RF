@@ -51,6 +51,7 @@ type Props = {
   isFavorite?: boolean
   isFavoritePending?: boolean
   onToggleFavorite?: () => void
+  onQuickBook?: () => void
   hasOpenReport?: boolean
   onReport?: () => void
 }
@@ -61,6 +62,7 @@ export function WorkerProfileHeader({
   isFavorite = false,
   isFavoritePending = false,
   onToggleFavorite,
+  onQuickBook,
   hasOpenReport = false,
   onReport,
 }: Props) {
@@ -161,6 +163,15 @@ export function WorkerProfileHeader({
                     )}
                     {/* <span>{isFavorite ? "Đã thích" : "Yêu thích"}</span> */}
                   </button>
+                ) : null}
+                {onQuickBook ? (
+                  <Button
+                    type="button"
+                    className="gap-1.5"
+                    onClick={onQuickBook}
+                  >
+                    {t("services.book")}
+                  </Button>
                 ) : null}
                 {onReport ? (
                   <WorkerReportButton
@@ -378,6 +389,11 @@ export function WorkerProfileHeader({
                           />
                         )}
                       </button>
+                    ) : null}
+                    {onQuickBook ? (
+                      <Button type="button" size="sm" onClick={onQuickBook}>
+                        {t("services.book")}
+                      </Button>
                     ) : null}
                     {onReport ? (
                       <WorkerReportButton

@@ -11,6 +11,15 @@ import { PricingUnit } from "../../types/worker/worker-service";
 import { IBookingDocument } from "../../types/booking";
 import { modelsName } from "../models.name";
 
+const guestContactSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
+    phone: { type: String, default: null, trim: true },
+  },
+  { _id: false }
+);
+
 const scheduleSchema = new Schema(
   {
     start_time: { type: Date, required: true },
@@ -79,7 +88,8 @@ const bookingSchema = new Schema<IBookingDocument>(
     client_id: {
       type: Schema.Types.ObjectId,
       ref: modelsName.USER,
-      required: true,
+      required: false,
+      default: null,
     },
     worker_id: {
       type: Schema.Types.ObjectId,
@@ -104,6 +114,9 @@ const bookingSchema = new Schema<IBookingDocument>(
     },
     schedule: { type: scheduleSchema, required: true },
     pricing: { type: pricingSchema, required: true },
+    guest_contact: { type: guestContactSchema, default: null },
+    is_guest: { type: Boolean, default: false },
+    public_ref: { type: String, default: null, index: true },
     status: {
       type: String,
       enum: Object.values(BookingStatus),
@@ -140,6 +153,7 @@ bookingSchema.index({ status: 1 });
 bookingSchema.index({ worker_id: 1, status: 1, "schedule.start_time": 1 });
 bookingSchema.index({ "schedule.start_time": 1, "schedule.end_time": 1 });
 bookingSchema.index({ service_code: 1 });
+bookingSchema.index({ public_ref: 1 }, { unique: true, sparse: true });
 bookingSchema.index(
   { worker_id: 1, "schedule.start_time": 1 },
   {

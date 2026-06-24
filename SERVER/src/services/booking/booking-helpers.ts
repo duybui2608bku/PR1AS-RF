@@ -101,7 +101,12 @@ export class BookingBaseService {
     userId: string,
     roleInfo: RoleInfo
   ): boolean {
-    const isClient = booking.client_id._id.toString() === userId;
+    const isClient =
+      typeof booking.client_id === "object" &&
+      booking.client_id !== null &&
+      "_id" in booking.client_id
+        ? booking.client_id._id.toString() === userId
+        : false;
     const isWorker = booking.worker_id._id.toString() === userId;
     const isAdmin = roleInfo.isAdmin === true;
     return isClient || isWorker || isAdmin;
@@ -111,7 +116,12 @@ export class BookingBaseService {
     booking: IBookingDocument,
     userId: string
   ): boolean {
-    return booking.client_id._id.toString() === userId;
+    return (
+      typeof booking.client_id === "object" &&
+      booking.client_id !== null &&
+      "_id" in booking.client_id &&
+      booking.client_id._id.toString() === userId
+    );
   }
 
   protected isBookingWorker(

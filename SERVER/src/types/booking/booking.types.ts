@@ -14,6 +14,12 @@ export interface BookingSchedule {
   duration_hours: number;
 }
 
+export interface BookingGuestContact {
+  name: string;
+  email: string;
+  phone?: string | null;
+}
+
 export interface BookingPricing {
   unit: PricingUnit;
   quantity: number;
@@ -39,13 +45,16 @@ export interface BookingDispute {
 }
 
 export interface IBooking {
-  client_id: Types.ObjectId;
+  client_id: Types.ObjectId | null;
   worker_id: Types.ObjectId;
   worker_service_id: Types.ObjectId;
   service_id: Types.ObjectId;
   service_code: string;
   schedule: BookingSchedule;
   pricing: BookingPricing;
+  guest_contact?: BookingGuestContact | null;
+  is_guest?: boolean;
+  public_ref?: string | null;
 
   status: BookingStatus;
 
@@ -67,7 +76,7 @@ export interface IBooking {
 export interface IBookingDocument extends IBooking, Document {}
 
 export interface CreateBookingInput {
-  client_id?: Types.ObjectId;
+  client_id?: Types.ObjectId | null;
   worker_id: Types.ObjectId;
   worker_service_id: Types.ObjectId;
   service_id: Types.ObjectId;
@@ -75,6 +84,9 @@ export interface CreateBookingInput {
   schedule: BookingSchedule;
   pricing: BookingPricing;
   client_notes?: string;
+  guest_contact?: BookingGuestContact | null;
+  is_guest?: boolean;
+  public_ref?: string | null;
 }
 
 export interface UpdateBookingStatusInput {
@@ -96,6 +108,8 @@ export interface BookingQuery {
   role?: "client" | "worker";
   status?: BookingStatus;
   service_code?: string;
+  search?: string;
+  is_guest?: boolean;
   start_date?: Date;
   end_date?: Date;
   page: number;

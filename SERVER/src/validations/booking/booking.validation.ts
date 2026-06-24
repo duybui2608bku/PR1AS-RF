@@ -68,7 +68,28 @@ const pricingSchema = z.object({
   quantity: z.number().int().positive().min(1),
 });
 
+const guestContactSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().max(255),
+  phone: z.string().trim().max(30).optional().default(""),
+});
+
 export const createBookingSchema = z.object({
+  worker_id: objectIdSchema,
+  worker_service_id: objectIdSchema,
+  service_id: objectIdSchema,
+  service_code: z
+    .string()
+    .trim()
+    .min(1)
+    .transform((val) => val.toUpperCase()),
+  schedule: scheduleSchema,
+  pricing: pricingSchema,
+  client_notes: z.string().trim().max(1000).optional().default(""),
+});
+
+export const createGuestBookingSchema = z.object({
+  guest_contact: guestContactSchema,
   worker_id: objectIdSchema,
   worker_service_id: objectIdSchema,
   service_id: objectIdSchema,
@@ -114,6 +135,15 @@ export const getBookingsQuerySchema = z.object({
   role: z.enum(["client", "worker"]).optional(),
   status: z.nativeEnum(BookingStatus).optional(),
   service_code: z.string().optional(),
+  search: z.string().trim().max(200).optional(),
+  is_guest: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((value) => {
+      if (value === "true" || value === true) return true;
+      if (value === "false" || value === false) return false;
+      return undefined;
+    }),
   start_date: dateSchema.optional(),
   end_date: dateSchema.optional(),
   page: z
@@ -159,6 +189,9 @@ export const resolveDisputeSchema = z.object({
 });
 
 export type CreateBookingSchemaType = z.infer<typeof createBookingSchema>;
+export type CreateGuestBookingSchemaType = z.infer<
+  typeof createGuestBookingSchema
+>;
 export type UpdateBookingStatusSchemaType = z.infer<typeof updateBookingStatusSchema>;
 export type CancelBookingReasonSchemaType = z.infer<typeof cancelBookingReasonSchema>;
 export type UpdateBookingSchemaType = z.infer<typeof updateBookingSchema>;

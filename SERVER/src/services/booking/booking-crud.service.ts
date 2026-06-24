@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import crypto from "crypto";
 import {
   bookingRepository,
   CreateBookingFailureReason,
@@ -121,6 +122,93 @@ export class BookingCrudService extends BookingBaseService {
     const createResult = await bookingRepository.createIfNoConflict({
       ...input,
       client_id: new Types.ObjectId(clientId),
+    });
+
+    if (!createResult.booking) {
+      if (
+        createResult.failureReason ===
+        CreateBookingFailureReason.WORKER_INELIGIBLE
+      ) {
+        throw new AppError(
+          BOOKING_MESSAGES.WORKER_INELIGIBLE,
+          HTTP_STATUS.FORBIDDEN,
+          ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+        );
+      }
+
+      throw new AppError(
+        BOOKING_MESSAGES.SCHEDULE_CONFLICT,
+        HTTP_STATUS.CONFLICT,
+        ErrorCode.BOOKING_INVALID_SCHEDULE
+      );
+    }
+
+    const createdBooking = createResult.booking;
+
+    void notificationEventService
+      .bookingCreated(createdBooking)
+      .catch((error) => logger.error("Booking notification failed:", error));
+
+    return createdBooking;
+  }
+
+  async createGuestBooking(
+    input: CreateBookingInput & {
+      guest_contact: { name: string; email: string; phone?: string | null };
+    }
+  ): Promise<IBookingDocument> {
+    const workerId = input.worker_id.toString();
+
+    await moderationService.assertNoActiveRestriction(
+      workerId,
+      RestrictionFeature.WORKER_ACTIVITY
+    );
+
+    const [worker, service] = await Promise.all([
+      userRepository.findById(workerId),
+      serviceRepository.findById(input.service_id.toString()),
+      this.validateWorkerService(input.worker_service_id.toString(), workerId),
+    ]);
+
+    if (!worker) {
+      throw new AppError(
+        BOOKING_MESSAGES.USER_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    const workerIneligible =
+      worker.status !== UserStatus.ACTIVE ||
+      !worker.verify_email ||
+      !worker.roles.includes(UserRole.WORKER);
+
+    if (workerIneligible) {
+      throw new AppError(
+        BOOKING_MESSAGES.WORKER_INELIGIBLE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
+    }
+
+    if (!service) {
+      throw new AppError(
+        BOOKING_MESSAGES.SERVICE_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    const createResult = await bookingRepository.createIfNoConflict({
+      ...input,
+      client_id: null,
+      is_guest: true,
+      public_ref: this.generatePublicRef(),
+      guest_contact: {
+        name: input.guest_contact.name.trim(),
+        email: input.guest_contact.email.trim().toLowerCase(),
+        phone: input.guest_contact.phone?.trim() || null,
+      },
     });
 
     if (!createResult.booking) {
@@ -399,5 +487,10 @@ export class BookingCrudService extends BookingBaseService {
       completion_by_date: completionByDate,
       recent_bookings: raw.recent_bookings,
     };
+  }
+
+  private generatePublicRef(): string {
+    const suffix = crypto.randomBytes(4).toString("hex").toUpperCase();
+    return `QB-${suffix}`;
   }
 }

@@ -20,7 +20,7 @@ import { PaginationHelper } from "../../utils";
 import { UserRole, UserStatus } from "../../types/auth/user.types";
 
 const BOOKING_POPULATE: PopulateOptions[] = [
-  { path: "client_id", select: "email full_name" },
+  { path: "client_id", select: "email full_name phone" },
   { path: "worker_id", select: "email full_name" },
   { path: "worker_service_id" },
   { path: "service_id" },
@@ -146,6 +146,19 @@ export class BookingRepository {
     if (query.status) filter.status = query.status;
     if (query.service_code) {
       filter.service_code = query.service_code.toUpperCase().trim();
+    }
+    if (typeof query.is_guest === "boolean") {
+      filter.is_guest = query.is_guest;
+    }
+    if (query.search) {
+      const escaped = query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.$or = [
+        { service_code: { $regex: escaped, $options: "i" } },
+        { public_ref: { $regex: escaped, $options: "i" } },
+        { "guest_contact.name": { $regex: escaped, $options: "i" } },
+        { "guest_contact.email": { $regex: escaped, $options: "i" } },
+        { "guest_contact.phone": { $regex: escaped, $options: "i" } },
+      ];
     }
 
     if (query.start_date || query.end_date) {

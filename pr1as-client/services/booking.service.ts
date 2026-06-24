@@ -7,6 +7,7 @@ import type {
   BookingListResponse,
   CancelBookingPayload,
   CreateBookingPayload,
+  CreateGuestBookingPayload,
   CreateDisputePayload,
   UpdateBookingPayload,
   UpdateBookingStatusPayload,
@@ -64,6 +65,14 @@ const getMyBookings = async (query: BookingListQuery = {}) => {
 export const bookingService = {
   createBooking: async (payload: CreateBookingPayload) => {
     const response = await api.post<ApiResponse<Booking>>("/bookings", payload)
+    return response.data.data
+  },
+
+  createGuestBooking: async (payload: CreateGuestBookingPayload) => {
+    const response = await api.post<ApiResponse<Booking>>(
+      "/bookings/quickbook",
+      payload
+    )
     return response.data.data
   },
 

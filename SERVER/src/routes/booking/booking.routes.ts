@@ -4,9 +4,23 @@ import { adminOnly, authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
 import { pagination } from "../../middleware";
-import { bookingCreateLimiter } from "../../middleware/rateLimiter";
+import {
+  bookingCreateLimiter,
+  guestBookingCreateLimiter,
+} from "../../middleware/rateLimiter";
+import { csrfProtection } from "../../middleware/csrf";
+import { Request } from "express";
 
 const router = Router();
+
+router.post(
+  "/quickbook",
+  ...csrfProtection,
+  guestBookingCreateLimiter,
+  asyncHandler<Request>(
+    bookingController.createGuestBooking.bind(bookingController)
+  )
+);
 
 router.post(
   "/",

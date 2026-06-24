@@ -64,9 +64,10 @@ type Props = {
   workerName: string
   services: WorkerServiceItem[]
   workerReputationScore?: number
+  onQuickBook?: (serviceId: string) => void
 }
 
-export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100 }: Props) {
+export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, onQuickBook }: Props) {
   const t = useTranslations("WorkerProfile")
   const locale = useLocale()
   const { format } = useCurrency()
@@ -78,6 +79,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const user = useAuthStore((s) => s.user)
   const currentUserId = user?.id
   const isOwnProfile = currentUserId === workerId
+  const isGuestViewer = !isAuthenticated
   const isWorkerLowReputation = workerReputationScore < 30
   const storedPlanCode = user?.meta_data?.pricing_plan_code?.toLowerCase()
   const storedPlanAllowsMessaging = storedPlanCode
@@ -223,17 +225,29 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
           </RadioGroup>
         )}
 
-        <Button
-          type="button"
-          className="w-full"
-          disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
-          onClick={handleBook}
-        >
-          <ShoppingCart className="size-4" />
-          {isWorkerLowReputation
-            ? t("services.bookLowReputation")
-            : t("services.book")}
-        </Button>
+        {isGuestViewer ? (
+          <Button
+            type="button"
+            className="w-full"
+            disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
+            onClick={() => onQuickBook?.(selectedId)}
+          >
+            <ShoppingCart className="size-4" />
+            {t("services.book")}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            className="w-full"
+            disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
+            onClick={handleBook}
+          >
+            <ShoppingCart className="size-4" />
+            {isWorkerLowReputation
+              ? t("services.bookLowReputation")
+              : t("services.book")}
+          </Button>
+        )}
 
         <Button
           type="button"
