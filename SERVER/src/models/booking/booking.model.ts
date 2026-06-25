@@ -115,6 +115,7 @@ const bookingSchema = new Schema<IBookingDocument>(
     schedule: { type: scheduleSchema, required: true },
     pricing: { type: pricingSchema, required: true },
     guest_contact: { type: guestContactSchema, default: null },
+    guest_locale: { type: String, default: null, trim: true },
     is_guest: { type: Boolean, default: false },
     public_ref: { type: String, default: null, index: true },
     status: {

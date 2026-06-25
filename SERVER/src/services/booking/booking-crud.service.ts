@@ -29,6 +29,7 @@ import { UserRole, UserStatus } from "../../types/auth/user.types";
 import { BookingStatus } from "../../constants/booking";
 import { moderationService } from "../moderation";
 import { RestrictionFeature } from "../../constants/moderation";
+import { sendQuickBookingCreatedEmails } from "./booking-email";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -155,6 +156,7 @@ export class BookingCrudService extends BookingBaseService {
   async createGuestBooking(
     input: CreateBookingInput & {
       guest_contact: { name: string; email: string; phone?: string | null };
+      guest_locale?: string | null;
     }
   ): Promise<IBookingDocument> {
     const workerId = input.worker_id.toString();
@@ -204,6 +206,7 @@ export class BookingCrudService extends BookingBaseService {
       client_id: null,
       is_guest: true,
       public_ref: this.generatePublicRef(),
+      guest_locale: input.guest_locale?.trim() || "en",
       guest_contact: {
         name: input.guest_contact.name.trim(),
         email: input.guest_contact.email.trim().toLowerCase(),
@@ -236,6 +239,10 @@ export class BookingCrudService extends BookingBaseService {
       .bookingCreated(createdBooking)
       .catch((error) => logger.error("Booking notification failed:", error));
 
+    void sendQuickBookingCreatedEmails(createdBooking).catch((error) =>
+      logger.error("Quick booking email failed:", error)
+    );
+
     return createdBooking;
   }
 
@@ -249,6 +256,24 @@ export class BookingCrudService extends BookingBaseService {
       this.isBookingOwner(booking, userId, roleInfo),
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
+    return booking;
+  }
+
+  async lookupGuestBooking(
+    publicRef: string,
+    email: string
+  ): Promise<IBookingDocument> {
+    const booking = await bookingRepository.findGuestBookingByPublicRef(
+      publicRef,
+      email
+    );
+    if (!booking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.BOOKING_NOT_FOUND
+      );
+    }
     return booking;
   }
 

@@ -90,6 +90,7 @@ export const createBookingSchema = z.object({
 
 export const createGuestBookingSchema = z.object({
   guest_contact: guestContactSchema,
+  guest_locale: z.enum(["vi", "en", "ko", "zh"]).optional(),
   worker_id: objectIdSchema,
   worker_service_id: objectIdSchema,
   service_id: objectIdSchema,
@@ -101,6 +102,11 @@ export const createGuestBookingSchema = z.object({
   schedule: scheduleSchema,
   pricing: pricingSchema,
   client_notes: z.string().trim().max(1000).optional().default(""),
+});
+
+export const guestBookingLookupQuerySchema = z.object({
+  public_ref: z.string().trim().min(1).max(64),
+  email: z.string().trim().email().max(255),
 });
 
 export const updateBookingStatusSchema = z.object({
@@ -191,6 +197,9 @@ export const resolveDisputeSchema = z.object({
 export type CreateBookingSchemaType = z.infer<typeof createBookingSchema>;
 export type CreateGuestBookingSchemaType = z.infer<
   typeof createGuestBookingSchema
+>;
+export type GuestBookingLookupQuerySchemaType = z.infer<
+  typeof guestBookingLookupQuerySchema
 >;
 export type UpdateBookingStatusSchemaType = z.infer<typeof updateBookingStatusSchema>;
 export type CancelBookingReasonSchemaType = z.infer<typeof cancelBookingReasonSchema>;

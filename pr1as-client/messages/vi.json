@@ -1825,6 +1825,7 @@
     "successTitle": "Đã gửi quick booking",
     "successDesc": "Worker sẽ xem yêu cầu của bạn. Mã tra cứu của bạn là {code}.",
     "trackingCode": "Mã tra cứu",
+    "lookupButton": "Mở trang tra cứu booking",
     "guestBadge": "Khách",
     "guestBooking": "Booking khách",
     "searchWorker": "Tìm theo tên hoặc email worker",
@@ -1972,5 +1973,27 @@
     "viewFull": "Xem chi tiết",
     "dismiss6h": "Ẩn trong 6 giờ",
     "acknowledge": "Đã hiểu"
+  },
+  "BookingLookup": {
+    "title": "Tra cứu booking",
+    "subtitle": "Theo dõi quick booking bằng mã tra cứu và email.",
+    "codeLabel": "Mã tra cứu",
+    "emailLabel": "Email",
+    "submit": "Tra cứu",
+    "reset": "Làm mới",
+    "loading": "Đang tải chi tiết booking...",
+    "empty": "Nhập mã tra cứu và email để xem booking.",
+    "notFound": "Không tìm thấy booking khớp với thông tin đã nhập.",
+    "invalid": "Vui lòng nhập mã và email hợp lệ.",
+    "guest": "Khách",
+    "worker": "Worker",
+    "service": "Dịch vụ",
+    "status": "Trạng thái",
+    "schedule": "Lịch hẹn",
+    "createdAt": "Tạo lúc",
+    "tracking": "Mở trang tra cứu booking",
+    "copy": "Sao chép link tra cứu",
+    "copied": "Đã sao chép link tra cứu",
+    "prefilled": "Email gửi đến có thể điền sẵn thông tin cho bạn."
   }
 }

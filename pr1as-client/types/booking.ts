@@ -114,6 +114,7 @@ export type Booking = {
   schedule: BookingSchedule
   pricing: BookingPricing
   guest_contact?: BookingGuestContact | null
+  guest_locale?: string | null
   is_guest?: boolean
   public_ref?: string | null
   status: BookingStatus
@@ -215,6 +216,7 @@ export type CreateDisputePayload = {
 
 export type CreateBookingPayload = {
   guest_contact?: BookingGuestContact
+  guest_locale?: string | null
   worker_id: string
   worker_service_id: string
   service_id: string
@@ -232,4 +234,10 @@ export type CreateBookingPayload = {
 
 export type CreateGuestBookingPayload = CreateBookingPayload & {
   guest_contact: BookingGuestContact
+  guest_locale?: string | null
+}
+
+export type GuestBookingLookupQuery = {
+  public_ref: string
+  email: string
 }

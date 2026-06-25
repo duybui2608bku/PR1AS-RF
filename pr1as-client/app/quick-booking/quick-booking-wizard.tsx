@@ -414,6 +414,7 @@ export function QuickBookingWizard() {
 
     const payload: CreateGuestBookingPayload = {
       guest_contact: guestContact,
+      guest_locale: locale,
       worker_id: selectedWorker.id,
       worker_service_id: workerServiceItem?._id ?? "",
       service_id: workerServiceItem?.service_id ?? "",
@@ -449,6 +450,23 @@ export function QuickBookingWizard() {
     await navigator.clipboard.writeText(code)
     toast.success(code)
   }
+
+  const lookupLink = React.useMemo(() => {
+    if (!submittedBooking?.public_ref || !state.email.trim()) return null
+    const params = new URLSearchParams()
+    params.set("code", submittedBooking.public_ref)
+    params.set("email", state.email.trim().toLowerCase())
+    return `/booking-lookup?${params.toString()}`
+  }, [state.email, submittedBooking?.public_ref])
+
+  const lookupButtonLabel =
+    locale === "vi"
+      ? "Mở trang tra cứu booking"
+      : locale === "ko"
+        ? "예약 조회 열기"
+        : locale === "zh"
+          ? "打开预约查询"
+          : "Open booking lookup"
 
   return (
     <div className="relative overflow-hidden rounded-[2rem] border bg-background shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)]">
@@ -867,6 +885,11 @@ export function QuickBookingWizard() {
                 {submittedBooking?.public_ref ? (
                   <div className="flex flex-wrap items-center gap-3">
                     <Button onClick={copyTrackingCode}>{t("trackingCode")}</Button>
+                    {lookupLink ? (
+                      <Button asChild variant="outline">
+                        <Link href={lookupLink}>{lookupButtonLabel}</Link>
+                      </Button>
+                    ) : null}
                     <Button variant="outline" onClick={resetWizard}>
                       {t("continue")}
                     </Button>

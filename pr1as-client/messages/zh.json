@@ -1972,5 +1972,27 @@
     "viewFull": "查看详情",
     "dismiss6h": "隐藏 6 小时",
     "acknowledge": "我知道了"
+  },
+  "BookingLookup": {
+    "title": "预约查询",
+    "subtitle": "使用查询码和邮箱追踪快速预约。",
+    "codeLabel": "查询码",
+    "emailLabel": "邮箱",
+    "submit": "查询预约",
+    "reset": "重置",
+    "loading": "正在加载预约详情...",
+    "empty": "请输入查询码和邮箱以查看预约。",
+    "notFound": "未找到与这些信息匹配的预约。",
+    "invalid": "请输入有效的查询码和邮箱。",
+    "guest": "客户",
+    "worker": "服务人员",
+    "service": "服务",
+    "status": "状态",
+    "schedule": "时间",
+    "createdAt": "创建时间",
+    "tracking": "打开预约查询",
+    "copy": "复制查询链接",
+    "copied": "查询链接已复制",
+    "prefilled": "邮件中的链接可以为您预填此页面。"
   }
 }

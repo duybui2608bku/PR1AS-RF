@@ -17,6 +17,7 @@ import { ReputationConfigKey } from "../../types/reputation/reputation-config.ty
 import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
+import { sendQuickBookingStatusEmail } from "./booking-email";
 
 export class BookingStatusService extends BookingBaseService {
   async updateBookingStatus(
@@ -89,6 +90,10 @@ export class BookingStatusService extends BookingBaseService {
       .bookingStatusUpdated(updatedBooking, status, userId)
       .catch((error) => logger.error("Booking status notification failed:", error));
 
+    void sendQuickBookingStatusEmail(updatedBooking, status).catch((error) =>
+      logger.error("Quick booking status email failed:", error)
+    );
+
     return updatedBooking;
   }
 
@@ -147,6 +152,10 @@ export class BookingStatusService extends BookingBaseService {
     void notificationEventService
       .bookingCancelled(updatedBooking, userId, cancelledBy)
       .catch((error) => logger.error("Booking cancellation notification failed:", error));
+
+    void sendQuickBookingStatusEmail(updatedBooking, BookingStatus.CANCELLED).catch(
+      (error) => logger.error("Quick booking cancellation email failed:", error)
+    );
 
     if (cancelledBy === CancelledBy.WORKER) {
       const workerIdRaw = updatedBooking.worker_id as unknown as {

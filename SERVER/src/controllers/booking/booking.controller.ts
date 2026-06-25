@@ -3,6 +3,7 @@ import { bookingService } from "../../services/booking/booking.service";
 import {
   createBookingSchema,
   createGuestBookingSchema,
+  guestBookingLookupQuerySchema,
   updateBookingStatusSchema,
   cancelBookingReasonSchema,
   updateBookingSchema,
@@ -22,6 +23,7 @@ import { PaginationRequest } from "../../middleware";
 import { RoleInfo } from "../../services/booking/booking-helpers";
 import { JWTPayload } from "../../utils/jwt";
 import { UserRole } from "../../types/auth/user.types";
+import { getLocaleFromHeader } from "../../utils/i18n";
 
 function roleInfoFromJwt(user: JWTPayload): RoleInfo {
   return {
@@ -49,8 +51,28 @@ export class BookingController {
       req.body,
       COMMON_MESSAGES.BAD_REQUEST
     );
-    const result = await bookingService.createGuestBooking(data);
+    const acceptLanguage =
+      typeof req.headers["accept-language"] === "string"
+        ? req.headers["accept-language"]
+        : undefined;
+    const result = await bookingService.createGuestBooking({
+      ...data,
+      guest_locale: data.guest_locale || getLocaleFromHeader(acceptLanguage),
+    });
     R.created(res, result, BOOKING_MESSAGES.BOOKING_CREATED, req);
+  }
+
+  async lookupGuestBooking(req: Request, res: Response): Promise<void> {
+    const query = validateWithSchema(
+      guestBookingLookupQuerySchema,
+      req.query,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await bookingService.lookupGuestBooking(
+      query.public_ref,
+      query.email
+    );
+    R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
 
   async getBookingById(req: AuthRequest, res: Response): Promise<void> {

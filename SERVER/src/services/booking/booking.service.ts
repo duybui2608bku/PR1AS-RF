@@ -16,6 +16,7 @@ class BookingService {
   createBooking = this.crud.createBooking.bind(this.crud);
   createGuestBooking = this.crud.createGuestBooking.bind(this.crud);
   getBookingById = this.crud.getBookingById.bind(this.crud);
+  lookupGuestBooking = this.crud.lookupGuestBooking.bind(this.crud);
   getBookingsByClient = this.crud.getBookingsByClient.bind(this.crud);
   getBookingsByWorker = this.crud.getBookingsByWorker.bind(this.crud);
   getMyBookings = this.crud.getMyBookings.bind(this.crud);

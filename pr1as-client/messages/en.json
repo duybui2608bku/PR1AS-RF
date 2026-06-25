@@ -1815,6 +1815,7 @@
     "successTitle": "Quick booking sent",
     "successDesc": "The worker will review your request. We also saved tracking code {code}.",
     "trackingCode": "Tracking code",
+    "lookupButton": "Open booking lookup",
     "guestBadge": "Guest",
     "guestBooking": "Guest booking",
     "searchWorker": "Search worker name or email",
@@ -1962,5 +1963,27 @@
     "viewFull": "View details",
     "dismiss6h": "Hide for 6 hours",
     "acknowledge": "Got it"
+  },
+  "BookingLookup": {
+    "title": "Booking lookup",
+    "subtitle": "Track a quick booking using your code and email.",
+    "codeLabel": "Tracking code",
+    "emailLabel": "Email",
+    "submit": "Lookup booking",
+    "reset": "Reset",
+    "loading": "Loading booking details...",
+    "empty": "Enter your tracking code and email to view the booking.",
+    "notFound": "We could not find a booking that matches those details.",
+    "invalid": "Please enter a valid code and email.",
+    "guest": "Guest",
+    "worker": "Worker",
+    "service": "Service",
+    "status": "Status",
+    "schedule": "Schedule",
+    "createdAt": "Created at",
+    "tracking": "Open booking lookup",
+    "copy": "Copy lookup link",
+    "copied": "Lookup link copied",
+    "prefilled": "The email link can prefill this page for you."
   }
 }

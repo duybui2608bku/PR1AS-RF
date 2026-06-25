@@ -9,6 +9,7 @@ import type {
   CreateBookingPayload,
   CreateGuestBookingPayload,
   CreateDisputePayload,
+  GuestBookingLookupQuery,
   UpdateBookingPayload,
   UpdateBookingStatusPayload,
 } from "@/types/booking"
@@ -111,6 +112,17 @@ export const bookingService = {
 
   getBookingById: async (id: string) => {
     const response = await api.get<ApiResponse<Booking>>(`/bookings/${id}`)
+    return response.data.data
+  },
+
+  lookupGuestBooking: async (query: GuestBookingLookupQuery) => {
+    const params = new URLSearchParams()
+    params.set("public_ref", query.public_ref)
+    params.set("email", query.email)
+
+    const response = await api.get<ApiResponse<Booking>>(
+      `/bookings/lookup?${params.toString()}`
+    )
     return response.data.data
   },
 

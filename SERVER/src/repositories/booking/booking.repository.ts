@@ -300,6 +300,17 @@ export class BookingRepository {
     return Booking.findById(id).populate(BOOKING_POPULATE);
   }
 
+  async findGuestBookingByPublicRef(
+    publicRef: string,
+    guestEmail: string
+  ): Promise<IBookingDocument | null> {
+    return Booking.findOne({
+      public_ref: publicRef.trim().toUpperCase(),
+      is_guest: true,
+      "guest_contact.email": guestEmail.trim().toLowerCase(),
+    }).populate(BOOKING_POPULATE);
+  }
+
   async findManyByIds(ids: string[]): Promise<IBookingDocument[]> {
     if (ids.length === 0) return [];
 

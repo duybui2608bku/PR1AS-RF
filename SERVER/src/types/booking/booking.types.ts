@@ -53,6 +53,7 @@ export interface IBooking {
   schedule: BookingSchedule;
   pricing: BookingPricing;
   guest_contact?: BookingGuestContact | null;
+  guest_locale?: string | null;
   is_guest?: boolean;
   public_ref?: string | null;
 
@@ -85,6 +86,7 @@ export interface CreateBookingInput {
   pricing: BookingPricing;
   client_notes?: string;
   guest_contact?: BookingGuestContact | null;
+  guest_locale?: string | null;
   is_guest?: boolean;
   public_ref?: string | null;
 }

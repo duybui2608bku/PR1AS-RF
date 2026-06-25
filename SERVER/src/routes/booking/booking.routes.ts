@@ -22,6 +22,13 @@ router.post(
   )
 );
 
+router.get(
+  "/lookup",
+  asyncHandler<Request>(
+    bookingController.lookupGuestBooking.bind(bookingController)
+  )
+);
+
 router.post(
   "/",
   authenticate,
