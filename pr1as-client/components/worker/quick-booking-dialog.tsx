@@ -137,6 +137,7 @@ type Props = {
   workerName: string
   services: WorkerServiceItem[]
   initialServiceId?: string | null
+  initialDate?: Date
 }
 
 type Step = 0 | 1 | 2 | 3
@@ -176,6 +177,7 @@ export function QuickBookingDialog({
   workerName,
   services,
   initialServiceId,
+  initialDate,
 }: Props) {
   const t = useTranslations("QuickBooking")
   const tCommon = useTranslations("Common")
@@ -283,6 +285,13 @@ export function QuickBookingDialog({
       unit: pricingOptions[0]?.unit ?? "",
     }))
   }, [pricingOptions, selectedService, state.unit])
+
+  // Pre-fill the date selected on the profile calendar when the dialog opens.
+  // Only the date is seeded; the wizard still starts at step 0.
+  React.useEffect(() => {
+    if (!open || !initialDate) return
+    setState((current) => ({ ...current, date: initialDate }))
+  }, [open, initialDate])
 
   const quantity = React.useMemo(() => {
     const parsed = Number.parseInt(state.quantity, 10)
@@ -445,9 +454,9 @@ export function QuickBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-6xl overflow-hidden border border-border/60 bg-background/95 p-0 shadow-[0_28px_90px_-30px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+      <DialogContent className="inset-0 h-full w-full max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border border-border/60 bg-background/95 p-0 shadow-[0_28px_90px_-30px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100%-2rem)] sm:max-w-6xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.10),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.02))] dark:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.10),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.85),rgba(2,6,23,0.35))]" />
-        <div className="relative p-6 md:p-8">
+        <div className="relative h-full max-h-[100dvh] overflow-y-auto p-4 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:p-6 md:p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold tracking-tight">
             {t("title")}
@@ -459,7 +468,7 @@ export function QuickBookingDialog({
 
         <div className="mt-6 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 t("stepInfo"),
                 t("stepService"),

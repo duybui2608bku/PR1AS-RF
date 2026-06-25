@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { Crown, MessageCircle, ShoppingCart } from "lucide-react"
@@ -64,10 +64,13 @@ type Props = {
   workerName: string
   services: WorkerServiceItem[]
   workerReputationScore?: number
+  selectedDate?: Date
   onQuickBook?: (serviceId: string) => void
+  /** Calendar slot rendered inside the card on mobile (below the service list). */
+  calendar?: ReactNode
 }
 
-export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, onQuickBook }: Props) {
+export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, selectedDate, onQuickBook, calendar }: Props) {
   const t = useTranslations("WorkerProfile")
   const locale = useLocale()
   const { format } = useCurrency()
@@ -225,6 +228,8 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
           </RadioGroup>
         )}
 
+        {calendar ? <div className="lg:hidden">{calendar}</div> : null}
+
         {isGuestViewer ? (
           <Button
             type="button"
@@ -269,6 +274,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
         workerName={workerName}
         service={selectedService}
         serviceName={selectedServiceName}
+        initialDate={selectedDate}
       />
 
       <Dialog open={upgradePlanOpen} onOpenChange={setUpgradePlanOpen}>

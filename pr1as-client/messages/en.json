@@ -990,7 +990,10 @@
       "upgradeConfirm": "Upgrade plan"
     },
     "calendar": {
-      "loading": "Loading calendar..."
+      "loading": "Loading calendar...",
+      "legendAvailable": "Available",
+      "legendUnavailable": "Unavailable",
+      "legendOutOfRange": "Outside booking window"
     },
     "suggestions": {
       "title": "Similar workers",

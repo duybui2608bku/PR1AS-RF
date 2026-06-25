@@ -40,7 +40,7 @@ function BottomSheetOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        "fixed inset-0 z-[55] bg-black/50",
+        "fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm",
         "data-[state=open]:animate-in data-[state=open]:fade-in-0",
         "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
         className,

@@ -990,7 +990,10 @@
       "upgradeConfirm": "升级套餐"
     },
     "calendar": {
-      "loading": "正在加载日程…"
+      "loading": "正在加载日程…",
+      "legendAvailable": "可预约",
+      "legendUnavailable": "不可预约",
+      "legendOutOfRange": "超出预约范围"
     },
     "suggestions": {
       "title": "相似工作者",
