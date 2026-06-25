@@ -990,7 +990,10 @@
       "upgradeConfirm": "Nâng cấp gói"
     },
     "calendar": {
-      "loading": "Đang tải lịch..."
+      "loading": "Đang tải lịch...",
+      "legendAvailable": "Còn trống",
+      "legendUnavailable": "Không nhận",
+      "legendOutOfRange": "Ngoài khoảng đặt lịch"
     },
     "suggestions": {
       "title": "Worker tương tự",

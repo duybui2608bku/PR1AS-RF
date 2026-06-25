@@ -82,6 +82,7 @@ export default function WorkerProfilePage({
   const [quickBookServiceId, setQuickBookServiceId] = useState<string | null>(
     null
   )
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const evidenceEditor = useImageEditorQueue()
 
   const favoriteIdsQuery = useFavoriteWorkerIds()
@@ -248,14 +249,30 @@ export default function WorkerProfilePage({
                       workerReputationScore={
                         data.user.meta_data?.reputation_score
                       }
+                      selectedDate={selectedDate}
                       onQuickBook={(serviceId) => {
                         setQuickBookServiceId(serviceId)
                         setQuickBookOpen(true)
                       }}
+                      calendar={
+                        <ErrorBoundary resetKeys={[data.user.id]}>
+                          <WorkerCalendar
+                            workerId={data.user.id}
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                          />
+                        </ErrorBoundary>
+                      }
                     />
-                    <ErrorBoundary resetKeys={[data.user.id]}>
-                      <WorkerCalendar workerId={data.user.id} />
-                    </ErrorBoundary>
+                    <div className="hidden lg:block">
+                      <ErrorBoundary resetKeys={[data.user.id]}>
+                        <WorkerCalendar
+                          workerId={data.user.id}
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                        />
+                      </ErrorBoundary>
+                    </div>
                   </aside>
                 </div>
               </div>
@@ -281,6 +298,7 @@ export default function WorkerProfilePage({
           workerName={data.user.full_name ?? t("header.notUpdated")}
           services={data.services ?? []}
           initialServiceId={quickBookServiceId}
+          initialDate={selectedDate}
         />
       ) : null}
       <Dialog open={reportOpen} onOpenChange={handleReportDialogOpenChange}>

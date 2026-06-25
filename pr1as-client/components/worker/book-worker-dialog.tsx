@@ -1,7 +1,7 @@
 "use client"
 
 import { CalendarIcon, Loader2 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
@@ -105,6 +105,7 @@ type Props = {
   workerName: string
   service: WorkerServiceItem | null
   serviceName: string
+  initialDate?: Date
 }
 
 export function BookWorkerDialog({
@@ -114,6 +115,7 @@ export function BookWorkerDialog({
   workerName,
   service,
   serviceName,
+  initialDate,
 }: Props) {
   const createBooking = useCreateBooking()
   const t = useTranslations("WorkerProfile")
@@ -139,6 +141,14 @@ export function BookWorkerDialog({
     startOfMonth(new Date()),
   )
   const [bookingAnchorMs, setBookingAnchorMs] = useState<number | null>(null)
+
+  // Pre-fill the date selected on the profile calendar when the dialog opens.
+  useEffect(() => {
+    if (!open || !initialDate) return
+    setDate(initialDate)
+    setCalendarMonth(startOfMonth(initialDate))
+    setNow(Date.now())
+  }, [open, initialDate])
 
   const unit =
     selectedUnit && availableUnits.includes(selectedUnit)
