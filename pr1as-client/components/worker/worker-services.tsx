@@ -238,7 +238,7 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
             onClick={() => onQuickBook?.(selectedId)}
           >
             <ShoppingCart className="size-4" />
-            {t("services.book")}
+            {t("services.quickBook")}
           </Button>
         ) : (
           <Button

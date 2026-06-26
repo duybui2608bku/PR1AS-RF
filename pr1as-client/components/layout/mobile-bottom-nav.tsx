@@ -1,6 +1,6 @@
 "use client"
 
-import { CalendarCheck2, FileText, Handshake, LogIn, MessageCircle, User } from "lucide-react"
+import { CalendarCheck2, FileText, Handshake, MessageCircle, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -11,7 +11,7 @@ import { MobileMoreSheet } from "@/components/layout/mobile-more-sheet"
 import { Button } from "@/components/ui/button"
 import { useVisualViewportBottom } from "@/lib/hooks/use-visual-viewport"
 import { getRoleRoute } from "@/lib/navigation/role-routes"
-import { useAuthStore, useIsSessionLoaded } from "@/lib/store/auth-store"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { useUIStore } from "@/lib/store/ui-store"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { cn } from "@/lib/utils"
@@ -21,7 +21,6 @@ export function MobileBottomNav() {
   const t = useTranslations("Nav")
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const isSessionLoaded = useIsSessionLoaded()
   const hideBottomNav = useUIStore((s) => s.hideBottomNav)
   const [moreOpen, setMoreOpen] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
@@ -69,18 +68,12 @@ export function MobileBottomNav() {
     return null
   }
 
-  // Bottom nav tối giản cho guest user (chưa đăng nhập)
+  // Bottom nav tối giản cho guest user (chưa đăng nhập) — nút đăng nhập đã chuyển lên header
   if (!isAuthenticated) {
-    const guestTabs = isSessionLoaded
-      ? [
-          { href: "/services", label: t("services"), icon: Handshake, isActive: pathname === "/services" || pathname.startsWith("/services/") },
-          { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
-          { href: "/login", label: t("login"), icon: LogIn, isActive: pathname === "/login" },
-        ] as const
-      : [
-          { href: "/services", label: t("services"), icon: Handshake, isActive: pathname === "/services" || pathname.startsWith("/services/") },
-          { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
-        ] as const
+    const guestTabs = [
+      { href: "/services", label: t("services"), icon: Handshake, isActive: pathname === "/services" || pathname.startsWith("/services/") },
+      { href: "/posts", label: t("posts"), icon: FileText, isActive: pathname === "/posts" || pathname.startsWith("/posts/") },
+    ] as const
 
     return (
       <nav
