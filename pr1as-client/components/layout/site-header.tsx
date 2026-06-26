@@ -441,6 +441,12 @@ export function SiteHeader() {
           <span>{switchRoleLabel}</span>
         </Button>
       ) : null}
+      {/* Mobile: nút đăng ký nhanh khi chưa đăng nhập, đặt trước thanh setting */}
+      {!isAuthenticated && isSessionLoaded ? (
+        <Button size="sm" asChild className="md:hidden">
+          <Link href="/register">{t("registerNow")}</Link>
+        </Button>
+      ) : null}
       {/* Desktop: preferences popover behind a single icon-bar (hamburger) button */}
       <div className="hidden md:block">
         <Popover>
