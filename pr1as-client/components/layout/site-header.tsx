@@ -441,11 +441,25 @@ export function SiteHeader() {
           <span>{switchRoleLabel}</span>
         </Button>
       ) : null}
-      {/* Mobile: nút đăng ký nhanh khi chưa đăng nhập, đặt trước thanh setting */}
+      {/* Mobile: cụm đăng nhập + đăng ký khi chưa đăng nhập, gói trong 1 viên pill */}
       {!isAuthenticated && isSessionLoaded ? (
-        <Button size="sm" asChild className="md:hidden">
-          <Link href="/register">{t("registerNow")}</Link>
-        </Button>
+        <div className="flex items-center gap-0.5 rounded-full border border-border bg-muted/40 p-1 md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLoginClick}
+            className="h-8 rounded-full px-3.5 text-sm font-medium text-muted-foreground hover:bg-background hover:text-foreground"
+          >
+            {t("login")}
+          </Button>
+          <Button
+            size="sm"
+            asChild
+            className="h-8 rounded-full px-4 text-sm font-semibold shadow-sm transition-shadow hover:shadow-md"
+          >
+            <Link href="/register">{t("register")}</Link>
+          </Button>
+        </div>
       ) : null}
       {/* Desktop: preferences popover behind a single icon-bar (hamburger) button */}
       <div className="hidden md:block">

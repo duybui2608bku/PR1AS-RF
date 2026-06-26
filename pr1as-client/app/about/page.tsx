@@ -209,7 +209,7 @@ export default async function AboutPage() {
             </p>
             <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/posts">
+                <Link href="/services">
                   {t("cta.primary")}
                   <ArrowRightIcon className="size-4" />
                 </Link>

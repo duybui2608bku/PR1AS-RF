@@ -977,6 +977,7 @@
       "priceFrom": "Giá từ {value}/{unit}",
       "empty": "Worker chưa cung cấp dịch vụ nào",
       "book": "Thuê ngay",
+      "quickBook": "Thuê nhanh",
       "bookLowReputation": "Không thể đặt (điểm uy tín thấp)",
       "message": "Nhắn tin",
       "checking": "Đang kiểm tra...",
