@@ -151,14 +151,30 @@ See [worker.md](./worker.md).
 Discovery excludes inactive users, inactive services, moderation-restricted
 workers, and profile-blocked workers where applicable.
 
+## Worker Questions - `/api/worker-questions`
+
+See [worker-question.md](./worker-question.md).
+
+| Method | Path | Auth | CSRF | Meaning |
+| --- | --- | --- | --- | --- |
+| `POST` | `/` | Optional | Yes | Ask a worker (guest or registered); rate-limited (10/hour). |
+| `GET` | `/worker/:workerId` | Optional | No | List a worker's questions, paginated and masked per viewer. |
+| `POST` | `/:id/answer` | Worker | Yes | Worker answers (or edits the answer to) their own question. |
+
+Private questions are masked (`question`/`answer` -> `***`) for viewers who are
+neither the worker nor the original asker. The first answer notifies the asker
+(registered users via in-app + email; guests via direct email).
+
 ## Bookings - `/api/bookings`
 
 See [booking.md](./booking.md).
 
 | Method | Path | Auth | Meaning |
 | --- | --- | --- | --- |
+| `POST` | `/quickbook` | Public | Create a guest booking (CSRF + rate-limited). |
+| `GET` | `/lookup` | Public | Look up a guest booking by `public_ref` + `email`. |
 | `POST` | `/` | User | Create booking. |
-| `GET` | `/my` | User | List my bookings. |
+| `GET` | `/my` | User | List my bookings (accepts `is_guest` filter). |
 | `GET` | `/admin/analytics` | Admin | Booking analytics. |
 | `GET` | `/:id` | User | Booking detail. |
 | `PATCH` | `/:id/status` | User | Status transition action. |
@@ -182,6 +198,9 @@ expired
 ```
 
 Booking does not escrow or debit wallet funds.
+
+Guest (quick) bookings use `POST /quickbook` (public, no `client_id`) and are
+tracked via `GET /lookup` with the `public_ref` code plus the guest email.
 
 ## Reviews - `/api/reviews`
 

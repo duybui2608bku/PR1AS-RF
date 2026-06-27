@@ -11,6 +11,10 @@ PR1AS is a full-stack platform combining a worker/companionship services marketp
 
 `memorybank/` contains detailed, per-domain documentation. Start with [memorybank/project-overview.md](memorybank/project-overview.md) and the relevant domain file (e.g. `booking.md`, `wallet.md`, `chat.md`) before deep work. Note: the memory bank can lag the code — verify specific claims against source.
 
+## Session log
+
+[SESSIONS.md](SESSIONS.md) is a cross-session work log. **At the start of a session, read it** (newest entry on top) to learn what previous sessions changed, decided, and left unfinished. **After making changes, append a new entry** to the top following the template in that file. Keep entries short — what changed and why, plus any leftover work; do not duplicate what `git log` already records.
+
 ## Commands
 
 ### Backend (`SERVER/`)

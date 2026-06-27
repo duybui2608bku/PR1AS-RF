@@ -54,6 +54,7 @@ Categories:
 - `admin`
 - `system`
 - `reputation`
+- `question`
 
 Priorities:
 
@@ -98,6 +99,8 @@ Core types:
 | `moderation.post_deleted` | Admin deleted post. |
 | `moderation.report_resolved` | Worker report resolved notification. |
 | `moderation.restriction_applied` | Admin applied feature restriction. |
+| `worker_question.created` | Someone asked a worker a question (category `question`). |
+| `worker_question.answered` | Worker answered a question; first answer only (registered asker in-app + email, guest via direct email). |
 
 ## Notification Model
 

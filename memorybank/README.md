@@ -45,9 +45,13 @@ Important current facts:
   worker service provisioning, status changes, and editable account rules.
 - [worker.md](./worker.md): worker profile, services, pricing tiers, discovery,
   favorites, blackouts, schedule, and frontend surfaces.
-- [booking.md](./booking.md): create flow, advance booking rules, status machine,
-  cancellation, disputes, complaint chat, reviews, notifications, and known
-  scheduling nuances.
+- [service-catalog-v2.md](./service-catalog-v2.md): the VIRTUAL/PHYSICAL service
+  catalog, its 19 seeded services, and the boot-time migration.
+- [worker-question.md](./worker-question.md): worker profile Q&A, guest/registered
+  asking, public/private masking, worker answers, and answer notifications.
+- [booking.md](./booking.md): create flow, guest/quick booking and lookup,
+  advance booking rules, status machine, cancellation, disputes, complaint chat,
+  reviews, notifications, and known scheduling nuances.
 - [pricing.md](./pricing.md): database-backed pricing packages, worker
   subscription state, direct wallet upgrade, SePay QR purchase, expiration, and
   admin package management.

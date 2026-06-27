@@ -32,7 +32,11 @@ Core fields:
 
 | Field | Meaning |
 | --- | --- |
-| `client_id` | User who created the booking. |
+| `client_id` | User who created the booking. `null` for guest (quick) bookings. |
+| `is_guest` | `true` for a guest/quick booking created without an account. Default `false`. |
+| `public_ref` | Public tracking code for guest bookings, format `QB-XXXXXXXX` (8 hex chars). Unique sparse index. `null` for normal bookings. |
+| `guest_contact` | Guest `{ name, email, phone }` for quick bookings, else `null`. |
+| `guest_locale` | Guest's preferred locale for emails (`vi`/`en`/`ko`/`zh`), else `null`. |
 | `worker_id` | Worker being booked. |
 | `worker_service_id` | Specific active `WorkerService` selected by the client. |
 | `service_id` | Catalog service id. |
@@ -208,6 +212,115 @@ Creation side effects:
 - New booking starts as `pending`.
 - Booking-created notification is queued asynchronously.
 - No wallet operation is performed.
+
+## Guest (Quick) Booking
+
+Guests can reserve a worker without creating an account ("quick book"), then
+look the booking up later with a tracking code. This reuses the same `booking`
+collection and status machine; the difference is identity (no `client_id`) and
+an email-based tracking flow.
+
+Routes:
+
+| Method | Path | Auth | CSRF | Rate limit | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `POST` | `/api/bookings/quickbook` | Public | Yes | `guestBookingCreateLimiter` (8/hour) | Create a guest booking. |
+| `GET` | `/api/bookings/lookup` | Public | No | - | Look up a guest booking by code + email. |
+
+These two routes are declared **before** the authenticated booking routes in
+`booking.routes.ts`, so `GET /lookup` is matched ahead of the `GET /:id`
+authenticated route.
+
+### Create flow
+
+Path: `routes/booking -> csrfProtection -> guestBookingCreateLimiter ->
+BookingController.createGuestBooking -> BookingCrudService.createGuestBooking ->
+bookingRepository.createIfNoConflict`.
+
+`createGuestBookingSchema` payload:
+
+```ts
+{
+  guest_contact: {
+    name: string,   // trimmed, 1..120
+    email: string,  // email, max 255
+    phone?: string, // trimmed, max 30, default ""
+  },
+  guest_locale?: "vi" | "en" | "ko" | "zh",
+  worker_id: ObjectId,
+  worker_service_id: ObjectId,
+  service_id: ObjectId,
+  service_code: string,
+  schedule: { start_time, end_time },  // same scheduleSchema as normal create
+  pricing: { unit, quantity },
+  client_notes?: string,               // max 1000
+}
+```
+
+Behaviour and differences from the authenticated create:
+
+- Same advance-window, schedule-conflict, worker-eligibility, and active
+  `WORKER_ACTIVITY` moderation checks apply.
+- There is **no client reputation check** and **no self-booking check** (there
+  is no client account).
+- The record is written with `client_id: null`, `is_guest: true`, a generated
+  `public_ref` (`QB-` + 8 uppercase hex), normalized `guest_contact` (trimmed
+  name, lowercased email, `phone || null`), and `guest_locale`.
+- `guest_locale` falls back to the request `Accept-Language` header and then to
+  `"en"` when not provided.
+- Side effects: emits the standard `bookingCreated` notification to the worker,
+  and calls `sendQuickBookingCreatedEmails` (see below). No wallet operation.
+
+### Tracking emails
+
+`SERVER/src/services/booking/booking-email.ts` sends localized guest emails
+(supported email locales: `en`, `vi`, `ko`, `zh`):
+
+- `sendQuickBookingCreatedEmails` (on create): always emails the **guest** a
+  confirmation with a tracking link. It additionally emails the **worker** a
+  quick-booking request, but only as a fallback when the worker's `EMAIL`
+  notification channel is disabled - otherwise the normal `bookingCreated`
+  notification already covers email and this avoids a duplicate.
+- `sendQuickBookingStatusEmail` (on status change and on cancel, from
+  `booking-status.service.ts`): emails the guest when their booking status
+  changes. It is a no-op for non-guest bookings and for the `pending` status.
+
+Tracking link format: `${frontendUrl}/booking-lookup?code=<public_ref>&email=<guest_email>`.
+
+### Lookup flow
+
+`GET /api/bookings/lookup` validates `guestBookingLookupQuerySchema`
+(`public_ref` 1..64, `email`) and calls
+`bookingRepository.findGuestBookingByPublicRef(public_ref, email)`. **Both** the
+code and the email must match the stored guest booking; otherwise it returns
+`404 BOOKING_NOT_FOUND`. No authentication is required.
+
+Guest bookings cannot be reached through `GET /:id` (that route requires auth
+and an owner match, and guests have `client_id: null`). The lookup endpoint is
+the only read path for a guest.
+
+### Worker-side handling
+
+Workers see guest bookings in their normal list via `GET /api/bookings/my` and
+act on them through the same status routes. `getBookingsQuerySchema` accepts an
+`is_guest` boolean filter so the worker UI can isolate guest bookings.
+
+### Frontend surfaces
+
+- `pr1as-client/app/quick-booking/page.tsx` + `quick-booking-wizard.tsx`: the
+  standalone guest booking wizard (info -> service/date/time -> review ->
+  success), guest-only, no auth required; shows the tracking code and links to
+  `/booking-lookup`.
+- `pr1as-client/components/worker/quick-booking-dialog.tsx`: the same flow as a
+  modal launched from a worker profile, with worker/service pre-selected.
+- `pr1as-client/app/booking-lookup/page.tsx` + `booking-lookup-client.tsx`: the
+  guest tracking page; prefills `code`/`email` from URL params.
+- Service: `bookingService.createGuestBooking` (POST `/bookings/quickbook`) and
+  `bookingService.lookupGuestBooking` (GET `/bookings/lookup`) in
+  `services/booking.service.ts`. Hook: `useCreateGuestBooking` in
+  `lib/hooks/use-bookings.ts`.
+- i18n namespaces: `QuickBooking.*` and `BookingLookup.*` in
+  `messages/{en,vi,zh}.json`.
 
 ## Frontend Booking Flow
 
@@ -606,8 +719,10 @@ Routes under `/api/bookings`:
 
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
+| `POST` | `/quickbook` | Public | Create a guest booking; CSRF + rate-limited (8/hour). |
+| `GET` | `/lookup` | Public | Look up a guest booking by `public_ref` + `email`. |
 | `POST` | `/` | Authenticated | Create booking; rate-limited. |
-| `GET` | `/my` | Authenticated | List current user's bookings, role-aware. |
+| `GET` | `/my` | Authenticated | List current user's bookings, role-aware. Accepts `is_guest` filter. |
 | `GET` | `/admin/analytics` | Admin | Booking analytics. |
 | `GET` | `/:id` | Authenticated | Booking detail for participant/admin. |
 | `PATCH` | `/:id/status` | Authenticated | Status transition. |
@@ -623,6 +738,8 @@ Routes under `/api/bookings`:
   role?: "client" | "worker",
   status?: BookingStatus,
   service_code?: string,
+  search?: string,           // max 200 chars
+  is_guest?: boolean,        // filter guest vs account bookings
   start_date?: Date,
   end_date?: Date,
   page?: number,

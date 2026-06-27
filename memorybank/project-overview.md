@@ -143,8 +143,9 @@ See [auth.md](./auth.md) for detailed flows.
 | --- | --- |
 | Auth/user | `user` |
 | Worker | `worker_service`, worker profile embedded on user |
+| Worker Q&A | `worker_question` |
 | Service catalog | service collection seeded at boot |
-| Booking | `booking` |
+| Booking | `booking` (includes guest/quick bookings) |
 | Review | `review` |
 | Wallet | `wallet`, `wallet_transaction` |
 | Pricing | `pricing_package`, `user_subscription_history` |
@@ -209,7 +210,8 @@ See [worker.md](./worker.md) and [multi-currency.md](./multi-currency.md).
 7. Completed bookings can receive reviews.
 
 Booking is reservation-only. It does not escrow, debit, release, or refund wallet
-money. See [booking.md](./booking.md).
+money. Guests can also "quick book" a worker without an account and track the
+reservation by code + email. See [booking.md](./booking.md).
 
 ### Pricing and Wallet
 
@@ -245,6 +247,7 @@ All API routes are mounted under `/api`.
 | `/services` | Read-only service catalog. |
 | `/worker/services` | Worker service offerings and pricing tiers. |
 | `/workers` | Worker discovery, favorites, blackouts, schedule. |
+| `/worker-questions` | Worker profile Q&A (ask, list, worker answer). |
 | `/chat` | Direct and group/complaint chat. |
 | `/wallet` | User wallet and SePay deposit webhook. |
 | `/admin/wallet` | Admin wallet reporting. |

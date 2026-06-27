@@ -402,6 +402,7 @@ Worker schedule and bookings:
 | Review | Worker detail and suggestions use review stats/reviews. |
 | Reputation | Discovery pushes low-reputation workers back. |
 | Boost | Discovery boost tier sorting and rotation. |
+| Worker Q&A | Profile page hosts the "Ask the worker" thread. See [worker-question.md](./worker-question.md). |
 | Moderation | Profile blocks and `WORKER_ACTIVITY` restrictions hide/lock workers. |
 | Multi-currency | Worker pricing stores `currency`, `exchange_rate`, `price_vnd`. |
 
