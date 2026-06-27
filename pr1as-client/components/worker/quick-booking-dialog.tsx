@@ -167,7 +167,7 @@ const initialState: FormState = {
   unit: "",
   quantity: "1",
   date: undefined,
-  time: "09:00",
+  time: "",
 }
 
 export function QuickBookingDialog({
@@ -299,7 +299,7 @@ export function QuickBookingDialog({
   }, [state.quantity])
 
   const startDateTime = React.useMemo(() => {
-    if (!state.date) return null
+    if (!state.date || !state.time) return null
     const [hours, minutes] = state.time.split(":").map((value) => Number.parseInt(value, 10))
     const value = new Date(state.date)
     value.setHours(hours, minutes, 0, 0)
