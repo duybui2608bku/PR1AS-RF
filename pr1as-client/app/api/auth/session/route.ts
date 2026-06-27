@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 
+import { getJwtSecret } from "@/lib/auth/jwt-secret"
+
 export const TOKEN_COOKIE_NAME = "token"
 
 // GET: check server-side session — đọc httpOnly cookie, gọi backend server-to-server.
@@ -9,10 +11,10 @@ export async function GET(req: NextRequest) {
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
   if (!token) return NextResponse.json({ ok: false })
 
+  // getJwtSecret() before the try: a prod misconfig throws → 500, instead of
+  // being masked as ok:false (which would silently kill session restore).
+  const secret = getJwtSecret()
   try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production",
-    )
     await jwtVerify(token, secret)
   } catch {
     return NextResponse.json({ ok: false })
@@ -39,9 +41,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Token không hợp lệ." }, { status: 400 })
   }
 
+  const secret = getJwtSecret()
   try {
-    const jwtSecret = process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production"
-    const secret = new TextEncoder().encode(jwtSecret)
     await jwtVerify(token, secret)
 
     const res = NextResponse.json({ ok: true })
@@ -84,10 +85,8 @@ export async function DELETE(req: NextRequest) {
   if (!force) {
     const currentToken = req.cookies.get(TOKEN_COOKIE_NAME)?.value
     if (currentToken) {
+      const secret = getJwtSecret()
       try {
-        const secret = new TextEncoder().encode(
-          process.env.JWT_SECRET ?? "pr1as-dev-only-not-for-production",
-        )
         await jwtVerify(currentToken, secret)
         return NextResponse.json({ ok: true, skipped: true })
       } catch {

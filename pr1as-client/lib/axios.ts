@@ -130,20 +130,16 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       const state = useAuthStore.getState()
-      const refreshToken = state.refreshToken
+      const storeRefreshToken = state.refreshToken
 
-      // If we don't have a refresh token, we cannot refresh.
-      // Only force-logout if the user was previously authenticated — a plain 401
-      // from a public endpoint (e.g. /auth/login with wrong credentials) should
-      // be passed through so the calling component can show an error message.
-      if (!refreshToken) {
-        if (typeof window !== "undefined" && state.isAuthenticated && !state.isLoggingOut) {
-          state.setLoggingOut(true)
-          state.clearAuth()
-          getQueryClient().clear()
-          await clearSessionCookie()
-          window.location.replace("/login")
-        }
+      // A 401 with no session at all is a genuine public-endpoint failure
+      // (e.g. /auth/login with wrong credentials) — pass it through so the
+      // caller can show the error. We attempt a refresh whenever the user is
+      // authenticated, EVEN if the store has no refresh token: tabs restored
+      // from the httpOnly cookie (SessionRestoreProvider) hold a token but no
+      // refresh token, and must be able to refresh via the backend's
+      // refreshToken cookie instead of being force-logged-out.
+      if (!storeRefreshToken && !state.isAuthenticated) {
         const apiError = toApiError(error)
         return Promise.reject(apiError ?? error)
       }
@@ -168,22 +164,24 @@ api.interceptors.response.use(
 
       try {
         const csrfToken = await ensureCsrfToken()
-        // Call backend API directly to refresh tokens
-        const response = await axios.post(`${apiBaseURL}/auth/refresh-token`, {
-          refreshToken,
-        }, {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-            "Accept-Language": state.user?.meta_data?.locale ?? "en",
-            ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
-          }
-        })
+        // Call backend API directly to refresh tokens. When the store has no
+        // refresh token (restored-session tab), send an empty body and rely on
+        // the httpOnly refreshToken cookie — the backend reads cookie ?? body.
+        const response = await axios.post(`${apiBaseURL}/auth/refresh-token`,
+          storeRefreshToken ? { refreshToken: storeRefreshToken } : {},
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+              "Accept-Language": state.user?.meta_data?.locale ?? "en",
+              ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
+            }
+          })
 
         const { success, data } = response.data
         if (success && data && data.token) {
           const newToken = data.token
-          const newRefreshToken = data.refreshToken ?? refreshToken
+          const newRefreshToken = data.refreshToken ?? storeRefreshToken
 
           // 1. Set the httpOnly session cookie TRƯỚC khi sync store —
           // middleware dựa hoàn toàn vào cookie. Nếu set fail (đã retry

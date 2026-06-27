@@ -13,6 +13,13 @@ import routes from "./routes";
 export const createApp = (): express.Application => {
   const app = express();
 
+  // Production runs behind a TLS-terminating reverse proxy / CDN (cookies use
+  // `sameSite: none; secure: true` and the Next app forwards `x-forwarded-for`).
+  // Without this, `req.ip` resolves to the proxy address for every request, so
+  // all IP-keyed rate limiters collapse into one bucket (5 bad logins lock out
+  // everyone) and audit logs record the proxy IP. Trust exactly one hop.
+  app.set("trust proxy", config.trustProxy);
+
   app.use(
     helmet({
       contentSecurityPolicy: config.security.csp.enabled
@@ -82,4 +89,3 @@ export const createApp = (): express.Application => {
 
   return app;
 };
-

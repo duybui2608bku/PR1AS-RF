@@ -5,6 +5,7 @@ import {
   ACTIVE_ROLE_COOKIE_NAME,
   TOKEN_COOKIE_NAME,
 } from "@/lib/auth/auth-cookie"
+import { getJwtSecret } from "@/lib/auth/jwt-secret"
 
 const PROTECTED_PREFIXES = [
   "/client",
@@ -31,12 +32,11 @@ const MAINTENANCE_BYPASS_PREFIXES = [
 
 // Signature and Expiration Verification at Next.js Edge Layer using jose
 async function verifyAndDecodeJwt(token: string): Promise<Record<string, unknown> | null> {
+  // Resolve the secret OUTSIDE the try: a missing secret in production throws
+  // and bubbles up to a 500, making the misconfiguration loud instead of
+  // silently failing every verification and looping users back to /login.
+  const secret = getJwtSecret()
   try {
-    const jwtSecret = process.env.JWT_SECRET
-    if (!jwtSecret && process.env.NODE_ENV === "production") {
-      console.error("[middleware] CRITICAL: JWT_SECRET env var is not set in production. All token verifications will fail.")
-    }
-    const secret = new TextEncoder().encode(jwtSecret ?? "pr1as-dev-only-not-for-production")
     const { payload } = await jwtVerify(token, secret)
     return payload as Record<string, unknown>
   } catch {

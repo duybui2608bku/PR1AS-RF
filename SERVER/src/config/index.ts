@@ -38,12 +38,40 @@ if (
   throw new Error("JWT secrets are not configured for production environment");
 }
 
+// Verification / password-reset emails embed links to the frontend; if this is
+// wrong (or defaults to the API host) every email link is broken. Fail closed
+// in production rather than silently shipping bad links.
+const frontendUrl = process.env.FRONTEND_URL;
+if (nodeEnv === "production" && !frontendUrl) {
+  throw new Error(
+    "FRONTEND_URL must be configured in production. It is used to build email verification and password-reset links."
+  );
+}
+
+// `trust proxy` setting passed to Express. Accepts a hop count (e.g. "1") or a
+// boolean ("true"/"false"). Defaults: production trusts one proxy hop; dev runs
+// with no proxy so it stays false (keeps `req.ip` honest and avoids spurious
+// express-rate-limit X-Forwarded-For warnings).
+const parseTrustProxy = (): number | boolean => {
+  const raw = process.env.TRUST_PROXY;
+  if (raw === undefined || raw === "") {
+    return nodeEnv === "production" ? 1 : false;
+  }
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  const hops = parseInt(raw, 10);
+  return Number.isNaN(hops) ? nodeEnv === "production" : hops;
+};
+
 export const config = {
   port: parseInt(process.env.PORT || "3000", 10),
   emailAccount: process.env.EMAIL_ACCOUNT || "no-reply@example.com",
   googleAppPassword:
     process.env.GOGGLE_APP_PASSWORD || "your-google-app-password",
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+  // Dev default points at the Next client (3001), not the API (3000), so email
+  // links open in the app during local testing.
+  frontendUrl: frontendUrl || "http://localhost:3001",
+  trustProxy: parseTrustProxy(),
   nodeEnv,
   corsOrigin: getCorsOrigin(),
   corsMethods: process.env.CORS_METHODS?.split(",") || [

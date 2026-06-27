@@ -37,6 +37,46 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-06-28 — Rà soát & vá luồng AUTH cho production
+
+**Mục tiêu**: Kiểm tra toàn bộ luồng AUTH client + server, rồi fix các vấn đề
+chặn production (#1–#4 trong báo cáo rà soát).
+
+**Đã làm**:
+- **#1 trust proxy**: thêm `app.set("trust proxy", config.trustProxy)` trong
+  `createApp()`. Trước đó thiếu hoàn toàn → sau reverse proxy/CDN, `req.ip` là IP
+  proxy cho mọi request → các rate limiter keyed-IP gộp 1 bucket (5 login sai
+  khoá toàn hệ thống). Thêm `config.trustProxy` (env `TRUST_PROXY`, mặc định:
+  prod=1, dev=false).
+- **#2 JWT_SECRET coupling (Next)**: tạo `lib/auth/jwt-secret.ts#getJwtSecret()`
+  — fail-hard (throw → 500) khi prod thiếu `JWT_SECRET` thay vì fallback secret
+  dev (vốn khiến mọi verify fail → redirect-loop /login âm thầm). Dùng trong
+  `middleware.ts` và `app/api/auth/session/route.ts` (gọi NGOÀI try để lỗi nổi
+  lên 500). Lưu ý vận hành: `JWT_SECRET` phải set ở CẢ hai app, cùng giá trị.
+- **#3 refresh cho tab khôi phục session**: `lib/axios.ts` interceptor 401 giờ
+  thử refresh qua cookie httpOnly khi store thiếu `refreshToken` nhưng vẫn
+  `isAuthenticated` (tab mở từ SessionRestoreProvider). Trước đó nó force-logout
+  → broadcast → cascade logout mọi tab. Backend đã đọc `cookie ?? body`.
+- **#4 FRONTEND_URL**: fail-hard ở prod khi thiếu; sửa default dev `3000`→`3001`
+  (đúng cổng client) để link verify/reset email mở đúng app.
+
+**File chính**: `SERVER/src/app.ts`, `SERVER/src/config/index.ts`,
+`pr1as-client/lib/auth/jwt-secret.ts` (mới), `pr1as-client/middleware.ts`,
+`pr1as-client/app/api/auth/session/route.ts`, `pr1as-client/lib/axios.ts`.
+
+**Quyết định / ghi chú**:
+- Backend prettier dùng `endOfLine: crlf`, frontend dùng `lf`. Edit tool ghi LF
+  → phải chạy `prettier --write` lại cho file backend (app.ts) để qua eslint.
+- Frontend KHÔNG gate prettier trong eslint (file gốc vốn "dirty") → chỉ giữ
+  changed lines sạch, không reformat cả file.
+- Cả hai app: `tsc --noEmit` pass; eslint trên các file đã sửa pass.
+
+**Còn lại**: Các mục 🟡 trong báo cáo (lockout không reset sau window; token
+trong sessionStorage; làm rõ proxy `[...path]` vs axios trực tiếp) chưa xử lý —
+đều là hardening, không chặn production. Chưa commit.
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-06-27 — Cập nhật memory bank: worker-question + guest booking
 
 **Mục tiêu**: Đọc memory bank để hiểu mã nguồn, rồi bổ sung các phần còn thiếu.
