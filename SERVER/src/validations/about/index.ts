@@ -1,0 +1,1 @@
+export * from "./about.validation";

@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   CreditCard,
   Gem,
+  Info,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -29,7 +30,6 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CurrencyOptions } from "@/components/layout/currency-switcher"
 import { Separator } from "@/components/ui/separator"
 import {
   Sidebar,
@@ -125,6 +125,11 @@ const adminNavGroups = [
         href: "/dashboard/settings",
         label: "Cài đặt",
         icon: Settings,
+      },
+      {
+        href: "/dashboard/about",
+        label: "Trang giới thiệu",
+        icon: Info,
       },
       {
         href: "/dashboard/docs",
@@ -333,7 +338,10 @@ function AdminSidebar({
 
         <SidebarContent className="space-y-4">
           {adminNavGroups.map((group, groupIdx) => (
-            <SidebarGroup key={group.title} className={cn(groupIdx > 0 && "mt-2")}>
+            <SidebarGroup
+              key={group.title}
+              className={cn(groupIdx > 0 && "mt-2")}
+            >
               {!collapsed && (
                 <SidebarGroupLabel className="px-3 py-1 text-[10px] font-bold tracking-wider text-muted-foreground/50 uppercase select-none">
                   {group.title}
@@ -350,13 +358,13 @@ function AdminSidebar({
                       asChild
                       variant="ghost"
                       className={cn(
-                        "h-9 w-full justify-start rounded-lg px-3 py-2 text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all duration-150 relative",
-                        collapsed && "md:size-9 md:justify-center md:px-0 md:py-0",
-                        active && (
-                          collapsed
-                            ? "bg-primary/[0.06] text-primary font-semibold shadow-xs"
-                            : "bg-primary/[0.04] text-primary border-l-2 border-primary rounded-l-none pl-2.5 font-semibold shadow-2xs"
-                        )
+                        "relative h-9 w-full justify-start rounded-lg px-3 py-2 text-left transition-all duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        collapsed &&
+                          "md:size-9 md:justify-center md:px-0 md:py-0",
+                        active &&
+                          (collapsed
+                            ? "bg-primary/[0.06] font-semibold text-primary shadow-xs"
+                            : "rounded-l-none border-l-2 border-primary bg-primary/[0.04] pl-2.5 font-semibold text-primary shadow-2xs")
                       )}
                     >
                       <Link
@@ -364,12 +372,17 @@ function AdminSidebar({
                         aria-current={active ? "page" : undefined}
                         title={collapsed ? item.label : undefined}
                         onClick={onCloseMobile}
-                        className="flex items-center w-full"
+                        className="flex w-full items-center"
                       >
-                        <Icon className={cn("size-4 shrink-0 transition-colors", active ? "text-primary" : "text-muted-foreground")} />
+                        <Icon
+                          className={cn(
+                            "size-4 shrink-0 transition-colors",
+                            active ? "text-primary" : "text-muted-foreground"
+                          )}
+                        />
                         <span
                           className={cn(
-                            "min-w-0 flex-1 truncate text-sm ml-2.5",
+                            "ml-2.5 min-w-0 flex-1 truncate text-sm",
                             collapsed && "md:hidden"
                           )}
                         >
@@ -389,35 +402,36 @@ function AdminSidebar({
         <SidebarFooter className="flex flex-col gap-2.5 p-3">
           <div
             className={cn(
-              "flex items-center gap-3 rounded-xl border border-sidebar-border/80 bg-background/40 backdrop-blur-xs p-3 transition-all duration-200 shadow-3xs",
+              "shadow-3xs flex items-center gap-3 rounded-xl border border-sidebar-border/80 bg-background/40 p-3 backdrop-blur-xs transition-all duration-200",
               collapsed && "md:justify-center md:p-2"
             )}
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-semibold border border-primary/20 shadow-2xs">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-xs font-semibold text-primary shadow-2xs">
               {initials || "AD"}
             </div>
             <div className={cn("min-w-0 flex-1", collapsed && "md:hidden")}>
-              <p className="truncate text-sm font-semibold text-foreground/90">{displayName}</p>
+              <p className="truncate text-sm font-semibold text-foreground/90">
+                {displayName}
+              </p>
               <p className="truncate text-xs text-muted-foreground/80">
                 {displayEmail}
               </p>
             </div>
             <Badge
               variant="outline"
-              className={cn("shrink-0 border-primary/20 text-primary bg-primary/5 text-[10px] h-5 px-1.5 font-medium", collapsed && "md:hidden")}
+              className={cn(
+                "h-5 shrink-0 border-primary/20 bg-primary/5 px-1.5 text-[10px] font-medium text-primary",
+                collapsed && "md:hidden"
+              )}
             >
               Admin
             </Badge>
           </div>
 
-          <div className={cn(collapsed && "md:hidden")}>
-            <CurrencyOptions label="Tiền tệ hiển thị" dropUp />
-          </div>
-
           <Button
             variant="ghost"
             className={cn(
-              "h-9 w-full justify-start rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all duration-150",
+              "h-9 w-full justify-start rounded-lg text-muted-foreground transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400",
               collapsed && "md:justify-center md:px-0"
             )}
             onClick={handleLogout}
@@ -429,7 +443,9 @@ function AdminSidebar({
             ) : (
               <LogOut className="size-4" />
             )}
-            <span className={cn("ml-2.5", collapsed && "md:hidden")}>Đăng xuất</span>
+            <span className={cn("ml-2.5", collapsed && "md:hidden")}>
+              Đăng xuất
+            </span>
           </Button>
         </SidebarFooter>
       </Sidebar>
@@ -469,7 +485,9 @@ export function AdminDashboardShell({
             >
               <Menu className="size-5" />
             </Button>
-            <span className="truncate text-sm font-semibold">{brandName} Admin</span>
+            <span className="truncate text-sm font-semibold">
+              {brandName} Admin
+            </span>
           </div>
           <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
             {children}

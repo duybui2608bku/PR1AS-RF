@@ -37,6 +37,75 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-06-29 — Gỡ currency switcher sidebar admin + ẩn user hệ thống tạo
+
+**Mục tiêu**: (1) Bỏ section "Tiền tệ hiển thị" trong sidebar admin; (2) Danh
+sách quản lý user không hiển thị tài khoản do admin/hệ thống tạo
+(`created_by_admin`).
+
+**Đã làm**:
+- **Sidebar admin** (`admin-dashboard-shell.tsx`): xoá block `CurrencyOptions`
+  ("Tiền tệ hiển thị") ở `SidebarFooter` + import không dùng.
+- **Ẩn hoàn toàn user hệ thống tạo**: backend `userRepository.findAllWithFilters`
+  giờ **luôn** thêm `created_by_admin: { $ne: true }` (bỏ nhánh param). Gỡ param
+  `created_by_admin` khỏi `getUsersQuerySchema` + `GetUsersQuery` DTO. Frontend:
+  xoá filter "Nguồn tài khoản" (SOURCE_OPTIONS + Select + state/reset), bỏ
+  `createdByAdmin` khỏi `GetUsersParams` + query.
+
+**File chính**: `SERVER/src/{repositories/auth/user.repository.ts,validations/user/user.validation.ts,types/user/user.dto.ts}`,
+`pr1as-client/{components/layout/admin-dashboard-shell.tsx,services/user.service.ts,app/dashboard/users/page.tsx}`
+
+**Quyết định / ghi chú**: User chọn "ẩn hoàn toàn" (không chỉ default). Endpoint
+chi tiết/sửa user theo ID vẫn truy cập được — chỉ danh sách bị lọc. Badge
+`user.created_by_admin` trong bảng còn nhưng không bao giờ render (vô hại).
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-06-29 — Trang About chỉnh sửa được bởi Admin (CMS đa ngôn ngữ)
+
+**Mục tiêu**: Cho phép Admin sửa nội dung trang `/about`; giữ layout hard-code,
+chỉ đổi text, đa ngôn ngữ, dùng rich text editor; có fallback mặc định.
+
+**Đã làm**:
+- **Backend module `about`** (singleton, theo khuôn `site-settings`): model với
+  sub-schema localized `{vi,en,zh,ko}` (+ `minimize:false`), types, constants
+  `ABOUT_DEFAULTS` (seed + reset, mirror nội dung 4 ngôn ngữ trong
+  `messages/*.json`), zod validation, repository (get+seed lazy, update
+  **deep-merge** giữ locale khác, reset), service, controller, routes:
+  `GET /api/about` (public) + `PATCH`/`POST /reset` (adminOnly + csrf). Thêm
+  `models.name.ABOUT_CONTENT`. HTML tự sanitize qua `sanitizeInput` global.
+- **Frontend**: `services/about.service.ts` (+normalize/empty shape),
+  `lib/about-server.ts` (SSR fetch revalidate 60s + fallback rỗng),
+  `lib/hooks/use-about-content.ts`, query key `about`.
+- **Trang public `app/about/page.tsx`**: giữ nguyên layout/icon, nạp content DB
+  qua `getServerAboutContent` + `pickLocalized`, **fallback từng field về
+  next-intl messages**; render HTML bằng `RichText` (unwrap `<p>` cho
+  heading/inline). `what.paragraphs` → field rich `what.body`.
+- **Trang admin `app/dashboard/about/page.tsx`**: Tabs theo section, mọi field
+  dùng TipTap (chọn ngôn ngữ global, editor remount theo `key`), badge "Chưa
+  lưu", lưu từng section, thêm/bớt item cho why/features, dialog reset. Thêm nav
+  "Trang giới thiệu" vào `admin-dashboard-shell`.
+
+**File chính**: `SERVER/src/{models,types,constants,validations,repositories,services,controllers,routes}/about*`,
+`pr1as-client/{app/about/page.tsx,app/dashboard/about/page.tsx,services/about.service.ts,lib/about-server.ts,lib/hooks/use-about-content.ts}`
+
+**Quyết định / ghi chú**: Tất cả field là rich HTML (theo yêu cầu); fallback 3
+lớp = seed DB → SSR fail-safe → message từng field. Trang admin theo convention
+hard-code tiếng Việt như `dashboard/settings` (không thêm key i18n mới). Lint
+rule `react-hooks/set-state-in-effect` đã có sẵn ở `settings/page.tsx`; trang
+about dùng pattern sync-khi-render nên lint sạch.
+
+**Còn lại**: Chưa chạy thử runtime (cần Mongo). Cân nhắc on-demand
+`revalidatePath('/about')` sau khi lưu nếu muốn cập nhật tức thì (hiện 60s).
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-06-29 — Vá tiếp luồng AUTH (refresh race, reset, rate-limit, XSS)
 
 **Mục tiêu**: Review lại reset-password + login + logout + refresh; sửa hết lỗi

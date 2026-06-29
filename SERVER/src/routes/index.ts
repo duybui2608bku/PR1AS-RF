@@ -29,6 +29,7 @@ import {
 import boostRoutes from "./boost/boost.routes";
 import boostAdminRoutes from "./boost/boost-admin.routes";
 import workerQuestionRoutes from "./worker-question/worker-question.routes";
+import aboutRoutes from "./about/about.routes";
 import { csrfToken } from "../middleware/csrf";
 import { CSRF_CONSTANTS } from "../constants/csrf";
 import { R } from "../utils/response";
@@ -71,5 +72,6 @@ router.use("/admin/announcements", announcementAdminRoutes);
 router.use("/boost", boostRoutes);
 router.use("/admin/boost", boostAdminRoutes);
 router.use("/worker-questions", workerQuestionRoutes);
+router.use("/about", aboutRoutes);
 
 export default router;

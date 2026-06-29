@@ -44,4 +44,5 @@ export const modelsName = {
   POST_REGISTRATION: "post_registrations",
   WORKER_QUESTION: "worker_questions",
   MIGRATION: "migrations",
+  ABOUT_CONTENT: "about_content",
 };

@@ -69,15 +69,6 @@ const STATUS_OPTIONS: {
   { label: "Đã khóa", value: "banned" },
 ]
 
-const SOURCE_OPTIONS: {
-  label: string
-  value: "true" | "false" | typeof ALL_FILTER_VALUE
-}[] = [
-  { label: "Tất cả nguồn", value: ALL_FILTER_VALUE },
-  { label: "Do admin tạo", value: "true" },
-  { label: "Người dùng thật", value: "false" },
-]
-
 function formatDate(value?: string | null) {
   if (!value) return "—"
   const date = new Date(value)
@@ -399,32 +390,6 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">
-                Nguồn tài khoản
-              </Label>
-              <Select
-                value={filters.createdByAdmin || ALL_FILTER_VALUE}
-                onValueChange={(value) =>
-                  handleFilterChange(
-                    "createdByAdmin",
-                    value === ALL_FILTER_VALUE ? "" : value
-                  )
-                }
-              >
-                <SelectTrigger className="h-9 w-full data-[size=default]:h-9">
-                  <SelectValue placeholder="Tất cả nguồn" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
               <Label className="text-xs text-muted-foreground">
                 Khoảng ngày tạo
@@ -465,8 +430,7 @@ export default function AdminUsersPage() {
                   !filters.status &&
                   !filters.startDate &&
                   !filters.endDate &&
-                  !filters.search &&
-                  !filters.createdByAdmin
+                  !filters.search
                 }
                 onClick={() => {
                   setSearchInput("")
@@ -478,7 +442,6 @@ export default function AdminUsersPage() {
                     status: "",
                     startDate: "",
                     endDate: "",
-                    createdByAdmin: "",
                   })
                 }}
               >
