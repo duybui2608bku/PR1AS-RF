@@ -12,6 +12,7 @@ export interface ApiResponse<T = unknown> {
     code: string;
     message: string;
     details?: { field: string; message: string }[];
+    retry_after?: number;
     stack?: string;
   };
 }

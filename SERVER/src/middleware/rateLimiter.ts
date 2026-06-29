@@ -119,12 +119,37 @@ export const questionCreateLimiter = rateLimit({
   handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 
+// Per-IP ceiling for email-dispatching endpoints (forgot-password,
+// resend-verification). Kept generous so NATed networks (offices, schools,
+// mobile carriers) where many real users share one IP are not throttled to a
+// near-unusable handful of requests/hour. The tight per-recipient cap below is
+// what actually defends a specific inbox against bombing.
 export const emailActionLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
-  max: 3,
+  max: 15,
   message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
+});
+
+// Per-recipient cap: prevents an attacker (even across rotated IPs) from flooding
+// one victim's inbox with reset/verification mail. Keyed by the normalized email
+// in the body so the same address is throttled regardless of source IP; falls
+// back to IP-keying for malformed requests with no email.
+export const emailRecipientLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOWS.EMAIL_ACTION_HOURS * TIME_IN_MS.HOUR,
+  max: 4,
+  message: AUTH_MESSAGES.RATE_LIMIT_EXCEEDED,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request): string => {
+    const email = (req.body as { email?: unknown } | undefined)?.email;
+    if (typeof email === "string" && email.trim().length > 0) {
+      return `email:${email.toLowerCase().trim()}`;
+    }
+    return `ip:${req.ip ?? "unknown"}`;
+  },
   handler: createRateLimitHandler(AUTH_MESSAGES.RATE_LIMIT_EXCEEDED),
 });
 

@@ -18,12 +18,14 @@ export const errorHandler = (
   let code: ErrorCode = ErrorCode.INTERNAL_SERVER_ERROR;
   let message: string = ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
   let details: { field: string; message: string }[] | undefined;
+  let retryAfter: number | undefined;
 
   if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
     message = err.message;
     details = err.details;
+    retryAfter = err.retryAfter;
   }
 
   const errorLog: Record<string, unknown> = {
@@ -81,9 +83,15 @@ export const errorHandler = (
       code,
       message: translatedMessage,
       ...(translatedDetails && { details: translatedDetails }),
+      ...(retryAfter !== undefined && { retry_after: retryAfter }),
       ...(config.nodeEnv === "development" && { stack: err.stack }),
     },
   };
+
+  // Standard HTTP hint so non-browser clients / proxies also see the backoff.
+  if (retryAfter !== undefined) {
+    res.setHeader("Retry-After", String(retryAfter));
+  }
 
   res.status(statusCode).json(response);
 };

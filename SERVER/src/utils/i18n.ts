@@ -320,6 +320,50 @@ const translations: Record<string, Record<Locale, string>> = {
     zh: "出于安全原因，请勿与任何人分享此链接。",
   },
 
+  // Password changed confirmation
+  "email.subject.passwordChanged": {
+    en: "{appName} password was changed",
+    vi: "{appName} - Mật khẩu đã được thay đổi",
+    ko: "{appName} 비밀번호가 변경되었습니다",
+    zh: "{appName} 密码已更改",
+  },
+  "email.passwordChanged.heading": {
+    en: "Your password was changed",
+    vi: "Mật khẩu của bạn đã được thay đổi",
+    ko: "비밀번호가 변경되었습니다",
+    zh: "您的密码已更改",
+  },
+  "email.passwordChanged.greeting.named": {
+    en: "Hello {name},",
+    vi: "Xin chào {name},",
+    ko: "안녕하세요 {name}님,",
+    zh: "您好 {name}，",
+  },
+  "email.passwordChanged.greeting.anonymous": {
+    en: "Hello,",
+    vi: "Xin chào,",
+    ko: "안녕하세요,",
+    zh: "您好，",
+  },
+  "email.passwordChanged.body": {
+    en: "This is a confirmation that the password for your {appName} account was just changed. For your security, all other active sessions have been signed out.",
+    vi: "Đây là xác nhận rằng mật khẩu tài khoản {appName} của bạn vừa được thay đổi. Vì lý do bảo mật, tất cả các phiên đăng nhập khác đã bị đăng xuất.",
+    ko: "{appName} 계정의 비밀번호가 방금 변경되었음을 확인하는 메일입니다. 보안을 위해 다른 모든 활성 세션은 로그아웃되었습니다.",
+    zh: "这是确认您的 {appName} 账户密码刚刚被更改。出于安全考虑，所有其他活动会话均已退出登录。",
+  },
+  "email.passwordChanged.notYou": {
+    en: "If you did NOT make this change, your account may be compromised. Please reset your password immediately and contact support.",
+    vi: "Nếu bạn KHÔNG thực hiện thay đổi này, tài khoản của bạn có thể đã bị xâm phạm. Vui lòng đặt lại mật khẩu ngay và liên hệ bộ phận hỗ trợ.",
+    ko: "본인이 변경하지 않았다면 계정이 침해되었을 수 있습니다. 즉시 비밀번호를 재설정하고 지원팀에 문의하세요.",
+    zh: "如果这不是您本人的操作，您的账户可能已被入侵。请立即重置密码并联系客服。",
+  },
+  "email.passwordChanged.footer": {
+    en: "This is an automated security notification from {appName}.",
+    vi: "Đây là thông báo bảo mật tự động từ {appName}.",
+    ko: "{appName}에서 보내는 자동 보안 알림입니다.",
+    zh: "这是来自 {appName} 的自动安全通知。",
+  },
+
   // Account banned template
   "email.banned.heading": {
     en: "Your {appName} Account Has Been Locked",

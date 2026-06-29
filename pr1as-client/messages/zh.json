@@ -96,6 +96,7 @@
     "loginSuccess": "登录成功。",
     "loginFailed": "登录失败。",
     "loginError": "无法登录，请重试。",
+    "accountLocked": "因多次登录失败，账户已被暂时锁定。请在 {minutes} 分钟后重试，或重置密码。",
     "emailNotVerified": "邮箱未验证，请检查收件箱或重新发送验证邮件。",
     "resendSuccess": "验证邮件已重新发送，请检查收件箱。",
     "resendError": "重新发送验证邮件失败，请重试。",

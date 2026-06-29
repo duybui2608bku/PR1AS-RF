@@ -1,7 +1,12 @@
 import { userRepository } from "../../repositories/auth/user.repository";
 import { hashPassword, comparePassword } from "../../utils/bcrypt";
 import { verifyRefreshToken } from "../../utils/jwt";
-import { generateAuthTokens, hashOpaqueToken } from "../../utils/token";
+import {
+  generateAuthTokens,
+  signAuthTokens,
+  hashOpaqueToken,
+  timingSafeEqualHex,
+} from "../../utils/token";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -20,10 +25,11 @@ import nodemailerUtils from "../../utils/nodemailer";
 import {
   passwordResetTemplate,
   emailVerificationTemplate,
+  passwordChangedTemplate,
 } from "../../utils/template-mail";
 import { config } from "../../config";
 import { logger } from "../../utils/logger";
-import { LOGIN_LOCKOUT } from "../../constants/app";
+import { LOGIN_LOCKOUT, REFRESH_TOKEN } from "../../constants/app";
 import { Locale } from "../../utils/i18n";
 import { TIME_IN_MS } from "../../constants/time";
 import {
@@ -107,14 +113,10 @@ export class AuthService {
     // valid credentials are rejected until the window passes. This is the
     // defense against IP-rotated brute force where per-IP rate limits don't
     // bite (one attempt per stolen IP can still sweep a password list).
-    if (
-      user &&
-      user.locked_until &&
-      user.locked_until.getTime() > Date.now()
-    ) {
-      throw new AppError(
+    if (user && user.locked_until && user.locked_until.getTime() > Date.now()) {
+      throw AppError.tooManyRequests(
         AUTH_MESSAGES.ACCOUNT_LOCKED,
-        HTTP_STATUS.TOO_MANY_REQUESTS,
+        Math.ceil((user.locked_until.getTime() - Date.now()) / 1000),
         ErrorCode.ACCOUNT_LOCKED
       );
     }
@@ -123,8 +125,7 @@ export class AuthService {
     // so response time doesn't leak account existence. The dummy hash is a
     // random secret hashed once at startup; comparePassword against it will
     // always return false but pays the same CPU cost as a real comparison.
-    const hashToCompare =
-      user?.password_hash ?? (await getDummyPasswordHash());
+    const hashToCompare = user?.password_hash ?? (await getDummyPasswordHash());
     const isPasswordValid = await comparePassword(
       input.password,
       hashToCompare
@@ -147,13 +148,10 @@ export class AuthService {
             });
             return null;
           });
-        if (
-          result?.lockedUntil &&
-          result.lockedUntil.getTime() > Date.now()
-        ) {
-          throw new AppError(
+        if (result?.lockedUntil && result.lockedUntil.getTime() > Date.now()) {
+          throw AppError.tooManyRequests(
             AUTH_MESSAGES.ACCOUNT_LOCKED,
-            HTTP_STATUS.TOO_MANY_REQUESTS,
+            Math.ceil((result.lockedUntil.getTime() - Date.now()) / 1000),
             ErrorCode.ACCOUNT_LOCKED
           );
         }
@@ -279,14 +277,25 @@ export class AuthService {
     }
 
     const presentedHash = hashOpaqueToken(refreshToken);
-    const expectedHash = user.refresh_token_hash;
-    const isValid =
-      presentedHash.length === expectedHash.length &&
-      crypto.timingSafeEqual(
-        Buffer.from(presentedHash),
-        Buffer.from(expectedHash)
-      );
-    if (!isValid) {
+    const currentHash = user.refresh_token_hash;
+    const matchesCurrent =
+      !!currentHash && timingSafeEqualHex(presentedHash, currentHash);
+    // Within the grace window the immediately-previous token is still accepted,
+    // so concurrent refreshes from sibling tabs/devices (all presenting the same
+    // pre-rotation token via the shared httpOnly cookie) succeed instead of
+    // tripping reuse detection and logging everyone out.
+    const withinGrace =
+      !!user.refresh_token_rotated_at &&
+      Date.now() - user.refresh_token_rotated_at.getTime() <
+        REFRESH_TOKEN.REUSE_GRACE_MS;
+    const matchesPrevious =
+      withinGrace &&
+      !!user.previous_refresh_token_hash &&
+      timingSafeEqualHex(presentedHash, user.previous_refresh_token_hash);
+
+    if (!matchesCurrent && !matchesPrevious) {
+      // Neither the current nor the in-grace previous token matched — treat as
+      // replay of a long-rotated/stolen token and revoke the whole session.
       await userRepository.clearRefreshToken(user._id.toString());
       throw new AppError(
         AUTH_MESSAGES.REFRESH_TOKEN_REUSE_DETECTED,
@@ -295,11 +304,20 @@ export class AuthService {
       );
     }
 
-    const tokens = await generateAuthTokens(user);
+    const {
+      token,
+      refreshToken: newRefreshToken,
+      refreshTokenHash,
+    } = signAuthTokens(user);
+    await userRepository.rotateRefreshTokenHash(
+      user._id.toString(),
+      refreshTokenHash
+    );
 
     return {
       user: toPublicUser(user),
-      ...tokens,
+      token,
+      refreshToken: newRefreshToken,
     };
   }
 
@@ -353,7 +371,11 @@ export class AuthService {
     const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
 
     const locale = (user.meta_data?.locale ?? "en") as Locale;
-    const { subject: resetSubject, html: resetHtml } = passwordResetTemplate(resetLink, user.full_name || undefined, locale);
+    const { subject: resetSubject, html: resetHtml } = passwordResetTemplate(
+      resetLink,
+      user.full_name || undefined,
+      locale
+    );
     await nodemailerUtils({
       email: user.email,
       html: resetHtml,
@@ -398,6 +420,24 @@ export class AuthService {
 
     await userRepository.resetPassword(user._id.toString(), passwordHash);
 
+    // Fire-and-forget security notification — never let a mail failure turn a
+    // successful reset into an error response.
+    const locale = (user.meta_data?.locale ?? "en") as Locale;
+    const { subject, html } = passwordChangedTemplate(
+      user.full_name || undefined,
+      locale
+    );
+    setImmediate(() => {
+      void nodemailerUtils({ email: user.email, html, subject }).catch(
+        (error) => {
+          logger.error("Failed to send password-changed notification", {
+            userId: user._id.toString(),
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      );
+    });
+
     return {
       message: AUTH_MESSAGES.PASSWORD_RESET_SUCCESS,
     };
@@ -425,7 +465,8 @@ export class AuthService {
     const verificationLink = `${config.frontendUrl}/verify-email?token=${verificationToken}`;
 
     const locale = (user.meta_data?.locale ?? "en") as Locale;
-    const { subject: verifySubject, html: verifyHtml } = emailVerificationTemplate(verificationLink, locale);
+    const { subject: verifySubject, html: verifyHtml } =
+      emailVerificationTemplate(verificationLink, locale);
     await nodemailerUtils({
       email: user.email,
       html: verifyHtml,

@@ -96,6 +96,7 @@
     "loginSuccess": "Logged in successfully.",
     "loginFailed": "Login failed.",
     "loginError": "Unable to login. Please try again.",
+    "accountLocked": "Account temporarily locked due to too many failed attempts. Please try again in {minutes} minute(s), or reset your password.",
     "emailNotVerified": "Email not verified. Please check your inbox or resend the verification email.",
     "resendSuccess": "Verification email resent. Please check your inbox.",
     "resendError": "Failed to resend verification email. Please try again.",

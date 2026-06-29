@@ -586,21 +586,59 @@ export class UserRepository {
   }
 
   async findByIdWithRefreshToken(id: string): Promise<IUserDocument | null> {
-    return User.findById(id).select("+refresh_token_hash");
+    return User.findById(id).select(
+      "+refresh_token_hash +previous_refresh_token_hash +refresh_token_rotated_at"
+    );
   }
 
+  /**
+   * Sets the refresh token for a fresh login. Clears the rotation-grace fields
+   * so a previously-rotated token from an old session can't be replayed against
+   * the new one.
+   */
   async setRefreshTokenHash(
     id: string,
     refresh_token_hash: string | null
   ): Promise<void> {
     await User.findByIdAndUpdate(id, {
       refresh_token_hash,
+      previous_refresh_token_hash: null,
+      refresh_token_rotated_at: null,
       ...(refresh_token_hash !== null && { last_login: new Date() }),
     });
   }
 
+  /**
+   * Rotates the refresh token: the outgoing hash becomes `previous_*` (valid for
+   * the grace window) and the new hash becomes current. Pipeline update so the
+   * current value can be copied into `previous_*` atomically in one round-trip.
+   * `$literal` keeps the hex hash as data even though it can never start with "$".
+   */
+  async rotateRefreshTokenHash(
+    id: string,
+    refresh_token_hash: string
+  ): Promise<void> {
+    await User.findByIdAndUpdate(
+      id,
+      [
+        {
+          $set: {
+            previous_refresh_token_hash: "$refresh_token_hash",
+            refresh_token_hash: { $literal: refresh_token_hash },
+            refresh_token_rotated_at: "$$NOW",
+          },
+        },
+      ],
+      { updatePipeline: true }
+    );
+  }
+
   async clearRefreshToken(id: string): Promise<void> {
-    await User.findByIdAndUpdate(id, { refresh_token_hash: null });
+    await User.findByIdAndUpdate(id, {
+      refresh_token_hash: null,
+      previous_refresh_token_hash: null,
+      refresh_token_rotated_at: null,
+    });
   }
 
   /**
@@ -683,7 +721,17 @@ export class UserRepository {
       password_hash,
       password_reset_token: null,
       password_reset_expires: null,
+      // Completing a reset proves control of the inbox, so treat the email as
+      // verified — otherwise an unverified user could reset their password and
+      // still be stuck at the EMAIL_NOT_VERIFIED wall on login.
+      verify_email: true,
+      email_verification_token: null,
+      email_verification_expires: null,
+      // Invalidate every existing session (and the rotation grace) so a stolen
+      // token can't outlive the password change.
       refresh_token_hash: null,
+      previous_refresh_token_hash: null,
+      refresh_token_rotated_at: null,
       failed_login_attempts: 0,
       locked_until: null,
     });

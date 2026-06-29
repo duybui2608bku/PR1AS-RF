@@ -96,6 +96,7 @@
     "loginSuccess": "Đăng nhập thành công.",
     "loginFailed": "Đăng nhập thất bại.",
     "loginError": "Không thể đăng nhập. Vui lòng thử lại.",
+    "accountLocked": "Tài khoản tạm khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau {minutes} phút, hoặc đặt lại mật khẩu.",
     "emailNotVerified": "Email chưa được xác minh. Vui lòng kiểm tra hộp thư hoặc gửi lại email xác minh.",
     "resendSuccess": "Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.",
     "resendError": "Gửi lại email xác minh thất bại. Vui lòng thử lại.",

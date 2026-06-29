@@ -7,6 +7,7 @@ import {
   authLimiter,
   refreshTokenLimiter,
   emailActionLimiter,
+  emailRecipientLimiter,
   tokenActionLimiter,
   tokenAttemptLimiter,
 } from "../../middleware/rateLimiter";
@@ -112,6 +113,7 @@ router.patch(
 router.post(
   "/forgot-password",
   emailActionLimiter,
+  emailRecipientLimiter,
   ...csrfProtection,
   asyncHandler(authController.forgotPassword.bind(authController))
 );
@@ -135,6 +137,7 @@ router.post(
 router.post(
   "/resend-verification",
   emailActionLimiter,
+  emailRecipientLimiter,
   ...csrfProtection,
   asyncHandler(authController.resendVerificationEmail.bind(authController))
 );

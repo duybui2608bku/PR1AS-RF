@@ -22,7 +22,7 @@ import { normalizeEmail } from "@/lib/auth/auth-input.utils"
 import { getActiveRole } from "@/lib/auth/roles"
 import { useForgotPassword, useGoogleLogin, useLogin, useMe, useResendVerification } from "@/lib/hooks/use-auth"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
+import { ApiError, getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
@@ -96,6 +96,14 @@ export default function LoginPage() {
       if (isEmailNotVerifiedError(error)) {
         setPendingVerificationEmail(normalizedEmail)
         toast.warning(t("emailNotVerified"))
+        return
+      }
+
+      if (error instanceof ApiError && error.code === "ACCOUNT_LOCKED") {
+        const minutes = error.retryAfter
+          ? Math.max(1, Math.ceil(error.retryAfter / 60))
+          : 30
+        toast.error(t("accountLocked", { minutes }))
         return
       }
 

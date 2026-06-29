@@ -87,6 +87,11 @@ export interface IUser {
   created_at: Date;
   last_login: Date | null;
   refresh_token_hash?: string | null;
+  // Hash of the immediately-previous refresh token, kept briefly after rotation
+  // so concurrent refreshes from sibling tabs/devices (which all present the same
+  // pre-rotation token) are not misread as token theft. See REFRESH_TOKEN.REUSE_GRACE_MS.
+  previous_refresh_token_hash?: string | null;
+  refresh_token_rotated_at?: Date | null;
   failed_login_attempts?: number;
   locked_until?: Date | null;
   password_reset_token?: string | null;

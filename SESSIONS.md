@@ -37,6 +37,60 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-06-29 — Vá tiếp luồng AUTH (refresh race, reset, rate-limit, XSS)
+
+**Mục tiêu**: Review lại reset-password + login + logout + refresh; sửa hết lỗi
+phát hiện được.
+
+**Đã làm**:
+- **#1 Refresh-token reuse giả khi refresh đồng thời** (bug logout oan): rotation
+  giờ giữ `previous_refresh_token_hash` + `refresh_token_rotated_at` và chấp nhận
+  token-ngay-trước trong grace window `REFRESH_TOKEN.REUSE_GRACE_MS` (15s). Hai
+  tab/thiết bị cùng refresh bằng cùng cookie không còn bị revoke nhầm. Tách
+  `signAuthTokens()` (thuần) khỏi `generateAuthTokens()`; thêm `timingSafeEqualHex`
+  và `userRepository.rotateRefreshTokenHash()` (pipeline update, `$$NOW`).
+  `clearRefreshToken`/`setRefreshTokenHash`/`resetPassword` đều clear field grace.
+- **#5 Reset xong vẫn EMAIL_NOT_VERIFIED**: `resetPassword` repo nay set
+  `verify_email: true` (+ clear verification token) — click link reset đã chứng
+  minh sở hữu inbox.
+- **#6 Email báo đổi mật khẩu**: thêm `passwordChangedTemplate` + i18n
+  `email.passwordChanged.*`; gửi fire-and-forget sau reset thành công.
+- **#8 Rate-limit email**: nới `emailActionLimiter` theo IP (3→15, đỡ chặn nhầm
+  IP/NAT dùng chung) + thêm `emailRecipientLimiter` (khoá theo email, 4/giờ) cho
+  forgot-password & resend-verification (chống bom mail 1 địa chỉ qua xoay IP).
+- **#2 (một phần) refresh token khỏi sessionStorage**: bỏ persist `refreshToken`
+  trong `auth-store` partialize (vẫn giữ memory làm body-fallback). Thu hẹp bề
+  mặt XSS mà không phá cookie-only refresh.
+- **#9 retry_after cho lockout**: `AppError` thêm field `retryAfter` +
+  `AppError.tooManyRequests()`; errorHandler trả `error.retry_after` (giây) +
+  header `Retry-After`. Login tính số giây còn lại từ `locked_until`. Frontend:
+  `ApiError.retryAfter`, login page hiển thị i18n `Auth.accountLocked` với số phút
+  (key thêm cho en/vi/ko/zh).
+
+**File chính**: `SERVER/src/services/auth/auth.service.ts`,
+`SERVER/src/repositories/auth/user.repository.ts`, `SERVER/src/utils/token.ts`,
+`SERVER/src/models/auth/user.model.ts`, `SERVER/src/middleware/rateLimiter.ts`,
+`SERVER/src/utils/{template-mail,i18n}.ts`, `SERVER/src/constants/app.ts`,
+`pr1as-client/lib/store/auth-store.ts`
+
+**Quyết định / ghi chú**: Grace window dùng top-level `previous_*` thay vì mảng
+session vì vẫn là mô hình single refresh token. Guard `!user.refresh_token_hash`
+chạy TRƯỚC logic grace nên logout/reset/delete (null current hash) vẫn revoke
+tuyệt đối. Không gửi email khi tài khoản bị lock (failed-login) vì có thể bị lạm
+dụng để bom mail nạn nhân.
+
+**Còn lại** (cần quyết định product/infra, chưa làm):
+- **#3 Đa thiết bị/đa phiên**: hiện 1 refresh hash/user → đăng nhập máy mới đá
+  máy cũ. Cần refactor sang mảng session (thêm `sid` vào JWT) — đổi data model.
+- **#2 (đủ)**: gỡ hẳn refresh token khỏi JS / route qua proxy same-origin — phụ
+  thuộc topology domain prod (same-site vs cross-site + chặn third-party cookie).
+- **#4 sâu**: lockout vẫn cho phép DoS có chủ đích lên nạn nhân (cần CAPTCHA /
+  khoá theo account+IP). **#7**: vô nghĩa ở mô hình single-token, gộp vào #3.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-06-28 — Rà soát & vá luồng AUTH cho production
 
 **Mục tiêu**: Kiểm tra toàn bộ luồng AUTH client + server, rồi fix các vấn đề

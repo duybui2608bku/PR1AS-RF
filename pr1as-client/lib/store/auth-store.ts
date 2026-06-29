@@ -157,7 +157,13 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
-        refreshToken: state.refreshToken,
+        // refreshToken intentionally NOT persisted. Keeping it out of
+        // sessionStorage closes the easiest XSS exfiltration path (storage is
+        // readable at any time, even by an async payload). It still lives in
+        // memory for the active session as a body fallback when the httpOnly
+        // refreshToken cookie can't be relied on (cross-site/3rd-party cookie
+        // blocking); after a reload/new tab the cookie-only refresh path takes
+        // over — the same path restored tabs already use.
         isAuthenticated: state.isAuthenticated,
         // _hasHydrated intentionally excluded — must reset to false on every page load
       }),

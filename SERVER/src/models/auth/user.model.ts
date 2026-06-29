@@ -140,6 +140,16 @@ const userSchema = new Schema<IUserDocument>(
       select: false,
       default: null,
     },
+    previous_refresh_token_hash: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    refresh_token_rotated_at: {
+      type: Date,
+      select: false,
+      default: null,
+    },
     failed_login_attempts: {
       type: Number,
       default: 0,

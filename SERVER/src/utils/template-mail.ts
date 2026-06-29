@@ -330,12 +330,14 @@ const bookingPanelStyle =
 const bookingLabelStyle =
   "display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6b7280;margin-bottom:6px;";
 
-const bookingValueStyle = "font-size:15px;font-weight:600;color:#111827;margin:0;";
+const bookingValueStyle =
+  "font-size:15px;font-weight:600;color:#111827;margin:0;";
 
 const bookingMetaPillStyle =
   "display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:0.04em;background:#ecfeff;color:#0f766e;";
 
-const bookingMutedTextStyle = "color:#6b7280;font-size:13px;line-height:1.6;margin:0;";
+const bookingMutedTextStyle =
+  "color:#6b7280;font-size:13px;line-height:1.6;margin:0;";
 
 function bookingActionButton(
   href: string,
@@ -464,6 +466,38 @@ export const passwordResetTemplate = (
         <p style="color: #666; font-size: 12px; margin-top: 30px;"><strong>${t("email.passwordReset.expiry", locale, { minutes: TOKEN_EXPIRY.PASSWORD_RESET_MINUTES })}</strong></p>
         <p style="color: #666; font-size: 12px;">${t("email.passwordReset.notRequested", locale)}</p>
         <p style="color: #666; font-size: 12px; margin-top: 20px;">${t("email.passwordReset.securityNote", locale)}</p>
+      </div>
+    </body>
+    </html>
+  `;
+  return { subject, html };
+};
+
+export const passwordChangedTemplate = (
+  userName?: string,
+  locale: Locale = "en"
+): EmailTemplate => {
+  const appName = APP_CONSTANTS.NAME;
+  const greeting = userName
+    ? t("email.passwordChanged.greeting.named", locale, { name: userName })
+    : t("email.passwordChanged.greeting.anonymous", locale);
+  const subject = t("email.subject.passwordChanged", locale, { appName });
+  const heading = t("email.passwordChanged.heading", locale);
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${heading}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+        <h2 style="color: #333;">${heading}</h2>
+        <p>${greeting}</p>
+        <p>${t("email.passwordChanged.body", locale, { appName })}</p>
+        <p style="color: #b91c1c; font-weight: bold; margin-top: 20px;">${t("email.passwordChanged.notYou", locale)}</p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">${t("email.passwordChanged.footer", locale, { appName })}</p>
       </div>
     </body>
     </html>

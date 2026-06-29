@@ -9,6 +9,7 @@ type ServerErrorPayload = {
       field?: string
       message?: string
     }>
+    retry_after?: number
   }
   errors?: Record<string, string[]>
 }
@@ -410,23 +411,28 @@ export class ApiError extends Error {
   readonly code: string | undefined
   readonly statusCode: number | undefined
   readonly details: Array<{ field?: string; message?: string }> | undefined
+  /** Seconds to wait before retrying, surfaced on 429 (e.g. account lockout). */
+  readonly retryAfter: number | undefined
 
   constructor({
     message,
     code,
     statusCode,
     details,
+    retryAfter,
   }: {
     message: string
     code?: string
     statusCode?: number
     details?: Array<{ field?: string; message?: string }>
+    retryAfter?: number
   }) {
     super(message)
     this.name = "ApiError"
     this.code = code
     this.statusCode = statusCode
     this.details = details
+    this.retryAfter = retryAfter
   }
 }
 
@@ -463,6 +469,7 @@ export const toApiError = (error: unknown): ApiError | null => {
     code,
     statusCode,
     details: data?.error?.details,
+    retryAfter: data?.error?.retry_after,
   })
 }
 
