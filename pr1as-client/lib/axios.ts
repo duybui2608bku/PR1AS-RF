@@ -7,6 +7,11 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { toApiError } from "@/lib/utils/error-handler"
 import { getQueryClient } from "@/lib/query-client"
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
+  SUPPORTED_LOCALES,
+} from "@/lib/locale"
 
 const ensureApiBasePath = (url: string) => {
   const trimmedUrl = url.replace(/\/+$/, "")
@@ -51,6 +56,21 @@ const readCookie = (name: string) => {
   )
 }
 
+// Language to send on every request so the backend localizes responses AND
+// emails to the recipient's language. A logged-in user's stored locale wins;
+// otherwise fall back to the UI locale (NEXT_LOCALE cookie) so public flows
+// like registration/verification email are sent in the language the visitor
+// is actually browsing in — not a hard-coded "en".
+const resolveAcceptLanguage = () => {
+  const userLocale = useAuthStore.getState().user?.meta_data?.locale
+  if (userLocale) return userLocale
+  const uiLocale = readCookie(LOCALE_COOKIE_NAME)
+  if (uiLocale && (SUPPORTED_LOCALES as readonly string[]).includes(uiLocale)) {
+    return uiLocale
+  }
+  return DEFAULT_LOCALE
+}
+
 let csrfFetchPromise: Promise<string | null> | null = null
 
 const ensureCsrfToken = async () => {
@@ -63,7 +83,7 @@ const ensureCsrfToken = async () => {
     csrfFetchPromise = axios
       .get(`${apiBaseURL}/csrf-token`, {
         withCredentials: true,
-        headers: { "Accept-Language": useAuthStore.getState().user?.meta_data?.locale ?? "en" },
+        headers: { "Accept-Language": resolveAcceptLanguage() },
       })
       .then((response) => {
         const bodyToken = response.data?.data?.csrfToken
@@ -95,11 +115,11 @@ const attachCsrfHeader = async (config: InternalAxiosRequestConfig) => {
 
 // Request interceptor to dynamically inject the authorization and locale headers
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const { token, user } = useAuthStore.getState()
+  const { token } = useAuthStore.getState()
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`)
   }
-  config.headers.set("Accept-Language", user?.meta_data?.locale ?? "en")
+  config.headers.set("Accept-Language", resolveAcceptLanguage())
   await attachCsrfHeader(config)
   return config
 })
@@ -173,7 +193,7 @@ api.interceptors.response.use(
             withCredentials: true,
             headers: {
               "Content-Type": "application/json",
-              "Accept-Language": state.user?.meta_data?.locale ?? "en",
+              "Accept-Language": resolveAcceptLanguage(),
               ...(csrfToken ? { [csrfHeaderName]: csrfToken } : {}),
             }
           })
