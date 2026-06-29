@@ -68,6 +68,22 @@ export const config = {
   emailAccount: process.env.EMAIL_ACCOUNT || "no-reply@example.com",
   googleAppPassword:
     process.env.GOGGLE_APP_PASSWORD || "your-google-app-password",
+  // Transactional email transport. In production use a real ESP (Resend) so
+  // SPF/DKIM/DMARC align with the From domain and mail lands in the inbox
+  // rather than spam. When SMTP_HOST is unset we fall back to the Gmail
+  // account above — acceptable for local dev only, NOT production.
+  mail: {
+    smtpHost: process.env.SMTP_HOST || "",
+    smtpPort: parseInt(process.env.SMTP_PORT || "587", 10),
+    smtpUser: process.env.SMTP_USER || "",
+    smtpPass: process.env.SMTP_PASS || "",
+    // The From header MUST be an address on a domain the ESP is authorized to
+    // send for (verified in Resend); otherwise DMARC fails → spam. Defaults to
+    // the Gmail account so the dev fallback stays self-consistent.
+    from:
+      process.env.EMAIL_FROM ||
+      `PR1AS <${process.env.EMAIL_ACCOUNT || "no-reply@example.com"}>`,
+  },
   // Dev default points at the Next client (3001), not the API (3000), so email
   // links open in the app during local testing.
   frontendUrl: frontendUrl || "http://localhost:3001",
