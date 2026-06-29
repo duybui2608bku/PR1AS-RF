@@ -199,17 +199,28 @@ export class NotificationEventService {
       return;
     }
 
+    // The worker may attach a free-text reply when changing the status
+    // (the "Phản hồi cho khách hàng" field). Surface it to the client only —
+    // showing it back to the worker who wrote it would be noise.
+    const workerResponse = booking.worker_response?.trim();
+
     await Promise.all(
       recipients.map(async (recipientId) => {
         const locale = await getRecipientLocale(recipientId);
         const { title, body } = getBookingStatusContent(status, locale);
+        const fullBody =
+          workerResponse && recipientId === clientId
+            ? `${body}\n\n${t("notif.booking.workerResponse", locale, {
+                message: truncate(workerResponse, 500),
+              })}`
+            : body;
         return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.BOOKING_STATUS_UPDATED,
           category: NotificationCategory.BOOKING,
           title,
-          body,
+          body: fullBody,
           data: { booking_id: bookingId, status },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.HIGH,
