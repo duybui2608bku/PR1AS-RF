@@ -164,8 +164,10 @@ export class NotificationEventService {
     const workerId = toId(booking.worker_id);
     const clientId = toOptionalId(booking.client_id);
     const locale = await getRecipientLocale(workerId);
-    const actorId =
-      clientId ?? (booking.is_guest ? `guest:${booking.public_ref ?? bookingId}` : workerId);
+    // Guest bookings have no user actor; actor_id is an ObjectId ref to USER,
+    // so it must stay null for guests (a "guest:..." string fails the cast and
+    // silently drops the worker's notification).
+    const actorId = clientId ?? (booking.is_guest ? null : workerId);
 
     await notificationService.notify({
       recipient_ids: [workerId],
