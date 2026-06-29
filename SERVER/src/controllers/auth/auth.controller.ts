@@ -32,6 +32,26 @@ import {
 } from "../../utils";
 import { userService } from "../../services/user/user.service";
 import { config } from "../../config";
+import { getLocaleFromHeader, Locale } from "../../utils/i18n";
+
+// The locale the user is currently browsing in: prefer the value the client
+// sends explicitly, fall back to the Accept-Language header. Used so the very
+// first email (verification) goes out in the recipient's language.
+const SUPPORTED_LOCALES: Locale[] = ["vi", "en", "zh", "ko"];
+
+function resolveRequestLocale(
+  req: Request,
+  explicit?: string
+): Locale {
+  if (explicit && SUPPORTED_LOCALES.includes(explicit as Locale)) {
+    return explicit as Locale;
+  }
+  const acceptLanguage =
+    typeof req.headers["accept-language"] === "string"
+      ? req.headers["accept-language"]
+      : undefined;
+  return getLocaleFromHeader(acceptLanguage);
+}
 
 const ACCESS_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -74,7 +94,10 @@ export class AuthController {
       req.body,
       COMMON_MESSAGES.BAD_REQUEST
     );
-    const result = await authService.register(data);
+    const result = await authService.register({
+      ...data,
+      locale: resolveRequestLocale(req, data.locale),
+    });
     R.created(res, result, AUTH_MESSAGES.REGISTER_VERIFY_REQUIRED, req);
   }
 
@@ -280,7 +303,11 @@ export class AuthController {
     if (!idToken || typeof idToken !== "string") {
       throw AppError.badRequest(AUTH_MESSAGES.TOKEN_NOT_PROVIDED);
     }
-    const result = await authService.loginWithGoogle(idToken);
+    const bodyLocale = req.body?.locale as Locale | undefined;
+    const result = await authService.loginWithGoogle(
+      idToken,
+      resolveRequestLocale(req, bodyLocale)
+    );
     setAuthCookies(res, result.token, result.refreshToken);
     R.success(res, result, undefined, req);
   }

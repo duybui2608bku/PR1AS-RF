@@ -8,12 +8,14 @@ import {
 import { PricingPlanCode } from "../../constants/pricing";
 import { GetUsersQuery } from "../../types/user/user.dto";
 import { escapeRegExp } from "../../utils/string";
+import { Locale } from "../../utils/i18n";
 
 export interface CreateUserInput {
   email: string;
   password_hash?: string;
   full_name?: string;
   phone?: string;
+  locale?: Locale;
 }
 
 export interface CreateGoogleUserInput {
@@ -21,6 +23,7 @@ export interface CreateGoogleUserInput {
   google_id: string;
   full_name?: string;
   avatar?: string;
+  locale?: Locale;
 }
 
 export interface CreateByAdminInput {
@@ -156,6 +159,7 @@ export class UserRepository {
       verify_email: false,
       created_at: new Date(),
       last_login: null,
+      ...(data.locale ? { meta_data: { locale: data.locale } } : {}),
     });
 
     return user.save();
@@ -233,6 +237,7 @@ export class UserRepository {
       verify_email: true,
       created_at: new Date(),
       last_login: null,
+      ...(data.locale ? { meta_data: { locale: data.locale } } : {}),
     });
     return user.save();
   }

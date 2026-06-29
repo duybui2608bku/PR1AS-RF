@@ -1,5 +1,6 @@
 import { Document } from "mongoose";
 import { PricingPlanCode } from "../../constants/pricing";
+import { Locale } from "../../utils/i18n";
 
 export enum UserRole {
   CLIENT = "client",
@@ -143,15 +144,17 @@ export interface RegisterInput {
   password: string;
   full_name?: string;
   phone?: string;
+  locale?: Locale;
+}
+
+export interface GoogleLoginInput {
+  id_token: string;
+  locale?: Locale;
 }
 
 export interface LoginInput {
   email: string;
   password: string;
-}
-
-export interface GoogleLoginInput {
-  id_token: string;
 }
 
 export interface AuthResponse {
