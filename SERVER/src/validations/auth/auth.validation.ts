@@ -19,6 +19,9 @@ export const registerSchema = z.object({
   password: strongPassword,
   full_name: z.string().trim().optional(),
   phone: z.string().trim().optional(),
+  // Locale the user is browsing the site in, captured at signup so the very
+  // first email (verification) is sent in their language. See meta_data.locale.
+  locale: z.enum(["vi", "en", "zh", "ko"]).optional(),
 });
 
 export const loginSchema = z.object({

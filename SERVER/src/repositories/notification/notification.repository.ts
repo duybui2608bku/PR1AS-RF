@@ -35,7 +35,10 @@ export class NotificationRepository {
     const now = new Date();
     const notificationData = {
       recipient_id: new Types.ObjectId(data.recipient_id),
-      actor_id: data.actor_id ? new Types.ObjectId(data.actor_id) : null,
+      actor_id:
+        data.actor_id && Types.ObjectId.isValid(data.actor_id)
+          ? new Types.ObjectId(data.actor_id)
+          : null,
       type: data.type,
       category: data.category,
       title: data.title,

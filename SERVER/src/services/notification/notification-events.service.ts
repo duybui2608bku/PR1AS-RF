@@ -164,8 +164,10 @@ export class NotificationEventService {
     const workerId = toId(booking.worker_id);
     const clientId = toOptionalId(booking.client_id);
     const locale = await getRecipientLocale(workerId);
-    const actorId =
-      clientId ?? (booking.is_guest ? `guest:${booking.public_ref ?? bookingId}` : workerId);
+    // Guest bookings have no user actor; actor_id is an ObjectId ref to USER,
+    // so it must stay null for guests (a "guest:..." string fails the cast and
+    // silently drops the worker's notification).
+    const actorId = clientId ?? (booking.is_guest ? null : workerId);
 
     await notificationService.notify({
       recipient_ids: [workerId],
@@ -197,17 +199,28 @@ export class NotificationEventService {
       return;
     }
 
+    // The worker may attach a free-text reply when changing the status
+    // (the "Phản hồi cho khách hàng" field). Surface it to the client only —
+    // showing it back to the worker who wrote it would be noise.
+    const workerResponse = booking.worker_response?.trim();
+
     await Promise.all(
       recipients.map(async (recipientId) => {
         const locale = await getRecipientLocale(recipientId);
         const { title, body } = getBookingStatusContent(status, locale);
+        const fullBody =
+          workerResponse && recipientId === clientId
+            ? `${body}\n\n${t("notif.booking.workerResponse", locale, {
+                message: truncate(workerResponse, 500),
+              })}`
+            : body;
         return notificationService.notify({
           recipient_ids: [recipientId],
           actor_id: actorId,
           type: NotificationType.BOOKING_STATUS_UPDATED,
           category: NotificationCategory.BOOKING,
           title,
-          body,
+          body: fullBody,
           data: { booking_id: bookingId, status },
           link: getBookingDashboardLink(recipientId, booking),
           priority: NotificationPriority.HIGH,

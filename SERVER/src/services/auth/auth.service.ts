@@ -90,6 +90,7 @@ export class AuthService {
       password_hash,
       full_name: input.full_name,
       phone: input.phone,
+      locale: input.locale,
     });
 
     await this.sendVerificationEmailToUser(user).catch((error) => {
@@ -540,7 +541,10 @@ export class AuthService {
    * Replaces the previous access-token + userinfo flow, which couldn't
    * cryptographically verify token audience and didn't check email_verified.
    */
-  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+  async loginWithGoogle(
+    idToken: string,
+    locale?: Locale
+  ): Promise<AuthResponse> {
     if (!config.googleClientId) {
       throw new AppError(
         "Google login is not configured on this server",
@@ -585,7 +589,13 @@ export class AuthService {
       );
     }
 
-    const user = await this.resolveGoogleUser({ sub, email, name, picture });
+    const user = await this.resolveGoogleUser({
+      sub,
+      email,
+      name,
+      picture,
+      locale,
+    });
 
     if (user.status === UserStatus.BANNED) {
       throw new AppError(
@@ -637,6 +647,7 @@ export class AuthService {
     email: string;
     name?: string;
     picture?: string;
+    locale?: Locale;
   }): Promise<IUserDocument> {
     const existingByGoogleId = await userRepository.findByGoogleId(claims.sub);
     if (existingByGoogleId) return existingByGoogleId;
@@ -679,6 +690,7 @@ export class AuthService {
         google_id: claims.sub,
         full_name: claims.name,
         avatar: claims.picture,
+        locale: claims.locale,
       });
     } catch (err) {
       // Concurrent request inserted first — re-fetch by either key.

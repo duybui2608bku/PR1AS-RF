@@ -28,6 +28,7 @@ type BookingEmailKey =
   | "guestStatus.workerLabel"
   | "guestStatus.serviceLabel"
   | "guestStatus.timeLabel"
+  | "guestStatus.workerResponseLabel"
   | "guestStatus.button"
   | "guestStatus.pasteLink"
   | "guestStatus.footer"
@@ -170,6 +171,12 @@ const BOOKING_EMAIL_COPY: Record<BookingEmailKey, Record<Locale, string>> = {
     vi: "Lịch hẹn:",
     ko: "일정:",
     zh: "时间：",
+  },
+  "guestStatus.workerResponseLabel": {
+    en: "Message from the worker:",
+    vi: "Phản hồi từ người thực hiện:",
+    ko: "작업자의 메시지:",
+    zh: "服务者的留言：",
   },
   "guestStatus.button": {
     en: "View booking status",
@@ -611,8 +618,10 @@ export const bookingGuestStatusTemplate = (input: {
   startTime: string;
   endTime: string;
   status: string;
+  workerResponse?: string;
 }): EmailTemplate => {
   const appName = APP_CONSTANTS.NAME;
+  const workerResponse = input.workerResponse?.trim();
   const subject = bookingEmailText("subject.guestStatus", input.locale, {
     appName,
     status: input.status,
@@ -654,6 +663,18 @@ export const bookingGuestStatusTemplate = (input: {
           )}
         </div>
       </div>
+      ${
+        workerResponse
+          ? `<div style="${bookingPanelStyle};margin-top:18px;">
+        <span style="${bookingLabelStyle}">${safe(
+          bookingEmailText("guestStatus.workerResponseLabel", input.locale)
+        )}</span>
+        <p style="${bookingValueStyle};font-weight:500;white-space:pre-line;">${safe(
+          workerResponse
+        ).replace(/\n/g, "<br>")}</p>
+      </div>`
+          : ""
+      }
       <p style="${bookingMutedTextStyle};margin-top:18px;">${safe(
         bookingEmailText("guestStatus.pasteLink", input.locale)
       )}</p>

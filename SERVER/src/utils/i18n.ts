@@ -411,6 +411,12 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "새 예약 요청을 받았습니다.",
     zh: "您收到了新的预约请求。",
   },
+  "notif.booking.workerResponse": {
+    en: 'Message from the worker: "{message}"',
+    vi: 'Phản hồi từ người thực hiện: "{message}"',
+    ko: '작업자의 메시지: "{message}"',
+    zh: '服务者的留言："{message}"',
+  },
   "notif.booking.status.confirmed.title": {
     en: "Booking confirmed",
     vi: "Booking đã được xác nhận",

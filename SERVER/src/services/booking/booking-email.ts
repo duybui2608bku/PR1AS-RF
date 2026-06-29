@@ -215,6 +215,7 @@ export async function sendQuickBookingStatusEmail(
     startTime,
     endTime,
     status: statusLabel,
+    workerResponse: booking.worker_response,
   });
 
   await nodemailerUtils({
