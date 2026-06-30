@@ -38,6 +38,39 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-01 — Tự động chọn ngôn ngữ ban đầu theo trình duyệt
+
+**Mục tiêu**: Khách lần đầu (chưa có cookie `NEXT_LOCALE`) đang luôn bị ép về
+`vi`. Cần tự động phát hiện ngôn ngữ trình duyệt; nếu không khớp `vi/en/zh/ko`
+thì mặc định tiếng Anh (`en`) và ghim vào cookie.
+
+**Đã làm**:
+
+- Thêm `detectLocaleFromAcceptLanguage()` + hằng `INITIAL_FALLBACK_LOCALE = "en"`
+  trong `lib/locale.ts` (mirror `SERVER/src/utils/i18n.ts > getLocaleFromHeader`).
+- `i18n/request.ts`: khi không có cookie hợp lệ thì đọc header `Accept-Language`
+  để chọn locale thay vì fallback thẳng `DEFAULT_LOCALE` → render server đầu tiên
+  đã đúng ngôn ngữ.
+- `middleware.ts`: khi request chưa có cookie `NEXT_LOCALE`, detect locale từ
+  header rồi ghim cookie (1 năm, SameSite=Lax) qua helper `applyLocaleCookie`
+  bọc cả 6 điểm return (bỏ qua `/api`). Khi đã có cookie → no-op.
+- Cập nhật CLAUDE.md mục i18n + Routing/auth cho khớp thực tế (4 locale gồm `ko`,
+  mặc định `vi`, không URL prefix, locale do `i18n/request.ts` xử lý qua cookie).
+
+**File chính**: `pr1as-client/lib/locale.ts`, `pr1as-client/i18n/request.ts`,
+`pr1as-client/middleware.ts`, `CLAUDE.md`
+
+**Quyết định / ghi chú**: Không đổi `DEFAULT_LOCALE` (vẫn `vi`, dùng cho OG tags,
+`pickLocalized`, format ngày/giờ). Floor cho khách mới giờ là `en` theo yêu cầu.
+Không đụng backend/`meta_data.locale` (phạm vi "Cách A"). Cơ chế mount-sync
+`localStorage → cookie` trong `LocaleSwitcher` vẫn đảm bảo lựa chọn cũ thắng
+header detection.
+
+**Còn lại**: Verify thủ công với `Accept-Language` (xem plan). `typecheck` sạch;
+lint pass cho các file đã sửa (lỗi lint còn lại là pre-existing, không liên quan).
+
+**Commit**: chưa commit · branch `main-3`
+
 ## 2026-06-30 — Tạm ẩn trang + modal Trách nhiệm pháp lý
 
 **Mục tiêu**: Tạm thời ẩn trang `/legal-responsibility` và modal nhắc trách
