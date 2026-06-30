@@ -24,7 +24,7 @@ import {
   Lock,
   Mail,
   MessageSquarePlus,
-  Scale,
+  // Scale, // tạm ẩn cùng link Trách nhiệm pháp lý
   Send,
   ShieldCheck,
   Star,
@@ -215,12 +215,14 @@ const infoLinks: Array<{
     descriptionKey: "termsDesc",
     icon: FileText,
   },
-  {
-    href: "/legal-responsibility",
-    labelKey: "legalRespLabel",
-    descriptionKey: "legalRespDesc",
-    icon: Scale,
-  },
+  // Tạm thời ẩn link Trách nhiệm pháp lý (trang đang ẩn). Bật lại: bỏ comment
+  // (và bỏ comment import Scale).
+  // {
+  //   href: "/legal-responsibility",
+  //   labelKey: "legalRespLabel",
+  //   descriptionKey: "legalRespDesc",
+  //   icon: Scale,
+  // },
   {
     href: "/cookies",
     labelKey: "cookiesLabel",

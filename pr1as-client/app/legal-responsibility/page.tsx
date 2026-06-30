@@ -1,5 +1,10 @@
+import { notFound } from "next/navigation"
+
 import { SiteLayout } from "@/components/layout/site-layout"
 import { getTranslations } from "next-intl/server"
+
+// Tạm thời ẩn trang trách nhiệm pháp lý. Bật lại: đổi HIDDEN = false.
+const HIDDEN = true
 
 export async function generateMetadata() {
   const t = await getTranslations("LegalResponsibility")
@@ -9,6 +14,8 @@ export async function generateMetadata() {
 }
 
 export default async function LegalResponsibilityPage() {
+  if (HIDDEN) notFound()
+
   const t = await getTranslations("LegalResponsibility")
 
   return (

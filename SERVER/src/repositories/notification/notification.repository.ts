@@ -28,10 +28,17 @@ const DEFAULT_CHANNELS: Record<NotificationChannel, boolean> = {
   [NotificationChannel.PUSH]: true,
 };
 
+export type CreateNotificationResult = {
+  notification: INotificationDocument;
+  // True only when a brand-new row was inserted. On a dedupe_key match (the row
+  // already existed) this is false so callers can skip re-delivering channels.
+  created: boolean;
+};
+
 export class NotificationRepository {
   async createNotification(
     data: NotifyInput & { recipient_id: string }
-  ): Promise<INotificationDocument> {
+  ): Promise<CreateNotificationResult> {
     const now = new Date();
     const notificationData = {
       recipient_id: new Types.ObjectId(data.recipient_id),
@@ -76,26 +83,46 @@ export class NotificationRepository {
         // link luôn được cập nhật để phản ánh giá trị mới nhất từ server
         $set: { updated_at: now, link: data.link || null },
       };
-      const opts = { upsert: true, new: true, setDefaultsOnInsert: true };
-      try {
-        return (await Notification.findOneAndUpdate(
+      // includeResultMetadata distinguishes a fresh insert (first reminder →
+      // deliver) from a match on an existing row (cron re-scan of a booking
+      // still inside the reminder window → already delivered, skip). Without
+      // this, dedupe_key only stops duplicate rows while channels (email/push)
+      // re-dispatch every tick; dedupe_key must mean "deliver exactly once".
+      const opts = {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+        includeResultMetadata: true,
+      };
+      const runUpsert = async (): Promise<CreateNotificationResult> => {
+        const result = (await Notification.findOneAndUpdate(
           filter,
           update,
           opts
-        )) as INotificationDocument;
+        )) as unknown as {
+          value: INotificationDocument;
+          lastErrorObject?: { updatedExisting?: boolean };
+        };
+        return {
+          notification: result.value,
+          created: result.lastErrorObject?.updatedExisting === false,
+        };
+      };
+      try {
+        return await runUpsert();
       } catch (error) {
         if ((error as { code?: number })?.code === 11000) {
-          return (await Notification.findOneAndUpdate(
-            filter,
-            update,
-            opts
-          )) as INotificationDocument;
+          // Lost the sub-millisecond insert race; the row now exists, so the
+          // retry hits the update path (created: false) and the racer that
+          // won the insert is the one that delivers.
+          return await runUpsert();
         }
         throw error;
       }
     }
 
-    return new Notification(notificationData).save();
+    const notification = await new Notification(notificationData).save();
+    return { notification, created: true };
   }
 
   async listNotifications(

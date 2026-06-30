@@ -37,6 +37,69 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-06-30 — Tạm ẩn trang + modal Trách nhiệm pháp lý
+
+**Mục tiêu**: Tạm thời ẩn trang `/legal-responsibility` và modal nhắc trách
+nhiệm pháp lý.
+
+**Đã làm**:
+- Modal `LegalResponsibilityModal`: thêm cờ `HIDDEN = true` + `if (HIDDEN)
+  return null` (giữ nguyên toàn bộ logic, bật lại = đổi 1 dòng).
+- Trang `/legal-responsibility`: `if (HIDDEN) notFound()` → trả 404, nội dung
+  gốc giữ nguyên.
+- Ẩn link dẫn tới trang để tránh nút bấm → 404: comment item trong
+  `config/nav.ts` (footer "Pháp lý") và `infoLinks` trong `settings/page.tsx`
+  (kèm comment import icon `Scale` để khỏi unused).
+
+**File chính**: `pr1as-client/components/providers/legal-responsibility-modal.tsx`,
+`pr1as-client/app/legal-responsibility/page.tsx`, `pr1as-client/config/nav.ts`,
+`pr1as-client/app/settings/page.tsx`
+
+**Quyết định / ghi chú**: Dùng cờ `HIDDEN`/comment thay vì xoá code để bật lại
+dễ. Typecheck pass. Lint còn 1 lỗi `set-state-in-effect` ở modal là pre-existing
+(dòng 75, không đụng tới). i18n keys + provider wiring giữ nguyên.
+
+**Còn lại**: không (chờ yêu cầu bật lại).
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-06-30 — Sửa spam email nhắc lịch booking (mỗi 10 phút)
+
+**Mục tiêu**: Email nhắc thời gian booking bị gửi lại mỗi 10 phút cho cùng một
+booking.
+
+**Đã làm**:
+- Root cause: job `booking-reminder` chạy `*/10 * * * *`, query
+  `findUpcomingBookingsForReminder` chỉ lọc theo cửa sổ thời gian (24h/1h) nên
+  mỗi tick chọn lại cùng booking. `dedupe_key` chỉ chặn trùng **dòng**
+  notification (unique index) nhưng `notify()` vẫn gọi `dispatchChannels()`
+  **vô điều kiện** → email/push re-dispatch mỗi 10 phút.
+- Fix tại tầng notification (lợi cho mọi luồng dùng dedupe_key):
+  `createNotification` giờ trả `{ notification, created }`, dùng
+  `includeResultMetadata` để phân biệt insert mới vs. khớp dòng cũ
+  (`lastErrorObject.updatedExisting`). `notify()` chỉ `dispatchChannels` khi
+  `created === true`. Nhánh retry E11000 → `created: false` (racer thua không
+  gửi lại). Job và query giữ nguyên.
+
+**File chính**: `SERVER/src/repositories/notification/notification.repository.ts`,
+`SERVER/src/services/notification/notification.service.ts`
+
+**Quyết định / ghi chú**: `dedupe_key` nay mang nghĩa "deliver đúng một lần"
+trên mọi kênh — nhất quán với tất cả call site (đều unique theo sự kiện/người
+nhận). Đánh đổi: nếu lần gửi đầu thất bại (provider down) sẽ không retry; chấp
+nhận được, spam nghiêm trọng hơn nhiều so với mất 1 retry. Không cần dọn dữ
+liệu: booking đang trong cửa sổ đã có sẵn row → tick sau khớp → ngừng gửi ngay
+khi deploy. Typecheck pass; 3 lỗi lint còn lại ở dòng destructuring
+`_updatedAt/_link` là pre-existing, không thuộc thay đổi này.
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-06-29 — Gỡ currency switcher sidebar admin + ẩn user hệ thống tạo
 
 **Mục tiêu**: (1) Bỏ section "Tiền tệ hiển thị" trong sidebar admin; (2) Danh

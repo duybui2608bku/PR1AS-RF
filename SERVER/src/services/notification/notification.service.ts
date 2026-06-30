@@ -185,20 +185,26 @@ export class NotificationService {
           return null;
         }
 
-        const notification = await notificationRepository.createNotification({
-          ...input,
-          recipient_id: recipientId,
-          category: input.category || typeConfig.category,
-          priority: input.priority || typeConfig.priority,
-          channels,
-          dedupe_key: input.dedupe_key
-            ? `${input.dedupe_key}:${recipientId}`
-            : null,
-        });
+        const { notification, created } =
+          await notificationRepository.createNotification({
+            ...input,
+            recipient_id: recipientId,
+            category: input.category || typeConfig.category,
+            priority: input.priority || typeConfig.priority,
+            channels,
+            dedupe_key: input.dedupe_key
+              ? `${input.dedupe_key}:${recipientId}`
+              : null,
+          });
 
-        void this.dispatchChannels(notification).catch((error) => {
-          logger.error("Notification dispatch failed:", error);
-        });
+        // Only deliver when the row was freshly created. A dedupe_key match
+        // means we already delivered this notification, so re-dispatching would
+        // re-send the email/push (the cron-driven booking-reminder spam bug).
+        if (created) {
+          void this.dispatchChannels(notification).catch((error) => {
+            logger.error("Notification dispatch failed:", error);
+          });
+        }
 
         return notification;
       })

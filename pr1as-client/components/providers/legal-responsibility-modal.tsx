@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/dialog"
 import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 
+// Tạm thời ẩn modal trách nhiệm pháp lý. Bật lại: đổi HIDDEN = false.
+const HIDDEN = true
+
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000
 const DISMISS_KEY_PREFIX = "legal-responsibility-dismissed-until:"
@@ -88,6 +91,8 @@ export function LegalResponsibilityModal() {
   const handleAcknowledge = () => {
     setOpen(false)
   }
+
+  if (HIDDEN) return null
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleAcknowledge()}>
