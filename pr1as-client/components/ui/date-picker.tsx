@@ -20,6 +20,8 @@ type DatePickerProps = {
   buttonClassName?: string
   fromDate?: Date
   toDate?: Date
+  /** Extra day matchers to disable on top of the from/to range. */
+  disabledMatchers?: CalendarProps["disabled"]
   /** Show month/year dropdowns — handy for far-back dates like birthdays. */
   captionLayout?: CalendarProps["captionLayout"]
 }
@@ -47,6 +49,7 @@ export function DatePicker({
   buttonClassName,
   fromDate,
   toDate,
+  disabledMatchers,
   captionLayout,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
@@ -54,14 +57,18 @@ export function DatePicker({
   const dateLocale = DATE_FNS_LOCALES[appLocale] ?? vi
   const resolvedPlaceholder = placeholder ?? PLACEHOLDERS[appLocale] ?? PLACEHOLDERS.vi
 
-  let disabledDays: CalendarProps["disabled"]
-  if (fromDate && toDate) {
-    disabledDays = [{ before: fromDate }, { after: toDate }]
-  } else if (fromDate) {
-    disabledDays = { before: fromDate }
-  } else if (toDate) {
-    disabledDays = { after: toDate }
-  }
+  const extraMatchers = disabledMatchers
+    ? Array.isArray(disabledMatchers)
+      ? disabledMatchers
+      : [disabledMatchers]
+    : []
+  const matchers = [
+    ...(fromDate ? [{ before: fromDate }] : []),
+    ...(toDate ? [{ after: toDate }] : []),
+    ...extraMatchers,
+  ]
+  const disabledDays: CalendarProps["disabled"] =
+    matchers.length > 0 ? matchers : undefined
 
   const handleSelect = (date: Date | undefined) => {
     onChange?.(date)

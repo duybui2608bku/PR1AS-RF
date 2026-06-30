@@ -996,7 +996,8 @@
       "loading": "Đang tải lịch...",
       "legendAvailable": "Còn trống",
       "legendUnavailable": "Không nhận",
-      "legendOutOfRange": "Ngoài khoảng đặt lịch"
+      "legendOutOfRange": "Ngoài khoảng đặt lịch",
+      "legendPartial": "Còn vài khung giờ"
     },
     "suggestions": {
       "title": "Worker tương tự",
@@ -1035,7 +1036,9 @@
       "errSelectDate": "Vui lòng chọn ngày",
       "errMinQuantity": "Số lượng tối thiểu là 1",
       "errSelectTime": "Vui lòng chọn giờ bắt đầu",
-      "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ"
+      "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ",
+      "errSlotTaken": "Khung giờ này đã có người đặt",
+      "slotTaken": "Đã đặt"
     }
   },
   "Onboarding": {
@@ -1843,7 +1846,8 @@
     "validationQuantity": "Số lượng phải lớn hơn hoặc bằng 1",
     "validationSchedule": "Thời gian đã chọn nằm ngoài lịch khả dụng của worker",
     "validationMinAdvance": "Booking phải được đặt trước ít nhất {hours} giờ",
-    "validationPriceMissing": "Worker này chưa có giá"
+    "validationPriceMissing": "Worker này chưa có giá",
+    "slotTaken": "Đã đặt"
   },
   "Location": {
     "searchProvince": "Tìm tỉnh / thành phố...",

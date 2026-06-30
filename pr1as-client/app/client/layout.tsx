@@ -15,7 +15,7 @@ export async function generateMetadata() {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <AuthGuard>{children}</AuthGuard>
     </SiteLayout>
   )

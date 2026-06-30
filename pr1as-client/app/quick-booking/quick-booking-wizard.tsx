@@ -33,6 +33,13 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import {
+  classifyDays,
+  computeBlockedHours,
+  computeBookedIntervals,
+  HOURS_PER_UNIT,
+  rangeHasConflict,
+} from "@/lib/booking-availability"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import { INTL_LOCALE_TAGS, type SupportedLocale, pickLocalized } from "@/lib/locale"
 import { workerService } from "@/services/worker.service"
@@ -55,11 +62,7 @@ const HOUR_OPTIONS = Array.from({ length: 15 }, (_, idx) => {
   }
 })
 
-const HOURS_PER_UNIT: Record<WorkerPricingUnit, number> = {
-  HOURLY: 1,
-  DAILY: 24,
-  MONTHLY: 24 * 30,
-}
+const HOUR_VALUES = HOUR_OPTIONS.map((opt) => opt.value)
 
 const toIsoDate = (date: Date) => {
   const y = date.getFullYear()
@@ -102,23 +105,6 @@ const getPricingUnitLabel = (
     default:
       return unit
   }
-}
-
-const computeBookedDays = (
-  schedule: Array<{ start_time: string; end_time: string }>
-): Date[] => {
-  const map = new Map<string, Date>()
-  for (const item of schedule) {
-    const start = startOfDay(new Date(item.start_time))
-    const end = new Date(item.end_time)
-    const cursor = new Date(start)
-    while (cursor <= end) {
-      const key = toIsoDate(cursor)
-      if (!map.has(key)) map.set(key, new Date(cursor))
-      cursor.setDate(cursor.getDate() + 1)
-    }
-  }
-  return [...map.values()]
 }
 
 type WizardStep = 0 | 1 | 2 | 3
@@ -288,13 +274,39 @@ export function QuickBookingWizard() {
     return new Date(startDateTime.getTime() + hours * 60 * 60 * 1000)
   }, [quantity, startDateTime, state.unit])
 
-  const bookedDays = React.useMemo(() => {
-    const items = [
-      ...(workerScheduleQuery.data?.bookings ?? []),
-      ...(workerScheduleQuery.data?.blackouts ?? []),
-    ]
-    return computeBookedDays(items)
-  }, [workerScheduleQuery.data])
+  const bookedIntervals = React.useMemo(
+    () =>
+      computeBookedIntervals([
+        ...(workerScheduleQuery.data?.bookings ?? []),
+        ...(workerScheduleQuery.data?.blackouts ?? []),
+      ]),
+    [workerScheduleQuery.data],
+  )
+
+  // Days with no free slot are disabled in the date picker; partially booked
+  // days stay selectable so the remaining hours can still be booked.
+  const fullyBookedDays = React.useMemo(
+    () =>
+      classifyDays(
+        startOfDay(new Date()),
+        endOfRange(new Date()),
+        HOUR_VALUES,
+        bookedIntervals,
+      ).fullyBooked,
+    [bookedIntervals],
+  )
+
+  // Start times already taken on the selected day (for the chosen duration).
+  const blockedHours = React.useMemo(() => {
+    if (!state.date || !state.unit) return new Set<string>()
+    const durationHours = HOURS_PER_UNIT[state.unit] * quantity
+    return computeBlockedHours(
+      state.date,
+      HOUR_VALUES,
+      durationHours,
+      bookedIntervals,
+    )
+  }, [state.date, state.unit, quantity, bookedIntervals])
 
   const unitPriceVnd = selectedPricing
     ? selectedPricing.price_vnd ?? selectedPricing.price
@@ -327,17 +339,27 @@ export function QuickBookingWizard() {
     if (!state.unit) return t("validationUnit")
     if (!pricingOptions.length) return t("validationPriceMissing")
     if (quantity < 1) return t("validationQuantity")
-    if (bookedDays.some((day) => day.toDateString() === state.date?.toDateString())) {
+    if (
+      startDateTime &&
+      endDateTime &&
+      rangeHasConflict(
+        startDateTime.getTime(),
+        endDateTime.getTime(),
+        bookedIntervals,
+      )
+    ) {
       return t("validationSchedule")
     }
     return minAdvanceError
   }, [
-    bookedDays,
+    bookedIntervals,
+    endDateTime,
     minAdvanceError,
     pricingOptions.length,
     quantity,
     selectedService,
     selectedWorker,
+    startDateTime,
     state.date,
     state.time,
     state.unit,
@@ -746,6 +768,7 @@ export function QuickBookingWizard() {
                           onChange={(value) => setField("date", value)}
                           fromDate={new Date()}
                           toDate={endOfRange(new Date())}
+                          disabledMatchers={fullyBookedDays}
                           buttonClassName="bg-background"
                         />
                       </div>
@@ -757,8 +780,15 @@ export function QuickBookingWizard() {
                           </SelectTrigger>
                           <SelectContent>
                             {HOUR_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                disabled={blockedHours.has(option.value)}
+                              >
                                 {option.label}
+                                {blockedHours.has(option.value)
+                                  ? ` · ${t("slotTaken")}`
+                                  : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>

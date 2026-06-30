@@ -996,7 +996,8 @@
       "loading": "正在加载日程…",
       "legendAvailable": "可预约",
       "legendUnavailable": "不可预约",
-      "legendOutOfRange": "超出预约范围"
+      "legendOutOfRange": "超出预约范围",
+      "legendPartial": "尚有部分时段"
     },
     "suggestions": {
       "title": "相似工作者",
@@ -1035,7 +1036,9 @@
       "errSelectDate": "请选择日期",
       "errMinQuantity": "数量至少为 1",
       "errSelectTime": "请选择开始时间",
-      "errMinAdvance": "预约须至少提前 {hours} 小时"
+      "errMinAdvance": "预约须至少提前 {hours} 小时",
+      "errSlotTaken": "该时间段已被预约",
+      "slotTaken": "已约"
     }
   },
   "Onboarding": {
@@ -1842,7 +1845,8 @@
     "validationQuantity": "数量必须至少为 1",
     "validationSchedule": "所选时间不在 worker 可用时间内",
     "validationMinAdvance": "预约必须至少提前 {hours} 小时",
-    "validationPriceMissing": "该 worker 没有可用价格"
+    "validationPriceMissing": "该 worker 没有可用价格",
+    "slotTaken": "已约"
   },
   "Location": {
     "searchProvince": "搜索省/市...",

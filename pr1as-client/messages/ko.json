@@ -991,7 +991,11 @@
       "upgradeConfirm": "플랜 업그레이드"
     },
     "calendar": {
-      "loading": "캘린더를 불러오는 중..."
+      "loading": "캘린더를 불러오는 중...",
+      "legendAvailable": "예약 가능",
+      "legendUnavailable": "예약 불가",
+      "legendOutOfRange": "예약 가능 범위 밖",
+      "legendPartial": "일부 시간대 가능"
     },
     "suggestions": {
       "title": "비슷한 작업자",
@@ -1030,7 +1034,9 @@
       "errSelectDate": "날짜를 선택하세요",
       "errMinQuantity": "최소 수량은 1입니다",
       "errSelectTime": "시작 시간을 선택하세요",
-      "errMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다"
+      "errMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다",
+      "errSlotTaken": "이 시간대는 이미 예약되었습니다",
+      "slotTaken": "예약됨"
     }
   },
   "Onboarding": {
@@ -1828,7 +1834,8 @@
     "validationQuantity": "수량은 1 이상이어야 합니다",
     "validationSchedule": "선택한 시간이 워커의 가능 시간과 맞지 않습니다",
     "validationMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다",
-    "validationPriceMissing": "이 워커에는 가격 정보가 없습니다"
+    "validationPriceMissing": "이 워커에는 가격 정보가 없습니다",
+    "slotTaken": "예약됨"
   },
   "Location": {
     "searchProvince": "시/도 검색...",

@@ -3,7 +3,7 @@ import { WalletDepositPage } from "@/components/wallet/wallet-deposit-page"
 
 export default function WalletDepositRoutePage() {
   return (
-    <SiteLayout>
+    <SiteLayout hideFooter>
       <WalletDepositPage />
     </SiteLayout>
   )

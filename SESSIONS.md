@@ -37,6 +37,75 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-06-30 — Fix: booking 1 phần ngày khóa cả ngày của worker
+
+**Mục tiêu**: Client đặt vài giờ trong ngày của worker nhưng frontend khóa cả
+ngày → client khác không đặt được giờ trống còn lại.
+
+**Nguyên nhân**: Backend so trùng đúng theo khoảng giờ (half-open overlap,
+`checkScheduleConflict`) — ĐÚNG. Nhưng frontend `computeBookedDays` quét
+nguyên cả ngày: chỉ cần 1 booking bất kỳ là disable cả ngày. Lỗi lặp ở **4**
+surface: `book-worker-dialog`, `quick-booking-dialog`, `quick-booking-wizard`,
+`worker-calendar`.
+
+**Đã làm**:
+- Tạo module dùng chung `pr1as-client/lib/booking-availability.ts`:
+  `computeBookedIntervals` / `rangeHasConflict` (mirror backend half-open) /
+  `computeBlockedHours` (giờ bắt đầu bị trùng theo unit×quantity) /
+  `classifyDays` (fully vs partially booked, probe 1h).
+- 4 component: chỉ disable ngày **fully booked**; ngày partial vẫn chọn được
+  (modifier amber "còn vài khung giờ"); dropdown giờ disable đúng slot đã đặt;
+  thêm validation overlap theo [start,end) thật.
+- Mở rộng `components/ui/date-picker.tsx` thêm prop `disabledMatchers`.
+- i18n 4 locale: thêm `WorkerProfile.calendar.legendPartial`,
+  `WorkerProfile.book.errSlotTaken` + `slotTaken`, `QuickBooking.slotTaken`.
+  Bổ sung luôn các key legend còn thiếu sẵn trong `ko.json`.
+- Cập nhật `memorybank/booking.md` (đoạn mô tả hành vi cũ đã sai).
+
+**File chính**: `lib/booking-availability.ts`, `components/worker/{book-worker-dialog,
+quick-booking-dialog,worker-calendar}.tsx`, `app/quick-booking/quick-booking-wizard.tsx`,
+`components/ui/date-picker.tsx`, `messages/{vi,en,zh,ko}.json`
+
+**Quyết định / ghi chú**: "Fully booked" probe bằng slot 1h nên độc lập
+unit/quantity (lịch profile chưa chọn unit). `npm run typecheck` pass; lint
+không phát sinh lỗi mới (các cảnh báo còn lại là của code cũ). Đã test logic
+module bằng script (9/9 PASS) — gồm đúng kịch bản bug.
+
+**Còn lại**: Chưa kiểm thử E2E trên trình duyệt (cần worker có booking 1 phần
+ngày trong DB để thấy rõ). Logic đã verify bằng unit test.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-06-30 — Chuẩn hóa footer theo loại trang (desktop)
+
+**Mục tiêu**: Rà soát client bản desktop, xác định page nào cần footer / không cần,
+rồi sửa cho nhất quán.
+
+**Nguyên tắc**: trang public/marketing/pháp lý → có footer; trang app đã đăng
+nhập / giao dịch / dashboard → ẩn footer (`SiteLayout hideFooter`). Footer vốn
+chỉ render từ `md` trở lên; mobile dùng bottom-nav nên không đổi.
+
+**Đã làm** (5 chỗ lệch chuẩn):
+- `/pricing`: bỏ `hideFooter` → hiện footer (đồng bộ với about/services/booking-process).
+- `/worker/boost`: thêm `hideFooter` → ẩn (trang app của worker).
+- `/wallet`, `/wallet/deposit`: thêm `hideFooter` → ẩn (giao dịch, đã đăng nhập).
+- `/client/*` (qua `client/layout.tsx`): thêm `hideFooter` → ẩn cho toàn khu client app.
+
+**File chính**: `pr1as-client/app/pricing/page.tsx`, `app/worker/boost/page.tsx`,
+`app/wallet/page.tsx`, `app/wallet/deposit/page.tsx`, `app/client/layout.tsx`
+
+**Quyết định / ghi chú**: `/booking-lookup` và `/quick-booking` giữ footer vì là
+flow public. Các trang không dùng `SiteLayout` (chat, dashboard, (auth), notifications)
+vốn đã không có footer — không đụng. `npm run typecheck` pass.
+
+**Còn lại**: không
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-06-30 — Tạm ẩn trang + modal Trách nhiệm pháp lý
 
 **Mục tiêu**: Tạm thời ẩn trang `/legal-responsibility` và modal nhắc trách

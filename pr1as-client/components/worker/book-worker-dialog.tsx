@@ -29,6 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  classifyDays,
+  computeBlockedHours,
+  computeBookedIntervals,
+  HOURS_PER_UNIT,
+  rangeHasConflict,
+} from "@/lib/booking-availability"
 import { useCreateBooking } from "@/lib/hooks/use-bookings"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
 import { useCurrency } from "@/lib/hooks/use-currency"
@@ -43,12 +50,6 @@ const UNIT_KEY: Record<WorkerPricingUnit, string> = {
   HOURLY: "enums.unitHourly",
   DAILY: "enums.unitDaily",
   MONTHLY: "enums.unitMonthly",
-}
-
-const HOURS_PER_UNIT: Record<WorkerPricingUnit, number> = {
-  HOURLY: 1,
-  DAILY: 24,
-  MONTHLY: 24 * 30,
 }
 
 const toIsoDate = (date: Date) => {
@@ -75,28 +76,13 @@ const formatDateLabel = (date: Date, localeTag: string) =>
     year: "numeric",
   })
 
-const computeBookedDays = (
-  schedule: Array<{ start_time: string; end_time: string }>,
-): Date[] => {
-  const map = new Map<string, Date>()
-  for (const item of schedule) {
-    const start = startOfDay(new Date(item.start_time))
-    const end = new Date(item.end_time)
-    const cursor = new Date(start)
-    while (cursor <= end) {
-      const key = toIsoDate(cursor)
-      if (!map.has(key)) map.set(key, new Date(cursor))
-      cursor.setDate(cursor.getDate() + 1)
-    }
-  }
-  return [...map.values()]
-}
-
 const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
   const hour = 6 + i
   const label = `${String(hour).padStart(2, "0")}:00`
   return { value: label, label }
 })
+
+const HOUR_VALUES = HOUR_OPTIONS.map((opt) => opt.value)
 
 type Props = {
   open: boolean
@@ -191,19 +177,28 @@ export function BookWorkerDialog({
     fetchRange,
   )
 
-  const bookedDays = useMemo(() => {
-    const items: Array<{ start_time: string; end_time: string }> = [
-      ...(schedule?.bookings ?? []),
-      ...(schedule?.blackouts ?? []),
-    ]
-    return computeBookedDays(items)
-  }, [schedule])
+  const bookedIntervals = useMemo(
+    () =>
+      computeBookedIntervals([
+        ...(schedule?.bookings ?? []),
+        ...(schedule?.blackouts ?? []),
+      ]),
+    [schedule],
+  )
 
   const maxDate = useMemo(() => {
     const d = startOfDay(new Date())
     d.setDate(d.getDate() + DATE_RANGE_DAYS)
     return d
   }, [])
+
+  // Only days with no free slot are disabled; partially booked days stay open
+  // so other clients can still grab the remaining hours.
+  const { fullyBooked, partiallyBooked } = useMemo(
+    () =>
+      classifyDays(startOfDay(new Date()), maxDate, HOUR_VALUES, bookedIntervals),
+    [bookedIntervals, maxDate],
+  )
 
   const startDateTime = useMemo(() => {
     if (!date) return null
@@ -218,6 +213,14 @@ export function BookWorkerDialog({
     const hours = HOURS_PER_UNIT[unit] * quantity
     return new Date(startDateTime.getTime() + hours * 60 * 60 * 1000)
   }, [startDateTime, unit, quantity])
+
+  // Start-time options already taken on the selected day, for the chosen unit +
+  // quantity duration. These get disabled in the time dropdown.
+  const blockedHours = useMemo(() => {
+    if (!date || !unit) return new Set<string>()
+    const durationHours = HOURS_PER_UNIT[unit] * quantity
+    return computeBlockedHours(date, HOUR_VALUES, durationHours, bookedIntervals)
+  }, [date, unit, quantity, bookedIntervals])
 
   const unitPricing = useMemo(() => {
     if (!service || !unit) return null
@@ -245,8 +248,29 @@ export function BookWorkerDialog({
     if (startDateTime < minStart) {
       return t("book.errMinAdvance", { hours: MIN_ADVANCE_HOURS })
     }
+    if (
+      endDateTime &&
+      rangeHasConflict(
+        startDateTime.getTime(),
+        endDateTime.getTime(),
+        bookedIntervals,
+      )
+    ) {
+      return t("book.errSlotTaken")
+    }
     return null
-  }, [open, service, unit, date, quantity, startDateTime, now, t])
+  }, [
+    open,
+    service,
+    unit,
+    date,
+    quantity,
+    startDateTime,
+    endDateTime,
+    bookedIntervals,
+    now,
+    t,
+  ])
 
   const handleSubmit = async () => {
     if (
@@ -347,12 +371,14 @@ export function BookWorkerDialog({
                     disabled={[
                       { before: startOfDay(new Date()) },
                       { after: maxDate },
-                      ...bookedDays,
+                      ...fullyBooked,
                     ]}
-                    modifiers={{ booked: bookedDays }}
+                    modifiers={{ booked: fullyBooked, partial: partiallyBooked }}
                     modifiersClassNames={{
                       booked:
                         "[&>button]:border [&>button]:border-rose-300 [&>button]:text-rose-500 dark:[&>button]:border-rose-800 dark:[&>button]:text-rose-400 [&>button]:cursor-not-allowed",
+                      partial:
+                        "[&>button]:border [&>button]:border-amber-300 [&>button]:text-amber-600 dark:[&>button]:border-amber-700 dark:[&>button]:text-amber-400",
                     }}
                     initialFocus
                   />
@@ -374,8 +400,15 @@ export function BookWorkerDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {HOUR_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      disabled={blockedHours.has(opt.value)}
+                    >
                       {opt.label}
+                      {blockedHours.has(opt.value)
+                        ? ` · ${t("book.slotTaken")}`
+                        : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
