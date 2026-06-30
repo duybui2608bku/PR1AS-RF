@@ -6,6 +6,13 @@ import {
   TOKEN_COOKIE_NAME,
 } from "@/lib/auth/auth-cookie"
 import { getJwtSecret } from "@/lib/auth/jwt-secret"
+import {
+  LOCALE_COOKIE_NAME,
+  SUPPORTED_LOCALES,
+  detectLocaleFromAcceptLanguage,
+} from "@/lib/locale"
+
+const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
 const PROTECTED_PREFIXES = [
   "/client",
@@ -111,6 +118,35 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = req.cookies.get(TOKEN_COOKIE_NAME)?.value
 
+  // First-time visitors have no explicit language choice yet: detect it from the
+  // browser's Accept-Language header (fallback English) and pin it into the
+  // NEXT_LOCALE cookie so it stays stable on subsequent requests. We also detect
+  // when the existing cookie holds an unsupported value (tampered / removed
+  // locale) so it gets healed instead of leaving the UI and backend out of sync.
+  // Once a valid cookie exists, this is a no-op (detectedLocale === null).
+  const localeCookie = req.cookies.get(LOCALE_COOKIE_NAME)?.value
+  const hasValidLocaleCookie =
+    !!localeCookie && (SUPPORTED_LOCALES as readonly string[]).includes(localeCookie)
+  const detectedLocale = hasValidLocaleCookie
+    ? null
+    : detectLocaleFromAcceptLanguage(req.headers.get("accept-language"))
+
+  // Only pin the cookie on real HTML document navigations — not on RSC prefetches,
+  // API calls, or metadata routes (robots.txt / sitemap.xml / manifest), where a
+  // stray Set-Cookie would defeat CDN caching.
+  const isDocumentNavigation = req.headers.get("sec-fetch-dest") === "document"
+
+  const applyLocaleCookie = (res: NextResponse): NextResponse => {
+    if (detectedLocale && isDocumentNavigation) {
+      res.cookies.set(LOCALE_COOKIE_NAME, detectedLocale, {
+        path: "/",
+        maxAge: LOCALE_COOKIE_MAX_AGE,
+        sameSite: "lax",
+      })
+    }
+    return res
+  }
+
   // Verify token signature and exp claim at Edge
   const payload = token ? await verifyAndDecodeJwt(token) : null
   const isTokenValid = payload !== null
@@ -136,14 +172,14 @@ export async function middleware(req: NextRequest) {
     if (maintenanceMode) {
       const url = req.nextUrl.clone()
       url.pathname = "/maintenance"
-      return NextResponse.redirect(url)
+      return applyLocaleCookie(NextResponse.redirect(url))
     }
   }
 
   if (isTokenValid && activeRole === "admin" && pathname === "/") {
     const url = req.nextUrl.clone()
     url.pathname = "/dashboard"
-    return NextResponse.redirect(url)
+    return applyLocaleCookie(NextResponse.redirect(url))
   }
 
   // Worker/client (và khách) đều landing mặc định ở /about — rơi xuống
@@ -158,7 +194,7 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone()
     url.pathname = "/posts"
     url.search = ""
-    return NextResponse.redirect(url)
+    return applyLocaleCookie(NextResponse.redirect(url))
   }
 
   if (isProtectedPath(pathname) && !isTokenValid) {
@@ -170,7 +206,7 @@ export async function middleware(req: NextRequest) {
     const response = NextResponse.redirect(url)
     response.cookies.delete(TOKEN_COOKIE_NAME)
     response.cookies.delete(ACTIVE_ROLE_COOKIE_NAME)
-    return response
+    return applyLocaleCookie(response)
   }
 
   if (AUTH_PAGES.includes(pathname) && isTokenValid) {
@@ -188,10 +224,10 @@ export async function middleware(req: NextRequest) {
     url.search = ""
     url.pathname =
       allowedFrom ?? (activeRole === "admin" ? "/dashboard" : "/about")
-    return NextResponse.redirect(url)
+    return applyLocaleCookie(NextResponse.redirect(url))
   }
 
-  return NextResponse.next()
+  return applyLocaleCookie(NextResponse.next())
 }
 
 export const config = {

@@ -67,13 +67,13 @@ Next.js App Router. Data and state conventions:
 - **Server state**: TanStack Query. Hooks in `lib/hooks/use-*.ts` wrap query/mutation logic; query keys are centralized in `lib/query-keys.ts`. API calls go through axios clients in `services/` (shared instance in `lib/axios.ts`).
 - **Client state**: Zustand stores in `lib/store/`.
 - **Realtime**: `socket.io-client` via `lib/chat-socket.ts` and `lib/hooks/use-chat-socket.ts`.
-- **Routing/auth**: `middleware.ts` handles locale + auth gating; role-based route maps in `lib/navigation/`.
+- **Routing/auth**: `middleware.ts` handles auth gating + maintenance-mode redirects (locale is handled separately via cookie in `i18n/request.ts`, not in middleware); role-based route maps in `lib/navigation/`.
 - UI primitives are shadcn/ui (Radix-based) under `components/`.
 
 ## Invariants (do not break)
 
 - **Multi-currency**: VND is the pivot/base. All stored amounts are normalized to VND; the display layer converts using hard-coded snapshot rates. Source of truth is `SERVER/src/constants/currency.ts`, **mirrored** in `pr1as-client/lib/currency.ts` — change both together. Active currencies: VND, CNY, JPY, KRW, USD.
-- **i18n**: Active locales `en` (default), `vi`, `zh`. Per-user locale lives in `meta_data.locale` (`PATCH /api/auth/locale`); frontend uses `next-intl` with `pr1as-client/messages/{locale}.json`. Add keys to all three locale files.
+- **i18n**: Active locales `vi` (**default**), `en`, `zh`, `ko` — source of truth is `pr1as-client/lib/locale.ts` (`SUPPORTED_LOCALES`/`DEFAULT_LOCALE`). Uses `next-intl` **without URL prefix** (no `[locale]` route segment); the active locale is resolved server-side from the `NEXT_LOCALE` cookie in `i18n/request.ts`, falling back to `DEFAULT_LOCALE`. Switching writes the cookie + `localStorage` (`pr1as-locale`) + (for logged-in users, best-effort) `meta_data.locale` via `PATCH /api/auth/locale`, then `router.refresh()`. `meta_data.locale` is used mainly so emails go out in the user's language. Messages live in `pr1as-client/messages/{locale}.json` — add keys to all four locale files.
 - **Payments**: the wallet/top-up gateway is **SePay** (VNPay was removed — do not reintroduce it).
 - **User-generated rich content** must be sanitized with `sanitize-html` before storage/render.
 
