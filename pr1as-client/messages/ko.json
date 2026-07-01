@@ -1134,6 +1134,8 @@
     "workerBookingsTitle": "작업자 예약",
     "aboutTitle": "PR1AS 소개 — 작업자와 프리랜서를 위한 신뢰 기반 예약",
     "aboutDescription": "PR1AS가 무엇인지, 많은 사람이 선택하는 이유와 신뢰할 수 있는 서비스 제공자 예약을 쉽고 안전하며 투명하게 만드는 기능을 알아보세요.",
+    "contactTitle": "PR1AS 문의",
+    "contactDescription": "PR1AS 팀에 문의하세요 — 빠른 지원을 위한 이메일, 전화, 주소 및 운영 시간.",
     "legalResponsibilityTitle": "법적 책임",
     "legalResponsibilityDescription": "책임 법인 및 산업무역부 제출 서류를 포함한 PR1AS의 책임 원칙과 법적 준수 상태입니다."
   },
@@ -1537,6 +1539,14 @@
       "close": "닫기",
       "cancel": "취소"
     }
+  },
+  "Contact": {
+    "title": "문의하기",
+    "subtitle": "궁금한 점이 있거나 지원이 필요하신가요? PR1AS 팀에 문의하세요 — 언제든 기꺼이 도와드리겠습니다.",
+    "email": "이메일",
+    "phone": "전화",
+    "address": "주소",
+    "hours": "운영 시간"
   },
   "Privacy": {
     "title": "개인정보처리방침",

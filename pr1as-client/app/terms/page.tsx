@@ -1,5 +1,9 @@
 import { SiteLayout } from "@/components/layout/site-layout"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
+
+import { RichText } from "@/components/content/rich-text"
+import { getServerLegalContent } from "@/lib/legal-server"
+import { pickLocalized } from "@/lib/locale"
 
 export async function generateMetadata() {
   const t = await getTranslations("Terms")
@@ -9,7 +13,46 @@ export async function generateMetadata() {
 }
 
 export default async function TermsPage() {
+  const locale = await getLocale()
   const t = await getTranslations("Terms")
+  const content = await getServerLegalContent("terms")
+
+  // Admin-edited DB content takes priority. Fall back to the next-intl
+  // messages only when the API is unreachable (no sections resolved).
+  if (content.sections.length > 0) {
+    const title = pickLocalized(content.title, locale) || t("title")
+    const lastUpdated =
+      pickLocalized(content.lastUpdated, locale) || t("lastUpdated")
+    const introHtml = pickLocalized(content.intro, locale) || ""
+
+    return (
+      <SiteLayout>
+        <section className="container mx-auto max-w-3xl px-4 py-14 md:py-20">
+          <h1 className="mb-1">{title}</h1>
+          <p className="mb-10 text-sm text-muted-foreground">{lastUpdated}</p>
+
+          {introHtml ? <RichText html={introHtml} className="mb-8" /> : null}
+
+          <div className="space-y-8">
+            {content.sections.map((section, idx) => {
+              const heading = pickLocalized(section.title, locale) ?? ""
+              const bodyHtml = pickLocalized(section.body, locale) ?? ""
+              return (
+                <div key={idx}>
+                  {heading ? (
+                    <h2 className="mb-3 text-lg font-semibold text-foreground">
+                      {heading}
+                    </h2>
+                  ) : null}
+                  <RichText html={bodyHtml} />
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </SiteLayout>
+    )
+  }
 
   return (
     <SiteLayout>

@@ -1136,6 +1136,8 @@
     "workerBookingsTitle": "Booking worker",
     "aboutTitle": "Giới thiệu PR1AS — Đặt lịch tin cậy cho worker & freelancer",
     "aboutDescription": "Tìm hiểu PR1AS là gì, vì sao hàng nghìn người chọn chúng tôi, và những tính năng giúp việc đặt dịch vụ trở nên đơn giản, an toàn và minh bạch.",
+    "contactTitle": "Liên hệ PR1AS",
+    "contactDescription": "Liên hệ với đội ngũ PR1AS — email, số điện thoại, địa chỉ và giờ làm việc để được hỗ trợ nhanh chóng.",
     "legalResponsibilityTitle": "Trách nhiệm pháp lý",
     "legalResponsibilityDescription": "Nguyên tắc trách nhiệm và tình trạng tuân thủ pháp lý của PR1AS, gồm pháp nhân chịu trách nhiệm và hồ sơ nộp Bộ Công Thương."
   },
@@ -1539,6 +1541,14 @@
       "close": "Đóng",
       "cancel": "Hủy"
     }
+  },
+  "Contact": {
+    "title": "Liên hệ",
+    "subtitle": "Bạn có câu hỏi hoặc cần hỗ trợ? Hãy liên hệ với đội ngũ PR1AS — chúng tôi luôn sẵn sàng giúp đỡ.",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "address": "Địa chỉ",
+    "hours": "Giờ làm việc"
   },
   "Privacy": {
     "title": "Chính sách bảo mật",

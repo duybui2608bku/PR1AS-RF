@@ -129,6 +129,13 @@ export const queryKeys = {
   about: {
     all: ["about-content"] as const,
   },
+  legal: {
+    all: ["legal-content"] as const,
+    page: (page: string) => ["legal-content", page] as const,
+  },
+  contact: {
+    all: ["contact-content"] as const,
+  },
   emailCampaigns: {
     all: ["email-campaigns"] as const,
     list: (params?: Record<string, unknown>) =>

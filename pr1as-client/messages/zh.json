@@ -1136,6 +1136,8 @@
     "workerBookingsTitle": "工作者预约",
     "aboutTitle": "关于 PR1AS — 值得信赖的工作者与自由职业者预约平台",
     "aboutDescription": "了解 PR1AS 是什么、为何成千上万的人选择我们，以及让预约可信赖服务变得简单、安全、透明的功能。",
+    "contactTitle": "联系 PR1AS",
+    "contactDescription": "联系 PR1AS 团队——电子邮件、电话、地址和工作时间，为您提供快速支持。",
     "legalResponsibilityTitle": "法律责任",
     "legalResponsibilityDescription": "PR1AS 的责任原则与法律合规状况，包括负责法人及提交工贸部的备案文件。"
   },
@@ -1539,6 +1541,14 @@
       "close": "关闭",
       "cancel": "取消"
     }
+  },
+  "Contact": {
+    "title": "联系我们",
+    "subtitle": "有疑问或需要帮助？请联系 PR1AS 团队——我们随时乐意为您服务。",
+    "email": "电子邮件",
+    "phone": "电话",
+    "address": "地址",
+    "hours": "工作时间"
   },
   "Privacy": {
     "title": "隐私政策",

@@ -1136,6 +1136,8 @@
     "workerBookingsTitle": "Worker bookings",
     "aboutTitle": "About PR1AS — Trusted booking for workers & freelancers",
     "aboutDescription": "Learn what PR1AS is, why thousands choose us, and the features that make booking trusted service providers simple, safe and transparent.",
+    "contactTitle": "Contact PR1AS",
+    "contactDescription": "Get in touch with the PR1AS team — email, phone, address and working hours for quick support.",
     "legalResponsibilityTitle": "Legal Responsibility",
     "legalResponsibilityDescription": "PR1AS accountability principles and legal-compliance status, including the responsible legal entity and the Ministry of Industry and Trade dossier."
   },
@@ -1539,6 +1541,14 @@
       "close": "Close",
       "cancel": "Cancel"
     }
+  },
+  "Contact": {
+    "title": "Contact",
+    "subtitle": "Have a question or need support? Get in touch with the PR1AS team — we're always happy to help.",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "hours": "Working hours"
   },
   "Privacy": {
     "title": "Privacy Policy",

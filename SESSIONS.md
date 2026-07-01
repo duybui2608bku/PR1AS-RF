@@ -37,6 +37,54 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-01 — Cho admin chỉnh sửa Privacy/Terms + tạo trang Contact
+
+**Mục tiêu**: Cho phép admin sửa nội dung Privacy, Terms và Contact ở dashboard
+(About đã có sẵn từ trước). Cookies bỏ qua theo yêu cầu.
+
+**Đã làm** (nhân bản khuôn mẫu module `about`):
+- **Backend module `legal`** (privacy + terms, phân biệt qua param `:page`,
+  singleton mỗi page, `page` unique index): types → constants (defaults 4 ngôn
+  ngữ dựng từ i18n cũ) → model → repository (lazy-seed + deepMerge localized,
+  sections thay nguyên khối) → service → validation (zod, `z.enum` cho page) →
+  controller → routes. Mount `GET /api/legal/:page` (public), `PATCH` + `POST
+  /:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
+  intro + mảng sections (title + body HTML), admin thêm/xoá/sắp xếp.
+- **Backend module `contact`** (singleton): title/subtitle/email/phone/address/
+  hours/body; email+phone là plain, còn lại localized. Mount `/api/contact`.
+- Thêm `LEGAL_CONTENT`, `CONTACT_CONTENT` vào `models.name.ts`.
+- **Frontend**: `services/{legal,contact}.service.ts`, hooks
+  `use-{legal,contact}-content.ts`, `lib/{legal,contact}-server.ts` (SSR fetch,
+  revalidate 60s, fallback rỗng), query-keys `legal`/`contact`.
+- Public: `app/privacy` + `app/terms` render DB (ưu tiên) → fallback i18n cũ khi
+  API lỗi; `app/contact/{page,layout}.tsx` mới (thẻ email/phone/address/hours +
+  body). Component chung `components/content/rich-text.tsx`.
+- Admin: `components/dashboard/content-fields.tsx` (primitives dùng chung),
+  `legal-editor.tsx`, page `/dashboard/legal` (tab Privacy/Terms) +
+  `/dashboard/contact`. Thêm 2 nav "Trang pháp lý"/"Trang liên hệ" vào
+  `admin-dashboard-shell.tsx`.
+- i18n: thêm namespace `Contact` + `SEO.contact{Title,Description}` cho cả 4
+  file vi/en/zh/ko.
+
+**File chính**: `SERVER/src/{types,constants,models,repositories,services,
+validations,controllers,routes}/{legal,contact}/*`, `pr1as-client/app/{privacy,
+terms,contact}`, `pr1as-client/app/dashboard/{legal,contact}`,
+`pr1as-client/components/{content,dashboard}/*`, `messages/*.json`.
+
+**Quyết định / ghi chú**: nav `/contact` đã tồn tại sẵn (main+footer) nhưng
+trước đó 404 — nay có page. DB lazy-seed từ defaults nên editor luôn có sẵn nội
+dung để sửa; i18n Privacy/Terms giữ làm fallback SSR khi API down. Titles/labels
+dùng input plain (không TipTap) để không dính `<p>`; chỉ intro/body/section body
+là rich text.
+
+**Còn lại**: chưa chạy full-stack (cần MongoDB) — mới verify bằng
+`tsc --noEmit` + ESLint sạch cả 2 app. Nên chạy thử `npm run dev` 2 app + đăng
+nhập admin để mắt thấy editor lưu/hiển thị.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-06-30 — Fix: booking 1 phần ngày khóa cả ngày của worker
 
 **Mục tiêu**: Client đặt vài giờ trong ngày của worker nhưng frontend khóa cả

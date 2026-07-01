@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen,
   CalendarCheck,
+  Contact,
   CreditCard,
   Gem,
   Info,
@@ -20,6 +21,7 @@ import {
   MessagesSquare,
   PanelLeftClose,
   PanelLeftOpen,
+  ScrollText,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -130,6 +132,16 @@ const adminNavGroups = [
         href: "/dashboard/about",
         label: "Trang giới thiệu",
         icon: Info,
+      },
+      {
+        href: "/dashboard/legal",
+        label: "Trang pháp lý",
+        icon: ScrollText,
+      },
+      {
+        href: "/dashboard/contact",
+        label: "Trang liên hệ",
+        icon: Contact,
       },
       {
         href: "/dashboard/docs",
