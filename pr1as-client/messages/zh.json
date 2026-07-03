@@ -1522,6 +1522,16 @@
     "errors": {
       "paymentCreateFailed": "无法创建支付。请重试。"
     },
+    "voucher": {
+      "title": "有优惠码吗？",
+      "description": "输入优惠码即可激活对应的 Gold 或 Diamond 套餐。",
+      "placeholder": "输入优惠码",
+      "submit": "立即兑换",
+      "loginToRedeem": "登录后兑换",
+      "invalidCode": "优惠码无效。",
+      "success": "{plan} 套餐已激活！",
+      "error": "无法兑换优惠码。请重试。"
+    },
     "yes": "是",
     "purchaseModal": {
       "title": "购买 {package} 计划",

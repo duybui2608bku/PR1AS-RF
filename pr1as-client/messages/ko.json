@@ -1520,6 +1520,16 @@
     "errors": {
       "paymentCreateFailed": "결제를 생성할 수 없습니다. 다시 시도하세요."
     },
+    "voucher": {
+      "title": "바우처 코드가 있으신가요?",
+      "description": "바우처 코드를 입력하면 해당 Gold 또는 Diamond 플랜이 활성화됩니다.",
+      "placeholder": "바우처 코드 입력",
+      "submit": "사용하기",
+      "loginToRedeem": "로그인 후 사용",
+      "invalidCode": "유효하지 않은 바우처 코드입니다.",
+      "success": "{plan} 플랜이 활성화되었습니다!",
+      "error": "바우처 코드를 사용할 수 없습니다. 다시 시도하세요."
+    },
     "yes": "예",
     "purchaseModal": {
       "title": "{package} 플랜 결제",

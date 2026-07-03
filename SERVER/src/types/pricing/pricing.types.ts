@@ -27,6 +27,7 @@ export enum SubscriptionEventStatus {
 export enum SubscriptionSource {
   WALLET = "wallet",
   SYSTEM = "system",
+  VOUCHER = "voucher",
 }
 
 export interface IUserSubscriptionHistory {

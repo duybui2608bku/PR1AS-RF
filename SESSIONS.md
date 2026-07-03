@@ -38,6 +38,53 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-04 — Tính năng voucher kích hoạt gói Gold/Diamond
+
+**Mục tiêu**: Admin tạo mã voucher gắn với gói Gold/Diamond theo tháng; người
+dùng nhập mã trên trang /pricing để kích hoạt gói tương ứng.
+
+**Đã làm**:
+
+- **Backend module `voucher`** (types → models → validations → service →
+  controller → routes, mount `/api/vouchers`): model `Voucher` (code unique
+  uppercase, plan_code, duration_months 1-24, max_uses/used_count, expires_at,
+  is_active, note, created_by) + `VoucherRedemption` (unique compound
+  voucher_id+user_id — mỗi user chỉ nhập 1 mã 1 lần). Admin CRUD:
+  tạo 1-100 mã ngẫu nhiên (`PR1AS-XXXXXXXX`, charset bỏ 0/O/1/I) hoặc 1 mã
+  tùy chỉnh, list phân trang + filter (search/plan/is_active), PATCH
+  (bật/tắt, note, hạn, max_uses ≥ used_count), DELETE chỉ khi chưa ai dùng.
+- **Redeem** (`POST /api/vouchers/redeem`, auth + CSRF): tái dùng đúng luật
+  của `upgradePricing` — cùng plan thì cộng dồn tháng vào expires_at, plan cao
+  hơn thì reset từ hôm nay, plan thấp hơn plan đang active thì từ chối. Chạy
+  trong 1 transaction: consume voucher atomic (`$inc used_count` với điều kiện
+  `used_count < max_uses` + còn hạn + is_active), tạo redemption, update
+  `meta_data.pricing_*`, ghi `UserSubscriptionHistory` (source **`voucher`**
+  mới thêm vào enum, amount 0). Cộng boost points như mua gói (ngoài
+  transaction). Duplicate key (race) → 409 "đã dùng mã này".
+- **Frontend**: `services/voucher.service.ts`, `lib/hooks/use-vouchers.ts`
+  (query key `vouchers` trong query-keys.ts; redeem invalidate pricing/auth
+  cache như useUpgradePricing), trang admin `/dashboard/vouchers` (bảng +
+  filter + dialog tạo + dialog hiện mã vừa tạo với copy + xóa/tắt), nav item
+  "Voucher" (icon Ticket) trong admin-dashboard-shell, component
+  `components/pricing/voucher-redeem.tsx` gắn vào `/pricing` (guest → nút
+  chuyển login), i18n `Pricing.voucher` cho cả 4 file vi/en/zh/ko.
+
+**File chính**: `SERVER/src/{types,models,validations,services,controllers,
+routes}/voucher/*`, `SERVER/src/constants/messages.ts` (VOUCHER_MESSAGES),
+`SERVER/src/types/pricing/pricing.types.ts` (SubscriptionSource.VOUCHER),
+`pr1as-client/app/dashboard/vouchers/page.tsx`,
+`pr1as-client/components/pricing/voucher-redeem.tsx`.
+
+**Quyết định / ghi chú**: voucher không yêu cầu package đang `is_active` khi
+redeem (admin đã phát mã thì mã vẫn dùng được kể cả khi gói bị ẩn khỏi trang
+mua). `max_uses` là tổng lượt trên mỗi mã; mỗi user 1 lượt/mã (hard guard bằng
+unique index). Đã smoke test: server boot + sync index OK, routes trả 401 khi
+chưa auth, service test tạo/trùng mã/list/tắt/xóa pass trên DB dev (tự dọn).
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-07-01 — Cho admin chỉnh sửa Privacy/Terms + tạo trang Contact
 
 **Mục tiêu**: Cho phép admin sửa nội dung Privacy, Terms và Contact ở dashboard

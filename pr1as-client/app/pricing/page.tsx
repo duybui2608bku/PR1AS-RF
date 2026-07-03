@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 
 import { SiteLayout } from "@/components/layout/site-layout"
 import { PricingPlans } from "@/components/pricing/pricing-plans"
+import { VoucherRedeem } from "@/components/pricing/voucher-redeem"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { pricingService, type PricingPackage } from "@/services/pricing.service"
 import { cn } from "@/lib/utils"
@@ -137,6 +138,9 @@ export default async function PricingPage() {
         ) : (
           <>
             <PricingPlans packages={packages} />
+
+            {/* ── Voucher redeem ── */}
+            <VoucherRedeem />
 
             {/* ── Comparison table ── */}
             <div className="mt-12 md:mt-16">

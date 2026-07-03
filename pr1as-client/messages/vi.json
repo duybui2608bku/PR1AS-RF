@@ -1522,6 +1522,16 @@
     "errors": {
       "paymentCreateFailed": "Không thể tạo thanh toán. Vui lòng thử lại."
     },
+    "voucher": {
+      "title": "Bạn có mã voucher?",
+      "description": "Nhập mã voucher để kích hoạt gói Gold hoặc Diamond tương ứng.",
+      "placeholder": "Nhập mã voucher",
+      "submit": "Kích hoạt",
+      "loginToRedeem": "Đăng nhập để nhập mã",
+      "invalidCode": "Mã voucher không hợp lệ.",
+      "success": "Đã kích hoạt gói {plan} thành công!",
+      "error": "Không thể kích hoạt mã voucher. Vui lòng thử lại."
+    },
     "yes": "Có",
     "purchaseModal": {
       "title": "Thanh toán gói {package}",
