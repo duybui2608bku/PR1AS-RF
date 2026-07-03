@@ -332,6 +332,28 @@ export const PRICING_MESSAGES = {
   PRICING_PAYMENT_CREATED: "Pricing payment QR created successfully",
 } as const;
 
+export const VOUCHER_MESSAGES = {
+  VOUCHER_CREATED: "Voucher(s) created successfully",
+  VOUCHERS_FETCHED: "Vouchers fetched successfully",
+  VOUCHER_FETCHED: "Voucher fetched successfully",
+  VOUCHER_UPDATED: "Voucher updated successfully",
+  VOUCHER_DELETED: "Voucher deleted successfully",
+  VOUCHER_REDEEMED: "Voucher redeemed successfully",
+  VOUCHER_NOT_FOUND: "Voucher code is invalid",
+  VOUCHER_CODE_EXISTS: "Voucher code already exists",
+  VOUCHER_INACTIVE: "This voucher has been deactivated",
+  VOUCHER_EXPIRED: "This voucher has expired",
+  VOUCHER_EXHAUSTED: "This voucher has reached its usage limit",
+  VOUCHER_ALREADY_REDEEMED: "You have already redeemed this voucher",
+  VOUCHER_NOT_AVAILABLE: "This voucher is no longer available",
+  VOUCHER_PLAN_DOWNGRADE:
+    "Cannot redeem a voucher for a plan lower than your current active plan",
+  VOUCHER_DELETE_HAS_REDEMPTIONS:
+    "Voucher has been redeemed and cannot be deleted; deactivate it instead",
+  VOUCHER_MAX_USES_BELOW_USED:
+    "Max uses cannot be lower than the current used count",
+} as const;
+
 export const BOOST_MESSAGES = {
   ATTENDANCE_CHECKED_IN: "Attendance recorded successfully",
   POINTS_FETCHED: "Points fetched successfully",

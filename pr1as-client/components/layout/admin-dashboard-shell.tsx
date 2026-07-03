@@ -25,6 +25,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Ticket,
   Users,
   X,
 } from "lucide-react"
@@ -122,6 +123,11 @@ const adminNavGroups = [
         href: "/dashboard/pricing",
         label: "Pricing",
         icon: Gem,
+      },
+      {
+        href: "/dashboard/vouchers",
+        label: "Voucher",
+        icon: Ticket,
       },
       {
         href: "/dashboard/settings",

@@ -45,6 +45,8 @@ export const modelsName = {
   WORKER_QUESTION: "worker_questions",
   MIGRATION: "migrations",
   ABOUT_CONTENT: "about_content",
+  VOUCHER: "vouchers",
+  VOUCHER_REDEMPTION: "voucher_redemptions",
   LEGAL_CONTENT: "legal_content",
   CONTACT_CONTENT: "contact_content",
 };

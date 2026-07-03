@@ -1522,6 +1522,16 @@
     "errors": {
       "paymentCreateFailed": "Cannot create payment. Please try again."
     },
+    "voucher": {
+      "title": "Have a voucher code?",
+      "description": "Enter a voucher code to activate the corresponding Gold or Diamond plan.",
+      "placeholder": "Enter voucher code",
+      "submit": "Redeem",
+      "loginToRedeem": "Login to redeem",
+      "invalidCode": "Invalid voucher code.",
+      "success": "The {plan} plan has been activated!",
+      "error": "Could not redeem the voucher code. Please try again."
+    },
     "yes": "Yes",
     "purchaseModal": {
       "title": "Payment for {package} plan",
