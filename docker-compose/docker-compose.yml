@@ -1,0 +1,73 @@
+networks:
+  pr1as-net:
+    driver: bridge
+
+services:
+  server:
+    build:
+      context: ../SERVER
+      dockerfile: ../docker/Dockerfile.server
+    image: pr1as-server:${IMAGE_TAG:-latest}
+    container_name: pr1as-server
+    restart: ${SERVICE_RESTART:-unless-stopped}
+    ports:
+      - "${SERVER_PORT:-3052}:3052"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3052
+      MONGODB_URI: ${MONGODB_URI}
+      DB_NAME: ${DB_NAME:-pr1as}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_METHODS: ${CORS_METHODS:-GET,POST,PUT,DELETE,PATCH}
+      CORS_CREDENTIALS: ${CORS_CREDENTIALS:-true}
+      FRONTEND_URL: ${FRONTEND_URL}
+      EMAIL_ACCOUNT: ${EMAIL_ACCOUNT:-}
+      GOGGLE_APP_PASSWORD: ${GOGGLE_APP_PASSWORD:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      LOG_DIR: logs
+    volumes:
+      - server-logs:/app/logs
+    networks:
+      - pr1as-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  client:
+    build:
+      context: ../pr1as-client
+      dockerfile: ../docker/Dockerfile.client
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    image: pr1as-client:${IMAGE_TAG:-latest}
+    container_name: pr1as-client
+    restart: ${SERVICE_RESTART:-unless-stopped}
+    ports:
+      - "${CLIENT_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - server
+    networks:
+      - pr1as-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  server-logs:
