@@ -991,7 +991,11 @@
       "upgradeConfirm": "플랜 업그레이드"
     },
     "calendar": {
-      "loading": "캘린더를 불러오는 중..."
+      "loading": "캘린더를 불러오는 중...",
+      "legendAvailable": "예약 가능",
+      "legendUnavailable": "예약 불가",
+      "legendOutOfRange": "예약 가능 범위 밖",
+      "legendPartial": "일부 시간대 가능"
     },
     "suggestions": {
       "title": "비슷한 작업자",
@@ -1030,7 +1034,9 @@
       "errSelectDate": "날짜를 선택하세요",
       "errMinQuantity": "최소 수량은 1입니다",
       "errSelectTime": "시작 시간을 선택하세요",
-      "errMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다"
+      "errMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다",
+      "errSlotTaken": "이 시간대는 이미 예약되었습니다",
+      "slotTaken": "예약됨"
     }
   },
   "Onboarding": {
@@ -1128,6 +1134,8 @@
     "workerBookingsTitle": "작업자 예약",
     "aboutTitle": "PR1AS 소개 — 작업자와 프리랜서를 위한 신뢰 기반 예약",
     "aboutDescription": "PR1AS가 무엇인지, 많은 사람이 선택하는 이유와 신뢰할 수 있는 서비스 제공자 예약을 쉽고 안전하며 투명하게 만드는 기능을 알아보세요.",
+    "contactTitle": "PR1AS 문의",
+    "contactDescription": "PR1AS 팀에 문의하세요 — 빠른 지원을 위한 이메일, 전화, 주소 및 운영 시간.",
     "legalResponsibilityTitle": "법적 책임",
     "legalResponsibilityDescription": "책임 법인 및 산업무역부 제출 서류를 포함한 PR1AS의 책임 원칙과 법적 준수 상태입니다."
   },
@@ -1532,6 +1540,14 @@
       "cancel": "취소"
     }
   },
+  "Contact": {
+    "title": "문의하기",
+    "subtitle": "궁금한 점이 있거나 지원이 필요하신가요? PR1AS 팀에 문의하세요 — 언제든 기꺼이 도와드리겠습니다.",
+    "email": "이메일",
+    "phone": "전화",
+    "address": "주소",
+    "hours": "운영 시간"
+  },
   "Privacy": {
     "title": "개인정보처리방침",
     "lastUpdated": "최종 업데이트: 2026년 5월",
@@ -1828,7 +1844,8 @@
     "validationQuantity": "수량은 1 이상이어야 합니다",
     "validationSchedule": "선택한 시간이 워커의 가능 시간과 맞지 않습니다",
     "validationMinAdvance": "예약은 최소 {hours}시간 전에 해야 합니다",
-    "validationPriceMissing": "이 워커에는 가격 정보가 없습니다"
+    "validationPriceMissing": "이 워커에는 가격 정보가 없습니다",
+    "slotTaken": "예약됨"
   },
   "Location": {
     "searchProvince": "시/도 검색...",

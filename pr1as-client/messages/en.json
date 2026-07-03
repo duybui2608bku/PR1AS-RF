@@ -996,7 +996,8 @@
       "loading": "Loading calendar...",
       "legendAvailable": "Available",
       "legendUnavailable": "Unavailable",
-      "legendOutOfRange": "Outside booking window"
+      "legendOutOfRange": "Outside booking window",
+      "legendPartial": "Some slots left"
     },
     "suggestions": {
       "title": "Similar workers",
@@ -1035,7 +1036,9 @@
       "errSelectDate": "Please select a date",
       "errMinQuantity": "Minimum quantity is 1",
       "errSelectTime": "Please select a start time",
-      "errMinAdvance": "Bookings must be made at least {hours} hours in advance"
+      "errMinAdvance": "Bookings must be made at least {hours} hours in advance",
+      "errSlotTaken": "This time slot is already booked",
+      "slotTaken": "Booked"
     }
   },
   "Onboarding": {
@@ -1133,6 +1136,8 @@
     "workerBookingsTitle": "Worker bookings",
     "aboutTitle": "About PR1AS — Trusted booking for workers & freelancers",
     "aboutDescription": "Learn what PR1AS is, why thousands choose us, and the features that make booking trusted service providers simple, safe and transparent.",
+    "contactTitle": "Contact PR1AS",
+    "contactDescription": "Get in touch with the PR1AS team — email, phone, address and working hours for quick support.",
     "legalResponsibilityTitle": "Legal Responsibility",
     "legalResponsibilityDescription": "PR1AS accountability principles and legal-compliance status, including the responsible legal entity and the Ministry of Industry and Trade dossier."
   },
@@ -1537,6 +1542,14 @@
       "cancel": "Cancel"
     }
   },
+  "Contact": {
+    "title": "Contact",
+    "subtitle": "Have a question or need support? Get in touch with the PR1AS team — we're always happy to help.",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "hours": "Working hours"
+  },
   "Privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: May 2026",
@@ -1833,7 +1846,8 @@
     "validationQuantity": "Quantity must be at least 1",
     "validationSchedule": "Selected time is outside the worker's availability",
     "validationMinAdvance": "Bookings must be made at least {hours} hours in advance",
-    "validationPriceMissing": "No pricing available for this worker"
+    "validationPriceMissing": "No pricing available for this worker",
+    "slotTaken": "Booked"
   },
   "Location": {
     "searchProvince": "Search province / city...",

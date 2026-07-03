@@ -996,7 +996,8 @@
       "loading": "正在加载日程…",
       "legendAvailable": "可预约",
       "legendUnavailable": "不可预约",
-      "legendOutOfRange": "超出预约范围"
+      "legendOutOfRange": "超出预约范围",
+      "legendPartial": "尚有部分时段"
     },
     "suggestions": {
       "title": "相似工作者",
@@ -1035,7 +1036,9 @@
       "errSelectDate": "请选择日期",
       "errMinQuantity": "数量至少为 1",
       "errSelectTime": "请选择开始时间",
-      "errMinAdvance": "预约须至少提前 {hours} 小时"
+      "errMinAdvance": "预约须至少提前 {hours} 小时",
+      "errSlotTaken": "该时间段已被预约",
+      "slotTaken": "已约"
     }
   },
   "Onboarding": {
@@ -1133,6 +1136,8 @@
     "workerBookingsTitle": "工作者预约",
     "aboutTitle": "关于 PR1AS — 值得信赖的工作者与自由职业者预约平台",
     "aboutDescription": "了解 PR1AS 是什么、为何成千上万的人选择我们，以及让预约可信赖服务变得简单、安全、透明的功能。",
+    "contactTitle": "联系 PR1AS",
+    "contactDescription": "联系 PR1AS 团队——电子邮件、电话、地址和工作时间，为您提供快速支持。",
     "legalResponsibilityTitle": "法律责任",
     "legalResponsibilityDescription": "PR1AS 的责任原则与法律合规状况，包括负责法人及提交工贸部的备案文件。"
   },
@@ -1537,6 +1542,14 @@
       "cancel": "取消"
     }
   },
+  "Contact": {
+    "title": "联系我们",
+    "subtitle": "有疑问或需要帮助？请联系 PR1AS 团队——我们随时乐意为您服务。",
+    "email": "电子邮件",
+    "phone": "电话",
+    "address": "地址",
+    "hours": "工作时间"
+  },
   "Privacy": {
     "title": "隐私政策",
     "lastUpdated": "最后更新：2026年5月",
@@ -1842,7 +1855,8 @@
     "validationQuantity": "数量必须至少为 1",
     "validationSchedule": "所选时间不在 worker 可用时间内",
     "validationMinAdvance": "预约必须至少提前 {hours} 小时",
-    "validationPriceMissing": "该 worker 没有可用价格"
+    "validationPriceMissing": "该 worker 没有可用价格",
+    "slotTaken": "已约"
   },
   "Location": {
     "searchProvince": "搜索省/市...",

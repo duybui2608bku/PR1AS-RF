@@ -996,7 +996,8 @@
       "loading": "Đang tải lịch...",
       "legendAvailable": "Còn trống",
       "legendUnavailable": "Không nhận",
-      "legendOutOfRange": "Ngoài khoảng đặt lịch"
+      "legendOutOfRange": "Ngoài khoảng đặt lịch",
+      "legendPartial": "Còn vài khung giờ"
     },
     "suggestions": {
       "title": "Worker tương tự",
@@ -1035,7 +1036,9 @@
       "errSelectDate": "Vui lòng chọn ngày",
       "errMinQuantity": "Số lượng tối thiểu là 1",
       "errSelectTime": "Vui lòng chọn giờ bắt đầu",
-      "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ"
+      "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ",
+      "errSlotTaken": "Khung giờ này đã có người đặt",
+      "slotTaken": "Đã đặt"
     }
   },
   "Onboarding": {
@@ -1133,6 +1136,8 @@
     "workerBookingsTitle": "Booking worker",
     "aboutTitle": "Giới thiệu PR1AS — Đặt lịch tin cậy cho worker & freelancer",
     "aboutDescription": "Tìm hiểu PR1AS là gì, vì sao hàng nghìn người chọn chúng tôi, và những tính năng giúp việc đặt dịch vụ trở nên đơn giản, an toàn và minh bạch.",
+    "contactTitle": "Liên hệ PR1AS",
+    "contactDescription": "Liên hệ với đội ngũ PR1AS — email, số điện thoại, địa chỉ và giờ làm việc để được hỗ trợ nhanh chóng.",
     "legalResponsibilityTitle": "Trách nhiệm pháp lý",
     "legalResponsibilityDescription": "Nguyên tắc trách nhiệm và tình trạng tuân thủ pháp lý của PR1AS, gồm pháp nhân chịu trách nhiệm và hồ sơ nộp Bộ Công Thương."
   },
@@ -1537,6 +1542,14 @@
       "cancel": "Hủy"
     }
   },
+  "Contact": {
+    "title": "Liên hệ",
+    "subtitle": "Bạn có câu hỏi hoặc cần hỗ trợ? Hãy liên hệ với đội ngũ PR1AS — chúng tôi luôn sẵn sàng giúp đỡ.",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "address": "Địa chỉ",
+    "hours": "Giờ làm việc"
+  },
   "Privacy": {
     "title": "Chính sách bảo mật",
     "lastUpdated": "Cập nhật lần cuối: tháng 5 năm 2026",
@@ -1843,7 +1856,8 @@
     "validationQuantity": "Số lượng phải lớn hơn hoặc bằng 1",
     "validationSchedule": "Thời gian đã chọn nằm ngoài lịch khả dụng của worker",
     "validationMinAdvance": "Booking phải được đặt trước ít nhất {hours} giờ",
-    "validationPriceMissing": "Worker này chưa có giá"
+    "validationPriceMissing": "Worker này chưa có giá",
+    "slotTaken": "Đã đặt"
   },
   "Location": {
     "searchProvince": "Tìm tỉnh / thành phố...",

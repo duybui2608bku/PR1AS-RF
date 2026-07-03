@@ -330,8 +330,12 @@ Client flow in `BookWorkerDialog`:
 
 1. Client chooses an active worker service.
 2. Dialog loads worker schedule for today through the next 30 days.
-3. Calendar disables dates before today, after 30 days, and dates covered by
-   returned bookings or worker blackouts.
+3. Calendar disables dates before today, after 30 days, and only days that are
+   **fully booked** (no free hour slot). Partially booked days stay selectable
+   and are flagged with an amber "some slots left" modifier; the start-time
+   dropdown then disables just the hours that overlap an existing booking. This
+   per-slot logic mirrors the backend half-open overlap check so a partial-day
+   booking never blocks the rest of the day for other clients.
 4. Client selects pricing unit from the worker service's pricing array.
 5. Client selects start time from hourly options `06:00` through `21:00`.
 6. Client enters quantity.
@@ -350,8 +354,12 @@ Frontend validation mirrors part of backend validation:
 - Quantity must be at least 1.
 - Start time must be at least 2 hours from now.
 
-Backend remains authoritative. The frontend disables booked days as a coarse
-UX hint, while backend validates exact time overlap and blackouts.
+Backend remains authoritative. The frontend disables only fully-booked days and
+already-taken hour slots as a UX hint (shared logic in
+`pr1as-client/lib/booking-availability.ts`), while backend validates exact time
+overlap and blackouts. The four booking surfaces — `book-worker-dialog.tsx`,
+`quick-booking-dialog.tsx`, `quick-booking-wizard.tsx`, and the profile
+`worker-calendar.tsx` — all consume that shared module.
 
 ## Advance-Booking Rules
 

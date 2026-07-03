@@ -4,9 +4,20 @@ import { useMemo, useState } from "react"
 import { useTranslations } from "next-intl"
 
 import { Calendar } from "@/components/ui/calendar"
+import {
+  classifyDays,
+  computeBookedIntervals,
+} from "@/lib/booking-availability"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
 
 const DATE_RANGE_DAYS = 30
+
+// Mirror BookWorkerDialog's start-time window so "fully booked" is judged
+// against the same slots the booking form actually offers.
+const BOOKABLE_HOURS = Array.from(
+  { length: 16 },
+  (_, i) => `${String(6 + i).padStart(2, "0")}:00`,
+)
 
 const toIsoDate = (date: Date) => {
   const y = date.getFullYear()
@@ -25,23 +36,6 @@ const startOfDay = (date: Date) => {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
   return d
-}
-
-const computeBookedDays = (
-  schedule: Array<{ start_time: string; end_time: string }>,
-): Date[] => {
-  const days = new Map<string, Date>()
-  for (const item of schedule) {
-    const start = startOfDay(new Date(item.start_time))
-    const end = new Date(item.end_time)
-    const cursor = new Date(start)
-    while (cursor <= end) {
-      const key = toIsoDate(cursor)
-      if (!days.has(key)) days.set(key, new Date(cursor))
-      cursor.setDate(cursor.getDate() + 1)
-    }
-  }
-  return [...days.values()]
 }
 
 type Props = {
@@ -72,13 +66,18 @@ export function WorkerCalendar({ workerId, selected, onSelect }: Props) {
     return d
   }, [])
 
-  const bookedDays = useMemo(() => {
-    const items: Array<{ start_time: string; end_time: string }> = [
+  const { fullyBooked, partiallyBooked } = useMemo(() => {
+    const intervals = computeBookedIntervals([
       ...(schedule?.bookings ?? []),
       ...(schedule?.blackouts ?? []),
-    ]
-    return computeBookedDays(items)
-  }, [schedule])
+    ])
+    return classifyDays(
+      startOfMonth(month),
+      endOfMonth(month),
+      BOOKABLE_HOURS,
+      intervals,
+    )
+  }, [schedule, month])
 
   return (
     <div className="rounded-2xl border bg-card shadow-sm">
@@ -94,12 +93,14 @@ export function WorkerCalendar({ workerId, selected, onSelect }: Props) {
         disabled={[
           { before: startOfDay(new Date()) },
           { after: maxDate },
-          ...bookedDays,
+          ...fullyBooked,
         ]}
-        modifiers={{ booked: bookedDays }}
+        modifiers={{ booked: fullyBooked, partial: partiallyBooked }}
         modifiersClassNames={{
           booked:
             "border border-rose-300 text-rose-500 dark:border-rose-800 dark:text-rose-400 rounded-md opacity-100",
+          partial:
+            "border border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400 rounded-md",
         }}
         classNames={{
           week: "mt-2 flex w-full gap-1",
@@ -113,6 +114,13 @@ export function WorkerCalendar({ workerId, selected, onSelect }: Props) {
             className="size-3 shrink-0 rounded-[4px] border border-border bg-background"
           />
           {t("calendar.legendAvailable")}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="size-3 shrink-0 rounded-[4px] border border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400"
+          />
+          {t("calendar.legendPartial")}
         </span>
         <span className="flex items-center gap-1.5">
           <span

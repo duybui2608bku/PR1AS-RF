@@ -38,6 +38,122 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-01 — Cho admin chỉnh sửa Privacy/Terms + tạo trang Contact
+
+**Mục tiêu**: Cho phép admin sửa nội dung Privacy, Terms và Contact ở dashboard
+(About đã có sẵn từ trước). Cookies bỏ qua theo yêu cầu.
+
+**Đã làm** (nhân bản khuôn mẫu module `about`):
+- **Backend module `legal`** (privacy + terms, phân biệt qua param `:page`,
+  singleton mỗi page, `page` unique index): types → constants (defaults 4 ngôn
+  ngữ dựng từ i18n cũ) → model → repository (lazy-seed + deepMerge localized,
+  sections thay nguyên khối) → service → validation (zod, `z.enum` cho page) →
+  controller → routes. Mount `GET /api/legal/:page` (public), `PATCH` + `POST
+  /:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
+  intro + mảng sections (title + body HTML), admin thêm/xoá/sắp xếp.
+- **Backend module `contact`** (singleton): title/subtitle/email/phone/address/
+  hours/body; email+phone là plain, còn lại localized. Mount `/api/contact`.
+- Thêm `LEGAL_CONTENT`, `CONTACT_CONTENT` vào `models.name.ts`.
+- **Frontend**: `services/{legal,contact}.service.ts`, hooks
+  `use-{legal,contact}-content.ts`, `lib/{legal,contact}-server.ts` (SSR fetch,
+  revalidate 60s, fallback rỗng), query-keys `legal`/`contact`.
+- Public: `app/privacy` + `app/terms` render DB (ưu tiên) → fallback i18n cũ khi
+  API lỗi; `app/contact/{page,layout}.tsx` mới (thẻ email/phone/address/hours +
+  body). Component chung `components/content/rich-text.tsx`.
+- Admin: `components/dashboard/content-fields.tsx` (primitives dùng chung),
+  `legal-editor.tsx`, page `/dashboard/legal` (tab Privacy/Terms) +
+  `/dashboard/contact`. Thêm 2 nav "Trang pháp lý"/"Trang liên hệ" vào
+  `admin-dashboard-shell.tsx`.
+- i18n: thêm namespace `Contact` + `SEO.contact{Title,Description}` cho cả 4
+  file vi/en/zh/ko.
+
+**File chính**: `SERVER/src/{types,constants,models,repositories,services,
+validations,controllers,routes}/{legal,contact}/*`, `pr1as-client/app/{privacy,
+terms,contact}`, `pr1as-client/app/dashboard/{legal,contact}`,
+`pr1as-client/components/{content,dashboard}/*`, `messages/*.json`.
+
+**Quyết định / ghi chú**: nav `/contact` đã tồn tại sẵn (main+footer) nhưng
+trước đó 404 — nay có page. DB lazy-seed từ defaults nên editor luôn có sẵn nội
+dung để sửa; i18n Privacy/Terms giữ làm fallback SSR khi API down. Titles/labels
+dùng input plain (không TipTap) để không dính `<p>`; chỉ intro/body/section body
+là rich text.
+
+**Còn lại**: chưa chạy full-stack (cần MongoDB) — mới verify bằng
+`tsc --noEmit` + ESLint sạch cả 2 app. Nên chạy thử `npm run dev` 2 app + đăng
+nhập admin để mắt thấy editor lưu/hiển thị.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-06-30 — Fix: booking 1 phần ngày khóa cả ngày của worker
+
+**Mục tiêu**: Client đặt vài giờ trong ngày của worker nhưng frontend khóa cả
+ngày → client khác không đặt được giờ trống còn lại.
+
+**Nguyên nhân**: Backend so trùng đúng theo khoảng giờ (half-open overlap,
+`checkScheduleConflict`) — ĐÚNG. Nhưng frontend `computeBookedDays` quét
+nguyên cả ngày: chỉ cần 1 booking bất kỳ là disable cả ngày. Lỗi lặp ở **4**
+surface: `book-worker-dialog`, `quick-booking-dialog`, `quick-booking-wizard`,
+`worker-calendar`.
+
+**Đã làm**:
+- Tạo module dùng chung `pr1as-client/lib/booking-availability.ts`:
+  `computeBookedIntervals` / `rangeHasConflict` (mirror backend half-open) /
+  `computeBlockedHours` (giờ bắt đầu bị trùng theo unit×quantity) /
+  `classifyDays` (fully vs partially booked, probe 1h).
+- 4 component: chỉ disable ngày **fully booked**; ngày partial vẫn chọn được
+  (modifier amber "còn vài khung giờ"); dropdown giờ disable đúng slot đã đặt;
+  thêm validation overlap theo [start,end) thật.
+- Mở rộng `components/ui/date-picker.tsx` thêm prop `disabledMatchers`.
+- i18n 4 locale: thêm `WorkerProfile.calendar.legendPartial`,
+  `WorkerProfile.book.errSlotTaken` + `slotTaken`, `QuickBooking.slotTaken`.
+  Bổ sung luôn các key legend còn thiếu sẵn trong `ko.json`.
+- Cập nhật `memorybank/booking.md` (đoạn mô tả hành vi cũ đã sai).
+
+**File chính**: `lib/booking-availability.ts`, `components/worker/{book-worker-dialog,
+quick-booking-dialog,worker-calendar}.tsx`, `app/quick-booking/quick-booking-wizard.tsx`,
+`components/ui/date-picker.tsx`, `messages/{vi,en,zh,ko}.json`
+
+**Quyết định / ghi chú**: "Fully booked" probe bằng slot 1h nên độc lập
+unit/quantity (lịch profile chưa chọn unit). `npm run typecheck` pass; lint
+không phát sinh lỗi mới (các cảnh báo còn lại là của code cũ). Đã test logic
+module bằng script (9/9 PASS) — gồm đúng kịch bản bug.
+
+**Còn lại**: Chưa kiểm thử E2E trên trình duyệt (cần worker có booking 1 phần
+ngày trong DB để thấy rõ). Logic đã verify bằng unit test.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-06-30 — Chuẩn hóa footer theo loại trang (desktop)
+
+**Mục tiêu**: Rà soát client bản desktop, xác định page nào cần footer / không cần,
+rồi sửa cho nhất quán.
+
+**Nguyên tắc**: trang public/marketing/pháp lý → có footer; trang app đã đăng
+nhập / giao dịch / dashboard → ẩn footer (`SiteLayout hideFooter`). Footer vốn
+chỉ render từ `md` trở lên; mobile dùng bottom-nav nên không đổi.
+
+**Đã làm** (5 chỗ lệch chuẩn):
+- `/pricing`: bỏ `hideFooter` → hiện footer (đồng bộ với about/services/booking-process).
+- `/worker/boost`: thêm `hideFooter` → ẩn (trang app của worker).
+- `/wallet`, `/wallet/deposit`: thêm `hideFooter` → ẩn (giao dịch, đã đăng nhập).
+- `/client/*` (qua `client/layout.tsx`): thêm `hideFooter` → ẩn cho toàn khu client app.
+
+**File chính**: `pr1as-client/app/pricing/page.tsx`, `app/worker/boost/page.tsx`,
+`app/wallet/page.tsx`, `app/wallet/deposit/page.tsx`, `app/client/layout.tsx`
+
+**Quyết định / ghi chú**: `/booking-lookup` và `/quick-booking` giữ footer vì là
+flow public. Các trang không dùng `SiteLayout` (chat, dashboard, (auth), notifications)
+vốn đã không có footer — không đụng. `npm run typecheck` pass.
+
+**Còn lại**: không
+
+**Commit**: chưa commit · branch `main`
+
+---
 ## 2026-07-01 — Tự động chọn ngôn ngữ ban đầu theo trình duyệt
 
 **Mục tiêu**: Khách lần đầu (chưa có cookie `NEXT_LOCALE`) đang luôn bị ép về

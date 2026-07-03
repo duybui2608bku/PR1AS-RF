@@ -33,6 +33,13 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import {
+  classifyDays,
+  computeBlockedHours,
+  computeBookedIntervals,
+  HOURS_PER_UNIT,
+  rangeHasConflict,
+} from "@/lib/booking-availability"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import { useCreateGuestBooking } from "@/lib/hooks/use-bookings"
 import { INTL_LOCALE_TAGS, type SupportedLocale, pickLocalized } from "@/lib/locale"
@@ -44,17 +51,13 @@ import type { WorkerPricingUnit, WorkerServiceItem } from "@/types"
 const MIN_ADVANCE_HOURS = 2
 const RANGE_DAYS = 30
 
-const HOURS_PER_UNIT: Record<WorkerPricingUnit, number> = {
-  HOURLY: 1,
-  DAILY: 24,
-  MONTHLY: 24 * 30,
-}
-
 const HOUR_OPTIONS = Array.from({ length: 15 }, (_, idx) => {
   const hour = 8 + idx
   const label = `${String(hour).padStart(2, "0")}:00`
   return { value: label, label }
 })
+
+const HOUR_VALUES = HOUR_OPTIONS.map((opt) => opt.value)
 
 const startOfDay = (date: Date) => {
   const value = new Date(date)
@@ -73,23 +76,6 @@ const endOfRange = (date: Date) => {
   const value = new Date(date)
   value.setDate(value.getDate() + RANGE_DAYS)
   return value
-}
-
-const computeBookedDays = (
-  schedule: Array<{ start_time: string; end_time: string }>
-): Date[] => {
-  const map = new Map<string, Date>()
-  for (const item of schedule) {
-    const start = startOfDay(new Date(item.start_time))
-    const end = new Date(item.end_time)
-    const cursor = new Date(start)
-    while (cursor <= end) {
-      const key = toIsoDate(cursor)
-      if (!map.has(key)) map.set(key, new Date(cursor))
-      cursor.setDate(cursor.getDate() + 1)
-    }
-  }
-  return [...map.values()]
 }
 
 const formatDateLabel = (date: Date, localeTag: string) =>
@@ -243,13 +229,25 @@ export function QuickBookingDialog({
     staleTime: 30_000,
   })
 
-  const bookedDays = React.useMemo(
+  const bookedIntervals = React.useMemo(
     () =>
-      computeBookedDays([
+      computeBookedIntervals([
         ...(workerScheduleQuery.data?.bookings ?? []),
         ...(workerScheduleQuery.data?.blackouts ?? []),
       ]),
     [workerScheduleQuery.data]
+  )
+
+  // Only fully-booked days are disabled; partially booked days stay selectable.
+  const fullyBookedDays = React.useMemo(
+    () =>
+      classifyDays(
+        startOfDay(new Date()),
+        endOfRange(new Date()),
+        HOUR_VALUES,
+        bookedIntervals,
+      ).fullyBooked,
+    [bookedIntervals],
   )
 
   React.useEffect(() => {
@@ -311,6 +309,13 @@ export function QuickBookingDialog({
     return new Date(startDateTime.getTime() + HOURS_PER_UNIT[state.unit] * quantity * 60 * 60 * 1000)
   }, [quantity, startDateTime, state.unit])
 
+  // Start times already taken on the selected day, for the chosen duration.
+  const blockedHours = React.useMemo(() => {
+    if (!state.date || !state.unit) return new Set<string>()
+    const durationHours = HOURS_PER_UNIT[state.unit] * quantity
+    return computeBlockedHours(state.date, HOUR_VALUES, durationHours, bookedIntervals)
+  }, [state.date, state.unit, quantity, bookedIntervals])
+
   const fieldErrors = React.useMemo(() => {
     const errors: Partial<Record<keyof FormState | "service", string>> = {}
 
@@ -341,14 +346,19 @@ export function QuickBookingDialog({
     }
 
     if (
-      state.date &&
-      bookedDays.some((day) => day.toDateString() === state.date?.toDateString())
+      startDateTime &&
+      endDateTime &&
+      rangeHasConflict(
+        startDateTime.getTime(),
+        endDateTime.getTime(),
+        bookedIntervals,
+      )
     ) {
-      errors.date = t("validationSchedule")
+      errors.time = t("validationSchedule")
     }
 
     return errors
-  }, [bookedDays, selectedPricing, selectedService, startDateTime, state.date, state.email, state.name, state.quantity, state.time, state.unit, t])
+  }, [bookedIntervals, endDateTime, selectedPricing, selectedService, startDateTime, state.date, state.email, state.name, state.quantity, state.time, state.unit, t])
 
   const step0Invalid =
     Boolean(fieldErrors.name) || Boolean(fieldErrors.email)
@@ -595,6 +605,7 @@ export function QuickBookingDialog({
                       onChange={(value) => setField("date", value)}
                       fromDate={new Date()}
                       toDate={endOfRange(new Date())}
+                      disabledMatchers={fullyBookedDays}
                       buttonClassName={cn(
                         "h-11 w-full",
                         attemptedStep === 1 && fieldErrors.date && "border-destructive text-destructive",
@@ -612,8 +623,15 @@ export function QuickBookingDialog({
                       </SelectTrigger>
                       <SelectContent>
                         {HOUR_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            disabled={blockedHours.has(option.value)}
+                          >
                             {option.label}
+                            {blockedHours.has(option.value)
+                              ? ` · ${t("slotTaken")}`
+                              : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
