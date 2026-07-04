@@ -14,6 +14,7 @@ import {
   WalletIcon,
 } from "lucide-react"
 
+import { AnnouncementRenderer } from "@/components/announcement"
 import { SiteLayout } from "@/components/layout/site-layout"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
@@ -135,6 +136,8 @@ export default async function AboutPage() {
 
   return (
     <SiteLayout>
+      <AnnouncementRenderer placement="about_popup" />
+      <AnnouncementRenderer placement="about_banner" />
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/10 via-primary/5 to-background">
         <div className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-primary/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-24 size-72 rounded-full bg-primary/10 blur-3xl" />

@@ -49,7 +49,7 @@ Routes:
 
 | Method | Path | Auth | Meaning |
 | --- | --- | --- | --- |
-| `GET` | `/api/announcements/by-placement` | User | Return active announcements for a placement. |
+| `GET` | `/api/announcements/by-placement` | None (public) | Return active announcements for a placement. |
 | `GET` | `/api/admin/announcements` | Admin | List announcements. |
 | `POST` | `/api/admin/announcements` | Admin + CSRF | Create announcement. |
 | `GET` | `/api/admin/announcements/:id` | Admin | Detail. |
@@ -76,17 +76,34 @@ Model fields:
 
 Active-by-placement selection:
 
-1. User must be authenticated.
-2. Query filters out deleted and inactive records.
-3. `placements` must include the requested placement.
-4. Current time must be within optional `start_date` and `end_date`.
-5. Results are sorted by `priority` descending, then creation time descending.
+1. Query filters out deleted and inactive records (no authentication required
+   — guests and logged-in users alike can call this).
+2. `placements` must include the requested placement.
+3. Current time must be within optional `start_date` and `end_date`.
+4. Results are sorted by `priority` descending, then creation time descending.
+
+Note: `target_roles` is stored on the model but is **not** currently enforced
+anywhere in the query or in the frontend renderer — it exists for future use.
+Audience separation today is achieved purely by which `placements` value a
+page requests, not by role filtering.
+
+Placements in use (`pr1as-client/config/announcement-placements.ts`):
+`home_client_popup/banner/inline` (mounted on `app/services/page.tsx`, the
+client/guest services feed), `home_worker_popup/banner/inline` (mounted on
+`app/posts/page.tsx`, the worker feed), and `about_popup/banner/inline`
+(mounted on `app/about/page.tsx`, the shared landing page for guests, workers,
+and clients — see `memorybank/legal-responsibility.md` for why `/about` is the
+default landing route).
+
+Frontend dismissal (`lib/utils/announcement-dismissal.ts`) keys localStorage by
+user id; guests (no `useAuthStore` user) share one `"guest"` key per device —
+see `AnnouncementRenderer.tsx`.
 
 Important nuance:
 
-- There is no public `GET /api/announcements` list route. The public mounted
-  router only exposes `GET /by-placement`, and the route currently uses
-  `authenticate`.
+- There is no public `GET /api/announcements` list route — only `GET
+  /by-placement`, which returns a single announcement (or null) for one
+  placement value.
 
 ## Feedback
 
