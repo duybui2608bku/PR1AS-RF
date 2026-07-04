@@ -6,9 +6,10 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { announcementController } from "../../controllers/announcement/announcement.controller";
 
 const publicRouter = Router();
+// Anonymous-accessible: guests must see homepage announcements too, and the
+// controller never reads req.user, so no auth gate is needed here.
 publicRouter.get(
   "/by-placement",
-  authenticate,
   asyncHandler(announcementController.getByPlacement.bind(announcementController))
 );
 

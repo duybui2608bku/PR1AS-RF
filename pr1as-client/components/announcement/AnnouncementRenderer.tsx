@@ -22,11 +22,13 @@ export function AnnouncementRenderer({
 }: AnnouncementRendererProps) {
   const user = useAuthStore((state) => state.user)
   const { data: announcement } = useAnnouncementByPlacement(placement)
+  // Guests share one dismissal key per device — there is no account to key by.
+  const dismissalId = user?.id ?? "guest"
 
-  if (!announcement || !user) return null
-  if (!shouldShowAnnouncement(announcement, user.id)) return null
+  if (!announcement) return null
+  if (!shouldShowAnnouncement(announcement, dismissalId)) return null
 
-  const handleDismiss = () => dismissAnnouncement(announcement, user.id)
+  const handleDismiss = () => dismissAnnouncement(announcement, dismissalId)
 
   return (
     <>
