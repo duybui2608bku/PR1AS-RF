@@ -464,12 +464,15 @@ class WorkerServiceRepository {
           title: string | null;
           introduction: string | null;
           gallery_urls: string[];
+          height_cm: number | null;
+          weight_kg: number | null;
           work_locations: Array<{
             province_code: number;
             ward_code: number | null;
             label_snapshot: string | null;
           }>;
         } | null;
+        reputation_score: number;
         pricing: WorkerServicePricing[];
       }>;
     }>
@@ -654,9 +657,14 @@ class WorkerServiceRepository {
                 title: "$worker.worker_profile.title",
                 introduction: "$worker.worker_profile.introduction",
                 gallery_urls: "$worker.worker_profile.gallery_urls",
+                height_cm: { $ifNull: ["$worker.worker_profile.height_cm", null] },
+                weight_kg: { $ifNull: ["$worker.worker_profile.weight_kg", null] },
                 work_locations: {
                   $ifNull: ["$worker.worker_profile.work_locations", []],
                 },
+              },
+              reputation_score: {
+                $ifNull: ["$worker.meta_data.reputation_score", 100],
               },
               pricing: "$pricing",
             },
@@ -699,12 +707,15 @@ class WorkerServiceRepository {
             title: string | null;
             introduction: string | null;
             gallery_urls: string[];
+            height_cm: number | null;
+            weight_kg: number | null;
             work_locations: Array<{
               province_code: number;
               ward_code: number | null;
               label_snapshot: string | null;
             }>;
           } | null;
+          reputation_score: number;
           pricing: WorkerServicePricing[];
         }>;
       }) => ({

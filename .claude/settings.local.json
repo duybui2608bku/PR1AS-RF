@@ -4,7 +4,28 @@
       "Bash(npx tsc *)",
       "Bash(npm run *)",
       "Bash(cp /Users/tuananh/PR1AS-RF/pr1as-client/middleware.ts /Users/tuananh/PR1AS-RF/pr1as-client/proxy.ts)",
-      "Bash(rm /Users/tuananh/PR1AS-RF/pr1as-client/middleware.ts)"
+      "Bash(rm /Users/tuananh/PR1AS-RF/pr1as-client/middleware.ts)",
+      "mcp__codegraph__codegraph_files",
+      "mcp__codegraph__codegraph_explore",
+      "Bash(/tmp/docx-env/bin/pip install *)",
+      "Bash(/tmp/docx-env/bin/python3 gen_fdd4.py)",
+      "Bash(open /Users/tuananh/PR1AS-RF/FDD_PR1AS_System_v2.docx)",
+      "Bash(python3 *)",
+      "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(echo \"EXIT_LINT=$?\")",
+      "Bash(echo \"EXIT_TSC=$?\")",
+      "Bash(lsof -nP -iTCP:3052 -sTCP:LISTEN)",
+      "Bash(lsof -nP -iTCP:27017 -sTCP:LISTEN)",
+      "Bash(echo \"TSC=$?\")",
+      "Bash(echo \"ESLINT=$?\")",
+      "Bash(curl -s -o /dev/null -w \"GET /api/users \\(no auth\\) -> %{http_code}\\\\n\" -X GET http://localhost:3052/api/users)",
+      "Bash(curl -s -o /dev/null -w \"GET /api/users/000000000000000000000000 -> %{http_code}\\\\n\" http://localhost:3052/api/users/000000000000000000000000)",
+      "Bash(sed -n '526p' app/dashboard/transactions/page.tsx)",
+      "Bash(sed -n '526p' app/dashboard/page.tsx)",
+      "Bash(node -e \"console.log\\(require\\('react-day-picker/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./messages/en.json'\\).Onboarding,null,0\\)\\)\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./messages/zh.json'\\).Onboarding,null,0\\)\\)\")"
     ]
   }
 }

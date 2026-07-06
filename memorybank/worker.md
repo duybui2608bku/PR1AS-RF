@@ -222,8 +222,9 @@ items.
 Repository base query:
 
 1. Match active worker service rows: `is_active: true`.
-2. Exclude worker ids from profile blocks, active worker restrictions, and the
-   viewer themself.
+2. Exclude worker ids from profile blocks and active worker restrictions.
+   The viewer themself is **not** excluded — a worker sees their own service
+   listed alongside others on both home and `/services`.
 3. Join catalog service and require `service.is_active: true`.
 4. Join worker user and require `worker.status = active`.
 5. Require `worker.worker_profile != null`.
@@ -386,6 +387,32 @@ Discovery:
 - `components/home/home-search-experience.tsx`
 - `components/worker/workers-by-service-list.tsx`
 - Calls `/api/workers/grouped-by-service`.
+- `app/services/page.tsx` renders the same `HomeSearchExperience` component,
+  so home and `/services` share one data source and one set of discovery
+  filters — there is no separate "services page" query path.
+
+Worker card (`WorkerCard` inside `workers-by-service-list.tsx`) shows
+`height_cm`, `weight_kg` (from `worker_profile`) and `reputation_score`
+(from `user.meta_data.reputation_score`, default 100) inline. These three
+fields are projected explicitly in the `$group` stage of
+`findWorkersGroupedByService` (`worker-service.repository.ts`) — they are
+not part of the base aggregation pipeline and must stay in sync with the
+return-type interfaces on that method and the frontend
+`WorkerGroupedByService` type (`services/worker.service.ts`) if extended
+further.
+
+Expand-on-interaction pattern for the card:
+
+- Desktop: wrapped in `HoverCard` (`components/ui/hover-card.tsx`); hovering
+  reveals a floating panel with the untruncated bio/location/stats. Radix
+  ignores `pointerType === "touch"`, so this never fires on mobile taps.
+- Mobile: a manual long-press (~450ms, via `onTouchStart`/`onTouchMove`/
+  `onTouchEnd` on the card's `Link`) opens a `BottomSheet`
+  (`components/ui/bottom-sheet.tsx`) with the same expanded content. The
+  bottom sheet's drag handle now supports drag-to-dismiss (pointer-based,
+  threshold ~120px) — this was added to the shared component, so it also
+  benefits every other `BottomSheet` usage in the app (mobile more/prefs
+  menus, booking action sheet, mobile filters).
 
 Worker schedule and bookings:
 

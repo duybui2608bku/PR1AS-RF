@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
@@ -10,7 +11,9 @@ import {
   Info,
   Loader2,
   MapPin,
+  Ruler,
   Star,
+  Weight,
   X,
   Zap,
 } from "lucide-react"
@@ -31,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { WorkerTitleOverlayBadge } from "@/components/worker/worker-title-overlay-badge"
 import { Button } from "@/components/ui/button"
+import { BottomSheet, BottomSheetContent, BottomSheetTitle } from "@/components/ui/bottom-sheet"
 import {
   Dialog,
   DialogContent,
@@ -38,6 +42,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { serviceService } from "@/services/service.service"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import type { ServiceTab } from "@/lib/home/home-search-params"
@@ -50,13 +55,16 @@ type WorkLocation = NonNullable<
   NonNullable<Worker["worker_profile"]>["work_locations"]
 >[number]
 
-const formatWorkLocations = (locations?: WorkLocation[]): string => {
+const formatWorkLocations = (
+  locations?: WorkLocation[],
+  options?: { full?: boolean },
+): string => {
   if (!locations?.length) return ""
   const labels = locations
     .map((loc) => loc.label_snapshot?.trim())
     .filter((label): label is string => Boolean(label))
   if (!labels.length) return ""
-  if (labels.length <= 2) return labels.join(" · ")
+  if (options?.full || labels.length <= 2) return labels.join(" · ")
   return `${labels.slice(0, 2).join(" · ")} +${labels.length - 2}`
 }
 
@@ -90,6 +98,71 @@ const formatPricing = (
   }
 }
 
+const WorkerExpandedDetails = ({
+  worker,
+  t,
+  priceLabel,
+  pricePrefix,
+}: {
+  worker: Worker
+  t: WorkersListTranslator
+  priceLabel: string
+  pricePrefix: string
+}) => {
+  const height = worker.worker_profile?.height_cm
+  const weight = worker.worker_profile?.weight_kg
+  const reputation = worker.reputation_score
+  const fullLocation = formatWorkLocations(worker.worker_profile?.work_locations, {
+    full: true,
+  })
+  return (
+    <div className="space-y-2 text-left">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">
+          {worker.full_name ?? t("nameFallback")}
+        </p>
+        {reputation != null ? (
+          <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <Star className="size-3 fill-amber-500 text-amber-500" />
+            {reputation}
+          </span>
+        ) : null}
+      </div>
+      {worker.worker_profile?.introduction ? (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {worker.worker_profile.introduction.trim()}
+        </p>
+      ) : null}
+      {fullLocation ? (
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <MapPin className="size-3 shrink-0" />
+          <span>{fullLocation}</span>
+        </p>
+      ) : null}
+      {height != null || weight != null ? (
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {height != null ? (
+            <span className="flex items-center gap-1">
+              <Ruler className="size-3" />
+              {height}cm
+            </span>
+          ) : null}
+          {weight != null ? (
+            <span className="flex items-center gap-1">
+              <Weight className="size-3" />
+              {weight}kg
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <p className="border-t border-border pt-2 text-xs font-semibold text-foreground">
+        {pricePrefix}
+        <span className="text-primary">{priceLabel}</span>
+      </p>
+    </div>
+  )
+}
+
 const WorkerCard = ({
   worker,
   isFavorite = false,
@@ -106,6 +179,18 @@ const WorkerCard = ({
   const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
   const { format } = useCurrency()
   const { label, prefix } = formatPricing(worker.pricing, t, format)
+  const height = worker.worker_profile?.height_cm
+  const weight = worker.worker_profile?.weight_kg
+  const reputation = worker.reputation_score
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressed = useRef(false)
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
   return (
     <article
       className={[
@@ -117,74 +202,130 @@ const WorkerCard = ({
             : "border-border",
       ].join(" ")}
     >
-      <Link
-        href={`/worker/${worker.id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block cursor-pointer"
-      >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
-        {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt={worker.full_name ?? t("workerFallback")}
-            fill
-            sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 44vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
-            {t("noImage")}
+      <HoverCard openDelay={200} closeDelay={100}>
+        <HoverCardTrigger asChild>
+          <Link
+            href={`/worker/${worker.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block cursor-pointer"
+            onTouchStart={() => {
+              longPressed.current = false
+              cancelLongPress()
+              longPressTimer.current = setTimeout(() => {
+                longPressed.current = true
+                setSheetOpen(true)
+              }, 450)
+            }}
+            onTouchMove={cancelLongPress}
+            onTouchEnd={(event) => {
+              cancelLongPress()
+              if (longPressed.current) {
+                event.preventDefault()
+              }
+            }}
+            onTouchCancel={cancelLongPress}
+          >
+          <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
+            {imageSrc ? (
+              <Image
+                src={imageSrc}
+                alt={worker.full_name ?? t("workerFallback")}
+                fill
+                sizes="(min-width: 1024px) 16vw, (min-width: 640px) 25vw, 44vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
+                {t("noImage")}
+              </div>
+            )}
+            {worker.boost?.boost_tier === 1 && (
+              <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow">
+                <Star className="h-2.5 w-2.5 fill-yellow-900" /> {t("boost.featured")}
+              </div>
+            )}
+            {worker.boost?.boost_tier === 2 && (
+              <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                <Zap className="h-2.5 w-2.5" /> {t("boost.active")}
+              </div>
+            )}
+            {worker.worker_profile?.title ? (
+              <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
+            ) : null}
           </div>
-        )}
-        {worker.boost?.boost_tier === 1 && (
-          <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow">
-            <Star className="h-2.5 w-2.5 fill-yellow-900" /> {t("boost.featured")}
-          </div>
-        )}
-        {worker.boost?.boost_tier === 2 && (
-          <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-            <Zap className="h-2.5 w-2.5" /> {t("boost.active")}
-          </div>
-        )}
-        {worker.worker_profile?.title ? (
-          <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
-        ) : null}
-      </div>
-      <div className="px-2.5 pt-2 pb-0">
-        <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">
-          {worker.full_name ?? t("nameFallback")}
-        </p>
-      </div>
-
-      <div className="p-2.5 space-y-1.5">
-        {worker.worker_profile?.introduction ? (
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {worker.worker_profile.introduction.trim()}
-          </p>
-        ) : null}
-
-        {(() => {
-          const locationText = formatWorkLocations(
-            worker.worker_profile?.work_locations,
-          )
-          if (!locationText) return null
-          return (
-            <p className="flex items-center gap-1 text-[11px] text-muted-foreground line-clamp-1">
-              <MapPin className="size-3 shrink-0" />
-              <span className="truncate">{locationText}</span>
+          <div className="px-2.5 pt-2 pb-0 flex items-center justify-between gap-1">
+            <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">
+              {worker.full_name ?? t("nameFallback")}
             </p>
-          )
-        })()}
+            {reputation != null ? (
+              <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                <Star className="size-3 fill-amber-500 text-amber-500" aria-hidden="true" />
+                {reputation}
+              </span>
+            ) : null}
+          </div>
 
-        <div className="flex items-center justify-between pt-1 border-t border-border">
-          <p className="text-xs font-semibold text-foreground">
-            {prefix}
-            <span className="text-primary">{label}</span>
-          </p>
-        </div>
-      </div>
-      </Link>
+          <div className="p-2.5 space-y-1.5">
+            {worker.worker_profile?.introduction ? (
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                {worker.worker_profile.introduction.trim()}
+              </p>
+            ) : null}
+
+            {(() => {
+              const locationText = formatWorkLocations(
+                worker.worker_profile?.work_locations,
+              )
+              if (!locationText) return null
+              return (
+                <p className="flex items-center gap-1 text-[11px] text-muted-foreground line-clamp-1">
+                  <MapPin className="size-3 shrink-0" />
+                  <span className="truncate">{locationText}</span>
+                </p>
+              )
+            })()}
+
+            {height != null || weight != null ? (
+              <p className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                {height != null ? (
+                  <span className="flex items-center gap-1">
+                    <Ruler className="size-3" aria-hidden="true" />
+                    {height}cm
+                  </span>
+                ) : null}
+                {weight != null ? (
+                  <span className="flex items-center gap-1">
+                    <Weight className="size-3" aria-hidden="true" />
+                    {weight}kg
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+
+            <div className="flex items-center justify-between pt-1 border-t border-border">
+              <p className="text-xs font-semibold text-foreground">
+                {prefix}
+                <span className="text-primary">{label}</span>
+              </p>
+            </div>
+          </div>
+          </Link>
+        </HoverCardTrigger>
+        <HoverCardContent side="right" align="start" className="hidden w-72 sm:block">
+          <WorkerExpandedDetails worker={worker} t={t} priceLabel={label} pricePrefix={prefix} />
+        </HoverCardContent>
+      </HoverCard>
+      <BottomSheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <BottomSheetContent onOpenAutoFocus={(event) => event.preventDefault()}>
+          <div className="px-4 pb-4">
+            <BottomSheetTitle className="sr-only">
+              {worker.full_name ?? t("nameFallback")}
+            </BottomSheetTitle>
+            <WorkerExpandedDetails worker={worker} t={t} priceLabel={label} pricePrefix={prefix} />
+          </div>
+        </BottomSheetContent>
+      </BottomSheet>
       {onToggleFavorite ? (
         isFavorite ? (
           <AlertDialog>

@@ -123,12 +123,15 @@ export type WorkerGroupedByService = {
       title: string | null
       introduction: string | null
       gallery_urls: string[]
+      height_cm?: number | null
+      weight_kg?: number | null
       work_locations?: Array<{
         province_code: number
         ward_code: number | null
         label_snapshot: string | null
       }>
     } | null
+    reputation_score?: number
     pricing: Array<{
       unit: string
       duration?: number

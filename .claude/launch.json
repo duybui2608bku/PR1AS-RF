@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "cwd": "pr1as-client"
+    },
+    {
+      "name": "pr1as-server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3052,
+      "cwd": "SERVER"
     }
   ]
 }
