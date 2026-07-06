@@ -475,11 +475,15 @@ export default function WorkerSetupPage() {
   // Location helpers
   const addProvinceLocation = (p: ProvinceOption) => {
     setWorkLocations((prev) => {
-      const cleaned = prev.filter((w) => w.province_code !== p.code)
-      if (
-        cleaned.some((w) => w.province_code === p.code && w.ward_code == null)
+      const isSelected = prev.some(
+        (w) => w.province_code === p.code && w.ward_code == null
       )
-        return cleaned
+      if (isSelected) {
+        return prev.filter(
+          (w) => !(w.province_code === p.code && w.ward_code == null)
+        )
+      }
+      const cleaned = prev.filter((w) => w.province_code !== p.code)
       if (cleaned.length >= WORK_LOCATIONS_MAX) {
         toast.warning(t("toast.maxLocations", { max: WORK_LOCATIONS_MAX }))
         return prev
@@ -506,10 +510,13 @@ export default function WorkerSetupPage() {
 
   const addWardLocation = (p: ProvinceOption, w: WardOption) => {
     setWorkLocations((prev) => {
+      const isSelected = prev.some((x) => x.ward_code === w.code)
+      if (isSelected) {
+        return prev.filter((x) => x.ward_code !== w.code)
+      }
       const cleaned = prev.filter(
         (x) => !(x.province_code === p.code && x.ward_code == null)
       )
-      if (cleaned.some((x) => x.ward_code === w.code)) return cleaned
       if (cleaned.length >= WORK_LOCATIONS_MAX) {
         toast.warning(t("toast.maxLocations", { max: WORK_LOCATIONS_MAX }))
         return prev
