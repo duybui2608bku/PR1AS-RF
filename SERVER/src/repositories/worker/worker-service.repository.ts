@@ -724,6 +724,17 @@ class WorkerServiceRepository {
       })
     );
   }
+
+  async countByServiceId(serviceId: string): Promise<number> {
+    return WorkerService.countDocuments({ service_id: serviceId });
+  }
+
+  async findWorkerIdsByServiceId(serviceId: string): Promise<string[]> {
+    const ids = await WorkerService.distinct("worker_id", {
+      service_id: serviceId,
+    });
+    return ids.map((id) => id.toString());
+  }
 }
 
 export const workerServiceRepository = new WorkerServiceRepository();

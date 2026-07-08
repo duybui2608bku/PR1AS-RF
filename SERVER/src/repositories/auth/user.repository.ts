@@ -775,6 +775,16 @@ export class UserRepository {
       email_verification_expires: null,
     });
   }
+
+  async findActiveWorkerIds(): Promise<string[]> {
+    const users = await User.find({
+      roles: UserRole.WORKER,
+      status: UserStatus.ACTIVE,
+    })
+      .select("_id")
+      .lean();
+    return users.map((user) => user._id.toString());
+  }
 }
 
 export const userRepository = new UserRepository();
