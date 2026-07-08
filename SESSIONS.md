@@ -38,6 +38,47 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-09 — Quản lý vòng đời dịch vụ + admin CRUD dịch vụ
+
+**Mục tiêu**: Dịch vụ đang seed cứng, chưa có admin CRUD. Cho admin thêm/sửa/
+ngừng/xóa dịch vụ an toàn mà không làm mất offering của worker hay hỏng discovery/
+filter, và đưa worker cũ vào dịch vụ mới qua opt-in.
+
+**Đã làm** (theo spec+plan trong `docs/superpowers/{specs,plans}/2026-07-08-service-lifecycle*`):
+
+- **Vòng đời (Hướng A)**: tái dùng `Service.is_active` làm cờ deprecate; thêm
+  `deprecated_at`/`created_by`/`updated_by`. Không đổi schema WorkerService/Booking.
+- **Admin CRUD** `/api/admin/services` (adminOnly + CSRF): list (cả đã ngừng),
+  create, update (khóa `code`), deprecate, reactivate, delete **có rào chắn** —
+  chặn 409 khi còn WorkerService hoặc Booking tham chiếu (buộc dùng Ngừng).
+  Business logic ở `AdminServiceService` (15 unit test, mock repo+notify).
+- **Thông báo 2 tầng**: ngừng DV → IN_APP+EMAIL cho worker đang offer; DV mới →
+  IN_APP cho tất cả worker active + banner "kéo" ở trang worker setup (opt-in).
+- **Frontend**: trang admin `dashboard/services` (table + dialog create/edit 4
+  locale + rules + companionship, deprecate/reactivate/xóa), banner worker,
+  hooks + query keys + axios client, mục sidebar mới.
+
+**File chính**: `SERVER/src/{models,repositories,services,controllers,routes,validations}/service/*`,
+`SERVER/src/services/service/admin-service.service.ts`, `SERVER/src/constants/notification.ts`,
+`SERVER/src/utils/i18n.ts`, `pr1as-client/{services,lib/hooks}/*admin-service*`,
+`pr1as-client/app/dashboard/services/page.tsx`, `pr1as-client/components/{dashboard/service-form-dialog,worker/new-services-banner}.tsx`.
+
+**Quyết định / ghi chú**:
+
+- Discovery đã sẵn lọc `service.is_active: true` → deprecated tự biến mất khỏi
+  filter, không cần sửa.
+- **Bug quan trọng đã fix trong review cuối**: `updateById` dùng `$set` cả object
+  `name`/`description` sẽ xóa bản dịch zh/ko khi form chỉ gửi vi/en → đã đổi sang
+  dot-notation (`name.vi`,...) + form nay thu thập đủ 4 locale.
+- Notify DV mới hiện **await** cả fan-out (đúng convention `notify` toàn repo);
+  spec gợi ý non-blocking — để lại làm sau nếu cần ở quy mô lớn.
+
+**Còn lại**: polish nhỏ đã defer (per-row pending state ở trang admin, empty-state,
+errorMap cho Zod enum, hợp nhất query-key `["services","list"]` vs `services.all`).
+Chưa chạy thử E2E trên trình duyệt (session không có backend chạy).
+
+**Commit**: `d1fcee0`..`2da9715` (14 commit) · branch `main-3` (chưa merge/push)
+
 ## 2026-07-04 — Tính năng voucher kích hoạt gói Gold/Diamond
 
 **Mục tiêu**: Admin tạo mã voucher gắn với gói Gold/Diamond theo tháng; người
