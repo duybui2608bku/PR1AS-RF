@@ -4,8 +4,10 @@ import { notificationService } from "../notification/notification.service";
 import {
   IServiceDocument,
   CreateServiceInput,
+  UpdateServiceInput,
   AdminServiceFilter,
 } from "../../types/service/service.type";
+import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import {
@@ -44,6 +46,95 @@ export class AdminServiceService {
 
     await this.notifyNewService(service);
     return service;
+  }
+
+  async updateService(
+    id: string,
+    input: UpdateServiceInput & { code?: string },
+    adminId: string
+  ): Promise<IServiceDocument> {
+    if (input.code !== undefined) {
+      throw AppError.badRequest("Service code cannot be changed");
+    }
+
+    const updated = await serviceRepository.updateById(id, {
+      ...input,
+      updated_by: adminId,
+    });
+    if (!updated) {
+      throw AppError.notFound("Service not found");
+    }
+    return updated;
+  }
+
+  async deprecateService(
+    id: string,
+    adminId: string
+  ): Promise<IServiceDocument> {
+    const service = await serviceRepository.findById(id);
+    if (!service) {
+      throw AppError.notFound("Service not found");
+    }
+    if (!service.is_active) {
+      return service;
+    }
+
+    const updated = await serviceRepository.setActiveState(
+      id,
+      false,
+      new Date(),
+      adminId
+    );
+    if (!updated) {
+      throw AppError.notFound("Service not found");
+    }
+
+    await this.notifyDeprecatedService(updated);
+    return updated;
+  }
+
+  async reactivateService(
+    id: string,
+    adminId: string
+  ): Promise<IServiceDocument> {
+    const updated = await serviceRepository.setActiveState(
+      id,
+      true,
+      null,
+      adminId
+    );
+    if (!updated) {
+      throw AppError.notFound("Service not found");
+    }
+    return updated;
+  }
+
+  private async notifyDeprecatedService(
+    service: IServiceDocument
+  ): Promise<void> {
+    const serviceId = String(service._id);
+    const workerIds =
+      await workerServiceRepository.findWorkerIdsByServiceId(serviceId);
+    if (workerIds.length === 0) {
+      return;
+    }
+
+    await notificationService.notify({
+      recipient_ids: workerIds,
+      type: NotificationType.SERVICE_DEPRECATED,
+      category: NotificationCategory.SYSTEM,
+      title: t("notif.service.deprecated.title", "vi"),
+      body: t("notif.service.deprecated.body", "vi"),
+      data: {
+        service_id: serviceId,
+        service_code: service.code,
+        service_name: service.name.vi,
+      },
+      link: WORKER_SETUP_LINK,
+      priority: NotificationPriority.NORMAL,
+      channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+      dedupe_key: `service_deprecated:${serviceId}`,
+    });
   }
 
   private async notifyNewService(service: IServiceDocument): Promise<void> {

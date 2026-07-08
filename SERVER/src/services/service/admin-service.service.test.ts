@@ -34,6 +34,8 @@ import {
   NotificationChannel,
 } from "../../constants/notification";
 import { ServiceCategory, CreateServiceInput } from "../../types/service/service.type";
+import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
+import { UpdateServiceInput } from "../../types/service/service.type";
 
 const baseInput: CreateServiceInput = {
   code: "NEWCODE",
@@ -93,5 +95,131 @@ describe("adminServiceService.createService", () => {
     await adminServiceService.createService(baseInput, "admin1");
 
     expect(notificationService.notify).not.toHaveBeenCalled();
+  });
+});
+
+describe("adminServiceService.updateService", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("rejects an attempt to change the code", async () => {
+    await expect(
+      adminServiceService.updateService(
+        "svc1",
+        { code: "OTHER" } as UpdateServiceInput & { code?: string },
+        "admin1"
+      )
+    ).rejects.toMatchObject({ statusCode: 400 });
+    expect(serviceRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it("updates allowed fields and stamps updated_by", async () => {
+    (serviceRepository.updateById as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      icon: "Music",
+    });
+
+    await adminServiceService.updateService(
+      "svc1",
+      { icon: "Music" },
+      "admin1"
+    );
+
+    expect(serviceRepository.updateById).toHaveBeenCalledWith("svc1", {
+      icon: "Music",
+      updated_by: "admin1",
+    });
+  });
+
+  it("throws 404 when the service does not exist", async () => {
+    (serviceRepository.updateById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      adminServiceService.updateService("missing", { icon: "X" }, "admin1")
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("adminServiceService.deprecateService", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("deactivates, stamps deprecated_at, and notifies offering workers via in-app + email", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      is_active: true,
+    });
+    (serviceRepository.setActiveState as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      code: "CODE1",
+      name: { vi: "Dịch vụ" },
+      is_active: false,
+    });
+    (
+      workerServiceRepository.findWorkerIdsByServiceId as jest.Mock
+    ).mockResolvedValue(["w1", "w2"]);
+
+    await adminServiceService.deprecateService("svc1", "admin1");
+
+    expect(serviceRepository.setActiveState).toHaveBeenCalledWith(
+      "svc1",
+      false,
+      expect.any(Date),
+      "admin1"
+    );
+    expect(notificationService.notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipient_ids: ["w1", "w2"],
+        type: NotificationType.SERVICE_DEPRECATED,
+        channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+        dedupe_key: "service_deprecated:svc1",
+      })
+    );
+  });
+
+  it("is idempotent when already deprecated (no write, no notify)", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      is_active: false,
+    });
+
+    await adminServiceService.deprecateService("svc1", "admin1");
+
+    expect(serviceRepository.setActiveState).not.toHaveBeenCalled();
+    expect(notificationService.notify).not.toHaveBeenCalled();
+  });
+
+  it("throws 404 when the service does not exist", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      adminServiceService.deprecateService("missing", "admin1")
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("adminServiceService.reactivateService", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("reactivates and clears deprecated_at", async () => {
+    (serviceRepository.setActiveState as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      is_active: true,
+    });
+
+    await adminServiceService.reactivateService("svc1", "admin1");
+
+    expect(serviceRepository.setActiveState).toHaveBeenCalledWith(
+      "svc1",
+      true,
+      null,
+      "admin1"
+    );
+  });
+
+  it("throws 404 when the service does not exist", async () => {
+    (serviceRepository.setActiveState as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      adminServiceService.reactivateService("missing", "admin1")
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 });
