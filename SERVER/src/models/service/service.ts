@@ -57,6 +57,20 @@ const serviceSchema = new Schema<IServiceDocument>(
       default: true,
       index: true,
     },
+    deprecated_at: {
+      type: Date,
+      default: null,
+    },
+    created_by: {
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER,
+      default: null,
+    },
+    updated_by: {
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER,
+      default: null,
+    },
     created_at: {
       type: Date,
       default: Date.now,
