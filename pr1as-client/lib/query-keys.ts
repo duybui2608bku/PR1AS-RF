@@ -95,6 +95,11 @@ export const queryKeys = {
       ["workers", "schedule", id, params] as const,
     myServices: ["workers", "my-services"] as const,
   },
+  services: {
+    all: ["services"] as const,
+    adminList: (params?: Record<string, unknown>) =>
+      ["services", "admin", "list", params] as const,
+  },
   moderation: {
     all: ["moderation"] as const,
     blocks: ["moderation", "blocks"] as const,
