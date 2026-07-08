@@ -705,6 +705,10 @@
     "optional": "(optional)",
     "stepCounter": "Step {current}/{total}",
     "stepAria": "Step {step}",
+    "newServicesBanner": {
+      "message": "There are {count} new services you don't offer yet. Add them to your profile to receive bookings.",
+      "cta": "Add services"
+    },
     "steps": {
       "area": {
         "title": "Area & Basics",

@@ -705,6 +705,10 @@
     "optional": "（可选）",
     "stepCounter": "步骤 {current}/{total}",
     "stepAria": "步骤 {step}",
+    "newServicesBanner": {
+      "message": "有 {count} 项您尚未提供的新服务。将其添加到您的资料中以接收预订。",
+      "cta": "添加服务"
+    },
     "steps": {
       "area": {
         "title": "地区与基础信息",

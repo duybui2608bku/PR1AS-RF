@@ -705,6 +705,10 @@
     "optional": "(tuỳ chọn)",
     "stepCounter": "Bước {current}/{total}",
     "stepAria": "Bước {step}",
+    "newServicesBanner": {
+      "message": "Có {count} dịch vụ mới bạn chưa cung cấp. Thêm vào hồ sơ để nhận đặt lịch.",
+      "cta": "Thêm dịch vụ"
+    },
     "steps": {
       "area": {
         "title": "Khu vực & Cơ bản",

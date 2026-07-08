@@ -1,31 +1,25 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
-import { queryKeys } from "@/lib/query-keys"
-import { serviceService } from "@/services/service.service"
-import { useMyWorkerServices } from "@/lib/hooks/use-worker-setup"
+import type { ServiceItem } from "@/services/service.service"
 
 type NewServicesBannerProps = {
+  services: ServiceItem[]
+  offeredServiceCodes: string[]
   onGoToServices?: () => void
 }
 
 export const NewServicesBanner = ({
+  services,
+  offeredServiceCodes,
   onGoToServices,
 }: NewServicesBannerProps) => {
-  const { data: allServices } = useQuery({
-    queryKey: queryKeys.services.all,
-    queryFn: () => serviceService.getServices(),
-  })
-  const { data: myServices } = useMyWorkerServices()
+  const t = useTranslations("WorkerSetup")
 
-  const offeredCodes = new Set(
-    (myServices ?? []).map((item) => item.service_code)
-  )
-  const missing = (allServices ?? []).filter(
-    (service) => service.is_active && !offeredCodes.has(service.code)
-  )
+  const offered = new Set(offeredServiceCodes)
+  const missing = services.filter((s) => s.is_active && !offered.has(s.code))
 
   if (missing.length === 0) {
     return null
@@ -37,11 +31,10 @@ export const NewServicesBanner = ({
       className="mb-4 flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-sm">
-        Có {missing.length} dịch vụ mới bạn chưa cung cấp. Thêm vào hồ sơ để
-        nhận đặt lịch.
+        {t("newServicesBanner.message", { count: missing.length })}
       </p>
       <Button size="sm" onClick={onGoToServices}>
-        Thêm dịch vụ
+        {t("newServicesBanner.cta")}
       </Button>
     </div>
   )

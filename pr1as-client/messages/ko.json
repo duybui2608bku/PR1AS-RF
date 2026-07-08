@@ -704,6 +704,10 @@
     "optional": "(선택 사항)",
     "stepCounter": "{current}/{total}단계",
     "stepAria": "{step}단계",
+    "newServicesBanner": {
+      "message": "아직 제공하지 않는 새로운 서비스가 {count}개 있습니다. 프로필에 추가하여 예약을 받으세요.",
+      "cta": "서비스 추가"
+    },
     "steps": {
       "area": {
         "title": "지역 및 기본 정보",

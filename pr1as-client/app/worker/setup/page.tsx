@@ -1391,6 +1391,10 @@ export default function WorkerSetupPage() {
     <SiteLayout hideFooter>
       <div className="container mx-auto max-w-2xl px-4 pt-4 pb-48 md:pb-28 lg:pb-12">
         <NewServicesBanner
+          services={catalogQuery.data ?? []}
+          offeredServiceCodes={(mineQuery.data ?? []).map(
+            (s) => s.service_code
+          )}
           onGoToServices={() => setCurrentStep(STEP_KEYS.indexOf("services"))}
         />
 
