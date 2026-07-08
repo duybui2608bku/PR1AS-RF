@@ -3,6 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -30,8 +31,16 @@ type FormState = {
   icon: string
   nameVi: string
   nameEn: string
+  nameZh: string
+  nameKo: string
   descriptionVi: string
   descriptionEn: string
+  descriptionZh: string
+  descriptionKo: string
+  companionshipLevel: string
+  physicalTouch: boolean
+  intellectualConversationRequired: boolean
+  dressCode: string
 }
 
 const EMPTY_FORM: FormState = {
@@ -40,8 +49,16 @@ const EMPTY_FORM: FormState = {
   icon: "",
   nameVi: "",
   nameEn: "",
+  nameZh: "",
+  nameKo: "",
   descriptionVi: "",
   descriptionEn: "",
+  descriptionZh: "",
+  descriptionKo: "",
+  companionshipLevel: "",
+  physicalTouch: false,
+  intellectualConversationRequired: false,
+  dressCode: "",
 }
 
 export const ServiceFormDialog = ({
@@ -62,8 +79,20 @@ export const ServiceFormDialog = ({
         icon: service.icon ?? "",
         nameVi: service.name.vi ?? "",
         nameEn: service.name.en ?? "",
+        nameZh: service.name.zh ?? "",
+        nameKo: service.name.ko ?? "",
         descriptionVi: service.description?.vi ?? "",
         descriptionEn: service.description?.en ?? "",
+        descriptionZh: service.description?.zh ?? "",
+        descriptionKo: service.description?.ko ?? "",
+        companionshipLevel:
+          service.companionship_level != null
+            ? String(service.companionship_level)
+            : "",
+        physicalTouch: service.rules?.physical_touch ?? false,
+        intellectualConversationRequired:
+          service.rules?.intellectual_conversation_required ?? false,
+        dressCode: service.rules?.dress_code ?? "",
       })
     } else {
       setForm(EMPTY_FORM)
@@ -75,13 +104,64 @@ export const ServiceFormDialog = ({
       setForm((prev) => ({ ...prev, [field]: event.target.value }))
     }
 
+  const handleCategoryChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setForm((prev) => ({ ...prev, category: event.target.value }))
+  }
+
+  const handleCompanionshipLevelChange = (
+    event: ChangeEvent<HTMLSelectElement>
+  ) => {
+    setForm((prev) => ({ ...prev, companionshipLevel: event.target.value }))
+  }
+
+  const handleDressCodeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setForm((prev) => ({ ...prev, dressCode: event.target.value }))
+  }
+
+  const handlePhysicalTouchChange = (value: boolean) => {
+    setForm((prev) => ({ ...prev, physicalTouch: value }))
+  }
+
+  const handleIntellectualConversationChange = (value: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      intellectualConversationRequired: value,
+    }))
+  }
+
+  const handleCancel = () => {
+    onOpenChange(false)
+  }
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
     const shared = {
       category: form.category,
       icon: form.icon,
-      name: { vi: form.nameVi, en: form.nameEn },
-      description: { vi: form.descriptionVi, en: form.descriptionEn },
+      name: {
+        vi: form.nameVi,
+        en: form.nameEn,
+        zh: form.nameZh || null,
+        ko: form.nameKo || null,
+      },
+      description: {
+        vi: form.descriptionVi,
+        en: form.descriptionEn,
+        zh: form.descriptionZh || null,
+        ko: form.descriptionKo || null,
+      },
+      companionship_level:
+        form.companionshipLevel === ""
+          ? null
+          : Number(form.companionshipLevel),
+      rules: form.dressCode
+        ? {
+            physical_touch: form.physicalTouch,
+            intellectual_conversation_required:
+              form.intellectualConversationRequired,
+            dress_code: form.dressCode,
+          }
+        : null,
     }
 
     if (isEdit && service) {
@@ -125,9 +205,7 @@ export const ServiceFormDialog = ({
             <select
               id="service-category"
               value={form.category}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, category: event.target.value }))
-              }
+              onChange={handleCategoryChange}
               className="h-9 w-full rounded-md border px-3 text-sm"
             >
               <option value="VIRTUAL">VIRTUAL</option>
@@ -163,6 +241,22 @@ export const ServiceFormDialog = ({
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="service-name-zh">Tên (ZH)</Label>
+              <Input
+                id="service-name-zh"
+                value={form.nameZh}
+                onChange={handleChange("nameZh")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="service-name-ko">Tên (KO)</Label>
+              <Input
+                id="service-name-ko"
+                value={form.nameKo}
+                onChange={handleChange("nameKo")}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -181,12 +275,89 @@ export const ServiceFormDialog = ({
                 onChange={handleChange("descriptionEn")}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="service-desc-zh">Mô tả (ZH)</Label>
+              <Input
+                id="service-desc-zh"
+                value={form.descriptionZh}
+                onChange={handleChange("descriptionZh")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="service-desc-ko">Mô tả (KO)</Label>
+              <Input
+                id="service-desc-ko"
+                value={form.descriptionKo}
+                onChange={handleChange("descriptionKo")}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="service-companionship-level">
+              Cấp độ đồng hành (tùy chọn)
+            </Label>
+            <select
+              id="service-companionship-level"
+              value={form.companionshipLevel}
+              onChange={handleCompanionshipLevelChange}
+              className="h-9 w-full rounded-md border px-3 text-sm"
+            >
+              <option value="">Không xác định</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="service-dress-code">
+              Quy định trang phục (tùy chọn)
+            </Label>
+            <select
+              id="service-dress-code"
+              value={form.dressCode}
+              onChange={handleDressCodeChange}
+              className="h-9 w-full rounded-md border px-3 text-sm"
+            >
+              <option value="">Không áp dụng</option>
+              <option value="CASUAL">CASUAL</option>
+              <option value="SEMI_FORMAL">SEMI_FORMAL</option>
+              <option value="FORMAL">FORMAL</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label
+              htmlFor="service-physical-touch"
+              className="flex items-center gap-2 text-sm"
+            >
+              <Checkbox
+                id="service-physical-touch"
+                checked={form.physicalTouch}
+                onCheckedChange={(value) =>
+                  handlePhysicalTouchChange(value === true)
+                }
+              />
+              Cho phép tiếp xúc vật lý
+            </label>
+            <label
+              htmlFor="service-intellectual-conversation"
+              className="flex items-center gap-2 text-sm"
+            >
+              <Checkbox
+                id="service-intellectual-conversation"
+                checked={form.intellectualConversationRequired}
+                onCheckedChange={(value) =>
+                  handleIntellectualConversationChange(value === true)
+                }
+              />
+              Yêu cầu trò chuyện trí tuệ
+            </label>
           </div>
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleCancel}
+              disabled={isPending}
             >
               Hủy
             </Button>

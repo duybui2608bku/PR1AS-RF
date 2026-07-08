@@ -72,9 +72,25 @@ export class ServiceRepository {
     id: string,
     patch: UpdateServiceInput & { updated_by: string }
   ): Promise<IServiceDocument | null> {
+    const { name, description, ...rest } = patch;
+    const set: Record<string, unknown> = { ...rest, updated_at: new Date() };
+    if (name) {
+      for (const [locale, value] of Object.entries(name)) {
+        if (value !== undefined) {
+          set[`name.${locale}`] = value;
+        }
+      }
+    }
+    if (description) {
+      for (const [locale, value] of Object.entries(description)) {
+        if (value !== undefined) {
+          set[`description.${locale}`] = value;
+        }
+      }
+    }
     return Service.findByIdAndUpdate(
       id,
-      { $set: { ...patch, updated_at: new Date() } },
+      { $set: set },
       { new: true, runValidators: true }
     );
   }

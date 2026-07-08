@@ -6,6 +6,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen,
+  Briefcase,
   CalendarCheck,
   Contact,
   CreditCard,
@@ -114,6 +115,11 @@ const adminNavGroups = [
   {
     title: "Cấu hình & Thiết lập",
     items: [
+      {
+        href: "/dashboard/services",
+        label: "Dịch vụ",
+        icon: Briefcase,
+      },
       {
         href: "/dashboard/reputation-config",
         label: "Cấu hình điểm",

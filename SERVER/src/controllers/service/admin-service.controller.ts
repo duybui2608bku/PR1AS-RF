@@ -6,8 +6,7 @@ import {
   adminServiceQuerySchema,
 } from "../../validations/service/admin-service.validation";
 import { COMMON_MESSAGES } from "../../constants/messages";
-import { R, validateWithSchema } from "../../utils";
-import { extractUserIdFromRequest } from "../../utils";
+import { R, validateWithSchema, extractUserIdFromRequest } from "../../utils";
 
 export class AdminServiceController {
   async list(req: Request, res: Response): Promise<void> {

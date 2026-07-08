@@ -56,7 +56,11 @@ export class AdminServiceService {
     adminId: string
   ): Promise<IServiceDocument> {
     if (input.code !== undefined) {
-      throw AppError.badRequest("Service code cannot be changed");
+      throw new AppError(
+        "Service code cannot be changed",
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.SERVICE_CODE_IMMUTABLE
+      );
     }
 
     const updated = await serviceRepository.updateById(id, {
