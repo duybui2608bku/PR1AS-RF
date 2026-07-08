@@ -23,6 +23,7 @@ import { toast } from "sonner"
 
 import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { SiteLayout } from "@/components/layout/site-layout"
+import { NewServicesBanner } from "@/components/worker/new-services-banner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -1389,6 +1390,10 @@ export default function WorkerSetupPage() {
   return (
     <SiteLayout hideFooter>
       <div className="container mx-auto max-w-2xl px-4 pt-4 pb-48 md:pb-28 lg:pb-12">
+        <NewServicesBanner
+          onGoToServices={() => setCurrentStep(STEP_KEYS.indexOf("services"))}
+        />
+
         {/* Header */}
         <div className="mb-5 space-y-3">
           <div className="flex items-center gap-2">
