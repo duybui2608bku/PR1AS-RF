@@ -8,8 +8,10 @@ import {
   AdminServiceFilter,
 } from "../../types/service/service.type";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
+import { HTTP_STATUS } from "../../constants/httpStatus";
 import {
   NotificationType,
   NotificationCategory,
@@ -107,6 +109,32 @@ export class AdminServiceService {
       throw AppError.notFound("Service not found");
     }
     return updated;
+  }
+
+  async deleteService(id: string): Promise<void> {
+    const service = await serviceRepository.findById(id);
+    if (!service) {
+      throw AppError.notFound("Service not found");
+    }
+
+    const [workerCount, bookingCount] = await Promise.all([
+      workerServiceRepository.countByServiceId(id),
+      bookingRepository.countByServiceId(id),
+    ]);
+
+    if (workerCount > 0 || bookingCount > 0) {
+      throw new AppError(
+        "Service is in use; deprecate it instead of deleting",
+        HTTP_STATUS.CONFLICT,
+        ErrorCode.SERVICE_IN_USE,
+        [
+          { field: "worker_count", message: String(workerCount) },
+          { field: "booking_count", message: String(bookingCount) },
+        ]
+      );
+    }
+
+    await serviceRepository.deleteById(id);
   }
 
   private async notifyDeprecatedService(

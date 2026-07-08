@@ -27,6 +27,7 @@ jest.mock("../notification/notification.service", () => ({
 
 import { adminServiceService } from "./admin-service.service";
 import { serviceRepository } from "../../repositories/service/service.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { notificationService } from "../notification/notification.service";
 import {
@@ -221,5 +222,57 @@ describe("adminServiceService.reactivateService", () => {
     await expect(
       adminServiceService.reactivateService("missing", "admin1")
     ).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("adminServiceService.deleteService", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("throws 404 when the service does not exist", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue(null);
+
+    await expect(
+      adminServiceService.deleteService("missing")
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("blocks deletion with 409 when workers still reference it", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue({ _id: "svc1" });
+    (workerServiceRepository.countByServiceId as jest.Mock).mockResolvedValue(3);
+    (bookingRepository.countByServiceId as jest.Mock).mockResolvedValue(0);
+
+    await expect(
+      adminServiceService.deleteService("svc1")
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      code: "SERVICE_IN_USE",
+      details: [
+        { field: "worker_count", message: "3" },
+        { field: "booking_count", message: "0" },
+      ],
+    });
+    expect(serviceRepository.deleteById).not.toHaveBeenCalled();
+  });
+
+  it("blocks deletion with 409 when bookings still reference it", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue({ _id: "svc1" });
+    (workerServiceRepository.countByServiceId as jest.Mock).mockResolvedValue(0);
+    (bookingRepository.countByServiceId as jest.Mock).mockResolvedValue(5);
+
+    await expect(
+      adminServiceService.deleteService("svc1")
+    ).rejects.toMatchObject({ statusCode: 409 });
+    expect(serviceRepository.deleteById).not.toHaveBeenCalled();
+  });
+
+  it("deletes when there are zero references", async () => {
+    (serviceRepository.findById as jest.Mock).mockResolvedValue({ _id: "svc1" });
+    (workerServiceRepository.countByServiceId as jest.Mock).mockResolvedValue(0);
+    (bookingRepository.countByServiceId as jest.Mock).mockResolvedValue(0);
+    (serviceRepository.deleteById as jest.Mock).mockResolvedValue(true);
+
+    await adminServiceService.deleteService("svc1");
+
+    expect(serviceRepository.deleteById).toHaveBeenCalledWith("svc1");
   });
 });
