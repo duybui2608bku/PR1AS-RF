@@ -307,7 +307,6 @@ export default function WorkerSetupPage() {
   const [weightKg, setWeightKg] = useState("")
   const [experience, setExperience] = useState<WorkerExperience | "">("")
   const [starSign, setStarSign] = useState("")
-  const [title, setTitle] = useState("")
   const [lifestyle, setLifestyle] = useState("")
   const [quote, setQuote] = useState("")
   const [introduction, setIntroduction] = useState("")
@@ -436,7 +435,6 @@ export default function WorkerSetupPage() {
       if (profile?.weight_kg != null) setWeightKg(String(profile.weight_kg))
       if (profile?.experience) setExperience(profile.experience)
       if (profile?.star_sign) setStarSign(profile.star_sign)
-      if (profile?.title) setTitle(profile.title)
       if (profile?.lifestyle) setLifestyle(profile.lifestyle)
       if (profile?.quote) setQuote(profile.quote)
       if (profile?.introduction) setIntroduction(profile.introduction)
@@ -638,7 +636,6 @@ export default function WorkerSetupPage() {
       hobbies,
       gallery_urls: galleryUrls,
       work_locations: workLocations,
-      title: title.trim() || undefined,
       lifestyle: lifestyle.trim() || undefined,
       quote: quote.trim() || undefined,
       introduction: introduction.trim() || undefined,
@@ -676,6 +673,7 @@ export default function WorkerSetupPage() {
       // currency (BE re-derives price_vnd from price × rate).
       items.push({
         service_id: serviceId,
+        hashtags: [],
         pricing: norm.map((p) => {
           const original = originalPricingRef.current.get(
             `${serviceId}:${p.unit}`
@@ -718,10 +716,6 @@ export default function WorkerSetupPage() {
         }
         return true
       case 1:
-        if (!title.trim()) {
-          toast.error(t("toast.enterTitle"))
-          return false
-        }
         return true
       case 2:
         if (galleryUrls.length < 1) {
@@ -1104,18 +1098,6 @@ export default function WorkerSetupPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 px-4 pb-4">
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">
-              {t("fields.title")} <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={100}
-              placeholder={t("placeholders.title")}
-              className="h-11 rounded-xl"
-            />
-          </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">
               {t("fields.lifestyle")}

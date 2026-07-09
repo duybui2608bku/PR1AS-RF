@@ -214,7 +214,6 @@ export type WorkerProfilePublic = {
   introduction?: string | null
   gallery_urls?: string[]
   experience?: WorkerExperience
-  title?: string | null
   work_locations?: WorkLocationRef[]
   coords?: {
     latitude: number | null
@@ -238,6 +237,7 @@ export type WorkerPricingSlot = {
 export type WorkerServiceUpsertItem = {
   service_id: string
   pricing: WorkerPricingSlot[]
+  hashtags: string[]
 }
 
 export type WorkerServiceUpsertPayload = {
@@ -261,7 +261,25 @@ export type WorkerServiceItem = {
   service_id: string
   service_code: string
   pricing: WorkerServicePricing[]
+  hashtags: string[]
   is_active: boolean
+}
+
+export type WorkerHashtagCard = {
+  id: string
+  full_name: string | null
+  avatar: string | null
+  worker_profile: {
+    introduction: string | null
+    gallery_urls: string[]
+    work_locations: Array<{
+      province_code: number
+      ward_code: number | null
+      label_snapshot: string | null
+    }>
+  } | null
+  reputation_score: number
+  matched_hashtags: string[]
 }
 
 export type WorkerReviewStats = {
@@ -309,7 +327,6 @@ export type WorkerSuggestion = {
   full_name: string | null
   avatar: string | null
   worker_profile: {
-    title: string | null
     introduction: string | null
     gallery_urls: string[]
     work_locations: WorkLocationRef[]
@@ -357,7 +374,6 @@ export type WorkerFavorite = {
   full_name: string | null
   avatar: string | null
   worker_profile: {
-    title: string | null
     introduction: string | null
     gallery_urls: string[]
     work_locations: WorkLocationRef[]
