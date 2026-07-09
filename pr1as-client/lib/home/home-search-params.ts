@@ -14,6 +14,7 @@ export type HomeSearchParams = {
   location?: HomeSearchParamRaw
   at?: HomeSearchParamRaw
   tab?: HomeSearchParamRaw
+  hashtag?: HomeSearchParamRaw
 }
 
 export type HomeSearchState = {
@@ -21,6 +22,7 @@ export type HomeSearchState = {
   activeCodes: string[]
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
+  hashtag: string
 }
 
 const toPositiveInt = (raw?: string): number | null => {
@@ -83,7 +85,9 @@ export const parseHomeSearchParams = (
   const activeTab: ServiceTab =
     rawTab === "PHYSICAL" ? "PHYSICAL" : "VIRTUAL"
 
-  return { activeTab, activeCodes, selectedLocation, scheduledAt }
+  const hashtag = firstString(raw?.hashtag)?.trim() ?? ""
+
+  return { activeTab, activeCodes, selectedLocation, scheduledAt, hashtag }
 }
 
 export const homeStateToFilters = (
@@ -101,6 +105,9 @@ export const homeStateToFilters = (
   }
   if (state.scheduledAt) {
     filters.schedule = state.scheduledAt.toISOString()
+  }
+  if (state.hashtag) {
+    filters.hashtag = state.hashtag
   }
   return filters
 }
@@ -122,6 +129,9 @@ export const homeStateToQueryString = (state: HomeSearchState): string => {
   }
   if (state.scheduledAt) {
     params.set("at", state.scheduledAt.toISOString().slice(0, 10))
+  }
+  if (state.hashtag) {
+    params.set("hashtag", state.hashtag)
   }
   return params.toString()
 }

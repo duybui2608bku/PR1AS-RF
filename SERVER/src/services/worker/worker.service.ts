@@ -502,6 +502,9 @@ export class WorkerService {
         excludedWorkerIds: [
           ...new Set([...profileBlockedIds, ...restrictedWorkerIds]),
         ],
+        hashtag: query.hashtag
+          ? (normalizeHashtag(query.hashtag) ?? undefined)
+          : undefined,
       });
 
     // Collect all worker ids, fetch active boosts, then apply boost-tier sort

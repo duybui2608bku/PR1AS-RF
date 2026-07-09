@@ -37,6 +37,7 @@ export interface GroupedWorkersFilter {
     wardCode?: number | null;
   };
   excludedWorkerIds?: string[];
+  hashtag?: string;
 }
 
 type LocalizedText = {
@@ -486,6 +487,13 @@ class WorkerServiceRepository {
       {
         $match: {
           is_active: true,
+          ...(filters?.hashtag
+            ? {
+                hashtags: {
+                  $regex: new RegExp(escapeRegExp(filters.hashtag), "i"),
+                },
+              }
+            : {}),
           ...(filters?.excludedWorkerIds?.length
             ? {
                 worker_id: {

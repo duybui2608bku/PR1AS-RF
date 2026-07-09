@@ -1,7 +1,6 @@
 "use client"
 import * as React from "react"
 import { createPortal } from "react-dom"
-import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 
@@ -90,6 +89,8 @@ type HomeHeroProps = {
   onSelectedLocationChange: (value: LocationSearchResult | null) => void
   scheduledAt: Date | undefined
   onScheduledAtChange: (value: Date | undefined) => void
+  hashtag: string
+  onHashtagChange: (value: string) => void
   onSearchSubmit?: () => void
 }
 
@@ -102,11 +103,11 @@ export function HomeHero({
   onSelectedLocationChange,
   scheduledAt,
   onScheduledAtChange,
+  hashtag,
+  onHashtagChange,
   onSearchSubmit,
 }: HomeHeroProps) {
   const t = useTranslations("Home")
-  const router = useRouter()
-  const [hashtag, setHashtag] = React.useState("")
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["services", "list"],
     queryFn: serviceService.getServices,
@@ -118,20 +119,9 @@ export function HomeHero({
     [services, activeTab]
   )
 
-  // A hashtag query takes priority and routes to the flat worker-by-hashtag
-  // results; otherwise fall back to the standard grouped-by-service search.
-  const submitSearch = () => {
-    const tag = hashtag.trim()
-    if (tag) {
-      router.push(`/workers/search?q=${encodeURIComponent(tag)}`)
-      return
-    }
-    onSearchSubmit?.()
-  }
-
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    submitSearch()
+    onSearchSubmit?.()
   }
 
   const { filterSlotEl } = useServicesHeaderStore()
@@ -185,7 +175,7 @@ export function HomeHero({
           className="mx-0 h-auto self-stretch"
         />
 
-        <div className="flex min-h-[76px] flex-1 flex-col justify-center gap-1 px-4 py-3 sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2">
+        <div className="flex min-h-[76px] flex-[1.6] flex-col justify-center gap-1 px-4 py-3 sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2">
           <Label
             htmlFor="hero-hashtag"
             className="cursor-text text-xs font-semibold text-foreground"
@@ -197,7 +187,7 @@ export function HomeHero({
             <Input
               id="hero-hashtag"
               value={hashtag}
-              onChange={(event) => setHashtag(event.target.value)}
+              onChange={(event) => onHashtagChange(event.target.value)}
               placeholder={t("heroHashtagPlaceholder")}
               className="h-auto min-w-0 truncate border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
             />
@@ -237,8 +227,8 @@ export function HomeHero({
             scheduledAt={scheduledAt}
             onScheduledAtChange={onScheduledAtChange}
             hashtag={hashtag}
-            onHashtagChange={setHashtag}
-            onSearchSubmit={submitSearch}
+            onHashtagChange={onHashtagChange}
+            onSearchSubmit={onSearchSubmit}
           />
         </div>
       </div>

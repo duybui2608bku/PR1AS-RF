@@ -8,7 +8,6 @@ import type {
   WorkerDetail,
   WorkerFavorite,
   WorkerFavoriteMutationResult,
-  WorkerHashtagCard,
   WorkerReviewItem,
   WorkerReviewStats,
   WorkerScheduleResponse,
@@ -20,6 +19,7 @@ export type WorkersGroupedFilters = {
   province_code?: number
   ward_code?: number | null
   schedule?: string
+  hashtag?: string
 }
 
 const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
@@ -33,6 +33,7 @@ const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
     }
   }
   if (filters.schedule) params.schedule = filters.schedule
+  if (filters.hashtag) params.hashtag = filters.hashtag
   return Object.keys(params).length ? params : undefined
 }
 
@@ -275,51 +276,9 @@ const removeFavoriteWorker = async (
   return response.data.data ?? { worker_id: workerId, is_favorite: false }
 }
 
-type PaginationMeta = {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasNextPage: boolean
-  hasPrevPage: boolean
-}
-
-export type WorkerHashtagSearchResult = {
-  data: WorkerHashtagCard[]
-  pagination: PaginationMeta
-}
-
-const EMPTY_HASHTAG_SEARCH = (
-  page: number,
-  limit: number
-): WorkerHashtagSearchResult => ({
-  data: [],
-  pagination: {
-    page,
-    limit,
-    total: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-  },
-})
-
-export const searchWorkersByHashtag = async (
-  q: string,
-  page = 1,
-  limit = 20
-): Promise<WorkerHashtagSearchResult> => {
-  const response = await api.get<ApiResponse<WorkerHashtagSearchResult>>(
-    "/workers/search-by-hashtag",
-    { params: { q, page, limit } }
-  )
-  return response.data.data ?? EMPTY_HASHTAG_SEARCH(page, limit)
-}
-
 export const workerService = {
   getWorkersGroupedByService,
   getWorkerById,
-  searchWorkersByHashtag,
   getWorkerSchedule,
   getWorkerSuggestions,
   getFavoriteWorkerIds,

@@ -49,6 +49,10 @@ export const workerGroupedByServiceQuerySchema = z.object({
       .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean))
       .optional()
   ),
+  hashtag: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().min(1).optional()
+  ),
 });
 
 export type WorkerGroupedByServiceQuery = z.infer<
