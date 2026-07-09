@@ -15,6 +15,7 @@ export interface UpsertWorkerServicePayload {
   serviceId: string;
   serviceCode: string;
   pricing: WorkerServicePricing[];
+  hashtags?: string[];
 }
 
 interface UpdateWorkerServiceOptions {
@@ -48,7 +49,6 @@ export interface WorkerSuggestionCandidate {
   full_name: string | null;
   avatar: string | null;
   worker_profile: {
-    title: string | null;
     introduction: string | null;
     gallery_urls: string[];
     work_locations: Array<{
@@ -101,6 +101,7 @@ class WorkerServiceRepository {
                 service_id: serviceObjectId,
                 service_code: item.serviceCode,
                 pricing: item.pricing,
+                hashtags: item.hashtags ?? [],
                 is_active: true,
                 updated_at: now,
               },
@@ -309,7 +310,6 @@ class WorkerServiceRepository {
           avatar: { $first: "$worker.avatar" },
           worker_profile: {
             $first: {
-              title: "$worker.worker_profile.title",
               introduction: "$worker.worker_profile.introduction",
               gallery_urls: "$worker.worker_profile.gallery_urls",
               work_locations: {
@@ -461,7 +461,6 @@ class WorkerServiceRepository {
         full_name: string | null;
         avatar: string | null;
         worker_profile: {
-          title: string | null;
           introduction: string | null;
           gallery_urls: string[];
           height_cm: number | null;
@@ -654,7 +653,6 @@ class WorkerServiceRepository {
               full_name: "$worker.full_name",
               avatar: "$worker.avatar",
               worker_profile: {
-                title: "$worker.worker_profile.title",
                 introduction: "$worker.worker_profile.introduction",
                 gallery_urls: "$worker.worker_profile.gallery_urls",
                 height_cm: { $ifNull: ["$worker.worker_profile.height_cm", null] },
@@ -704,7 +702,6 @@ class WorkerServiceRepository {
           full_name: string | null;
           avatar: string | null;
           worker_profile: {
-            title: string | null;
             introduction: string | null;
             gallery_urls: string[];
             height_cm: number | null;
