@@ -1153,7 +1153,9 @@
     "heroServiceLabel": "Dịch vụ",
     "heroServicePlaceholder": "Chọn dịch vụ",
     "heroServiceAll": "Tất cả",
-    "heroServiceCount": "{count} dịch vụ"
+    "heroServiceCount": "{count} dịch vụ",
+    "heroHashtagLabel": "Hashtag",
+    "heroHashtagPlaceholder": "vd: it, hr"
   },
   "ServicePicker": {
     "title": "Chọn dịch vụ",

@@ -1151,7 +1151,9 @@
     "heroServiceLabel": "서비스",
     "heroServicePlaceholder": "서비스 선택",
     "heroServiceAll": "전체",
-    "heroServiceCount": "서비스 {count}개"
+    "heroServiceCount": "서비스 {count}개",
+    "heroHashtagLabel": "해시태그",
+    "heroHashtagPlaceholder": "예: it, hr"
   },
   "ServicePicker": {
     "title": "서비스 선택",

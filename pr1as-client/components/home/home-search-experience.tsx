@@ -27,7 +27,6 @@ import { useServicesHeaderStore } from "@/lib/store/services-header-store"
 import type { LocationSearchResult } from "@/lib/vn-provinces/work-locations-api"
 import { serviceService, type ServiceItem } from "@/services/service.service"
 import { workerService } from "@/services/worker.service"
-import { WorkerHashtagSearchBox } from "@/components/worker/worker-hashtag-search-box"
 
 type HomeSearchExperienceProps = {
   initialState: HomeSearchState
@@ -292,9 +291,6 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         }
         onSearchSubmit={handleSearchSubmit}
       />
-      <div className="mx-auto max-w-3xl px-4 pt-4">
-        <WorkerHashtagSearchBox />
-      </div>
       <div ref={resultsRef} className="pt-6">
         <WorkersByServiceList
           groupedServices={visibleGroups}

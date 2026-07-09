@@ -1153,7 +1153,9 @@
     "heroServiceLabel": "Services",
     "heroServicePlaceholder": "Choose services",
     "heroServiceAll": "All",
-    "heroServiceCount": "{count} services"
+    "heroServiceCount": "{count} services",
+    "heroHashtagLabel": "Hashtag",
+    "heroHashtagPlaceholder": "e.g. it, hr"
   },
   "ServicePicker": {
     "title": "Select services",

@@ -1153,7 +1153,9 @@
     "heroServiceLabel": "服务",
     "heroServicePlaceholder": "选择服务",
     "heroServiceAll": "全部",
-    "heroServiceCount": "{count} 项服务"
+    "heroServiceCount": "{count} 项服务",
+    "heroHashtagLabel": "标签",
+    "heroHashtagPlaceholder": "例如：it, hr"
   },
   "ServicePicker": {
     "title": "选择服务",
