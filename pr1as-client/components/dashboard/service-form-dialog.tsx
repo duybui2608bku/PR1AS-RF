@@ -4,35 +4,79 @@ import { useState, type ChangeEvent, type FormEvent } from "react"
 import {
   Baby,
   BookOpen,
+  Brain,
   Briefcase,
+  Brush,
+  Building2,
+  Bus,
+  Calculator,
   Camera,
   Car,
+  Cat,
+  ChefHat,
+  ClipboardList,
+  Cloud,
   Code,
+  Coffee,
+  Cog,
+  Coins,
+  CreditCard,
   Dog,
   Dumbbell,
+  Factory,
   FileText,
+  Film,
+  FlaskConical,
+  Flower2,
+  Gavel,
   GraduationCap,
+  Guitar,
   Hammer,
-  Heart,
+  Handshake,
   HeartPulse,
   Home,
   Languages,
   Laptop,
+  Leaf,
+  Lightbulb,
   type LucideIcon,
+  Mail,
+  Megaphone,
+  MessagesSquare,
   Mic,
+  Microscope,
   Music,
+  Newspaper,
   Paintbrush,
   Palette,
+  PawPrint,
   PenTool,
+  Phone,
+  PiggyBank,
+  Pill,
   Plane,
+  Presentation,
+  Rocket,
   Scale,
   Scissors,
+  Server,
+  ShieldCheck,
   ShoppingBag,
+  ShoppingCart,
   Sparkles,
+  Sprout,
   Stethoscope,
+  Store,
+  Syringe,
+  Target,
+  TestTube,
+  TreePine,
+  Trophy,
+  Truck,
   Users,
   Utensils,
   Video,
+  Wine,
   Wrench,
 } from "lucide-react"
 
@@ -56,35 +100,79 @@ import type { AdminServiceItem } from "@/services/admin-service.service"
 const SERVICE_ICONS: Array<{ name: string; Icon: LucideIcon }> = [
   { name: "Briefcase", Icon: Briefcase },
   { name: "FileText", Icon: FileText },
+  { name: "ClipboardList", Icon: ClipboardList },
+  { name: "Presentation", Icon: Presentation },
+  { name: "Calculator", Icon: Calculator },
   { name: "Laptop", Icon: Laptop },
   { name: "Code", Icon: Code },
+  { name: "Server", Icon: Server },
+  { name: "Cloud", Icon: Cloud },
   { name: "GraduationCap", Icon: GraduationCap },
   { name: "BookOpen", Icon: BookOpen },
   { name: "Languages", Icon: Languages },
+  { name: "Microscope", Icon: Microscope },
+  { name: "FlaskConical", Icon: FlaskConical },
+  { name: "TestTube", Icon: TestTube },
+  { name: "Brain", Icon: Brain },
   { name: "HeartPulse", Icon: HeartPulse },
   { name: "Stethoscope", Icon: Stethoscope },
+  { name: "Pill", Icon: Pill },
+  { name: "Syringe", Icon: Syringe },
   { name: "Baby", Icon: Baby },
   { name: "Dog", Icon: Dog },
+  { name: "Cat", Icon: Cat },
+  { name: "PawPrint", Icon: PawPrint },
   { name: "Music", Icon: Music },
   { name: "Mic", Icon: Mic },
+  { name: "Guitar", Icon: Guitar },
+  { name: "Film", Icon: Film },
   { name: "Palette", Icon: Palette },
   { name: "Paintbrush", Icon: Paintbrush },
+  { name: "Brush", Icon: Brush },
+  { name: "PenTool", Icon: PenTool },
   { name: "Camera", Icon: Camera },
   { name: "Video", Icon: Video },
+  { name: "Newspaper", Icon: Newspaper },
+  { name: "Megaphone", Icon: Megaphone },
   { name: "Dumbbell", Icon: Dumbbell },
+  { name: "Trophy", Icon: Trophy },
+  { name: "Target", Icon: Target },
   { name: "Scale", Icon: Scale },
+  { name: "Gavel", Icon: Gavel },
   { name: "Scissors", Icon: Scissors },
+  { name: "ChefHat", Icon: ChefHat },
   { name: "Utensils", Icon: Utensils },
+  { name: "Coffee", Icon: Coffee },
+  { name: "Wine", Icon: Wine },
+  { name: "Store", Icon: Store },
   { name: "ShoppingBag", Icon: ShoppingBag },
+  { name: "ShoppingCart", Icon: ShoppingCart },
+  { name: "Building2", Icon: Building2 },
+  { name: "Factory", Icon: Factory },
   { name: "Car", Icon: Car },
+  { name: "Bus", Icon: Bus },
+  { name: "Truck", Icon: Truck },
   { name: "Plane", Icon: Plane },
   { name: "Home", Icon: Home },
   { name: "Wrench", Icon: Wrench },
   { name: "Hammer", Icon: Hammer },
-  { name: "PenTool", Icon: PenTool },
-  { name: "Sparkles", Icon: Sparkles },
+  { name: "Cog", Icon: Cog },
+  { name: "Lightbulb", Icon: Lightbulb },
+  { name: "ShieldCheck", Icon: ShieldCheck },
+  { name: "Sprout", Icon: Sprout },
+  { name: "Leaf", Icon: Leaf },
+  { name: "TreePine", Icon: TreePine },
+  { name: "Flower2", Icon: Flower2 },
+  { name: "PiggyBank", Icon: PiggyBank },
+  { name: "Coins", Icon: Coins },
+  { name: "CreditCard", Icon: CreditCard },
+  { name: "Handshake", Icon: Handshake },
   { name: "Users", Icon: Users },
-  { name: "Heart", Icon: Heart },
+  { name: "Phone", Icon: Phone },
+  { name: "Mail", Icon: Mail },
+  { name: "MessagesSquare", Icon: MessagesSquare },
+  { name: "Rocket", Icon: Rocket },
+  { name: "Sparkles", Icon: Sparkles },
 ]
 
 type ServiceFormDialogProps = {
@@ -126,8 +214,16 @@ export const ServiceFormDialog = ({
 }: ServiceFormDialogProps) => {
   const isEdit = Boolean(service)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [iconQuery, setIconQuery] = useState("")
   const createMutation = useCreateService()
   const updateMutation = useUpdateService()
+
+  const normalizedQuery = iconQuery.trim().toLowerCase()
+  const filteredIcons = normalizedQuery
+    ? SERVICE_ICONS.filter((item) =>
+        item.name.toLowerCase().includes(normalizedQuery)
+      )
+    : SERVICE_ICONS
 
   // Reset/populate the form whenever the dialog (re)opens or targets a
   // different service — done during render (React's recommended alternative to
@@ -168,6 +264,10 @@ export const ServiceFormDialog = ({
 
   const handleIconSelect = (name: string) => {
     setForm((prev) => ({ ...prev, icon: name }))
+  }
+
+  const handleIconQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setIconQuery(event.target.value)
   }
 
   const handleCancel = () => {
@@ -239,13 +339,30 @@ export const ServiceFormDialog = ({
             </select>
           </div>
           <div className="space-y-2">
-            <Label>Icon</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="service-icon-search">Icon</Label>
+              {form.icon ? (
+                <span className="text-xs text-muted-foreground">
+                  Đã chọn: <span className="font-medium">{form.icon}</span>
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  Vui lòng chọn một icon
+                </span>
+              )}
+            </div>
+            <Input
+              id="service-icon-search"
+              value={iconQuery}
+              onChange={handleIconQueryChange}
+              placeholder="Tìm icon (vd: laptop, health, music)..."
+            />
             <div
               role="radiogroup"
               aria-label="Chọn icon dịch vụ"
-              className="grid grid-cols-6 gap-2 sm:grid-cols-8"
+              className="grid max-h-44 grid-cols-6 gap-2 overflow-y-auto rounded-md border p-2 sm:grid-cols-8"
             >
-              {SERVICE_ICONS.map(({ name, Icon }) => {
+              {filteredIcons.map(({ name, Icon }) => {
                 const selected = form.icon === name
                 return (
                   <button
@@ -267,12 +384,12 @@ export const ServiceFormDialog = ({
                   </button>
                 )
               })}
+              {filteredIcons.length === 0 ? (
+                <p className="col-span-full py-2 text-center text-xs text-muted-foreground">
+                  Không tìm thấy icon phù hợp.
+                </p>
+              ) : null}
             </div>
-            {form.icon ? null : (
-              <p className="text-xs text-muted-foreground">
-                Vui lòng chọn một icon.
-              </p>
-            )}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
