@@ -213,6 +213,7 @@ export class WorkerService {
       _id: ws._id.toString(),
       service_id: ws.service_id.toString(),
       service_code: ws.service_code,
+      hashtags: ws.hashtags ?? [],
       pricing: ws.pricing.map((p) => ({
         unit: p.unit,
         duration: p.duration,
@@ -332,7 +333,6 @@ export class WorkerService {
           full_name: worker.full_name ?? null,
           avatar: worker.avatar ?? null,
           worker_profile: {
-            title: worker.worker_profile.title ?? null,
             introduction: worker.worker_profile.introduction ?? null,
             gallery_urls: worker.worker_profile.gallery_urls ?? [],
             work_locations: (worker.worker_profile.work_locations ?? []).map(
