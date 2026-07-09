@@ -789,7 +789,6 @@
       "height": "Height",
       "weight": "Weight",
       "starSign": "Zodiac sign",
-      "title": "Job title / Role",
       "lifestyle": "Lifestyle",
       "quote": "Favorite quote"
     },
@@ -797,7 +796,6 @@
       "dateOfBirth": "Select date of birth",
       "experience": "Select experience",
       "starSign": "Select zodiac sign",
-      "title": "E.g. Personal assistant, companion...",
       "lifestyle": "E.g. Active, enjoys exploring...",
       "quote": "A memorable quote about you...",
       "hobby": "Add a hobby...",
@@ -827,13 +825,13 @@
       "selectGender": "Select gender.",
       "selectLocation": "Select at least one work area.",
       "selectDateOfBirth": "Select your date of birth.",
-      "enterTitle": "Enter your job title.",
       "addGalleryPhoto": "Add at least one photo to your gallery.",
       "saveSuccess": "Profile and services saved.",
       "saveError": "Unable to save. Please try again."
     },
     "pricing": {
-      "priceHelp": "Enter a {currency} price for at least one unit"
+      "priceHelp": "Enter a {currency} price for at least one unit",
+      "hashtagsLabel": "Hashtags (help clients find you by keyword)"
     },
     "gallery": {
       "primary": "Primary",

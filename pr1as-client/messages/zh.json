@@ -789,7 +789,6 @@
       "height": "身高",
       "weight": "体重",
       "starSign": "星座",
-      "title": "职业名称 / 角色",
       "lifestyle": "生活方式",
       "quote": "喜爱的格言"
     },
@@ -797,7 +796,6 @@
       "dateOfBirth": "选择出生日期",
       "experience": "选择经验",
       "starSign": "选择星座",
-      "title": "例如：私人助理、陪伴者...",
       "lifestyle": "例如：活跃、喜欢探索...",
       "quote": "一句能代表你的话...",
       "hobby": "添加兴趣...",
@@ -827,13 +825,13 @@
       "selectGender": "请选择性别。",
       "selectLocation": "请选择至少一个工作地区。",
       "selectDateOfBirth": "请选择出生日期。",
-      "enterTitle": "请输入职业 / 头衔。",
       "addGalleryPhoto": "请至少上传一张照片。",
       "saveSuccess": "资料和服务已保存。",
       "saveError": "无法保存，请重试。"
     },
     "pricing": {
-      "priceHelp": "请至少为一种单位输入 {currency} 价格"
+      "priceHelp": "请至少为一种单位输入 {currency} 价格",
+      "hashtagsLabel": "标签（帮助客户按关键词找到你）"
     },
     "gallery": {
       "primary": "主图",

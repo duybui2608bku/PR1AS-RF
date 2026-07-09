@@ -115,6 +115,7 @@ import type {
   WorkerProfileUpdateInput,
   WorkerServiceUpsertItem,
 } from "@/types"
+import { HashtagChipInput } from "@/components/worker/hashtag-chip-input"
 
 const EMPTY_SERVICE_LIST: ServiceItem[] = []
 const MAX_GALLERY = 10
@@ -317,6 +318,9 @@ export default function WorkerSetupPage() {
   const [selectedPricing, setSelectedPricing] = useState<
     Map<string, WorkerPricingSlot[]>
   >(new Map())
+  const [serviceHashtags, setServiceHashtags] = useState<
+    Map<string, string[]>
+  >(new Map())
   // Raw input strings keyed by `${serviceId}:${unit}` so decimal typing (e.g.
   // "6.") isn't clobbered by re-deriving the value from the numeric model.
   const [priceDrafts, setPriceDrafts] = useState<Map<string, string>>(new Map())
@@ -372,10 +376,12 @@ export default function WorkerSetupPage() {
     const mine = mineQuery.data ?? []
     const cat = catalogQuery.data ?? EMPTY_SERVICE_LIST
     const nextMap = new Map<string, WorkerPricingSlot[]>()
+    const nextHashtags = new Map<string, string[]>()
     let savedCurrency: string | undefined
     for (const ws of mine) {
       const svc = cat.find((c) => c.id === ws.service_id)
       if (svc && isServiceIncludedInWorkerSetupStep(svc)) {
+        nextHashtags.set(ws.service_id, ws.hashtags ?? [])
         savedCurrency =
           savedCurrency ?? ws.pricing.find((p) => p.currency)?.currency
         for (const p of ws.pricing) {
@@ -452,6 +458,7 @@ export default function WorkerSetupPage() {
       }
 
       setSelectedPricing(nextMap)
+      setServiceHashtags(nextHashtags)
       hydratedRef.current = true
     })
   }, [
@@ -590,6 +597,14 @@ export default function WorkerSetupPage() {
         next.set(serviceId, [])
       }
       return next
+    })
+  }
+
+  const handleServiceHashtagsChange = (serviceId: string, next: string[]) => {
+    setServiceHashtags((prev) => {
+      const updated = new Map(prev)
+      updated.set(serviceId, next)
+      return updated
     })
   }
 
@@ -869,6 +884,17 @@ export default function WorkerSetupPage() {
                 </div>
               )
             })}
+            <div className="space-y-1 pt-1">
+              <Label className="text-xs text-muted-foreground">
+                {t("pricing.hashtagsLabel")}
+              </Label>
+              <HashtagChipInput
+                value={serviceHashtags.get(service.id) ?? []}
+                onChange={(next) =>
+                  handleServiceHashtagsChange(service.id, next)
+                }
+              />
+            </div>
           </div>
         )}
       </div>
