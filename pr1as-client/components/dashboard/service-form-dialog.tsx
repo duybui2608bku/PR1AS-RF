@@ -1,9 +1,42 @@
 "use client"
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { useState, type ChangeEvent, type FormEvent } from "react"
+import {
+  Baby,
+  BookOpen,
+  Briefcase,
+  Camera,
+  Car,
+  Code,
+  Dog,
+  Dumbbell,
+  FileText,
+  GraduationCap,
+  Hammer,
+  Heart,
+  HeartPulse,
+  Home,
+  Languages,
+  Laptop,
+  type LucideIcon,
+  Mic,
+  Music,
+  Paintbrush,
+  Palette,
+  PenTool,
+  Plane,
+  Scale,
+  Scissors,
+  ShoppingBag,
+  Sparkles,
+  Stethoscope,
+  Users,
+  Utensils,
+  Video,
+  Wrench,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -13,11 +46,46 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 import {
   useCreateService,
   useUpdateService,
 } from "@/lib/hooks/use-admin-services"
 import type { AdminServiceItem } from "@/services/admin-service.service"
+
+const SERVICE_ICONS: Array<{ name: string; Icon: LucideIcon }> = [
+  { name: "Briefcase", Icon: Briefcase },
+  { name: "FileText", Icon: FileText },
+  { name: "Laptop", Icon: Laptop },
+  { name: "Code", Icon: Code },
+  { name: "GraduationCap", Icon: GraduationCap },
+  { name: "BookOpen", Icon: BookOpen },
+  { name: "Languages", Icon: Languages },
+  { name: "HeartPulse", Icon: HeartPulse },
+  { name: "Stethoscope", Icon: Stethoscope },
+  { name: "Baby", Icon: Baby },
+  { name: "Dog", Icon: Dog },
+  { name: "Music", Icon: Music },
+  { name: "Mic", Icon: Mic },
+  { name: "Palette", Icon: Palette },
+  { name: "Paintbrush", Icon: Paintbrush },
+  { name: "Camera", Icon: Camera },
+  { name: "Video", Icon: Video },
+  { name: "Dumbbell", Icon: Dumbbell },
+  { name: "Scale", Icon: Scale },
+  { name: "Scissors", Icon: Scissors },
+  { name: "Utensils", Icon: Utensils },
+  { name: "ShoppingBag", Icon: ShoppingBag },
+  { name: "Car", Icon: Car },
+  { name: "Plane", Icon: Plane },
+  { name: "Home", Icon: Home },
+  { name: "Wrench", Icon: Wrench },
+  { name: "Hammer", Icon: Hammer },
+  { name: "PenTool", Icon: PenTool },
+  { name: "Sparkles", Icon: Sparkles },
+  { name: "Users", Icon: Users },
+  { name: "Heart", Icon: Heart },
+]
 
 type ServiceFormDialogProps = {
   open: boolean
@@ -26,7 +94,6 @@ type ServiceFormDialogProps = {
 }
 
 type FormState = {
-  code: string
   category: string
   icon: string
   nameVi: string
@@ -37,14 +104,9 @@ type FormState = {
   descriptionEn: string
   descriptionZh: string
   descriptionKo: string
-  companionshipLevel: string
-  physicalTouch: boolean
-  intellectualConversationRequired: boolean
-  dressCode: string
 }
 
 const EMPTY_FORM: FormState = {
-  code: "",
   category: "VIRTUAL",
   icon: "",
   nameVi: "",
@@ -55,10 +117,6 @@ const EMPTY_FORM: FormState = {
   descriptionEn: "",
   descriptionZh: "",
   descriptionKo: "",
-  companionshipLevel: "",
-  physicalTouch: false,
-  intellectualConversationRequired: false,
-  dressCode: "",
 }
 
 export const ServiceFormDialog = ({
@@ -71,33 +129,33 @@ export const ServiceFormDialog = ({
   const createMutation = useCreateService()
   const updateMutation = useUpdateService()
 
-  useEffect(() => {
-    if (service) {
-      setForm({
-        code: service.code,
-        category: service.category,
-        icon: service.icon ?? "",
-        nameVi: service.name.vi ?? "",
-        nameEn: service.name.en ?? "",
-        nameZh: service.name.zh ?? "",
-        nameKo: service.name.ko ?? "",
-        descriptionVi: service.description?.vi ?? "",
-        descriptionEn: service.description?.en ?? "",
-        descriptionZh: service.description?.zh ?? "",
-        descriptionKo: service.description?.ko ?? "",
-        companionshipLevel:
-          service.companionship_level != null
-            ? String(service.companionship_level)
-            : "",
-        physicalTouch: service.rules?.physical_touch ?? false,
-        intellectualConversationRequired:
-          service.rules?.intellectual_conversation_required ?? false,
-        dressCode: service.rules?.dress_code ?? "",
-      })
-    } else {
-      setForm(EMPTY_FORM)
+  // Reset/populate the form whenever the dialog (re)opens or targets a
+  // different service — done during render (React's recommended alternative to
+  // a syncing effect) so edits never leak between opens.
+  const currentId = service?.id ?? null
+  const [syncKey, setSyncKey] = useState<string | null>(null)
+  const openKey = open ? `open:${currentId ?? "new"}` : null
+  if (openKey !== syncKey) {
+    setSyncKey(openKey)
+    if (open) {
+      setForm(
+        service
+          ? {
+              category: service.category,
+              icon: service.icon ?? "",
+              nameVi: service.name.vi ?? "",
+              nameEn: service.name.en ?? "",
+              nameZh: service.name.zh ?? "",
+              nameKo: service.name.ko ?? "",
+              descriptionVi: service.description?.vi ?? "",
+              descriptionEn: service.description?.en ?? "",
+              descriptionZh: service.description?.zh ?? "",
+              descriptionKo: service.description?.ko ?? "",
+            }
+          : EMPTY_FORM
+      )
     }
-  }, [service, open])
+  }
 
   const handleChange =
     (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -108,25 +166,8 @@ export const ServiceFormDialog = ({
     setForm((prev) => ({ ...prev, category: event.target.value }))
   }
 
-  const handleCompanionshipLevelChange = (
-    event: ChangeEvent<HTMLSelectElement>
-  ) => {
-    setForm((prev) => ({ ...prev, companionshipLevel: event.target.value }))
-  }
-
-  const handleDressCodeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, dressCode: event.target.value }))
-  }
-
-  const handlePhysicalTouchChange = (value: boolean) => {
-    setForm((prev) => ({ ...prev, physicalTouch: value }))
-  }
-
-  const handleIntellectualConversationChange = (value: boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      intellectualConversationRequired: value,
-    }))
+  const handleIconSelect = (name: string) => {
+    setForm((prev) => ({ ...prev, icon: name }))
   }
 
   const handleCancel = () => {
@@ -135,7 +176,9 @@ export const ServiceFormDialog = ({
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    const shared = {
+    if (!form.icon) return
+
+    const payload = {
       category: form.category,
       icon: form.icon,
       name: {
@@ -150,56 +193,39 @@ export const ServiceFormDialog = ({
         zh: form.descriptionZh || null,
         ko: form.descriptionKo || null,
       },
-      companionship_level:
-        form.companionshipLevel === ""
-          ? null
-          : Number(form.companionshipLevel),
-      rules: form.dressCode
-        ? {
-            physical_touch: form.physicalTouch,
-            intellectual_conversation_required:
-              form.intellectualConversationRequired,
-            dress_code: form.dressCode,
-          }
-        : null,
     }
 
     if (isEdit && service) {
       updateMutation.mutate(
-        { id: service.id, payload: shared },
+        { id: service.id, payload },
         { onSuccess: () => onOpenChange(false) }
       )
       return
     }
 
-    createMutation.mutate(
-      { code: form.code, ...shared },
-      { onSuccess: () => onOpenChange(false) }
-    )
+    createMutation.mutate(payload, {
+      onSuccess: () => onOpenChange(false),
+    })
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
+  const canSubmit = Boolean(form.icon) && !isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? "Sửa dịch vụ" : "Tạo dịch vụ mới"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="service-code">Mã (không đổi sau khi tạo)</Label>
-            <Input
-              id="service-code"
-              value={form.code}
-              onChange={handleChange("code")}
-              disabled={isEdit}
-              placeholder="OFFICE_BASIC"
-              required
-            />
-          </div>
+          {isEdit && service ? (
+            <p className="text-sm text-muted-foreground">
+              Mã dịch vụ:{" "}
+              <span className="font-mono font-medium">{service.code}</span>
+            </p>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="service-category">Nhóm</Label>
             <select
@@ -213,14 +239,40 @@ export const ServiceFormDialog = ({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="service-icon">Icon (tên lucide)</Label>
-            <Input
-              id="service-icon"
-              value={form.icon}
-              onChange={handleChange("icon")}
-              placeholder="FileText"
-              required
-            />
+            <Label>Icon</Label>
+            <div
+              role="radiogroup"
+              aria-label="Chọn icon dịch vụ"
+              className="grid grid-cols-6 gap-2 sm:grid-cols-8"
+            >
+              {SERVICE_ICONS.map(({ name, Icon }) => {
+                const selected = form.icon === name
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-label={name}
+                    title={name}
+                    onClick={() => handleIconSelect(name)}
+                    className={cn(
+                      "flex aspect-square items-center justify-center rounded-md border transition-colors hover:bg-accent",
+                      selected
+                        ? "border-primary ring-2 ring-primary"
+                        : "border-input"
+                    )}
+                  >
+                    <Icon className="size-5" aria-hidden="true" />
+                  </button>
+                )
+              })}
+            </div>
+            {form.icon ? null : (
+              <p className="text-xs text-muted-foreground">
+                Vui lòng chọn một icon.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -292,66 +344,6 @@ export const ServiceFormDialog = ({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="service-companionship-level">
-              Cấp độ đồng hành (tùy chọn)
-            </Label>
-            <select
-              id="service-companionship-level"
-              value={form.companionshipLevel}
-              onChange={handleCompanionshipLevelChange}
-              className="h-9 w-full rounded-md border px-3 text-sm"
-            >
-              <option value="">Không xác định</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="service-dress-code">
-              Quy định trang phục (tùy chọn)
-            </Label>
-            <select
-              id="service-dress-code"
-              value={form.dressCode}
-              onChange={handleDressCodeChange}
-              className="h-9 w-full rounded-md border px-3 text-sm"
-            >
-              <option value="">Không áp dụng</option>
-              <option value="CASUAL">CASUAL</option>
-              <option value="SEMI_FORMAL">SEMI_FORMAL</option>
-              <option value="FORMAL">FORMAL</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <label
-              htmlFor="service-physical-touch"
-              className="flex items-center gap-2 text-sm"
-            >
-              <Checkbox
-                id="service-physical-touch"
-                checked={form.physicalTouch}
-                onCheckedChange={(value) =>
-                  handlePhysicalTouchChange(value === true)
-                }
-              />
-              Cho phép tiếp xúc vật lý
-            </label>
-            <label
-              htmlFor="service-intellectual-conversation"
-              className="flex items-center gap-2 text-sm"
-            >
-              <Checkbox
-                id="service-intellectual-conversation"
-                checked={form.intellectualConversationRequired}
-                onCheckedChange={(value) =>
-                  handleIntellectualConversationChange(value === true)
-                }
-              />
-              Yêu cầu trò chuyện trí tuệ
-            </label>
-          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -361,7 +353,7 @@ export const ServiceFormDialog = ({
             >
               Hủy
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={!canSubmit}>
               {isEdit ? "Lưu" : "Tạo"}
             </Button>
           </DialogFooter>

@@ -33,21 +33,39 @@ export class AdminServiceService {
     input: CreateServiceInput,
     adminId: string
   ): Promise<IServiceDocument> {
-    const existing = await serviceRepository.findByCode(input.code);
-    if (existing) {
-      throw AppError.conflict(
-        "Service code already exists",
-        ErrorCode.SERVICE_CODE_EXISTS
-      );
-    }
+    const code = await this.generateUniqueCode(input.name.en);
 
     const service = await serviceRepository.create({
       ...input,
+      code,
       created_by: adminId,
     });
 
     await this.notifyNewService(service);
     return service;
+  }
+
+  /**
+   * Derives a stable, unique service code from the English name (the `code`
+   * is admin-invisible and generated server-side): slug → uppercase, then a
+   * numeric suffix on collision (`BASIC_OFFICE`, `BASIC_OFFICE_2`, ...).
+   */
+  private async generateUniqueCode(nameEn: string): Promise<string> {
+    const base =
+      nameEn
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 40) || "SERVICE";
+
+    let candidate = base;
+    let suffix = 2;
+    while (await serviceRepository.findByCode(candidate)) {
+      candidate = `${base}_${suffix}`;
+      suffix += 1;
+    }
+    return candidate;
   }
 
   async updateService(

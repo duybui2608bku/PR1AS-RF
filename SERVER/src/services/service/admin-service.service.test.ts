@@ -39,29 +39,19 @@ import { workerServiceRepository } from "../../repositories/worker/worker-servic
 import { UpdateServiceInput } from "../../types/service/service.type";
 
 const baseInput: CreateServiceInput = {
-  code: "NEWCODE",
   category: ServiceCategory.VIRTUAL,
   icon: "Star",
-  name: { en: "New", vi: "Mới" },
+  name: { en: "New Service", vi: "Mới" },
 };
 
 describe("adminServiceService.createService", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it("rejects a duplicate code with a 409", async () => {
-    (serviceRepository.findByCode as jest.Mock).mockResolvedValue({ id: "x" });
-
-    await expect(
-      adminServiceService.createService(baseInput, "admin1")
-    ).rejects.toMatchObject({ statusCode: 409 });
-    expect(serviceRepository.create).not.toHaveBeenCalled();
-  });
-
-  it("creates with created_by and notifies active workers in-app only", async () => {
+  it("auto-generates a code from the English name, stamps created_by, and notifies workers in-app only", async () => {
     (serviceRepository.findByCode as jest.Mock).mockResolvedValue(null);
     (serviceRepository.create as jest.Mock).mockResolvedValue({
       _id: "svc1",
-      code: "NEWCODE",
+      code: "NEW_SERVICE",
       name: { vi: "Mới" },
     });
     (userRepository.findActiveWorkerIds as jest.Mock).mockResolvedValue([
@@ -72,7 +62,7 @@ describe("adminServiceService.createService", () => {
     await adminServiceService.createService(baseInput, "admin1");
 
     expect(serviceRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "NEWCODE", created_by: "admin1" })
+      expect.objectContaining({ code: "NEW_SERVICE", created_by: "admin1" })
     );
     expect(notificationService.notify).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -84,11 +74,29 @@ describe("adminServiceService.createService", () => {
     );
   });
 
+  it("appends a numeric suffix when the derived code already exists", async () => {
+    (serviceRepository.findByCode as jest.Mock)
+      .mockResolvedValueOnce({ id: "existing" })
+      .mockResolvedValueOnce(null);
+    (serviceRepository.create as jest.Mock).mockResolvedValue({
+      _id: "svc1",
+      code: "NEW_SERVICE_2",
+      name: { vi: "Mới" },
+    });
+    (userRepository.findActiveWorkerIds as jest.Mock).mockResolvedValue([]);
+
+    await adminServiceService.createService(baseInput, "admin1");
+
+    expect(serviceRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "NEW_SERVICE_2", created_by: "admin1" })
+    );
+  });
+
   it("skips notify when there are no active workers", async () => {
     (serviceRepository.findByCode as jest.Mock).mockResolvedValue(null);
     (serviceRepository.create as jest.Mock).mockResolvedValue({
       _id: "svc1",
-      code: "NEWCODE",
+      code: "NEW_SERVICE",
       name: { vi: "Mới" },
     });
     (userRepository.findActiveWorkerIds as jest.Mock).mockResolvedValue([]);

@@ -10,23 +10,15 @@ type ApiResponse<T> = {
 
 export type AdminServiceItem = ServiceItem
 
-export type ServiceRulesPayload = {
-  physical_touch: boolean
-  intellectual_conversation_required: boolean
-  dress_code: string
-}
-
+// `code` is generated server-side from the English name; admins never supply it.
 export type CreateServicePayload = {
-  code: string
   category: string
   icon: string
   name: LocalizedText
   description?: LocalizedText
-  companionship_level?: number | null
-  rules?: ServiceRulesPayload | null
 }
 
-export type UpdateServicePayload = Omit<CreateServicePayload, "code">
+export type UpdateServicePayload = CreateServicePayload
 
 type ServicesListResponse = {
   services: AdminServiceItem[]
