@@ -688,7 +688,7 @@ export default function WorkerSetupPage() {
       // currency (BE re-derives price_vnd from price × rate).
       items.push({
         service_id: serviceId,
-        hashtags: [],
+        hashtags: serviceHashtags.get(serviceId) ?? [],
         pricing: norm.map((p) => {
           const original = originalPricingRef.current.get(
             `${serviceId}:${p.unit}`
