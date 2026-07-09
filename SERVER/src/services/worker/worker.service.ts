@@ -34,6 +34,13 @@ import { moderationRepository } from "../../repositories/moderation";
 import { RestrictionFeature } from "../../constants/moderation";
 import { workerBoostRepository } from "../../repositories/boost/worker-boost.repository";
 import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
+import { normalizeHashtag } from "../../utils/worker-hashtag";
+import {
+  getPagination,
+  PaginationHelper,
+  PaginatedResponse,
+} from "../../utils/pagination";
+import { WorkerHashtagCard } from "../../types/worker/worker-hashtag-search.types";
 
 const parseLocation = (
   location?: string
@@ -721,6 +728,38 @@ export class WorkerService {
     if (!removed) {
       throw AppError.notFound("Blackout not found");
     }
+  }
+
+  async searchByHashtag(
+    rawQuery: string,
+    page?: number,
+    limit?: number
+  ): Promise<PaginatedResponse<WorkerHashtagCard>> {
+    const pagination = getPagination(page, limit);
+    const normalized = normalizeHashtag(rawQuery);
+
+    if (!normalized) {
+      return PaginationHelper.formatResponse(
+        [],
+        pagination.page,
+        pagination.limit,
+        0
+      );
+    }
+
+    const { data, total } =
+      await workerServiceRepository.searchWorkersByHashtag(
+        normalized,
+        pagination.skip,
+        pagination.limit
+      );
+
+    return PaginationHelper.formatResponse(
+      data,
+      pagination.page,
+      pagination.limit,
+      total
+    );
   }
 }
 

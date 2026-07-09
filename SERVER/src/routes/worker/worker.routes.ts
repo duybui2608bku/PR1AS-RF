@@ -107,6 +107,11 @@ router.get(
 );
 
 router.get(
+  "/search-by-hashtag",
+  asyncHandler(workerController.searchByHashtag.bind(workerController))
+);
+
+router.get(
   "/:id",
   optionalAuthenticate,
   validateObjectId("id"),
