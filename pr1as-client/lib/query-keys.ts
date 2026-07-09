@@ -94,6 +94,8 @@ export const queryKeys = {
     schedule: (id: string, params: Record<string, unknown>) =>
       ["workers", "schedule", id, params] as const,
     myServices: ["workers", "my-services"] as const,
+    hashtagSearch: (q: string, page: number) =>
+      ["workers", "hashtag-search", q, page] as const,
   },
   services: {
     all: ["services"] as const,
