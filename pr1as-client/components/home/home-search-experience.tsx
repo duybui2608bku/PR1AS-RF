@@ -35,11 +35,13 @@ type HomeSearchExperienceProps = {
 type DraftState = {
   selectedLocation: LocationSearchResult | null
   scheduledAt: Date | undefined
+  hashtag: string
 }
 
 const draftFromState = (state: HomeSearchState): DraftState => ({
   selectedLocation: state.selectedLocation,
   scheduledAt: state.scheduledAt,
+  hashtag: state.hashtag,
 })
 
 const findCategoryLabel = (
@@ -153,11 +155,16 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
       ...prev,
       selectedLocation: draft.selectedLocation,
       scheduledAt: draft.scheduledAt,
+      hashtag: draft.hashtag.trim(),
     }))
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     })
   }, [draft])
+
+  const handleHashtagChange = React.useCallback((value: string) => {
+    setDraft((prev) => ({ ...prev, hashtag: value }))
+  }, [])
 
   const handleSwitchTab = React.useCallback((tab: ServiceTab) => {
     setApplied((prev) =>
@@ -195,12 +202,13 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
   }, [])
 
   const handleClearAllFilters = React.useCallback(() => {
-    setDraft({ selectedLocation: null, scheduledAt: undefined })
+    setDraft({ selectedLocation: null, scheduledAt: undefined, hashtag: "" })
     setApplied((prev) => ({
       activeTab: prev.activeTab,
       activeCodes: [],
       selectedLocation: null,
       scheduledAt: undefined,
+      hashtag: "",
     }))
   }, [])
 
@@ -237,6 +245,11 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     setApplied((prev) => ({ ...prev, scheduledAt: undefined }))
   }, [])
 
+  const removeHashtagFilter = React.useCallback(() => {
+    setDraft((prev) => ({ ...prev, hashtag: "" }))
+    setApplied((prev) => ({ ...prev, hashtag: "" }))
+  }, [])
+
   const appliedFilters = React.useMemo<AppliedFilterChip[]>(() => {
     const chips: AppliedFilterChip[] = []
     for (const code of applied.activeCodes) {
@@ -264,6 +277,13 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         onRemove: removeDateFilter,
       })
     }
+    if (applied.hashtag) {
+      chips.push({
+        id: "hashtag",
+        label: `#${applied.hashtag}`,
+        onRemove: removeHashtagFilter,
+      })
+    }
     return chips
   }, [
     applied,
@@ -272,6 +292,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     removeCategoryCode,
     removeLocationFilter,
     removeDateFilter,
+    removeHashtagFilter,
   ])
 
   return (
@@ -289,6 +310,8 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
         onScheduledAtChange={(value) =>
           setDraft((prev) => ({ ...prev, scheduledAt: value }))
         }
+        hashtag={draft.hashtag}
+        onHashtagChange={handleHashtagChange}
         onSearchSubmit={handleSearchSubmit}
       />
       <div ref={resultsRef} className="pt-6">

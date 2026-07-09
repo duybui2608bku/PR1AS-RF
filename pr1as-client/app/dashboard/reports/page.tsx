@@ -145,13 +145,12 @@ function getWorkerProfileSummary(value: unknown): string | null {
   if (!value || typeof value !== "object") return null
   const user = value as {
     worker_profile?: {
-      title?: string | null
       experience?: string | null
       introduction?: string | null
     } | null
   }
   const profile = user.worker_profile
-  return profile?.title || profile?.experience || profile?.introduction || null
+  return profile?.experience || profile?.introduction || null
 }
 
 function getPostPreview(value: unknown): string {

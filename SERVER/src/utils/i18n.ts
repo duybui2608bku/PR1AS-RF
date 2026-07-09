@@ -411,6 +411,30 @@ const translations: Record<string, Record<Locale, string>> = {
     ko: "새 예약 요청을 받았습니다.",
     zh: "您收到了新的预约请求。",
   },
+  "notif.service.added.title": {
+    en: "New service available",
+    vi: "Có dịch vụ mới",
+    ko: "새로운 서비스 이용 가능",
+    zh: "有新服务",
+  },
+  "notif.service.added.body": {
+    en: "A new service was added. Add it to your profile to receive bookings.",
+    vi: "Một dịch vụ mới vừa được thêm. Thêm vào hồ sơ của bạn để nhận đặt lịch.",
+    ko: "새 서비스가 추가되었습니다. 예약을 받으려면 프로필에 추가하세요.",
+    zh: "已新增一项服务。将其添加到您的资料中以接收预订。",
+  },
+  "notif.service.deprecated.title": {
+    en: "A service was discontinued",
+    vi: "Một dịch vụ đã ngừng",
+    ko: "서비스가 중단되었습니다",
+    zh: "一项服务已停用",
+  },
+  "notif.service.deprecated.body": {
+    en: "A service you offer no longer accepts new bookings. Existing bookings are unaffected.",
+    vi: "Một dịch vụ bạn cung cấp không còn nhận đặt lịch mới. Các đặt lịch hiện tại không bị ảnh hưởng.",
+    ko: "제공 중인 서비스가 더 이상 새 예약을 받지 않습니다. 기존 예약은 영향을 받지 않습니다.",
+    zh: "您提供的某项服务不再接受新预订。现有预订不受影响。",
+  },
   "notif.booking.workerResponse": {
     en: 'Message from the worker: "{message}"',
     vi: 'Phản hồi từ người thực hiện: "{message}"',

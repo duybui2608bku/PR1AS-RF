@@ -69,6 +69,7 @@ export const workerProfileService = {
     const body = {
       services: payload.services.map((s) => ({
         service_id: s.service_id,
+        hashtags: s.hashtags,
         pricing: s.pricing.map((p) => ({
           unit: p.unit,
           duration: p.duration,

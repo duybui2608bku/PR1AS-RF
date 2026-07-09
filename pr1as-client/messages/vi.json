@@ -705,6 +705,10 @@
     "optional": "(tuỳ chọn)",
     "stepCounter": "Bước {current}/{total}",
     "stepAria": "Bước {step}",
+    "newServicesBanner": {
+      "message": "Có {count} dịch vụ mới bạn chưa cung cấp. Thêm vào hồ sơ để nhận đặt lịch.",
+      "cta": "Thêm dịch vụ"
+    },
     "steps": {
       "area": {
         "title": "Khu vực & Cơ bản",
@@ -785,7 +789,6 @@
       "height": "Chiều cao",
       "weight": "Cân nặng",
       "starSign": "Cung hoàng đạo",
-      "title": "Tên nghề / Chức danh",
       "lifestyle": "Lối sống",
       "quote": "Câu nói yêu thích"
     },
@@ -793,7 +796,6 @@
       "dateOfBirth": "Chọn ngày sinh",
       "experience": "Chọn kinh nghiệm",
       "starSign": "Chọn cung hoàng đạo",
-      "title": "VD: Trợ lý cá nhân, Người bạn đồng hành...",
       "lifestyle": "VD: Năng động, thích khám phá...",
       "quote": "Một câu nói ấn tượng về bạn...",
       "hobby": "Thêm sở thích...",
@@ -823,13 +825,13 @@
       "selectGender": "Chọn giới tính.",
       "selectLocation": "Chọn ít nhất một khu vực làm việc.",
       "selectDateOfBirth": "Chọn ngày sinh.",
-      "enterTitle": "Nhập tên nghề / chức danh.",
       "addGalleryPhoto": "Thêm ít nhất một ảnh vào thư viện.",
       "saveSuccess": "Đã lưu hồ sơ và dịch vụ.",
       "saveError": "Không thể lưu. Vui lòng thử lại."
     },
     "pricing": {
-      "priceHelp": "Nhập giá ({currency}) cho ít nhất một đơn vị"
+      "priceHelp": "Nhập giá ({currency}) cho ít nhất một đơn vị",
+      "hashtagsLabel": "Hashtag (giúp khách tìm theo từ khoá)"
     },
     "gallery": {
       "primary": "Chính",
@@ -1151,7 +1153,9 @@
     "heroServiceLabel": "Dịch vụ",
     "heroServicePlaceholder": "Chọn dịch vụ",
     "heroServiceAll": "Tất cả",
-    "heroServiceCount": "{count} dịch vụ"
+    "heroServiceCount": "{count} dịch vụ",
+    "heroHashtagLabel": "Hashtag",
+    "heroHashtagPlaceholder": "vd: it, hr"
   },
   "ServicePicker": {
     "title": "Chọn dịch vụ",

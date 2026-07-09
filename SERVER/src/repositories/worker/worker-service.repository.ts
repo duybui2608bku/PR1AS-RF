@@ -9,12 +9,15 @@ import mongoose, { PipelineStage } from "mongoose";
 import { ServiceCategory } from "../../types/service/service.type";
 import { BookingStatus } from "../../constants/booking";
 import { ReviewType } from "../../constants/review";
-import { UserStatus } from "../../types/auth";
+import { UserStatus, UserRole } from "../../types/auth";
+import { escapeRegExp } from "../../utils/string";
+import { WorkerHashtagCard } from "../../types/worker/worker-hashtag-search.types";
 
 export interface UpsertWorkerServicePayload {
   serviceId: string;
   serviceCode: string;
   pricing: WorkerServicePricing[];
+  hashtags?: string[];
 }
 
 interface UpdateWorkerServiceOptions {
@@ -34,6 +37,7 @@ export interface GroupedWorkersFilter {
     wardCode?: number | null;
   };
   excludedWorkerIds?: string[];
+  hashtag?: string;
 }
 
 type LocalizedText = {
@@ -48,7 +52,6 @@ export interface WorkerSuggestionCandidate {
   full_name: string | null;
   avatar: string | null;
   worker_profile: {
-    title: string | null;
     introduction: string | null;
     gallery_urls: string[];
     work_locations: Array<{
@@ -101,6 +104,7 @@ class WorkerServiceRepository {
                 service_id: serviceObjectId,
                 service_code: item.serviceCode,
                 pricing: item.pricing,
+                hashtags: item.hashtags ?? [],
                 is_active: true,
                 updated_at: now,
               },
@@ -309,7 +313,6 @@ class WorkerServiceRepository {
           avatar: { $first: "$worker.avatar" },
           worker_profile: {
             $first: {
-              title: "$worker.worker_profile.title",
               introduction: "$worker.worker_profile.introduction",
               gallery_urls: "$worker.worker_profile.gallery_urls",
               work_locations: {
@@ -461,7 +464,6 @@ class WorkerServiceRepository {
         full_name: string | null;
         avatar: string | null;
         worker_profile: {
-          title: string | null;
           introduction: string | null;
           gallery_urls: string[];
           height_cm: number | null;
@@ -485,6 +487,13 @@ class WorkerServiceRepository {
       {
         $match: {
           is_active: true,
+          ...(filters?.hashtag
+            ? {
+                hashtags: {
+                  $regex: new RegExp(escapeRegExp(filters.hashtag), "i"),
+                },
+              }
+            : {}),
           ...(filters?.excludedWorkerIds?.length
             ? {
                 worker_id: {
@@ -654,7 +663,6 @@ class WorkerServiceRepository {
               full_name: "$worker.full_name",
               avatar: "$worker.avatar",
               worker_profile: {
-                title: "$worker.worker_profile.title",
                 introduction: "$worker.worker_profile.introduction",
                 gallery_urls: "$worker.worker_profile.gallery_urls",
                 height_cm: { $ifNull: ["$worker.worker_profile.height_cm", null] },
@@ -704,7 +712,6 @@ class WorkerServiceRepository {
           full_name: string | null;
           avatar: string | null;
           worker_profile: {
-            title: string | null;
             introduction: string | null;
             gallery_urls: string[];
             height_cm: number | null;
@@ -723,6 +730,112 @@ class WorkerServiceRepository {
         workers: item.workers,
       })
     );
+  }
+
+  async countByServiceId(serviceId: string): Promise<number> {
+    return WorkerService.countDocuments({ service_id: serviceId });
+  }
+
+  async findWorkerIdsByServiceId(serviceId: string): Promise<string[]> {
+    const ids = await WorkerService.distinct("worker_id", {
+      service_id: serviceId,
+    });
+    return ids.map((id) => id.toString());
+  }
+
+  async searchWorkersByHashtag(
+    normalizedQuery: string,
+    skip: number,
+    limit: number
+  ): Promise<{ data: WorkerHashtagCard[]; total: number }> {
+    const regex = new RegExp(escapeRegExp(normalizedQuery), "i");
+
+    const pipeline: PipelineStage[] = [
+      { $match: { is_active: true, hashtags: { $regex: regex } } },
+      {
+        $lookup: {
+          from: modelsName.SERVICE,
+          localField: "service_id",
+          foreignField: "_id",
+          as: "service",
+        },
+      },
+      { $unwind: { path: "$service", preserveNullAndEmptyArrays: false } },
+      { $match: { "service.is_active": true } },
+      {
+        $lookup: {
+          from: modelsName.USER,
+          localField: "worker_id",
+          foreignField: "_id",
+          as: "worker",
+        },
+      },
+      { $unwind: { path: "$worker", preserveNullAndEmptyArrays: false } },
+      {
+        $match: {
+          "worker.status": UserStatus.ACTIVE,
+          "worker.roles": UserRole.WORKER,
+        },
+      },
+      {
+        $group: {
+          _id: "$worker_id",
+          worker: { $first: "$worker" },
+          reputation_score: { $first: "$worker.reputation_score" },
+          all_hashtags: { $push: "$hashtags" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          id: { $toString: "$_id" },
+          full_name: { $ifNull: ["$worker.full_name", null] },
+          avatar: { $ifNull: ["$worker.avatar", null] },
+          worker_profile: {
+            introduction: {
+              $ifNull: ["$worker.worker_profile.introduction", null],
+            },
+            gallery_urls: {
+              $ifNull: ["$worker.worker_profile.gallery_urls", []],
+            },
+            work_locations: {
+              $ifNull: ["$worker.worker_profile.work_locations", []],
+            },
+          },
+          reputation_score: { $ifNull: ["$reputation_score", 100] },
+          matched_hashtags: {
+            $filter: {
+              input: {
+                $setUnion: [
+                  {
+                    $reduce: {
+                      input: "$all_hashtags",
+                      initialValue: [],
+                      in: { $concatArrays: ["$$value", "$$this"] },
+                    },
+                  },
+                  [],
+                ],
+              },
+              as: "tag",
+              cond: { $regexMatch: { input: "$$tag", regex } },
+            },
+          },
+        },
+      },
+      { $sort: { reputation_score: -1, id: 1 } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: "count" }],
+        },
+      },
+    ];
+
+    const [result] = await WorkerService.aggregate(pipeline);
+    const data = (result?.data ?? []) as WorkerHashtagCard[];
+    const total = result?.totalCount?.[0]?.count ?? 0;
+    return { data, total };
   }
 }
 

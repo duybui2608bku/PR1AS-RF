@@ -44,6 +44,10 @@ const workerServiceSchema = new Schema<IWorkerServiceDocument>(
         message: "Pricing must contain at least one item",
       },
     },
+    hashtags: {
+      type: [String],
+      default: [],
+    },
     is_active: { type: Boolean, default: true, index: true },
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now },
@@ -61,6 +65,8 @@ const workerServiceSchema = new Schema<IWorkerServiceDocument>(
     },
   }
 );
+
+workerServiceSchema.index({ hashtags: 1 });
 
 export const WorkerService = mongoose.model<IWorkerServiceDocument>(
   modelsName.WORKER_SERVICE,

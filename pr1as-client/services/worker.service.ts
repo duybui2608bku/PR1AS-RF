@@ -19,6 +19,7 @@ export type WorkersGroupedFilters = {
   province_code?: number
   ward_code?: number | null
   schedule?: string
+  hashtag?: string
 }
 
 const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
@@ -32,6 +33,7 @@ const buildGroupedParams = (filters?: WorkersGroupedFilters) => {
     }
   }
   if (filters.schedule) params.schedule = filters.schedule
+  if (filters.hashtag) params.hashtag = filters.hashtag
   return Object.keys(params).length ? params : undefined
 }
 
@@ -120,7 +122,6 @@ export type WorkerGroupedByService = {
     full_name: string | null
     avatar: string | null
     worker_profile: {
-      title: string | null
       introduction: string | null
       gallery_urls: string[]
       height_cm?: number | null

@@ -23,6 +23,7 @@ export interface IWorkerService {
   service_id: Types.ObjectId;
   service_code: string;
   pricing: WorkerServicePricing[];
+  hashtags: string[];
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

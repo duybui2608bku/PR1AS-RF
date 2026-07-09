@@ -32,7 +32,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { WorkerTitleOverlayBadge } from "@/components/worker/worker-title-overlay-badge"
 import { Button } from "@/components/ui/button"
 import { BottomSheet, BottomSheetContent, BottomSheetTitle } from "@/components/ui/bottom-sheet"
 import {
@@ -250,9 +249,6 @@ const WorkerCard = ({
                 <Zap className="h-2.5 w-2.5" /> {t("boost.active")}
               </div>
             )}
-            {worker.worker_profile?.title ? (
-              <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
-            ) : null}
           </div>
           <div className="px-2.5 pt-2 pb-0 flex items-center justify-between gap-1">
             <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">

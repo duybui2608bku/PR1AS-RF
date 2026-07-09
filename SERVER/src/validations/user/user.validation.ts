@@ -57,6 +57,7 @@ export const getUsersQuerySchema = z.object({
   status: z.nativeEnum(UserStatus).optional(),
   startDate: isoDateString,
   endDate: isoDateString,
+  created_by_admin: z.enum(["true", "false"]).optional(),
 });
 
 export type UpdateUserStatusSchemaType = z.infer<typeof updateUserStatusSchema>;
@@ -91,7 +92,6 @@ export const updateWorkerProfileSchema = z.object({
     introduction: z.string().optional().nullable(),
     gallery_urls: z.array(z.string()).max(20).optional().default([]),
     experience: z.nativeEnum(Experience).optional().nullable(),
-    title: z.string().trim().max(100).optional().nullable(),
     work_locations: z
       .array(
         z.object({

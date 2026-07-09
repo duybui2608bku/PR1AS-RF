@@ -642,6 +642,10 @@ export class BookingRepository {
       status: booking.status as BookingStatus,
     }));
   }
+
+  async countByServiceId(serviceId: string): Promise<number> {
+    return Booking.countDocuments({ service_id: serviceId });
+  }
 }
 
 export const bookingRepository = new BookingRepository();

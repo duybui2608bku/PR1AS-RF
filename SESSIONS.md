@@ -38,6 +38,120 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-10 — Hashtag cho dịch vụ worker + search theo hashtag
+
+**Mục tiêu**: Cho worker gắn hashtag tự do vào từng dịch vụ khi setup hồ sơ, hiện
+hashtag trên hồ sơ công khai, và cho khách search hashtag (khớp một phần) ra danh
+sách worker khớp.
+
+**Đã làm** (theo spec+plan `docs/superpowers/{specs,plans}/2026-07-10-worker-service-hashtags*`):
+
+- **BE**: thêm `hashtags: string[]` (chuẩn hoá) vào `WorkerService` + index; helper
+  `normalizeHashtag(s)` (utils/worker-hashtag, 9 unit test); persist qua upsert
+  (validation + service normalize, ≤10 tag/dịch vụ ≤50 ký tự); trả hashtags ở
+  `getWorkerProfile`; aggregation `searchWorkersByHashtag` (regex-contains, join
+  service+worker active, dedupe theo worker, phân trang); endpoint public
+  `GET /api/workers/search-by-hashtag` (đăng ký TRƯỚC `/:id`) + service (2 test).
+- **FE**: `HashtagChipInput` tái dùng; nhập hashtag/dịch vụ trong setup wizard
+  (state `serviceHashtags`, seed từ my-services); hiện hashtag dưới mỗi dịch vụ ở
+  hồ sơ công khai (`worker-services.tsx`); trang search `/workers/search` + hook
+  + client + query key; ô search hashtag ở discovery (`home-search-experience`).
+- i18n: thêm `WorkerSetup.pricing.hashtagsLabel` cho 4 locale.
+
+**File chính**: `SERVER/src/{utils/worker-hashtag,constants/worker-service,
+models/worker/worker-service,repositories/worker/worker-service.repository,
+services/worker/worker.service,controllers/worker/worker.controller,
+routes/worker/worker.routes,validations/worker/*}`,
+`pr1as-client/{components/worker/hashtag-chip-input,worker-hashtag-search-box,
+worker-services,app/worker/setup/page,app/workers/search/page,
+lib/hooks/use-worker-hashtag-search,services/worker.service}`.
+
+**Quyết định / ghi chú**: Hướng A — lưu hashtag thẳng trên WorkerService, không
+dùng collection Hashtag chung (đó là của posts). Search dùng regex-contains
+(quét collection; chấp nhận ở quy mô vừa). BE: 26/26 test, tsc sạch; FE typecheck
+sạch. **Lưu ý**: công việc title-removal (2026-07-09) đang dở trong working tree
+bị trùng file nên đã lẫn một phần vào các commit hashtag; phần còn lại gom vào 1
+commit `refactor(worker): remove worker title field` (theo yêu cầu "để lẫn chung").
+
+**Còn lại**: chưa chạy E2E trên browser (session không có backend chạy).
+
+**Commit**: dãy commit `feat(worker): ...` hashtag + `refactor(worker): remove
+worker title field` · branch `main-3` (chưa merge/push)
+
+## 2026-07-09 — Bỏ hẳn trường "title" (chức danh) của worker ở FE + BE
+
+**Mục tiêu**: Gỡ bỏ hoàn toàn trường title/chức danh của worker (dòng text mờ dưới
+tên như "MARKETER", "Developer") khỏi mọi nơi ở cả frontend lẫn backend.
+
+**Đã làm**:
+
+- BE: gỡ field `worker_profile.title` khỏi Mongoose schema, các type, Zod validation
+  (`UpdateWorkerProfile`), service favorite mapping, và các `$project`/result-type
+  trong aggregation của worker-service repository.
+- FE: gỡ khỏi types/services, header hồ sơ worker (2 chỗ overlay + dưới tên), card
+  gợi ý, card theo dịch vụ, card yêu thích, quick-booking (filter + hiển thị),
+  form setup worker (bỏ luôn validation bắt buộc), form/create + detail dialog admin,
+  và summary ở trang reports admin.
+- Xóa component `worker-title-overlay-badge.tsx` (chỉ dùng cho title) + các import.
+- i18n: xóa `WorkerSetup.fields.title`, `placeholders.title`, `toast.enterTitle`
+  ở cả 4 locale (vi/en/zh/ko). Giữ lại các key `sections.*.title` (là tiêu đề mục).
+
+**File chính**: `SERVER/src/{models/auth/user.model,validations/user/user.validation,
+services/worker/worker.service,repositories/worker/worker-service.repository,types/**}`,
+`pr1as-client/{types/index,services/worker.service,components/worker/*,components/dashboard/
+user-create-form,user-detail-dialog,app/worker/setup/page,app/quick-booking/quick-booking-wizard,
+app/client/favorites/favorite-workers-client,app/dashboard/reports/page,messages/*.json}`
+
+**Quyết định / ghi chú**: Không viết migration xóa `title` khỏi các document worker
+đã có trong DB — dữ liệu cũ trở nên trơ vì mọi đường đọc đã bỏ. Typecheck cả 2 app
+sạch, JSON 4 locale hợp lệ.
+
+**Còn lại**: không.
+
+**Commit**: `refactor(worker): remove worker title field across FE and BE`
+(một phần đã lẫn vào các commit hashtag do trùng file) · branch `main-3`
+
+## 2026-07-09 — Quản lý vòng đời dịch vụ + admin CRUD dịch vụ
+
+**Mục tiêu**: Dịch vụ đang seed cứng, chưa có admin CRUD. Cho admin thêm/sửa/
+ngừng/xóa dịch vụ an toàn mà không làm mất offering của worker hay hỏng discovery/
+filter, và đưa worker cũ vào dịch vụ mới qua opt-in.
+
+**Đã làm** (theo spec+plan trong `docs/superpowers/{specs,plans}/2026-07-08-service-lifecycle*`):
+
+- **Vòng đời (Hướng A)**: tái dùng `Service.is_active` làm cờ deprecate; thêm
+  `deprecated_at`/`created_by`/`updated_by`. Không đổi schema WorkerService/Booking.
+- **Admin CRUD** `/api/admin/services` (adminOnly + CSRF): list (cả đã ngừng),
+  create, update (khóa `code`), deprecate, reactivate, delete **có rào chắn** —
+  chặn 409 khi còn WorkerService hoặc Booking tham chiếu (buộc dùng Ngừng).
+  Business logic ở `AdminServiceService` (15 unit test, mock repo+notify).
+- **Thông báo 2 tầng**: ngừng DV → IN_APP+EMAIL cho worker đang offer; DV mới →
+  IN_APP cho tất cả worker active + banner "kéo" ở trang worker setup (opt-in).
+- **Frontend**: trang admin `dashboard/services` (table + dialog create/edit 4
+  locale + rules + companionship, deprecate/reactivate/xóa), banner worker,
+  hooks + query keys + axios client, mục sidebar mới.
+
+**File chính**: `SERVER/src/{models,repositories,services,controllers,routes,validations}/service/*`,
+`SERVER/src/services/service/admin-service.service.ts`, `SERVER/src/constants/notification.ts`,
+`SERVER/src/utils/i18n.ts`, `pr1as-client/{services,lib/hooks}/*admin-service*`,
+`pr1as-client/app/dashboard/services/page.tsx`, `pr1as-client/components/{dashboard/service-form-dialog,worker/new-services-banner}.tsx`.
+
+**Quyết định / ghi chú**:
+
+- Discovery đã sẵn lọc `service.is_active: true` → deprecated tự biến mất khỏi
+  filter, không cần sửa.
+- **Bug quan trọng đã fix trong review cuối**: `updateById` dùng `$set` cả object
+  `name`/`description` sẽ xóa bản dịch zh/ko khi form chỉ gửi vi/en → đã đổi sang
+  dot-notation (`name.vi`,...) + form nay thu thập đủ 4 locale.
+- Notify DV mới hiện **await** cả fan-out (đúng convention `notify` toàn repo);
+  spec gợi ý non-blocking — để lại làm sau nếu cần ở quy mô lớn.
+
+**Còn lại**: polish nhỏ đã defer (per-row pending state ở trang admin, empty-state,
+errorMap cho Zod enum, hợp nhất query-key `["services","list"]` vs `services.all`).
+Chưa chạy thử E2E trên trình duyệt (session không có backend chạy).
+
+**Commit**: `d1fcee0`..`2da9715` (14 commit) · branch `main-3` (chưa merge/push)
+
 ## 2026-07-04 — Tính năng voucher kích hoạt gói Gold/Diamond
 
 **Mục tiêu**: Admin tạo mã voucher gắn với gói Gold/Diamond theo tháng; người

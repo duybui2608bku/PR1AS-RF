@@ -4,6 +4,7 @@ import { R, extractUserIdFromRequest } from "../../utils";
 import { COMMON_MESSAGES, WORKER_MESSAGES } from "../../constants/messages";
 import { validateWithSchema } from "../../utils/validator";
 import { workerGroupedByServiceQuerySchema } from "../../validations/worker/worker-grouped-query.validation";
+import { workerHashtagSearchQuerySchema } from "../../validations/worker/worker-hashtag-search.validation";
 import { locationSuggestionsQuerySchema } from "../../validations/worker/location-suggestion.validation";
 import { workerSuggestionQuerySchema } from "../../validations/worker/worker-suggestion.validation";
 import {
@@ -14,6 +15,20 @@ import { locationService } from "../../services/location/location.service";
 import { AuthRequest } from "../../middleware/auth";
 
 export class WorkerController {
+  async searchByHashtag(req: Request, res: Response): Promise<void> {
+    const query = validateWithSchema(
+      workerHashtagSearchQuerySchema,
+      req.query,
+      COMMON_MESSAGES.BAD_REQUEST
+    );
+    const result = await workerService.searchByHashtag(
+      query.q,
+      query.page,
+      query.limit
+    );
+    R.success(res, result);
+  }
+
   async getWorkerById(req: AuthRequest, res: Response): Promise<void> {
     const { id } = req.params;
     const worker = await workerService.getWorkerById(id, req.user?.sub);

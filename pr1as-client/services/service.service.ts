@@ -21,6 +21,7 @@ export type ServiceItem = {
   description: LocalizedText
   companionship_level: number | null
   is_active: boolean
+  deprecated_at: string | null
   rules: {
     physical_touch?: boolean
     intellectual_conversation_required?: boolean

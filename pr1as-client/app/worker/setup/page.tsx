@@ -23,6 +23,7 @@ import { toast } from "sonner"
 
 import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { SiteLayout } from "@/components/layout/site-layout"
+import { NewServicesBanner } from "@/components/worker/new-services-banner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,7 @@ import type {
   WorkerProfileUpdateInput,
   WorkerServiceUpsertItem,
 } from "@/types"
+import { HashtagChipInput } from "@/components/worker/hashtag-chip-input"
 
 const EMPTY_SERVICE_LIST: ServiceItem[] = []
 const MAX_GALLERY = 10
@@ -306,7 +308,6 @@ export default function WorkerSetupPage() {
   const [weightKg, setWeightKg] = useState("")
   const [experience, setExperience] = useState<WorkerExperience | "">("")
   const [starSign, setStarSign] = useState("")
-  const [title, setTitle] = useState("")
   const [lifestyle, setLifestyle] = useState("")
   const [quote, setQuote] = useState("")
   const [introduction, setIntroduction] = useState("")
@@ -316,6 +317,9 @@ export default function WorkerSetupPage() {
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [selectedPricing, setSelectedPricing] = useState<
     Map<string, WorkerPricingSlot[]>
+  >(new Map())
+  const [serviceHashtags, setServiceHashtags] = useState<
+    Map<string, string[]>
   >(new Map())
   // Raw input strings keyed by `${serviceId}:${unit}` so decimal typing (e.g.
   // "6.") isn't clobbered by re-deriving the value from the numeric model.
@@ -372,10 +376,12 @@ export default function WorkerSetupPage() {
     const mine = mineQuery.data ?? []
     const cat = catalogQuery.data ?? EMPTY_SERVICE_LIST
     const nextMap = new Map<string, WorkerPricingSlot[]>()
+    const nextHashtags = new Map<string, string[]>()
     let savedCurrency: string | undefined
     for (const ws of mine) {
       const svc = cat.find((c) => c.id === ws.service_id)
       if (svc && isServiceIncludedInWorkerSetupStep(svc)) {
+        nextHashtags.set(ws.service_id, ws.hashtags ?? [])
         savedCurrency =
           savedCurrency ?? ws.pricing.find((p) => p.currency)?.currency
         for (const p of ws.pricing) {
@@ -435,7 +441,6 @@ export default function WorkerSetupPage() {
       if (profile?.weight_kg != null) setWeightKg(String(profile.weight_kg))
       if (profile?.experience) setExperience(profile.experience)
       if (profile?.star_sign) setStarSign(profile.star_sign)
-      if (profile?.title) setTitle(profile.title)
       if (profile?.lifestyle) setLifestyle(profile.lifestyle)
       if (profile?.quote) setQuote(profile.quote)
       if (profile?.introduction) setIntroduction(profile.introduction)
@@ -453,6 +458,7 @@ export default function WorkerSetupPage() {
       }
 
       setSelectedPricing(nextMap)
+      setServiceHashtags(nextHashtags)
       hydratedRef.current = true
     })
   }, [
@@ -594,6 +600,14 @@ export default function WorkerSetupPage() {
     })
   }
 
+  const handleServiceHashtagsChange = (serviceId: string, next: string[]) => {
+    setServiceHashtags((prev) => {
+      const updated = new Map(prev)
+      updated.set(serviceId, next)
+      return updated
+    })
+  }
+
   const handleGalleryFiles = (files: FileList | null) => {
     const arr = Array.from(files ?? [])
     if (galleryInputRef.current) galleryInputRef.current.value = ""
@@ -637,7 +651,6 @@ export default function WorkerSetupPage() {
       hobbies,
       gallery_urls: galleryUrls,
       work_locations: workLocations,
-      title: title.trim() || undefined,
       lifestyle: lifestyle.trim() || undefined,
       quote: quote.trim() || undefined,
       introduction: introduction.trim() || undefined,
@@ -675,6 +688,7 @@ export default function WorkerSetupPage() {
       // currency (BE re-derives price_vnd from price × rate).
       items.push({
         service_id: serviceId,
+        hashtags: serviceHashtags.get(serviceId) ?? [],
         pricing: norm.map((p) => {
           const original = originalPricingRef.current.get(
             `${serviceId}:${p.unit}`
@@ -717,10 +731,6 @@ export default function WorkerSetupPage() {
         }
         return true
       case 1:
-        if (!title.trim()) {
-          toast.error(t("toast.enterTitle"))
-          return false
-        }
         return true
       case 2:
         if (galleryUrls.length < 1) {
@@ -874,6 +884,17 @@ export default function WorkerSetupPage() {
                 </div>
               )
             })}
+            <div className="space-y-1 pt-1">
+              <Label className="text-xs text-muted-foreground">
+                {t("pricing.hashtagsLabel")}
+              </Label>
+              <HashtagChipInput
+                value={serviceHashtags.get(service.id) ?? []}
+                onChange={(next) =>
+                  handleServiceHashtagsChange(service.id, next)
+                }
+              />
+            </div>
           </div>
         )}
       </div>
@@ -1103,18 +1124,6 @@ export default function WorkerSetupPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 px-4 pb-4">
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium">
-              {t("fields.title")} <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={100}
-              placeholder={t("placeholders.title")}
-              className="h-11 rounded-xl"
-            />
-          </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">
               {t("fields.lifestyle")}
@@ -1389,6 +1398,14 @@ export default function WorkerSetupPage() {
   return (
     <SiteLayout hideFooter>
       <div className="container mx-auto max-w-2xl px-4 pt-4 pb-48 md:pb-28 lg:pb-12">
+        <NewServicesBanner
+          services={catalogQuery.data ?? []}
+          offeredServiceCodes={(mineQuery.data ?? []).map(
+            (s) => s.service_code
+          )}
+          onGoToServices={() => setCurrentStep(STEP_KEYS.indexOf("services"))}
+        />
+
         {/* Header */}
         <div className="mb-5 space-y-3">
           <div className="flex items-center gap-2">

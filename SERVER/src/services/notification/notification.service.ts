@@ -142,6 +142,16 @@ const NOTIFICATION_TYPE_CONFIG: Partial<
     priority: NotificationPriority.HIGH,
     channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
   },
+  [NotificationType.SERVICE_DEPRECATED]: {
+    category: NotificationCategory.SYSTEM,
+    priority: NotificationPriority.NORMAL,
+    channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
+  },
+  [NotificationType.SERVICE_ADDED]: {
+    category: NotificationCategory.SYSTEM,
+    priority: NotificationPriority.NORMAL,
+    channels: [NotificationChannel.IN_APP],
+  },
 };
 
 export class NotificationService {

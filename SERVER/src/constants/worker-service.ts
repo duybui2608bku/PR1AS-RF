@@ -1,0 +1,4 @@
+export const WORKER_SERVICE_HASHTAG_LIMITS = {
+  MAX_PER_SERVICE: 10,
+  MAX_LENGTH: 50,
+} as const;

@@ -50,6 +50,8 @@ export enum NotificationType {
   MODERATION_RESTRICTION_APPLIED = "moderation.restriction_applied",
   WORKER_QUESTION_CREATED = "worker_question.created",
   WORKER_QUESTION_ANSWERED = "worker_question.answered",
+  SERVICE_DEPRECATED = "service.deprecated",
+  SERVICE_ADDED = "service.added",
 }
 
 export enum NotificationDeliveryStatus {

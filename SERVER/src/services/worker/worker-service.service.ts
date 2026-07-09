@@ -10,6 +10,7 @@ import {
   workerServiceRepository,
 } from "../../repositories/worker/worker-service.repository";
 import { AppError } from "../../utils/AppError";
+import { normalizeHashtags } from "../../utils/worker-hashtag";
 import {
   CreateWorkerServicesBody,
   UpdateWorkerServiceBody,
@@ -134,6 +135,7 @@ class WorkerServiceService {
         serviceId: service._id.toString(),
         serviceCode: service.code,
         pricing: this.normalizePricing(item.pricing, index),
+        hashtags: normalizeHashtags(item.hashtags ?? []),
       };
     });
 

@@ -34,6 +34,13 @@ import { moderationRepository } from "../../repositories/moderation";
 import { RestrictionFeature } from "../../constants/moderation";
 import { workerBoostRepository } from "../../repositories/boost/worker-boost.repository";
 import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
+import { normalizeHashtag } from "../../utils/worker-hashtag";
+import {
+  getPagination,
+  PaginationHelper,
+  PaginatedResponse,
+} from "../../utils/pagination";
+import { WorkerHashtagCard } from "../../types/worker/worker-hashtag-search.types";
 
 const parseLocation = (
   location?: string
@@ -213,6 +220,7 @@ export class WorkerService {
       _id: ws._id.toString(),
       service_id: ws.service_id.toString(),
       service_code: ws.service_code,
+      hashtags: ws.hashtags ?? [],
       pricing: ws.pricing.map((p) => ({
         unit: p.unit,
         duration: p.duration,
@@ -332,7 +340,6 @@ export class WorkerService {
           full_name: worker.full_name ?? null,
           avatar: worker.avatar ?? null,
           worker_profile: {
-            title: worker.worker_profile.title ?? null,
             introduction: worker.worker_profile.introduction ?? null,
             gallery_urls: worker.worker_profile.gallery_urls ?? [],
             work_locations: (worker.worker_profile.work_locations ?? []).map(
@@ -495,6 +502,9 @@ export class WorkerService {
         excludedWorkerIds: [
           ...new Set([...profileBlockedIds, ...restrictedWorkerIds]),
         ],
+        hashtag: query.hashtag
+          ? (normalizeHashtag(query.hashtag) ?? undefined)
+          : undefined,
       });
 
     // Collect all worker ids, fetch active boosts, then apply boost-tier sort
@@ -721,6 +731,38 @@ export class WorkerService {
     if (!removed) {
       throw AppError.notFound("Blackout not found");
     }
+  }
+
+  async searchByHashtag(
+    rawQuery: string,
+    page?: number,
+    limit?: number
+  ): Promise<PaginatedResponse<WorkerHashtagCard>> {
+    const pagination = getPagination(page, limit);
+    const normalized = normalizeHashtag(rawQuery);
+
+    if (!normalized) {
+      return PaginationHelper.formatResponse(
+        [],
+        pagination.page,
+        pagination.limit,
+        0
+      );
+    }
+
+    const { data, total } =
+      await workerServiceRepository.searchWorkersByHashtag(
+        normalized,
+        pagination.skip,
+        pagination.limit
+      );
+
+    return PaginationHelper.formatResponse(
+      data,
+      pagination.page,
+      pagination.limit,
+      total
+    );
   }
 }
 

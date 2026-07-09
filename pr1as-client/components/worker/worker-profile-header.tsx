@@ -82,7 +82,6 @@ export function WorkerProfileHeader({
     ratingCount > 0
       ? t("header.reviewsCount", { count: ratingCount })
       : t("header.noReviews")
-  const title = profile?.title ?? null
   const reputationScore = getReputationScore(worker.user.meta_data?.reputation_score)
   const isLowReputation = reputationScore < 30
 
@@ -189,9 +188,6 @@ export function WorkerProfileHeader({
             <h1 className="text-2xl font-bold leading-tight tracking-tight text-white">
               {fullName}
             </h1>
-            {title ? (
-              <p className="mt-0.5 text-sm text-white/80">{title}</p>
-            ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -336,9 +332,6 @@ export function WorkerProfileHeader({
                 <h1 className="text-2xl font-bold leading-tight tracking-tight">
                   {fullName}
                 </h1>
-                {title ? (
-                  <p className="text-base text-muted-foreground">{title}</p>
-                ) : null}
               </div>
               <div className="flex shrink-0 items-center gap-2 pt-0.5">
                 {isOwnProfile ? (

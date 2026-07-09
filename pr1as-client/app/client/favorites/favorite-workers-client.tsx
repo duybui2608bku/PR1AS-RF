@@ -18,7 +18,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { WorkerTitleOverlayBadge } from "@/components/worker/worker-title-overlay-badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   useFavoriteWorkers,
@@ -82,9 +81,6 @@ function FavoriteWorkerCard({
               {t("noImage")}
             </div>
           )}
-          {worker.worker_profile?.title ? (
-            <WorkerTitleOverlayBadge title={worker.worker_profile.title} />
-          ) : null}
         </div>
         <div className="px-2.5 pt-2 pb-2.5">
           <p className="line-clamp-1 text-sm font-semibold leading-tight text-foreground">

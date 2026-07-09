@@ -221,6 +221,18 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatPrice(cheapest, t, format)}
                     </p>
+                    {service.hashtags.length > 0 ? (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {service.hashtags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </label>
               )

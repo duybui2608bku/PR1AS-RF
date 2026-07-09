@@ -14,6 +14,7 @@ import {
   Gamepad2,
   GraduationCap,
   Handshake,
+  Hash,
   HeartHandshake,
   HeartPulse,
   LayoutGrid,
@@ -34,6 +35,7 @@ import {
 import { LocationSearchField } from "@/components/hero/location-search-field"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Popover,
@@ -87,6 +89,8 @@ type HomeHeroProps = {
   onSelectedLocationChange: (value: LocationSearchResult | null) => void
   scheduledAt: Date | undefined
   onScheduledAtChange: (value: Date | undefined) => void
+  hashtag: string
+  onHashtagChange: (value: string) => void
   onSearchSubmit?: () => void
 }
 
@@ -99,6 +103,8 @@ export function HomeHero({
   onSelectedLocationChange,
   scheduledAt,
   onScheduledAtChange,
+  hashtag,
+  onHashtagChange,
   onSearchSubmit,
 }: HomeHeroProps) {
   const t = useTranslations("Home")
@@ -164,6 +170,30 @@ export function HomeHero({
           onChange={onScheduledAtChange}
         />
 
+        <Separator
+          orientation="vertical"
+          className="mx-0 h-auto self-stretch"
+        />
+
+        <div className="flex min-h-[76px] flex-[1.6] flex-col justify-center gap-1 px-4 py-3 sm:min-h-0 sm:gap-0.5 sm:rounded-full sm:px-5 sm:py-2">
+          <Label
+            htmlFor="hero-hashtag"
+            className="cursor-text text-xs font-semibold text-foreground"
+          >
+            {t("heroHashtagLabel")}
+          </Label>
+          <div className="flex min-w-0 items-center gap-2">
+            <Hash className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              id="hero-hashtag"
+              value={hashtag}
+              onChange={(event) => onHashtagChange(event.target.value)}
+              placeholder={t("heroHashtagPlaceholder")}
+              className="h-auto min-w-0 truncate border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            />
+          </div>
+        </div>
+
         <div className="flex items-stretch">
           <Button
             type="submit"
@@ -196,6 +226,8 @@ export function HomeHero({
             onSelectedLocationChange={onSelectedLocationChange}
             scheduledAt={scheduledAt}
             onScheduledAtChange={onScheduledAtChange}
+            hashtag={hashtag}
+            onHashtagChange={onHashtagChange}
             onSearchSubmit={onSearchSubmit}
           />
         </div>
@@ -275,6 +307,8 @@ type MobileSearchProps = {
   onSelectedLocationChange: (value: LocationSearchResult | null) => void
   scheduledAt: Date | undefined
   onScheduledAtChange: (value: Date | undefined) => void
+  hashtag: string
+  onHashtagChange: (value: string) => void
   onSearchSubmit?: () => void
 }
 
@@ -287,6 +321,8 @@ function MobileSearch({
   onSelectedLocationChange,
   scheduledAt,
   onScheduledAtChange,
+  hashtag,
+  onHashtagChange,
   onSearchSubmit,
 }: MobileSearchProps) {
   const t = useTranslations("Home")
@@ -341,6 +377,24 @@ function MobileSearch({
             value={scheduledAt}
             onChange={onScheduledAtChange}
           />
+        </div>
+        <div className="rounded-2xl border border-border px-4 py-2.5">
+          <Label
+            htmlFor="hero-hashtag-mobile"
+            className="cursor-text text-xs font-semibold text-foreground"
+          >
+            {t("heroHashtagLabel")}
+          </Label>
+          <div className="mt-1 flex min-w-0 items-center gap-2">
+            <Hash className="size-4 shrink-0 text-muted-foreground" />
+            <Input
+              id="hero-hashtag-mobile"
+              value={hashtag}
+              onChange={(event) => onHashtagChange(event.target.value)}
+              placeholder={t("heroHashtagPlaceholder")}
+              className="h-auto min-w-0 truncate border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            />
+          </div>
         </div>
         <div className="rounded-2xl border border-border">
           <ServicePickerField
