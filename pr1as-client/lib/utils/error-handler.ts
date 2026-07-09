@@ -74,6 +74,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   REACTION_INVALID_TYPE: "Loại cảm xúc không hợp lệ.",
   REACTION_TARGET_NOT_FOUND: "Không tìm thấy đối tượng cảm xúc.",
   REPUTATION_SCORE_TOO_LOW: "Điểm uy tín của bạn quá thấp để thực hiện hành động này.",
+  SERVICE_IN_USE:
+    "Dịch vụ đang được sử dụng nên không thể xóa. Hãy Ngừng dịch vụ thay vì Xóa.",
   REVIEW_ALREADY_EXISTS: "Booking này đã có đánh giá.",
   REVIEW_CANNOT_UPDATE: "Không thể cập nhật đánh giá này.",
   REVIEW_INVALID_RATING: "Điểm đánh giá không hợp lệ.",
@@ -506,6 +508,34 @@ export const extractAccountDeleteBlockers = (
       }
     })
     .filter((b): b is AccountDeleteBlocker => b !== null)
+}
+
+/**
+ * A service delete blocked by the guardrail returns a 409 `SERVICE_IN_USE`
+ * with `error.details` carrying the reference counts as
+ * `{ field: "worker_count" | "booking_count", message: stringified-number }`.
+ * This unpacks them so the UI can show how many workers/bookings still use it.
+ */
+export type ServiceInUseCounts = {
+  workerCount: number
+  bookingCount: number
+}
+
+export const extractServiceInUseCounts = (
+  error: unknown
+): ServiceInUseCounts | null => {
+  if (!(error instanceof ApiError)) return null
+  if (error.code !== "SERVICE_IN_USE") return null
+  const details = error.details ?? []
+  const count = (field: string): number => {
+    const raw = details.find((d) => d.field === field)?.message
+    const num = Number(raw)
+    return Number.isFinite(num) ? num : 0
+  }
+  return {
+    workerCount: count("worker_count"),
+    bookingCount: count("booking_count"),
+  }
 }
 
 export const getErrorMessage = (error: unknown, fallback = DEFAULT_ERROR_MESSAGE): string => {

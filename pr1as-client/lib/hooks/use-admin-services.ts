@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { queryKeys } from "@/lib/query-keys"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import {
+  extractServiceInUseCounts,
+  getErrorMessage,
+} from "@/lib/utils/error-handler"
 import {
   adminServiceApi,
   type CreateServicePayload,
@@ -88,12 +91,20 @@ export const useDeleteService = () => {
       toast.success("Đã xóa dịch vụ.")
       queryClient.invalidateQueries({ queryKey: queryKeys.services.all })
     },
-    onError: (error) =>
+    onError: (error) => {
+      const counts = extractServiceInUseCounts(error)
+      if (counts) {
+        toast.error(
+          `Không thể xóa: dịch vụ đang được ${counts.workerCount} worker cung cấp và có ${counts.bookingCount} booking. Hãy Ngừng dịch vụ thay vì Xóa.`
+        )
+        return
+      }
       toast.error(
         getErrorMessage(
           error,
           "Không thể xóa dịch vụ. Nếu đang được sử dụng, hãy Ngừng thay vì Xóa."
         )
-      ),
+      )
+    },
   })
 }
