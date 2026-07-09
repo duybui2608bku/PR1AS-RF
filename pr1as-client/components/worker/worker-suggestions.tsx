@@ -196,11 +196,6 @@ export function WorkerSuggestions({ workerId, limit = 4 }: Props) {
                         <p className="line-clamp-1 text-sm font-semibold text-foreground">
                           {worker.full_name ?? t("suggestions.noName")}
                         </p>
-                        {worker.worker_profile?.title ? (
-                          <p className="line-clamp-1 text-xs text-muted-foreground">
-                            {worker.worker_profile.title}
-                          </p>
-                        ) : null}
                       </div>
 
                       <div className="flex flex-wrap gap-1.5">

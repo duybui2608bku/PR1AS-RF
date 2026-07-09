@@ -55,7 +55,6 @@ export interface WorkerProfile {
   introduction?: string;
   gallery_urls: string[];
   experience?: Experience;
-  title?: string;
   work_locations?: Array<{
     province_code: number;
     ward_code?: number | null;

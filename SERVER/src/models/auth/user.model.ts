@@ -76,7 +76,6 @@ const userSchema = new Schema<IUserDocument>(
             enum: Object.values(Experience),
             default: null,
           },
-          title: { type: String, default: null, trim: true },
           work_locations: [
             {
               province_code: { type: Number, required: true },

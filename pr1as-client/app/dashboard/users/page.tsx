@@ -11,6 +11,7 @@ import {
   Eye,
   FilterX,
   Loader2,
+  Pencil,
   Plus,
   Search,
   ShieldAlert,
@@ -67,6 +68,15 @@ const STATUS_OPTIONS: {
   { label: "Tất cả trạng thái", value: ALL_FILTER_VALUE },
   { label: "Hoạt động", value: "active" },
   { label: "Đã khóa", value: "banned" },
+]
+
+const SOURCE_OPTIONS: {
+  label: string
+  value: "true" | "false" | typeof ALL_FILTER_VALUE
+}[] = [
+  { label: "Tất cả nguồn", value: ALL_FILTER_VALUE },
+  { label: "Admin tạo", value: "true" },
+  { label: "Người dùng thật", value: "false" },
 ]
 
 function formatDate(value?: string | null) {
@@ -230,6 +240,7 @@ export default function AdminUsersPage() {
     status: "",
     startDate: "",
     endDate: "",
+    created_by_admin: "",
   })
   const [searchInput, setSearchInput] = useState("")
   const [confirmTarget, setConfirmTarget] = useState<{
@@ -315,7 +326,7 @@ export default function AdminUsersPage() {
         <CardContent>
           <form
             onSubmit={applySearch}
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(180px,1fr)_150px_150px_160px_220px_auto]"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(180px,1fr)_150px_150px_150px_160px_220px_auto]"
           >
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">Tìm kiếm</Label>
@@ -390,6 +401,32 @@ export default function AdminUsersPage() {
               </Select>
             </div>
 
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">
+                Nguồn tài khoản
+              </Label>
+              <Select
+                value={filters.created_by_admin || ALL_FILTER_VALUE}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "created_by_admin",
+                    value === ALL_FILTER_VALUE ? "" : value
+                  )
+                }
+              >
+                <SelectTrigger className="h-9 w-full data-[size=default]:h-9">
+                  <SelectValue placeholder="Tất cả nguồn" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
               <Label className="text-xs text-muted-foreground">
                 Khoảng ngày tạo
@@ -430,7 +467,8 @@ export default function AdminUsersPage() {
                   !filters.status &&
                   !filters.startDate &&
                   !filters.endDate &&
-                  !filters.search
+                  !filters.search &&
+                  !filters.created_by_admin
                 }
                 onClick={() => {
                   setSearchInput("")
@@ -442,6 +480,7 @@ export default function AdminUsersPage() {
                     status: "",
                     startDate: "",
                     endDate: "",
+                    created_by_admin: "",
                   })
                 }}
               >
@@ -554,6 +593,19 @@ export default function AdminUsersPage() {
                     <Eye className="size-4" />
                     Chi tiết
                   </Button>
+                  {isAdmin && user.created_by_admin ? (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Link href={`/dashboard/users/${user.id}/edit`}>
+                        <Pencil className="size-4" />
+                        Sửa
+                      </Link>
+                    </Button>
+                  ) : null}
                   {isAdmin ? (
                     <Button
                       size="sm"
@@ -754,6 +806,14 @@ export default function AdminUsersPage() {
                           <Eye className="size-4" />
                           Chi tiết
                         </Button>
+                        {isAdmin && user.created_by_admin ? (
+                          <Button asChild size="sm" variant="ghost">
+                            <Link href={`/dashboard/users/${user.id}/edit`}>
+                              <Pencil className="size-4" />
+                              Sửa
+                            </Link>
+                          </Button>
+                        ) : null}
                         {isAdmin ? (
                           <Button
                             size="sm"

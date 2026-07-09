@@ -63,6 +63,7 @@ export interface GetUsersParams {
   status?: UserStatus | ""
   startDate?: string
   endDate?: string
+  created_by_admin?: "true" | "false" | ""
 }
 
 export interface UserListItem extends AuthUser {
@@ -100,6 +101,8 @@ export const userService = {
     if (params.status) query.set("status", params.status)
     if (params.startDate) query.set("startDate", params.startDate)
     if (params.endDate) query.set("endDate", params.endDate)
+    if (params.created_by_admin)
+      query.set("created_by_admin", params.created_by_admin)
 
     const { data } = await api.get<
       ApiResponse<PaginatedResponse<UserListItem>>

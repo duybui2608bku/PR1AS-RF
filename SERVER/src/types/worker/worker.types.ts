@@ -72,7 +72,6 @@ export interface WorkersGroupedByServiceItem {
     full_name: string | null;
     avatar: string | null;
     worker_profile: {
-      title: string | null;
       introduction: string | null;
       gallery_urls: string[];
       work_locations: Array<{
@@ -95,7 +94,6 @@ export interface WorkerSuggestionItem {
   full_name: string | null;
   avatar: string | null;
   worker_profile: {
-    title: string | null;
     introduction: string | null;
     gallery_urls: string[];
     work_locations: Array<{

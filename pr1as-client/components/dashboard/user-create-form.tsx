@@ -138,7 +138,6 @@ export type UserDraft = {
   isWorker: boolean
   status: AdminUserStatus
   // worker profile
-  title: string
   gender: WorkerGender
   date_of_birth: string
   experience: WorkerExperience | ""
@@ -178,7 +177,6 @@ export function createEmptyDraft(): UserDraft {
     avatar: null,
     isWorker: true,
     status: "active",
-    title: "",
     gender: "FEMALE",
     date_of_birth: "",
     experience: "",
@@ -271,12 +269,6 @@ const SAMPLE_MALE_NAMES = [
   "Đặng Hoàng Long",
   "Hoàng Anh Tuấn",
   "Nguyễn Đức Mạnh",
-]
-const SAMPLE_TITLES = [
-  "Trợ lý cá nhân chuyên nghiệp",
-  "Hướng dẫn viên địa phương thân thiện",
-  "Phiên dịch viên Anh – Việt",
-  "Người bạn đồng hành tinh tế",
 ]
 const SAMPLE_LIFESTYLES = [
   "Năng động, thích khám phá và giao tiếp",
@@ -381,7 +373,6 @@ export function buildSamplePatch(draft: UserDraft): Partial<UserDraft> {
     experience: pickRandom(EXPERIENCE_OPTIONS).value,
     height_cm: String(height),
     weight_kg: String(weight),
-    title: pickRandom(SAMPLE_TITLES),
     lifestyle: pickRandom(SAMPLE_LIFESTYLES),
     quote: pickRandom(SAMPLE_QUOTES),
     introduction: pickRandom(SAMPLE_INTROS),
@@ -427,7 +418,6 @@ function buildWorkerFields(draft: UserDraft):
     worker_services,
     worker_profile: {
       gender: draft.gender,
-      title: draft.title.trim() || null,
       date_of_birth: draft.date_of_birth || null,
       experience: draft.experience || undefined,
       height_cm: draft.height_cm ? Number(draft.height_cm) : null,
@@ -540,7 +530,6 @@ export function draftFromUser(detail: AdminUserDetail): UserDraft {
     avatar: detail.avatar ?? null,
     isWorker,
     status,
-    title: profile?.title ?? "",
     gender: profile?.gender ?? "FEMALE",
     date_of_birth: profile?.date_of_birth
       ? String(profile.date_of_birth).slice(0, 10)
@@ -1130,20 +1119,11 @@ function PhysicalSection({ draft, onPatch }: Props) {
 }
 
 // ---------------------------------------------------------------------------
-// Identity (title, lifestyle, quote)
+// Identity (lifestyle, quote)
 // ---------------------------------------------------------------------------
 function IdentitySection({ draft, onPatch }: Props) {
   return (
     <SectionCard title="Định danh cá nhân">
-      <FieldRow label="Tên nghề / Chức danh">
-        <Input
-          className="h-11 rounded-xl"
-          maxLength={100}
-          placeholder="VD: Trợ lý cá nhân, Người bạn đồng hành..."
-          value={draft.title}
-          onChange={(e) => onPatch({ title: e.target.value })}
-        />
-      </FieldRow>
       <FieldRow label="Lối sống">
         <Input
           className="h-11 rounded-xl"

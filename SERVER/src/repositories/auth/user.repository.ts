@@ -477,6 +477,7 @@ export class UserRepository {
       status,
       startDate,
       endDate,
+      created_by_admin,
     } = query;
 
     const filter: Record<string, unknown> = {};
@@ -492,9 +493,11 @@ export class UserRepository {
 
     if (role) filter.roles = role;
     if (status) filter.status = status;
-    // System/admin-provisioned accounts are never listed in the admin user
-    // management view — only real (self-registered) users appear.
-    filter.created_by_admin = { $ne: true };
+    // Optional source filter: "true" limits to admin-provisioned accounts,
+    // "false" limits to real (self-registered) users. When omitted, both are
+    // listed.
+    if (created_by_admin === "true") filter.created_by_admin = true;
+    if (created_by_admin === "false") filter.created_by_admin = { $ne: true };
 
     if (startDate || endDate) {
       const dateFilter: { $gte?: Date; $lte?: Date } = {};

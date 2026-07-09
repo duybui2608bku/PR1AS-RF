@@ -168,7 +168,6 @@ export function UserDetailDialog({
                   Hồ sơ worker
                 </p>
                 <div className="space-y-2">
-                  <InfoRow label="Chức danh" value={profile.title ?? "—"} />
                   <InfoRow
                     label="Giới tính"
                     value={profile.gender ? GENDER_LABEL[profile.gender] : "—"}

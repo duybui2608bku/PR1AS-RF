@@ -169,8 +169,7 @@ export function QuickBookingWizard() {
     if (!term) return workers
     return workers.filter((worker) => {
       const name = worker.full_name?.toLowerCase() ?? ""
-      const title = worker.worker_profile?.title?.toLowerCase() ?? ""
-      return name.includes(term) || title.includes(term)
+      return name.includes(term)
     })
   }, [searchTerm, selectedService])
 
@@ -318,7 +317,6 @@ export function QuickBookingWizard() {
       selectedService.service.code
     : ""
   const workerName = selectedWorker?.full_name ?? "-"
-  const workerTitle = selectedWorker?.worker_profile?.title ?? "-"
   const workerLocation =
     selectedWorker?.worker_profile?.work_locations?.[0]?.label_snapshot ?? "-"
 
@@ -726,9 +724,6 @@ export function QuickBookingWizard() {
                                   <div className="min-w-0">
                                     <p className="font-semibold">
                                       {worker.full_name || "Anonymous worker"}
-                                    </p>
-                                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                                      {worker.worker_profile?.title || workerTitle}
                                     </p>
                                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                                       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
