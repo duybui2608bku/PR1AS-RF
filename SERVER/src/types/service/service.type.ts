@@ -48,6 +48,7 @@ export interface IServiceDocument extends Document {
 }
 
 export interface CreateServiceInput {
+  code: string;
   category: ServiceCategory;
   icon: string;
   name: LocalizedName;

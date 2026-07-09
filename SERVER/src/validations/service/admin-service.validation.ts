@@ -22,6 +22,13 @@ const serviceRules = z.object({
 });
 
 export const createServiceSchema = z.object({
+  code: z
+    .string()
+    .min(2)
+    .regex(
+      /^[A-Z0-9_]+$/,
+      "Code must be uppercase letters, digits, or underscore"
+    ),
   category: z.nativeEnum(ServiceCategory),
   icon: z.string().min(1),
   name: localizedName,

@@ -63,7 +63,7 @@ export class ServiceRepository {
   }
 
   async create(
-    data: CreateServiceInput & { code: string; created_by: string }
+    data: CreateServiceInput & { created_by: string }
   ): Promise<IServiceDocument> {
     return Service.create({ ...data, is_active: true, deprecated_at: null });
   }

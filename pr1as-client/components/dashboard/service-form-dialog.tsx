@@ -182,6 +182,7 @@ type ServiceFormDialogProps = {
 }
 
 type FormState = {
+  code: string
   category: string
   icon: string
   nameVi: string
@@ -195,6 +196,7 @@ type FormState = {
 }
 
 const EMPTY_FORM: FormState = {
+  code: "",
   category: "VIRTUAL",
   icon: "",
   nameVi: "",
@@ -237,6 +239,7 @@ export const ServiceFormDialog = ({
       setForm(
         service
           ? {
+              code: service.code,
               category: service.category,
               icon: service.icon ?? "",
               nameVi: service.name.vi ?? "",
@@ -303,9 +306,10 @@ export const ServiceFormDialog = ({
       return
     }
 
-    createMutation.mutate(payload, {
-      onSuccess: () => onOpenChange(false),
-    })
+    createMutation.mutate(
+      { code: form.code, ...payload },
+      { onSuccess: () => onOpenChange(false) }
+    )
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
@@ -320,12 +324,24 @@ export const ServiceFormDialog = ({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isEdit && service ? (
-            <p className="text-sm text-muted-foreground">
-              Mã dịch vụ:{" "}
-              <span className="font-mono font-medium">{service.code}</span>
-            </p>
-          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="service-code">
+              Mã dịch vụ (không đổi sau khi tạo)
+            </Label>
+            <Input
+              id="service-code"
+              value={form.code}
+              onChange={handleChange("code")}
+              disabled={isEdit}
+              placeholder="OFFICE_BASIC"
+              required
+            />
+            {isEdit ? null : (
+              <p className="text-xs text-muted-foreground">
+                Chữ IN HOA, số và dấu gạch dưới (vd: OFFICE_BASIC).
+              </p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="service-category">Nhóm</Label>
             <select

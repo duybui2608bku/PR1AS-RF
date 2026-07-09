@@ -10,15 +10,16 @@ type ApiResponse<T> = {
 
 export type AdminServiceItem = ServiceItem
 
-// `code` is generated server-side from the English name; admins never supply it.
 export type CreateServicePayload = {
+  code: string
   category: string
   icon: string
   name: LocalizedText
   description?: LocalizedText
 }
 
-export type UpdateServicePayload = CreateServicePayload
+// `code` is immutable after creation, so it is never part of an update.
+export type UpdateServicePayload = Omit<CreateServicePayload, "code">
 
 type ServicesListResponse = {
   services: AdminServiceItem[]
