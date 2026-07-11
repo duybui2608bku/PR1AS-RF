@@ -78,3 +78,18 @@ export function useUpdateUser() {
     },
   })
 }
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => userService.deleteUser(id),
+    onSuccess: () => {
+      toast.success("Đã xóa người dùng.")
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Không thể xóa người dùng."))
+    },
+  })
+}

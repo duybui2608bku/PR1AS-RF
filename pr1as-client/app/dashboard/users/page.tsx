@@ -16,6 +16,7 @@ import {
   Search,
   ShieldAlert,
   ShieldCheck,
+  Trash2,
   User,
   X,
 } from "lucide-react"
@@ -36,7 +37,11 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table } from "@/components/ui/table"
-import { useGetUsers, useUpdateUserStatus } from "@/lib/hooks/use-users"
+import {
+  useDeleteUser,
+  useGetUsers,
+  useUpdateUserStatus,
+} from "@/lib/hooks/use-users"
 import { isAdminUser } from "@/lib/auth/roles"
 import { UserDetailDialog } from "@/components/dashboard/user-detail-dialog"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -212,6 +217,53 @@ function ConfirmDialog({
   )
 }
 
+function DeleteConfirmDialog({
+  user,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  user: UserListItem
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 dark:bg-background/70">
+      <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl">
+        <h2 className="mb-2 text-base font-semibold">Xác nhận xóa người dùng</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Xóa vĩnh viễn tài khoản của{" "}
+          <span className="font-medium text-foreground">
+            {user.full_name ?? user.email}
+          </span>
+          ? Hành động này không thể hoàn tác và sẽ xóa toàn bộ dữ liệu liên quan.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            disabled={isPending}
+          >
+            Hủy
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+            onClick={onConfirm}
+            disabled={isPending}
+          >
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            Xóa
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function UserTableSkeleton() {
   return (
     <>
@@ -248,9 +300,11 @@ export default function AdminUsersPage() {
     nextStatus: UserStatus
   } | null>(null)
   const [detailUser, setDetailUser] = useState<UserListItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null)
 
   const usersQuery = useGetUsers(filters)
   const updateStatusMutation = useUpdateUserStatus()
+  const deleteUserMutation = useDeleteUser()
 
   const users = usersQuery.data?.data ?? []
   const total = usersQuery.data?.pagination?.total ?? 0
@@ -298,6 +352,17 @@ export default function AdminUsersPage() {
       toast.error(getErrorMessage(error, "Cập nhật thất bại."))
     } finally {
       setConfirmTarget(null)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await deleteUserMutation.mutateAsync(deleteTarget.id)
+    } catch {
+      // Error toast is surfaced by the mutation's onError handler.
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -621,6 +686,18 @@ export default function AdminUsersPage() {
                       {user.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
                     </Button>
                   ) : null}
+                  {isAdmin && user.created_by_admin ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                      onClick={() => setDeleteTarget(user)}
+                      disabled={deleteUserMutation.isPending}
+                    >
+                      <Trash2 className="size-4" />
+                      Xóa
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             ))
@@ -831,6 +908,18 @@ export default function AdminUsersPage() {
                             {user.status === "active" ? "Khóa" : "Mở khóa"}
                           </Button>
                         ) : null}
+                        {isAdmin && user.created_by_admin ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-300 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+                            onClick={() => setDeleteTarget(user)}
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            <Trash2 className="size-4" />
+                            Xóa
+                          </Button>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -895,6 +984,15 @@ export default function AdminUsersPage() {
           onConfirm={handleConfirmStatus}
           onCancel={() => setConfirmTarget(null)}
           isPending={updateStatusMutation.isPending}
+        />
+      ) : null}
+
+      {deleteTarget ? (
+        <DeleteConfirmDialog
+          user={deleteTarget}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+          isPending={deleteUserMutation.isPending}
         />
       ) : null}
 

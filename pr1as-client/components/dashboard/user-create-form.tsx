@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useQuery } from "@tanstack/react-query"
-import { useLocale } from "next-intl"
 import {
-  Check,
   Copy,
   Globe2,
   KeyRound,
@@ -35,14 +33,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useCurrency } from "@/lib/hooks/use-currency"
-import {
-  convertToVnd,
-  convertVndTo,
-  formatAmountInput,
-  formatMoney,
-  getCurrencyMeta,
-  parseAmountInput,
-} from "@/lib/currency"
+import { convertVndTo, getCurrencyMeta } from "@/lib/currency"
 import { useCurrencyStore } from "@/lib/store/currency-store"
 import { uploadImage, uploadMultipleImages } from "@/lib/utils/upload-image"
 import {
@@ -65,9 +56,11 @@ import type {
 import type {
   WorkerExperience,
   WorkerGender,
+  WorkerPricingSlot,
   WorkerPricingUnit,
   WorkerProfilePublic,
 } from "@/types"
+import { WorkerServicesEditor } from "@/components/worker/worker-services-editor"
 
 const MAX_GALLERY = 10
 
@@ -92,11 +85,6 @@ const STATUS_OPTIONS: { value: AdminUserStatus; label: string }[] = [
 ]
 
 const PRICING_UNITS: WorkerPricingUnit[] = ["HOURLY", "DAILY", "MONTHLY"]
-const UNIT_LABEL: Record<WorkerPricingUnit, string> = {
-  HOURLY: "Theo giờ",
-  DAILY: "Theo ngày",
-  MONTHLY: "Theo tháng",
-}
 
 const STAR_SIGNS: { value: string; label: string }[] = [
   { value: "ARIES", label: "Bạch Dương ♈" },
@@ -118,6 +106,26 @@ export type DraftServicePrices = Record<WorkerPricingUnit, string>
 export type DraftService = {
   service_code: string
   prices: DraftServicePrices
+  hashtags: string[]
+}
+
+// Convert between the admin draft's per-unit VND price strings and the
+// canonical `WorkerPricingSlot[]` model the shared editor uses.
+const pricesToSlots = (prices: DraftServicePrices): WorkerPricingSlot[] => {
+  const slots: WorkerPricingSlot[] = []
+  for (const unit of PRICING_UNITS) {
+    const vnd = Number(String(prices[unit]).replace(/\D/g, ""))
+    if (vnd > 0) slots.push({ unit, duration: 1, price: vnd, currency: "VND" })
+  }
+  return slots
+}
+
+const slotsToPrices = (slots: WorkerPricingSlot[]): DraftServicePrices => {
+  const prices = emptyPrices()
+  for (const s of slots) {
+    if (s.price > 0) prices[s.unit] = String(s.price)
+  }
+  return prices
 }
 
 export type DraftWorkLocation = {
@@ -301,7 +309,9 @@ const SAMPLE_LOCATIONS: DraftWorkLocation[] = [
   { province_code: 48, ward_code: null, label_snapshot: "Thành phố Đà Nẵng" },
 ]
 // Realistic service offerings keyed by the seeded service codes.
-const SAMPLE_SERVICE_SETS: DraftService[][] = [
+const SAMPLE_SERVICE_SETS: Array<
+  Array<Pick<DraftService, "service_code" | "prices">>
+> = [
   [
     {
       service_code: "PHYSICAL_ENTERTAINMENT",
@@ -380,6 +390,7 @@ export function buildSamplePatch(draft: UserDraft): Partial<UserDraft> {
     work_locations: [pickRandom(SAMPLE_LOCATIONS)],
     services: pickRandom(SAMPLE_SERVICE_SETS).map((s) => ({
       service_code: s.service_code,
+      hashtags: [],
       prices: { ...s.prices },
     })),
   }
@@ -411,7 +422,11 @@ function buildWorkerFields(draft: UserDraft):
     })
     if (pricing.length === 0)
       return { error: `Dịch vụ "${s.service_code}" cần ít nhất 1 mức giá.` }
-    worker_services.push({ service_code: s.service_code, pricing })
+    worker_services.push({
+      service_code: s.service_code,
+      pricing,
+      hashtags: s.hashtags,
+    })
   }
 
   return {
@@ -518,7 +533,7 @@ export function draftFromUser(detail: AdminUserDetail): UserDraft {
         prices[p.unit] = String(p.price_vnd ?? p.price)
       }
     }
-    return { service_code: s.service_code, prices }
+    return { service_code: s.service_code, prices, hashtags: s.hashtags ?? [] }
   })
 
   return {
@@ -1415,37 +1430,36 @@ function ServicesSection({
   catalog,
   loading,
 }: Props & { catalog: ServiceItem[]; loading: boolean }) {
-  const { currency, meta: currencyMeta, localeTag } = useCurrency()
-  const locale = useLocale()
-  // Raw input strings keyed by `${code}:${unit}:${currency}` so decimal typing
-  // isn't clobbered by re-deriving the value from the canonical VND model.
-  const [priceDrafts, setPriceDrafts] = useState<Map<string, string>>(new Map())
+  const { meta: currencyMeta } = useCurrency()
 
-  const toggleService = (code: string) => {
-    const exists = draft.services.some((s) => s.service_code === code)
-    onPatch({
-      services: exists
-        ? draft.services.filter((s) => s.service_code !== code)
-        : [...draft.services, { service_code: code, prices: emptyPrices() }],
-    })
+  const byId = new Map(catalog.map((s) => [s.id, s]))
+  const byCode = new Map(catalog.map((s) => [s.code, s]))
+
+  // Derive the shared-editor's id-keyed Maps from the draft's DraftService[].
+  const selectedPricing = new Map<string, WorkerPricingSlot[]>()
+  const serviceHashtags = new Map<string, string[]>()
+  for (const ds of draft.services) {
+    const svc = byCode.get(ds.service_code)
+    if (!svc) continue
+    selectedPricing.set(svc.id, pricesToSlots(ds.prices))
+    serviceHashtags.set(svc.id, ds.hashtags)
   }
 
-  const setPrice = (code: string, unit: WorkerPricingUnit, value: string) => {
-    // `value` is typed in the selected currency; store canonically in VND.
-    const typed = parseAmountInput(value, currencyMeta.decimals)
-    const vnd = typed == null ? "" : String(convertToVnd(typed, currency))
-    setPriceDrafts((prev) => {
-      const next = new Map(prev)
-      next.set(`${code}:${unit}:${currency}`, formatAmountInput(value, localeTag, currencyMeta.decimals))
-      return next
-    })
-    onPatch({
-      services: draft.services.map((s) =>
-        s.service_code === code
-          ? { ...s, prices: { ...s.prices, [unit]: vnd } }
-          : s
-      ),
-    })
+  const commitServices = (
+    pricing: Map<string, WorkerPricingSlot[]>,
+    hashtags: Map<string, string[]>
+  ) => {
+    const services: DraftService[] = []
+    for (const [id, slots] of pricing) {
+      const svc = byId.get(id)
+      if (!svc) continue
+      services.push({
+        service_code: svc.code,
+        prices: slotsToPrices(slots),
+        hashtags: hashtags.get(id) ?? [],
+      })
+    }
+    onPatch({ services })
   }
 
   return (
@@ -1453,96 +1467,23 @@ function ServicesSection({
       title="Dịch vụ & Giá"
       subtitle={`Chọn dịch vụ cung cấp và nhập giá (${currencyMeta.code}) cho ít nhất một đơn vị`}
     >
-      {loading && (
+      {loading ? (
         <p className="py-4 text-center text-sm text-muted-foreground">
           Đang tải danh mục dịch vụ...
         </p>
+      ) : (
+        <WorkerServicesEditor
+          catalog={catalog}
+          selectedPricing={selectedPricing}
+          onSelectedPricingChange={(next) =>
+            commitServices(next, serviceHashtags)
+          }
+          serviceHashtags={serviceHashtags}
+          onServiceHashtagsChange={(next) =>
+            commitServices(selectedPricing, next)
+          }
+        />
       )}
-
-      {catalog.map((service) => {
-        const selected = draft.services.find(
-          (s) => s.service_code === service.code
-        )
-        const checked = Boolean(selected)
-        return (
-          <div
-            key={service.code}
-            className="overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-accent/60"
-              onClick={() => toggleService(service.code)}
-            >
-              <span
-                className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all",
-                  checked
-                    ? "border-primary bg-primary"
-                    : "border-muted-foreground/40 bg-transparent"
-                )}
-              >
-                {checked && (
-                  <Check className="size-3.5 stroke-[3] text-primary-foreground" />
-                )}
-              </span>
-              <span className="flex-1 text-sm leading-snug font-medium">
-                {serviceService.getName(service.name, locale)}
-              </span>
-            </button>
-
-            {checked && selected && (
-              <div className="space-y-2.5 border-t border-border bg-muted/30 px-4 py-3">
-                <p className="text-xs text-muted-foreground">
-                  Nhập giá ({currencyMeta.code}) cho ít nhất một đơn vị
-                </p>
-                {PRICING_UNITS.map((unit) => {
-                  const vnd = Number(String(selected.prices[unit]).replace(/\D/g, ""))
-                  const draftKey = `${service.code}:${unit}:${currency}`
-                  const displayValue = priceDrafts.has(draftKey)
-                    ? priceDrafts.get(draftKey)!
-                    : formatAmountInput(
-                        vnd > 0
-                          ? Number(convertVndTo(vnd, currency).toFixed(currencyMeta.decimals))
-                          : undefined,
-                        localeTag,
-                        currencyMeta.decimals,
-                      )
-                  return (
-                    <div key={unit} className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <Label className="w-20 shrink-0 text-xs text-muted-foreground">
-                          {UNIT_LABEL[unit]}
-                        </Label>
-                        <div className="relative flex-1">
-                          <Input
-                            type="text"
-                            inputMode={currencyMeta.decimals > 0 ? "decimal" : "numeric"}
-                            placeholder="0"
-                            className="h-11 pr-10 text-sm"
-                            value={displayValue}
-                            onChange={(e) =>
-                              setPrice(service.code, unit, e.target.value)
-                            }
-                          />
-                          <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
-                            {currencyMeta.symbol}
-                          </span>
-                        </div>
-                      </div>
-                      {currency !== "VND" && vnd > 0 && (
-                        <p className="pl-[5.75rem] text-xs text-muted-foreground">
-                          ≈ {formatMoney(vnd, "VND", localeTag)}
-                        </p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })}
     </SectionCard>
   )
 }

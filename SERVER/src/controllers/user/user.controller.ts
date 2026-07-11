@@ -92,6 +92,15 @@ export class UserController {
 
     R.success(res, null, USER_MESSAGES.STATUS_UPDATED, req);
   }
+
+  async deleteUser(req: AuthRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const adminId = extractUserIdFromRequest(req);
+
+    await userService.deleteUserByAdmin(id, { adminId });
+
+    R.success(res, null, USER_MESSAGES.USER_DELETED, req);
+  }
 }
 
 export const userController = new UserController();

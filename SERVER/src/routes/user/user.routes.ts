@@ -50,4 +50,11 @@ router.patch(
   asyncHandler(userController.updateUserStatus.bind(userController))
 );
 
+router.delete(
+  "/:id",
+  validateObjectId("id"),
+  ...csrfProtection,
+  asyncHandler(userController.deleteUser.bind(userController))
+);
+
 export default router;

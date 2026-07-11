@@ -4,6 +4,7 @@ import { UserRole, UserStatus } from "../../types/auth/user.types";
 import { PricingUnit } from "../../types/worker/worker-service";
 import { AUTH_MESSAGES, USER_MESSAGES } from "../../constants/messages";
 import { VALIDATION_LIMITS } from "../../constants/validation";
+import { WORKER_SERVICE_HASHTAG_LIMITS } from "../../constants/worker-service";
 import { normalizeAvatarUrl } from "../../utils/avatar-url";
 import { updateWorkerProfileSchema } from "./user.validation";
 
@@ -50,6 +51,10 @@ export const adminWorkerServiceSchema = z
     pricing: z
       .array(pricingSchema)
       .min(1, { message: "pricing must contain at least 1 item" }),
+    hashtags: z
+      .array(z.string())
+      .max(WORKER_SERVICE_HASHTAG_LIMITS.MAX_PER_SERVICE)
+      .optional(),
   })
   .strict();
 
