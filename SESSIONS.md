@@ -38,6 +38,42 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-11 — Component dịch vụ chung: admin form ≡ worker setup
+
+**Mục tiêu**: Mục "Dịch vụ & Giá" ở form admin tạo/sửa user phải giống y hệt worker
+setup — chia Trợ lý ảo (VIRTUAL)/Trợ lý thực tế (PHYSICAL) + có ô hashtag per service.
+
+**Đã làm** (spec+plan `docs/superpowers/{specs,plans}/2026-07-11-shared-worker-services-editor*`):
+
+- Tách `components/worker/worker-services-editor.tsx` (controlled): props
+  `catalog` + `selectedPricing` (Map id→WorkerPricingSlot[] VND) + `serviceHashtags`
+  (Map id→string[]) + onChange; bên trong tự giữ `priceDrafts`, `useCurrency`, chia
+  VIRTUAL/PHYSICAL, per-unit price + `HashtagChipInput`. Dùng lại code/i18n
+  `WorkerSetup` verbatim.
+- Worker setup: thay khối render inline bằng `<WorkerServicesEditor/>` (bỏ
+  renderServiceRow/toggle/setPrice/priceDrafts; giữ hydrate + buildServicesPayload).
+- Admin form `user-create-form.tsx`: giữ model `DraftService[]` (+`hashtags`), convert
+  Map↔DraftService tại `ServicesSection` (helpers `pricesToSlots`/`slotsToPrices`),
+  render component chung; build/prefill/sample thêm hashtags.
+- Backend: `adminWorkerServiceSchema` + `resolveWorkerServices` +
+  `getUserDetailForAdmin` nhận/persist/trả `hashtags` (dùng `normalizeHashtags`,
+  `upsertManyForWorker` đã hỗ trợ). FE `user.service` types +hashtags.
+
+**File chính**: `pr1as-client/components/worker/worker-services-editor.tsx`,
+`app/worker/setup/page.tsx`, `components/dashboard/user-create-form.tsx`,
+`services/user.service.ts`; `SERVER/src/{validations/user/admin-create-user.validation,
+services/user/user.service}.ts`.
+
+**Quyết định / ghi chú**: admin giữ `DraftService[]` + convert ở ranh giới (thay vì
+đổi cả UserDraft sang Map) để không phải sửa các hàm build/prefill module-level cần
+catalog. BE 26/26 test + tsc sạch; FE typecheck sạch; file mới/sửa lint-clean.
+`npm run lint` toàn repo vẫn đỏ do **29 lỗi pre-existing** ở ~15 file không liên quan
+(rule React-19: refs-in-render/setState-in-effect) — không phải regression.
+
+**Còn lại**: chưa chạy E2E trên browser (session không có backend chạy).
+
+**Commit**: dãy commit `feat/refactor(worker|user)` · branch `main-3` (chưa merge/push)
+
 ## 2026-07-10 — Hashtag cho dịch vụ worker + search theo hashtag
 
 **Mục tiêu**: Cho worker gắn hashtag tự do vào từng dịch vụ khi setup hồ sơ, hiện
