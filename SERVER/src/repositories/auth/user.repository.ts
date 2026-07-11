@@ -284,6 +284,15 @@ export class UserRepository {
   }
 
   /**
+   * Physically removes the user document. Used only by the admin hard-delete of
+   * admin-provisioned accounts; real users go through the soft-delete/scrub flow.
+   */
+  async hardDeleteById(id: string): Promise<boolean> {
+    const res = await User.deleteOne({ _id: new Types.ObjectId(id) });
+    return res.deletedCount > 0;
+  }
+
+  /**
    * Permanently anonymizes a user that has waited out the grace window. PII is
    * replaced with deterministic sentinel values so historical joins (booking,
    * review, wallet) keep working without leaking the original identity.

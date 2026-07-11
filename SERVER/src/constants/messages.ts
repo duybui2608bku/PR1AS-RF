@@ -107,6 +107,7 @@ export const USER_MESSAGES = {
   WORKER_PROFILE_REQUIRED: "Worker profile is required for a worker account",
   USER_CREATED: "User created successfully",
   USER_UPDATED: "User updated successfully",
+  USER_DELETED: "User deleted successfully",
   USER_FETCHED: "User fetched successfully",
   NOT_ADMIN_CREATED:
     "Chỉ có thể chỉnh sửa người dùng do admin tạo. Tài khoản người dùng thật không thể chỉnh sửa.",
