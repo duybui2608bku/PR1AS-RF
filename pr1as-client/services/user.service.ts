@@ -10,6 +10,7 @@ export type AdminUserStatus = "active" | "inactive" | "banned"
 
 export interface AdminWorkerServiceInput {
   service_code: string
+  hashtags?: string[]
   pricing: {
     unit: WorkerPricingUnit
     duration: number
@@ -45,6 +46,7 @@ export interface AdminUpdateUserPayload {
 export interface AdminUserDetail extends UserListItem {
   worker_services?: Array<{
     service_code: string
+    hashtags?: string[]
     pricing: Array<{
       unit: "HOURLY" | "DAILY" | "MONTHLY"
       duration: number
@@ -137,5 +139,10 @@ export const userService = {
       payload
     )
     return data.data
+  },
+
+  deleteUser: async (id: string) => {
+    const { data } = await api.delete<ApiResponse<null>>(`/users/${id}`)
+    return data
   },
 }

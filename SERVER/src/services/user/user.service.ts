@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 import { userRepository } from "../../repositories/auth/user.repository";
 import { serviceRepository } from "../../repositories/service/service.repository";
 import {
@@ -6,6 +8,15 @@ import {
 } from "../../repositories/worker/worker-service.repository";
 import { walletBalanceRepository } from "../../repositories/wallet/wallet-balance.repository";
 import { workerPointWalletRepository } from "../../repositories/boost/worker-point-wallet.repository";
+import { postRepository } from "../../repositories/post/post.repository";
+import { commentRepository } from "../../repositories/comment/comment.repository";
+import { Wallet } from "../../models/wallet/wallet.model";
+import { WorkerPointWallet } from "../../models/boost/worker-point-wallet.model";
+import { WorkerFavorite } from "../../models/worker/worker-favorite.model";
+import { Reaction } from "../../models/reaction/reaction.model";
+import { PushSubscription } from "../../models/notification/push-subscription.model";
+import { NotificationPreference } from "../../models/notification/notification-preference.model";
+import { WorkerBlackout } from "../../models/worker/worker-blackout.model";
 import { GetUsersQuery } from "../../types/user/user.dto";
 import { UserStatus, UserRole } from "../../types/auth/user.types";
 import { AppError } from "../../utils/AppError";
@@ -40,6 +51,7 @@ import { SOCKET_EVENTS } from "../../constants/socket";
 import { getUserSocketIds } from "../../config/socket.handlers";
 import { invalidateUserStatusCache } from "../../utils/userStatusCache";
 import { normalizeAvatarUrl } from "../../utils/avatar-url";
+import { normalizeHashtags } from "../../utils/worker-hashtag";
 import { notificationEventService } from "../notification";
 
 interface BecomeWorkerAuditContext {
@@ -423,6 +435,7 @@ export class UserService {
             price_vnd: toVnd(price, currency),
           };
         }),
+        hashtags: normalizeHashtags(item.hashtags ?? []),
       });
     }
 
@@ -517,6 +530,7 @@ export class UserService {
     worker_services: Array<{
       service_code: string;
       pricing: WorkerServicePricing[];
+      hashtags: string[];
     }>;
   }> {
     const user = await userRepository.findById(userId);
@@ -531,6 +545,7 @@ export class UserService {
       worker_services: services.map((s) => ({
         service_code: s.service_code,
         pricing: s.pricing,
+        hashtags: s.hashtags ?? [],
       })),
     };
   }
@@ -628,6 +643,80 @@ export class UserService {
     });
 
     return user;
+  }
+
+  /**
+   * Admin hard-delete of an admin-provisioned account. Real (self-registered)
+   * users are never removed here — they go through the self-service soft-delete
+   * flow. The account is removed unconditionally (even with an active balance,
+   * bookings, or disputes). Cascade cleanup is best-effort (each step logs on
+   * failure) before the user document is removed.
+   */
+  async deleteUserByAdmin(
+    userId: string,
+    audit: { adminId?: string } = {}
+  ): Promise<void> {
+    const existing = await userRepository.findById(userId);
+    if (!existing) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    // Only admin-provisioned accounts can be hard-deleted from the admin panel.
+    if (!existing.created_by_admin) {
+      throw AppError.forbidden(USER_MESSAGES.NOT_ADMIN_CREATED);
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    // Cascade cleanup of data owned by / keyed to this user. Best-effort: each
+    // step runs independently and a failure is logged but does not abort the
+    // remaining cleanup or the final user removal.
+    const results = await Promise.allSettled([
+      Wallet.deleteMany({ user_id: userObjectId }),
+      WorkerPointWallet.deleteMany({ user_id: userObjectId }),
+      workerServiceRepository.deleteAllForWorker(userId),
+      WorkerFavorite.deleteMany({
+        $or: [{ client_id: userObjectId }, { worker_id: userObjectId }],
+      }),
+      Reaction.deleteMany({ user_id: userObjectId }),
+      PushSubscription.deleteMany({ user_id: userObjectId }),
+      NotificationPreference.deleteMany({ user_id: userObjectId }),
+      WorkerBlackout.deleteMany({ worker_id: userObjectId }),
+      postRepository.softDeleteAllByAuthor(userId),
+      commentRepository.softDeleteAllByAuthor(userId),
+    ]);
+
+    results.forEach((r, idx) => {
+      if (r.status === "rejected") {
+        logger.error("Cascade step failed during admin user delete", {
+          userId,
+          step: idx,
+          error: r.reason,
+        });
+      }
+    });
+
+    await userRepository.hardDeleteById(userId);
+
+    // Drop the cached status and kick any live socket so the deleted account
+    // loses realtime access immediately.
+    invalidateUserStatusCache(userId);
+    try {
+      const io = getSocketIO();
+      for (const socketId of getUserSocketIds(userId)) {
+        io.sockets.sockets.get(socketId)?.disconnect(true);
+      }
+    } catch (error) {
+      logger.warn(
+        "Could not disconnect sockets on admin user delete — socket may not be initialized",
+        { error, userId }
+      );
+    }
+
+    logger.info("AUDIT admin deleted user", {
+      event: "ADMIN_DELETE_USER",
+      userId,
+      email: existing.email,
+      adminId: audit.adminId,
+    });
   }
 }
 
