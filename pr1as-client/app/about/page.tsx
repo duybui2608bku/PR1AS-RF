@@ -131,7 +131,6 @@ export default async function AboutPage() {
     title: pick(content.cta.title, "cta.title"),
     subtitle: pick(content.cta.subtitle, "cta.subtitle"),
     primary: pick(content.cta.primary, "cta.primary"),
-    secondary: pick(content.cta.secondary, "cta.secondary"),
   }
 
   return (
@@ -218,6 +217,32 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        <section className="relative mb-16 overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/10 to-primary/5 p-7 text-center md:mb-24 md:p-14">
+          <div className="pointer-events-none absolute -top-16 -right-16 size-56 rounded-full bg-primary/15 blur-3xl" />
+          <div className="relative">
+            <RichText
+              as="h2"
+              html={cta.title}
+              inline
+              className="text-2xl font-bold tracking-tight md:text-3xl"
+            />
+            <RichText
+              as="p"
+              html={cta.subtitle}
+              inline
+              className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base"
+            />
+            <div className="mt-7 flex justify-center">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <Link href="/services">
+                  <RichText html={cta.primary} inline />
+                  <ArrowRightIcon className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
         <section className="mb-16 md:mb-24">
           <div className="mx-auto max-w-2xl text-center">
             <RichText
@@ -270,7 +295,7 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        <section className="mb-16 md:mb-24">
+        <section>
           <div className="mx-auto max-w-2xl text-center">
             <RichText
               as="h2"
@@ -313,41 +338,6 @@ export default async function AboutPage() {
                 </div>
               )
             })}
-          </div>
-        </section>
-        <section className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/10 to-primary/5 p-7 text-center md:p-14">
-          <div className="pointer-events-none absolute -top-16 -right-16 size-56 rounded-full bg-primary/15 blur-3xl" />
-          <div className="relative">
-            <RichText
-              as="h2"
-              html={cta.title}
-              inline
-              className="text-2xl font-bold tracking-tight md:text-3xl"
-            />
-            <RichText
-              as="p"
-              html={cta.subtitle}
-              inline
-              className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base"
-            />
-            <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/services">
-                  <RichText html={cta.primary} inline />
-                  <ArrowRightIcon className="size-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                <Link href="/pricing">
-                  <RichText html={cta.secondary} inline />
-                </Link>
-              </Button>
-            </div>
           </div>
         </section>
       </div>

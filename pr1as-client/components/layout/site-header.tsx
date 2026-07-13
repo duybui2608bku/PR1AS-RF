@@ -159,9 +159,13 @@ export function SiteHeader() {
   )
   const homeHref = getRoleDefaultRoute(activeRole)
 
+  // Chưa có hồ sơ worker → nút dẫn vào /worker/setup, nên gọi là "Trở thành
+  // Worker". Đã có rồi → chỉ là đổi vai trò đang hoạt động.
   const switchRoleLabel = isWorkerActive
     ? t("switchToClient")
-    : t("switchToWorker")
+    : hasWorkerRole
+      ? t("switchToWorker")
+      : t("becomeWorker")
   const userMenuItems = React.useMemo(
     () => [
       ...USER_MENU_ITEM_DEFS.filter((item) => {

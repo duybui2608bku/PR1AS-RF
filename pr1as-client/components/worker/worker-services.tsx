@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Crown, MessageCircle, ShoppingCart } from "lucide-react"
+import { Crown, MapPin, MessageCircle, Monitor, ShoppingCart } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -65,13 +65,13 @@ type Props = {
   services: WorkerServiceItem[]
   workerReputationScore?: number
   selectedDate?: Date
-  onQuickBook?: (serviceId: string) => void
   /** Calendar slot rendered inside the card on mobile (below the service list). */
   calendar?: ReactNode
 }
 
-export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, selectedDate, onQuickBook, calendar }: Props) {
+export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, selectedDate, calendar }: Props) {
   const t = useTranslations("WorkerProfile")
+  const tServices = useTranslations("Services")
   const locale = useLocale()
   const { format } = useCurrency()
   const [bookOpen, setBookOpen] = useState(false)
@@ -82,7 +82,6 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const user = useAuthStore((s) => s.user)
   const currentUserId = user?.id
   const isOwnProfile = currentUserId === workerId
-  const isGuestViewer = !isAuthenticated
   const isWorkerLowReputation = workerReputationScore < 30
   const storedPlanCode = user?.meta_data?.pricing_plan_code?.toLowerCase()
   const storedPlanAllowsMessaging = storedPlanCode
@@ -197,6 +196,8 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                 : service.service_code
               const cheapest = cheapestPricing(service.pricing)
               const isActive = selectedId === service._id
+              const isVirtual = catalogItem?.category === "VIRTUAL"
+              const CategoryIcon = isVirtual ? Monitor : MapPin
 
               return (
                 <label
@@ -218,6 +219,21 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
                     <p className="line-clamp-2 text-sm font-medium text-foreground">
                       {name}
                     </p>
+                    {catalogItem ? (
+                      <span
+                        className={cn(
+                          "mt-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                          isVirtual
+                            ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+                        )}
+                      >
+                        <CategoryIcon className="size-3" />
+                        {isVirtual
+                          ? tServices("virtual")
+                          : tServices("physical")}
+                      </span>
+                    ) : null}
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatPrice(cheapest, t, format)}
                     </p>
@@ -242,29 +258,17 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
 
         {calendar ? <div className="lg:hidden">{calendar}</div> : null}
 
-        {isGuestViewer ? (
-          <Button
-            type="button"
-            className="w-full"
-            disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
-            onClick={() => onQuickBook?.(selectedId)}
-          >
-            <ShoppingCart className="size-4" />
-            {t("services.quickBook")}
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            className="w-full"
-            disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
-            onClick={handleBook}
-          >
-            <ShoppingCart className="size-4" />
-            {isWorkerLowReputation
-              ? t("services.bookLowReputation")
-              : t("services.book")}
-          </Button>
-        )}
+        <Button
+          type="button"
+          className="w-full"
+          disabled={!selectedId || isOwnProfile || isWorkerLowReputation}
+          onClick={handleBook}
+        >
+          <ShoppingCart className="size-4" />
+          {isWorkerLowReputation
+            ? t("services.bookLowReputation")
+            : t("services.book")}
+        </Button>
 
         <Button
           type="button"

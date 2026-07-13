@@ -8,6 +8,21 @@ interface AnnouncementContentProps {
   className?: string
 }
 
+export function AnnouncementCloseButton({ onClick, className }: { onClick: () => void; className?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Đóng"
+      className={cn(
+        "absolute right-2 top-2 flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground",
+        className
+      )}
+    >
+      ✕
+    </button>
+  )
+}
+
 export function AnnouncementContent({ announcement, className }: AnnouncementContentProps) {
   const { content, redirect_url, redirect_target } = announcement
 

@@ -4,23 +4,14 @@ import { adminOnly, authenticate } from "../../middleware/auth";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthRequest } from "../../middleware/auth";
 import { pagination } from "../../middleware";
-import {
-  bookingCreateLimiter,
-  guestBookingCreateLimiter,
-} from "../../middleware/rateLimiter";
-import { csrfProtection } from "../../middleware/csrf";
+import { bookingCreateLimiter } from "../../middleware/rateLimiter";
 import { Request } from "express";
 
 const router = Router();
 
-router.post(
-  "/quickbook",
-  ...csrfProtection,
-  guestBookingCreateLimiter,
-  asyncHandler<Request>(
-    bookingController.createGuestBooking.bind(bookingController)
-  )
-);
+// ponytail: quick-booking (guest) tắt — bỏ route POST /quickbook. Bật lại:
+// khôi phục route trỏ vào bookingController.createGuestBooking (vẫn còn) +
+// UI ở worker-services. Lookup guest booking giữ nguyên cho đơn cũ.
 
 router.get(
   "/lookup",

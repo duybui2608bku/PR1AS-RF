@@ -38,6 +38,47 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-13 — Gọn trang About, tắt thuê nhanh, badge online/onsite
+
+**Mục tiêu**: Bỏ nút "Xem bảng giá" ở About + dời section CTA lên vị trí 2;
+đổi nhãn nút chuyển vai trò; tắt thuê nhanh (guest quick booking); hồ sơ worker
+phải cho thấy dịch vụ nào online / onsite.
+
+**Đã làm**:
+
+- About: section CTA ("Khám phá ngay") dời lên ngay sau "PR1AS là gì", chỉ còn 1
+  nút → `/services`. Bỏ luôn field `cta.secondary` khi render (DB vẫn còn field,
+  admin editor không đổi).
+- Tắt thuê nhanh: xoá `app/quick-booking/*` + `components/worker/quick-booking-dialog.tsx`,
+  bỏ nhánh guest trong `worker-services.tsx` (guest bấm Đặt lịch → `requireAuth`
+  → login), gỡ prop `onQuickBook` (đã chết) khỏi `worker-profile-header.tsx`, gỡ
+  `/quick-booking` khỏi sitemap/robots, và gỡ route `POST /api/bookings/quickbook`.
+- Nhãn chuyển vai trò: `WORKER`/`CLIENT` → `Trở thành Worker` (chưa có hồ sơ
+  worker) / `Chuyển sang Worker` (đã có) / `Chuyển sang Client`. Thêm key
+  `Nav.becomeWorker` vào cả 4 locale.
+- `worker-services.tsx`: mỗi dịch vụ có badge `Trợ lý ảo` (Monitor) /
+  `Trợ lý thực tế` (MapPin), lấy từ `catalogItem.category` (VIRTUAL/PHYSICAL) —
+  catalog đã fetch sẵn trong component, không đổi API/type.
+
+**File chính**: `pr1as-client/app/about/page.tsx`,
+`pr1as-client/components/worker/{worker-services,worker-profile-header}.tsx`,
+`pr1as-client/app/worker/[id]/page.tsx`, `pr1as-client/components/layout/site-header.tsx`,
+`pr1as-client/app/{sitemap,robots}.ts`, `messages/{vi,en,zh,ko}.json`,
+`SERVER/src/routes/booking/booking.routes.ts`
+
+**Quyết định / ghi chú**: Backend `createGuestBooking` / `sendQuickBooking*Emails`
+và `GET /bookings/lookup` **giữ nguyên** — booking guest cũ vẫn tra cứu &
+xử lý được; chỉ chặn tạo mới. Muốn bật lại: khôi phục route `/quickbook` +
+nhánh guest trong `worker-services.tsx` (xem comment `ponytail:` trong routes).
+Frontend `bookingService.createGuestBooking` / `useCreateGuestBooking` còn đó
+nhưng hiện không ai gọi.
+
+**Còn lại**: i18n `WorkerProfile.services.quickBook` + namespace `QuickBooking`
+(phần wizard) giờ dư — chưa dọn vì `QuickBooking.*` vẫn dùng ở trang booking của
+worker để hiển thị đơn guest.
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-07-11 — Component dịch vụ chung: admin form ≡ worker setup
 
 **Mục tiêu**: Mục "Dịch vụ & Giá" ở form admin tạo/sửa user phải giống y hệt worker
