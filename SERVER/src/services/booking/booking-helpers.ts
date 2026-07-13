@@ -1,8 +1,6 @@
 import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
-import {
-  IBookingDocument,
-} from "../../types/booking/booking.types";
+import { IBookingDocument } from "../../types/booking/booking.types";
 import {
   BookingStatus,
   BOOKING_STATUS_TRANSITIONS,
@@ -191,5 +189,4 @@ export class BookingBaseService {
 
     return updates;
   }
-
 }

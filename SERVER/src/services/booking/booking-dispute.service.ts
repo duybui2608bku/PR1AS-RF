@@ -51,12 +51,17 @@ export class BookingDisputeService extends BookingBaseService {
     }
 
     // Với booking đã COMPLETED, chỉ cho mở khiếu nại trong vòng
-    // DISPUTE_WINDOW_DAYS kể từ khi lịch hẹn kết thúc (schedule.end_time).
-    // Quá hạn coi như client chấp nhận kết quả. Các trạng thái còn đang diễn ra
-    // (IN_PROGRESS, PENDING_CLIENT_ACCEPTANCE) không bị giới hạn thời gian này.
+    // DISPUTE_WINDOW_DAYS kể từ mốc muộn hơn giữa lịch kết thúc và lúc booking
+    // được đánh dấu hoàn thành. Quá hạn coi như client chấp nhận kết quả.
+    // Neo theo completed_at là bắt buộc: job auto-complete set COMPLETED cho
+    // booking CONFIRMED ở tận ngày thứ 3 sau end_time — nếu chỉ tính từ end_time
+    // thì cửa sổ khiếu nại đóng ngay giây booking chuyển sang COMPLETED.
+    // Các trạng thái còn đang diễn ra (IN_PROGRESS, PENDING_CLIENT_ACCEPTANCE)
+    // không bị giới hạn thời gian này.
     if (booking.status === BookingStatus.COMPLETED) {
+      const completedAt = booking.completed_at?.getTime() ?? 0;
       const deadline =
-        booking.schedule.end_time.getTime() +
+        Math.max(booking.schedule.end_time.getTime(), completedAt) +
         BOOKING_LIMITS.DISPUTE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
       if (Date.now() > deadline) {
         throw new AppError(
@@ -180,7 +185,9 @@ export class BookingDisputeService extends BookingBaseService {
 
     void notificationEventService
       .disputeResolved(updatedBooking, adminUserId, resolution)
-      .catch((error) => logger.error("Dispute resolution notification failed:", error));
+      .catch((error) =>
+        logger.error("Dispute resolution notification failed:", error)
+      );
 
     return updatedBooking;
   }

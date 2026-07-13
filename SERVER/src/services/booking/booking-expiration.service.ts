@@ -97,7 +97,9 @@ export class BookingExpirationService {
             ReputationHistoryReason.BOOKING_EXPIRY
           );
         })
-        .catch((err) => logger.error("Reputation deduction after booking expiry failed:", err));
+        .catch((err) =>
+          logger.error("Reputation deduction after booking expiry failed:", err)
+        );
     }
 
     return {

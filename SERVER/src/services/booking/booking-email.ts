@@ -103,16 +103,26 @@ function toId(value: unknown): string {
 function getServiceName(booking: IBookingDocument, locale: Locale): string {
   const service = booking.service_id;
   if (service && typeof service === "object") {
-    const name = (service as { name?: Record<string, string>; code?: string }).name;
+    const name = (service as { name?: Record<string, string>; code?: string })
+      .name;
     if (name) {
-      return name[locale] || name.en || name.vi || (service as { code?: string }).code || booking.service_code;
+      return (
+        name[locale] ||
+        name.en ||
+        name.vi ||
+        (service as { code?: string }).code ||
+        booking.service_code
+      );
     }
   }
   return booking.service_code;
 }
 
 function getWorkerName(booking: IBookingDocument): string {
-  const worker = booking.worker_id as unknown as { full_name?: string; email?: string };
+  const worker = booking.worker_id as unknown as {
+    full_name?: string;
+    email?: string;
+  };
   return worker?.full_name || worker?.email || "Worker";
 }
 
@@ -120,7 +130,10 @@ function getGuestName(booking: IBookingDocument): string {
   return booking.guest_contact?.name?.trim() || "Guest";
 }
 
-function getGuestLocale(booking: IBookingDocument, fallback: Locale = "en"): Locale {
+function getGuestLocale(
+  booking: IBookingDocument,
+  fallback: Locale = "en"
+): Locale {
   return resolveLocale(booking.guest_locale, fallback);
 }
 
@@ -142,7 +155,10 @@ export async function sendQuickBookingCreatedEmails(
   const trackingLink = buildTrackingLink(booking);
   const workerName = getWorkerName(booking);
   const serviceName = getServiceName(booking, locale);
-  const startTime = formatDateTime(new Date(booking.schedule.start_time), locale);
+  const startTime = formatDateTime(
+    new Date(booking.schedule.start_time),
+    locale
+  );
   const endTime = formatDateTime(new Date(booking.schedule.end_time), locale);
   const guestTemplate = bookingGuestRequestTemplate({
     locale,
@@ -165,7 +181,8 @@ export async function sendQuickBookingCreatedEmails(
   const worker = await userRepository.findById(workerId);
   if (!worker?.email) return;
 
-  const preference = await notificationRepository.getOrCreatePreference(workerId);
+  const preference =
+    await notificationRepository.getOrCreatePreference(workerId);
   if (preference.channels[NotificationChannel.EMAIL] !== false) {
     return;
   }
@@ -179,7 +196,10 @@ export async function sendQuickBookingCreatedEmails(
     clientEmail: booking.guest_contact.email,
     clientPhone: booking.guest_contact.phone,
     serviceName: getServiceName(booking, workerLocale),
-    startTime: formatDateTime(new Date(booking.schedule.start_time), workerLocale),
+    startTime: formatDateTime(
+      new Date(booking.schedule.start_time),
+      workerLocale
+    ),
     endTime: formatDateTime(new Date(booking.schedule.end_time), workerLocale),
     bookingLink: `${config.frontendUrl}/worker/bookings`,
   });
@@ -201,7 +221,10 @@ export async function sendQuickBookingStatusEmail(
   const trackingLink = buildTrackingLink(booking);
   const serviceName = getServiceName(booking, locale);
   const workerName = getWorkerName(booking);
-  const startTime = formatDateTime(new Date(booking.schedule.start_time), locale);
+  const startTime = formatDateTime(
+    new Date(booking.schedule.start_time),
+    locale
+  );
   const endTime = formatDateTime(new Date(booking.schedule.end_time), locale);
   const statusLabel = STATUS_LABELS[status][locale] || STATUS_LABELS[status].en;
 

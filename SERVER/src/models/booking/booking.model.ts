@@ -153,6 +153,9 @@ bookingSchema.index({ worker_id: 1, created_at: -1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ worker_id: 1, status: 1, "schedule.start_time": 1 });
 bookingSchema.index({ "schedule.start_time": 1, "schedule.end_time": 1 });
+// Job auto-complete quét mỗi 15 phút theo (status, schedule.end_time);
+// index { status: 1 } đơn lẻ có cardinality quá thấp để đỡ được query đó.
+bookingSchema.index({ status: 1, "schedule.end_time": 1 });
 bookingSchema.index({ service_code: 1 });
 bookingSchema.index({ public_ref: 1 }, { unique: true, sparse: true });
 bookingSchema.index(

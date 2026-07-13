@@ -12,6 +12,8 @@ import {
 import { PaginatedResponse } from "../../utils/pagination";
 import {
   BookingStatus,
+  BOOKING_AUTO_COMPLETE_STARTED_STATUSES,
+  BOOKING_AUTO_COMPLETE_STATUSES,
   BOOKING_SCHEDULE_BLOCKING_STATUSES,
   CancellationReason,
   CancelledBy,
@@ -151,7 +153,9 @@ export class BookingRepository {
       filter.is_guest = query.is_guest;
     }
     if (query.search) {
-      const escaped = query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escaped = query.search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.$or = [
         { service_code: { $regex: escaped, $options: "i" } },
         { public_ref: { $regex: escaped, $options: "i" } },
@@ -483,6 +487,44 @@ export class BookingRepository {
       .populate(BOOKING_POPULATE)
       .sort({ "schedule.start_time": 1, created_at: 1 })
       .limit(limit);
+  }
+
+  // Hai mốc khác nhau: booking đã bắt đầu chỉ cần chờ vài giờ, booking mới chỉ
+  // CONFIRMED phải chờ lâu hơn vì không có bằng chứng buổi hẹn đã diễn ra.
+  async findFinishedBookingsForAutoComplete(
+    startedCutoff: Date,
+    unstartedCutoff: Date,
+    limit = 100
+  ): Promise<IBookingDocument[]> {
+    return Booking.find({
+      $or: [
+        {
+          status: { $in: BOOKING_AUTO_COMPLETE_STARTED_STATUSES },
+          "schedule.end_time": { $lte: startedCutoff },
+        },
+        {
+          status: BookingStatus.CONFIRMED,
+          "schedule.end_time": { $lte: unstartedCutoff },
+        },
+      ],
+    })
+      .populate(BOOKING_POPULATE)
+      .sort({ "schedule.end_time": 1 })
+      .limit(limit);
+  }
+
+  // Điều kiện status nằm trong chính query để đua với client bấm dispute/complete
+  // ngay lúc job chạy: ai tới trước thắng, không ghi đè trạng thái của người kia.
+  async autoCompleteBooking(id: string): Promise<IBookingDocument | null> {
+    const now = new Date();
+    return Booking.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(id),
+        status: { $in: BOOKING_AUTO_COMPLETE_STATUSES },
+      },
+      { status: BookingStatus.COMPLETED, completed_at: now, updated_at: now },
+      { new: true }
+    ).populate(BOOKING_POPULATE);
   }
 
   async findUpcomingBookingsForReminder(

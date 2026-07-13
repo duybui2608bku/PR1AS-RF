@@ -17,6 +17,22 @@ export const BOOKING_SCHEDULE_BLOCKING_STATUSES: BookingStatus[] = [
   BookingStatus.PENDING_CLIENT_ACCEPTANCE,
 ];
 
+// Worker đã bấm bắt đầu → có bằng chứng buổi hẹn thực sự diễn ra. Quá giờ kết thúc
+// mà không ai bấm tiếp thì gần như chắc chắn là "làm xong rồi quên cập nhật".
+export const BOOKING_AUTO_COMPLETE_STARTED_STATUSES: BookingStatus[] = [
+  BookingStatus.IN_PROGRESS,
+  BookingStatus.PENDING_CLIENT_ACCEPTANCE,
+];
+
+// Booking còn "đang chạy" sau khi lịch hẹn đã kết thúc: hai bên làm xong ngoài đời
+// nhưng quên bấm status. Job auto-complete quét đúng các trạng thái này — CONFIRMED
+// với grace dài hơn (xem BOOKING_LIMITS.AUTO_COMPLETE_UNSTARTED_DAYS).
+// DISPUTED cố tình không nằm trong đây — đang tranh chấp thì chờ admin phân xử.
+export const BOOKING_AUTO_COMPLETE_STATUSES: BookingStatus[] = [
+  BookingStatus.CONFIRMED,
+  ...BOOKING_AUTO_COMPLETE_STARTED_STATUSES,
+];
+
 export enum CancellationReason {
   CLIENT_REQUEST = "client_request",
   WORKER_UNAVAILABLE = "worker_unavailable",
@@ -89,7 +105,13 @@ export const BOOKING_LIMITS = {
   MAX_DURATION_DAYS: 30,
   MAX_DURATION_MONTHS: 12,
   AUTO_CONFIRM_HOURS: 24,
+  // Grace sau schedule.end_time trước khi job tự set COMPLETED.
+  // Booking đã bắt đầu (IN_PROGRESS/PENDING_CLIENT_ACCEPTANCE): 2 giờ là đủ.
   AUTO_COMPLETE_HOURS: 2,
+  // Booking mới chỉ CONFIRMED thì hệ thống không có bằng chứng buổi hẹn đã diễn ra
+  // (có thể worker no-show). Chờ hết cửa sổ khiếu nại rồi mới coi như xong, để hai
+  // bên còn kịp cancel/dispute. Cố ý bằng DISPUTE_WINDOW_DAYS.
+  AUTO_COMPLETE_UNSTARTED_DAYS: 3,
   // Sau khi lịch hẹn kết thúc, client chỉ còn 3 ngày để mở khiếu nại với
   // booking đã COMPLETED. Quá hạn coi như chấp nhận kết quả, không thể tranh chấp.
   DISPUTE_WINDOW_DAYS: 3,

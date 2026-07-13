@@ -38,6 +38,59 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-13 — Job auto-complete booking đã qua giờ làm
+
+**Mục tiêu**: booking làm xong ngoài đời nhưng không ai bấm status thì kẹt vĩnh
+viễn (worker không được review, thống kê completed thiếu, cửa sổ dispute không
+bao giờ đóng). Cần job tự set COMPLETED.
+
+**Đã làm**:
+
+- Job auto-complete với **grace period kép** theo mức độ chắc chắn buổi hẹn đã
+  diễn ra: `IN_PROGRESS`/`PENDING_CLIENT_ACCEPTANCE` chờ 2 giờ sau `end_time`
+  (`AUTO_COMPLETE_HOURS`), `CONFIRMED` chờ 3 ngày
+  (`AUTO_COMPLETE_UNSTARTED_DAYS`). `DISPUTED` không bao giờ bị đụng.
+- Repository: `findFinishedBookingsForAutoComplete` (`$or` hai nhánh cutoff) +
+  `autoCompleteBooking` (guard status ngay trong query để đua an toàn với client
+  bấm dispute/complete cùng lúc).
+- Dispute deadline đổi từ `end_time` sang `max(end_time, completed_at)` +
+  `DISPUTE_WINDOW_DAYS`.
+- Index mới `{ status: 1, "schedule.end_time": 1 }` cho job quét mỗi 15 phút.
+- `notificationEventService.bookingStatusUpdated` nhận `actorId: string | null`
+  cho trường hợp hệ thống tự đổi status.
+- Test: `booking-auto-complete.service.test.ts` (2 case).
+
+**File chính**: `SERVER/src/jobs/booking-auto-complete.job.ts`,
+`SERVER/src/services/booking/booking-auto-complete.service.ts`,
+`SERVER/src/services/booking/booking-dispute.service.ts`,
+`SERVER/src/repositories/booking/booking.repository.ts`,
+`SERVER/src/models/booking/booking.model.ts`,
+`SERVER/src/constants/booking.ts`, `SERVER/src/index.ts`
+
+**Quyết định / ghi chú**:
+
+- `CONFIRMED` là status mơ hồ nhất: hệ thống **không có bằng chứng** buổi hẹn đã
+  diễn ra (có thể worker no-show). Vẫn auto-complete nó — nếu không thì booking
+  kẹt vĩnh viễn, worker làm thật cũng không được review — nhưng grace 3 ngày để
+  hai bên kịp cancel. Rủi ro còn lại: worker no-show mà client thụ động thì được
+  cộng 1 booking `completed` vào thống kê. Không mất tiền (không escrow), không
+  cộng reputation (COMPLETED không gọi `reputationService`).
+- **Bẫy đã tránh**: `AUTO_COMPLETE_UNSTARTED_DAYS` cố ý **bằng**
+  `DISPUTE_WINDOW_DAYS`. Nếu dispute deadline vẫn tính từ `end_time` thì booking
+  CONFIRMED auto-complete ở ngày thứ 3 sẽ hết hạn khiếu nại **ngay giây nó
+  chuyển sang COMPLETED** → phải neo theo `completed_at`. Test khoá bất biến này.
+- Job đi thẳng qua repository, **không** qua `BOOKING_STATUS_TRANSITIONS` — giống
+  hệt cách `expirePendingBooking` đang làm. Flow thủ công của user không đổi:
+  worker vẫn không tự COMPLETED được.
+- `AUTO_COMPLETE_HOURS` trước đây là hằng số chết (khai báo, không job nào dùng);
+  giờ đã dùng. `AUTO_CONFIRM_HOURS: 24` vẫn chết.
+
+**Còn lại**: booking treo ở CONFIRMED/IN_PROGRESS *trước* khi có job này sẽ được
+job quét luôn ở lần chạy đầu (backfill tự nhiên) — theo dõi log
+`Auto-completed finished bookings` lần deploy đầu.
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-07-13 — Gọn trang About, tắt thuê nhanh, badge online/onsite
 
 **Mục tiêu**: Bỏ nút "Xem bảng giá" ở About + dời section CTA lên vị trí 2;

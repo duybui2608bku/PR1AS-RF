@@ -14,6 +14,10 @@ import {
   stopBookingExpirationJob,
 } from "./jobs/booking-expiration.job";
 import {
+  startBookingAutoCompleteJob,
+  stopBookingAutoCompleteJob,
+} from "./jobs/booking-auto-complete.job";
+import {
   startReputationRecoveryJob,
   stopReputationRecoveryJob,
 } from "./jobs/reputation-recovery.job";
@@ -44,8 +48,6 @@ import {
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
 import { serviceCatalogMigrationService } from "./services/service/service-catalog-migration.service";
 
-
-
 const app = createApp();
 const httpServer = createServer(app);
 
@@ -58,6 +60,7 @@ const startServer = async () => {
     await reputationConfigService.seedDefaults();
     await serviceCatalogMigrationService.runOnBoot();
     startBookingExpirationJob();
+    startBookingAutoCompleteJob();
     startBookingReminderJob();
     startReputationRecoveryJob();
     startModerationResolutionJob();
@@ -80,6 +83,7 @@ const startServer = async () => {
 process.on("SIGTERM", async () => {
   logger.info("SIGTERM signal received: closing HTTP server");
   stopBookingExpirationJob();
+  stopBookingAutoCompleteJob();
   stopBookingReminderJob();
   stopReputationRecoveryJob();
   stopModerationResolutionJob();
@@ -97,6 +101,7 @@ process.on("SIGTERM", async () => {
 process.on("SIGINT", async () => {
   logger.info("SIGINT signal received: closing HTTP server");
   stopBookingExpirationJob();
+  stopBookingAutoCompleteJob();
   stopBookingReminderJob();
   stopReputationRecoveryJob();
   stopModerationResolutionJob();

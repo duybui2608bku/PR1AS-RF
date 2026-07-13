@@ -183,10 +183,12 @@ export class NotificationEventService {
     });
   }
 
+  // actorId = null khi hệ thống tự đổi status (job auto-complete): không có người
+  // thao tác, và cả client lẫn worker đều cần nhận thông báo.
   async bookingStatusUpdated(
     booking: IBookingDocument,
     status: BookingStatus,
-    actorId: string
+    actorId: string | null
   ): Promise<void> {
     const bookingId = toId(booking._id);
     const clientId = toOptionalId(booking.client_id);
@@ -344,8 +346,8 @@ export class NotificationEventService {
     const clientId = toOptionalId(booking.client_id);
     const workerId = toId(booking.worker_id);
     const startTime = booking.schedule.start_time;
-    const recipients = [clientId, workerId].filter(
-      (id): id is string => Boolean(id)
+    const recipients = [clientId, workerId].filter((id): id is string =>
+      Boolean(id)
     );
 
     await Promise.all(

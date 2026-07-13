@@ -37,8 +37,8 @@ export class BookingStatusService extends BookingBaseService {
     this.validateStatusTransition(booking.status as BookingStatus, status);
 
     if (status === BookingStatus.CONFIRMED) {
-      const workerIdRaw = booking.worker_id as unknown as { _id?: unknown }
-      const workerId = String(workerIdRaw?._id ?? booking.worker_id)
+      const workerIdRaw = booking.worker_id as unknown as { _id?: unknown };
+      const workerId = String(workerIdRaw?._id ?? booking.worker_id);
       await this.validateScheduleConflict(
         workerId,
         booking.schedule.start_time,
@@ -76,7 +76,11 @@ export class BookingStatusService extends BookingBaseService {
       updateData.worker_response = workerResponse;
     }
 
-    const updatedBooking = await bookingRepository.updateStatus(bookingId, status, updateData);
+    const updatedBooking = await bookingRepository.updateStatus(
+      bookingId,
+      status,
+      updateData
+    );
 
     if (!updatedBooking) {
       throw new AppError(
@@ -88,7 +92,9 @@ export class BookingStatusService extends BookingBaseService {
 
     void notificationEventService
       .bookingStatusUpdated(updatedBooking, status, userId)
-      .catch((error) => logger.error("Booking status notification failed:", error));
+      .catch((error) =>
+        logger.error("Booking status notification failed:", error)
+      );
 
     void sendQuickBookingStatusEmail(updatedBooking, status).catch((error) =>
       logger.error("Quick booking status email failed:", error)
@@ -111,7 +117,10 @@ export class BookingStatusService extends BookingBaseService {
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
 
-    this.validateStatusTransition(booking.status as BookingStatus, BookingStatus.CANCELLED);
+    this.validateStatusTransition(
+      booking.status as BookingStatus,
+      BookingStatus.CANCELLED
+    );
 
     let cancelledBy: CancelledBy;
     if (this.isBookingClient(booking, userId)) {
@@ -151,10 +160,15 @@ export class BookingStatusService extends BookingBaseService {
 
     void notificationEventService
       .bookingCancelled(updatedBooking, userId, cancelledBy)
-      .catch((error) => logger.error("Booking cancellation notification failed:", error));
+      .catch((error) =>
+        logger.error("Booking cancellation notification failed:", error)
+      );
 
-    void sendQuickBookingStatusEmail(updatedBooking, BookingStatus.CANCELLED).catch(
-      (error) => logger.error("Quick booking cancellation email failed:", error)
+    void sendQuickBookingStatusEmail(
+      updatedBooking,
+      BookingStatus.CANCELLED
+    ).catch((error) =>
+      logger.error("Quick booking cancellation email failed:", error)
     );
 
     if (cancelledBy === CancelledBy.WORKER) {
@@ -172,7 +186,9 @@ export class BookingStatusService extends BookingBaseService {
             ReputationHistoryReason.WORKER_CANCEL
           );
         })
-        .catch((err) => logger.error("Reputation deduction after worker cancel failed:", err));
+        .catch((err) =>
+          logger.error("Reputation deduction after worker cancel failed:", err)
+        );
     }
 
     if (cancelledBy === CancelledBy.CLIENT) {
