@@ -12,6 +12,7 @@ import {
   CreateBookingInput,
   BookingQuery,
   IBookingDocument,
+  BookingClientProfile,
 } from "../../types/booking/booking.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
@@ -257,6 +258,77 @@ export class BookingCrudService extends BookingBaseService {
       BOOKING_MESSAGES.UNAUTHORIZED_ACCESS
     );
     return booking;
+  }
+
+  async getClientProfileForBooking(
+    bookingId: string,
+    workerId: string
+  ): Promise<BookingClientProfile> {
+    const booking = await bookingRepository.findById(bookingId);
+    if (!booking) {
+      throw new AppError(
+        BOOKING_MESSAGES.BOOKING_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    const bookingWorkerId =
+      booking.worker_id && typeof booking.worker_id === "object"
+        ? (booking.worker_id as { toString(): string }).toString()
+        : String(booking.worker_id);
+    if (bookingWorkerId !== workerId) {
+      throw new AppError(
+        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
+    }
+
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new AppError(
+        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
+      );
+    }
+
+    const clientRef = booking.client_id as
+      | { _id?: { toString(): string }; toString(): string }
+      | null;
+    if (!clientRef) {
+      throw new AppError(
+        BOOKING_MESSAGES.USER_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+    const clientId = clientRef._id
+      ? clientRef._id.toString()
+      : clientRef.toString();
+
+    const [client, stats] = await Promise.all([
+      userRepository.findById(clientId),
+      bookingRepository.countClientBookingStats(clientId),
+    ]);
+    if (!client) {
+      throw new AppError(
+        BOOKING_MESSAGES.USER_NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND,
+        ErrorCode.NOT_FOUND
+      );
+    }
+
+    return {
+      full_name: client.full_name ?? null,
+      avatar: client.avatar ?? null,
+      member_since: new Date(client.created_at).toISOString(),
+      is_verified: Boolean(client.verify_email),
+      reputation_score: client.meta_data?.reputation_score ?? 100,
+      total_count: stats.total,
+      completed_count: stats.completed,
+      client_cancelled_count: stats.clientCancelled,
+    };
   }
 
   async lookupGuestBooking(
