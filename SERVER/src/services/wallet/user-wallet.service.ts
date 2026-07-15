@@ -60,6 +60,9 @@ export class UserWalletService {
     const paymentCode = await this.generateSePayPaymentCode();
     const paymentContent = paymentCode;
     const qrUrl = this.buildSePayQrUrl(amount, paymentContent);
+    const expiresAt = new Date(
+      Date.now() + WALLET_LIMITS.DEPOSIT_QR_TTL_MINUTES * 60_000
+    );
 
     const transaction = await walletRepository.create({
       user_id: userId,
@@ -73,6 +76,7 @@ export class UserWalletService {
       bank_account_number: config.sepay.bankAccountNumber,
       bank_name: config.sepay.bankName,
       description: `${TRANSACTION_DESCRIPTIONS.DEPOSIT_PREFIX} ${amount} - ${paymentCode}`,
+      expires_at: expiresAt,
     });
 
     logger.info("Created SePay deposit transaction", {
@@ -94,6 +98,7 @@ export class UserWalletService {
       bank_account_number: config.sepay.bankAccountNumber,
       bank_name: config.sepay.bankName,
       amount,
+      expires_at: expiresAt.toISOString(),
     };
   }
 

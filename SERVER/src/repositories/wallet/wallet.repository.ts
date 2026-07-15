@@ -98,6 +98,32 @@ export class WalletRepository {
     });
   }
 
+  async expirePendingDeposits(now: Date): Promise<number> {
+    const result = await WalletTransaction.updateMany(
+      {
+        status: TransactionStatus.PENDING,
+        expires_at: { $ne: null, $lte: now },
+      },
+      { $set: { status: TransactionStatus.EXPIRED, updated_at: now } }
+    );
+    return result.modifiedCount ?? 0;
+  }
+
+  async expireIfDue(
+    transactionId: string,
+    now: Date
+  ): Promise<IWalletTransactionDocument | null> {
+    return WalletTransaction.findOneAndUpdate(
+      {
+        _id: transactionId,
+        status: TransactionStatus.PENDING,
+        expires_at: { $ne: null, $lte: now },
+      },
+      { $set: { status: TransactionStatus.EXPIRED, updated_at: now } },
+      { new: true }
+    );
+  }
+
   async findBySePayTransactionId(
     sepayTransactionId: number
   ): Promise<IWalletTransactionDocument | null> {

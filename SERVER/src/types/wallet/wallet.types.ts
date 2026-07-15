@@ -73,6 +73,7 @@ export interface CreateDepositResponse {
   bank_account_number: string;
   bank_name: string;
   amount: number;
+  expires_at?: string;
 }
 
 export interface CreatePricingPaymentRequest {
