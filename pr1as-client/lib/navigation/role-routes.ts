@@ -34,9 +34,10 @@ const ROLE_ROUTES: Record<string, RoleRoutes> = {
 
 const DEFAULT_ROLE_ROUTES: Record<string, string> = {
   admin: "/dashboard",
-  // Trang chủ mặc định của client/worker là /about (logo, đổi role, sau login).
-  client: "/about",
-  worker: "/about",
+  // Trang mặc định theo role (logo/Home, đổi role, sau login): client vào
+  // Dịch vụ, worker vào Bảng tin. Khách chưa đăng nhập vẫn landing ở /about.
+  client: "/services",
+  worker: "/posts",
 }
 
 export function getRoleRoute(
