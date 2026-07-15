@@ -38,6 +38,40 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-16 — QR nạp ví hết hạn sau 10 phút
+
+**Mục tiêu**: QR nạp ví SePay phải có hạn 10 phút; quá hạn đổi status sang
+`expired` và UI cho tạo QR mới.
+
+**Đã làm**:
+
+- Thêm status `TransactionStatus.EXPIRED` + hằng `DEPOSIT_QR_TTL_MINUTES = 10`;
+  field `expires_at` trên `wallet_transaction` + index `{ status, expires_at }`.
+- `createDepositTransaction` set `expires_at = now + 10p`, trả về trong response.
+  **Không** đụng `createPricingPayment` → pricing (`expires_at` null) không bị
+  expire (cả 2 hàm expire guard `expires_at: { $ne: null }`).
+- Expire bằng **cron mỗi phút** (`wallet-deposit-expiration.job.ts`, backstop) +
+  **lazy** trong `getWalletTransactionById` (FE poll 3s thấy hết hạn ngay).
+- **Webhook giữ nguyên** — đã money-safe: tiền về sau khi `expired` vẫn cộng
+  (`findByPaymentCode` không lọc status, `finalizeSePayDepositIfPending` CAS
+  `$ne SUCCESS`).
+- FE: đếm ngược mm:ss trên trang deposit, hết hạn ẩn QR + nút "Tạo QR mới";
+  status `expired` có label riêng (`statusExpired`/"Hết hạn") + icon `TimerOff`.
+
+**File chính**: `SERVER/src/{constants,models,repositories,services,jobs}/wallet/*`
++ `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
+lib/hooks/use-wallet.ts,messages/*}`.
+
+**Quyết định / ghi chú**: chốt "tiền về trễ vẫn cộng" (money-safe), status mới
+`expired` (không tái dùng cancelled), cron+lazy, chỉ áp cho nạp ví. Thêm
+`expired` vào union FE buộc điền các `Record<status,…>` exhaustive map ở 3 file
+khác (đã xử lý + label riêng).
+
+**Còn lại**: FE pricing modal chưa có countdown (ngoài scope, pending không hết
+hạn); quyết định nhánh.
+
+**Commit**: `d3b7328` (dải `aa25542..d3b7328`) · branch `main-3`
+
 ## 2026-07-16 — Redirect theo role + worker xem hồ sơ khách
 
 **Mục tiêu**: (1) user đã đăng nhập mặc định vào trang theo role (client→/services,
