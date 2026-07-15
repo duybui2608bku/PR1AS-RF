@@ -551,7 +551,11 @@
     "copyLabelBank": "ngân hàng",
     "copyLabelAccount": "số tài khoản",
     "copyLabelAmount": "số tiền",
-    "copyLabelContent": "nội dung"
+    "copyLabelContent": "nội dung",
+    "qrCountdown": "QR hết hạn sau {time}",
+    "qrExpiredTitle": "QR đã hết hạn",
+    "qrExpiredMsg": "Mã QR đã quá hạn 10 phút. Vui lòng tạo mã mới để tiếp tục.",
+    "regenerateQr": "Tạo QR mới"
   },
   "Notifications": {
     "title": "Thông báo",

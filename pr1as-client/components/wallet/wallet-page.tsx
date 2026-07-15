@@ -66,6 +66,10 @@ const statusVisual: Record<
     icon: Ban,
     circle: "bg-muted text-muted-foreground",
   },
+  expired: {
+    icon: Ban,
+    circle: "bg-muted text-muted-foreground",
+  },
 }
 
 function TransactionStatusBadge({

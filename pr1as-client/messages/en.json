@@ -551,7 +551,11 @@
     "copyLabelBank": "bank",
     "copyLabelAccount": "account number",
     "copyLabelAmount": "amount",
-    "copyLabelContent": "transfer note"
+    "copyLabelContent": "transfer note",
+    "qrCountdown": "QR expires in {time}",
+    "qrExpiredTitle": "QR expired",
+    "qrExpiredMsg": "This QR code passed its 10-minute limit. Create a new one to continue.",
+    "regenerateQr": "Create new QR"
   },
   "Notifications": {
     "title": "Notifications",

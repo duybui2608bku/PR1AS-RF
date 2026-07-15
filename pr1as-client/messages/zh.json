@@ -551,7 +551,11 @@
     "copyLabelBank": "银行",
     "copyLabelAccount": "账号",
     "copyLabelAmount": "金额",
-    "copyLabelContent": "转账备注"
+    "copyLabelContent": "转账备注",
+    "qrCountdown": "二维码将在 {time} 后过期",
+    "qrExpiredTitle": "二维码已过期",
+    "qrExpiredMsg": "此二维码已超过 10 分钟有效期。请生成新的二维码以继续。",
+    "regenerateQr": "生成新二维码"
   },
   "Notifications": {
     "title": "通知",

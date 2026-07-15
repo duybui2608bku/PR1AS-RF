@@ -58,6 +58,7 @@ const STATUS_OPTIONS: {
   { label: "Thành công", value: "success" },
   { label: "Thất bại", value: "failed" },
   { label: "Đã hủy", value: "cancelled" },
+  { label: "Hết hạn", value: "expired" },
 ]
 
 const TYPE_OPTIONS: {
@@ -103,6 +104,11 @@ const STATUS_CONFIG: Record<
   },
   cancelled: {
     label: "Đã hủy",
+    className: "bg-muted text-muted-foreground",
+    icon: <X className="size-3" />,
+  },
+  expired: {
+    label: "Hết hạn",
     className: "bg-muted text-muted-foreground",
     icon: <X className="size-3" />,
   },
