@@ -38,6 +38,41 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-16 — Redirect theo role + worker xem hồ sơ khách
+
+**Mục tiêu**: (1) user đã đăng nhập mặc định vào trang theo role (client→/services,
+worker→/posts) thay vì /about; (2) worker xem được hồ sơ khách trong Work Bookings.
+
+**Đã làm**:
+
+- **Redirect theo role**: sau login ([login/page.tsx]), quay lại `/` khi còn phiên
+  và trang auth ([middleware.ts]) đều đá về trang theo role. Đổi luôn
+  `DEFAULT_ROLE_ROUTES` trong [lib/navigation/role-routes.ts] (client→/services,
+  worker→/posts) → áp cho cả role-switch, logo/Home và HomeRoleGate (vốn đang
+  redirect worker về /about thành vòng lặp). Khách chưa login vẫn /about.
+- **Worker xem hồ sơ khách**: endpoint mới `GET /api/bookings/:id/client-profile`
+  (authenticate + workerOnly) trả payload curated (không email/phone/total_spent).
+  Ban đầu chỉ cho đơn PENDING, sau **nới cho mọi đơn** worker sở hữu (bỏ chặn 403
+  non-pending). FE: `CustomerProfileSheet` (BottomSheet) + hook
+  `useBookingClientProfile`. Nút "Xem hồ sơ khách" cuối cùng đặt **trong menu
+  hành động** (dropdown "Chọn hành động" desktop + action sheet mobile), không
+  còn là link inline; menu mở được cả khi đơn không có hành động trạng thái.
+- Tỉ lệ hủy = `client_cancelled / total` tính trên **toàn bộ** booking của khách
+  (`cancellation.cancelled_by === "client"`), không chỉ đơn với worker này.
+
+**File chính**: `SERVER/src/{repositories,services,controllers,routes}/booking/*`,
+`pr1as-client/app/worker/bookings/*`, `pr1as-client/lib/navigation/role-routes.ts`,
+`middleware.ts`, `app/(auth)/login/page.tsx`.
+
+**Quyết định / ghi chú**: authz hồ sơ khách nằm ở service — worker phải sở hữu đơn,
+guest booking → 404. `bookingRepository.findById` trả document đã populate nên phải
+lấy `worker_id._id`/`client_id._id` (từng có bug lấy `.toString()` trên document).
+Spec/plan gốc chốt "chỉ pending" nhưng đã đổi sang "mọi đơn" theo yêu cầu.
+
+**Còn lại**: quyết định nhánh (merge/PR); cập nhật spec/plan cho khớp scope "mọi đơn".
+
+**Commit**: `f27b165` (và các commit trước trong dải `adc88ca..f27b165`) · branch `main-3`
+
 ## 2026-07-13 — Job auto-complete booking đã qua giờ làm
 
 **Mục tiêu**: booking làm xong ngoài đời nhưng không ai bấm status thì kẹt vĩnh

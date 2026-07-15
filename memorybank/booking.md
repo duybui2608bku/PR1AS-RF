@@ -494,6 +494,33 @@ Worker can also:
 - Add/update `worker_response`.
 - Cancel a `pending` or `confirmed` booking through the cancel route.
 - Open the complaint group when booking is `disputed`.
+- **View the client's limited profile** for any of their own bookings.
+
+### Client profile lookup (worker-only)
+
+`GET /api/bookings/:id/client-profile` (`authenticate` + `workerOnly`) lets the
+booking's worker see a **curated** profile of the client so they can decide
+before/around accepting. Authorization lives in
+`bookingCrudService.getClientProfileForBooking`:
+
+- Booking missing → 404; requester is not the booking's `worker_id` → 403; guest
+  booking (`client_id` null) → 404. (Originally also 403 unless status was
+  `pending`; that restriction was dropped — now any owned, non-guest booking
+  works.)
+- `bookingRepository.findById` returns a **populated** document, so worker/client
+  ids must be read from `._id` (not `.toString()` on the sub-doc).
+
+Payload (never includes email/phone/`total_spent`/`company_name`):
+`full_name, avatar, member_since, is_verified, reputation_score, total_count,
+completed_count, client_cancelled_count`. Stats come from
+`bookingRepository.countClientBookingStats(clientId)` — aggregation over all of
+that client's bookings: `completed` = status `completed`, `clientCancelled` =
+status `cancelled` AND `cancellation.cancelled_by === "client"`. The FE cancel
+rate = `client_cancelled / total` (0 when total = 0).
+
+Frontend: hook `useBookingClientProfile(bookingId, enabled)`, `CustomerProfileSheet`
+(BottomSheet). Entry point is the **action menu** — the "Chọn hành động" dropdown
+(desktop table) and the action sheet (mobile card), shown for non-guest bookings.
 
 Backend does not allow unilateral cancellation from `in_progress`. Any issue
 while service is already in progress should go through dispute.
