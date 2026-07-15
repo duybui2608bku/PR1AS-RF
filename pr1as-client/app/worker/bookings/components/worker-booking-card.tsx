@@ -106,9 +106,7 @@ export function WorkerBookingCard({
           </span>
         </InfoRow>
 
-        {onViewCustomerProfile &&
-        booking.status === BookingStatus.PENDING &&
-        !isGuestBooking(booking) ? (
+        {onViewCustomerProfile && !isGuestBooking(booking) ? (
           <button
             type="button"
             onClick={() => onViewCustomerProfile(booking)}

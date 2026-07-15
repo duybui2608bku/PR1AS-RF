@@ -287,14 +287,6 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    if (booking.status !== BookingStatus.PENDING) {
-      throw new AppError(
-        BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.BOOKING_UNAUTHORIZED_ACCESS
-      );
-    }
-
     const clientRef = booking.client_id as
       | { _id?: { toString(): string }; toString(): string }
       | null;

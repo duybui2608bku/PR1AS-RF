@@ -81,13 +81,21 @@ it("throws 403 when the requester is not the booking's worker", async () => {
   ).rejects.toMatchObject({ statusCode: HTTP_STATUS.FORBIDDEN });
 });
 
-it("throws 403 when the booking is not PENDING", async () => {
+it("returns the profile for the owning worker regardless of booking status", async () => {
   bookingRepo.findById.mockResolvedValue(
     bookingDoc({ status: BookingStatus.CONFIRMED })
   );
-  await expect(
-    service.getClientProfileForBooking("booking1", WORKER_ID)
-  ).rejects.toMatchObject({ statusCode: HTTP_STATUS.FORBIDDEN });
+  userRepo.findById.mockResolvedValue(clientUser);
+  bookingRepo.countClientBookingStats.mockResolvedValue({
+    total: 3,
+    completed: 3,
+    clientCancelled: 0,
+  });
+
+  const result = await service.getClientProfileForBooking("booking1", WORKER_ID);
+
+  expect(result.full_name).toBe("Nguyen Van A");
+  expect(result.completed_count).toBe(3);
 });
 
 it("throws 404 for a guest booking with no client_id", async () => {
