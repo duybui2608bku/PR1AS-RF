@@ -34,6 +34,7 @@ export interface IWalletTransaction {
   payment_code?: string;
   payment_content?: string;
   qr_url?: string;
+  expires_at?: Date | null;
   bank_account_number?: string;
   bank_name?: string;
   sepay_transaction_id?: number;

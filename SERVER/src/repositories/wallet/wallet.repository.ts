@@ -31,6 +31,7 @@ export interface CreateTransactionInput {
   description?: string;
   purpose?: string;
   purpose_metadata?: Record<string, unknown>;
+  expires_at?: Date;
 }
 
 export interface SePayTransactionUpdateInput {

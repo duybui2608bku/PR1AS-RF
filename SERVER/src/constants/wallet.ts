@@ -10,6 +10,7 @@ export enum TransactionStatus {
   SUCCESS = "success",
   FAILED = "failed",
   CANCELLED = "cancelled",
+  EXPIRED = "expired",
 }
 
 export enum PaymentGateway {
@@ -38,6 +39,7 @@ export const WALLET_LIMITS = {
   MIN_WITHDRAW_AMOUNT: 10000,
   MAX_WITHDRAW_AMOUNT: 50000000,
   MIN_BALANCE: 0,
+  DEPOSIT_QR_TTL_MINUTES: 10,
 } as const;
 
 export const SEPAY_CONSTANTS = {
