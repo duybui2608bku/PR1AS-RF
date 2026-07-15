@@ -83,6 +83,16 @@ export class BookingController {
     R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
   }
 
+  async getClientProfileForBooking(
+    req: AuthRequest,
+    res: Response
+  ): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+    const result = await bookingService.getClientProfileForBooking(id, userId);
+    R.success(res, result, BOOKING_MESSAGES.BOOKING_FETCHED, req);
+  }
+
   async getMyBookings(req: PaginationRequest, res: Response): Promise<void> {
     const userId = extractUserIdFromRequest(req);
     const query = validateWithSchema(
