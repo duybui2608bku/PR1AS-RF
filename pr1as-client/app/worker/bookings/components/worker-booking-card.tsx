@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   Clock3,
+  Eye,
   Loader2,
   MessageSquare,
   Quote,
@@ -34,6 +35,7 @@ type WorkerBookingCardProps = {
   hasActions: boolean
   actionLoading?: boolean
   onOpenActions: (booking: Booking) => void
+  onViewCustomerProfile?: (booking: Booking) => void
 }
 
 export function WorkerBookingCard({
@@ -41,6 +43,7 @@ export function WorkerBookingCard({
   hasActions,
   actionLoading,
   onOpenActions,
+  onViewCustomerProfile,
 }: WorkerBookingCardProps) {
   const t = useTranslations("WorkerBookings")
   const tQuick = useTranslations("QuickBooking")
@@ -102,6 +105,19 @@ export function WorkerBookingCard({
             {getBookingCustomerLine(booking)}
           </span>
         </InfoRow>
+
+        {onViewCustomerProfile &&
+        booking.status === BookingStatus.PENDING &&
+        !isGuestBooking(booking) ? (
+          <button
+            type="button"
+            onClick={() => onViewCustomerProfile(booking)}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <Eye className="size-4" />
+            {t("viewCustomerProfile")}
+          </button>
+        ) : null}
 
         <InfoRow icon={CalendarDays} label={t("appointment")}>
           <span className="font-medium">

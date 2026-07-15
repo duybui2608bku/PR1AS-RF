@@ -71,6 +71,7 @@ import {
 } from "./components/worker-booking-action-sheet"
 import { WorkerBookingCard } from "./components/worker-booking-card"
 import { WorkerBookingsMobileFilters } from "./components/worker-bookings-mobile-filters"
+import { CustomerProfileSheet } from "./components/customer-profile-sheet"
 import {
   bookingStatusBadgeClass,
   formatDateTime,
@@ -255,6 +256,9 @@ export default function WorkerBookingsPage() {
     action: WorkerBookingAction
   } | null>(null)
   const [sheetBooking, setSheetBooking] = React.useState<Booking | null>(null)
+  const [profileBooking, setProfileBooking] = React.useState<Booking | null>(
+    null
+  )
   const [complaintLoadingId, setComplaintLoadingId] = React.useState<
     string | null
   >(null)
@@ -720,6 +724,7 @@ export default function WorkerBookingsPage() {
                       hasActions={hasActions}
                       actionLoading={complaintLoadingId === bookingId}
                       onOpenActions={setSheetBooking}
+                      onViewCustomerProfile={setProfileBooking}
                     />
                   )
                 })}
@@ -947,6 +952,14 @@ export default function WorkerBookingsPage() {
             items={sheetItems}
             onOpenChange={(open) => {
               if (!open) setSheetBooking(null)
+            }}
+          />
+
+          <CustomerProfileSheet
+            open={profileBooking !== null}
+            booking={profileBooking}
+            onOpenChange={(open) => {
+              if (!open) setProfileBooking(null)
             }}
           />
         </div>
