@@ -395,7 +395,8 @@ export default function WorkerBookingsPage() {
     const actions = getAvailableActions(booking, expired, t)
     const complaintLoading = complaintLoadingId === bookingId
     const hasComplaintAction = booking.status === BookingStatus.DISPUTED
-    const hasActions = hasComplaintAction || actions.length > 0
+    const canViewProfile = !isGuestBooking(booking)
+    const hasActions = hasComplaintAction || canViewProfile || actions.length > 0
 
     if (!hasActions) {
       return (
@@ -413,6 +414,11 @@ export default function WorkerBookingsPage() {
     }
 
     const handleActionChange = (value: string) => {
+      if (value === "view-profile") {
+        setProfileBooking(booking)
+        return
+      }
+
       if (value === "complaint") {
         handleOpenComplaintGroup(booking)
         return
@@ -444,6 +450,15 @@ export default function WorkerBookingsPage() {
             <SelectValue placeholder={t("selectAction")} />
           </SelectTrigger>
           <SelectContent align="end" className="min-w-52">
+            {canViewProfile ? (
+              <SelectItem
+                value="view-profile"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <Eye className="size-4" />
+                {t("viewCustomerProfile")}
+              </SelectItem>
+            ) : null}
             {hasComplaintAction ? (
               <SelectItem
                 value="complaint"
@@ -487,6 +502,17 @@ export default function WorkerBookingsPage() {
       booking.status,
       booking.created_at
     )
+    if (!isGuestBooking(booking)) {
+      sheetItems.push({
+        key: "view-profile",
+        label: t("viewCustomerProfile"),
+        icon: Eye,
+        onSelect: () => {
+          setSheetBooking(null)
+          setProfileBooking(booking)
+        },
+      })
+    }
     if (booking.status === BookingStatus.DISPUTED) {
       sheetItems.push({
         key: "complaint",
@@ -717,7 +743,8 @@ export default function WorkerBookingsPage() {
                   const actions = getAvailableActions(booking, expired, t)
                   const hasActions =
                     booking.status === BookingStatus.DISPUTED ||
-                    actions.length > 0
+                    actions.length > 0 ||
+                    !isGuestBooking(booking)
                   return (
                     <WorkerBookingCard
                       key={bookingId}
@@ -725,7 +752,6 @@ export default function WorkerBookingsPage() {
                       hasActions={hasActions}
                       actionLoading={complaintLoadingId === bookingId}
                       onOpenActions={setSheetBooking}
-                      onViewCustomerProfile={setProfileBooking}
                     />
                   )
                 })}
@@ -849,16 +875,6 @@ export default function WorkerBookingsPage() {
                                 <div className="text-xs text-muted-foreground">
                                   {getBookingCustomerLine(booking)}
                                 </div>
-                                {!isGuestBooking(booking) ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setProfileBooking(booking)}
-                                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                                  >
-                                    <Eye className="size-3.5" />
-                                    {t("viewCustomerProfile")}
-                                  </button>
-                                ) : null}
                               </div>
                             </td>
                             <td className="px-4 py-3">
