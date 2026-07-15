@@ -523,6 +523,7 @@
     "statusSuccess": "Thành công",
     "statusFailed": "Thất bại",
     "statusCancelled": "Đã hủy",
+    "statusExpired": "Hết hạn",
     "depositTitle": "Nạp tiền",
     "depositSubtitle": "Thanh toán qua SePay",
     "backToWallet": "Ví của tôi",

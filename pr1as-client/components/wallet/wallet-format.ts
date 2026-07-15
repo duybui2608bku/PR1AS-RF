@@ -32,7 +32,7 @@ export const statusKeys: Record<WalletTransactionStatus, string> = {
   success: "statusSuccess",
   failed: "statusFailed",
   cancelled: "statusCancelled",
-  expired: "statusCancelled",
+  expired: "statusExpired",
 }
 
 export const statusClassName: Record<WalletTransactionStatus, string> = {

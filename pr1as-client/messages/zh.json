@@ -523,6 +523,7 @@
     "statusSuccess": "成功",
     "statusFailed": "失败",
     "statusCancelled": "已取消",
+    "statusExpired": "已过期",
     "depositTitle": "充值",
     "depositSubtitle": "通过 SePay 支付",
     "backToWallet": "我的钱包",

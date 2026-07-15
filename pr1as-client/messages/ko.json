@@ -522,6 +522,7 @@
     "statusSuccess": "성공",
     "statusFailed": "실패",
     "statusCancelled": "취소됨",
+    "statusExpired": "만료됨",
     "depositTitle": "충전",
     "depositSubtitle": "SePay로 결제",
     "backToWallet": "내 지갑",

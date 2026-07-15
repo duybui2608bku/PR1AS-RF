@@ -523,6 +523,7 @@
     "statusSuccess": "Success",
     "statusFailed": "Failed",
     "statusCancelled": "Cancelled",
+    "statusExpired": "Expired",
     "depositTitle": "Top up",
     "depositSubtitle": "Pay via SePay",
     "backToWallet": "My wallet",
