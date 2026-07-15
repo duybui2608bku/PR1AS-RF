@@ -6,6 +6,7 @@ import {
   AlertCircle,
   CalendarCheck2,
   CheckCircle2,
+  Eye,
   FilterX,
   Info,
   Loader2,
@@ -848,6 +849,16 @@ export default function WorkerBookingsPage() {
                                 <div className="text-xs text-muted-foreground">
                                   {getBookingCustomerLine(booking)}
                                 </div>
+                                {!isGuestBooking(booking) ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setProfileBooking(booking)}
+                                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                                  >
+                                    <Eye className="size-3.5" />
+                                    {t("viewCustomerProfile")}
+                                  </button>
+                                ) : null}
                               </div>
                             </td>
                             <td className="px-4 py-3">
