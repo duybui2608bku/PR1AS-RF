@@ -522,6 +522,7 @@
     "statusSuccess": "성공",
     "statusFailed": "실패",
     "statusCancelled": "취소됨",
+    "statusExpired": "만료됨",
     "depositTitle": "충전",
     "depositSubtitle": "SePay로 결제",
     "backToWallet": "내 지갑",
@@ -550,7 +551,11 @@
     "copyLabelBank": "은행",
     "copyLabelAccount": "계좌번호",
     "copyLabelAmount": "금액",
-    "copyLabelContent": "이체 메모"
+    "copyLabelContent": "이체 메모",
+    "qrCountdown": "QR 만료까지 {time}",
+    "qrExpiredTitle": "QR 만료됨",
+    "qrExpiredMsg": "이 QR 코드는 10분 제한을 초과했습니다. 계속하려면 새로 생성하세요.",
+    "regenerateQr": "새 QR 생성"
   },
   "Notifications": {
     "title": "알림",
@@ -1342,7 +1347,15 @@
       "description": "예약 작업",
       "cancel": "취소"
     },
-    "guide": "예약 가이드"
+    "guide": "예약 가이드",
+    "viewCustomerProfile": "고객 프로필 보기",
+    "customerProfileTitle": "고객 프로필",
+    "memberSince": "{date}부터 회원",
+    "verifiedBadge": "인증됨",
+    "reputation": "신뢰도",
+    "completedBookings": "완료된 예약 {count}건",
+    "cancelRate": "취소율 {rate}%",
+    "profileLoadError": "고객 프로필을 불러오지 못했습니다"
   },
   "WorkerBoost": {
     "page": {

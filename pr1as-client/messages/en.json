@@ -523,6 +523,7 @@
     "statusSuccess": "Success",
     "statusFailed": "Failed",
     "statusCancelled": "Cancelled",
+    "statusExpired": "Expired",
     "depositTitle": "Top up",
     "depositSubtitle": "Pay via SePay",
     "backToWallet": "My wallet",
@@ -551,7 +552,11 @@
     "copyLabelBank": "bank",
     "copyLabelAccount": "account number",
     "copyLabelAmount": "amount",
-    "copyLabelContent": "transfer note"
+    "copyLabelContent": "transfer note",
+    "qrCountdown": "QR expires in {time}",
+    "qrExpiredTitle": "QR expired",
+    "qrExpiredMsg": "This QR code passed its 10-minute limit. Create a new one to continue.",
+    "regenerateQr": "Create new QR"
   },
   "Notifications": {
     "title": "Notifications",
@@ -1344,7 +1349,15 @@
       "description": "Booking actions",
       "cancel": "Cancel"
     },
-    "guide": "Booking guide"
+    "guide": "Booking guide",
+    "viewCustomerProfile": "View customer profile",
+    "customerProfileTitle": "Customer profile",
+    "memberSince": "Member since {date}",
+    "verifiedBadge": "Verified",
+    "reputation": "Reputation",
+    "completedBookings": "{count} completed bookings",
+    "cancelRate": "Cancel rate {rate}%",
+    "profileLoadError": "Could not load customer profile"
   },
   "WorkerBoost": {
     "page": {

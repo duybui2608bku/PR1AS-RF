@@ -6,6 +6,7 @@ import {
   AlertCircle,
   CalendarCheck2,
   CheckCircle2,
+  Eye,
   FilterX,
   Info,
   Loader2,
@@ -71,6 +72,7 @@ import {
 } from "./components/worker-booking-action-sheet"
 import { WorkerBookingCard } from "./components/worker-booking-card"
 import { WorkerBookingsMobileFilters } from "./components/worker-bookings-mobile-filters"
+import { CustomerProfileSheet } from "./components/customer-profile-sheet"
 import {
   bookingStatusBadgeClass,
   formatDateTime,
@@ -255,6 +257,9 @@ export default function WorkerBookingsPage() {
     action: WorkerBookingAction
   } | null>(null)
   const [sheetBooking, setSheetBooking] = React.useState<Booking | null>(null)
+  const [profileBooking, setProfileBooking] = React.useState<Booking | null>(
+    null
+  )
   const [complaintLoadingId, setComplaintLoadingId] = React.useState<
     string | null
   >(null)
@@ -390,7 +395,8 @@ export default function WorkerBookingsPage() {
     const actions = getAvailableActions(booking, expired, t)
     const complaintLoading = complaintLoadingId === bookingId
     const hasComplaintAction = booking.status === BookingStatus.DISPUTED
-    const hasActions = hasComplaintAction || actions.length > 0
+    const canViewProfile = !isGuestBooking(booking)
+    const hasActions = hasComplaintAction || canViewProfile || actions.length > 0
 
     if (!hasActions) {
       return (
@@ -408,6 +414,11 @@ export default function WorkerBookingsPage() {
     }
 
     const handleActionChange = (value: string) => {
+      if (value === "view-profile") {
+        setProfileBooking(booking)
+        return
+      }
+
       if (value === "complaint") {
         handleOpenComplaintGroup(booking)
         return
@@ -439,6 +450,15 @@ export default function WorkerBookingsPage() {
             <SelectValue placeholder={t("selectAction")} />
           </SelectTrigger>
           <SelectContent align="end" className="min-w-52">
+            {canViewProfile ? (
+              <SelectItem
+                value="view-profile"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <Eye className="size-4" />
+                {t("viewCustomerProfile")}
+              </SelectItem>
+            ) : null}
             {hasComplaintAction ? (
               <SelectItem
                 value="complaint"
@@ -482,6 +502,17 @@ export default function WorkerBookingsPage() {
       booking.status,
       booking.created_at
     )
+    if (!isGuestBooking(booking)) {
+      sheetItems.push({
+        key: "view-profile",
+        label: t("viewCustomerProfile"),
+        icon: Eye,
+        onSelect: () => {
+          setSheetBooking(null)
+          setProfileBooking(booking)
+        },
+      })
+    }
     if (booking.status === BookingStatus.DISPUTED) {
       sheetItems.push({
         key: "complaint",
@@ -712,7 +743,8 @@ export default function WorkerBookingsPage() {
                   const actions = getAvailableActions(booking, expired, t)
                   const hasActions =
                     booking.status === BookingStatus.DISPUTED ||
-                    actions.length > 0
+                    actions.length > 0 ||
+                    !isGuestBooking(booking)
                   return (
                     <WorkerBookingCard
                       key={bookingId}
@@ -947,6 +979,14 @@ export default function WorkerBookingsPage() {
             items={sheetItems}
             onOpenChange={(open) => {
               if (!open) setSheetBooking(null)
+            }}
+          />
+
+          <CustomerProfileSheet
+            open={profileBooking !== null}
+            booking={profileBooking}
+            onOpenChange={(open) => {
+              if (!open) setProfileBooking(null)
             }}
           />
         </div>

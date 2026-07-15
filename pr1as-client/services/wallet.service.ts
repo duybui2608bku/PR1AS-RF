@@ -12,7 +12,7 @@ export type WalletBalance = {
   user_id: string
 }
 
-export type WalletTransactionStatus = "pending" | "success" | "failed" | "cancelled"
+export type WalletTransactionStatus = "pending" | "success" | "failed" | "cancelled" | "expired"
 
 export type WalletTransaction = {
   id: string
@@ -31,6 +31,7 @@ export type WalletTransaction = {
   sepay_reference_code?: string | null
   description?: string | null
   currency: string
+  expires_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -60,6 +61,7 @@ export type DepositPayment = {
   bank_account_number: string
   bank_name: string
   amount: number
+  expires_at?: string
 }
 
 const emptyTransactionList: WalletTransactionList = {
