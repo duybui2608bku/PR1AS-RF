@@ -56,12 +56,17 @@ export function WalletDepositPage() {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    if (!payment?.expires_at || isPaymentSuccess || isPaymentFailed) {
+    if (
+      !payment?.expires_at ||
+      isPaymentSuccess ||
+      isPaymentFailed ||
+      isPaymentExpired
+    ) {
       return
     }
     const timer = window.setInterval(() => setNow(Date.now()), 1_000)
     return () => window.clearInterval(timer)
-  }, [payment?.expires_at, isPaymentSuccess, isPaymentFailed])
+  }, [payment?.expires_at, isPaymentSuccess, isPaymentFailed, isPaymentExpired])
 
   const msLeft = payment?.expires_at
     ? new Date(payment.expires_at).getTime() - now
