@@ -1344,7 +1344,15 @@
       "description": "Hành động booking",
       "cancel": "Hủy"
     },
-    "guide": "Hướng dẫn đặt lịch"
+    "guide": "Hướng dẫn đặt lịch",
+    "viewCustomerProfile": "Xem hồ sơ khách",
+    "customerProfileTitle": "Hồ sơ khách hàng",
+    "memberSince": "Thành viên từ {date}",
+    "verifiedBadge": "Đã xác thực",
+    "reputation": "Điểm uy tín",
+    "completedBookings": "Đã hoàn thành {count} đơn",
+    "cancelRate": "Tỉ lệ hủy {rate}%",
+    "profileLoadError": "Không tải được hồ sơ khách"
   },
   "WorkerBoost": {
     "page": {

@@ -1344,7 +1344,15 @@
       "description": "Booking actions",
       "cancel": "Cancel"
     },
-    "guide": "Booking guide"
+    "guide": "Booking guide",
+    "viewCustomerProfile": "View customer profile",
+    "customerProfileTitle": "Customer profile",
+    "memberSince": "Member since {date}",
+    "verifiedBadge": "Verified",
+    "reputation": "Reputation",
+    "completedBookings": "{count} completed bookings",
+    "cancelRate": "Cancel rate {rate}%",
+    "profileLoadError": "Could not load customer profile"
   },
   "WorkerBoost": {
     "page": {

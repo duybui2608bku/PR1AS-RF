@@ -1344,7 +1344,15 @@
       "description": "预约操作",
       "cancel": "取消"
     },
-    "guide": "预约指南"
+    "guide": "预约指南",
+    "viewCustomerProfile": "查看客户资料",
+    "customerProfileTitle": "客户资料",
+    "memberSince": "注册于 {date}",
+    "verifiedBadge": "已验证",
+    "reputation": "信誉分",
+    "completedBookings": "已完成 {count} 个预约",
+    "cancelRate": "取消率 {rate}%",
+    "profileLoadError": "无法加载客户资料"
   },
   "WorkerBoost": {
     "page": {

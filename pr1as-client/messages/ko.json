@@ -1342,7 +1342,15 @@
       "description": "예약 작업",
       "cancel": "취소"
     },
-    "guide": "예약 가이드"
+    "guide": "예약 가이드",
+    "viewCustomerProfile": "고객 프로필 보기",
+    "customerProfileTitle": "고객 프로필",
+    "memberSince": "{date}부터 회원",
+    "verifiedBadge": "인증됨",
+    "reputation": "신뢰도",
+    "completedBookings": "완료된 예약 {count}건",
+    "cancelRate": "취소율 {rate}%",
+    "profileLoadError": "고객 프로필을 불러오지 못했습니다"
   },
   "WorkerBoost": {
     "page": {
