@@ -524,6 +524,26 @@ export class UserWalletService {
       throw AppError.forbidden(WALLET_MESSAGES.TRANSACTION_FAILED);
     }
 
+    if (
+      transaction.status === TransactionStatus.PENDING &&
+      transaction.expires_at &&
+      transaction.expires_at.getTime() <= Date.now()
+    ) {
+      const expired = await walletRepository.expireIfDue(
+        transaction._id.toString(),
+        new Date()
+      );
+      return expired ?? transaction;
+    }
+
     return transaction;
+  }
+
+  async expirePendingDeposits(): Promise<number> {
+    const count = await walletRepository.expirePendingDeposits(new Date());
+    if (count > 0) {
+      logger.info("Expired pending deposit QR transactions", { count });
+    }
+    return count;
   }
 }
