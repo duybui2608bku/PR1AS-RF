@@ -79,6 +79,51 @@ export class BookingRepository {
     });
   }
 
+  async countClientBookingStats(clientId: string): Promise<{
+    total: number;
+    completed: number;
+    clientCancelled: number;
+  }> {
+    const [row] = await Booking.aggregate<{
+      total: number;
+      completed: number;
+      clientCancelled: number;
+    }>([
+      { $match: { client_id: new Types.ObjectId(clientId) } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ["$status", BookingStatus.COMPLETED] }, 1, 0],
+            },
+          },
+          clientCancelled: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", BookingStatus.CANCELLED] },
+                    { $eq: ["$cancellation.cancelled_by", "client"] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    return {
+      total: row?.total ?? 0,
+      completed: row?.completed ?? 0,
+      clientCancelled: row?.clientCancelled ?? 0,
+    };
+  }
+
   async hasConfirmedBookingBetweenUsers(
     userAId: string,
     userBId: string
