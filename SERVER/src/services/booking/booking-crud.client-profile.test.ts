@@ -27,7 +27,7 @@ const CLIENT_ID = "6512bbbb0000000000000002";
 const bookingDoc = (over: Record<string, unknown> = {}) =>
   ({
     _id: { toString: () => "booking1" },
-    worker_id: { toString: () => WORKER_ID },
+    worker_id: { _id: { toString: () => WORKER_ID }, toString: () => "[object Object]" },
     client_id: { _id: { toString: () => CLIENT_ID }, toString: () => CLIENT_ID },
     status: BookingStatus.PENDING,
     ...over,

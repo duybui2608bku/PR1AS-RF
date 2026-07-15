@@ -273,10 +273,12 @@ export class BookingCrudService extends BookingBaseService {
       );
     }
 
-    const bookingWorkerId =
-      booking.worker_id && typeof booking.worker_id === "object"
-        ? (booking.worker_id as { toString(): string }).toString()
-        : String(booking.worker_id);
+    const workerRef = booking.worker_id as
+      | { _id?: { toString(): string }; toString(): string }
+      | null;
+    const bookingWorkerId = workerRef?._id
+      ? workerRef._id.toString()
+      : String(workerRef);
     if (bookingWorkerId !== workerId) {
       throw new AppError(
         BOOKING_MESSAGES.UNAUTHORIZED_ACCESS,
