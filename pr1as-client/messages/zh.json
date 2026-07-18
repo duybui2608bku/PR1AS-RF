@@ -994,11 +994,7 @@
       "cannotBookLowReputation": "由于信誉分较低，该工作者目前无法接受预约。",
       "selectServiceWarning": "请选择一项服务。",
       "cannotMessageSelf": "你不能给自己发消息。",
-      "checkingPlan": "正在检查你当前的套餐。",
-      "upgradeTitle": "需要升级套餐",
-      "upgradeDesc": "你需要升级套餐才能先向工作者发消息。升级后即可开始直接对话。",
-      "upgradeLater": "以后再说",
-      "upgradeConfirm": "升级套餐"
+      "checkingPlan": "正在检查你当前的套餐。"
     },
     "calendar": {
       "loading": "正在加载日程…",
@@ -1392,6 +1388,7 @@
       "points": "{count} 积分",
       "hours": "{count} 小时",
       "notEnoughPointsDetail": "积分不足（还需要 {points} 积分）",
+      "planBlockedHint": "当前套餐不支持置顶，或本月额度已用完",
       "activeButton": "已有 Boost 生效",
       "notEnoughPointsButton": "积分不足",
       "activateButton": "启用",
@@ -1501,6 +1498,15 @@
         "timedRange": "{start} → {end}"
       }
     }
+  },
+  "PlanUpgrade": {
+    "title": "需要升级套餐",
+    "descMessaging": "你需要升级套餐才能先向工作者发消息。升级后即可开始直接对话。",
+    "descPost": "你已达到当前套餐的发帖上限。升级套餐可发布更多帖子。",
+    "descBoost": "当前套餐不支持资料置顶，或本月额度已用完。升级套餐以继续。",
+    "descGeneric": "此功能在当前套餐中不可用。升级套餐以使用。",
+    "later": "以后再说",
+    "confirm": "升级套餐"
   },
   "Pricing": {
     "title": "价格",

@@ -15,6 +15,7 @@ import { OnboardingRoleModal } from "@/components/providers/onboarding-role-moda
 import { LegalResponsibilityModal } from "@/components/providers/legal-responsibility-modal"
 import { BrandingSync } from "@/components/providers/branding-sync"
 import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
+import { UpgradePlanDialog } from "@/components/plan/upgrade-plan-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { PrefLoadingOverlay } from "@/components/layout/pref-loading-overlay"
 import { Toaster } from "@/components/ui/sonner"
@@ -141,6 +142,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <BrandingSync />
         <Toaster richColors position="top-right" />
         <AuthRequiredDialog />
+        {/* Upgrade-plan dialog — shown when a plan-restricted action is attempted */}
+        <UpgradePlanDialog />
         {/* Banned account modal — triggered by socket or HTTP 403 USER_BANNED */}
         <BannedAccountModal />
         {/* Onboarding modal — shown once on first login */}

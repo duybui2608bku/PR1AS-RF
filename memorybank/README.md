@@ -72,6 +72,9 @@ Important current facts:
   warnings, history, and daily recovery.
 - [boost.md](./boost.md): point wallet, attendance, boost activation, discovery
   ranking, admin config, and frontend hard-coded cost/duration nuance.
+- [plan-upgrade-gating.md](./plan-upgrade-gating.md): shared upgrade-required
+  dialog pattern, and how messaging/post-creation/boost each gate on plan
+  features through it.
 - [multi-currency.md](./multi-currency.md): supported currencies, VND pivot,
   worker service price snapshots, display conversion, and drift handling.
 - [site-header.md](./site-header.md): standard header, services header, portal

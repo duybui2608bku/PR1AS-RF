@@ -3,25 +3,18 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Crown, MapPin, MessageCircle, Monitor, ShoppingCart } from "lucide-react"
+import { MapPin, MessageCircle, Monitor, ShoppingCart } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { BookWorkerDialog } from "@/components/worker/book-worker-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useMyPricing } from "@/lib/hooks/use-pricing"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
+import { useRequirePlan } from "@/lib/hooks/use-require-plan"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { serviceService } from "@/services/service.service"
@@ -75,9 +68,9 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
   const locale = useLocale()
   const { format } = useCurrency()
   const [bookOpen, setBookOpen] = useState(false)
-  const [upgradePlanOpen, setUpgradePlanOpen] = useState(false)
   const router = useRouter()
   const { requireAuth } = useAuthRequired()
+  const { requirePlan } = useRequirePlan()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const user = useAuthStore((s) => s.user)
   const currentUserId = user?.id
@@ -163,11 +156,9 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
         toast.info(t("services.checkingPlan"))
         return
       }
-      if (!canMessageWorker) {
-        setUpgradePlanOpen(true)
-        return
-      }
-      router.push(`/chat?receiver_id=${workerId}`)
+      requirePlan(canMessageWorker, "messaging", () => {
+        router.push(`/chat?receiver_id=${workerId}`)
+      })
     })
   }
 
@@ -292,36 +283,6 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
         serviceName={selectedServiceName}
         initialDate={selectedDate}
       />
-
-      <Dialog open={upgradePlanOpen} onOpenChange={setUpgradePlanOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Crown className="size-5" />
-            </div>
-            <DialogTitle>{t("services.upgradeTitle")}</DialogTitle>
-            <DialogDescription>{t("services.upgradeDesc")}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setUpgradePlanOpen(false)}
-            >
-              {t("services.upgradeLater")}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setUpgradePlanOpen(false)
-                router.push("/pricing")
-              }}
-            >
-              {t("services.upgradeConfirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   )
 }

@@ -28,4 +28,17 @@ export const createEmailVerificationExpiry = (): Date => {
   return addHoursToDate(new Date(), TOKEN_EXPIRY.EMAIL_VERIFICATION_HOURS);
 };
 
+/**
+ * Current calendar-month window anchored to the product timezone
+ * (Asia/Ho_Chi_Minh), so monthly quotas (post creation, boost activation)
+ * reset at local midnight on the 1st regardless of where the server runs.
+ */
+export const getCurrentMonthWindow = (): { startDate: Date; endDate: Date } => {
+  const startOfMonth = dayjs().tz("Asia/Ho_Chi_Minh").startOf("month");
+  return {
+    startDate: startOfMonth.toDate(),
+    endDate: startOfMonth.add(1, "month").toDate(),
+  };
+};
+
 export default dayjs;

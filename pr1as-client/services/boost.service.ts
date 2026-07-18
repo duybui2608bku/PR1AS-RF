@@ -41,6 +41,11 @@ export interface BoostStatus {
   boost_type: BoostType | null
   expires_at: string | null
   seconds_remaining: number | null
+  boost_plan_enabled: boolean
+  monthly_boost_limit: number | null
+  current_month_boost_count: number
+  remaining_monthly_boosts: number | null
+  can_activate_boost: boolean
 }
 
 export interface ActivateBoostResponse {

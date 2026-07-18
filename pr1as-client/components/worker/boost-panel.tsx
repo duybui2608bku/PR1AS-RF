@@ -15,6 +15,10 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { queryKeys } from "@/lib/query-keys"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
+import { useRequirePlan } from "@/lib/hooks/use-require-plan"
+import { useUpgradePlanStore } from "@/lib/store/upgrade-plan-store"
+import { ApiError } from "@/lib/utils/error-handler"
+import { cn } from "@/lib/utils"
 
 const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
   vi,
@@ -22,6 +26,10 @@ const DATE_FNS_LOCALES: Record<SupportedLocale, Locale> = {
   zh: zhCN,
   ko,
 }
+
+// Plan-restriction codes thrown by boostService.activate()'s plan gate —
+// trigger the upgrade dialog instead of the generic activation-error toast.
+const BOOST_PLAN_CODES = new Set(["BOOST_PLAN_FEATURE_DISABLED", "BOOST_MONTHLY_LIMIT_EXCEEDED"])
 
 interface BoostCardProps {
   title: string
@@ -32,6 +40,7 @@ interface BoostCardProps {
   tier: 1 | 2
   balance: number
   isActiveBoost: boolean
+  planBlocked: boolean
   onActivate: (type: BoostType) => void
   isPending: boolean
 }
@@ -45,13 +54,16 @@ function BoostCard({
   tier,
   balance,
   isActiveBoost,
+  planBlocked,
   onActivate,
   isPending,
 }: BoostCardProps) {
   const t = useTranslations("WorkerBoost.panel")
   const isFeatured = tier === 1
   const canAfford = balance >= cost
-  const disabled = isPending || isActiveBoost || !canAfford
+  // Plan restriction stays clickable (to open the upgrade dialog) even though
+  // it visually reads as disabled — only the points shortfall hard-disables.
+  const disabled = isPending || isActiveBoost || (!canAfford && !planBlocked)
 
   return (
     <Card
@@ -91,22 +103,25 @@ function BoostCard({
             {t("hours", { count: durationHours })}
           </span>
         </div>
-        {!canAfford && (
+        {planBlocked ? (
+          <p className="text-xs text-destructive">{t("planBlockedHint")}</p>
+        ) : !canAfford ? (
           <p className="text-xs text-destructive">
             {t("notEnoughPointsDetail", { points: cost - balance })}
           </p>
-        )}
+        ) : null}
         <Button
           size="sm"
-          className="w-full"
+          className={cn("w-full", planBlocked && "opacity-60")}
           variant={isFeatured ? "default" : "outline"}
           disabled={disabled}
+          aria-disabled={planBlocked}
           onClick={() => onActivate(boostType)}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isActiveBoost
             ? t("activeButton")
-            : !canAfford
+            : !planBlocked && !canAfford
               ? t("notEnoughPointsButton")
               : t("activateButton")}
         </Button>
@@ -121,6 +136,8 @@ export function BoostPanel() {
   const localeTag = INTL_LOCALE_TAGS[locale]
   const dateFnsLocale = DATE_FNS_LOCALES[locale]
   const queryClient = useQueryClient()
+  const { requirePlan } = useRequirePlan()
+  const openUpgradeDialog = useUpgradePlanStore((s) => s.openUpgradeDialog)
 
   const { data: pointsData, isLoading: pointsLoading } = useQuery({
     queryKey: queryKeys.boostPoints,
@@ -165,6 +182,10 @@ export function BoostPanel() {
       )
     },
     onError: (err: unknown) => {
+      if (err instanceof ApiError && err.code && BOOST_PLAN_CODES.has(err.code)) {
+        openUpgradeDialog("boost")
+        return
+      }
       const msg = err instanceof Error ? err.message : t("activationError")
       toast.error(msg)
     },
@@ -174,6 +195,11 @@ export function BoostPanel() {
   const status = statusData
   const balance = wallet?.balance ?? 0
   const isActiveBoost = Boolean(status?.is_active)
+  // Ignore the plan gate while a boost is already running — the "active" state
+  // already explains why the button is disabled, so don't layer plan copy on top.
+  const planBlocked = status ? !status.can_activate_boost && !isActiveBoost : false
+  const handleActivate = (type: BoostType) =>
+    requirePlan(!planBlocked, "boost", () => activate(type))
 
   return (
     <div className="space-y-4">
@@ -212,7 +238,8 @@ export function BoostPanel() {
           tier={2}
           balance={balance}
           isActiveBoost={isActiveBoost}
-          onActivate={activate}
+          planBlocked={planBlocked}
+          onActivate={handleActivate}
           isPending={isPending}
         />
         <BoostCard
@@ -224,7 +251,8 @@ export function BoostPanel() {
           tier={1}
           balance={balance}
           isActiveBoost={isActiveBoost}
-          onActivate={activate}
+          planBlocked={planBlocked}
+          onActivate={handleActivate}
           isPending={isPending}
         />
       </div>

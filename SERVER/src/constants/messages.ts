@@ -363,6 +363,8 @@ export const BOOST_MESSAGES = {
   BOOST_ALREADY_ACTIVE:
     "You already have an active boost. Wait for it to expire before activating a new one",
   BOOST_INSUFFICIENT_POINTS: "Insufficient points to activate this boost",
+  BOOST_PLAN_FEATURE_DISABLED: "Your current plan does not allow activating profile boost",
+  BOOST_MONTHLY_LIMIT_EXCEEDED: "You have reached your monthly boost activation limit for the current plan",
   CONFIG_FETCHED: "Boost config fetched successfully",
   CONFIG_UPDATED: "Boost config updated successfully",
   POINTS_ADJUSTED: "Points adjusted successfully",

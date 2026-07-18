@@ -5,12 +5,18 @@ import type {
   CursorPaginatedResponse,
   PostFeedParams,
   PostPublic,
+  PostStatsPublic,
   UpdatePostPayload,
 } from "@/types"
 
 export const postService = {
   createPost: async (payload: CreatePostPayload) => {
     const { data } = await api.post<ApiResponse<PostPublic>>("/posts", payload)
+    return data.data
+  },
+
+  getMyPostStats: async () => {
+    const { data } = await api.get<ApiResponse<PostStatsPublic>>("/users/me/post-stats")
     return data.data
   },
 

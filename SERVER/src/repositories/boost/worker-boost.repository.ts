@@ -57,6 +57,22 @@ class WorkerBoostRepository {
     }));
   }
 
+  /**
+   * Counts activations started within [startDate, endDate) for the monthly
+   * plan-limit gate. Includes expired rows — a boost that already ran its
+   * course still consumed a monthly slot.
+   */
+  async countActivatedByUserBetween(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number> {
+    return WorkerBoost.countDocuments({
+      user_id: new mongoose.Types.ObjectId(userId),
+      started_at: { $gte: startDate, $lt: endDate },
+    });
+  }
+
   /** Cron: mark expired boosts */
   async expireOverdue(): Promise<number> {
     const result = await WorkerBoost.updateMany(

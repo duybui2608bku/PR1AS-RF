@@ -37,6 +37,8 @@ const FIELD_TRANSLATIONS: Record<string, string> = {
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   AUTH_EMAIL_NOT_VERIFIED: "Vui lòng xác minh email trước khi đăng nhập.",
   BOOKING_ALREADY_DISPUTED: "Booking này đã có khiếu nại đang xử lý.",
+  BOOST_PLAN_FEATURE_DISABLED: "Gói hiện tại không hỗ trợ tính năng Boost hồ sơ.",
+  BOOST_MONTHLY_LIMIT_EXCEEDED: "Bạn đã dùng hết lượt Boost hồ sơ trong tháng của gói hiện tại.",
   BOOKING_CANNOT_CANCEL: "Không thể hủy booking này.",
   BOOKING_CANNOT_UPDATE: "Không thể cập nhật booking này.",
   BOOKING_INVALID_PRICING: "Thông tin giá không hợp lệ.",
