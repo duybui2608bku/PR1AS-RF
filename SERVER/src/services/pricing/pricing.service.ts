@@ -6,6 +6,7 @@ import {
   PricingPlanFeatures,
 } from "../../constants/pricing";
 import { AppError } from "../../utils/AppError";
+import { ErrorCode } from "../../types/common/error.types";
 import { PricingPackage, UserSubscriptionHistory } from "../../models/pricing";
 import { PRICING_MESSAGES } from "../../constants/messages";
 import {
@@ -192,6 +193,40 @@ class PricingService {
         },
       });
     }
+  }
+
+  /**
+   * Loads the caller's currently active DB-backed package — the shared,
+   * DB-authoritative building block for any plan-feature gate (post creation,
+   * boost activation, ...). Fails closed with 403 if the plan's package is
+   * missing/inactive, unlike `getMyPricing`'s standard-package fallback,
+   * since a gate must not silently treat a broken package config as allowed.
+   * Callers needing feature-specific checks (e.g. post's moderation
+   * restriction) layer those on top of this.
+   */
+  async getActivePackageForUser(userId: string) {
+    await this.ensureDefaultPackages();
+    await this.ensureUserPlanActive(userId);
+
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
+    }
+
+    const pricingPackage = await PricingPackage.findOne({
+      package_code: user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
+      is_active: true,
+    }).lean();
+
+    if (!pricingPackage) {
+      throw new AppError(
+        PRICING_MESSAGES.PRICING_PACKAGE_NOT_AVAILABLE,
+        HTTP_STATUS.FORBIDDEN,
+        ErrorCode.FORBIDDEN
+      );
+    }
+
+    return pricingPackage;
   }
 
   async getMyPricing(userId: string): Promise<PricingMeResponse> {

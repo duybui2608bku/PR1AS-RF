@@ -994,11 +994,7 @@
       "cannotBookLowReputation": "Worker này hiện không thể nhận booking do điểm uy tín thấp.",
       "selectServiceWarning": "Vui lòng chọn một dịch vụ.",
       "cannotMessageSelf": "Bạn không thể nhắn tin chính mình.",
-      "checkingPlan": "Đang kiểm tra gói hiện tại của bạn.",
-      "upgradeTitle": "Cần nâng cấp gói",
-      "upgradeDesc": "Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.",
-      "upgradeLater": "Để sau",
-      "upgradeConfirm": "Nâng cấp gói"
+      "checkingPlan": "Đang kiểm tra gói hiện tại của bạn."
     },
     "calendar": {
       "loading": "Đang tải lịch...",
@@ -1392,6 +1388,7 @@
       "points": "{count} điểm",
       "hours": "{count} giờ",
       "notEnoughPointsDetail": "Không đủ điểm (cần thêm {points} điểm)",
+      "planBlockedHint": "Gói hiện tại không hỗ trợ Boost hoặc đã hết lượt tháng này",
       "activeButton": "Đang có boost chạy",
       "notEnoughPointsButton": "Không đủ điểm",
       "activateButton": "Kích hoạt",
@@ -1569,6 +1566,15 @@
       "close": "Đóng",
       "cancel": "Hủy"
     }
+  },
+  "PlanUpgrade": {
+    "title": "Cần nâng cấp gói",
+    "descMessaging": "Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.",
+    "descPost": "Bạn đã đạt giới hạn đăng tin của gói hiện tại. Nâng cấp gói để đăng thêm tin.",
+    "descBoost": "Gói hiện tại không hỗ trợ Boost hồ sơ hoặc bạn đã dùng hết lượt trong tháng. Nâng cấp gói để tiếp tục.",
+    "descGeneric": "Tính năng này không khả dụng trong gói hiện tại. Nâng cấp gói để sử dụng.",
+    "later": "Để sau",
+    "confirm": "Nâng cấp gói"
   },
   "Contact": {
     "title": "Liên hệ",

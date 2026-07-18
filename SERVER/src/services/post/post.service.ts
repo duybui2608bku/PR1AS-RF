@@ -11,8 +11,6 @@ import { moderationRepository } from "../../repositories/moderation";
 import { postRegistrationRepository } from "../../repositories/post/post-registration.repository";
 import { hashtagService } from "../../services/hashtag/hashtag.service";
 import { pricingService } from "../../services/pricing/pricing.service";
-import { PricingPackage } from "../../models/pricing";
-import { PricingPlanCode } from "../../constants/pricing";
 import { ReactionTargetType, ReactionType } from "../../constants/reaction";
 import { UserRole } from "../../types/auth/user.types";
 import {
@@ -35,7 +33,6 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import {
   POST_MESSAGES,
   POST_REGISTRATION_MESSAGES,
-  PRICING_MESSAGES,
   REPUTATION_MESSAGES,
 } from "../../constants/messages";
 import { POST_LIMITS, PostVisibility } from "../../constants/post";
@@ -45,7 +42,7 @@ import {
   formatCursorResponse,
 } from "../../utils/cursorPagination";
 import { logger } from "../../utils/logger";
-import dayjs from "../../utils/date";
+import { getCurrentMonthWindow } from "../../utils/date";
 import { moderationService } from "../moderation";
 import { RestrictionFeature } from "../../constants/moderation";
 
@@ -168,54 +165,16 @@ const summarizeReactions = (
 };
 
 export class PostService {
-  private getCurrentMonthWindow(): { startDate: Date; endDate: Date } {
-    // Anchor the month window to the product timezone (Asia/Ho_Chi_Minh) so
-    // the monthly post quota resets at local midnight on the 1st regardless
-    // of where the server runs. Relying on `dayjs()` (local time) or even
-    // `dayjs().tz()` without an explicit zone leaves the cut-off sensitive
-    // to server-host TZ and would shift the user's reset if the host moves.
-    const startOfMonth = dayjs().tz("Asia/Ho_Chi_Minh").startOf("month");
-    return {
-      startDate: startOfMonth.toDate(),
-      endDate: startOfMonth.add(1, "month").toDate(),
-    };
-  }
-
-  private async getActivePricingPackageForUser(userId: string) {
-    await pricingService.ensureDefaultPackages();
-    await pricingService.ensureUserPlanActive(userId);
-
-    const user = await userRepository.findById(userId);
-    if (!user) {
-      throw AppError.notFound(PRICING_MESSAGES.PRICING_USER_NOT_FOUND);
-    }
-
-    await moderationService.assertNoActiveRestriction(
-      userId,
-      RestrictionFeature.POST_CREATE
-    );
-
-    const pricingPackage = await PricingPackage.findOne({
-      package_code:
-        user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
-      is_active: true,
-    }).lean();
-
-    if (!pricingPackage) {
-      throw new AppError(
-        PRICING_MESSAGES.PRICING_PACKAGE_NOT_AVAILABLE,
-        HTTP_STATUS.FORBIDDEN,
-        ErrorCode.FORBIDDEN
-      );
-    }
-
-    return pricingPackage;
-  }
-
+  // Pure read — no moderation check here. This is shared by the write-path
+  // gate (assertUserCanCreatePost) AND the read-only stats endpoint
+  // (countActivePostsByAuthor, polled by the frontend's proactive
+  // create-post gate). A restricted user must still be able to read their
+  // quota without the request throwing — moderation eligibility is enforced
+  // separately, only on the actual create-post write path.
   private async getPostCreateQuota(userId: string): Promise<PostCreateQuota> {
-    const pricingPackage = await this.getActivePricingPackageForUser(userId);
+    const pricingPackage = await pricingService.getActivePackageForUser(userId);
     const { create_job_enabled, create_job_limit } = pricingPackage.features;
-    const { startDate, endDate } = this.getCurrentMonthWindow();
+    const { startDate, endDate } = getCurrentMonthWindow();
     const currentMonthPostCount =
       await postRepository.countCreatedByAuthorBetween(
         userId,
@@ -277,6 +236,11 @@ export class PostService {
         ErrorCode.POST_CREATE_FEATURE_DISABLED
       );
     }
+
+    await moderationService.assertNoActiveRestriction(
+      userId,
+      RestrictionFeature.POST_CREATE
+    );
 
     const quota = await this.getPostCreateQuota(userId);
 

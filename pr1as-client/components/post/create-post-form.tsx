@@ -17,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { ImageEditorDialog } from "@/components/ui/image-editor-dialog"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
-import { useCreatePost } from "@/lib/hooks/use-posts"
+import { useCreatePost, useMyPostStats } from "@/lib/hooks/use-posts"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
+import { useRequirePlan } from "@/lib/hooks/use-require-plan"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -79,6 +80,12 @@ export function CreatePostForm() {
   const { user, isAuthenticated } = useAuthStore()
   const createMutation = useCreatePost()
   const { requireAuth } = useAuthRequired()
+  const { requirePlan } = useRequirePlan()
+  const { data: postStats } = useMyPostStats()
+  // Optimistic default while loading/unauthenticated avoids a loading-flash on
+  // the trigger bar; useCreatePost's onError is the safety net if this races
+  // with a just-exhausted quota.
+  const canCreatePost = postStats?.can_create_post ?? true
   const isWorkerActive = isAuthenticated && isWorkerRoleActive(user)
 
   const [open, setOpen] = useState(false)
@@ -88,6 +95,8 @@ export function CreatePostForm() {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const postImageEditor = useImageEditorQueue()
+
+  const openCompose = () => requireAuth(() => requirePlan(canCreatePost, "post", () => setOpen(true)))
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -173,14 +182,14 @@ export function CreatePostForm() {
           />
           <button
             type="button"
-            onClick={() => requireAuth(() => setOpen(true))}
+            onClick={openCompose}
             className="flex-1 rounded-full border bg-muted/50 px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted"
           >
             {t("triggerPlaceholder")}
           </button>
           <button
             type="button"
-            onClick={() => requireAuth(() => setOpen(true))}
+            onClick={openCompose}
             className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent"
             aria-label={t("addImage")}
           >

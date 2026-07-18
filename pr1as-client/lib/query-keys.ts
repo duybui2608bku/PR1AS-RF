@@ -49,6 +49,7 @@ export const queryKeys = {
       ["posts", "registrations", postId] as const,
     registeredFeed: (params?: Record<string, unknown>) =>
       ["posts", "registeredFeed", params] as const,
+    myStats: ["posts", "my-stats"] as const,
   },
   hashtags: {
     all: ["hashtags"] as const,

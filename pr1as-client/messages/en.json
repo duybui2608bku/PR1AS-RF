@@ -994,11 +994,7 @@
       "cannotBookLowReputation": "This worker cannot accept bookings due to a low reputation score.",
       "selectServiceWarning": "Please select a service.",
       "cannotMessageSelf": "You cannot message yourself.",
-      "checkingPlan": "Checking your current plan.",
-      "upgradeTitle": "Upgrade required",
-      "upgradeDesc": "You need to upgrade your plan to message a worker first. After upgrading, you can start a direct conversation.",
-      "upgradeLater": "Later",
-      "upgradeConfirm": "Upgrade plan"
+      "checkingPlan": "Checking your current plan."
     },
     "calendar": {
       "loading": "Loading calendar...",
@@ -1392,6 +1388,7 @@
       "points": "{count} points",
       "hours": "{count} hours",
       "notEnoughPointsDetail": "Not enough points (need {points} more)",
+      "planBlockedHint": "Your plan doesn't support boost, or you've used this month's allowance",
       "activeButton": "Boost already active",
       "notEnoughPointsButton": "Not enough points",
       "activateButton": "Activate",
@@ -1501,6 +1498,15 @@
         "timedRange": "{start} → {end}"
       }
     }
+  },
+  "PlanUpgrade": {
+    "title": "Upgrade required",
+    "descMessaging": "You need to upgrade your plan to message a worker first. After upgrading, you can start a direct conversation.",
+    "descPost": "You've reached your current plan's posting limit. Upgrade to post more.",
+    "descBoost": "Your current plan doesn't support profile boost, or you've used this month's allowance. Upgrade to continue.",
+    "descGeneric": "This feature isn't available on your current plan. Upgrade to use it.",
+    "later": "Later",
+    "confirm": "Upgrade plan"
   },
   "Pricing": {
     "title": "Pricing",

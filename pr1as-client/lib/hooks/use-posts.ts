@@ -11,17 +11,34 @@ import { toast } from "sonner"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore, type AuthUser } from "@/lib/store/auth-store"
-import { getErrorMessage } from "@/lib/utils/error-handler"
+import { useUpgradePlanStore } from "@/lib/store/upgrade-plan-store"
+import { ApiError, getErrorMessage } from "@/lib/utils/error-handler"
 import { postService } from "@/services/post.service"
 import type { CreatePostPayload, PostFeedParams, UpdatePostPayload } from "@/types"
 
 const WORKER_POST_PERMISSION_MESSAGE =
   "Worker chỉ có quyền reaction và bình luận trên bảng tin."
 
+// Plan-restriction codes thrown by assertUserCanCreatePost — trigger the
+// upgrade dialog instead of a generic toast. Other 403 codes on this same
+// path (reputation too low, moderation restriction) fall through unchanged.
+const POST_PLAN_CODES = new Set(["POST_CREATE_FEATURE_DISABLED", "POST_MONTHLY_LIMIT_EXCEEDED"])
+
 function assertCanManagePosts(user: AuthUser | null) {
   if (isWorkerRoleActive(user)) {
     throw new Error(WORKER_POST_PERMISSION_MESSAGE)
   }
+}
+
+export function useMyPostStats() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  return useQuery({
+    queryKey: queryKeys.posts.myStats,
+    queryFn: postService.getMyPostStats,
+    enabled: isAuthenticated,
+    staleTime: 30_000,
+  })
 }
 
 export function useListFeed(params: Omit<PostFeedParams, "cursor"> = {}) {
@@ -46,6 +63,7 @@ export function useGetPost(id: string) {
 export function useCreatePost() {
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
+  const openUpgradeDialog = useUpgradePlanStore((s) => s.openUpgradeDialog)
 
   return useMutation({
     mutationFn: (payload: CreatePostPayload) => {
@@ -57,6 +75,10 @@ export function useCreatePost() {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all })
     },
     onError: (error) => {
+      if (error instanceof ApiError && error.code && POST_PLAN_CODES.has(error.code)) {
+        openUpgradeDialog("post")
+        return
+      }
       toast.error(getErrorMessage(error, "Không thể đăng bài. Vui lòng thử lại."))
     },
   })
