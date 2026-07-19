@@ -139,7 +139,13 @@ class WorkerServiceService {
       };
     });
 
-    return workerServiceRepository.upsertManyForWorker(workerId, upsertPayloads, now);
+    const result = await workerServiceRepository.upsertManyForWorker(
+      workerId,
+      upsertPayloads,
+      now
+    );
+    await workerServiceRepository.deleteManyForWorkerExcept(workerId, serviceIds);
+    return result;
   }
 
   async updateWorkerService(
