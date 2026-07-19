@@ -101,6 +101,7 @@ export function ImageEditorDialog({
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
+              transform={`translate(${crop.x}px, ${crop.y}px) rotate(${rotation}deg) scale(${zoom}) scaleX(${flip.horizontal ? -1 : 1}) scaleY(${flip.vertical ? -1 : 1})`}
               style={{ containerStyle: { borderRadius: 8 } }}
             />
           )}

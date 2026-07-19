@@ -174,6 +174,18 @@ class WorkerServiceRepository {
     return result.deletedCount === 1;
   }
 
+  async deleteManyForWorkerExcept(
+    workerId: string,
+    keepServiceIds: string[]
+  ): Promise<void> {
+    await WorkerService.deleteMany({
+      worker_id: new mongoose.Types.ObjectId(workerId),
+      service_id: {
+        $nin: keepServiceIds.map((id) => new mongoose.Types.ObjectId(id)),
+      },
+    });
+  }
+
   async findAllForWorker(workerId: string): Promise<IWorkerServiceDocument[]> {
     return WorkerService.find({
       worker_id: workerId,
