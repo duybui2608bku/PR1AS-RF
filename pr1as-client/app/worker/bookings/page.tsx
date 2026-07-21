@@ -203,7 +203,6 @@ function getAvailableActions(
       return [
         buildStatusAction(BookingStatus.PENDING_CLIENT_ACCEPTANCE, t),
         buildResponseAction(booking, t),
-        buildCancelAction(t),
       ]
     default:
       return []

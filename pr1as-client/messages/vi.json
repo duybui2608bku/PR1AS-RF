@@ -1371,7 +1371,12 @@
       "streakValue": "{days} ngày",
       "balanceLabel": "Số điểm:",
       "checkedInButton": "Đã điểm danh",
-      "checkInButton": "Điểm danh"
+      "checkInButton": "Điểm danh",
+      "reminder": {
+        "title": "Đừng quên điểm danh hôm nay",
+        "description": "Duy trì chuỗi điểm danh và nhận thêm điểm thưởng mỗi ngày.",
+        "snoozeHint": "Nếu đóng thông báo, chúng tôi sẽ nhắc lại sau 1 giờ."
+      }
     },
     "panel": {
       "featuredBadge": "Nổi bật",

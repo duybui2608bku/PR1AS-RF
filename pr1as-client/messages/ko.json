@@ -1369,7 +1369,12 @@
       "streakValue": "{days}일",
       "balanceLabel": "포인트:",
       "checkedInButton": "출석 완료",
-      "checkInButton": "출석하기"
+      "checkInButton": "출석하기",
+      "reminder": {
+        "title": "오늘 출석 체크를 잊지 마세요",
+        "description": "연속 출석을 유지하고 매일 보상 포인트를 받으세요.",
+        "snoozeHint": "알림을 닫으면 1시간 후에 다시 알려드릴게요."
+      }
     },
     "panel": {
       "featuredBadge": "추천",

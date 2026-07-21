@@ -1371,7 +1371,12 @@
       "streakValue": "{days} days",
       "balanceLabel": "Points:",
       "checkedInButton": "Checked in",
-      "checkInButton": "Check in"
+      "checkInButton": "Check in",
+      "reminder": {
+        "title": "Don't forget today's check-in",
+        "description": "Keep your attendance streak going and earn daily reward points.",
+        "snoozeHint": "If you close this reminder, we'll remind you again in 1 hour."
+      }
     },
     "panel": {
       "featuredBadge": "Featured",

@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils"
 import { type SupportedLocale } from "@/lib/locale"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getActiveRole } from "@/lib/auth/roles"
+import { getRoleDefaultRoute } from "@/lib/navigation/role-routes"
 import { useSwitchRole } from "@/lib/hooks/use-auth"
 import {
   useNotificationsInfinite,
@@ -281,17 +282,28 @@ export default function NotificationsPage() {
     }
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back()
+      return
+    }
+
+    router.replace(getRoleDefaultRoute(getActiveRole(user)))
+  }
+
   return (
     <div className="flex h-svh flex-col bg-background">
       {/* ── iOS Navigation Bar ── */}
-      <div className="pt-safe z-20 shrink-0 border-b bg-background/95 backdrop-blur-md">
+      <div className="pt-safe relative z-30 shrink-0 border-b bg-background/95 backdrop-blur-md">
         <div className="grid h-11 grid-cols-3 items-center px-1">
           {/* Back */}
           <Button
             variant="ghost"
             size="sm"
-            className="flex w-fit items-center gap-0.5 px-2 text-[17px] font-normal text-blue-500 hover:bg-transparent hover:text-blue-600 active:opacity-60"
-            onClick={() => router.back()}
+            type="button"
+            aria-label={t("back")}
+            className="flex size-11 touch-manipulation items-center justify-start gap-0.5 px-2 text-[17px] font-normal text-blue-500 hover:bg-transparent hover:text-blue-600 active:opacity-60 sm:w-fit"
+            onClick={handleBack}
           >
             <ArrowLeft className="size-[22px] stroke-[2]" />
             <span className="hidden sm:inline">{t("back")}</span>

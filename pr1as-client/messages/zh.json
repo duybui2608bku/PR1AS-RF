@@ -1371,7 +1371,12 @@
       "streakValue": "{days} 天",
       "balanceLabel": "积分：",
       "checkedInButton": "已签到",
-      "checkInButton": "签到"
+      "checkInButton": "签到",
+      "reminder": {
+        "title": "别忘了今天签到",
+        "description": "保持连续签到，每天领取奖励积分。",
+        "snoozeHint": "关闭提醒后，我们将在 1 小时后再次提醒。"
+      }
     },
     "panel": {
       "featuredBadge": "精选",

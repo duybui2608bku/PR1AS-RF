@@ -134,8 +134,7 @@ export const isBookingExpired = (
 
 export const canCancelBooking = (status: BookingStatus): boolean =>
   status === BookingStatus.PENDING ||
-  status === BookingStatus.CONFIRMED ||
-  status === BookingStatus.IN_PROGRESS
+  status === BookingStatus.CONFIRMED
 
 export const canComplainBooking = (status: BookingStatus): boolean =>
   status === BookingStatus.IN_PROGRESS ||

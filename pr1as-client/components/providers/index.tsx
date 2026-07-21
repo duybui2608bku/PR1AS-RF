@@ -13,6 +13,7 @@ import { TopProgressBar } from "@/components/providers/top-progress-bar"
 import { BannedAccountModal } from "@/components/providers/banned-account-modal"
 import { OnboardingRoleModal } from "@/components/providers/onboarding-role-modal"
 import { LegalResponsibilityModal } from "@/components/providers/legal-responsibility-modal"
+import { AttendanceReminderModal } from "@/components/providers/attendance-reminder-modal"
 import { BrandingSync } from "@/components/providers/branding-sync"
 import { AuthRequiredDialog } from "@/components/auth/auth-required-dialog"
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
@@ -149,6 +150,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <LegalResponsibilityModal />
         {/* Restore session từ cookie khi sessionStorage empty */}
         <SessionRestoreProvider />
+        {/* Daily worker attendance prompt; snoozes for one hour when dismissed. */}
+        <AttendanceReminderModal />
         {/* Chủ động refresh token khi app quay lại foreground (chống bị đá khỏi protected routes sau khi background >15') */}
         <TokenForegroundRefresh />
         {/* Sync logout across tabs */}
