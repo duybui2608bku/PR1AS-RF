@@ -53,6 +53,18 @@ export function useBookingDetail(id?: string) {
   })
 }
 
+export function useBookingClientProfile(
+  bookingId: string | null,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: queryKeys.bookings.clientProfile(bookingId ?? ""),
+    queryFn: () => bookingService.getBookingClientProfile(bookingId!),
+    enabled: Boolean(enabled && bookingId),
+    staleTime: 60_000,
+  })
+}
+
 export function useAdminBookingAnalytics(query: AdminBookingAnalyticsQuery) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 

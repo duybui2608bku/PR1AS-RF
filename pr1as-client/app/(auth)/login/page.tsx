@@ -54,7 +54,12 @@ export default function LoginPage() {
     fromPath?.startsWith("/") && !fromPath.startsWith("//") ? fromPath : null
   const allowedSafeFrom =
     safeFrom?.startsWith("/dashboard") && !isAdminActive ? null : safeFrom
-  const defaultRedirectTarget = "/about"
+  const defaultRedirectTarget =
+    activeRole === "client"
+      ? "/services"
+      : activeRole === "worker"
+        ? "/posts"
+        : "/about"
   const safeRedirectTarget = allowedSafeFrom === "/" ? null : allowedSafeFrom
   const redirectTarget =
     authenticatedUser && isAdminActive

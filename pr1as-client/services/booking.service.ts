@@ -3,6 +3,7 @@ import type {
   AdminBookingAnalytics,
   AdminBookingAnalyticsQuery,
   Booking,
+  BookingClientProfile,
   BookingListQuery,
   BookingListResponse,
   CancelBookingPayload,
@@ -158,6 +159,18 @@ export const bookingService = {
       `/bookings/${id}/dispute`,
       payload
     )
+    return response.data.data
+  },
+
+  getBookingClientProfile: async (
+    bookingId: string
+  ): Promise<BookingClientProfile> => {
+    const response = await api.get<ApiResponse<BookingClientProfile>>(
+      `/bookings/${bookingId}/client-profile`
+    )
+    if (!response.data.data) {
+      throw new Error("Missing client profile in response")
+    }
     return response.data.data
   },
 }

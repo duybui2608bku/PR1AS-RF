@@ -42,6 +42,10 @@ import {
   stopWalletReconciliationJob,
 } from "./jobs/wallet-reconciliation.job";
 import {
+  startWalletDepositExpirationJob,
+  stopWalletDepositExpirationJob,
+} from "./jobs/wallet-deposit-expiration.job";
+import {
   startEmailCampaignJob,
   stopEmailCampaignJob,
 } from "./jobs/email-campaign.job";
@@ -67,6 +71,7 @@ const startServer = async () => {
     startPlanExpirationJob();
     startAccountDeletionJob();
     startWalletReconciliationJob();
+    startWalletDepositExpirationJob();
     startEmailCampaignJob();
 
     httpServer.listen(config.port, () => {
@@ -90,6 +95,7 @@ process.on("SIGTERM", async () => {
   stopPlanExpirationJob();
   stopAccountDeletionJob();
   stopWalletReconciliationJob();
+  stopWalletDepositExpirationJob();
   stopEmailCampaignJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");
@@ -108,6 +114,7 @@ process.on("SIGINT", async () => {
   stopPlanExpirationJob();
   stopAccountDeletionJob();
   stopWalletReconciliationJob();
+  stopWalletDepositExpirationJob();
   stopEmailCampaignJob();
   httpServer.close(async () => {
     logger.info("HTTP server closed");

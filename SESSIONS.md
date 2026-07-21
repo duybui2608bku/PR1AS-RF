@@ -38,6 +38,75 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-16 — QR nạp ví hết hạn sau 10 phút
+
+**Mục tiêu**: QR nạp ví SePay phải có hạn 10 phút; quá hạn đổi status sang
+`expired` và UI cho tạo QR mới.
+
+**Đã làm**:
+
+- Thêm status `TransactionStatus.EXPIRED` + hằng `DEPOSIT_QR_TTL_MINUTES = 10`;
+  field `expires_at` trên `wallet_transaction` + index `{ status, expires_at }`.
+- `createDepositTransaction` set `expires_at = now + 10p`, trả về trong response.
+  **Không** đụng `createPricingPayment` → pricing (`expires_at` null) không bị
+  expire (cả 2 hàm expire guard `expires_at: { $ne: null }`).
+- Expire bằng **cron mỗi phút** (`wallet-deposit-expiration.job.ts`, backstop) +
+  **lazy** trong `getWalletTransactionById` (FE poll 3s thấy hết hạn ngay).
+- **Webhook giữ nguyên** — đã money-safe: tiền về sau khi `expired` vẫn cộng
+  (`findByPaymentCode` không lọc status, `finalizeSePayDepositIfPending` CAS
+  `$ne SUCCESS`).
+- FE: đếm ngược mm:ss trên trang deposit, hết hạn ẩn QR + nút "Tạo QR mới";
+  status `expired` có label riêng (`statusExpired`/"Hết hạn") + icon `TimerOff`.
+
+**File chính**: `SERVER/src/{constants,models,repositories,services,jobs}/wallet/*`
++ `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
+lib/hooks/use-wallet.ts,messages/*}`.
+
+**Quyết định / ghi chú**: chốt "tiền về trễ vẫn cộng" (money-safe), status mới
+`expired` (không tái dùng cancelled), cron+lazy, chỉ áp cho nạp ví. Thêm
+`expired` vào union FE buộc điền các `Record<status,…>` exhaustive map ở 3 file
+khác (đã xử lý + label riêng).
+
+**Còn lại**: FE pricing modal chưa có countdown (ngoài scope, pending không hết
+hạn); quyết định nhánh.
+
+**Commit**: `d3b7328` (dải `aa25542..d3b7328`) · branch `main-3`
+
+## 2026-07-16 — Redirect theo role + worker xem hồ sơ khách
+
+**Mục tiêu**: (1) user đã đăng nhập mặc định vào trang theo role (client→/services,
+worker→/posts) thay vì /about; (2) worker xem được hồ sơ khách trong Work Bookings.
+
+**Đã làm**:
+
+- **Redirect theo role**: sau login ([login/page.tsx]), quay lại `/` khi còn phiên
+  và trang auth ([middleware.ts]) đều đá về trang theo role. Đổi luôn
+  `DEFAULT_ROLE_ROUTES` trong [lib/navigation/role-routes.ts] (client→/services,
+  worker→/posts) → áp cho cả role-switch, logo/Home và HomeRoleGate (vốn đang
+  redirect worker về /about thành vòng lặp). Khách chưa login vẫn /about.
+- **Worker xem hồ sơ khách**: endpoint mới `GET /api/bookings/:id/client-profile`
+  (authenticate + workerOnly) trả payload curated (không email/phone/total_spent).
+  Ban đầu chỉ cho đơn PENDING, sau **nới cho mọi đơn** worker sở hữu (bỏ chặn 403
+  non-pending). FE: `CustomerProfileSheet` (BottomSheet) + hook
+  `useBookingClientProfile`. Nút "Xem hồ sơ khách" cuối cùng đặt **trong menu
+  hành động** (dropdown "Chọn hành động" desktop + action sheet mobile), không
+  còn là link inline; menu mở được cả khi đơn không có hành động trạng thái.
+- Tỉ lệ hủy = `client_cancelled / total` tính trên **toàn bộ** booking của khách
+  (`cancellation.cancelled_by === "client"`), không chỉ đơn với worker này.
+
+**File chính**: `SERVER/src/{repositories,services,controllers,routes}/booking/*`,
+`pr1as-client/app/worker/bookings/*`, `pr1as-client/lib/navigation/role-routes.ts`,
+`middleware.ts`, `app/(auth)/login/page.tsx`.
+
+**Quyết định / ghi chú**: authz hồ sơ khách nằm ở service — worker phải sở hữu đơn,
+guest booking → 404. `bookingRepository.findById` trả document đã populate nên phải
+lấy `worker_id._id`/`client_id._id` (từng có bug lấy `.toString()` trên document).
+Spec/plan gốc chốt "chỉ pending" nhưng đã đổi sang "mọi đơn" theo yêu cầu.
+
+**Còn lại**: quyết định nhánh (merge/PR); cập nhật spec/plan cho khớp scope "mọi đơn".
+
+**Commit**: `f27b165` (và các commit trước trong dải `adc88ca..f27b165`) · branch `main-3`
+
 ## 2026-07-13 — Job auto-complete booking đã qua giờ làm
 
 **Mục tiêu**: booking làm xong ngoài đời nhưng không ai bấm status thì kẹt vĩnh

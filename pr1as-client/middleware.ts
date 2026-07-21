@@ -80,6 +80,16 @@ function getTokenRole(payload: Record<string, unknown> | null): string | null {
   return roles[0] ?? role
 }
 
+// Trang mặc định cho user đã đăng nhập khi họ landing ở entry point mặc định
+// (root `/` hoặc trang auth trong lúc còn phiên). Client → Dịch vụ, Worker →
+// Bảng tin, Admin → Dashboard. Role khác/không xác định giữ fallback /about.
+function defaultLandingForRole(role: string | null): string {
+  if (role === "admin") return "/dashboard"
+  if (role === "client") return "/services"
+  if (role === "worker") return "/posts"
+  return "/about"
+}
+
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -176,14 +186,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (isTokenValid && activeRole === "admin" && pathname === "/") {
-    const url = req.nextUrl.clone()
-    url.pathname = "/dashboard"
-    return applyLocaleCookie(NextResponse.redirect(url))
+  // User đã đăng nhập quay lại trang gốc `/` (dù còn phiên, không cần login lại)
+  // → đá thẳng về trang mặc định theo role thay vì rơi xuống app/page.tsx (/about).
+  // Khách (không token) vẫn rơi xuống /about như cũ.
+  if (isTokenValid && pathname === "/") {
+    const landing = defaultLandingForRole(activeRole)
+    if (landing !== "/") {
+      const url = req.nextUrl.clone()
+      url.pathname = landing
+      return applyLocaleCookie(NextResponse.redirect(url))
+    }
   }
-
-  // Worker/client (và khách) đều landing mặc định ở /about — rơi xuống
-  // app/page.tsx để redirect sang /about. Chỉ admin có nhánh riêng ở trên.
 
   // Worker không được vào trang Dịch vụ — kể cả gõ thẳng URL. Đẩy về /posts.
   if (
@@ -222,8 +235,7 @@ export async function middleware(req: NextRequest) {
         : safeFrom
 
     url.search = ""
-    url.pathname =
-      allowedFrom ?? (activeRole === "admin" ? "/dashboard" : "/about")
+    url.pathname = allowedFrom ?? defaultLandingForRole(activeRole)
     return applyLocaleCookie(NextResponse.redirect(url))
   }
 

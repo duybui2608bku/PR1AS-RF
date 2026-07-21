@@ -6,6 +6,7 @@ import axios, {
 import { useAuthStore } from "@/lib/store/auth-store"
 import { setSessionCookie, clearSessionCookie } from "@/lib/auth/auth-cookie"
 import { toApiError } from "@/lib/utils/error-handler"
+import { PLAN_RESTRICTED_CODE_REASON } from "@/lib/utils/plan-restriction"
 import { getQueryClient } from "@/lib/query-client"
 import {
   DEFAULT_LOCALE,
@@ -254,6 +255,16 @@ api.interceptors.response.use(
       if (typeof window !== "undefined" && errorCode === "USER_BANNED") {
         window.dispatchEvent(new CustomEvent("user:banned"))
         return Promise.reject(toApiError(error) ?? error)
+      }
+
+      // Defense-in-depth for plan-restricted actions: a proactive client-side
+      // check should normally prevent this request, but stale state (multi-tab,
+      // a stale poll) can still let one through. Catch it here so the upgrade
+      // dialog opens instead of a raw error toast.
+      const nestedError = data?.error as { code?: string } | undefined
+      const code = nestedError?.code
+      if (typeof window !== "undefined" && code && PLAN_RESTRICTED_CODE_REASON[code]) {
+        window.dispatchEvent(new CustomEvent<{ code: string }>("plan:restricted", { detail: { code } }))
       }
     }
 

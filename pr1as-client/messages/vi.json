@@ -523,6 +523,7 @@
     "statusSuccess": "Thành công",
     "statusFailed": "Thất bại",
     "statusCancelled": "Đã hủy",
+    "statusExpired": "Hết hạn",
     "depositTitle": "Nạp tiền",
     "depositSubtitle": "Thanh toán qua SePay",
     "backToWallet": "Ví của tôi",
@@ -551,7 +552,11 @@
     "copyLabelBank": "ngân hàng",
     "copyLabelAccount": "số tài khoản",
     "copyLabelAmount": "số tiền",
-    "copyLabelContent": "nội dung"
+    "copyLabelContent": "nội dung",
+    "qrCountdown": "QR hết hạn sau {time}",
+    "qrExpiredTitle": "QR đã hết hạn",
+    "qrExpiredMsg": "Mã QR đã quá hạn 10 phút. Vui lòng tạo mã mới để tiếp tục.",
+    "regenerateQr": "Tạo QR mới"
   },
   "Notifications": {
     "title": "Thông báo",
@@ -989,11 +994,7 @@
       "cannotBookLowReputation": "Worker này hiện không thể nhận booking do điểm uy tín thấp.",
       "selectServiceWarning": "Vui lòng chọn một dịch vụ.",
       "cannotMessageSelf": "Bạn không thể nhắn tin chính mình.",
-      "checkingPlan": "Đang kiểm tra gói hiện tại của bạn.",
-      "upgradeTitle": "Cần nâng cấp gói",
-      "upgradeDesc": "Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.",
-      "upgradeLater": "Để sau",
-      "upgradeConfirm": "Nâng cấp gói"
+      "checkingPlan": "Đang kiểm tra gói hiện tại của bạn."
     },
     "calendar": {
       "loading": "Đang tải lịch...",
@@ -1344,7 +1345,15 @@
       "description": "Hành động booking",
       "cancel": "Hủy"
     },
-    "guide": "Hướng dẫn đặt lịch"
+    "guide": "Hướng dẫn đặt lịch",
+    "viewCustomerProfile": "Xem hồ sơ khách",
+    "customerProfileTitle": "Hồ sơ khách hàng",
+    "memberSince": "Thành viên từ {date}",
+    "verifiedBadge": "Đã xác thực",
+    "reputation": "Điểm uy tín",
+    "completedBookings": "Đã hoàn thành {count} đơn",
+    "cancelRate": "Tỉ lệ hủy {rate}%",
+    "profileLoadError": "Không tải được hồ sơ khách"
   },
   "WorkerBoost": {
     "page": {
@@ -1384,6 +1393,7 @@
       "points": "{count} điểm",
       "hours": "{count} giờ",
       "notEnoughPointsDetail": "Không đủ điểm (cần thêm {points} điểm)",
+      "planBlockedHint": "Gói hiện tại không hỗ trợ Boost hoặc đã hết lượt tháng này",
       "activeButton": "Đang có boost chạy",
       "notEnoughPointsButton": "Không đủ điểm",
       "activateButton": "Kích hoạt",
@@ -1561,6 +1571,15 @@
       "close": "Đóng",
       "cancel": "Hủy"
     }
+  },
+  "PlanUpgrade": {
+    "title": "Cần nâng cấp gói",
+    "descMessaging": "Bạn cần nâng cấp gói để nhắn tin trước với worker. Sau khi nâng cấp, bạn có thể bắt đầu cuộc trò chuyện trực tiếp.",
+    "descPost": "Bạn đã đạt giới hạn đăng tin của gói hiện tại. Nâng cấp gói để đăng thêm tin.",
+    "descBoost": "Gói hiện tại không hỗ trợ Boost hồ sơ hoặc bạn đã dùng hết lượt trong tháng. Nâng cấp gói để tiếp tục.",
+    "descGeneric": "Tính năng này không khả dụng trong gói hiện tại. Nâng cấp gói để sử dụng.",
+    "later": "Để sau",
+    "confirm": "Nâng cấp gói"
   },
   "Contact": {
     "title": "Liên hệ",

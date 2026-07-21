@@ -197,6 +197,7 @@ Flow:
    - `status: pending`,
    - `gateway: sepay`,
    - bank info and QR info,
+   - `expires_at = now + WALLET_LIMITS.DEPOSIT_QR_TTL_MINUTES` (10 min),
    - description `Deposit <amount> - <paymentCode>`.
 6. Return QR/payment info to frontend.
 
@@ -210,6 +211,38 @@ Response includes:
 - `bank_account_number`
 - `bank_name`
 - `amount`
+- `expires_at` (ISO string)
+
+### QR expiry (deposit only)
+
+The QR has a **10-minute TTL**. `TransactionStatus.EXPIRED = "expired"` is a
+distinct status (not `cancelled`/`failed`). Two mechanisms flip an overdue
+`pending` deposit to `expired`:
+
+- **Lazy** — `getWalletTransactionById` (the `GET /wallet/transactions/:id`
+  poll target) calls `walletRepository.expireIfDue(id, now)` when the record is
+  `pending` and `expires_at <= now`, so the FE (polling every 3s) sees `expired`
+  within ~3s.
+- **Cron backstop** — `wallet-deposit-expiration.job.ts` runs every minute
+  (`withJobLock`), calling `walletService.expirePendingDeposits()` →
+  `walletRepository.expirePendingDeposits(now)` (`updateMany`).
+
+Both expire methods guard `expires_at: { $ne: null, $lte: now }`. Because
+**only `createDepositTransaction` sets `expires_at`** (pricing payments leave it
+null), pricing QR payments are never expired by either path. Index
+`{ status: 1, expires_at: 1 }` backs the cron scan.
+
+**Money-safety:** expiry does NOT prevent late payment from crediting. The
+webhook (`findByPaymentCode` — no status filter; `finalizeSePayDepositIfPending`
+CAS `{ status: { $ne: SUCCESS } }`) still finalizes an `expired` deposit to
+`success` and credits atomically if the transfer arrives late. `expired` only
+affects the QR/UI.
+
+FE: `wallet-deposit-page.tsx` shows a mm:ss countdown from `expires_at`; on
+expiry it hides the QR and shows a "Tạo QR mới" (regenerate) button that
+re-creates the deposit with the same amount. Poll stops when status leaves
+`pending`. `expired` renders a distinct label (`statusExpired` / "Hết hạn") and
+`TimerOff` icon in the wallet surfaces.
 
 ## Pricing QR Payment Flow
 

@@ -61,6 +61,10 @@ const walletTransactionSchema = new Schema<IWalletTransactionDocument>(
       type: String,
       default: null,
     },
+    expires_at: {
+      type: Date,
+      default: null,
+    },
     bank_account_number: {
       type: String,
       default: null,
@@ -176,6 +180,7 @@ walletTransactionSchema.index(
 );
 walletTransactionSchema.index({ sepay_reference_code: 1 });
 walletTransactionSchema.index({ status: 1, type: 1 });
+walletTransactionSchema.index({ status: 1, expires_at: 1 });
 
 export const WalletTransaction = mongoose.model<IWalletTransactionDocument>(
   modelsName.WALLET_TRANSACTION,

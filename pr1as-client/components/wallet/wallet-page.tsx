@@ -12,6 +12,7 @@ import {
   Plus,
   ReceiptText,
   RefreshCw,
+  TimerOff,
   Wallet,
   XCircle,
 } from "lucide-react"
@@ -64,6 +65,10 @@ const statusVisual: Record<
   },
   cancelled: {
     icon: Ban,
+    circle: "bg-muted text-muted-foreground",
+  },
+  expired: {
+    icon: TimerOff,
     circle: "bg-muted text-muted-foreground",
   },
 }

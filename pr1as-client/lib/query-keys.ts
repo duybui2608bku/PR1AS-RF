@@ -49,6 +49,7 @@ export const queryKeys = {
       ["posts", "registrations", postId] as const,
     registeredFeed: (params?: Record<string, unknown>) =>
       ["posts", "registeredFeed", params] as const,
+    myStats: ["posts", "my-stats"] as const,
   },
   hashtags: {
     all: ["hashtags"] as const,
@@ -72,6 +73,8 @@ export const queryKeys = {
     schedule: (params?: Record<string, unknown>) =>
       ["bookings", "schedule", params] as const,
     detail: (id: string) => ["bookings", "detail", id] as const,
+    clientProfile: (id: string) =>
+      ["bookings", "client-profile", id] as const,
   },
   reviews: {
     all: ["reviews"] as const,

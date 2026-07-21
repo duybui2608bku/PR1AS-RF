@@ -52,6 +52,33 @@ export function WalletDepositPage() {
   const transactionStatus = transactionQuery.data?.status ?? "pending"
   const isPaymentSuccess = transactionStatus === "success"
   const isPaymentFailed = transactionStatus === "failed"
+  const isPaymentExpired = transactionStatus === "expired"
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (
+      !payment?.expires_at ||
+      isPaymentSuccess ||
+      isPaymentFailed ||
+      isPaymentExpired
+    ) {
+      return
+    }
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000)
+    return () => window.clearInterval(timer)
+  }, [payment?.expires_at, isPaymentSuccess, isPaymentFailed, isPaymentExpired])
+
+  const msLeft = payment?.expires_at
+    ? new Date(payment.expires_at).getTime() - now
+    : 0
+  const isExpired =
+    isPaymentExpired || (Boolean(payment?.expires_at) && msLeft <= 0)
+  const countdownLabel = (() => {
+    const totalSeconds = Math.max(0, Math.floor(msLeft / 1000))
+    const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0")
+    const ss = String(totalSeconds % 60).padStart(2, "0")
+    return `${mm}:${ss}`
+  })()
 
   useEffect(() => {
     if (!payment || notifiedTransactionRef.current === payment.transaction_id) {
@@ -99,6 +126,28 @@ export function WalletDepositPage() {
         return
       }
       notifiedTransactionRef.current = null
+      setPayment(result)
+      toast.success(t("paymentCreated"))
+    } catch (error) {
+      toast.error(getErrorMessage(error, t("cannotCreatePayment")))
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (amountError) {
+      toast.warning(amountError)
+      return
+    }
+    try {
+      const result = await createDepositMutation.mutateAsync({
+        amount: parsedAmount,
+      })
+      if (!result) {
+        toast.error(t("cannotCreatePayment"))
+        return
+      }
+      notifiedTransactionRef.current = null
+      setNow(Date.now())
       setPayment(result)
       toast.success(t("paymentCreated"))
     } catch (error) {
@@ -216,67 +265,103 @@ export function WalletDepositPage() {
           </CardHeader>
           <CardContent className="p-6">
             {payment ? (
-              <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-                <div className="flex rounded-lg border bg-white p-3">
-                  <Image
-                    src={payment.qr_url}
-                    alt={`QR ${payment.payment_code}`}
-                    width={236}
-                    height={236}
-                    className="aspect-square w-full object-contain"
-                    unoptimized
-                  />
-                </div>
-                <div className="space-y-3">
-                  <PaymentRow
-                    label={t("bank")}
-                    value={payment.bank_name}
-                    copyAria={t("copyAria", { label: t("bank") })}
-                    onCopy={() =>
-                      copyText(payment.bank_name, t("copyLabelBank"))
+              isExpired ? (
+                <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 text-center">
+                  <XCircle className="size-10 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <p className="text-base font-semibold">
+                      {t("qrExpiredTitle")}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t("qrExpiredMsg")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleRegenerate}
+                    disabled={
+                      createDepositMutation.isPending || Boolean(amountError)
                     }
-                  />
-                  <PaymentRow
-                    label={t("accountNumber")}
-                    value={payment.bank_account_number}
-                    copyAria={t("copyAria", { label: t("accountNumber") })}
-                    onCopy={() =>
-                      copyText(
-                        payment.bank_account_number,
-                        t("copyLabelAccount")
-                      )
-                    }
-                  />
-                  <PaymentRow
-                    label={t("amount")}
-                    value={formatVnd(payment.amount, localeTag)}
-                    copyAria={t("copyAria", { label: t("amount") })}
-                    onCopy={() =>
-                      copyText(String(payment.amount), t("copyLabelAmount"))
-                    }
-                  />
-                  <PaymentRow
-                    label={t("content")}
-                    value={payment.payment_content}
-                    copyAria={t("copyAria", { label: t("content") })}
-                    onCopy={() =>
-                      copyText(payment.payment_content, t("copyLabelContent"))
-                    }
-                  />
-                  <PaymentStatus
-                    isChecking={
-                      transactionQuery.isFetching &&
-                      !isPaymentSuccess &&
-                      !isPaymentFailed
-                    }
-                    isFailed={isPaymentFailed}
-                    isSuccess={isPaymentSuccess}
-                  />
-                  <Button asChild variant="outline" className="w-full">
-                    <Link href="/wallet">{t("viewWallet")}</Link>
+                  >
+                    {createDepositMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <QrCode className="size-4" />
+                    )}
+                    {t("regenerateQr")}
                   </Button>
                 </div>
-              </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-[260px_1fr]">
+                  <div className="flex rounded-lg border bg-white p-3">
+                    <Image
+                      src={payment.qr_url}
+                      alt={`QR ${payment.payment_code}`}
+                      width={236}
+                      height={236}
+                      className="aspect-square w-full object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <PaymentRow
+                      label={t("bank")}
+                      value={payment.bank_name}
+                      copyAria={t("copyAria", { label: t("bank") })}
+                      onCopy={() =>
+                        copyText(payment.bank_name, t("copyLabelBank"))
+                      }
+                    />
+                    <PaymentRow
+                      label={t("accountNumber")}
+                      value={payment.bank_account_number}
+                      copyAria={t("copyAria", { label: t("accountNumber") })}
+                      onCopy={() =>
+                        copyText(
+                          payment.bank_account_number,
+                          t("copyLabelAccount")
+                        )
+                      }
+                    />
+                    <PaymentRow
+                      label={t("amount")}
+                      value={formatVnd(payment.amount, localeTag)}
+                      copyAria={t("copyAria", { label: t("amount") })}
+                      onCopy={() =>
+                        copyText(String(payment.amount), t("copyLabelAmount"))
+                      }
+                    />
+                    <PaymentRow
+                      label={t("content")}
+                      value={payment.payment_content}
+                      copyAria={t("copyAria", { label: t("content") })}
+                      onCopy={() =>
+                        copyText(
+                          payment.payment_content,
+                          t("copyLabelContent")
+                        )
+                      }
+                    />
+                    {!isPaymentSuccess && !isPaymentFailed ? (
+                      <p className="text-center text-xs font-medium text-muted-foreground">
+                        {t("qrCountdown", { time: countdownLabel })}
+                      </p>
+                    ) : null}
+                    <PaymentStatus
+                      isChecking={
+                        transactionQuery.isFetching &&
+                        !isPaymentSuccess &&
+                        !isPaymentFailed
+                      }
+                      isFailed={isPaymentFailed}
+                      isSuccess={isPaymentSuccess}
+                    />
+                    <Button asChild variant="outline" className="w-full">
+                      <Link href="/wallet">{t("viewWallet")}</Link>
+                    </Button>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-dashed">
                 <QrCode className="size-12 text-muted-foreground" />
