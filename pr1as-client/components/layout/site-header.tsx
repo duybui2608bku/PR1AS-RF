@@ -213,12 +213,12 @@ export function SiteHeader() {
     label: string
     icon: LucideIcon
   }[] = [
-    { value: "VIRTUAL", label: tServices("virtual"), icon: Bot },
     {
       value: "PHYSICAL",
       label: tServices("physical"),
       icon: Handshake,
     },
+    { value: "VIRTUAL", label: tServices("virtual"), icon: Bot },
   ]
 
   const tabWrapRefs = React.useRef<(HTMLSpanElement | null)[]>([])

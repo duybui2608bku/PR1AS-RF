@@ -83,7 +83,7 @@ export const parseHomeSearchParams = (
 
   const rawTab = firstString(raw?.tab)
   const activeTab: ServiceTab =
-    rawTab === "PHYSICAL" ? "PHYSICAL" : "VIRTUAL"
+    rawTab === "VIRTUAL" ? "VIRTUAL" : "PHYSICAL"
 
   const hashtag = firstString(raw?.hashtag)?.trim() ?? ""
 

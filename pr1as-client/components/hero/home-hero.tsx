@@ -245,8 +245,8 @@ type ServiceTabsProps = {
 }
 
 const SERVICE_TABS: { value: ServiceTab; labelKey: string; icon: LucideIcon }[] = [
-  { value: "VIRTUAL", labelKey: "Services.virtual", icon: Bot },
   { value: "PHYSICAL", labelKey: "Services.physical", icon: Handshake },
+  { value: "VIRTUAL", labelKey: "Services.virtual", icon: Bot },
 ]
 
 function ServiceTabs({ activeTab, onSwitchTab, className }: ServiceTabsProps) {
