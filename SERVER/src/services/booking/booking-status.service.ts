@@ -59,6 +59,19 @@ export class BookingStatusService extends BookingBaseService {
       );
     }
 
+    // ponytail: chốt cứng theo giờ hẹn, không có grace sớm. Cần cho phép bấm sớm
+    // vài phút thì trừ đi một hằng số ở đây.
+    if (
+      status === BookingStatus.IN_PROGRESS &&
+      Date.now() < booking.schedule.start_time.getTime()
+    ) {
+      throw new AppError(
+        BOOKING_MESSAGES.CANNOT_START_BEFORE_SCHEDULE,
+        HTTP_STATUS.BAD_REQUEST,
+        ErrorCode.BOOKING_INVALID_STATUS_TRANSITION
+      );
+    }
+
     if (status === BookingStatus.COMPLETED) {
       this.ensureAuthorized(
         booking.is_guest

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Info,
   Loader2,
+  MessageCircle,
   MessageSquare,
   MessageSquareWarning,
   RefreshCw,
@@ -267,12 +268,18 @@ export default function ClientBookingsPage() {
       !expired && booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
     const showReview = booking.status === BookingStatus.COMPLETED
     const showComplaintGroup = booking.status === BookingStatus.DISPUTED
+    const workerId = getRefId(booking.worker_id)
     const complaintLoading = complaintLoadingId === bookingId
     const completing =
       updateStatusMutation.isPending &&
       updateStatusMutation.variables?.id === bookingId
     const hasActions =
-      showComplaintGroup || showReview || showComplete || showDispute || showCancel
+      showComplaintGroup ||
+      Boolean(workerId) ||
+      showReview ||
+      showComplete ||
+      showDispute ||
+      showCancel
 
     if (!hasActions) {
       return (
@@ -293,6 +300,9 @@ export default function ClientBookingsPage() {
       switch (value) {
         case "complaint-group":
           void handleOpenComplaintGroup(booking)
+          break
+        case "message":
+          router.push(`/chat?receiver_id=${workerId}`)
           break
         case "review":
           setReviewTarget(booking)
@@ -333,6 +343,15 @@ export default function ClientBookingsPage() {
               >
                 <MessageSquare className="size-4" />
                 {t("openComplaintGroup")}
+              </SelectItem>
+            ) : null}
+            {workerId ? (
+              <SelectItem
+                value="message"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <MessageCircle className="size-4" />
+                {t("sendMessage")}
               </SelectItem>
             ) : null}
             {showReview ? (

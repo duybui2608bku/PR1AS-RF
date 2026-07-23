@@ -22,6 +22,9 @@ import type { WorkerServiceItem, WorkerServicePricing } from "@/types"
 
 const MESSAGING_PLAN_CODES = new Set(["gold", "diamond"])
 
+// ponytail: tạm mở nhắn tin cho mọi gói. Set true để bật lại giới hạn theo gói.
+const MESSAGING_PLAN_GATE_ENABLED = false
+
 type Translator = ReturnType<typeof useTranslations>
 
 const UNIT_KEY: Record<string, string> = {
@@ -83,12 +86,16 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
 
   const myPricingQuery = useMyPricing()
   const canMessageWorker =
-    myPricingQuery.data !== undefined
+    !MESSAGING_PLAN_GATE_ENABLED ||
+    (myPricingQuery.data !== undefined
       ? !myPricingQuery.data.is_expired &&
         myPricingQuery.data.package.features.messaging_enabled
-      : storedPlanAllowsMessaging
+      : storedPlanAllowsMessaging)
   const isCheckingPricing =
-    isAuthenticated && myPricingQuery.isLoading && !storedPlanCode
+    MESSAGING_PLAN_GATE_ENABLED &&
+    isAuthenticated &&
+    myPricingQuery.isLoading &&
+    !storedPlanCode
   const isMessageLocked =
     isAuthenticated && !isOwnProfile && !canMessageWorker
 

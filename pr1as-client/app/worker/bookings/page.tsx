@@ -10,6 +10,7 @@ import {
   FilterX,
   Info,
   Loader2,
+  MessageCircle,
   MessageSquare,
   PlayCircle,
   RefreshCw,
@@ -77,6 +78,7 @@ import {
   bookingStatusBadgeClass,
   formatDateTime,
   getBookingId,
+  getBookingClientId,
   getBookingCustomerLabel,
   getBookingCustomerLine,
   getConfirmationDeadline,
@@ -196,8 +198,11 @@ function getAvailableActions(
         buildCancelAction(t),
       ]
     case BookingStatus.CONFIRMED:
+      // Nút bắt đầu chỉ hiện khi đã đến giờ hẹn — server chặn cùng điều kiện.
       return [
-        buildStatusAction(BookingStatus.IN_PROGRESS, t),
+        ...(new Date(booking.schedule.start_time).getTime() <= Date.now()
+          ? [buildStatusAction(BookingStatus.IN_PROGRESS, t)]
+          : []),
         buildResponseAction(booking, t),
         buildCancelAction(t),
       ]
@@ -395,7 +400,9 @@ export default function WorkerBookingsPage() {
     const complaintLoading = complaintLoadingId === bookingId
     const hasComplaintAction = booking.status === BookingStatus.DISPUTED
     const canViewProfile = !isGuestBooking(booking)
-    const hasActions = hasComplaintAction || canViewProfile || actions.length > 0
+    const clientId = getBookingClientId(booking)
+    const hasActions =
+      hasComplaintAction || canViewProfile || Boolean(clientId) || actions.length > 0
 
     if (!hasActions) {
       return (
@@ -420,6 +427,11 @@ export default function WorkerBookingsPage() {
 
       if (value === "complaint") {
         handleOpenComplaintGroup(booking)
+        return
+      }
+
+      if (value === "message") {
+        router.push(`/chat?receiver_id=${clientId}`)
         return
       }
 
@@ -456,6 +468,15 @@ export default function WorkerBookingsPage() {
               >
                 <Eye className="size-4" />
                 {t("viewCustomerProfile")}
+              </SelectItem>
+            ) : null}
+            {clientId ? (
+              <SelectItem
+                value="message"
+                className="cursor-pointer py-2 pr-8 pl-2.5"
+              >
+                <MessageCircle className="size-4" />
+                {t("sendMessage")}
               </SelectItem>
             ) : null}
             {hasComplaintAction ? (
@@ -509,6 +530,18 @@ export default function WorkerBookingsPage() {
         onSelect: () => {
           setSheetBooking(null)
           setProfileBooking(booking)
+        },
+      })
+    }
+    const sheetClientId = getBookingClientId(booking)
+    if (sheetClientId) {
+      sheetItems.push({
+        key: "message",
+        label: t("sendMessage"),
+        icon: MessageCircle,
+        onSelect: () => {
+          setSheetBooking(null)
+          router.push(`/chat?receiver_id=${sheetClientId}`)
         },
       })
     }

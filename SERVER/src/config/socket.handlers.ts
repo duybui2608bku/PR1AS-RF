@@ -8,6 +8,7 @@ import { bookingRepository } from "../repositories/booking/booking.repository";
 import { getSocketIO } from "./socket";
 import { AUTH_MESSAGES, CHAT_MESSAGES } from "../constants/messages";
 import { SOCKET_EVENTS } from "../constants/socket";
+import { DIRECT_CHAT_BOOKING_GATE_ENABLED } from "../constants/chat";
 import {
   getOtherUserId,
   getConversationRoom,
@@ -172,6 +173,7 @@ const verifyConversationAccessUncached = async (
   if (currentUser.roles?.includes(UserRole.ADMIN)) return true;
   if (!otherUser) return false;
   if (otherUser.roles?.includes(UserRole.ADMIN)) return true;
+  if (!DIRECT_CHAT_BOOKING_GATE_ENABLED) return true;
 
   if (currentUser.last_active_role === UserRole.CLIENT) {
     return (

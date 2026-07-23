@@ -38,6 +38,30 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-23 — Chỉ cho bắt đầu booking khi đến giờ hẹn
+
+**Mục tiêu**: worker không được bấm "bắt đầu" (CONFIRMED → IN_PROGRESS) trước
+giờ hẹn. Trước đó không có ràng buộc thời gian nào.
+
+**Đã làm**:
+
+- Server: chặn `IN_PROGRESS` khi `now < schedule.start_time` trong
+  `updateBookingStatus`, message `CANNOT_START_BEFORE_SCHEDULE`.
+- Client: ẩn nút bắt đầu ở worker bookings khi chưa tới `start_time`.
+- Test `booking-status.start-gate.test.ts` (2 case: chặn sớm / cho phép đúng giờ).
+
+**File chính**: `SERVER/src/services/booking/booking-status.service.ts`,
+`SERVER/src/constants/messages.ts`, `pr1as-client/app/worker/bookings/page.tsx`
+
+**Quyết định / ghi chú**: không có grace cho bấm sớm — chốt cứng theo
+`start_time`. Muốn nới thì trừ một hằng số tại chỗ check (có comment `ponytail:`).
+
+**Còn lại**: không
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-07-16 — QR nạp ví hết hạn sau 10 phút
 
 **Mục tiêu**: QR nạp ví SePay phải có hạn 10 phút; quá hạn đổi status sang

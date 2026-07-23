@@ -111,6 +111,12 @@ export const getBookingCustomerLine = (booking: Booking): string => {
     .join(" | ")
 }
 
+export const getBookingClientId = (booking: Booking): string => {
+  const client = booking.client_id
+  if (!client || isGuestBooking(booking)) return ""
+  return typeof client === "string" ? client : client._id
+}
+
 export const getClientName = (client: Booking["client_id"]): string => {
   if (!client) return "-"
   if (typeof client === "string") return client

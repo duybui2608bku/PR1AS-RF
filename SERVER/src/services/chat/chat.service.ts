@@ -27,6 +27,7 @@ import {
 import { CHAT_MESSAGES } from "../../constants/messages";
 import { chatRepository } from "../../repositories/chat/chat.repository";
 import { bookingRepository } from "../../repositories/booking/booking.repository";
+import { DIRECT_CHAT_BOOKING_GATE_ENABLED } from "../../constants/chat";
 import { SOCKET_EVENTS } from "../../constants/socket";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
@@ -46,7 +47,11 @@ export class ChatService {
     sender: IUserDocument,
     receiver: IUserDocument
   ): Promise<void> {
-    if (this.isAdmin(sender) || this.isAdmin(receiver)) {
+    if (
+      !DIRECT_CHAT_BOOKING_GATE_ENABLED ||
+      this.isAdmin(sender) ||
+      this.isAdmin(receiver)
+    ) {
       return;
     }
 
@@ -359,6 +364,7 @@ export class ChatService {
     const messageMap = new Map(lastMessages.map((m) => [m._id.toString(), m]));
     const currentUser = await userRepository.findById(user_id);
     const allowedPeerIds =
+      DIRECT_CHAT_BOOKING_GATE_ENABLED &&
       currentUser &&
       !this.isAdmin(currentUser) &&
       (currentUser.last_active_role === UserRole.CLIENT ||
