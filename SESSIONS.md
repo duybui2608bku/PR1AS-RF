@@ -38,6 +38,65 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-18 — Nút nâng cấp gói khi action bị chặn bởi Plan
+
+**Mục tiêu**: Mọi action bị hạn chế bởi Plan (gói) mà user không thực hiện được
+=> thay bằng lời nhắc nâng cấp gói phù hợp, thay vì chặn cụt/toast lỗi chung.
+Phạm vi thống nhất với user: nhắn tin worker, đăng tin/job, kích hoạt boost hồ
+sơ (không gồm `ads_enabled` — chưa gắn action cụ thể). Giữ nguyên nút gốc, bấm
+vào mở dialog nâng cấp; CTA luôn là "Nâng cấp gói" chung → `/pricing` (không
+tính gói tối thiểu).
+
+**Đã làm**:
+
+- Dựng pattern dùng chung, nhại kiến trúc `auth-dialog-store`/`use-auth-required`/
+  `auth-required-dialog` đã có: `upgrade-plan-store.ts` (Zustand) +
+  `use-require-plan.ts` (`requirePlan(allowed, reason, cb)`) +
+  `UpgradePlanDialog` (mount global trong `providers/index.tsx`). Refactor
+  `worker-services.tsx` (nhắn tin) từ dialog inline cũ sang dùng pattern này.
+- Đăng tin: BE đã enforce sẵn (`assertUserCanCreatePost`), chỉ thiếu FE — thêm
+  `useMyPostStats()` (bọc `GET /users/me/post-stats` có sẵn) để gate chủ động ở
+  `create-post-form.tsx`, cộng reactive fallback trong `useCreatePost.onError`
+  (chỉ bắt đúng 2 code plan, không đụng lỗi reputation/moderation dùng chung shape).
+- Boost hồ sơ: **enforce mới hoàn toàn** ở backend (`boost_profile_enabled`/
+  `boost_profile_monthly_limit` trong `PricingPackage.features` trước đây có mô
+  hình nhưng chưa gate gì) — `boostService.activate()` thêm check qua
+  `pricingService.getActivePackageForUser()` (method chung mới, tách từ
+  `post.service.ts`) + `workerBoostRepository.countActivatedByUserBetween()`
+  (đếm `WorkerBoost.started_at` trong tháng — mỗi lần activate tạo doc mới,
+  không xoá, nên đếm thẳng được). 2 `ErrorCode` mới: `BOOST_PLAN_FEATURE_DISABLED`,
+  `BOOST_MONTHLY_LIMIT_EXCEEDED`. `GET /boost/status` (đã poll 30s sẵn) trả thêm
+  field quota để `boost-panel.tsx` gate chủ động, tách biệt với lý do "không đủ điểm".
+- Defense-in-depth: `axios.ts` interceptor bắt 403 có code nằm trong
+  `PLAN_RESTRICTED_CODE_REASON` → dispatch event `plan:restricted`, dialog tự mở.
+  Chỉ áp dụng cho đăng tin/boost (nhắn tin không có BE enforcement).
+- i18n: namespace `PlanUpgrade` mới (4 locale) thay cho key mồ côi
+  `WorkerProfile.services.upgrade*`; thêm `WorkerBoost.panel.planBlockedHint`.
+- Viết `memorybank/plan-upgrade-gating.md` trước khi code (theo yêu cầu đã lưu).
+
+**File chính**: `pr1as-client/lib/store/upgrade-plan-store.ts`,
+`pr1as-client/lib/hooks/use-require-plan.ts`,
+`pr1as-client/components/plan/upgrade-plan-dialog.tsx`,
+`SERVER/src/services/pricing/pricing.service.ts` (`getActivePackageForUser`),
+`SERVER/src/services/boost/boost.service.ts`,
+`SERVER/src/repositories/boost/worker-boost.repository.ts`,
+`pr1as-client/components/worker/boost-panel.tsx`,
+`pr1as-client/components/post/create-post-form.tsx`.
+
+**Quyết định / ghi chú**: Phát hiện bug có sẵn không liên quan — nhánh
+`USER_BANNED` trong `axios.ts` đọc `data?.error_code` nhưng response thật là
+`{error:{code,message}}` (không có `error_code` top-level), nên gần như không
+bao giờ khớp trên thực tế; **không sửa** vì ngoài phạm vi, chỉ note lại. Repo
+đang có mismatch CRLF/LF trên toàn bộ file có sẵn (prettier đòi CRLF,
+`npm run lint` ở SERVER báo ~36k lỗi) — pre-existing, không phải do session
+này, không đụng vào.
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main-3`
+
+---
+
 ## 2026-07-16 — QR nạp ví hết hạn sau 10 phút
 
 **Mục tiêu**: QR nạp ví SePay phải có hạn 10 phút; quá hạn đổi status sang
