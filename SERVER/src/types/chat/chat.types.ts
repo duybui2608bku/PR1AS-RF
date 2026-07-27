@@ -72,6 +72,10 @@ export interface ConversationWithLastMessage extends IConversation {
     is_blocked?: boolean;
     has_blocked_me?: boolean;
     block_profile?: boolean;
+    presence?: {
+      is_online: boolean;
+      last_active_at: Date | null;
+    };
   };
   unread_count?: number;
 }
