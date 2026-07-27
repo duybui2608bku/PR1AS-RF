@@ -49,6 +49,7 @@ export function useListFeed(params: Omit<PostFeedParams, "cursor"> = {}) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.has_more ? (lastPage.next_cursor ?? undefined) : undefined,
+    refetchInterval: 60_000,
   })
 }
 

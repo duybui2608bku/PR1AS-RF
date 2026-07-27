@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { PresenceDot } from "@/components/shared/presence-dot"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -88,33 +89,40 @@ function AuthorAvatar({
   avatar,
   name,
   planCode,
+  presence,
 }: {
   avatar: string | null
   name: string | null
   planCode?: string | null
+  presence?: PostPublic["author"]["presence"]
 }) {
-  if (avatar) {
-    return (
-      <Image
-        src={avatar}
-        alt={name ?? "Avatar"}
-        width={40}
-        height={40}
-        className={cn(
-          "size-10 rounded-full object-cover",
-          getPlanRingClass(planCode)
-        )}
-      />
-    )
-  }
   return (
-    <div
-      className={cn(
-        "flex size-10 items-center justify-center rounded-full bg-muted",
-        getPlanRingClass(planCode)
+    <div className="relative shrink-0">
+      {avatar ? (
+        <Image
+          src={avatar}
+          alt={name ?? "Avatar"}
+          width={40}
+          height={40}
+          className={cn(
+            "size-10 rounded-full object-cover",
+            getPlanRingClass(planCode)
+          )}
+        />
+      ) : (
+        <div
+          className={cn(
+            "flex size-10 items-center justify-center rounded-full bg-muted",
+            getPlanRingClass(planCode)
+          )}
+        >
+          <User className="size-5 text-muted-foreground" />
+        </div>
       )}
-    >
-      <User className="size-5 text-muted-foreground" />
+      <PresenceDot
+        presence={presence}
+        className="absolute bottom-0 right-0 ring-2 ring-background"
+      />
     </div>
   )
 }
@@ -480,6 +488,7 @@ export function PostCard({ post }: Props) {
                 avatar={post.author.avatar}
                 name={post.author.full_name}
                 planCode={post.author.meta_data?.pricing_plan_code}
+                presence={post.author.presence}
               />
             </Link>
           ) : (
@@ -487,6 +496,7 @@ export function PostCard({ post }: Props) {
               avatar={post.author.avatar}
               name={post.author.full_name}
               planCode={post.author.meta_data?.pricing_plan_code}
+              presence={post.author.presence}
             />
           )}
           <div className="min-w-0">
