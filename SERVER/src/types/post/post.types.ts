@@ -90,6 +90,10 @@ export interface AuthorPublic {
   meta_data?: {
     pricing_plan_code?: string | null;
   };
+  presence: {
+    is_online: boolean;
+    last_active_at: Date | null;
+  };
 }
 
 export interface PostMediaPublic {
