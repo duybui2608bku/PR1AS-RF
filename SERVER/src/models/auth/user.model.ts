@@ -137,7 +137,6 @@ const userSchema = new Schema<IUserDocument>(
     last_active_at: {
       type: Date,
       default: null,
-      index: true,
     },
     refresh_token_hash: {
       type: String,

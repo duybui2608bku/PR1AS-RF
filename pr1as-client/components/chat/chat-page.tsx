@@ -78,6 +78,7 @@ import { cn } from "@/lib/utils"
 import type {
   ChatConversation,
   ChatMessage,
+  DirectConversationListResult,
   DirectMessageListResult,
   GroupChatConversation,
   GroupChatMember,
@@ -846,14 +847,50 @@ export function ChatPage({
       )
     }
 
-    const handlePresenceUpdate = () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.chat.directConversationsRoot,
-      })
+    const handlePresenceUpdate = (payload: {
+      user_id: string
+      is_online: boolean
+      last_active_at: string | null
+    }) => {
+      const nextPresence = {
+        is_online: payload.is_online,
+        last_active_at: payload.last_active_at,
+      }
+
+      queryClient.setQueryData<DirectConversationListResult>(
+        queryKeys.chat.directConversations(CONVERSATION_PARAMS),
+        (current) => {
+          if (!current) return current
+          let changed = false
+          const conversations = current.conversations.map((conversation) => {
+            const otherUser = conversation.other_user
+            if (!otherUser || otherUser._id !== payload.user_id) {
+              return conversation
+            }
+            changed = true
+            return {
+              ...conversation,
+              other_user: { ...otherUser, presence: nextPresence },
+            }
+          })
+          return changed ? { ...current, conversations } : current
+        }
+      )
+
       if (activeDirectIdRef.current) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.chat.directConversation(activeDirectIdRef.current),
-        })
+        queryClient.setQueryData<ChatConversation | null>(
+          queryKeys.chat.directConversation(activeDirectIdRef.current),
+          (current) => {
+            const otherUser = current?.other_user
+            if (!current || !otherUser || otherUser._id !== payload.user_id) {
+              return current
+            }
+            return {
+              ...current,
+              other_user: { ...otherUser, presence: nextPresence },
+            }
+          }
+        )
       }
     }
 

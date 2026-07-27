@@ -1,5 +1,8 @@
 jest.mock("../../repositories/auth/user.repository", () => ({
-  userRepository: { updateLastActiveNow: jest.fn().mockResolvedValue(undefined) },
+  userRepository: {
+    updateLastActiveNow: jest.fn().mockResolvedValue(undefined),
+    findRolesById: jest.fn().mockResolvedValue(["client"]),
+  },
 }));
 jest.mock("../../repositories/chat/conversation.repository", () => ({
   conversationRepository: { listDirectPartnerIds: jest.fn() },
@@ -89,5 +92,19 @@ describe("presence transition broadcast", () => {
       SOCKET_EVENTS.PRESENCE_UPDATE,
       expect.objectContaining({ user_id: "user-1", is_online: false })
     );
+  });
+
+  it("never persists or broadcasts presence for an admin account", async () => {
+    (userRepository.findRolesById as jest.Mock).mockResolvedValueOnce([
+      "admin",
+    ]);
+
+    registerUserSocket("user-1", "socket-1");
+    await flushMicrotasks();
+
+    expect(userRepository.updateLastActiveNow).not.toHaveBeenCalled();
+    expect(conversationRepository.listDirectPartnerIds).not.toHaveBeenCalled();
+    expect(to).not.toHaveBeenCalled();
+    expect(emit).not.toHaveBeenCalled();
   });
 });

@@ -98,11 +98,16 @@ export class ConversationRepository {
       .select("sender_id receiver_id")
       .lean();
 
-    return conversations.map((conv) =>
+    const partnerIds = conversations.map((conv) =>
       conv.sender_id.toString() === user_id
         ? conv.receiver_id.toString()
         : conv.sender_id.toString()
     );
+
+    // De-dupe: if two separate conversation documents ever point at the same
+    // other user, a single presence transition must not double-emit
+    // presence:update to that partner.
+    return [...new Set(partnerIds)];
   }
 
   async updateConversationLastMessage(

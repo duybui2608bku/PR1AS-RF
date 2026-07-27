@@ -9,7 +9,7 @@ import { PostVisibility } from "../../constants/post";
 import { CursorValue, buildCursorFilter } from "../../utils/cursorPagination";
 
 const AUTHOR_PUBLIC_FIELDS =
-  "full_name avatar worker_profile meta_data.pricing_plan_code last_active_at";
+  "full_name avatar worker_profile meta_data.pricing_plan_code last_active_at roles";
 
 export class PostRepository {
   async create(

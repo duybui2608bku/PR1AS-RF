@@ -24,6 +24,9 @@ export function PresenceDot({
       <Tooltip>
         <TooltipTrigger asChild>
           <span
+            tabIndex={0}
+            role="img"
+            aria-label={label ?? undefined}
             className={cn(
               "block size-2.5 rounded-full border-2 border-background bg-green-500",
               className

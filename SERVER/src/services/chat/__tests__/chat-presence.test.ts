@@ -80,4 +80,30 @@ describe("chatService.getConversation presence", () => {
       last_active_at: lastActiveAt,
     });
   });
+
+  it("forces offline/null presence when the other user is an admin, even if their socket is connected", async () => {
+    const lastActiveAt = new Date("2026-07-28T10:00:00.000Z");
+    (userRepository.findById as jest.Mock).mockImplementation((id: string) => {
+      if (id === "user-1") {
+        return Promise.resolve({ _id: "user-1", roles: [UserRole.CLIENT] });
+      }
+      return Promise.resolve({
+        _id: "user-2",
+        full_name: "Admin Two",
+        avatar: null,
+        email: "admin2@example.com",
+        status: "active",
+        roles: [UserRole.ADMIN],
+        last_active_at: lastActiveAt,
+      });
+    });
+    (isUserOnline as jest.Mock).mockReturnValue(true);
+
+    const result = await chatService.getConversation("user-1", "conv-1");
+
+    expect(result?.other_user?.presence).toEqual({
+      is_online: false,
+      last_active_at: null,
+    });
+  });
 });

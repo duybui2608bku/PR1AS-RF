@@ -139,6 +139,17 @@ const handlePresenceTransition = async (
   userId: string,
   isOnline: boolean
 ): Promise<void> => {
+  // Admin accounts must never be presence-tracked or broadcast, per product
+  // decision — not just "naturally unlikely" to occur. This is the primary
+  // (cheapest) guard; chat.service.ts and post.service.ts have read-side
+  // defense in depth in case this write path is ever bypassed.
+  try {
+    const roles = await userRepository.findRolesById(userId);
+    if (roles?.includes(UserRole.ADMIN)) return;
+  } catch (error) {
+    logger.error(`Failed to check admin role for user ${userId}:`, error);
+  }
+
   const now = new Date();
 
   try {

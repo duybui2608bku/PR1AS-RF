@@ -56,6 +56,7 @@ type LeanPostWithAuthor = IPostDocument & {
     | "worker_profile"
     | "meta_data"
     | "last_active_at"
+    | "roles"
   > | null;
 };
 
@@ -92,10 +93,14 @@ export const toAuthorPublic = (
       meta_data: {
         pricing_plan_code: populated.meta_data?.pricing_plan_code ?? null,
       },
-      presence: {
-        is_online: isUserOnline(authorId),
-        last_active_at: populated.last_active_at ?? null,
-      },
+      // Defense in depth: admin accounts must never show presence, even if
+      // the write-side guard in socket.handlers.ts is ever bypassed.
+      presence: populated.roles?.includes(UserRole.ADMIN)
+        ? { is_online: false, last_active_at: null }
+        : {
+            is_online: isUserOnline(authorId),
+            last_active_at: populated.last_active_at ?? null,
+          },
     };
   }
   return {
