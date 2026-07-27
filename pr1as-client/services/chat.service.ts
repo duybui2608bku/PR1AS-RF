@@ -42,6 +42,10 @@ export type ChatConversation = {
     is_blocked?: boolean
     has_blocked_me?: boolean
     block_profile?: boolean
+    presence?: {
+      is_online: boolean
+      last_active_at: string | null
+    }
     meta_data?: {
       pricing_plan_code?: string | null
     }
