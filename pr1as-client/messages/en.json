@@ -2043,5 +2043,12 @@
     "copy": "Copy lookup link",
     "copied": "Lookup link copied",
     "prefilled": "The email link can prefill this page for you."
+  },
+  "Presence": {
+    "online": "Online now",
+    "justNow": "Active just now",
+    "minutesAgo": "Active {count}m ago",
+    "hoursAgo": "Active {count}h ago",
+    "daysAgo": "Active {count}d ago"
   }
 }
