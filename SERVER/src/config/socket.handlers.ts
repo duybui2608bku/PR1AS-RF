@@ -110,6 +110,16 @@ export const isUserOnline = (userId: string): boolean => {
   return userSockets.has(userId) && userSockets.get(userId)!.size > 0;
 };
 
+export const isUserOnlineBulk = (userIds: string[]): Set<string> => {
+  const online = new Set<string>();
+  for (const userId of userIds) {
+    if (isUserOnline(userId)) {
+      online.add(userId);
+    }
+  }
+  return online;
+};
+
 export const getUserSocketIds = (userId: string): string[] => {
   const sockets = userSockets.get(userId);
   return sockets ? Array.from(sockets) : [];
