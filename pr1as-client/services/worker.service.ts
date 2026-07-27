@@ -146,6 +146,10 @@ export type WorkerGroupedByService = {
       boost_type: "basic" | "featured" | null
       boost_tier: number | null
     }
+    presence: {
+      is_online: boolean
+      last_active_at: string | null
+    }
   }>
 }
 
