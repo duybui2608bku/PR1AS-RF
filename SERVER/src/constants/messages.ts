@@ -197,6 +197,8 @@ export const BOOKING_MESSAGES = {
   INVALID_DURATION: "Duration must be between 1 and 24 hours",
   INVALID_PRICING: "Invalid pricing information",
   INVALID_STATUS_TRANSITION: "Invalid status transition",
+  CANNOT_START_BEFORE_SCHEDULE:
+    "You can only start this booking once the scheduled start time has arrived",
   CANNOT_CANCEL_COMPLETED: "Cannot cancel a completed booking",
   CANNOT_CANCEL_CANCELLED: "Booking is already cancelled",
   CANNOT_UPDATE_COMPLETED: "Cannot update a completed booking",

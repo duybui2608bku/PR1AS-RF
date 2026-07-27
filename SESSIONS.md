@@ -95,6 +95,28 @@ này, không đụng vào.
 
 **Commit**: chưa commit · branch `main-3`
 
+## 2026-07-23 — Chỉ cho bắt đầu booking khi đến giờ hẹn
+
+**Mục tiêu**: worker không được bấm "bắt đầu" (CONFIRMED → IN_PROGRESS) trước
+giờ hẹn. Trước đó không có ràng buộc thời gian nào.
+
+**Đã làm**:
+
+- Server: chặn `IN_PROGRESS` khi `now < schedule.start_time` trong
+  `updateBookingStatus`, message `CANNOT_START_BEFORE_SCHEDULE`.
+- Client: ẩn nút bắt đầu ở worker bookings khi chưa tới `start_time`.
+- Test `booking-status.start-gate.test.ts` (2 case: chặn sớm / cho phép đúng giờ).
+
+**File chính**: `SERVER/src/services/booking/booking-status.service.ts`,
+`SERVER/src/constants/messages.ts`, `pr1as-client/app/worker/bookings/page.tsx`
+
+**Quyết định / ghi chú**: không có grace cho bấm sớm — chốt cứng theo
+`start_time`. Muốn nới thì trừ một hằng số tại chỗ check (có comment `ponytail:`).
+
+**Còn lại**: không
+
+**Commit**: chưa commit · branch `main`
+
 ---
 
 ## 2026-07-16 — QR nạp ví hết hạn sau 10 phút
@@ -118,7 +140,8 @@ này, không đụng vào.
   status `expired` có label riêng (`statusExpired`/"Hết hạn") + icon `TimerOff`.
 
 **File chính**: `SERVER/src/{constants,models,repositories,services,jobs}/wallet/*`
-+ `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
+
+- `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
 lib/hooks/use-wallet.ts,messages/*}`.
 
 **Quyết định / ghi chú**: chốt "tiền về trễ vẫn cộng" (money-safe), status mới
@@ -213,7 +236,7 @@ bao giờ đóng). Cần job tự set COMPLETED.
 - `AUTO_COMPLETE_HOURS` trước đây là hằng số chết (khai báo, không job nào dùng);
   giờ đã dùng. `AUTO_CONFIRM_HOURS: 24` vẫn chết.
 
-**Còn lại**: booking treo ở CONFIRMED/IN_PROGRESS *trước* khi có job này sẽ được
+**Còn lại**: booking treo ở CONFIRMED/IN_PROGRESS _trước_ khi có job này sẽ được
 job quét luôn ở lần chạy đầu (backfill tự nhiên) — theo dõi log
 `Auto-completed finished bookings` lần deploy đầu.
 
@@ -313,7 +336,7 @@ sách worker khớp.
 - **FE**: `HashtagChipInput` tái dùng; nhập hashtag/dịch vụ trong setup wizard
   (state `serviceHashtags`, seed từ my-services); hiện hashtag dưới mỗi dịch vụ ở
   hồ sơ công khai (`worker-services.tsx`); trang search `/workers/search` + hook
-  + client + query key; ô search hashtag ở discovery (`home-search-experience`).
+  - client + query key; ô search hashtag ở discovery (`home-search-experience`).
 - i18n: thêm `WorkerSetup.pricing.hashtagsLabel` cho 4 locale.
 
 **File chính**: `SERVER/src/{utils/worker-hashtag,constants/worker-service,
@@ -426,11 +449,11 @@ dùng nhập mã trên trang /pricing để kích hoạt gói tương ứng.
   tùy chỉnh, list phân trang + filter (search/plan/is_active), PATCH
   (bật/tắt, note, hạn, max_uses ≥ used_count), DELETE chỉ khi chưa ai dùng.
 - **Redeem** (`POST /api/vouchers/redeem`, auth + CSRF): tái dùng đúng luật
-  của `upgradePricing` — cùng plan thì cộng dồn tháng vào expires_at, plan cao
+  của `upgradePricing` — cùng plan thì cộng dồn tháng vào expires*at, plan cao
   hơn thì reset từ hôm nay, plan thấp hơn plan đang active thì từ chối. Chạy
   trong 1 transaction: consume voucher atomic (`$inc used_count` với điều kiện
   `used_count < max_uses` + còn hạn + is_active), tạo redemption, update
-  `meta_data.pricing_*`, ghi `UserSubscriptionHistory` (source **`voucher`**
+  `meta_data.pricing*\*`, ghi `UserSubscriptionHistory` (source **`voucher`\*\*
   mới thêm vào enum, amount 0). Cộng boost points như mua gói (ngoài
   transaction). Duplicate key (race) → 409 "đã dùng mã này".
 - **Frontend**: `services/voucher.service.ts`, `lib/hooks/use-vouchers.ts`
@@ -463,12 +486,13 @@ chưa auth, service test tạo/trùng mã/list/tắt/xóa pass trên DB dev (t�
 (About đã có sẵn từ trước). Cookies bỏ qua theo yêu cầu.
 
 **Đã làm** (nhân bản khuôn mẫu module `about`):
+
 - **Backend module `legal`** (privacy + terms, phân biệt qua param `:page`,
   singleton mỗi page, `page` unique index): types → constants (defaults 4 ngôn
   ngữ dựng từ i18n cũ) → model → repository (lazy-seed + deepMerge localized,
   sections thay nguyên khối) → service → validation (zod, `z.enum` cho page) →
   controller → routes. Mount `GET /api/legal/:page` (public), `PATCH` + `POST
-  /:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
+/:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
   intro + mảng sections (title + body HTML), admin thêm/xoá/sắp xếp.
 - **Backend module `contact`** (singleton): title/subtitle/email/phone/address/
   hours/body; email+phone là plain, còn lại localized. Mount `/api/contact`.
@@ -517,6 +541,7 @@ surface: `book-worker-dialog`, `quick-booking-dialog`, `quick-booking-wizard`,
 `worker-calendar`.
 
 **Đã làm**:
+
 - Tạo module dùng chung `pr1as-client/lib/booking-availability.ts`:
   `computeBookedIntervals` / `rangeHasConflict` (mirror backend half-open) /
   `computeBlockedHours` (giờ bắt đầu bị trùng theo unit×quantity) /
@@ -556,6 +581,7 @@ nhập / giao dịch / dashboard → ẩn footer (`SiteLayout hideFooter`). Foot
 chỉ render từ `md` trở lên; mobile dùng bottom-nav nên không đổi.
 
 **Đã làm** (5 chỗ lệch chuẩn):
+
 - `/pricing`: bỏ `hideFooter` → hiện footer (đồng bộ với about/services/booking-process).
 - `/worker/boost`: thêm `hideFooter` → ẩn (trang app của worker).
 - `/wallet`, `/wallet/deposit`: thêm `hideFooter` → ẩn (giao dịch, đã đăng nhập).
@@ -573,6 +599,7 @@ vốn đã không có footer — không đụng. `npm run typecheck` pass.
 **Commit**: chưa commit · branch `main`
 
 ---
+
 ## 2026-07-01 — Tự động chọn ngôn ngữ ban đầu theo trình duyệt
 
 **Mục tiêu**: Khách lần đầu (chưa có cookie `NEXT_LOCALE`) đang luôn bị ép về

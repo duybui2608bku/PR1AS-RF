@@ -1,12 +1,14 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   CalendarDays,
   CheckCircle2,
   Clock,
   Info,
   Loader2,
+  MessageCircle,
   MessageSquare,
   MessageSquareWarning,
   Star,
@@ -34,6 +36,7 @@ import {
   cancelledByLabel,
   formatDateTime,
   getConfirmationDeadline,
+  getRefId,
   getServiceLabel,
   getWorkerName,
   isBookingExpired,
@@ -82,8 +85,9 @@ export function BookingCard({
     !expired && booking.status === BookingStatus.PENDING_CLIENT_ACCEPTANCE
   const showReview = booking.status === BookingStatus.COMPLETED
   const showComplaintGroup = booking.status === BookingStatus.DISPUTED
+  const workerId = getRefId(booking.worker_id)
 
-  const formatLdt = (val?: string | null) => {
+  const formatLdt =(val?: string | null) => {
     if (!val) return "-"
     return new Date(val).toLocaleString(
       locale === "vi"
@@ -228,8 +232,17 @@ export function BookingCard({
       showDispute ||
       showComplete ||
       showReview ||
-      showComplaintGroup ? (
+      showComplaintGroup ||
+      workerId ? (
         <div className="mt-3 flex flex-wrap justify-end gap-2 border-t pt-3">
+          {workerId ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/chat?receiver_id=${workerId}`}>
+                <MessageCircle className="size-4" />
+                {t("sendMessage")}
+              </Link>
+            </Button>
+          ) : null}
           {showComplaintGroup ? (
             <Button
               size="sm"
