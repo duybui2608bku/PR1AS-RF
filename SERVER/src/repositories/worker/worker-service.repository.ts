@@ -487,6 +487,7 @@ class WorkerServiceRepository {
           }>;
         } | null;
         reputation_score: number;
+        last_active_at: Date | null;
         pricing: WorkerServicePricing[];
       }>;
     }>
@@ -686,6 +687,7 @@ class WorkerServiceRepository {
               reputation_score: {
                 $ifNull: ["$worker.meta_data.reputation_score", 100],
               },
+              last_active_at: { $ifNull: ["$worker.last_active_at", null] },
               pricing: "$pricing",
             },
           },
@@ -735,6 +737,7 @@ class WorkerServiceRepository {
             }>;
           } | null;
           reputation_score: number;
+          last_active_at: Date | null;
           pricing: WorkerServicePricing[];
         }>;
       }) => ({
