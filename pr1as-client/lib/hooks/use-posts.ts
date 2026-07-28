@@ -49,15 +49,6 @@ export function useListFeed(params: Omit<PostFeedParams, "cursor"> = {}) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.has_more ? (lastPage.next_cursor ?? undefined) : undefined,
-    refetchInterval: 60_000,
-    // Bounds the 60s poll's refetch cost: TanStack Query v5 refetches every
-    // currently-loaded page on each interval tick, so a session scrolled 8
-    // pages deep would fire 8 requests/minute just to refresh presence dots.
-    // maxPages only caps how many pages are kept in the refetch/eviction
-    // window — it does not limit how far the user can scroll via
-    // fetchNextPage; older pages beyond this stay rendered from their last
-    // fetched data, they just stop being part of the periodic refresh.
-    maxPages: 3,
   })
 }
 
