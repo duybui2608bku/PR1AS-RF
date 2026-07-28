@@ -91,6 +91,25 @@ export class ConversationRepository {
     };
   }
 
+  async listDirectPartnerIds(user_id: string): Promise<string[]> {
+    const conversations = await Conversation.find({
+      $or: [{ sender_id: user_id }, { receiver_id: user_id }],
+    })
+      .select("sender_id receiver_id")
+      .lean();
+
+    const partnerIds = conversations.map((conv) =>
+      conv.sender_id.toString() === user_id
+        ? conv.receiver_id.toString()
+        : conv.sender_id.toString()
+    );
+
+    // De-dupe: if two separate conversation documents ever point at the same
+    // other user, a single presence transition must not double-emit
+    // presence:update to that partner.
+    return [...new Set(partnerIds)];
+  }
+
   async updateConversationLastMessage(
     conversation_id: string,
     message_id: string

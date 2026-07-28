@@ -13,5 +13,6 @@ export const SOCKET_EVENTS = {
   TOKEN_REFRESH_REQUIRED: "auth:token_refresh_required",
   TOKEN_REFRESH: "auth:token_refresh",
   TOKEN_REFRESHED: "auth:token_refreshed",
+  PRESENCE_UPDATE: "presence:update",
 } as const;
 

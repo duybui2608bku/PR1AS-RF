@@ -45,11 +45,18 @@ import { logger } from "../../utils/logger";
 import { getCurrentMonthWindow } from "../../utils/date";
 import { moderationService } from "../moderation";
 import { RestrictionFeature } from "../../constants/moderation";
+import { isUserOnline } from "../../config/socket.handlers";
 
 type LeanPostWithAuthor = IPostDocument & {
   author_id: Pick<
     IUserDocument,
-    "_id" | "full_name" | "avatar" | "worker_profile" | "meta_data"
+    | "_id"
+    | "full_name"
+    | "avatar"
+    | "worker_profile"
+    | "meta_data"
+    | "last_active_at"
+    | "roles"
   > | null;
 };
 
@@ -71,20 +78,29 @@ const postAuthorIdToString = (authorId: unknown): string => {
   return String(authorId);
 };
 
-const toAuthorPublic = (
+export const toAuthorPublic = (
   post: LeanPostWithAuthor,
   fallbackId: Types.ObjectId
 ) => {
   const populated = post.author_id;
   if (populated && typeof populated === "object" && "_id" in populated) {
+    const authorId = populated._id.toString();
     return {
-      id: populated._id.toString(),
+      id: authorId,
       full_name: populated.full_name ?? null,
       avatar: populated.avatar ?? null,
       has_worker_profile: !!populated.worker_profile,
       meta_data: {
         pricing_plan_code: populated.meta_data?.pricing_plan_code ?? null,
       },
+      // Defense in depth: admin accounts must never show presence, even if
+      // the write-side guard in socket.handlers.ts is ever bypassed.
+      presence: populated.roles?.includes(UserRole.ADMIN)
+        ? { is_online: false, last_active_at: null }
+        : {
+            is_online: isUserOnline(authorId),
+            last_active_at: populated.last_active_at ?? null,
+          },
     };
   }
   return {
@@ -92,6 +108,7 @@ const toAuthorPublic = (
     full_name: null,
     avatar: null,
     has_worker_profile: false,
+    presence: { is_online: false, last_active_at: null },
   };
 };
 

@@ -38,6 +38,63 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-07-18 — Nút nâng cấp gói khi action bị chặn bởi Plan
+
+**Mục tiêu**: Mọi action bị hạn chế bởi Plan (gói) mà user không thực hiện được
+=> thay bằng lời nhắc nâng cấp gói phù hợp, thay vì chặn cụt/toast lỗi chung.
+Phạm vi thống nhất với user: nhắn tin worker, đăng tin/job, kích hoạt boost hồ
+sơ (không gồm `ads_enabled` — chưa gắn action cụ thể). Giữ nguyên nút gốc, bấm
+vào mở dialog nâng cấp; CTA luôn là "Nâng cấp gói" chung → `/pricing` (không
+tính gói tối thiểu).
+
+**Đã làm**:
+
+- Dựng pattern dùng chung, nhại kiến trúc `auth-dialog-store`/`use-auth-required`/
+  `auth-required-dialog` đã có: `upgrade-plan-store.ts` (Zustand) +
+  `use-require-plan.ts` (`requirePlan(allowed, reason, cb)`) +
+  `UpgradePlanDialog` (mount global trong `providers/index.tsx`). Refactor
+  `worker-services.tsx` (nhắn tin) từ dialog inline cũ sang dùng pattern này.
+- Đăng tin: BE đã enforce sẵn (`assertUserCanCreatePost`), chỉ thiếu FE — thêm
+  `useMyPostStats()` (bọc `GET /users/me/post-stats` có sẵn) để gate chủ động ở
+  `create-post-form.tsx`, cộng reactive fallback trong `useCreatePost.onError`
+  (chỉ bắt đúng 2 code plan, không đụng lỗi reputation/moderation dùng chung shape).
+- Boost hồ sơ: **enforce mới hoàn toàn** ở backend (`boost_profile_enabled`/
+  `boost_profile_monthly_limit` trong `PricingPackage.features` trước đây có mô
+  hình nhưng chưa gate gì) — `boostService.activate()` thêm check qua
+  `pricingService.getActivePackageForUser()` (method chung mới, tách từ
+  `post.service.ts`) + `workerBoostRepository.countActivatedByUserBetween()`
+  (đếm `WorkerBoost.started_at` trong tháng — mỗi lần activate tạo doc mới,
+  không xoá, nên đếm thẳng được). 2 `ErrorCode` mới: `BOOST_PLAN_FEATURE_DISABLED`,
+  `BOOST_MONTHLY_LIMIT_EXCEEDED`. `GET /boost/status` (đã poll 30s sẵn) trả thêm
+  field quota để `boost-panel.tsx` gate chủ động, tách biệt với lý do "không đủ điểm".
+- Defense-in-depth: `axios.ts` interceptor bắt 403 có code nằm trong
+  `PLAN_RESTRICTED_CODE_REASON` → dispatch event `plan:restricted`, dialog tự mở.
+  Chỉ áp dụng cho đăng tin/boost (nhắn tin không có BE enforcement).
+- i18n: namespace `PlanUpgrade` mới (4 locale) thay cho key mồ côi
+  `WorkerProfile.services.upgrade*`; thêm `WorkerBoost.panel.planBlockedHint`.
+- Viết `memorybank/plan-upgrade-gating.md` trước khi code (theo yêu cầu đã lưu).
+
+**File chính**: `pr1as-client/lib/store/upgrade-plan-store.ts`,
+`pr1as-client/lib/hooks/use-require-plan.ts`,
+`pr1as-client/components/plan/upgrade-plan-dialog.tsx`,
+`SERVER/src/services/pricing/pricing.service.ts` (`getActivePackageForUser`),
+`SERVER/src/services/boost/boost.service.ts`,
+`SERVER/src/repositories/boost/worker-boost.repository.ts`,
+`pr1as-client/components/worker/boost-panel.tsx`,
+`pr1as-client/components/post/create-post-form.tsx`.
+
+**Quyết định / ghi chú**: Phát hiện bug có sẵn không liên quan — nhánh
+`USER_BANNED` trong `axios.ts` đọc `data?.error_code` nhưng response thật là
+`{error:{code,message}}` (không có `error_code` top-level), nên gần như không
+bao giờ khớp trên thực tế; **không sửa** vì ngoài phạm vi, chỉ note lại. Repo
+đang có mismatch CRLF/LF trên toàn bộ file có sẵn (prettier đòi CRLF,
+`npm run lint` ở SERVER báo ~36k lỗi) — pre-existing, không phải do session
+này, không đụng vào.
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main-3`
+
 ## 2026-07-23 — Chỉ cho bắt đầu booking khi đến giờ hẹn
 
 **Mục tiêu**: worker không được bấm "bắt đầu" (CONFIRMED → IN_PROGRESS) trước
@@ -83,7 +140,8 @@ giờ hẹn. Trước đó không có ràng buộc thời gian nào.
   status `expired` có label riêng (`statusExpired`/"Hết hạn") + icon `TimerOff`.
 
 **File chính**: `SERVER/src/{constants,models,repositories,services,jobs}/wallet/*`
-+ `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
+
+- `src/index.ts`; `pr1as-client/{services/wallet.service.ts,components/wallet/*,
 lib/hooks/use-wallet.ts,messages/*}`.
 
 **Quyết định / ghi chú**: chốt "tiền về trễ vẫn cộng" (money-safe), status mới
@@ -178,7 +236,7 @@ bao giờ đóng). Cần job tự set COMPLETED.
 - `AUTO_COMPLETE_HOURS` trước đây là hằng số chết (khai báo, không job nào dùng);
   giờ đã dùng. `AUTO_CONFIRM_HOURS: 24` vẫn chết.
 
-**Còn lại**: booking treo ở CONFIRMED/IN_PROGRESS *trước* khi có job này sẽ được
+**Còn lại**: booking treo ở CONFIRMED/IN_PROGRESS _trước_ khi có job này sẽ được
 job quét luôn ở lần chạy đầu (backfill tự nhiên) — theo dõi log
 `Auto-completed finished bookings` lần deploy đầu.
 
@@ -278,7 +336,7 @@ sách worker khớp.
 - **FE**: `HashtagChipInput` tái dùng; nhập hashtag/dịch vụ trong setup wizard
   (state `serviceHashtags`, seed từ my-services); hiện hashtag dưới mỗi dịch vụ ở
   hồ sơ công khai (`worker-services.tsx`); trang search `/workers/search` + hook
-  + client + query key; ô search hashtag ở discovery (`home-search-experience`).
+  - client + query key; ô search hashtag ở discovery (`home-search-experience`).
 - i18n: thêm `WorkerSetup.pricing.hashtagsLabel` cho 4 locale.
 
 **File chính**: `SERVER/src/{utils/worker-hashtag,constants/worker-service,
@@ -391,11 +449,11 @@ dùng nhập mã trên trang /pricing để kích hoạt gói tương ứng.
   tùy chỉnh, list phân trang + filter (search/plan/is_active), PATCH
   (bật/tắt, note, hạn, max_uses ≥ used_count), DELETE chỉ khi chưa ai dùng.
 - **Redeem** (`POST /api/vouchers/redeem`, auth + CSRF): tái dùng đúng luật
-  của `upgradePricing` — cùng plan thì cộng dồn tháng vào expires_at, plan cao
+  của `upgradePricing` — cùng plan thì cộng dồn tháng vào expires*at, plan cao
   hơn thì reset từ hôm nay, plan thấp hơn plan đang active thì từ chối. Chạy
   trong 1 transaction: consume voucher atomic (`$inc used_count` với điều kiện
   `used_count < max_uses` + còn hạn + is_active), tạo redemption, update
-  `meta_data.pricing_*`, ghi `UserSubscriptionHistory` (source **`voucher`**
+  `meta_data.pricing*\*`, ghi `UserSubscriptionHistory` (source **`voucher`\*\*
   mới thêm vào enum, amount 0). Cộng boost points như mua gói (ngoài
   transaction). Duplicate key (race) → 409 "đã dùng mã này".
 - **Frontend**: `services/voucher.service.ts`, `lib/hooks/use-vouchers.ts`
@@ -428,12 +486,13 @@ chưa auth, service test tạo/trùng mã/list/tắt/xóa pass trên DB dev (t�
 (About đã có sẵn từ trước). Cookies bỏ qua theo yêu cầu.
 
 **Đã làm** (nhân bản khuôn mẫu module `about`):
+
 - **Backend module `legal`** (privacy + terms, phân biệt qua param `:page`,
   singleton mỗi page, `page` unique index): types → constants (defaults 4 ngôn
   ngữ dựng từ i18n cũ) → model → repository (lazy-seed + deepMerge localized,
   sections thay nguyên khối) → service → validation (zod, `z.enum` cho page) →
   controller → routes. Mount `GET /api/legal/:page` (public), `PATCH` + `POST
-  /:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
+/:page/reset` (admin). Cấu trúc **sections linh hoạt**: title/lastUpdated/
   intro + mảng sections (title + body HTML), admin thêm/xoá/sắp xếp.
 - **Backend module `contact`** (singleton): title/subtitle/email/phone/address/
   hours/body; email+phone là plain, còn lại localized. Mount `/api/contact`.
@@ -482,6 +541,7 @@ surface: `book-worker-dialog`, `quick-booking-dialog`, `quick-booking-wizard`,
 `worker-calendar`.
 
 **Đã làm**:
+
 - Tạo module dùng chung `pr1as-client/lib/booking-availability.ts`:
   `computeBookedIntervals` / `rangeHasConflict` (mirror backend half-open) /
   `computeBlockedHours` (giờ bắt đầu bị trùng theo unit×quantity) /
@@ -521,6 +581,7 @@ nhập / giao dịch / dashboard → ẩn footer (`SiteLayout hideFooter`). Foot
 chỉ render từ `md` trở lên; mobile dùng bottom-nav nên không đổi.
 
 **Đã làm** (5 chỗ lệch chuẩn):
+
 - `/pricing`: bỏ `hideFooter` → hiện footer (đồng bộ với about/services/booking-process).
 - `/worker/boost`: thêm `hideFooter` → ẩn (trang app của worker).
 - `/wallet`, `/wallet/deposit`: thêm `hideFooter` → ẩn (giao dịch, đã đăng nhập).
@@ -538,6 +599,7 @@ vốn đã không có footer — không đụng. `npm run typecheck` pass.
 **Commit**: chưa commit · branch `main`
 
 ---
+
 ## 2026-07-01 — Tự động chọn ngôn ngữ ban đầu theo trình duyệt
 
 **Mục tiêu**: Khách lần đầu (chưa có cookie `NEXT_LOCALE`) đang luôn bị ép về

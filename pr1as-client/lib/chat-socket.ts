@@ -72,6 +72,11 @@ export type ServerToClientEvents = {
   "notification:new": (payload: NotificationPayload) => void
   "notification:unread_count": (payload: { unread_count: number }) => void
   "account:banned": () => void
+  "presence:update": (payload: {
+    user_id: string
+    is_online: boolean
+    last_active_at: string | null
+  }) => void
 }
 
 export type ClientToServerEvents = {

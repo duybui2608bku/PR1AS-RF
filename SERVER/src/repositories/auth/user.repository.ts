@@ -335,6 +335,10 @@ export class UserRepository {
     return User.findByIdAndUpdate(id, { last_active_role }, { new: true });
   }
 
+  async updateLastActiveNow(id: string): Promise<void> {
+    await User.findByIdAndUpdate(id, { last_active_at: new Date() });
+  }
+
   async updateLocale(
     id: string,
     locale: string

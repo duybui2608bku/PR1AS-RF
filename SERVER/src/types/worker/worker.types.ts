@@ -86,6 +86,10 @@ export interface WorkersGroupedByServiceItem {
       boost_type: string | null;
       boost_tier: number | null; // 1=featured, 2=basic, null=none
     };
+    presence?: {
+      is_online: boolean;
+      last_active_at: Date | null;
+    };
   }>;
 }
 

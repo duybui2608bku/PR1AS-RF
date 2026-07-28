@@ -35,6 +35,7 @@ import { RestrictionFeature } from "../../constants/moderation";
 import { workerBoostRepository } from "../../repositories/boost/worker-boost.repository";
 import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
 import { normalizeHashtag } from "../../utils/worker-hashtag";
+import { isUserOnlineBulk } from "../../config/socket.handlers";
 import {
   getPagination,
   PaginationHelper,
@@ -178,6 +179,23 @@ const calculateSuggestionScore = (
   const priceScore = match.priceProximityScore * 25;
 
   return serviceMatchScore + ratingScore + completedBookingScore + priceScore;
+};
+
+// Sort key for worker discovery: boost tier first (paid ranking is preserved),
+// then online-now as a tie-break within the same tier, then a deterministic
+// scatter so equal-priority workers rotate exposure over time.
+export const getWorkerBoostSortKey = (
+  workerId: string,
+  boostByWorkerId: Map<string, { tier: number }>,
+  onlineWorkerIds: Set<string>,
+  slotId: number
+): [number, number, number] => {
+  const boost = boostByWorkerId.get(workerId);
+  const tier = boost ? boost.tier : 999;
+  const onlineRank = onlineWorkerIds.has(workerId) ? 0 : 1;
+  // Cheap deterministic scatter within same tier using last 4 hex chars of id
+  const scatter = (parseInt(workerId.slice(-4), 16) + slotId) % 1000;
+  return [tier, onlineRank, scatter];
 };
 
 export class WorkerService {
@@ -518,20 +536,13 @@ export class WorkerService {
     ]);
 
     const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
+    const onlineWorkerIds = isUserOnlineBulk(allWorkerIds);
 
     // Deterministic rotation: slot changes every rotation_interval_minutes so
     // all boosted workers at the same tier get equal exposure over time.
     const slotId = Math.floor(
       Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
     );
-
-    const getBoostSortKey = (workerId: string): [number, number] => {
-      const boost = boostByWorkerId.get(workerId);
-      const tier = boost ? boost.tier : 999;
-      // Cheap deterministic scatter within same tier using last 4 hex chars of id
-      const scatter = (parseInt(workerId.slice(-4), 16) + slotId) % 1000;
-      return [tier, scatter];
-    };
 
     const groupedWithBoost = groupedWorkers.map((group) => ({
       ...group,
@@ -545,12 +556,27 @@ export class WorkerService {
               boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
               boost_tier: boost ? boost.tier : null,
             },
+            presence: {
+              is_online: onlineWorkerIds.has(w.id),
+              last_active_at: w.last_active_at ?? null,
+            },
           };
         })
         .sort((a, b) => {
-          const [tierA, scatterA] = getBoostSortKey(a.id);
-          const [tierB, scatterB] = getBoostSortKey(b.id);
+          const [tierA, onlineA, scatterA] = getWorkerBoostSortKey(
+            a.id,
+            boostByWorkerId,
+            onlineWorkerIds,
+            slotId
+          );
+          const [tierB, onlineB, scatterB] = getWorkerBoostSortKey(
+            b.id,
+            boostByWorkerId,
+            onlineWorkerIds,
+            slotId
+          );
           if (tierA !== tierB) return tierA - tierB;
+          if (onlineA !== onlineB) return onlineA - onlineB;
           return scatterA - scatterB;
         }),
     }));

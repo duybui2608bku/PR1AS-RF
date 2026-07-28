@@ -28,6 +28,11 @@ const conversationSchema = new Schema({
 });
 
 conversationSchema.index({ sender_id: 1, receiver_id: 1 }, { unique: true });
+// listDirectPartnerIds() (repositories/chat/conversation.repository.ts) queries
+// $or: [{ sender_id }, { receiver_id }] on every presence transition (socket
+// connect/disconnect). The unique index above only covers the sender_id
+// branch, so the receiver_id branch would full-scan without this.
+conversationSchema.index({ receiver_id: 1 });
 
 const Conversation = model(modelsName.CONVERSATION, conversationSchema);
 

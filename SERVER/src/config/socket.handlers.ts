@@ -4,6 +4,7 @@ import { verifyToken, JWTPayload } from "../utils/jwt";
 import { logger } from "../utils/logger";
 import { chatRepository, groupChatRepository } from "../repositories/chat";
 import { userRepository } from "../repositories/auth/user.repository";
+import { conversationRepository } from "../repositories/chat/conversation.repository";
 import { bookingRepository } from "../repositories/booking/booking.repository";
 import { getSocketIO } from "./socket";
 import { AUTH_MESSAGES, CHAT_MESSAGES } from "../constants/messages";
@@ -85,11 +86,17 @@ export const authenticateSocket = async (
 };
 
 export const registerUserSocket = (userId: string, socketId: string): void => {
+  const wasOffline = !isUserOnline(userId);
+
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
   }
   userSockets.get(userId)!.add(socketId);
   logger.info(`User ${userId} connected with socket ${socketId}`);
+
+  if (wasOffline) {
+    void handlePresenceTransition(userId, true);
+  }
 };
 
 export const unregisterUserSocket = (
@@ -101,6 +108,7 @@ export const unregisterUserSocket = (
     sockets.delete(socketId);
     if (sockets.size === 0) {
       userSockets.delete(userId);
+      void handlePresenceTransition(userId, false);
     }
   }
   logger.info(`User ${userId} disconnected socket ${socketId}`);
@@ -108,6 +116,62 @@ export const unregisterUserSocket = (
 
 export const isUserOnline = (userId: string): boolean => {
   return userSockets.has(userId) && userSockets.get(userId)!.size > 0;
+};
+
+export const isUserOnlineBulk = (userIds: string[]): Set<string> => {
+  const online = new Set<string>();
+  for (const userId of userIds) {
+    if (isUserOnline(userId)) {
+      online.add(userId);
+    }
+  }
+  return online;
+};
+
+/**
+ * Persists the online/offline transition and notifies direct-chat partners
+ * so their conversation list/header can update without a manual refresh.
+ * Fire-and-forget from registerUserSocket/unregisterUserSocket — a failure
+ * here must never block the socket handshake or disconnect cleanup, so every
+ * awaited call is wrapped in its own try/catch.
+ */
+const handlePresenceTransition = async (
+  userId: string,
+  isOnline: boolean
+): Promise<void> => {
+  // Admin accounts must never be presence-tracked or broadcast, per product
+  // decision — not just "naturally unlikely" to occur. This is the primary
+  // (cheapest) guard; chat.service.ts and post.service.ts have read-side
+  // defense in depth in case this write path is ever bypassed.
+  try {
+    const roles = await userRepository.findRolesById(userId);
+    if (roles?.includes(UserRole.ADMIN)) return;
+  } catch (error) {
+    logger.error(`Failed to check admin role for user ${userId}:`, error);
+  }
+
+  const now = new Date();
+
+  try {
+    await userRepository.updateLastActiveNow(userId);
+  } catch (error) {
+    logger.error(`Failed to persist last_active_at for user ${userId}:`, error);
+  }
+
+  try {
+    const partnerIds = await conversationRepository.listDirectPartnerIds(userId);
+    const io = getSocketIO();
+    const payload = {
+      user_id: userId,
+      is_online: isOnline,
+      last_active_at: now.toISOString(),
+    };
+    for (const partnerId of partnerIds) {
+      io.to(getUserRoom(partnerId)).emit(SOCKET_EVENTS.PRESENCE_UPDATE, payload);
+    }
+  } catch (error) {
+    logger.error(`Failed to broadcast presence for user ${userId}:`, error);
+  }
 };
 
 export const getUserSocketIds = (userId: string): string[] => {

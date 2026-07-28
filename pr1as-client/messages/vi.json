@@ -2053,5 +2053,14 @@
     "copy": "Sao chép link tra cứu",
     "copied": "Đã sao chép link tra cứu",
     "prefilled": "Email gửi đến có thể điền sẵn thông tin cho bạn."
+  },
+  "Presence": {
+    "online": "Đang online",
+    "justNow": "Vừa hoạt động",
+    "minutesAgo": "Hoạt động {count} phút trước",
+    "hoursAgo": "Hoạt động {count} giờ trước",
+    "daysAgo": "Hoạt động {count} ngày trước",
+    "offline": "Offline",
+    "onlineBadge": "Online"
   }
 }

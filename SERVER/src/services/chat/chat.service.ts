@@ -17,6 +17,7 @@ import { userRepository } from "../../repositories/auth/user.repository";
 import { UserRole } from "../../types/auth/user.types";
 
 import { getSocketIO } from "../../config/socket";
+import { isUserOnline, isUserOnlineBulk } from "../../config/socket.handlers";
 
 import {
   getOtherUserId,
@@ -345,6 +346,8 @@ export class ChatService {
       )
     );
 
+    const onlineUserIds = isUserOnlineBulk(otherUserIds);
+
     const lastMessageIds = result.conversations
       .filter((conv: IConversation) => conv.last_message)
       .map((conv: IConversation) => conv.last_message!);
@@ -420,6 +423,15 @@ export class ChatService {
                 is_blocked: Boolean(block?.outgoing),
                 has_blocked_me: Boolean(block?.incoming),
                 block_profile: Boolean(block?.outgoing?.block_profile),
+                // Defense in depth: admin accounts must never show presence,
+                // even if the write-side guard in socket.handlers.ts is
+                // ever bypassed.
+                presence: this.isAdmin(otherUser ?? null)
+                  ? { is_online: false, last_active_at: null }
+                  : {
+                      is_online: onlineUserIds.has(otherUserId),
+                      last_active_at: otherUser?.last_active_at ?? null,
+                    },
               }
             : formattedUser,
           unread_count: unreadCountMap.get(conv._id) ?? 0,
@@ -475,6 +487,15 @@ export class ChatService {
             is_blocked: Boolean(outgoingBlock),
             has_blocked_me: Boolean(incomingBlock),
             block_profile: Boolean(outgoingBlock?.block_profile),
+            // Defense in depth: admin accounts must never show presence,
+            // even if the write-side guard in socket.handlers.ts is
+            // ever bypassed.
+            presence: this.isAdmin(otherUser)
+              ? { is_online: false, last_active_at: null }
+              : {
+                  is_online: isUserOnline(otherUserId),
+                  last_active_at: otherUser?.last_active_at ?? null,
+                },
           }
         : formattedUser,
       unread_count: result.unread_count,

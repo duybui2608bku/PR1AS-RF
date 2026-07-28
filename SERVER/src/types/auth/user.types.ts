@@ -86,6 +86,7 @@ export interface IUser {
   created_by_admin?: boolean;
   created_at: Date;
   last_login: Date | null;
+  last_active_at: Date | null;
   refresh_token_hash?: string | null;
   // Hash of the immediately-previous refresh token, kept briefly after rotation
   // so concurrent refreshes from sibling tabs/devices (which all present the same

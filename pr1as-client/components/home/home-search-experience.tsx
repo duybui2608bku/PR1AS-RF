@@ -135,6 +135,7 @@ export function HomeSearchExperience({ initialState }: HomeSearchExperienceProps
     queryFn: () => workerService.getWorkersGroupedByService(filters),
     placeholderData: (previous) => previous,
     staleTime: 30 * 1000,
+    refetchInterval: 60_000,
   })
 
   const visibleGroups = React.useMemo(() => {

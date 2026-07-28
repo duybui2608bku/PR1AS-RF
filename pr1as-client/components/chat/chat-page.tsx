@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
+import { PresenceText } from "@/components/shared/presence-text"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import * as React from "react"
@@ -77,6 +78,7 @@ import { cn } from "@/lib/utils"
 import type {
   ChatConversation,
   ChatMessage,
+  DirectConversationListResult,
   DirectMessageListResult,
   GroupChatConversation,
   GroupChatMember,
@@ -845,6 +847,53 @@ export function ChatPage({
       )
     }
 
+    const handlePresenceUpdate = (payload: {
+      user_id: string
+      is_online: boolean
+      last_active_at: string | null
+    }) => {
+      const nextPresence = {
+        is_online: payload.is_online,
+        last_active_at: payload.last_active_at,
+      }
+
+      queryClient.setQueryData<DirectConversationListResult>(
+        queryKeys.chat.directConversations(CONVERSATION_PARAMS),
+        (current) => {
+          if (!current) return current
+          let changed = false
+          const conversations = current.conversations.map((conversation) => {
+            const otherUser = conversation.other_user
+            if (!otherUser || otherUser._id !== payload.user_id) {
+              return conversation
+            }
+            changed = true
+            return {
+              ...conversation,
+              other_user: { ...otherUser, presence: nextPresence },
+            }
+          })
+          return changed ? { ...current, conversations } : current
+        }
+      )
+
+      if (activeDirectIdRef.current) {
+        queryClient.setQueryData<ChatConversation | null>(
+          queryKeys.chat.directConversation(activeDirectIdRef.current),
+          (current) => {
+            const otherUser = current?.other_user
+            if (!current || !otherUser || otherUser._id !== payload.user_id) {
+              return current
+            }
+            return {
+              ...current,
+              other_user: { ...otherUser, presence: nextPresence },
+            }
+          }
+        )
+      }
+    }
+
     socket.on("new_message", handleNewMessage)
     socket.on("message_deleted", handleDeletedMessage)
     socket.on("message_read", handleMessageRead)
@@ -852,6 +901,7 @@ export function ChatPage({
     socket.on("group_messages_read", handleGroupRead)
     socket.on("user_typing", handleTyping)
     socket.on("group_user_typing", handleGroupTyping)
+    socket.on("presence:update", handlePresenceUpdate)
     socket.on("error", handleSocketError)
 
     return () => {
@@ -862,6 +912,7 @@ export function ChatPage({
       socket.off("group_messages_read", handleGroupRead)
       socket.off("user_typing", handleTyping)
       socket.off("group_user_typing", handleGroupTyping)
+      socket.off("presence:update", handlePresenceUpdate)
       socket.off("error", handleSocketError)
     }
   // activeDirectId, activeGroupId, user?.id đọc qua refs → không cần trong deps
@@ -1489,6 +1540,9 @@ export function ChatPage({
                 <p className="truncate text-xs text-muted-foreground">
                   {activeSubtitle}
                 </p>
+                {mode === "direct" ? (
+                  <PresenceText presence={selectedDirect?.other_user?.presence} />
+                ) : null}
               </div>
             </div>
             <div className="flex shrink-0 items-center justify-end gap-2">
@@ -1911,6 +1965,9 @@ function ConversationList({
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {subtitle}
               </p>
+              {isDirect ? (
+                <PresenceText presence={directConversation?.other_user?.presence} />
+              ) : null}
               <p
                 className={cn(
                   "mt-1 truncate text-xs text-muted-foreground",

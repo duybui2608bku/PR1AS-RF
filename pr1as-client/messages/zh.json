@@ -2052,5 +2052,14 @@
     "copy": "复制查询链接",
     "copied": "查询链接已复制",
     "prefilled": "邮件中的链接可以为您预填此页面。"
+  },
+  "Presence": {
+    "online": "在线",
+    "justNow": "刚刚活跃",
+    "minutesAgo": "{count} 分钟前活跃",
+    "hoursAgo": "{count} 小时前活跃",
+    "daysAgo": "{count} 天前活跃",
+    "offline": "离线",
+    "onlineBadge": "在线"
   }
 }

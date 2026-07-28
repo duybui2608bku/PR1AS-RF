@@ -44,6 +44,10 @@ export type PostAuthor = {
   meta_data?: {
     pricing_plan_code?: string | null
   }
+  presence: {
+    is_online: boolean
+    last_active_at: string | null
+  }
 }
 
 export type PostMediaPublic = {
