@@ -2059,6 +2059,7 @@
     "minutesAgo": "{count} 分钟前活跃",
     "hoursAgo": "{count} 小时前活跃",
     "daysAgo": "{count} 天前活跃",
-    "offline": "离线"
+    "offline": "离线",
+    "onlineBadge": "在线"
   }
 }

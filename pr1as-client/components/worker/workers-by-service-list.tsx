@@ -42,7 +42,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { PresenceDot } from "@/components/shared/presence-dot"
+import { PresenceBadge } from "@/components/shared/presence-badge"
 import { serviceService } from "@/services/service.service"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import type { ServiceTab } from "@/lib/home/home-search-params"
@@ -250,7 +250,7 @@ const WorkerCard = ({
                 <Zap className="h-2.5 w-2.5" /> {t("boost.active")}
               </div>
             )}
-            <PresenceDot
+            <PresenceBadge
               presence={worker.presence}
               className="absolute bottom-2 right-2"
             />

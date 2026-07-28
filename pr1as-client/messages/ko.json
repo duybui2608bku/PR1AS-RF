@@ -2048,6 +2048,7 @@
     "minutesAgo": "{count}분 전 활동",
     "hoursAgo": "{count}시간 전 활동",
     "daysAgo": "{count}일 전 활동",
-    "offline": "오프라인"
+    "offline": "오프라인",
+    "onlineBadge": "온라인"
   }
 }

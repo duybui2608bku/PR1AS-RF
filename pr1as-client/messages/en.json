@@ -2050,6 +2050,7 @@
     "minutesAgo": "Active {count}m ago",
     "hoursAgo": "Active {count}h ago",
     "daysAgo": "Active {count}d ago",
-    "offline": "Offline"
+    "offline": "Offline",
+    "onlineBadge": "Online"
   }
 }
