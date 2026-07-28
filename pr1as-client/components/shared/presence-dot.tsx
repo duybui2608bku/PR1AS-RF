@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 import {
   Tooltip,
   TooltipContent,
@@ -16,8 +18,13 @@ export function PresenceDot({
   presence?: PresenceInfo | null
   className?: string
 }) {
+  const t = useTranslations("Presence")
   const label = usePresenceLabel(presence)
-  if (!presence?.is_online) return null
+  if (!presence) return null
+
+  // Always show the dot (green online, grey offline) rather than hiding it
+  // offline — an offline-only-hidden dot never taught users the feature exists.
+  const displayLabel = label ?? t("offline")
 
   return (
     <TooltipProvider>
@@ -26,14 +33,15 @@ export function PresenceDot({
           <span
             tabIndex={0}
             role="img"
-            aria-label={label ?? undefined}
+            aria-label={displayLabel}
             className={cn(
-              "block size-2.5 rounded-full border-2 border-background bg-green-500",
+              "block size-4 rounded-full border-[3px] border-background",
+              presence.is_online ? "bg-green-500" : "bg-muted-foreground/60",
               className
             )}
           />
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent>{displayLabel}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )

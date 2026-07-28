@@ -2049,6 +2049,7 @@
     "justNow": "Active just now",
     "minutesAgo": "Active {count}m ago",
     "hoursAgo": "Active {count}h ago",
-    "daysAgo": "Active {count}d ago"
+    "daysAgo": "Active {count}d ago",
+    "offline": "Offline"
   }
 }

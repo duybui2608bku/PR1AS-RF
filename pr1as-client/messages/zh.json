@@ -2058,6 +2058,7 @@
     "justNow": "刚刚活跃",
     "minutesAgo": "{count} 分钟前活跃",
     "hoursAgo": "{count} 小时前活跃",
-    "daysAgo": "{count} 天前活跃"
+    "daysAgo": "{count} 天前活跃",
+    "offline": "离线"
   }
 }

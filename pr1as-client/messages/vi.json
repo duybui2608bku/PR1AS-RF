@@ -2059,6 +2059,7 @@
     "justNow": "Vừa hoạt động",
     "minutesAgo": "Hoạt động {count} phút trước",
     "hoursAgo": "Hoạt động {count} giờ trước",
-    "daysAgo": "Hoạt động {count} ngày trước"
+    "daysAgo": "Hoạt động {count} ngày trước",
+    "offline": "Không hoạt động"
   }
 }
