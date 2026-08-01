@@ -1042,7 +1042,8 @@
       "errSelectTime": "Vui lòng chọn giờ bắt đầu",
       "errMinAdvance": "Lịch phải đặt trước ít nhất {hours} giờ",
       "errSlotTaken": "Khung giờ này đã có người đặt",
-      "slotTaken": "Đã đặt"
+      "slotTaken": "Đã đặt",
+      "slotTooSoon": "Quá gần giờ hiện tại"
     }
   },
   "Onboarding": {
