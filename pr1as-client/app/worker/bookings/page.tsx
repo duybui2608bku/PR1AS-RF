@@ -52,7 +52,7 @@ import {
 } from "@/lib/hooks/use-bookings"
 import { useCreateComplaintConversation } from "@/lib/hooks/use-chat"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
-import { cn } from "@/lib/utils"
+import { buildChatHref, cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import {
   BookingStatus,
@@ -81,6 +81,8 @@ import {
   getBookingClientId,
   getBookingCustomerLabel,
   getBookingCustomerLine,
+  getClientAvatar,
+  getClientName,
   getConfirmationDeadline,
   isGuestBooking,
   getServiceLabel,
@@ -431,7 +433,12 @@ export default function WorkerBookingsPage() {
       }
 
       if (value === "message") {
-        router.push(`/chat?receiver_id=${clientId}`)
+        router.push(
+          buildChatHref(clientId, {
+            name: getClientName(booking.client_id),
+            avatar: getClientAvatar(booking.client_id),
+          })
+        )
         return
       }
 
@@ -541,7 +548,12 @@ export default function WorkerBookingsPage() {
         icon: MessageCircle,
         onSelect: () => {
           setSheetBooking(null)
-          router.push(`/chat?receiver_id=${sheetClientId}`)
+          router.push(
+            buildChatHref(sheetClientId, {
+              name: getClientName(booking.client_id),
+              avatar: getClientAvatar(booking.client_id),
+            })
+          )
         },
       })
     }

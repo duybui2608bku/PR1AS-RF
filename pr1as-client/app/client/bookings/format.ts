@@ -157,6 +157,11 @@ export const getWorkerName = (worker: Booking["worker_id"]): string => {
   return worker.full_name || worker.email || "-"
 }
 
+export const getWorkerAvatar = (worker: Booking["worker_id"]): string | null => {
+  if (!worker || typeof worker === "string") return null
+  return worker.avatar ?? null
+}
+
 export const getServiceLabel = (
   booking: Booking,
   locale: string = DEFAULT_LOCALE

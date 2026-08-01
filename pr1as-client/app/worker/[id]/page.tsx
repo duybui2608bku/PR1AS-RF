@@ -240,6 +240,7 @@ export default function WorkerProfilePage({
                     <WorkerServices
                       workerId={data.user.id}
                       workerName={data.user.full_name ?? "worker"}
+                      workerAvatar={data.user.avatar}
                       services={data.services ?? []}
                       workerReputationScore={
                         data.user.meta_data?.reputation_score
