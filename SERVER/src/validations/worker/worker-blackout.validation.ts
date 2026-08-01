@@ -16,6 +16,10 @@ export const createWorkerBlackoutSchema = z
   .refine((data) => data.end_time.getTime() > data.start_time.getTime(), {
     message: "end_time must be after start_time",
     path: ["end_time"],
+  })
+  .refine((data) => data.start_time.getTime() >= Date.now(), {
+    message: "start_time must not be in the past",
+    path: ["start_time"],
   });
 
 export const listWorkerBlackoutQuerySchema = z.object({

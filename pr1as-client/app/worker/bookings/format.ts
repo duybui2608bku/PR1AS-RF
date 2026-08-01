@@ -123,6 +123,11 @@ export const getClientName = (client: Booking["client_id"]): string => {
   return client.full_name || client.email || "-"
 }
 
+export const getClientAvatar = (client: Booking["client_id"]): string | null => {
+  if (!client || typeof client === "string") return null
+  return client.avatar ?? null
+}
+
 export const getServiceLabel = (
   booking: Booking,
   locale: string = DEFAULT_LOCALE

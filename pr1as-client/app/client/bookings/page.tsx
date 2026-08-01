@@ -46,7 +46,7 @@ import {
 import { useCreateComplaintConversation } from "@/lib/hooks/use-chat"
 import { useCreateReview } from "@/lib/hooks/use-reviews"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { cn } from "@/lib/utils"
+import { buildChatHref, cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import {
   BookingStatus,
@@ -76,6 +76,7 @@ import {
   getConfirmationDeadline,
   getRefId,
   getServiceLabel,
+  getWorkerAvatar,
   getWorkerName,
   isBookingExpired,
 } from "./format"
@@ -302,7 +303,12 @@ export default function ClientBookingsPage() {
           void handleOpenComplaintGroup(booking)
           break
         case "message":
-          router.push(`/chat?receiver_id=${workerId}`)
+          router.push(
+            buildChatHref(workerId, {
+              name: getWorkerName(booking.worker_id),
+              avatar: getWorkerAvatar(booking.worker_id),
+            })
+          )
           break
         case "review":
           setReviewTarget(booking)

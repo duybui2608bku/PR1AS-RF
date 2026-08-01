@@ -16,7 +16,7 @@ import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useRequirePlan } from "@/lib/hooks/use-require-plan"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { cn } from "@/lib/utils"
+import { buildChatHref, cn } from "@/lib/utils"
 import { serviceService } from "@/services/service.service"
 import type { WorkerServiceItem, WorkerServicePricing } from "@/types"
 
@@ -58,6 +58,7 @@ const cheapestPricing = (
 type Props = {
   workerId: string
   workerName: string
+  workerAvatar?: string | null
   services: WorkerServiceItem[]
   workerReputationScore?: number
   selectedDate?: Date
@@ -65,7 +66,7 @@ type Props = {
   calendar?: ReactNode
 }
 
-export function WorkerServices({ workerId, workerName, services, workerReputationScore = 100, selectedDate, calendar }: Props) {
+export function WorkerServices({ workerId, workerName, workerAvatar, services, workerReputationScore = 100, selectedDate, calendar }: Props) {
   const t = useTranslations("WorkerProfile")
   const tServices = useTranslations("Services")
   const locale = useLocale()
@@ -164,7 +165,9 @@ export function WorkerServices({ workerId, workerName, services, workerReputatio
         return
       }
       requirePlan(canMessageWorker, "messaging", () => {
-        router.push(`/chat?receiver_id=${workerId}`)
+        router.push(
+          buildChatHref(workerId, { name: workerName, avatar: workerAvatar })
+        )
       })
     })
   }

@@ -1042,7 +1042,8 @@
       "errSelectTime": "请选择开始时间",
       "errMinAdvance": "预约须至少提前 {hours} 小时",
       "errSlotTaken": "该时间段已被预约",
-      "slotTaken": "已约"
+      "slotTaken": "已约",
+      "slotTooSoon": "太近，无法预约"
     }
   },
   "Onboarding": {

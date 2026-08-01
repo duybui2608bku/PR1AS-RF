@@ -34,6 +34,7 @@ import {
   computeBlockedHours,
   computeBookedIntervals,
   HOURS_PER_UNIT,
+  hourToMs,
   rangeHasConflict,
 } from "@/lib/booking-availability"
 import { useCreateBooking } from "@/lib/hooks/use-bookings"
@@ -222,6 +223,21 @@ export function BookWorkerDialog({
     return computeBlockedHours(date, HOUR_VALUES, durationHours, bookedIntervals)
   }, [date, unit, quantity, bookedIntervals])
 
+  // Hour options that would violate the MIN_ADVANCE_HOURS buffer — only ever
+  // non-empty for today, since the buffer is far shorter than a day. Without
+  // this, picking today's date still let the dropdown offer already-past or
+  // less-than-2-hours-away start times that the submit-time check would then
+  // reject.
+  const pastOrTooSoonHours = useMemo(() => {
+    if (!date || !now) return new Set<string>()
+    const cutoff = now + MIN_ADVANCE_HOURS * 60 * 60 * 1000
+    const result = new Set<string>()
+    for (const opt of HOUR_VALUES) {
+      if (hourToMs(date, opt) < cutoff) result.add(opt)
+    }
+    return result
+  }, [date, now])
+
   const unitPricing = useMemo(() => {
     if (!service || !unit) return null
     return service.pricing.find((p) => p.unit === unit) ?? null
@@ -399,18 +415,22 @@ export function BookWorkerDialog({
                   <SelectValue placeholder={t("book.timePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {HOUR_OPTIONS.map((opt) => (
-                    <SelectItem
-                      key={opt.value}
-                      value={opt.value}
-                      disabled={blockedHours.has(opt.value)}
-                    >
-                      {opt.label}
-                      {blockedHours.has(opt.value)
-                        ? ` · ${t("book.slotTaken")}`
-                        : ""}
-                    </SelectItem>
-                  ))}
+                  {HOUR_OPTIONS.map((opt) => {
+                    const isTaken = blockedHours.has(opt.value)
+                    const isTooSoon =
+                      !isTaken && pastOrTooSoonHours.has(opt.value)
+                    return (
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
+                        disabled={isTaken || isTooSoon}
+                      >
+                        {opt.label}
+                        {isTaken ? ` · ${t("book.slotTaken")}` : ""}
+                        {isTooSoon ? ` · ${t("book.slotTooSoon")}` : ""}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>

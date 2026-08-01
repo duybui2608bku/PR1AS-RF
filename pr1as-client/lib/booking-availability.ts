@@ -40,7 +40,7 @@ export const rangeHasConflict = (
   booked: BookedInterval[],
 ): boolean => booked.some((b) => startMs < b.end && endMs > b.start)
 
-const hourToMs = (date: Date, hhmm: string): number => {
+export const hourToMs = (date: Date, hhmm: string): number => {
   const [hh, mm] = hhmm.split(":").map((part) => Number.parseInt(part, 10))
   const dt = new Date(date)
   dt.setHours(hh, Number.isFinite(mm) ? mm : 0, 0, 0)

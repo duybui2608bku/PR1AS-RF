@@ -1042,7 +1042,8 @@
       "errSelectTime": "Please select a start time",
       "errMinAdvance": "Bookings must be made at least {hours} hours in advance",
       "errSlotTaken": "This time slot is already booked",
-      "slotTaken": "Booked"
+      "slotTaken": "Booked",
+      "slotTooSoon": "Too soon"
     }
   },
   "Onboarding": {

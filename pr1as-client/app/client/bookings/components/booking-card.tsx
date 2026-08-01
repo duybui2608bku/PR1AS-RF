@@ -24,7 +24,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { useTranslations, useLocale } from "next-intl"
-import { cn } from "@/lib/utils"
+import { buildChatHref, cn } from "@/lib/utils"
 import { BookingStatus, type Booking } from "@/types/booking"
 
 import {
@@ -38,6 +38,7 @@ import {
   getConfirmationDeadline,
   getRefId,
   getServiceLabel,
+  getWorkerAvatar,
   getWorkerName,
   isBookingExpired,
 } from "../format"
@@ -237,7 +238,12 @@ export function BookingCard({
         <div className="mt-3 flex flex-wrap justify-end gap-2 border-t pt-3">
           {workerId ? (
             <Button size="sm" variant="outline" asChild>
-              <Link href={`/chat?receiver_id=${workerId}`}>
+              <Link
+                href={buildChatHref(workerId, {
+                  name: getWorkerName(booking.worker_id),
+                  avatar: getWorkerAvatar(booking.worker_id),
+                })}
+              >
                 <MessageCircle className="size-4" />
                 {t("sendMessage")}
               </Link>

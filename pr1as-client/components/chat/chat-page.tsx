@@ -74,7 +74,7 @@ import { useBlockUser, useUnblockUser } from "@/lib/hooks/use-moderation"
 import { useMarkNotificationsByConversation } from "@/lib/hooks/use-notifications"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
-import { cn } from "@/lib/utils"
+import { buildChatHref, cn } from "@/lib/utils"
 import type {
   ChatConversation,
   ChatMessage,
@@ -100,6 +100,10 @@ type ChatPageProps = {
   initialDirectConversationId?: string | null
   initialGroupConversationId?: string | null
   initialReceiverId?: string | null
+  /** Display name to show for `initialReceiverId` before any conversation exists. */
+  initialReceiverName?: string | null
+  /** Avatar to show for `initialReceiverId` before any conversation exists. */
+  initialReceiverAvatar?: string | null
   showHomeButton?: boolean
   title?: string
   variant?: "standalone" | "embedded"
@@ -406,6 +410,8 @@ export function ChatPage({
   initialDirectConversationId = null,
   initialGroupConversationId = null,
   initialReceiverId = null,
+  initialReceiverName = null,
+  initialReceiverAvatar = null,
   showHomeButton = true,
   title,
   variant = "standalone",
@@ -420,6 +426,8 @@ export function ChatPage({
   const hasHydrated = useHasHydrated()
   const activeRole = getActiveRole(user)
   const initialReceiverIdValue = initialReceiverId?.trim() ?? ""
+  const initialReceiverNameValue = initialReceiverName?.trim() || null
+  const initialReceiverAvatarValue = initialReceiverAvatar?.trim() || null
   const shouldStartNewDirect = Boolean(
     initialReceiverIdValue &&
     initialMode === "direct" &&
@@ -513,6 +521,15 @@ export function ChatPage({
     receiverParamTargetId && !receiverParamConversation && !selectedDirectId
   )
   const isDirectComposerOpen = isReceiverParamNewDirect
+  // Only trust the name/avatar carried in the URL while it still refers to
+  // the same receiver we're composing to — never as a fallback once a real
+  // conversation (with its own fresh data) is selected.
+  const composerReceiverName = isDirectComposerOpen
+    ? initialReceiverNameValue
+    : null
+  const composerReceiverAvatar = isDirectComposerOpen
+    ? initialReceiverAvatarValue
+    : null
 
   const activeDirectId =
     selectedDirectId ??
@@ -624,7 +641,7 @@ export function ChatPage({
   const activeTitle =
     mode === "direct"
       ? isDirectComposerOpen
-        ? t("newMessage")
+        ? (composerReceiverName ?? t("newMessage"))
         : getDirectTitle(t, selectedDirect)
       : getGroupTitle(t, selectedGroup)
   const activeSubtitle =
@@ -1276,7 +1293,12 @@ export function ChatPage({
 
     setSelectedDirectId(null)
     setMobileThreadOpen(true)
-    router.replace(`/chat?receiver_id=${adminContact._id}`)
+    router.replace(
+      buildChatHref(adminContact._id, {
+        name: adminContact.full_name,
+        avatar: adminContact.avatar,
+      })
+    )
   }, [adminContact, directConversations, resetComposer, router, user?.id, t])
 
   const handleDeleteDirectMessage = async (messageId: string) => {
@@ -1510,7 +1532,7 @@ export function ChatPage({
                 <ThreadAvatar
                   mode={mode}
                   title={activeTitle}
-                  avatar={selectedDirect?.other_user?.avatar}
+                  avatar={selectedDirect?.other_user?.avatar ?? composerReceiverAvatar}
                   highlight={isActiveDirectAdmin ? "admin" : undefined}
                   planCode={
                     selectedDirect?.other_user?.meta_data?.pricing_plan_code
@@ -1586,7 +1608,7 @@ export function ChatPage({
                   )}
                 </Button>
               ) : null}
-              {!activeConversationId ? (
+              {!activeConversationId && !isDirectComposerOpen ? (
                 <Badge variant="outline">{t("noneSelected")}</Badge>
               ) : null}
             </div>
