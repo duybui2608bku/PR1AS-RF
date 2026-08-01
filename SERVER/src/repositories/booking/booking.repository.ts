@@ -22,8 +22,8 @@ import { PaginationHelper } from "../../utils";
 import { UserRole, UserStatus } from "../../types/auth/user.types";
 
 const BOOKING_POPULATE: PopulateOptions[] = [
-  { path: "client_id", select: "email full_name phone" },
-  { path: "worker_id", select: "email full_name" },
+  { path: "client_id", select: "email full_name phone avatar" },
+  { path: "worker_id", select: "email full_name avatar" },
   { path: "worker_service_id" },
   { path: "service_id" },
 ];
