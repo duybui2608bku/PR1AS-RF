@@ -820,6 +820,31 @@ export class UserRepository {
     });
   }
 
+  /**
+   * One-time backfill read: every worker account, regardless of status, for the
+   * worker-reputation migration script (Task 16). Not paginated — intended for
+   * a manual, offline run rather than a request-path query.
+   */
+  async findAllWorkersForMigration(): Promise<IUserDocument[]> {
+    return User.find({ roles: UserRole.WORKER });
+  }
+
+  /**
+   * Writes the migration-computed score alongside the profile component it was
+   * derived from. Used only by the one-time worker-reputation backfill script
+   * (Task 16); clamped defensively even though the caller already clamps.
+   */
+  async setReputationScoreAndComponent(
+    id: string,
+    score: number,
+    profileComponent: number
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      "meta_data.reputation_score": Math.max(0, Math.min(100, score)),
+      "meta_data.reputation_profile_component": profileComponent,
+    });
+  }
+
   async findActiveWorkerIds(): Promise<string[]> {
     const users = await User.find({
       roles: UserRole.WORKER,

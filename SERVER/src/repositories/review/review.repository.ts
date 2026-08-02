@@ -337,6 +337,36 @@ export class ReviewRepository {
       average_rating_details: averageRatingDetails,
     };
   }
+  /**
+   * One-time backfill read for the worker-reputation migration script (Task 16).
+   * The `lowRatingCount` cutoff (<=2) mirrors the current LOW_REVIEW_THRESHOLD
+   * default. It's read as a fixed constant here rather than re-fetching config
+   * per row because this is a one-time backfill, not a live per-review check —
+   * if the threshold config changes later, only newly-created reviews are
+   * scored against the new value going forward.
+   */
+  async countAndAverageForWorker(workerId: string): Promise<{
+    total: number;
+    fiveStarCount: number;
+    lowRatingCount: number;
+  }> {
+    const [row] = await Review.aggregate([
+      { $match: { worker_id: new Types.ObjectId(workerId) } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          fiveStarCount: {
+            $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] },
+          },
+          lowRatingCount: {
+            $sum: { $cond: [{ $lte: ["$rating", 2] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+    return row ?? { total: 0, fiveStarCount: 0, lowRatingCount: 0 };
+  }
 }
 
 export const reviewRepository = new ReviewRepository();

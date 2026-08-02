@@ -761,6 +761,16 @@ export class BookingRepository {
   async countByServiceId(serviceId: string): Promise<number> {
     return Booking.countDocuments({ service_id: serviceId });
   }
+
+  /**
+   * One-time backfill read for the worker-reputation migration script (Task 16).
+   */
+  async countCompletedForWorker(workerId: string): Promise<number> {
+    return Booking.countDocuments({
+      worker_id: new Types.ObjectId(workerId),
+      status: BookingStatus.COMPLETED,
+    });
+  }
 }
 
 export const bookingRepository = new BookingRepository();
