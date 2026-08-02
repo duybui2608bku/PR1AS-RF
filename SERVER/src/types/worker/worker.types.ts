@@ -41,6 +41,9 @@ export interface WorkerDetailResponse {
     full_name: string | null;
     avatar: string | null;
     email: string;
+    meta_data: {
+      reputation_score: number;
+    };
   };
   worker_profile: IUserDocument["worker_profile"] | null;
   services?: Array<{
