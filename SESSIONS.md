@@ -87,23 +87,38 @@ hoàn toàn cho worker (client giữ nguyên hệ cũ).
   vô tình gộp vào lịch sử git do lệnh git quá rộng — đã hỏi, user quyết định
   giữ nguyên (đó là việc dở của họ, nội dung ổn).
 
-**Còn lại** (đã surface cho user, user chọn để phiên sau xử lý — chưa có
-plan riêng, cần brainstorm trước khi code):
-1. Admin dashboard `/dashboard/reputation-config` chưa biết 12 key config
-   mới (UI hard-code danh sách 7 key cũ), vẫn hiện `worker_cancel_deduction`
-   dù rule đó không còn dùng nữa.
-2. Review có thể bị cày điểm: tạo review 5 sao → xoá → tạo lại → +10 mỗi
-   vòng, không giới hạn (review create/delete/update chưa có cơ chế đảo
-   ngược điểm khi xoá/sửa rating).
-3. `userService.updateUserByAdmin` (sửa user có sẵn thành worker) không
-   reset điểm về 0 và không đồng bộ điểm hồ sơ — khác với `becomeWorker`/
-   `createByAdmin` đã xử lý đúng.
-4. `SERVER/src/services/post/post.service.ts:236` vẫn còn `?? 100` không
-   phân biệt role — spec có nhắc file này nhưng Task 7 bỏ sót.
-5. `memorybank/reputation.md` chưa cập nhật theo mô hình mới (vẫn mô tả
-   "Default score is 100" cho mọi user).
+**Cập nhật cùng ngày — xử lý nốt 5 việc còn lại**: user yêu cầu làm luôn
+trong phiên, thay vì để phiên sau. Viết spec/plan riêng
+(`docs/superpowers/specs/2026-08-02-worker-reputation-followups-design.md`,
+`docs/superpowers/plans/2026-08-02-worker-reputation-followups.md`), triển
+khai bằng subagent-driven-development (5 task):
 
-**Commit**: nhiều commit, range `7645327..082a789` · branch `main-3`
+1. Admin dashboard `/dashboard/reputation-config`: thêm label cho 12 key
+   mới, bỏ `worker_cancel_deduction` khỏi danh sách hiển thị. Phát hiện
+   thêm lúc làm: trang này chia 2 card qua filter hard-code riêng (không
+   chỉ 1 danh sách `orderedKeys` như tưởng ban đầu) — đã cập nhật cả 2.
+2. Review: khoá hẳn sửa/xoá cho client (chỉ admin còn quyền) để chặn cày
+   điểm — quyết định đơn giản hơn so với đảo điểm chính xác, vì frontend
+   vốn không có UI sửa/xoá review cho client (xác nhận trước khi làm).
+3. `updateUserByAdmin`: reset điểm về 0 khi promote user thành worker lần
+   đầu + đồng bộ điểm hồ sơ, khớp với `becomeWorker`/`createByAdmin`.
+4. `post.service.ts`: fix fallback `?? 100` → role-aware, giống
+   `comment.service.ts` đã làm.
+5. Viết lại toàn bộ `memorybank/reputation.md` theo mô hình mới.
+
+Review toàn nhánh (Opus) sau 5 task tìm thêm 1 lỗ hổng chức năng thật:
+`updateUserByAdmin` xử lý chiều promote nhưng bỏ sót chiều **demote**
+(admin bỏ role worker) — tài khoản bị hạ vai trò kẹt lại ở điểm số kiểu
+worker (vd 15), khiến các cổng `<30` phía client (booking/post/comment)
+âm thầm chặn họ. Đã sửa: demote về lại điểm mặc định client (100/0). Cộng
+thêm 1 lỗi tài liệu (memorybank nói sai là chỉ có đúng 12 rule ảnh hưởng
+điểm worker, bỏ sót `booking_expiry_deduction` có từ trước). Cả 2 đã sửa
+và review lại sạch.
+
+**Còn lại**: không — đã xử lý hết các phát hiện từ review. Test cuối:
+30 suite / 110 test backend pass, typecheck 2 phía sạch.
+
+**Commit**: nhiều commit, range `7645327..d54dbcf` · branch `main-3`
 
 ---
 
