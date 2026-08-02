@@ -591,6 +591,8 @@ export class UserService {
       throw AppError.forbidden(USER_MESSAGES.NOT_ADMIN_CREATED);
     }
 
+    const wasWorker = existing.roles.includes(UserRole.WORKER);
+
     const newEmail = input.email?.toLowerCase().trim();
     if (newEmail && newEmail !== existing.email) {
       if (await userRepository.emailExists(newEmail)) {
@@ -653,6 +655,28 @@ export class UserService {
         workerServicePayloads,
         new Date()
       );
+
+      // First time becoming a worker via admin edit: reset reputation to 0,
+      // same as becomeWorker/createByAdmin — discards any prior client score
+      // (accepted tradeoff, see design spec "Dual-role field").
+      if (!wasWorker) {
+        await userRepository.setReputationScoreAndComponent(userId, 0, 0);
+      }
+
+      // Re-fetch so the profile-completeness sync sees the just-applied
+      // reset (if any) and the freshly-written worker_profile, not a stale
+      // copy from before this request's writes.
+      const freshUser = await userRepository.findById(userId);
+      if (freshUser) {
+        void reputationService
+          .syncWorkerProfileCompleteness(freshUser)
+          .catch((error) =>
+            logger.error(
+              "Reputation profile-completeness sync failed for admin-edited worker:",
+              error
+            )
+          );
+      }
     }
 
     // Status may have changed — drop the cached status so auth checks see it.
