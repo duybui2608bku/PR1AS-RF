@@ -3,11 +3,16 @@
 import { useState } from "react"
 import {
   AlertTriangle,
+  CalendarX,
+  CheckCircle2,
   Clock,
+  Flag,
+  Image as ImageIcon,
   Loader2,
   RefreshCcw,
   RotateCcw,
   Save,
+  ShieldAlert,
   Star,
   StarOff,
   TrendingUp,
@@ -93,6 +98,90 @@ const CONFIG_META: Record<ReputationConfigKey, ConfigMeta> = {
     icon: <AlertTriangle className="size-4" />,
     unit: "điểm",
     hint: "Thông báo gửi khi điểm vượt ngưỡng theo chiều giảm",
+  },
+  profile_photos_bonus: {
+    label: "Đủ ảnh hồ sơ",
+    description: "Điểm cộng khi worker có đủ số ảnh tối thiểu trong thư viện ảnh.",
+    icon: <ImageIcon className="size-4" />,
+    unit: "điểm",
+    hint: "Cộng một lần khi đạt ngưỡng số ảnh tối thiểu bên dưới",
+  },
+  min_profile_photos_threshold: {
+    label: "Số ảnh tối thiểu",
+    description: "Số ảnh tối thiểu trong hồ sơ để được cộng điểm ảnh.",
+    icon: <ImageIcon className="size-4" />,
+    unit: "ảnh",
+    hint: "Không thể tắt — luôn được áp dụng khi tính điểm hồ sơ",
+  },
+  profile_info_field_bonus: {
+    label: "Mỗi trường thông tin hồ sơ",
+    description: "Điểm cộng cho mỗi trường thông tin hồ sơ được điền (tối đa 10 trường).",
+    icon: <CheckCircle2 className="size-4" />,
+    unit: "điểm/trường",
+    hint: "Tính lại mỗi khi worker cập nhật hồ sơ",
+  },
+  review_received_bonus: {
+    label: "Nhận được đánh giá",
+    description: "Điểm cộng cho worker mỗi khi nhận một đánh giá mới, bất kể số sao.",
+    icon: <Star className="size-4" />,
+    unit: "điểm",
+    hint: "Cộng một lần cho mỗi đánh giá hợp lệ",
+  },
+  five_star_review_bonus: {
+    label: "Đánh giá 5 sao",
+    description: "Điểm cộng thêm khi đánh giá nhận được là 5 sao.",
+    icon: <Star className="size-4" />,
+    unit: "điểm",
+    hint: "Cộng thêm, ngoài điểm nhận đánh giá ở trên",
+  },
+  job_completion_bonus: {
+    label: "Hoàn thành job",
+    description: "Điểm cộng khi một booking worker thực hiện chuyển sang hoàn thành.",
+    icon: <CheckCircle2 className="size-4" />,
+    unit: "điểm",
+    hint: "Áp dụng cho mọi booking hoàn thành, kể cả tự động hoàn thành",
+  },
+  report_filed_valid_bonus: {
+    label: "Báo cáo vi phạm đúng",
+    description: "Điểm cộng khi báo cáo do worker gửi được admin xác nhận đúng.",
+    icon: <Flag className="size-4" />,
+    unit: "điểm",
+    hint: "Áp dụng khi worker là người báo cáo",
+  },
+  reported_valid_penalty: {
+    label: "Bị báo cáo đúng",
+    description: "Điểm bị trừ khi báo cáo nhắm vào worker được admin xác nhận đúng.",
+    icon: <ShieldAlert className="size-4" />,
+    unit: "điểm",
+    hint: "Áp dụng khi worker là đối tượng bị báo cáo",
+  },
+  late_completion_penalty: {
+    label: "Trễ hoàn thành",
+    description: "Điểm bị trừ khi booking đã bắt đầu nhưng worker quên bấm hoàn thành, hệ thống tự động đóng.",
+    icon: <Clock className="size-4" />,
+    unit: "điểm",
+    hint: "Chỉ áp dụng khi booking đã ở trạng thái đang thực hiện",
+  },
+  cancel_medium_penalty: {
+    label: "Huỷ lịch (30 phút - 2 giờ)",
+    description: "Điểm bị trừ khi worker huỷ booking còn 30 phút đến 2 giờ là tới giờ hẹn.",
+    icon: <CalendarX className="size-4" />,
+    unit: "điểm",
+    hint: "Mức nhẹ hơn trong 3 mức phạt huỷ lịch",
+  },
+  cancel_severe_penalty: {
+    label: "Huỷ lịch (dưới 30 phút)",
+    description: "Điểm bị trừ khi worker huỷ booking khi còn chưa tới 30 phút là tới giờ hẹn.",
+    icon: <CalendarX className="size-4" />,
+    unit: "điểm",
+    hint: "Mức nặng hơn trong 3 mức phạt huỷ lịch",
+  },
+  cancel_noshow_penalty: {
+    label: "Bom lịch",
+    description: "Điểm bị trừ khi dispute worker không đến (no-show) được admin xác nhận đúng.",
+    icon: <XCircle className="size-4" />,
+    unit: "điểm",
+    hint: "Mức nặng nhất trong các quy tắc huỷ/không đến",
   },
 }
 
@@ -251,12 +340,23 @@ export default function ReputationConfigPage() {
 
   const orderedKeys: ReputationConfigKey[] = [
     "booking_expiry_deduction",
-    "worker_cancel_deduction",
     "client_late_cancel_deduction",
     "low_review_deduction",
     "low_review_threshold",
     "daily_recovery_points",
     "warning_threshold",
+    "profile_photos_bonus",
+    "min_profile_photos_threshold",
+    "profile_info_field_bonus",
+    "review_received_bonus",
+    "five_star_review_bonus",
+    "job_completion_bonus",
+    "report_filed_valid_bonus",
+    "reported_valid_penalty",
+    "late_completion_penalty",
+    "cancel_medium_penalty",
+    "cancel_severe_penalty",
+    "cancel_noshow_penalty",
   ]
 
   const orderedConfigs = orderedKeys
@@ -327,6 +427,11 @@ export default function ReputationConfigPage() {
                     "client_late_cancel_deduction",
                     "low_review_deduction",
                     "low_review_threshold",
+                    "reported_valid_penalty",
+                    "late_completion_penalty",
+                    "cancel_medium_penalty",
+                    "cancel_severe_penalty",
+                    "cancel_noshow_penalty",
                   ].includes(c.key)
                 )
                 .map((config) => (
@@ -339,13 +444,23 @@ export default function ReputationConfigPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Cộng điểm & cảnh báo</CardTitle>
               <CardDescription>
-                Cấu hình phục hồi điểm hàng ngày và ngưỡng thông báo.
+                Cấu hình phục hồi điểm hàng ngày, điểm cộng hồ sơ/hoạt động và ngưỡng thông báo.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {orderedConfigs
                 .filter((c) =>
-                  ["daily_recovery_points", "warning_threshold"].includes(c.key)
+                  [
+                    "daily_recovery_points",
+                    "warning_threshold",
+                    "profile_photos_bonus",
+                    "min_profile_photos_threshold",
+                    "profile_info_field_bonus",
+                    "review_received_bonus",
+                    "five_star_review_bonus",
+                    "job_completion_bonus",
+                    "report_filed_valid_bonus",
+                  ].includes(c.key)
                 )
                 .map((config) => (
                   <ConfigRow key={config.key} config={config} />
