@@ -10,7 +10,7 @@ import {
   ICommentDocument,
   UpdateCommentInput,
 } from "../../types/comment/comment.types";
-import { IUserDocument } from "../../types/auth/user.types";
+import { IUserDocument, UserRole } from "../../types/auth/user.types";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -85,7 +85,13 @@ export class CommentService {
     input: CreateCommentInput
   ): Promise<CommentPublic & { replies: CommentPublic[] }> {
     const commenter = await userRepository.findById(userId);
-    const reputation = commenter?.meta_data?.reputation_score ?? 100;
+    const defaultCommenterReputation = commenter?.roles?.includes(
+      UserRole.WORKER
+    )
+      ? 0
+      : 100;
+    const reputation =
+      commenter?.meta_data?.reputation_score ?? defaultCommenterReputation;
     if (reputation < 30) {
       throw new AppError(
         REPUTATION_MESSAGES.TOO_LOW_FOR_COMMENT,

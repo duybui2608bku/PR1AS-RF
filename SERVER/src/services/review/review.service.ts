@@ -7,7 +7,7 @@ import {
   IReviewDocument,
   UpdateReviewInput,
 } from "../../types/review/review.types";
-import { ReviewStatus, ReviewType } from "../../constants/review";
+import { ReviewStatus, ReviewType, REVIEW_LIMITS } from "../../constants/review";
 import { BookingStatus } from "../../constants/booking";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
@@ -124,6 +124,38 @@ export class ReviewService {
       .reviewCreated(review, userId)
       .catch((error) => logger.error("Review notification failed:", error));
 
+    void reputationConfigService
+      .getActiveValue(ReputationConfigKey.REVIEW_RECEIVED_BONUS)
+      .then((points) => {
+        if (points === null) return;
+        return reputationService.recoverPoints(
+          bookingWorkerId,
+          points,
+          ReputationHistoryReason.REVIEW_RECEIVED,
+          0
+        );
+      })
+      .catch((err) =>
+        logger.error("Reputation bonus after review received failed:", err)
+      );
+
+    if (input.rating === REVIEW_LIMITS.MAX_RATING) {
+      void reputationConfigService
+        .getActiveValue(ReputationConfigKey.FIVE_STAR_REVIEW_BONUS)
+        .then((points) => {
+          if (points === null) return;
+          return reputationService.recoverPoints(
+            bookingWorkerId,
+            points,
+            ReputationHistoryReason.FIVE_STAR_REVIEW,
+            0
+          );
+        })
+        .catch((err) =>
+          logger.error("Reputation bonus after 5-star review failed:", err)
+        );
+    }
+
     void Promise.all([
       reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_THRESHOLD),
       reputationConfigService.getActiveValue(ReputationConfigKey.LOW_REVIEW_DEDUCTION),
@@ -133,7 +165,8 @@ export class ReviewService {
           void reputationService.deductPoints(
             bookingWorkerId,
             points,
-            ReputationHistoryReason.LOW_REVIEW
+            ReputationHistoryReason.LOW_REVIEW,
+            0
           );
         }
       })
@@ -283,10 +316,11 @@ export class ReviewService {
       );
     }
 
+    // Reviews are immutable for the client once created — only admin can
+    // edit (moderation). Prevents farming reputation bonuses via
+    // create -> edit-rating-up cycles.
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner = review.client_id.toString() === userId;
-
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
       throw new AppError(
         REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
@@ -314,7 +348,7 @@ export class ReviewService {
 
   async deleteReview(
     reviewId: string,
-    userId: string,
+    _userId: string,
     userRoles: string[]
   ): Promise<void> {
     const review = await reviewRepository.findById(reviewId);
@@ -326,10 +360,11 @@ export class ReviewService {
       );
     }
 
+    // Reviews are immutable for the client once created — only admin can
+    // delete (moderation). Prevents farming reputation bonuses via
+    // create -> delete -> recreate cycles.
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner = review.client_id.toString() === userId;
-
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
       throw new AppError(
         REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,

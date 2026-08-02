@@ -9,14 +9,21 @@ import {
 } from "../../types/reputation/reputation-history.types";
 import { PaginationHelper } from "../../utils";
 import { logger } from "../../utils/logger";
+import { IUserDocument, UserRole } from "../../types/auth/user.types";
+import { computeProfileCompletenessScore } from "./worker-profile-completeness";
 
 export class ReputationService {
   async deductPoints(
     userId: string,
     points: number,
-    reason = ReputationHistoryReason.MANUAL
+    reason = ReputationHistoryReason.MANUAL,
+    defaultScore = 100
   ): Promise<void> {
-    const result = await userRepository.adjustReputationScore(userId, -points);
+    const result = await userRepository.adjustReputationScore(
+      userId,
+      -points,
+      defaultScore
+    );
     if (!result) return;
     const { previousScore, newScore } = result;
     await reputationHistoryRepository.create({
@@ -47,9 +54,14 @@ export class ReputationService {
   async recoverPoints(
     userId: string,
     points: number,
-    reason = ReputationHistoryReason.MANUAL
+    reason = ReputationHistoryReason.MANUAL,
+    defaultScore = 100
   ): Promise<void> {
-    const result = await userRepository.adjustReputationScore(userId, points);
+    const result = await userRepository.adjustReputationScore(
+      userId,
+      points,
+      defaultScore
+    );
     if (!result) return;
     const { previousScore, newScore } = result;
     await reputationHistoryRepository.create({
@@ -105,6 +117,66 @@ export class ReputationService {
       query.limit,
       total
     );
+  }
+
+  async awardJobCompletion(workerId: string): Promise<void> {
+    const points = await reputationConfigService.getActiveValue(
+      ReputationConfigKey.JOB_COMPLETION_BONUS
+    );
+    if (points === null) return;
+    await this.recoverPoints(
+      workerId,
+      points,
+      ReputationHistoryReason.JOB_COMPLETED,
+      0
+    );
+  }
+
+  async syncWorkerProfileCompleteness(user: IUserDocument): Promise<void> {
+    if (!user.roles?.includes(UserRole.WORKER)) return;
+
+    // PROFILE_PHOTOS_BONUS and PROFILE_INFO_FIELD_BONUS are toggleable
+    // point-changing rules (TOGGLEABLE_REPUTATION_KEYS), so they must use
+    // getActiveValue and treat a `null` (disabled) result as a 0 contribution
+    // — mirroring every other point-changing hook in this codebase.
+    // MIN_PROFILE_PHOTOS_THRESHOLD is a pure threshold (not toggleable) and
+    // stays on getValue, per the existing convention.
+    const [photoBonus, minPhotos, perFieldBonus] = await Promise.all([
+      reputationConfigService.getActiveValue(
+        ReputationConfigKey.PROFILE_PHOTOS_BONUS
+      ),
+      reputationConfigService.getValue(
+        ReputationConfigKey.MIN_PROFILE_PHOTOS_THRESHOLD
+      ),
+      reputationConfigService.getActiveValue(
+        ReputationConfigKey.PROFILE_INFO_FIELD_BONUS
+      ),
+    ]);
+
+    const newComponent = computeProfileCompletenessScore(user.worker_profile, {
+      photoBonus: photoBonus ?? 0,
+      minPhotos,
+      perFieldBonus: perFieldBonus ?? 0,
+    });
+    const previousComponent = user.meta_data?.reputation_profile_component ?? 0;
+    const delta = newComponent - previousComponent;
+    if (delta === 0) return;
+
+    const userId = user._id.toString();
+    const result = await userRepository.adjustReputationScore(userId, delta, 0);
+    if (!result) return;
+
+    await userRepository.setReputationProfileComponent(userId, newComponent);
+
+    const { previousScore, newScore } = result;
+    if (newScore === previousScore) return;
+    await reputationHistoryRepository.create({
+      userId,
+      delta: newScore - previousScore,
+      previousScore,
+      newScore,
+      reason: ReputationHistoryReason.PROFILE_COMPLETENESS,
+    });
   }
 }
 

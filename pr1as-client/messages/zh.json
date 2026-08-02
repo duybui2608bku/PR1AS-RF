@@ -795,15 +795,21 @@
       "height": "身高",
       "weight": "体重",
       "starSign": "星座",
+      "occupation": "职业",
       "lifestyle": "生活方式",
-      "quote": "喜爱的格言"
+      "quote": "喜爱的格言",
+      "personality": "性格",
+      "maritalStatus": "婚姻状况"
     },
     "placeholders": {
       "dateOfBirth": "选择出生日期",
       "experience": "选择经验",
       "starSign": "选择星座",
+      "occupation": "例如：上班族、自由职业...",
       "lifestyle": "例如：活跃、喜欢探索...",
       "quote": "一句能代表你的话...",
+      "personality": "例如：开朗、善于交际、体贴...",
+      "maritalStatus": "例如：单身、已婚...",
       "hobby": "添加兴趣...",
       "introduction": "简单介绍你自己、优势和工作风格..."
     },

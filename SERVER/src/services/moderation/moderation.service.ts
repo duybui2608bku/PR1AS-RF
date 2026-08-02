@@ -19,6 +19,10 @@ import { ErrorCode } from "../../types/common/error.types";
 import { PaginationHelper } from "../../utils";
 import { logger } from "../../utils/logger";
 import { notificationEventService } from "../notification/notification-events.service";
+import { reputationService } from "../reputation/reputation.service";
+import { reputationConfigService } from "../reputation/reputation-config.service";
+import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 
 const WORKER_REPORT_RESOLUTION_DEFER_MS = 60_000;
 
@@ -206,6 +210,11 @@ export class ModerationService {
     adminId: string;
     adminNote?: string | null;
   }) {
+    const existing = await moderationRepository.findReportById(
+      input.reportId
+    );
+    const previousStatus = existing?.status ?? null;
+
     const report = await moderationRepository.updateReportStatus(input);
     if (!report) throw AppError.notFound(MODERATION_MESSAGES.REPORT_NOT_FOUND);
 
@@ -221,6 +230,63 @@ export class ModerationService {
         );
       } catch (error) {
         logger.error("Failed to set pending resolution notify", error);
+      }
+    }
+
+    const justResolved =
+      input.status === ReportStatus.RESOLVED &&
+      previousStatus !== ReportStatus.RESOLVED &&
+      existing !== null;
+
+    if (justResolved) {
+      const reporterId = String(existing!.reporter_id);
+      const targetUserId = existing!.target_user_id
+        ? String(existing!.target_user_id)
+        : null;
+
+      void userRepository
+        .getUserRoleInfoById(reporterId)
+        .then((roleInfo) => {
+          if (!roleInfo.isWorker) return;
+          return reputationConfigService
+            .getActiveValue(ReputationConfigKey.REPORT_FILED_VALID_BONUS)
+            .then((points) => {
+              if (points === null) return;
+              return reputationService.recoverPoints(
+                reporterId,
+                points,
+                ReputationHistoryReason.REPORT_FILED_VALID,
+                0
+              );
+            });
+        })
+        .catch((error) =>
+          logger.error("Reputation bonus for valid report filer failed:", error)
+        );
+
+      if (targetUserId) {
+        void userRepository
+          .getUserRoleInfoById(targetUserId)
+          .then((roleInfo) => {
+            if (!roleInfo.isWorker) return;
+            return reputationConfigService
+              .getActiveValue(ReputationConfigKey.REPORTED_VALID_PENALTY)
+              .then((points) => {
+                if (points === null) return;
+                return reputationService.deductPoints(
+                  targetUserId,
+                  points,
+                  ReputationHistoryReason.REPORTED_VALID,
+                  0
+                );
+              });
+          })
+          .catch((error) =>
+            logger.error(
+              "Reputation penalty for valid report target failed:",
+              error
+            )
+          );
       }
     }
 

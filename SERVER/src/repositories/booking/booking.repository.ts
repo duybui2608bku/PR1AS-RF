@@ -22,8 +22,8 @@ import { PaginationHelper } from "../../utils";
 import { UserRole, UserStatus } from "../../types/auth/user.types";
 
 const BOOKING_POPULATE: PopulateOptions[] = [
-  { path: "client_id", select: "email full_name phone" },
-  { path: "worker_id", select: "email full_name" },
+  { path: "client_id", select: "email full_name phone avatar" },
+  { path: "worker_id", select: "email full_name avatar" },
   { path: "worker_service_id" },
   { path: "service_id" },
 ];
@@ -66,6 +66,34 @@ export class BookingRepository {
       ],
       status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
     });
+  }
+
+  // Used when an admin-provisioned account is hard-deleted: unlike self-service
+  // deletion, that path removes the User doc unconditionally, which would
+  // otherwise leave active bookings pointing at a worker_id/client_id that no
+  // longer resolves. Cancelling them first keeps every booking's reference valid.
+  async cancelActiveBookingsForUser(userId: string): Promise<number> {
+    const now = new Date();
+    const result = await Booking.updateMany(
+      {
+        $or: [
+          { client_id: new Types.ObjectId(userId) },
+          { worker_id: new Types.ObjectId(userId) },
+        ],
+        status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
+      },
+      {
+        status: BookingStatus.CANCELLED,
+        updated_at: now,
+        cancellation: {
+          cancelled_at: now,
+          cancelled_by: CancelledBy.SYSTEM,
+          reason: CancellationReason.OTHER,
+          notes: "Cancelled because the account was deleted",
+        },
+      }
+    );
+    return result.modifiedCount;
   }
 
   async countOpenDisputesForUser(userId: string): Promise<number> {
@@ -732,6 +760,16 @@ export class BookingRepository {
 
   async countByServiceId(serviceId: string): Promise<number> {
     return Booking.countDocuments({ service_id: serviceId });
+  }
+
+  /**
+   * One-time backfill read for the worker-reputation migration script (Task 16).
+   */
+  async countCompletedForWorker(workerId: string): Promise<number> {
+    return Booking.countDocuments({
+      worker_id: new Types.ObjectId(workerId),
+      status: BookingStatus.COMPLETED,
+    });
   }
 }
 

@@ -49,10 +49,13 @@ export interface WorkerProfile {
   height_cm?: number;
   weight_kg?: number;
   star_sign?: string;
+  occupation?: string;
   lifestyle?: string;
   hobbies: string[];
   quote?: string;
   introduction?: string;
+  personality?: string;
+  marital_status?: string;
   gallery_urls: string[];
   experience?: Experience;
   work_locations?: Array<{
@@ -105,6 +108,7 @@ export interface IUser {
   };
   meta_data: {
     reputation_score: number;
+    reputation_profile_component: number;
     pricing_plan_code: PricingPlanCode;
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;
@@ -136,6 +140,7 @@ export interface IUserPublic {
   last_login?: Date | null;
   meta_data: {
     reputation_score: number;
+    reputation_profile_component: number;
     pricing_plan_code: PricingPlanCode;
     pricing_started_at: Date | null;
     pricing_expires_at: Date | null;

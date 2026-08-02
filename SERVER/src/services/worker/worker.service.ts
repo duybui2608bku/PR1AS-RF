@@ -282,6 +282,9 @@ export class WorkerService {
         full_name: user.full_name ?? null,
         avatar: user.avatar ?? null,
         email: user.email,
+        meta_data: {
+          reputation_score: user.meta_data?.reputation_score ?? 0,
+        },
       },
       worker_profile: workerProfile,
       services,

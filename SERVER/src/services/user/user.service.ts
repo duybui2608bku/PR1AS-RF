@@ -10,6 +10,7 @@ import { walletBalanceRepository } from "../../repositories/wallet/wallet-balanc
 import { workerPointWalletRepository } from "../../repositories/boost/worker-point-wallet.repository";
 import { postRepository } from "../../repositories/post/post.repository";
 import { commentRepository } from "../../repositories/comment/comment.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { Wallet } from "../../models/wallet/wallet.model";
 import { WorkerPointWallet } from "../../models/boost/worker-point-wallet.model";
 import { WorkerFavorite } from "../../models/worker/worker-favorite.model";
@@ -52,6 +53,7 @@ import { getUserSocketIds } from "../../config/socket.handlers";
 import { invalidateUserStatusCache } from "../../utils/userStatusCache";
 import { normalizeAvatarUrl } from "../../utils/avatar-url";
 import { normalizeHashtags } from "../../utils/worker-hashtag";
+import { reputationService } from "../reputation/reputation.service";
 import { notificationEventService } from "../notification";
 
 interface BecomeWorkerAuditContext {
@@ -274,6 +276,13 @@ export class UserService {
     );
 
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    void reputationService
+      .syncWorkerProfileCompleteness(user)
+      .catch((error) =>
+        logger.error("Reputation profile-completeness sync failed:", error)
+      );
+
     return user;
   }
 
@@ -299,6 +308,12 @@ export class UserService {
     );
 
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    void reputationService
+      .syncWorkerProfileCompleteness(user)
+      .catch((error) =>
+        logger.error("Reputation profile-completeness sync failed:", error)
+      );
 
     logger.info("AUDIT user become worker confirmed", {
       event: "USER_BECOME_WORKER_CONFIRMED",
@@ -508,6 +523,14 @@ export class UserService {
         workerServicePayloads,
         new Date()
       );
+      void reputationService
+        .syncWorkerProfileCompleteness(user)
+        .catch((error) =>
+          logger.error(
+            "Reputation profile-completeness sync failed for admin-created worker:",
+            error
+          )
+        );
     }
 
     logger.info("AUDIT admin created user", {
@@ -567,6 +590,8 @@ export class UserService {
     if (!existing.created_by_admin) {
       throw AppError.forbidden(USER_MESSAGES.NOT_ADMIN_CREATED);
     }
+
+    const wasWorker = existing.roles.includes(UserRole.WORKER);
 
     const newEmail = input.email?.toLowerCase().trim();
     if (newEmail && newEmail !== existing.email) {
@@ -630,6 +655,37 @@ export class UserService {
         workerServicePayloads,
         new Date()
       );
+
+      // First time becoming a worker via admin edit: reset reputation to 0,
+      // same as becomeWorker/createByAdmin — discards any prior client score
+      // (accepted tradeoff, see design spec "Dual-role field").
+      if (!wasWorker) {
+        await userRepository.setReputationScoreAndComponent(userId, 0, 0);
+      }
+
+      // Re-fetch so the profile-completeness sync sees the just-applied
+      // reset (if any) and the freshly-written worker_profile, not a stale
+      // copy from before this request's writes.
+      const freshUser = await userRepository.findById(userId);
+      if (freshUser) {
+        void reputationService
+          .syncWorkerProfileCompleteness(freshUser)
+          .catch((error) =>
+            logger.error(
+              "Reputation profile-completeness sync failed for admin-edited worker:",
+              error
+            )
+          );
+      }
+    } else if (wasWorker) {
+      // Admin removed the worker role from an existing worker: the account
+      // is now client-only, but it still shares the same meta_data score
+      // field a worker used (e.g. 15). Every client-side reputation gate
+      // (booking/post/comment, all `< 30` checks) reads that field with a
+      // `?? 100` fallback that never fires once a real value is set, so
+      // without this reset a demoted user would be silently blocked until
+      // an admin manually fixed the score. Reset to the client default.
+      await userRepository.setReputationScoreAndComponent(userId, 100, 0);
     }
 
     // Status may have changed — drop the cached status so auth checks see it.
@@ -648,9 +704,10 @@ export class UserService {
   /**
    * Admin hard-delete of an admin-provisioned account. Real (self-registered)
    * users are never removed here — they go through the self-service soft-delete
-   * flow. The account is removed unconditionally (even with an active balance,
-   * bookings, or disputes). Cascade cleanup is best-effort (each step logs on
-   * failure) before the user document is removed.
+   * flow. The account is removed unconditionally (even with an active balance
+   * or disputes); any active bookings are cancelled first so they don't end up
+   * pointing at a worker_id/client_id that no longer resolves. Cascade cleanup
+   * is best-effort (each step logs on failure) before the user document is removed.
    */
   async deleteUserByAdmin(
     userId: string,
@@ -670,6 +727,7 @@ export class UserService {
     // step runs independently and a failure is logged but does not abort the
     // remaining cleanup or the final user removal.
     const results = await Promise.allSettled([
+      bookingRepository.cancelActiveBookingsForUser(userId),
       Wallet.deleteMany({ user_id: userObjectId }),
       WorkerPointWallet.deleteMany({ user_id: userObjectId }),
       workerServiceRepository.deleteAllForWorker(userId),

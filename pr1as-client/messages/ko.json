@@ -794,15 +794,21 @@
       "height": "키",
       "weight": "몸무게",
       "starSign": "별자리",
+      "occupation": "직업",
       "lifestyle": "라이프스타일",
-      "quote": "좋아하는 문구"
+      "quote": "좋아하는 문구",
+      "personality": "성격",
+      "maritalStatus": "결혼 상태"
     },
     "placeholders": {
       "dateOfBirth": "생년월일 선택",
       "experience": "경력 선택",
       "starSign": "별자리 선택",
+      "occupation": "예: 회사원, 프리랜서...",
       "lifestyle": "예: 활동적이며 탐험을 즐김...",
       "quote": "나를 보여주는 인상적인 문구...",
+      "personality": "예: 밝고 사교적이며 배려심 많음...",
+      "maritalStatus": "예: 미혼, 기혼...",
       "hobby": "취미 추가...",
       "introduction": "자신의 강점과 업무 스타일을 포함해 짧게 소개해 주세요..."
     },

@@ -795,15 +795,21 @@
       "height": "Height",
       "weight": "Weight",
       "starSign": "Zodiac sign",
+      "occupation": "Occupation",
       "lifestyle": "Lifestyle",
-      "quote": "Favorite quote"
+      "quote": "Favorite quote",
+      "personality": "Personality",
+      "maritalStatus": "Marital status"
     },
     "placeholders": {
       "dateOfBirth": "Select date of birth",
       "experience": "Select experience",
       "starSign": "Select zodiac sign",
+      "occupation": "E.g. Office worker, freelancer...",
       "lifestyle": "E.g. Active, enjoys exploring...",
       "quote": "A memorable quote about you...",
+      "personality": "E.g. Cheerful, sociable, caring...",
+      "maritalStatus": "E.g. Single, married...",
       "hobby": "Add a hobby...",
       "introduction": "Write a short introduction about yourself, your strengths and working style..."
     },

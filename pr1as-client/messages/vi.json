@@ -795,15 +795,21 @@
       "height": "Chiều cao",
       "weight": "Cân nặng",
       "starSign": "Cung hoàng đạo",
+      "occupation": "Nghề nghiệp",
       "lifestyle": "Lối sống",
-      "quote": "Câu nói yêu thích"
+      "quote": "Câu nói yêu thích",
+      "personality": "Tính cách",
+      "maritalStatus": "Tình trạng hôn nhân"
     },
     "placeholders": {
       "dateOfBirth": "Chọn ngày sinh",
       "experience": "Chọn kinh nghiệm",
       "starSign": "Chọn cung hoàng đạo",
+      "occupation": "VD: Nhân viên văn phòng, tự do...",
       "lifestyle": "VD: Năng động, thích khám phá...",
       "quote": "Một câu nói ấn tượng về bạn...",
+      "personality": "VD: Vui vẻ, hòa đồng, chu đáo...",
+      "maritalStatus": "VD: Độc thân, đã kết hôn...",
       "hobby": "Thêm sở thích...",
       "introduction": "Viết vài dòng giới thiệu bản thân, điểm mạnh và phong cách làm việc của bạn..."
     },

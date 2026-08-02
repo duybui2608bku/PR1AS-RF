@@ -245,7 +245,11 @@ Rules:
 
 - At least one field is required.
 - Rating/detail validation matches create validation.
-- Owner client or admin can update.
+- **Admin only can update.** The owning client's edit path was removed:
+  reviews are immutable for the client once created. This closes a
+  reputation-bonus farming vector (create -> edit rating up cycles) since
+  the +5 review-received / +5 five-star bonus awarded on create was never
+  reversed or re-evaluated on update.
 - Service rejects update when `review.status === approved`.
 
 Nuance:
@@ -260,7 +264,11 @@ Route: `DELETE /api/reviews/:id`
 
 Rules:
 
-- Owner client or admin can delete.
+- **Admin only can delete.** The owning client's delete path was removed:
+  reviews are immutable for the client once created. This closes a
+  reputation-bonus farming vector (create -> delete -> recreate cycles)
+  since review deletion never reversed the reputation bonus awarded on
+  create.
 - Delete is a hard delete via `findByIdAndDelete`.
 - There is no soft-delete or visibility toggle in the delete service.
 
@@ -351,8 +359,8 @@ Routes under `/api/reviews`:
 | `GET` | `/all` | Admin | Admin review list. |
 | `GET` | `/stats/:workerId` | Authenticated | Worker stats for admin or that worker. |
 | `GET` | `/:id` | Authenticated | Review detail with visibility/owner access. |
-| `PATCH` | `/:id` | Authenticated | Update review by owner/admin. |
-| `DELETE` | `/:id` | Authenticated | Hard delete review by owner/admin. |
+| `PATCH` | `/:id` | Authenticated | Update review (admin only; client-owner edit path removed). |
+| `DELETE` | `/:id` | Authenticated | Hard delete review (admin only; client-owner delete path removed). |
 | `POST` | `/:id/reply` | Authenticated | Worker/admin reply. |
 
 ## Common Implementation Checklist

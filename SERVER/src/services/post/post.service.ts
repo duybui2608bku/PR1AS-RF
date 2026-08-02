@@ -233,7 +233,11 @@ export class PostService {
 
   private async assertUserCanCreatePost(userId: string): Promise<void> {
     const user = await userRepository.findById(userId);
-    const reputation = user?.meta_data?.reputation_score ?? 100;
+    const defaultPostReputation = user?.roles?.includes(UserRole.WORKER)
+      ? 0
+      : 100;
+    const reputation =
+      user?.meta_data?.reputation_score ?? defaultPostReputation;
     if (reputation < 30) {
       throw new AppError(
         REPUTATION_MESSAGES.TOO_LOW_FOR_POST,

@@ -94,7 +94,8 @@ export class BookingExpirationService {
           return reputationService.deductPoints(
             workerId,
             points,
-            ReputationHistoryReason.BOOKING_EXPIRY
+            ReputationHistoryReason.BOOKING_EXPIRY,
+            0
           );
         })
         .catch((err) =>

@@ -69,10 +69,13 @@ const WORKER_PROFILE_ALLOWED_FIELDS = new Set([
   "height_cm",
   "weight_kg",
   "star_sign",
+  "occupation",
   "lifestyle",
   "hobbies",
   "quote",
   "introduction",
+  "personality",
+  "marital_status",
   "gallery_urls",
   "experience",
   "title",
@@ -171,6 +174,7 @@ export class UserRepository {
    * can log in immediately without the email-verification handshake.
    */
   async createByAdmin(data: CreateByAdminInput): Promise<IUserDocument> {
+    const isWorker = data.roles.includes(UserRole.WORKER);
     const user = new User({
       email: data.email.toLowerCase().trim(),
       password_hash: data.password_hash,
@@ -184,7 +188,8 @@ export class UserRepository {
       created_by_admin: true,
       worker_profile: data.worker_profile ?? null,
       meta_data: {
-        reputation_score: 100,
+        reputation_score: isWorker ? 0 : 100,
+        reputation_profile_component: 0,
         pricing_plan_code: PricingPlanCode.STANDARD,
         pricing_started_at: null,
         pricing_expires_at: null,
@@ -395,6 +400,11 @@ export class UserRepository {
       setStage.roles = {
         $setUnion: [{ $ifNull: ["$roles", []] }, [UserRole.WORKER]],
       };
+      // First time becoming a worker: reputation starts fresh under the
+      // worker-only build-from-0 model, discarding whatever client score
+      // existed. Accepted tradeoff — see design spec, "Dual-role field".
+      setStage["meta_data.reputation_score"] = 0;
+      setStage["meta_data.reputation_profile_component"] = 0;
     }
 
     if (Object.keys(setStage).length === 0) {
@@ -534,7 +544,8 @@ export class UserRepository {
 
   async adjustReputationScore(
     id: string,
-    delta: number
+    delta: number,
+    defaultScore = 100
   ): Promise<{ newScore: number; previousScore: number } | null> {
     // Atomic read-modify-write: new:false returns the document as it was
     // *before* the update, letting us reconstruct both scores without a
@@ -552,7 +563,12 @@ export class UserRepository {
                     100,
                     {
                       $add: [
-                        { $ifNull: ["$meta_data.reputation_score", 100] },
+                        {
+                          $ifNull: [
+                            "$meta_data.reputation_score",
+                            defaultScore,
+                          ],
+                        },
                         delta,
                       ],
                     },
@@ -568,9 +584,18 @@ export class UserRepository {
     if (!before) return null;
     const previousScore =
       (before as unknown as { meta_data?: { reputation_score?: number } })
-        ?.meta_data?.reputation_score ?? 100;
+        ?.meta_data?.reputation_score ?? defaultScore;
     const newScore = Math.max(0, Math.min(100, previousScore + delta));
     return { newScore, previousScore };
+  }
+
+  async setReputationProfileComponent(
+    id: string,
+    value: number
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      "meta_data.reputation_profile_component": value,
+    });
   }
 
   async incrementReputationScoreForAll(delta: number): Promise<number> {
@@ -592,7 +617,10 @@ export class UserRepository {
   async findReputationRecoveryCandidates(): Promise<
     Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
   > {
-    return User.find({ "meta_data.reputation_score": { $lt: 100 } })
+    return User.find({
+      "meta_data.reputation_score": { $lt: 100 },
+      roles: { $ne: UserRole.WORKER },
+    })
       .select("_id meta_data.reputation_score")
       .limit(500)
       .lean() as Promise<
@@ -789,6 +817,31 @@ export class UserRepository {
       verify_email: true,
       email_verification_token: null,
       email_verification_expires: null,
+    });
+  }
+
+  /**
+   * One-time backfill read: every worker account, regardless of status, for the
+   * worker-reputation migration script (Task 16). Not paginated — intended for
+   * a manual, offline run rather than a request-path query.
+   */
+  async findAllWorkersForMigration(): Promise<IUserDocument[]> {
+    return User.find({ roles: UserRole.WORKER });
+  }
+
+  /**
+   * Writes the migration-computed score alongside the profile component it was
+   * derived from. Used only by the one-time worker-reputation backfill script
+   * (Task 16); clamped defensively even though the caller already clamps.
+   */
+  async setReputationScoreAndComponent(
+    id: string,
+    score: number,
+    profileComponent: number
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      "meta_data.reputation_score": Math.max(0, Math.min(100, score)),
+      "meta_data.reputation_profile_component": profileComponent,
     });
   }
 
