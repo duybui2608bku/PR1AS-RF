@@ -7,6 +7,16 @@ export enum ReputationHistoryReason {
   LOW_REVIEW = "low_review",
   DAILY_RECOVERY = "daily_recovery",
   MANUAL = "manual",
+  PROFILE_COMPLETENESS = "profile_completeness",
+  REVIEW_RECEIVED = "review_received",
+  FIVE_STAR_REVIEW = "five_star_review",
+  JOB_COMPLETED = "job_completed",
+  REPORT_FILED_VALID = "report_filed_valid",
+  REPORTED_VALID = "reported_valid",
+  LATE_COMPLETION = "late_completion",
+  WORKER_CANCEL_MEDIUM = "worker_cancel_medium",
+  WORKER_CANCEL_SEVERE = "worker_cancel_severe",
+  WORKER_NO_SHOW = "worker_no_show",
 }
 
 export interface IReputationHistory {
