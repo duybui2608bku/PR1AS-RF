@@ -14,9 +14,14 @@ export class ReputationService {
   async deductPoints(
     userId: string,
     points: number,
-    reason = ReputationHistoryReason.MANUAL
+    reason = ReputationHistoryReason.MANUAL,
+    defaultScore = 100
   ): Promise<void> {
-    const result = await userRepository.adjustReputationScore(userId, -points);
+    const result = await userRepository.adjustReputationScore(
+      userId,
+      -points,
+      defaultScore
+    );
     if (!result) return;
     const { previousScore, newScore } = result;
     await reputationHistoryRepository.create({
@@ -47,9 +52,14 @@ export class ReputationService {
   async recoverPoints(
     userId: string,
     points: number,
-    reason = ReputationHistoryReason.MANUAL
+    reason = ReputationHistoryReason.MANUAL,
+    defaultScore = 100
   ): Promise<void> {
-    const result = await userRepository.adjustReputationScore(userId, points);
+    const result = await userRepository.adjustReputationScore(
+      userId,
+      points,
+      defaultScore
+    );
     if (!result) return;
     const { previousScore, newScore } = result;
     await reputationHistoryRepository.create({

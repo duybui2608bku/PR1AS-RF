@@ -534,7 +534,8 @@ export class UserRepository {
 
   async adjustReputationScore(
     id: string,
-    delta: number
+    delta: number,
+    defaultScore = 100
   ): Promise<{ newScore: number; previousScore: number } | null> {
     // Atomic read-modify-write: new:false returns the document as it was
     // *before* the update, letting us reconstruct both scores without a
@@ -552,7 +553,12 @@ export class UserRepository {
                     100,
                     {
                       $add: [
-                        { $ifNull: ["$meta_data.reputation_score", 100] },
+                        {
+                          $ifNull: [
+                            "$meta_data.reputation_score",
+                            defaultScore,
+                          ],
+                        },
                         delta,
                       ],
                     },
@@ -568,7 +574,7 @@ export class UserRepository {
     if (!before) return null;
     const previousScore =
       (before as unknown as { meta_data?: { reputation_score?: number } })
-        ?.meta_data?.reputation_score ?? 100;
+        ?.meta_data?.reputation_score ?? defaultScore;
     const newScore = Math.max(0, Math.min(100, previousScore + delta));
     return { newScore, previousScore };
   }

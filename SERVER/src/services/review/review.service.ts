@@ -133,7 +133,8 @@ export class ReviewService {
           void reputationService.deductPoints(
             bookingWorkerId,
             points,
-            ReputationHistoryReason.LOW_REVIEW
+            ReputationHistoryReason.LOW_REVIEW,
+            0
           );
         }
       })
