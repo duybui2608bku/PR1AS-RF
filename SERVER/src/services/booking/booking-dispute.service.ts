@@ -192,7 +192,14 @@ export class BookingDisputeService extends BookingBaseService {
     };
     const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
 
-    if (finalStatus === BookingStatus.COMPLETED) {
+    // `booking` here is the pre-resolution document (fetched before this
+    // update). createDispute never touches completed_at when a booking is
+    // disputed straight from COMPLETED (see comment above), so a truthy
+    // completed_at at this point means the booking already transitioned to
+    // COMPLETED once before and already earned the job-completion bonus back
+    // then. Only award again when this resolution is the FIRST transition
+    // into COMPLETED, to avoid double-awarding the bonus for one booking.
+    if (finalStatus === BookingStatus.COMPLETED && !booking.completed_at) {
       void reputationService
         .awardJobCompletion(workerId)
         .catch((error) =>

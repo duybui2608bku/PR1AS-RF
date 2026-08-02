@@ -135,22 +135,28 @@ export class ReputationService {
   async syncWorkerProfileCompleteness(user: IUserDocument): Promise<void> {
     if (!user.roles?.includes(UserRole.WORKER)) return;
 
+    // PROFILE_PHOTOS_BONUS and PROFILE_INFO_FIELD_BONUS are toggleable
+    // point-changing rules (TOGGLEABLE_REPUTATION_KEYS), so they must use
+    // getActiveValue and treat a `null` (disabled) result as a 0 contribution
+    // — mirroring every other point-changing hook in this codebase.
+    // MIN_PROFILE_PHOTOS_THRESHOLD is a pure threshold (not toggleable) and
+    // stays on getValue, per the existing convention.
     const [photoBonus, minPhotos, perFieldBonus] = await Promise.all([
-      reputationConfigService.getValue(
+      reputationConfigService.getActiveValue(
         ReputationConfigKey.PROFILE_PHOTOS_BONUS
       ),
       reputationConfigService.getValue(
         ReputationConfigKey.MIN_PROFILE_PHOTOS_THRESHOLD
       ),
-      reputationConfigService.getValue(
+      reputationConfigService.getActiveValue(
         ReputationConfigKey.PROFILE_INFO_FIELD_BONUS
       ),
     ]);
 
     const newComponent = computeProfileCompletenessScore(user.worker_profile, {
-      photoBonus,
+      photoBonus: photoBonus ?? 0,
       minPhotos,
-      perFieldBonus,
+      perFieldBonus: perFieldBonus ?? 0,
     });
     const previousComponent = user.meta_data?.reputation_profile_component ?? 0;
     const delta = newComponent - previousComponent;

@@ -41,12 +41,16 @@ const WORKER_ID = "6512aaaa0000000000000001";
 const CLIENT_ID = "6512bbbb0000000000000002";
 const ADMIN_ID = "6512cccc0000000000000003";
 
-const disputedBooking = (reason: DisputeReason) =>
+const disputedBooking = (
+  reason: DisputeReason,
+  completedAt: Date | null = null
+) =>
   ({
     _id: { toString: () => "booking1" },
     worker_id: { _id: { toString: () => WORKER_ID } },
     client_id: { _id: { toString: () => CLIENT_ID } },
     status: BookingStatus.DISPUTED,
+    completed_at: completedAt,
     dispute: {
       reason,
       description: "test dispute",
@@ -87,6 +91,31 @@ const resolvedBooking = (reason: DisputeReason) =>
       cancelled_by: "admin" as const,
       reason: "policy_violation" as const,
       notes: "Admin decision",
+    },
+    schedule: {
+      start_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      end_time: new Date(Date.now() - 20 * 60 * 60 * 1000),
+      duration_hours: 4,
+    },
+  }) as never;
+
+const completedResolvedBooking = (reason: DisputeReason) =>
+  ({
+    _id: { toString: () => "booking1" },
+    worker_id: { _id: { toString: () => WORKER_ID } },
+    client_id: { _id: { toString: () => CLIENT_ID } },
+    status: BookingStatus.COMPLETED,
+    completed_at: new Date(),
+    dispute: {
+      reason,
+      description: "test dispute",
+      evidence_urls: [],
+      disputed_by: CLIENT_ID,
+      disputed_at: new Date(),
+      resolution: DisputeResolution.FAVOR_WORKER,
+      resolution_notes: "Admin decision",
+      resolved_by: ADMIN_ID,
+      resolved_at: new Date(),
     },
     schedule: {
       start_time: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -144,5 +173,48 @@ it("does not deduct the no-show penalty for other dispute reasons", async () => 
   );
 
   expect(reputation.deductPoints).not.toHaveBeenCalled();
+  expect(reputation.awardJobCompletion).not.toHaveBeenCalled();
+});
+
+it("awards the job-completion bonus when FAVOR_WORKER completes a booking for the first time", async () => {
+  // Pre-resolution booking never passed through COMPLETED before (completed_at
+  // is null), so this dispute resolution is the first transition into
+  // COMPLETED and should earn the bonus.
+  const booking = disputedBooking(DisputeReason.POOR_QUALITY, null);
+  const resolved = completedResolvedBooking(DisputeReason.POOR_QUALITY);
+
+  bookingRepo.findById.mockResolvedValue(booking);
+  bookingRepo.updateStatus.mockResolvedValue(resolved);
+
+  await service.resolveDispute(
+    "booking1",
+    ADMIN_ID,
+    DisputeResolution.FAVOR_WORKER,
+    "quality confirmed acceptable",
+    { isAdmin: true } as never
+  );
+
+  expect(reputation.awardJobCompletion).toHaveBeenCalledWith(WORKER_ID);
+});
+
+it("does not award the job-completion bonus again for a booking that was already COMPLETED before the dispute", async () => {
+  // The booking was already COMPLETED (and already earned the bonus) before
+  // it was disputed within the dispute window and now resolves FAVOR_WORKER
+  // back to COMPLETED. completed_at is already set from the original
+  // completion, since createDispute never clears it.
+  const booking = disputedBooking(DisputeReason.POOR_QUALITY, new Date());
+  const resolved = completedResolvedBooking(DisputeReason.POOR_QUALITY);
+
+  bookingRepo.findById.mockResolvedValue(booking);
+  bookingRepo.updateStatus.mockResolvedValue(resolved);
+
+  await service.resolveDispute(
+    "booking1",
+    ADMIN_ID,
+    DisputeResolution.FAVOR_WORKER,
+    "quality confirmed acceptable",
+    { isAdmin: true } as never
+  );
+
   expect(reputation.awardJobCompletion).not.toHaveBeenCalled();
 });
