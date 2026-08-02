@@ -119,6 +119,19 @@ export class ReputationService {
     );
   }
 
+  async awardJobCompletion(workerId: string): Promise<void> {
+    const points = await reputationConfigService.getActiveValue(
+      ReputationConfigKey.JOB_COMPLETION_BONUS
+    );
+    if (points === null) return;
+    await this.recoverPoints(
+      workerId,
+      points,
+      ReputationHistoryReason.JOB_COMPLETED,
+      0
+    );
+  }
+
   async syncWorkerProfileCompleteness(user: IUserDocument): Promise<void> {
     if (!user.roles?.includes(UserRole.WORKER)) return;
 

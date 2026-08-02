@@ -113,6 +113,18 @@ export class BookingStatusService extends BookingBaseService {
       logger.error("Quick booking status email failed:", error)
     );
 
+    if (status === BookingStatus.COMPLETED) {
+      const workerIdRaw = updatedBooking.worker_id as unknown as {
+        _id?: unknown;
+      };
+      const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
+      void reputationService
+        .awardJobCompletion(workerId)
+        .catch((err) =>
+          logger.error("Reputation bonus after job completion failed:", err)
+        );
+    }
+
     return updatedBooking;
   }
 

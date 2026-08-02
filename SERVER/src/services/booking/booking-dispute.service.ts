@@ -15,6 +15,10 @@ import { BOOKING_MESSAGES } from "../../constants/messages";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { BookingBaseService, RoleInfo } from "./booking-helpers";
+import { reputationService } from "../reputation/reputation.service";
+import { reputationConfigService } from "../reputation/reputation-config.service";
+import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 
 export class BookingDisputeService extends BookingBaseService {
   async createDispute(
@@ -181,6 +185,45 @@ export class BookingDisputeService extends BookingBaseService {
         HTTP_STATUS.NOT_FOUND,
         ErrorCode.BOOKING_NOT_FOUND
       );
+    }
+
+    const workerIdRaw = updatedBooking.worker_id as unknown as {
+      _id?: unknown;
+    };
+    const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
+
+    if (finalStatus === BookingStatus.COMPLETED) {
+      void reputationService
+        .awardJobCompletion(workerId)
+        .catch((error) =>
+          logger.error(
+            "Reputation bonus after dispute-resolved completion failed:",
+            error
+          )
+        );
+    }
+
+    if (
+      resolution === DisputeResolution.FAVOR_CLIENT &&
+      booking.dispute?.reason === DisputeReason.WORKER_NO_SHOW
+    ) {
+      void reputationConfigService
+        .getActiveValue(ReputationConfigKey.CANCEL_NOSHOW_PENALTY)
+        .then((points) => {
+          if (points === null) return;
+          return reputationService.deductPoints(
+            workerId,
+            points,
+            ReputationHistoryReason.WORKER_NO_SHOW,
+            0
+          );
+        })
+        .catch((error) =>
+          logger.error(
+            "Reputation deduction after worker no-show failed:",
+            error
+          )
+        );
     }
 
     void notificationEventService

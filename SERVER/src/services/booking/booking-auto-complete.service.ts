@@ -1,8 +1,16 @@
 import { bookingRepository } from "../../repositories/booking/booking.repository";
-import { BOOKING_LIMITS, BookingStatus } from "../../constants/booking";
+import {
+  BOOKING_LIMITS,
+  BOOKING_AUTO_COMPLETE_STARTED_STATUSES,
+  BookingStatus,
+} from "../../constants/booking";
 import { notificationEventService } from "../notification";
 import { logger } from "../../utils/logger";
 import { sendQuickBookingStatusEmail } from "./booking-email";
+import { reputationService } from "../reputation/reputation.service";
+import { reputationConfigService } from "../reputation/reputation-config.service";
+import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
+import { ReputationHistoryReason } from "../../types/reputation/reputation-history.types";
 
 const HOUR_MS = 60 * 60 * 1000;
 const AUTO_COMPLETE_SCAN_LIMIT = 100;
@@ -46,6 +54,10 @@ export class BookingAutoCompleteService {
     let completedCount = 0;
 
     for (const booking of candidates) {
+      const wasStarted = BOOKING_AUTO_COMPLETE_STARTED_STATUSES.includes(
+        booking.status as BookingStatus
+      );
+
       const completed = await bookingRepository.autoCompleteBooking(
         booking._id.toString()
       );
@@ -53,6 +65,43 @@ export class BookingAutoCompleteService {
       if (!completed) continue;
 
       completedCount += 1;
+
+      const workerIdRaw = completed.worker_id as unknown as {
+        _id?: unknown;
+      };
+      const workerId = String(workerIdRaw?._id ?? completed.worker_id);
+
+      void reputationService
+        .awardJobCompletion(workerId)
+        .catch((error) =>
+          logger.error(
+            "Reputation bonus after auto-complete failed:",
+            error
+          )
+        );
+
+      // Only the "started" branch (worker had already begun the job) implies
+      // they simply forgot to close it out — the "unstarted" 3-day branch has
+      // no evidence the appointment happened at all, so it stays unpenalized.
+      if (wasStarted) {
+        void reputationConfigService
+          .getActiveValue(ReputationConfigKey.LATE_COMPLETION_PENALTY)
+          .then((points) => {
+            if (points === null) return;
+            return reputationService.deductPoints(
+              workerId,
+              points,
+              ReputationHistoryReason.LATE_COMPLETION,
+              0
+            );
+          })
+          .catch((error) =>
+            logger.error(
+              "Reputation deduction after late completion failed:",
+              error
+            )
+          );
+      }
 
       void notificationEventService
         .bookingStatusUpdated(completed, BookingStatus.COMPLETED, null)
