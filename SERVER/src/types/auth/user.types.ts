@@ -49,10 +49,13 @@ export interface WorkerProfile {
   height_cm?: number;
   weight_kg?: number;
   star_sign?: string;
+  occupation?: string;
   lifestyle?: string;
   hobbies: string[];
   quote?: string;
   introduction?: string;
+  personality?: string;
+  marital_status?: string;
   gallery_urls: string[];
   experience?: Experience;
   work_locations?: Array<{

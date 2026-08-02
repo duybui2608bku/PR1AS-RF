@@ -66,10 +66,13 @@ const userSchema = new Schema<IUserDocument>(
           height_cm: { type: Number, default: null },
           weight_kg: { type: Number, default: null },
           star_sign: { type: String, default: null },
+          occupation: { type: String, default: null },
           lifestyle: { type: String, default: null },
           hobbies: { type: [String], default: [] },
           quote: { type: String, default: null },
           introduction: { type: String, default: null },
+          personality: { type: String, default: null },
+          marital_status: { type: String, default: null },
           gallery_urls: { type: [String], default: [] },
           experience: {
             type: String,
