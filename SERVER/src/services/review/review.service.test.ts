@@ -11,13 +11,19 @@ jest.mock("../../repositories/review/review.repository", () => ({
   reviewRepository: {
     findByBookingId: jest.fn(),
     create: jest.fn(),
+    findById: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 jest.mock("../../repositories/booking/booking.repository", () => ({
   bookingRepository: { findById: jest.fn() },
 }));
 jest.mock("../notification", () => ({
-  notificationEventService: { reviewCreated: jest.fn().mockResolvedValue(undefined) },
+  notificationEventService: {
+    reviewCreated: jest.fn().mockResolvedValue(undefined),
+    reviewUpdated: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 jest.mock("../reputation/reputation.service", () => ({
   reputationService: { deductPoints: jest.fn(), recoverPoints: jest.fn() },
@@ -121,4 +127,61 @@ it("deducts for a low review and does not award the five-star bonus", async () =
     ReputationHistoryReason.LOW_REVIEW,
     0
   );
+});
+
+it("rejects updateReview from the owning client (client can no longer edit)", async () => {
+  reviewRepo.findById.mockResolvedValue({
+    _id: "r1",
+    client_id: "client1",
+    worker_id: "worker1",
+    status: undefined,
+  } as never);
+  // Configure update to succeed so the test only passes if authorization
+  // itself blocks the call, not because the mock happens to return falsy.
+  reviewRepo.update.mockResolvedValue({ _id: "r1", rating: 4 } as never);
+
+  await expect(
+    service.updateReview("r1", { rating: 4 }, "client1", ["client"])
+  ).rejects.toThrow();
+});
+
+it("still allows updateReview from an admin", async () => {
+  reviewRepo.findById.mockResolvedValue({
+    _id: "r1",
+    client_id: "client1",
+    worker_id: "worker1",
+  } as never);
+  reviewRepo.update.mockResolvedValue({ _id: "r1", rating: 4 } as never);
+
+  await expect(
+    service.updateReview("r1", { rating: 4 }, "admin1", ["admin"])
+  ).resolves.toBeDefined();
+});
+
+it("rejects deleteReview from the owning client (client can no longer delete)", async () => {
+  reviewRepo.findById.mockResolvedValue({
+    _id: "r1",
+    client_id: "client1",
+    worker_id: "worker1",
+  } as never);
+  // Configure delete to succeed so the test only passes if authorization
+  // itself blocks the call, not because the mock happens to return falsy.
+  reviewRepo.delete.mockResolvedValue(true as never);
+
+  await expect(
+    service.deleteReview("r1", "client1", ["client"])
+  ).rejects.toThrow();
+});
+
+it("still allows deleteReview from an admin", async () => {
+  reviewRepo.findById.mockResolvedValue({
+    _id: "r1",
+    client_id: "client1",
+    worker_id: "worker1",
+  } as never);
+  reviewRepo.delete.mockResolvedValue(true as never);
+
+  await expect(
+    service.deleteReview("r1", "admin1", ["admin"])
+  ).resolves.toBeUndefined();
 });

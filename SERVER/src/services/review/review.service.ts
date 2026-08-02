@@ -316,10 +316,11 @@ export class ReviewService {
       );
     }
 
+    // Reviews are immutable for the client once created — only admin can
+    // edit (moderation). Prevents farming reputation bonuses via
+    // create -> edit-rating-up cycles.
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner = review.client_id.toString() === userId;
-
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
       throw new AppError(
         REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
@@ -347,7 +348,7 @@ export class ReviewService {
 
   async deleteReview(
     reviewId: string,
-    userId: string,
+    _userId: string,
     userRoles: string[]
   ): Promise<void> {
     const review = await reviewRepository.findById(reviewId);
@@ -359,10 +360,11 @@ export class ReviewService {
       );
     }
 
+    // Reviews are immutable for the client once created — only admin can
+    // delete (moderation). Prevents farming reputation bonuses via
+    // create -> delete -> recreate cycles.
     const isAdmin = userRoles.includes(UserRole.ADMIN);
-    const isOwner = review.client_id.toString() === userId;
-
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
       throw new AppError(
         REVIEW_MESSAGES.UNAUTHORIZED_ACCESS,
         HTTP_STATUS.FORBIDDEN,
