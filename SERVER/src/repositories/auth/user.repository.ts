@@ -174,6 +174,7 @@ export class UserRepository {
    * can log in immediately without the email-verification handshake.
    */
   async createByAdmin(data: CreateByAdminInput): Promise<IUserDocument> {
+    const isWorker = data.roles.includes(UserRole.WORKER);
     const user = new User({
       email: data.email.toLowerCase().trim(),
       password_hash: data.password_hash,
@@ -187,7 +188,8 @@ export class UserRepository {
       created_by_admin: true,
       worker_profile: data.worker_profile ?? null,
       meta_data: {
-        reputation_score: 100,
+        reputation_score: isWorker ? 0 : 100,
+        reputation_profile_component: 0,
         pricing_plan_code: PricingPlanCode.STANDARD,
         pricing_started_at: null,
         pricing_expires_at: null,
@@ -398,6 +400,11 @@ export class UserRepository {
       setStage.roles = {
         $setUnion: [{ $ifNull: ["$roles", []] }, [UserRole.WORKER]],
       };
+      // First time becoming a worker: reputation starts fresh under the
+      // worker-only build-from-0 model, discarding whatever client score
+      // existed. Accepted tradeoff — see design spec, "Dual-role field".
+      setStage["meta_data.reputation_score"] = 0;
+      setStage["meta_data.reputation_profile_component"] = 0;
     }
 
     if (Object.keys(setStage).length === 0) {

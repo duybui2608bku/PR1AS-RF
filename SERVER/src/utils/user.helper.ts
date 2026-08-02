@@ -23,6 +23,8 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     coords: user.coords,
     meta_data: {
       reputation_score: user.meta_data?.reputation_score ?? 100,
+      reputation_profile_component:
+        user.meta_data?.reputation_profile_component ?? 0,
       pricing_plan_code:
         user.meta_data?.pricing_plan_code ?? PricingPlanCode.STANDARD,
       pricing_started_at: user.meta_data?.pricing_started_at ?? null,

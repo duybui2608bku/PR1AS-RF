@@ -196,6 +196,10 @@ const userSchema = new Schema<IUserDocument>(
             max: 100,
             index: true,
           },
+          reputation_profile_component: {
+            type: Number,
+            default: 0,
+          },
           pricing_plan_code: {
             type: String,
             enum: Object.values(PricingPlanCode),
