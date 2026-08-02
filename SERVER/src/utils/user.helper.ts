@@ -1,10 +1,14 @@
-import { IUserDocument, IUserPublic } from "../types/auth/user.types";
+import { IUserDocument, IUserPublic, UserRole } from "../types/auth/user.types";
 import { PricingPlanCode } from "../constants/pricing";
 import { AuthRequest } from "../middleware/auth";
 import { AppError } from "./AppError";
 import { AUTH_MESSAGES } from "../constants/messages";
 
 export const toPublicUser = (user: IUserDocument): IUserPublic => {
+  const defaultReputationScore = user.roles?.includes(UserRole.WORKER)
+    ? 0
+    : 100;
+
   return {
     id: user._id.toString(),
     email: user.email,
@@ -22,7 +26,8 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
     last_login: user.last_login,
     coords: user.coords,
     meta_data: {
-      reputation_score: user.meta_data?.reputation_score ?? 100,
+      reputation_score:
+        user.meta_data?.reputation_score ?? defaultReputationScore,
       reputation_profile_component:
         user.meta_data?.reputation_profile_component ?? 0,
       pricing_plan_code:

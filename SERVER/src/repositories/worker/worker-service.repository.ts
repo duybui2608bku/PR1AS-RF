@@ -642,7 +642,7 @@ class WorkerServiceRepository {
             $cond: {
               if: {
                 $lt: [
-                  { $ifNull: ["$worker.meta_data.reputation_score", 100] },
+                  { $ifNull: ["$worker.meta_data.reputation_score", 0] },
                   30,
                 ],
               },
@@ -685,7 +685,7 @@ class WorkerServiceRepository {
                 },
               },
               reputation_score: {
-                $ifNull: ["$worker.meta_data.reputation_score", 100],
+                $ifNull: ["$worker.meta_data.reputation_score", 0],
               },
               last_active_at: { $ifNull: ["$worker.last_active_at", null] },
               pricing: "$pricing",
@@ -817,7 +817,7 @@ class WorkerServiceRepository {
               $ifNull: ["$worker.worker_profile.work_locations", []],
             },
           },
-          reputation_score: { $ifNull: ["$reputation_score", 100] },
+          reputation_score: { $ifNull: ["$reputation_score", 0] },
           matched_hashtags: {
             $filter: {
               input: {
