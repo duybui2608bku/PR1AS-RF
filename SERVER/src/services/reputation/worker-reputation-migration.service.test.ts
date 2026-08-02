@@ -40,7 +40,7 @@ beforeEach(() => {
       review_received_bonus: 5,
       five_star_review_bonus: 5,
       job_completion_bonus: 5,
-      low_review_threshold: 2,
+      low_review_deduction: 10,
     };
     return values[key as unknown as string];
   });
@@ -69,7 +69,9 @@ it("computes a clamped score from profile + reviews + completed jobs", async () 
   const result = await service.runManual({ apply: true });
 
   // profile: 10 (photos) + 5 (introduction) = 15
-  // reviews: 4*5 + 2*5 - 1*10 = 20 + 10 - 10 = 20
+  // reviews: 4*5 + 2*5 - 1*lowReviewDeduction(10) = 20 + 10 - 10 = 20
+  //   (lowReviewDeduction is now sourced live from reputationConfigService,
+  //   mocked to 10 here — same numeric result as the previous hardcoded 10)
   // jobs: 3*5 = 15
   // total = 50, clamped [0,100]
   expect(userRepo.setReputationScoreAndComponent).toHaveBeenCalledWith(

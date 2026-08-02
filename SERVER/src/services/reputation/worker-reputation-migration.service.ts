@@ -27,7 +27,7 @@ export class WorkerReputationMigrationService {
       reviewReceivedBonus,
       fiveStarBonus,
       jobCompletionBonus,
-      lowReviewThreshold,
+      lowReviewDeduction,
     ] = await Promise.all([
       reputationConfigService.getValue(ReputationConfigKey.PROFILE_PHOTOS_BONUS),
       reputationConfigService.getValue(
@@ -39,9 +39,13 @@ export class WorkerReputationMigrationService {
       reputationConfigService.getValue(ReputationConfigKey.REVIEW_RECEIVED_BONUS),
       reputationConfigService.getValue(ReputationConfigKey.FIVE_STAR_REVIEW_BONUS),
       reputationConfigService.getValue(ReputationConfigKey.JOB_COMPLETION_BONUS),
-      reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_THRESHOLD),
+      reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_DEDUCTION),
     ]);
-    void lowReviewThreshold; // read for parity with live config; countAndAverageForWorker uses the fixed <=2 cutoff, see repository comment
+    // Note: LOW_REVIEW_THRESHOLD itself is not fetched here — the rating cutoff
+    // used to count "low" reviews is hardcoded to <=2 inside
+    // reviewRepository.countAndAverageForWorker (see that method's comment for
+    // why). LOW_REVIEW_DEDUCTION (the point value, independently toggleable) is
+    // fetched live above so it stays in sync with the admin-configured value.
 
     const workers = await userRepository.findAllWorkersForMigration();
     let updated = 0;
@@ -62,7 +66,7 @@ export class WorkerReputationMigrationService {
       const reviewComponent =
         reviewStats.total * reviewReceivedBonus +
         reviewStats.fiveStarCount * fiveStarBonus -
-        reviewStats.lowRatingCount * 10; // matches LOW_REVIEW_DEDUCTION new default
+        reviewStats.lowRatingCount * lowReviewDeduction;
 
       const jobComponent = completedJobs * jobCompletionBonus;
 
