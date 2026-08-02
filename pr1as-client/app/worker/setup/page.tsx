@@ -295,9 +295,12 @@ export default function WorkerSetupPage() {
   const [weightKg, setWeightKg] = useState("")
   const [experience, setExperience] = useState<WorkerExperience | "">("")
   const [starSign, setStarSign] = useState("")
+  const [occupation, setOccupation] = useState("")
   const [lifestyle, setLifestyle] = useState("")
   const [quote, setQuote] = useState("")
   const [introduction, setIntroduction] = useState("")
+  const [personality, setPersonality] = useState("")
+  const [maritalStatus, setMaritalStatus] = useState("")
   const [hobbies, setHobbies] = useState<string[]>([])
   const [hobbyDraft, setHobbyDraft] = useState("")
   const [galleryUrls, setGalleryUrls] = useState<string[]>([])
@@ -420,9 +423,12 @@ export default function WorkerSetupPage() {
       if (profile?.weight_kg != null) setWeightKg(String(profile.weight_kg))
       if (profile?.experience) setExperience(profile.experience)
       if (profile?.star_sign) setStarSign(profile.star_sign)
+      if (profile?.occupation) setOccupation(profile.occupation)
       if (profile?.lifestyle) setLifestyle(profile.lifestyle)
       if (profile?.quote) setQuote(profile.quote)
       if (profile?.introduction) setIntroduction(profile.introduction)
+      if (profile?.personality) setPersonality(profile.personality)
+      if (profile?.marital_status) setMaritalStatus(profile.marital_status)
       if (profile?.hobbies?.length) setHobbies(profile.hobbies)
       if (profile?.gallery_urls?.length) setGalleryUrls(profile.gallery_urls)
 
@@ -589,6 +595,9 @@ export default function WorkerSetupPage() {
       lifestyle: lifestyle.trim() || undefined,
       quote: quote.trim() || undefined,
       introduction: introduction.trim() || undefined,
+      occupation: occupation.trim() || undefined,
+      personality: personality.trim() || undefined,
+      marital_status: maritalStatus.trim() || undefined,
     }
     if (dateOfBirth) payload.date_of_birth = format(dateOfBirth, "yyyy-MM-dd")
     if (experience) payload.experience = experience
@@ -969,6 +978,39 @@ export default function WorkerSetupPage() {
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
               placeholder={t("placeholders.quote")}
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              {t("fields.occupation")}
+            </Label>
+            <Input
+              value={occupation}
+              onChange={(e) => setOccupation(e.target.value)}
+              placeholder={t("placeholders.occupation")}
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              {t("fields.personality")}
+            </Label>
+            <Input
+              value={personality}
+              onChange={(e) => setPersonality(e.target.value)}
+              placeholder={t("placeholders.personality")}
+              className="h-11 rounded-xl"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              {t("fields.maritalStatus")}
+            </Label>
+            <Input
+              value={maritalStatus}
+              onChange={(e) => setMaritalStatus(e.target.value)}
+              placeholder={t("placeholders.maritalStatus")}
               className="h-11 rounded-xl"
             />
           </div>

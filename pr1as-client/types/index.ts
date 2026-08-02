@@ -220,10 +220,13 @@ export type WorkerProfilePublic = {
   height_cm?: number | null
   weight_kg?: number | null
   star_sign?: string | null
+  occupation?: string | null
   lifestyle?: string | null
   hobbies?: string[]
   quote?: string | null
   introduction?: string | null
+  personality?: string | null
+  marital_status?: string | null
   gallery_urls?: string[]
   experience?: WorkerExperience
   work_locations?: WorkLocationRef[]
