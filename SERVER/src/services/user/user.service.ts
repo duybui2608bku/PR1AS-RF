@@ -10,6 +10,7 @@ import { walletBalanceRepository } from "../../repositories/wallet/wallet-balanc
 import { workerPointWalletRepository } from "../../repositories/boost/worker-point-wallet.repository";
 import { postRepository } from "../../repositories/post/post.repository";
 import { commentRepository } from "../../repositories/comment/comment.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { Wallet } from "../../models/wallet/wallet.model";
 import { WorkerPointWallet } from "../../models/boost/worker-point-wallet.model";
 import { WorkerFavorite } from "../../models/worker/worker-favorite.model";
@@ -670,9 +671,10 @@ export class UserService {
   /**
    * Admin hard-delete of an admin-provisioned account. Real (self-registered)
    * users are never removed here — they go through the self-service soft-delete
-   * flow. The account is removed unconditionally (even with an active balance,
-   * bookings, or disputes). Cascade cleanup is best-effort (each step logs on
-   * failure) before the user document is removed.
+   * flow. The account is removed unconditionally (even with an active balance
+   * or disputes); any active bookings are cancelled first so they don't end up
+   * pointing at a worker_id/client_id that no longer resolves. Cascade cleanup
+   * is best-effort (each step logs on failure) before the user document is removed.
    */
   async deleteUserByAdmin(
     userId: string,
@@ -692,6 +694,7 @@ export class UserService {
     // step runs independently and a failure is logged but does not abort the
     // remaining cleanup or the final user removal.
     const results = await Promise.allSettled([
+      bookingRepository.cancelActiveBookingsForUser(userId),
       Wallet.deleteMany({ user_id: userObjectId }),
       WorkerPointWallet.deleteMany({ user_id: userObjectId }),
       workerServiceRepository.deleteAllForWorker(userId),

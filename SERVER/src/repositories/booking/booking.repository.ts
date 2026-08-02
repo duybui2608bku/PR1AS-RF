@@ -68,6 +68,34 @@ export class BookingRepository {
     });
   }
 
+  // Used when an admin-provisioned account is hard-deleted: unlike self-service
+  // deletion, that path removes the User doc unconditionally, which would
+  // otherwise leave active bookings pointing at a worker_id/client_id that no
+  // longer resolves. Cancelling them first keeps every booking's reference valid.
+  async cancelActiveBookingsForUser(userId: string): Promise<number> {
+    const now = new Date();
+    const result = await Booking.updateMany(
+      {
+        $or: [
+          { client_id: new Types.ObjectId(userId) },
+          { worker_id: new Types.ObjectId(userId) },
+        ],
+        status: { $in: BOOKING_SCHEDULE_BLOCKING_STATUSES },
+      },
+      {
+        status: BookingStatus.CANCELLED,
+        updated_at: now,
+        cancellation: {
+          cancelled_at: now,
+          cancelled_by: CancelledBy.SYSTEM,
+          reason: CancellationReason.OTHER,
+          notes: "Cancelled because the account was deleted",
+        },
+      }
+    );
+    return result.modifiedCount;
+  }
+
   async countOpenDisputesForUser(userId: string): Promise<number> {
     return Booking.countDocuments({
       $or: [
