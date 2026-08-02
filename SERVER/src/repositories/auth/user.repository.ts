@@ -608,7 +608,10 @@ export class UserRepository {
   async findReputationRecoveryCandidates(): Promise<
     Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
   > {
-    return User.find({ "meta_data.reputation_score": { $lt: 100 } })
+    return User.find({
+      "meta_data.reputation_score": { $lt: 100 },
+      roles: { $ne: UserRole.WORKER },
+    })
       .select("_id meta_data.reputation_score")
       .limit(500)
       .lean() as Promise<
