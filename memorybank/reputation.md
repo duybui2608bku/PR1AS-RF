@@ -12,9 +12,16 @@ The **worker** model was reworked (2026-08-02): a worker's score no longer
 defaults to 100. It starts at **0** the moment a user first gains the
 `worker` role, and is built up through 12 scoring rules — profile
 completeness, reviews received, completed jobs, valid reports, cancellation
-tiers, no-shows, late completion. There is no daily recovery for workers;
-the only way a worker's score moves is through one of those 12 rules firing.
-This closed the original bug report: a worker who had not finished
+tiers, no-shows, late completion. There is no daily recovery for workers.
+Almost all of a worker's score movement comes from those 12 rules, but one
+pre-existing, unrelated event also deducts a worker's score:
+`booking_expiry_deduction` (a pending booking expiring unconfirmed — see
+`SERVER/src/services/booking/booking-expiration.service.ts`). This config
+key predates the rework and its point value was left unchanged; only its
+`defaultScore` parameter was updated to `0` for workers as part of the
+original 16-task plan. So in total there are 13 events that can move a
+worker's score: the 12 rules below plus `booking_expiry_deduction`. This
+closed the original bug report: a worker who had not finished
 `/worker/setup` no longer shows a trust-inspiring 100 on their public profile.
 
 Primary source files:
@@ -279,8 +286,9 @@ existing review/report flows).
 | 11 | Worker cancels, < 30 min before start | -20 | `cancel_severe_penalty` | `worker_cancel_severe` | `booking-status.service.ts`, `cancelBooking()` |
 | 12 | `WORKER_NO_SHOW` dispute resolved `FAVOR_CLIENT` | -30 | `cancel_noshow_penalty` | `worker_no_show` | `booking-dispute.service.ts`, `resolveDispute()` |
 
-All 16 non-threshold/non-deprecated keys above are independently toggleable —
-an admin can disable a rule or change its point value at any time via
+All 16 non-threshold keys (including the deprecated `worker_cancel_deduction`,
+see "Config keys and defaults" above) are independently toggleable — an admin
+can disable a rule or change its point value at any time via
 `PATCH /api/admin/reputation-config/:key` without a code change.
 `reputationService.deductPoints`/`recoverPoints` are always called with
 `defaultScore = 0` for worker-only rules, so a worker with no score yet is
@@ -428,10 +436,12 @@ Flow:
 
 **Client-only since the rework**: `findReputationRecoveryCandidates` filters
 candidates with `roles: { $ne: UserRole.WORKER }`, in addition to
-`reputation_score < 100`. Workers are entirely excluded — the only way a
-worker's score moves is through the 12 rules above, never a passive daily
-recovery. This is the one place the pre-rework "any user below 100" behavior
-was deliberately narrowed.
+`reputation_score < 100`. Workers are entirely excluded from this passive
+recovery mechanism — a worker's score only ever moves through an explicit
+deduction/bonus event (the 12 rules above plus the pre-existing
+`booking_expiry_deduction`, see "Purpose"), never a passive daily recovery.
+This is the one place the pre-rework "any user below 100" behavior was
+deliberately narrowed.
 
 Recovery candidates are still limited to 500 per run.
 
@@ -535,8 +545,8 @@ read from user/profile payloads and history is read from `/history`.
   Surfaces 18 of the 19 config keys, split across 2 cards ("Trừ điểm" /
   deductions, and "Cộng điểm & cảnh báo" / bonuses & warnings). The
   deprecated `worker_cancel_deduction` is deliberately left out of both the
-  card filters and `orderedKeys` — it is dead in the backend too, so there is
-  nothing for the admin to configure.
+  card filter arrays and `orderedKeys` — it is dead in the backend too, so
+  there is nothing for the admin to configure.
 - `pr1as-client/services/reputation-config.service.ts` independently defines
   its own `ReputationConfigKey` union type and `TOGGLEABLE_REPUTATION_KEYS`
   array (not imported from the backend) — both were updated to carry all 19

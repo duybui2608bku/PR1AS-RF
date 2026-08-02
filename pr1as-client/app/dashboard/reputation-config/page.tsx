@@ -423,7 +423,6 @@ export default function ReputationConfigPage() {
                 .filter((c) =>
                   [
                     "booking_expiry_deduction",
-                    "worker_cancel_deduction",
                     "client_late_cancel_deduction",
                     "low_review_deduction",
                     "low_review_threshold",
