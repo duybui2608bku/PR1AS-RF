@@ -38,6 +38,75 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-02 — Đại tu điểm uy tín worker (xây từ 0, thay vì mặc định 100)
+
+**Mục tiêu**: Bug báo cáo ban đầu: worker chưa setup hồ sơ vẫn hiện "100 điểm
+uy tín". Điều tra ra 2 nguyên nhân: (1) `reputation_score` mặc định 100 cho
+mọi tài khoản theo thiết kế cũ; (2) lỗi wiring thật sự — `GET /api/workers/:id`
+chưa từng trả `meta_data.reputation_score`, nên frontend luôn hiện fallback
+cứng 100 của chính nó. Từ đó brainstorm ra một mô hình tính điểm uy tín mới
+hoàn toàn cho worker (client giữ nguyên hệ cũ).
+
+**Đã làm**:
+
+- Viết spec (`docs/superpowers/specs/2026-08-02-worker-reputation-rework-design.md`)
+  và plan 16 task (`docs/superpowers/plans/2026-08-02-worker-reputation-rework.md`),
+  triển khai bằng subagent-driven-development (1 implementer + 1 reviewer/task).
+- Worker giờ bắt đầu từ **0 điểm**, xây dần qua 12 quy tắc cộng/trừ (admin
+  chỉnh được qua `reputation_config`): hồ sơ đầy đủ (ảnh + 10 field, tối đa
+  60đ — đủ vượt ngưỡng `<30` trước khi cần booking nào), review nhận được/5
+  sao/tệ, hoàn thành job, báo cáo hợp lệ (nộp/bị nộp), 3 mức phạt huỷ lịch
+  theo thời gian, phạt bom lịch. Client không đổi gì.
+- Thêm 3 field hồ sơ mới: `occupation`, `personality`, `marital_status`.
+- Tái dùng cơ chế có sẵn thay vì thêm state machine mới: job auto-complete
+  (nhánh started/unstarted) cho "trễ hoàn thành", dispute `WORKER_NO_SHOW`
+  cho "bom lịch".
+- Script backfill 1 lần cho worker hiện có (`npm run migrate:worker-reputation`).
+- Review toàn nhánh (Opus) sau khi xong 16 task tìm ra 2 bug Important, đã
+  sửa và review lại: (1) job-completion bonus có thể cộng 2 lần nếu 1 booking
+  đã `completed` bị mở dispute lại rồi resolve `FAVOR_WORKER` lần nữa; (2)
+  toggle admin cho 2 config điểm hồ sơ không có tác dụng (dùng nhầm `getValue`
+  thay vì `getActiveValue`).
+
+**File chính**: `SERVER/src/services/reputation/*`,
+`SERVER/src/repositories/auth/user.repository.ts` (`adjustReputationScore`,
+`updateWorkerProfile`, `createByAdmin`), `SERVER/src/services/worker/worker.service.ts`
+(`getWorkerById` — chỗ fix bug gốc), `SERVER/src/services/booking/*`
+(auto-complete, dispute, cancel), `SERVER/src/services/review/review.service.ts`,
+`SERVER/src/services/moderation/moderation.service.ts`,
+`pr1as-client/app/worker/setup/page.tsx`.
+
+**Quyết định / ghi chú**:
+- User đa vai trò (vừa client vừa worker): `meta_data.reputation_score` là
+  1 field dùng chung, cố ý reset về 0 khi bấm "trở thành worker" lần đầu —
+  điểm client cũ (nếu có) bị mất, chấp nhận đánh đổi này (đã hỏi user, xác nhận).
+- `daily_recovery_points` (hồi phục tự động hằng ngày) chỉ còn áp dụng cho
+  client; worker chỉ tăng điểm qua hành động cụ thể.
+- Có 1 commit không thuộc plan này (`33dc647`, fix null `worker_id` khi huỷ
+  booking + cascade huỷ booking lúc admin xoá cứng tài khoản) bị 1 subagent
+  vô tình gộp vào lịch sử git do lệnh git quá rộng — đã hỏi, user quyết định
+  giữ nguyên (đó là việc dở của họ, nội dung ổn).
+
+**Còn lại** (đã surface cho user, user chọn để phiên sau xử lý — chưa có
+plan riêng, cần brainstorm trước khi code):
+1. Admin dashboard `/dashboard/reputation-config` chưa biết 12 key config
+   mới (UI hard-code danh sách 7 key cũ), vẫn hiện `worker_cancel_deduction`
+   dù rule đó không còn dùng nữa.
+2. Review có thể bị cày điểm: tạo review 5 sao → xoá → tạo lại → +10 mỗi
+   vòng, không giới hạn (review create/delete/update chưa có cơ chế đảo
+   ngược điểm khi xoá/sửa rating).
+3. `userService.updateUserByAdmin` (sửa user có sẵn thành worker) không
+   reset điểm về 0 và không đồng bộ điểm hồ sơ — khác với `becomeWorker`/
+   `createByAdmin` đã xử lý đúng.
+4. `SERVER/src/services/post/post.service.ts:236` vẫn còn `?? 100` không
+   phân biệt role — spec có nhắc file này nhưng Task 7 bỏ sót.
+5. `memorybank/reputation.md` chưa cập nhật theo mô hình mới (vẫn mô tả
+   "Default score is 100" cho mọi user).
+
+**Commit**: nhiều commit, range `7645327..082a789` · branch `main-3`
+
+---
+
 ## 2026-07-18 — Nút nâng cấp gói khi action bị chặn bởi Plan
 
 **Mục tiêu**: Mọi action bị hạn chế bởi Plan (gói) mà user không thực hiện được
