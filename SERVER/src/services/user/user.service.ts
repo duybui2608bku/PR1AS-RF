@@ -677,6 +677,15 @@ export class UserService {
             )
           );
       }
+    } else if (wasWorker) {
+      // Admin removed the worker role from an existing worker: the account
+      // is now client-only, but it still shares the same meta_data score
+      // field a worker used (e.g. 15). Every client-side reputation gate
+      // (booking/post/comment, all `< 30` checks) reads that field with a
+      // `?? 100` fallback that never fires once a real value is set, so
+      // without this reset a demoted user would be silently blocked until
+      // an admin manually fixed the score. Reset to the client default.
+      await userRepository.setReputationScoreAndComponent(userId, 100, 0);
     }
 
     // Status may have changed — drop the cached status so auth checks see it.

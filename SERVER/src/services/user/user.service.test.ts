@@ -124,3 +124,30 @@ it("does not touch reputation at all when the edited user is not a worker", asyn
   expect(workerServiceRepo.upsertManyForWorker).not.toHaveBeenCalled();
   expect(workerPointWalletRepo.findOrCreate).not.toHaveBeenCalled();
 });
+
+it("resets reputation to 100 when demoting an existing worker back to client-only", async () => {
+  userRepo.findById.mockResolvedValueOnce({
+    created_by_admin: true,
+    roles: [UserRole.CLIENT, UserRole.WORKER],
+    email: "a@test.com",
+  } as never);
+  userRepo.updateByAdmin.mockResolvedValue({
+    _id: { toString: () => "u1" },
+    roles: [UserRole.CLIENT],
+  } as never);
+
+  await service.updateUserByAdmin("u1", {
+    ...baseInput,
+    roles: [UserRole.CLIENT],
+  } as never);
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(userRepo.setReputationScoreAndComponent).toHaveBeenCalledWith(
+    "u1",
+    100,
+    0
+  );
+  expect(repService.syncWorkerProfileCompleteness).not.toHaveBeenCalled();
+  expect(workerServiceRepo.upsertManyForWorker).not.toHaveBeenCalled();
+  expect(workerPointWalletRepo.findOrCreate).not.toHaveBeenCalled();
+});
