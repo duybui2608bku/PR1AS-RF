@@ -201,19 +201,37 @@ export class BookingStatusService extends BookingBaseService {
         _id?: unknown;
       };
       const workerId = String(workerIdRaw?._id ?? updatedBooking.worker_id);
-      void reputationConfigService
-        .getActiveValue(ReputationConfigKey.WORKER_CANCEL_DEDUCTION)
-        .then((points) => {
-          if (points === null) return;
-          return reputationService.deductPoints(
-            workerId,
-            points,
-            ReputationHistoryReason.WORKER_CANCEL
+      const minutesUntilStart =
+        (updatedBooking.schedule.start_time.getTime() - Date.now()) /
+        (60 * 1000);
+
+      let penaltyKey: ReputationConfigKey | null = null;
+      let reason: ReputationHistoryReason | null = null;
+      if (minutesUntilStart < 30) {
+        penaltyKey = ReputationConfigKey.CANCEL_SEVERE_PENALTY;
+        reason = ReputationHistoryReason.WORKER_CANCEL_SEVERE;
+      } else if (minutesUntilStart < 120) {
+        penaltyKey = ReputationConfigKey.CANCEL_MEDIUM_PENALTY;
+        reason = ReputationHistoryReason.WORKER_CANCEL_MEDIUM;
+      }
+
+      if (penaltyKey && reason) {
+        const finalReason = reason;
+        void reputationConfigService
+          .getActiveValue(penaltyKey)
+          .then((points) => {
+            if (points === null) return;
+            return reputationService.deductPoints(
+              workerId,
+              points,
+              finalReason,
+              0
+            );
+          })
+          .catch((err) =>
+            logger.error("Reputation deduction after worker cancel failed:", err)
           );
-        })
-        .catch((err) =>
-          logger.error("Reputation deduction after worker cancel failed:", err)
-        );
+      }
     }
 
     if (cancelledBy === CancelledBy.CLIENT) {
