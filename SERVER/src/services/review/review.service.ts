@@ -7,7 +7,7 @@ import {
   IReviewDocument,
   UpdateReviewInput,
 } from "../../types/review/review.types";
-import { ReviewStatus, ReviewType } from "../../constants/review";
+import { ReviewStatus, ReviewType, REVIEW_LIMITS } from "../../constants/review";
 import { BookingStatus } from "../../constants/booking";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
@@ -123,6 +123,38 @@ export class ReviewService {
     void notificationEventService
       .reviewCreated(review, userId)
       .catch((error) => logger.error("Review notification failed:", error));
+
+    void reputationConfigService
+      .getActiveValue(ReputationConfigKey.REVIEW_RECEIVED_BONUS)
+      .then((points) => {
+        if (points === null) return;
+        return reputationService.recoverPoints(
+          bookingWorkerId,
+          points,
+          ReputationHistoryReason.REVIEW_RECEIVED,
+          0
+        );
+      })
+      .catch((err) =>
+        logger.error("Reputation bonus after review received failed:", err)
+      );
+
+    if (input.rating === REVIEW_LIMITS.MAX_RATING) {
+      void reputationConfigService
+        .getActiveValue(ReputationConfigKey.FIVE_STAR_REVIEW_BONUS)
+        .then((points) => {
+          if (points === null) return;
+          return reputationService.recoverPoints(
+            bookingWorkerId,
+            points,
+            ReputationHistoryReason.FIVE_STAR_REVIEW,
+            0
+          );
+        })
+        .catch((err) =>
+          logger.error("Reputation bonus after 5-star review failed:", err)
+        );
+    }
 
     void Promise.all([
       reputationConfigService.getValue(ReputationConfigKey.LOW_REVIEW_THRESHOLD),
