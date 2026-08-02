@@ -589,6 +589,15 @@ export class UserRepository {
     return { newScore, previousScore };
   }
 
+  async setReputationProfileComponent(
+    id: string,
+    value: number
+  ): Promise<void> {
+    await User.findByIdAndUpdate(id, {
+      "meta_data.reputation_profile_component": value,
+    });
+  }
+
   async incrementReputationScoreForAll(delta: number): Promise<number> {
     const result = await User.updateMany(
       { "meta_data.reputation_score": { $lt: 100 } },

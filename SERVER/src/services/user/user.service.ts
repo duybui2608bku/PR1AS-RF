@@ -52,6 +52,7 @@ import { getUserSocketIds } from "../../config/socket.handlers";
 import { invalidateUserStatusCache } from "../../utils/userStatusCache";
 import { normalizeAvatarUrl } from "../../utils/avatar-url";
 import { normalizeHashtags } from "../../utils/worker-hashtag";
+import { reputationService } from "../reputation/reputation.service";
 import { notificationEventService } from "../notification";
 
 interface BecomeWorkerAuditContext {
@@ -274,6 +275,13 @@ export class UserService {
     );
 
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    void reputationService
+      .syncWorkerProfileCompleteness(user)
+      .catch((error) =>
+        logger.error("Reputation profile-completeness sync failed:", error)
+      );
+
     return user;
   }
 
@@ -299,6 +307,12 @@ export class UserService {
     );
 
     if (!user) throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+
+    void reputationService
+      .syncWorkerProfileCompleteness(user)
+      .catch((error) =>
+        logger.error("Reputation profile-completeness sync failed:", error)
+      );
 
     logger.info("AUDIT user become worker confirmed", {
       event: "USER_BECOME_WORKER_CONFIRMED",
@@ -508,6 +522,14 @@ export class UserService {
         workerServicePayloads,
         new Date()
       );
+      void reputationService
+        .syncWorkerProfileCompleteness(user)
+        .catch((error) =>
+          logger.error(
+            "Reputation profile-completeness sync failed for admin-created worker:",
+            error
+          )
+        );
     }
 
     logger.info("AUDIT admin created user", {

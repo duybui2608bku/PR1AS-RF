@@ -9,6 +9,8 @@ import {
 } from "../../types/reputation/reputation-history.types";
 import { PaginationHelper } from "../../utils";
 import { logger } from "../../utils/logger";
+import { IUserDocument, UserRole } from "../../types/auth/user.types";
+import { computeProfileCompletenessScore } from "./worker-profile-completeness";
 
 export class ReputationService {
   async deductPoints(
@@ -115,6 +117,47 @@ export class ReputationService {
       query.limit,
       total
     );
+  }
+
+  async syncWorkerProfileCompleteness(user: IUserDocument): Promise<void> {
+    if (!user.roles?.includes(UserRole.WORKER)) return;
+
+    const [photoBonus, minPhotos, perFieldBonus] = await Promise.all([
+      reputationConfigService.getValue(
+        ReputationConfigKey.PROFILE_PHOTOS_BONUS
+      ),
+      reputationConfigService.getValue(
+        ReputationConfigKey.MIN_PROFILE_PHOTOS_THRESHOLD
+      ),
+      reputationConfigService.getValue(
+        ReputationConfigKey.PROFILE_INFO_FIELD_BONUS
+      ),
+    ]);
+
+    const newComponent = computeProfileCompletenessScore(user.worker_profile, {
+      photoBonus,
+      minPhotos,
+      perFieldBonus,
+    });
+    const previousComponent = user.meta_data?.reputation_profile_component ?? 0;
+    const delta = newComponent - previousComponent;
+    if (delta === 0) return;
+
+    const userId = user._id.toString();
+    const result = await userRepository.adjustReputationScore(userId, delta, 0);
+    if (!result) return;
+
+    await userRepository.setReputationProfileComponent(userId, newComponent);
+
+    const { previousScore, newScore } = result;
+    if (newScore === previousScore) return;
+    await reputationHistoryRepository.create({
+      userId,
+      delta: newScore - previousScore,
+      previousScore,
+      newScore,
+      reason: ReputationHistoryReason.PROFILE_COMPLETENESS,
+    });
   }
 }
 
