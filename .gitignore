@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# ─── Env files chứa credentials thật — KHÔNG commit ─────────
+SERVER/.env
+pr1as-client/.env.local
+
+# ─── Giữ lại templates và local dev config ───────────────────
+!SERVER/.env.example
+!pr1as-client/.env.example
+!docker-compose/.env.local
+!docker-compose/.env.prod
+!docker-compose/.env.example
