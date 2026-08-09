@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -37,10 +37,15 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const t = useTranslations("Auth")
   const registerMutation = useRegister()
   const googleLoginMutation = useGoogleLogin()
 
+  // Link giới thiệu (`/register?ref=CODE`) chỉ điền sẵn ô mã — user vẫn sửa được.
+  const [referralCode, setReferralCode] = useState(
+    () => searchParams.get("ref")?.trim().toUpperCase() ?? ""
+  )
   const [email, setEmail] = useState("")
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
@@ -62,7 +67,10 @@ export default function RegisterPage() {
       return
     }
     try {
-      const response = await googleLoginMutation.mutateAsync(credential)
+      const response = await googleLoginMutation.mutateAsync({
+        idToken: credential,
+        referralCode: referralCode.trim() || undefined,
+      })
       if (!response.success) {
         toast.error(localizeServerMessage(response.message, t("googleLoginFailed")))
         return
@@ -97,6 +105,7 @@ export default function RegisterPage() {
         password,
         full_name: trimmedFullName || undefined,
         phone: trimmedPhone || undefined,
+        referral_code: referralCode.trim() || undefined,
       })
 
       if (!response.success) {
@@ -248,6 +257,24 @@ export default function RegisterPage() {
             </Field>
             <Field className="sm:col-span-2">
               <PasswordStrengthChecklist password={password} />
+            </Field>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="referral-code">
+                {t("referralCode")}
+              </FieldLabel>
+              <Input
+                id="referral-code"
+                value={referralCode}
+                onChange={(event) =>
+                  setReferralCode(event.target.value.toUpperCase())
+                }
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={16}
+                placeholder={t("referralCodePlaceholder")}
+                className="h-11 text-base"
+              />
             </Field>
           </FieldGroup>
           <Button

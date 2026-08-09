@@ -8,6 +8,7 @@ import {
   verifyEmailSchema,
   resendVerificationSchema,
   deleteAccountSchema,
+  referralCodeSchema,
 } from "../../validations/auth/auth.validation";
 import { accountDeletionService } from "../../services/auth/account-deletion.service";
 import {
@@ -124,6 +125,13 @@ export class AuthController {
   async getMe(req: AuthRequest, res: Response): Promise<void> {
     const user = await authService.getMe(extractUserIdFromRequest(req));
     R.success(res, { user }, undefined, req);
+  }
+
+  async getReferral(req: AuthRequest, res: Response): Promise<void> {
+    const referral = await authService.getReferralInfo(
+      extractUserIdFromRequest(req)
+    );
+    R.success(res, referral, undefined, req);
   }
 
   async logout(req: AuthRequest, res: Response): Promise<void> {
@@ -306,7 +314,12 @@ export class AuthController {
     const bodyLocale = req.body?.locale as Locale | undefined;
     const result = await authService.loginWithGoogle(
       idToken,
-      resolveRequestLocale(req, bodyLocale)
+      resolveRequestLocale(req, bodyLocale),
+      validateWithSchema(
+        referralCodeSchema,
+        req.body?.referral_code,
+        COMMON_MESSAGES.BAD_REQUEST
+      )
     );
     setAuthCookies(res, result.token, result.refreshToken);
     R.success(res, result, undefined, req);
