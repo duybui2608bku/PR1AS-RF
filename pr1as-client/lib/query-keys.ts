@@ -2,6 +2,7 @@ export const queryKeys = {
   auth: {
     me: ["auth", "me"] as const,
     deletionStatus: ["auth", "deletion-status"] as const,
+    referral: ["auth", "referral"] as const,
   },
   chat: {
     all: ["chat"] as const,

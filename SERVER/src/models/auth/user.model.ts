@@ -129,6 +129,22 @@ const userSchema = new Schema<IUserDocument>(
       default: false,
       index: true,
     },
+    // Mã giới thiệu của chính user này — sinh lười (lần đầu user mở trang
+    // giới thiệu) nên tài khoản cũ không cần backfill.
+    referral_code: {
+      type: String,
+      default: null,
+      uppercase: true,
+      trim: true,
+    },
+    // Người đã giới thiệu user này. Số lượt giới thiệu của một người =
+    // countDocuments({ referred_by: <id> }) — không denormalize counter.
+    referred_by: {
+      type: Schema.Types.ObjectId,
+      ref: modelsName.USER,
+      default: null,
+      index: true,
+    },
     created_at: {
       type: Date,
       default: Date.now,
@@ -262,6 +278,15 @@ userSchema.index(
   {
     unique: true,
     partialFilterExpression: { google_id: { $type: "string" } },
+  }
+);
+// Cùng lý do với google_id: schema default `null` nên sparse vẫn index mọi user
+// chưa sinh mã và văng E11000 ở người thứ hai.
+userSchema.index(
+  { referral_code: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { referral_code: { $type: "string" } },
   }
 );
 userSchema.index({

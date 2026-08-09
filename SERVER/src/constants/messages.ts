@@ -59,6 +59,7 @@ export const AUTH_MESSAGES = {
   PROFILE_UPDATED: "Profile updated successfully",
   WORKER_ROLE_ENABLED: "Worker role enabled successfully",
   BECOME_WORKER_CONFIRM_REQUIRED: "Confirmation is required to become a worker",
+  REFERRAL_CODE_INVALID: "Referral code does not exist",
 } as const;
 
 export const AUTHZ_MESSAGES = {

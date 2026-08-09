@@ -38,6 +38,42 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-09 — Người giới thiệu (referral)
+
+**Mục tiêu**: Đăng ký qua link giới thiệu + nhập mã khi tự đăng ký; hệ thống đếm
+số lượt một user đã giới thiệu. Phần "điểm" để phát triển sau.
+
+**Đã làm**:
+
+- User model thêm `referral_code` (unique partial index như `google_id`) và
+  `referred_by` (ObjectId, có index). **Không** có counter denormalize — số lượt
+  giới thiệu = `countDocuments({ referred_by: id })`.
+- `POST /api/auth/register` và `POST /api/auth/google` nhận `referral_code`;
+  mã sai → 400 (`REFERRAL_CODE_INVALID`), kiểm tra trước mọi side-effect. Với
+  Google chỉ gán khi tạo tài khoản mới, đăng nhập lại thì bỏ qua.
+- `GET /api/auth/referral` → `{ code, total_referred }`.
+- Frontend: ô "Mã giới thiệu" ở trang đăng ký, tự điền từ `?ref=CODE`; mục
+  "Giới thiệu bạn bè" trong `/settings` (mã + link + số người, nút copy).
+- Test: `SERVER/src/services/auth/auth.service.referral.test.ts` (4 case).
+
+**File chính**: `SERVER/src/{models,repositories,services,controllers,routes,validations}/auth/*`,
+`pr1as-client/app/(auth)/register/page.tsx`, `pr1as-client/app/settings/page.tsx`,
+`pr1as-client/lib/hooks/use-auth.ts`, `pr1as-client/messages/*.json`
+
+**Quyết định / ghi chú**:
+
+- Mã sinh **lười** ở lần đầu gọi `GET /api/auth/referral` (8 ký tự hex hoa) —
+  nhờ vậy tài khoản cũ không cần migration/backfill.
+- `useGoogleLogin` đổi chữ ký: `mutateAsync({ idToken, referralCode? })`.
+- Chưa gắn vào hệ điểm/boost sẵn có (`worker-point-wallet`) — theo yêu cầu để sau.
+
+**Còn lại**: cơ chế thưởng điểm cho người giới thiệu; admin chưa có màn xem
+bảng xếp hạng referral.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-08-02 — Đại tu điểm uy tín worker (xây từ 0, thay vì mặc định 100)
 
 **Mục tiêu**: Bug báo cáo ban đầu: worker chưa setup hồ sơ vẫn hiện "100 điểm

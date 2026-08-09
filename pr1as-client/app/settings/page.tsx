@@ -16,9 +16,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Cookie,
+  Copy,
   Eye,
   FileText,
   FileWarning,
+  Gift,
   Lightbulb,
   Loader2,
   Lock,
@@ -69,6 +71,7 @@ import {
   useDeleteAccount,
   useDeletionStatus,
   useForgotPassword,
+  useReferral,
 } from "@/lib/hooks/use-auth"
 import { useCreateFeedback, useMyFeedback } from "@/lib/hooks/use-feedback"
 import {
@@ -112,6 +115,7 @@ type SettingsSection =
   | "post-reports"
   | "worker-reports"
   | "reputation"
+  | "referral"
   | "feedback"
   | "delete-account"
 
@@ -151,6 +155,11 @@ const sectionMeta: Record<
     descriptionKey: "reputationDesc",
     icon: Star,
   },
+  referral: {
+    labelKey: "referralLabel",
+    descriptionKey: "referralDesc",
+    icon: Gift,
+  },
   feedback: {
     labelKey: "feedbackLabel",
     descriptionKey: "feedbackDesc",
@@ -169,7 +178,7 @@ const sectionGroups: Array<{ titleKey: string; items: SettingsSection[] }> = [
     titleKey: "groupSafety",
     items: ["blocked", "post-reports", "worker-reports"],
   },
-  { titleKey: "groupAccount", items: ["reputation", "feedback"] },
+  { titleKey: "groupAccount", items: ["reputation", "referral", "feedback"] },
   { titleKey: "groupDanger", items: ["delete-account"] },
 ]
 
@@ -738,6 +747,85 @@ function ReputationPanel() {
   )
 }
 
+function ReferralPanel() {
+  const t = useTranslations("Settings")
+  const referralQuery = useReferral()
+  const referral = referralQuery.data
+
+  // Origin lấy từ trình duyệt để link luôn khớp domain đang dùng (dev/staging/prod).
+  const link = referral
+    ? `${typeof window === "undefined" ? "" : window.location.origin}/register?ref=${referral.code}`
+    : ""
+
+  const handleCopy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast.success(t("referralCopied"))
+    } catch {
+      toast.error(t("referralCopyFailed"))
+    }
+  }
+
+  if (referralQuery.isLoading) return <LoadingPanel />
+
+  if (referralQuery.isError || !referral) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="size-4" />
+        <AlertTitle>{t("referralLoadError")}</AlertTitle>
+        <AlertDescription>{t("tryAgainLater")}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-md border bg-background p-4">
+        <p className="text-sm text-muted-foreground">{t("referralCount")}</p>
+        <p className="text-3xl font-semibold tracking-tight">
+          {referral.total_referred}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="referral-code">{t("referralYourCode")}</Label>
+        <div className="flex gap-2">
+          <Input
+            id="referral-code"
+            readOnly
+            value={referral.code}
+            className="font-mono text-base tracking-widest"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleCopy(referral.code)}
+          >
+            <Copy className="size-4" />
+            {t("referralCopy")}
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="referral-link">{t("referralYourLink")}</Label>
+        <div className="flex gap-2">
+          <Input id="referral-link" readOnly value={link} className="text-sm" />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleCopy(link)}
+          >
+            <Copy className="size-4" />
+            {t("referralCopy")}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">{t("referralHint")}</p>
+      </div>
+    </div>
+  )
+}
+
 function FeedbackPanel() {
   const t = useTranslations("Settings")
   const localeTag = useLocaleTag()
@@ -1134,6 +1222,7 @@ function SectionContent({ section }: { section: SettingsSection }) {
   if (section === "blocked") return <BlockedList />
   if (section === "post-reports") return <ReportsList targetType="post" />
   if (section === "worker-reports") return <ReportsList targetType="worker" />
+  if (section === "referral") return <ReferralPanel />
   if (section === "feedback") return <FeedbackPanel />
   if (section === "delete-account") return <DeleteAccountPanel />
   return <ReputationPanel />

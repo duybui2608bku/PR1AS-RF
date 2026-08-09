@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 import { PricingPlanCode } from "../../constants/pricing";
 import { Locale } from "../../utils/i18n";
 
@@ -87,6 +87,8 @@ export interface IUser {
   deleted_at: Date | null;
   verify_email: boolean;
   created_by_admin?: boolean;
+  referral_code?: string | null;
+  referred_by?: Types.ObjectId | null;
   created_at: Date;
   last_login: Date | null;
   last_active_at: Date | null;
@@ -155,11 +157,19 @@ export interface RegisterInput {
   full_name?: string;
   phone?: string;
   locale?: Locale;
+  // Mã giới thiệu của người khác (từ link ?ref= hoặc user tự nhập).
+  referral_code?: string;
 }
 
 export interface GoogleLoginInput {
   id_token: string;
   locale?: Locale;
+  referral_code?: string;
+}
+
+export interface ReferralInfo {
+  code: string;
+  total_referred: number;
 }
 
 export interface LoginInput {

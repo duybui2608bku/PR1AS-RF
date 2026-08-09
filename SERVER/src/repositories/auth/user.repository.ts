@@ -16,6 +16,7 @@ export interface CreateUserInput {
   full_name?: string;
   phone?: string;
   locale?: Locale;
+  referred_by?: Types.ObjectId | null;
 }
 
 export interface CreateGoogleUserInput {
@@ -24,6 +25,7 @@ export interface CreateGoogleUserInput {
   full_name?: string;
   avatar?: string;
   locale?: Locale;
+  referred_by?: Types.ObjectId | null;
 }
 
 export interface CreateByAdminInput {
@@ -160,6 +162,7 @@ export class UserRepository {
       roles: [UserRole.CLIENT],
       status: UserStatus.ACTIVE,
       verify_email: false,
+      referred_by: data.referred_by ?? null,
       created_at: new Date(),
       last_login: null,
       ...(data.locale ? { meta_data: { locale: data.locale } } : {}),
@@ -240,6 +243,7 @@ export class UserRepository {
       roles: [UserRole.CLIENT],
       status: UserStatus.ACTIVE,
       verify_email: true,
+      referred_by: data.referred_by ?? null,
       created_at: new Date(),
       last_login: null,
       ...(data.locale ? { meta_data: { locale: data.locale } } : {}),
@@ -249,6 +253,29 @@ export class UserRepository {
 
   async linkGoogleId(id: string, googleId: string): Promise<void> {
     await User.findByIdAndUpdate(id, { google_id: googleId });
+  }
+
+  async findByReferralCode(code: string): Promise<IUserDocument | null> {
+    return User.findOne({ referral_code: code.toUpperCase().trim() });
+  }
+
+  /**
+   * Ghi mã chỉ khi user chưa có mã — hai request song song thì kẻ thua nhận
+   * `null` và đọc lại mã của kẻ thắng thay vì ghi đè.
+   */
+  async setReferralCodeIfEmpty(
+    id: string,
+    code: string
+  ): Promise<IUserDocument | null> {
+    return User.findOneAndUpdate(
+      { _id: id, referral_code: null },
+      { referral_code: code },
+      { new: true }
+    );
+  }
+
+  async countReferrals(id: string): Promise<number> {
+    return User.countDocuments({ referred_by: new Types.ObjectId(id) });
   }
 
   async updateRoles(

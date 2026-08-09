@@ -30,6 +30,7 @@ export interface RegisterRequest {
   password: string
   full_name?: string
   phone?: string
+  referral_code?: string
 }
 
 interface AuthResponse {
@@ -102,8 +103,17 @@ export function useGoogleLogin() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (idToken: string) => {
-      const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", { id_token: idToken })
+    mutationFn: async ({
+      idToken,
+      referralCode,
+    }: {
+      idToken: string
+      referralCode?: string
+    }) => {
+      const response = await api.post<ApiResponse<AuthResponse>>("/auth/google", {
+        id_token: idToken,
+        referral_code: referralCode,
+      })
       // Cookie trước, authenticated sau — xem giải thích ở useLogin.
       if (response.data.success && response.data.data) {
         const cookieOk = await setSessionCookie(response.data.data.token)
@@ -204,6 +214,29 @@ export function useVerifyEmail() {
     mutationFn: async (payload: VerifyEmailRequest) => {
       const response = await api.post<ApiResponse<{ message: string }>>("/auth/verify-email", payload)
       return response.data
+    },
+  })
+}
+
+export interface ReferralInfo {
+  code: string
+  total_referred: number
+}
+
+/**
+ * Mã giới thiệu của chính user — server sinh lười ở lần gọi đầu tiên, nên
+ * mã chỉ tồn tại sau khi user mở mục Giới thiệu.
+ */
+export function useReferral(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.auth.referral,
+    enabled,
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<ReferralInfo>>("/auth/referral")
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.error?.message ?? "REFERRAL_FETCH_FAILED")
+      }
+      return response.data.data
     },
   })
 }

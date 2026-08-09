@@ -11,6 +11,15 @@ const strongPassword = z
     AUTH_MESSAGES.PASSWORD_COMPLEXITY
   );
 
+// Mã giới thiệu của người khác. Ô trống trên form gửi lên "" — coi như không nhập.
+export const referralCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .max(16)
+  .optional()
+  .transform((val) => val || undefined);
+
 export const registerSchema = z.object({
   email: z
     .string({ required_error: AUTH_MESSAGES.EMAIL_REQUIRED })
@@ -22,6 +31,7 @@ export const registerSchema = z.object({
   // Locale the user is browsing the site in, captured at signup so the very
   // first email (verification) is sent in their language. See meta_data.locale.
   locale: z.enum(["vi", "en", "zh", "ko"]).optional(),
+  referral_code: referralCodeSchema,
 });
 
 export const loginSchema = z.object({

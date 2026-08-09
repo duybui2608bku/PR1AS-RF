@@ -42,6 +42,12 @@ router.get(
   asyncHandler<AuthRequest>(authController.getMe.bind(authController))
 );
 
+router.get(
+  "/referral",
+  authenticate,
+  asyncHandler<AuthRequest>(authController.getReferral.bind(authController))
+);
+
 router.post(
   "/logout",
   authenticate,

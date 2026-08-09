@@ -297,7 +297,9 @@ export default function LoginPage() {
                 return
               }
               try {
-                const response = await googleLoginMutation.mutateAsync(credentialResponse.credential)
+                const response = await googleLoginMutation.mutateAsync({
+                  idToken: credentialResponse.credential,
+                })
                 if (!response.success) {
                   toast.error(localizeServerMessage(response.message, t("googleLoginFailed")))
                   return

@@ -18,8 +18,10 @@ import {
   RegisterResponse,
   IUserPublic,
   IUserDocument,
+  ReferralInfo,
   UserStatus,
 } from "../../types/auth/user.types";
+import { Types } from "mongoose";
 import crypto from "crypto";
 import nodemailerUtils from "../../utils/nodemailer";
 import {
@@ -65,6 +67,9 @@ export class AuthService {
    * account enumeration. Mirrors the policy already used by forgotPassword.
    */
   async register(input: RegisterInput): Promise<RegisterResponse> {
+    // Kiểm tra mã giới thiệu trước mọi side-effect: mã sai thì báo lỗi ngay,
+    // kể cả khi email đã tồn tại (nhánh im lặng chống dò tài khoản bên dưới).
+    const referredBy = await this.resolveReferrer(input.referral_code);
     const existing = await userRepository.findByEmail(input.email);
 
     if (existing) {
@@ -91,6 +96,7 @@ export class AuthService {
       full_name: input.full_name,
       phone: input.phone,
       locale: input.locale,
+      referred_by: referredBy,
     });
 
     await this.sendVerificationEmailToUser(user).catch((error) => {
@@ -543,7 +549,8 @@ export class AuthService {
    */
   async loginWithGoogle(
     idToken: string,
-    locale?: Locale
+    locale?: Locale,
+    referralCode?: string
   ): Promise<AuthResponse> {
     if (!config.googleClientId) {
       throw new AppError(
@@ -595,6 +602,7 @@ export class AuthService {
       name,
       picture,
       locale,
+      referralCode,
     });
 
     if (user.status === UserStatus.BANNED) {
@@ -648,6 +656,7 @@ export class AuthService {
     name?: string;
     picture?: string;
     locale?: Locale;
+    referralCode?: string;
   }): Promise<IUserDocument> {
     const existingByGoogleId = await userRepository.findByGoogleId(claims.sub);
     if (existingByGoogleId) return existingByGoogleId;
@@ -684,6 +693,8 @@ export class AuthService {
       return existingByEmail;
     }
 
+    // Chỉ tài khoản Google mới tinh mới được gán người giới thiệu — hai nhánh
+    // trên là đăng nhập lại, mã giới thiệu ở đó không có ý nghĩa.
     try {
       return await userRepository.createGoogleUser({
         email: claims.email,
@@ -691,6 +702,7 @@ export class AuthService {
         full_name: claims.name,
         avatar: claims.picture,
         locale: claims.locale,
+        referred_by: await this.resolveReferrer(claims.referralCode),
       });
     } catch (err) {
       // Concurrent request inserted first — re-fetch by either key.
@@ -702,6 +714,62 @@ export class AuthService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Đổi mã giới thiệu người khác nhập/đến từ link `?ref=` thành id người giới
+   * thiệu. Mã sai → 400 để user biết mà sửa, thay vì âm thầm mất công người
+   * giới thiệu.
+   */
+  private async resolveReferrer(code?: string): Promise<Types.ObjectId | null> {
+    if (!code) return null;
+    const referrer = await userRepository.findByReferralCode(code);
+    if (!referrer) {
+      throw AppError.badRequest(AUTH_MESSAGES.REFERRAL_CODE_INVALID);
+    }
+    return referrer._id as Types.ObjectId;
+  }
+
+  /**
+   * Mã giới thiệu của chính user, sinh lười ở lần đọc đầu tiên (nên tài khoản
+   * cũ không cần migration). 8 ký tự hex — không có ký tự dễ nhầm (O/0, I/l).
+   */
+  async getReferralInfo(userId: string): Promise<ReferralInfo> {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw AppError.notFound(AUTH_MESSAGES.USER_NOT_FOUND);
+    }
+
+    let code = user.referral_code ?? null;
+    for (let attempt = 0; !code && attempt < 5; attempt++) {
+      const candidate = crypto.randomBytes(4).toString("hex").toUpperCase();
+      try {
+        const updated = await userRepository.setReferralCodeIfEmpty(
+          userId,
+          candidate
+        );
+        // `null` = request song song đã ghi mã trước; đọc lại mã của nó.
+        code =
+          updated?.referral_code ??
+          (await userRepository.findById(userId))?.referral_code ??
+          null;
+      } catch (err) {
+        if (!this.isDuplicateKeyError(err)) throw err;
+      }
+    }
+
+    if (!code) {
+      throw new AppError(
+        AUTH_MESSAGES.REFERRAL_CODE_INVALID,
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ErrorCode.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return {
+      code,
+      total_referred: await userRepository.countReferrals(userId),
+    };
   }
 
   private isDuplicateKeyError(err: unknown): boolean {
