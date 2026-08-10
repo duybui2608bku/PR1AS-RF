@@ -172,14 +172,3 @@ export interface BookingStats {
   completed: number;
   cancelled: number;
 }
-
-export interface BookingClientProfile {
-  full_name: string | null;
-  avatar: string | null;
-  member_since: string;
-  is_verified: boolean;
-  reputation_score: number;
-  total_count: number;
-  completed_count: number;
-  client_cancelled_count: number;
-}

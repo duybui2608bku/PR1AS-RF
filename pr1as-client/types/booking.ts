@@ -242,13 +242,3 @@ export type GuestBookingLookupQuery = {
   email: string
 }
 
-export type BookingClientProfile = {
-  full_name: string | null
-  avatar: string | null
-  member_since: string
-  is_verified: boolean
-  reputation_score: number
-  total_count: number
-  completed_count: number
-  client_cancelled_count: number
-}

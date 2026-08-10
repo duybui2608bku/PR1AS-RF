@@ -1,6 +1,10 @@
 import { api } from "@/lib/axios"
 import type { AuthUser } from "@/lib/store/auth-store"
-import type { WorkerPricingUnit, WorkerProfileUpdateInput } from "@/types"
+import type {
+  ClientPublicProfile,
+  WorkerPricingUnit,
+  WorkerProfileUpdateInput,
+} from "@/types"
 
 export type UserRole = "client" | "worker" | "admin"
 export type UserStatus = "active" | "banned"
@@ -94,6 +98,16 @@ interface ApiResponse<T> {
 }
 
 export const userService = {
+  /** Public-facing profile of a client, e.g. the author of a job post. */
+  getClientPublicProfile: async (
+    userId: string
+  ): Promise<ClientPublicProfile> => {
+    const { data } = await api.get<ApiResponse<ClientPublicProfile>>(
+      `/users/${userId}/public-profile`
+    )
+    return data.data
+  },
+
   getUsers: async (params: GetUsersParams = {}) => {
     const query = new URLSearchParams()
     if (params.page) query.set("page", String(params.page))

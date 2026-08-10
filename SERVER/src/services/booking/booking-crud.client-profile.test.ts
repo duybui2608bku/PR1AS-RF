@@ -56,6 +56,7 @@ it("returns a curated client profile for the owning worker on a PENDING booking"
   const result = await service.getClientProfileForBooking("booking1", WORKER_ID);
 
   expect(result).toEqual({
+    id: CLIENT_ID,
     full_name: "Nguyen Van A",
     avatar: "https://cdn/x.png",
     member_since: "2025-01-02T03:04:05.000Z",

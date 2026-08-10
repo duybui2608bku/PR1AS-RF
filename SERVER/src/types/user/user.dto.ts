@@ -11,3 +11,19 @@ export interface GetUsersQuery {
   endDate?: string;
   created_by_admin?: "true" | "false";
 }
+
+/**
+ * What another user is allowed to see about a client. Whitelist — never add
+ * email/phone here. Also returned by GET /bookings/:id/client-profile.
+ */
+export interface ClientPublicProfile {
+  id: string;
+  full_name: string | null;
+  avatar: string | null;
+  member_since: string;
+  is_verified: boolean;
+  reputation_score: number;
+  total_count: number;
+  completed_count: number;
+  client_cancelled_count: number;
+}

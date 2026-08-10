@@ -40,7 +40,7 @@ import {
   useUpdateComment,
 } from "@/lib/hooks/use-comments"
 import { useAuthDialogStore } from "@/lib/store/auth-dialog-store"
-import { cn } from "@/lib/utils"
+import { authorProfileHref, cn } from "@/lib/utils"
 import { formatRelativeOrDate } from "@/lib/utils/time"
 import type { CommentPublic, CommentThreadItem } from "@/types"
 
@@ -302,7 +302,7 @@ function CommentItem({
   const canCollapse = !nested && comment.body.length > COMMENT_COLLAPSE_LENGTH
   const isBodyCollapsed = canCollapse && !isExpanded
   const displayName = comment.author.full_name?.trim() || t("defaultUser")
-  const workerHref = comment.author.has_worker_profile ? `/worker/${comment.author.id}` : null
+  const authorHref = authorProfileHref(comment.author)
   const trimmedDraft = draft.trim()
   const canSave =
     trimmedDraft.length > 0 &&
@@ -335,8 +335,8 @@ function CommentItem({
   return (
     <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
       <div className={cn("flex gap-2", nested ? "ml-8" : "")}>
-        {workerHref ? (
-          <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
+        {authorHref ? (
+          <Link href={authorHref} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-full hover:opacity-80 transition-opacity">
             <CommentAvatar avatar={comment.author.avatar} name={displayName} nested={nested} />
           </Link>
         ) : (
@@ -345,8 +345,8 @@ function CommentItem({
         <div className="min-w-0 flex-1">
           <div className="rounded-lg bg-muted/50 px-3 py-2">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            {workerHref ? (
-              <Link href={workerHref} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:underline">
+            {authorHref ? (
+              <Link href={authorHref} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:underline">
                 {displayName}
               </Link>
             ) : (

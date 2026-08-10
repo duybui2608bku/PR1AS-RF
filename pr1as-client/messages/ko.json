@@ -718,6 +718,18 @@
       "description": "필요할 때 개인 정보와 비밀번호를 수정하세요."
     }
   },
+  "CustomerProfile": {
+    "pageTitle": "고객 프로필",
+    "defaultUser": "사용자",
+    "loadErrorTitle": "고객 정보를 불러올 수 없습니다",
+    "loadErrorDesc": "나중에 다시 시도하거나 URL을 확인하세요.",
+    "memberSince": "{date}부터 회원",
+    "verifiedBadge": "인증됨",
+    "reputation": "신뢰도 {score}/100",
+    "totalBookings": "총 예약",
+    "completedBookings": "완료",
+    "cancelRate": "취소율"
+  },
   "WorkerSetup": {
     "optional": "(선택 사항)",
     "stepCounter": "{current}/{total}단계",

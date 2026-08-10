@@ -719,6 +719,18 @@
       "description": "Edit your personal information and password when needed."
     }
   },
+  "CustomerProfile": {
+    "pageTitle": "Customer profile",
+    "defaultUser": "User",
+    "loadErrorTitle": "Unable to load customer information",
+    "loadErrorDesc": "Please try again later or check the URL.",
+    "memberSince": "Member since {date}",
+    "verifiedBadge": "Verified",
+    "reputation": "Reputation {score}/100",
+    "totalBookings": "Total bookings",
+    "completedBookings": "Completed",
+    "cancelRate": "Cancel rate"
+  },
   "WorkerSetup": {
     "optional": "(optional)",
     "stepCounter": "Step {current}/{total}",

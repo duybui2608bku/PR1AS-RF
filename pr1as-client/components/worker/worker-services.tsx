@@ -16,7 +16,7 @@ import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useRequirePlan } from "@/lib/hooks/use-require-plan"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { buildChatHref, cn } from "@/lib/utils"
+import { buildChatHref, cn, tagColorClass } from "@/lib/utils"
 import { serviceService } from "@/services/service.service"
 import type { WorkerServiceItem, WorkerServicePricing } from "@/types"
 
@@ -243,7 +243,10 @@ export function WorkerServices({ workerId, workerName, workerAvatar, services, w
                         {service.hashtags.map((tag) => (
                           <span
                             key={tag}
-                            className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                            className={cn(
+                              "rounded px-1.5 py-0.5 text-[10px] font-medium",
+                              tagColorClass(tag),
+                            )}
                           >
                             #{tag}
                           </span>

@@ -157,7 +157,8 @@ export function SiteHeader() {
   const hasWorkerRole = userRoles.some(
     (role) => role.toLowerCase() === "worker"
   )
-  const homeHref = getRoleDefaultRoute(activeRole)
+  // ponytail: logo luôn trỏ /about, không phụ thuộc role
+  const logoHref = "/about"
 
   // Chưa có hồ sơ worker → nút dẫn vào /worker/setup, nên gọi là "Trở thành
   // Worker". Đã có rồi → chỉ là đổi vai trò đang hoạt động.
@@ -594,7 +595,7 @@ export function SiteHeader() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4 md:px-6">
               <div className="flex items-center gap-6 justify-self-start">
                 <Link
-                  href={homeHref}
+                  href={logoHref}
                   className="flex shrink-0 items-center gap-2 font-semibold"
                 >
                   {isMounted && brandLogo ? (
@@ -718,7 +719,7 @@ export function SiteHeader() {
         <div className="container mx-auto flex h-14 items-center justify-between border-b px-4">
           <div className="flex items-center gap-6">
             <Link
-              href={homeHref}
+              href={logoHref}
               className="flex items-center gap-2 font-semibold"
             >
               {isMounted && brandLogo ? (

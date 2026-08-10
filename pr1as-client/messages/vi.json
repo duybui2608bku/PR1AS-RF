@@ -719,6 +719,18 @@
       "description": "Chỉnh sửa thông tin cá nhân và mật khẩu khi cần."
     }
   },
+  "CustomerProfile": {
+    "pageTitle": "Hồ sơ khách hàng",
+    "defaultUser": "Người dùng",
+    "loadErrorTitle": "Không thể tải thông tin khách hàng",
+    "loadErrorDesc": "Vui lòng thử lại sau hoặc kiểm tra đường dẫn.",
+    "memberSince": "Thành viên từ {date}",
+    "verifiedBadge": "Đã xác thực",
+    "reputation": "Uy tín {score}/100",
+    "totalBookings": "Tổng đơn",
+    "completedBookings": "Đã hoàn thành",
+    "cancelRate": "Tỉ lệ hủy"
+  },
   "WorkerSetup": {
     "optional": "(tuỳ chọn)",
     "stepCounter": "Bước {current}/{total}",

@@ -30,6 +30,14 @@ export class UserController {
     R.success(res, stats, POST_MESSAGES.MY_POST_STATS_FETCHED, req);
   }
 
+  async getClientPublicProfile(req: AuthRequest, res: Response): Promise<void> {
+    const profile = await userService.getClientPublicProfileForViewer(
+      req.params.id,
+      req.user?.sub
+    );
+    R.success(res, profile, USER_MESSAGES.USER_FETCHED, req);
+  }
+
   async getUsers(req: PaginationRequest, res: Response): Promise<void> {
     const query = validateWithSchema(
       getUsersQuerySchema,

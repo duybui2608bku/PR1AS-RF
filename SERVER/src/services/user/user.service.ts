@@ -55,6 +55,8 @@ import { normalizeAvatarUrl } from "../../utils/avatar-url";
 import { normalizeHashtags } from "../../utils/worker-hashtag";
 import { reputationService } from "../reputation/reputation.service";
 import { notificationEventService } from "../notification";
+import { moderationService } from "../moderation/moderation.service";
+import { ClientPublicProfile } from "../../types/user/user.dto";
 
 interface BecomeWorkerAuditContext {
   ip?: string;
@@ -548,6 +550,50 @@ export class UserService {
    * Full account + worker offering for the admin edit form. Includes the
    * worker services (a separate collection) so the form can prefill pricing.
    */
+  /**
+   * Public-facing profile of a client, shown to other users (e.g. a worker
+   * clicking the author of a job post). Whitelist only — no email/phone.
+   * Shared with GET /bookings/:id/client-profile so both stay in sync.
+   */
+  async getClientPublicProfile(clientId: string): Promise<ClientPublicProfile> {
+    const [client, stats] = await Promise.all([
+      userRepository.findById(clientId),
+      bookingRepository.countClientBookingStats(clientId),
+    ]);
+    // ponytail: deleted accounts are scrubbed (name/avatar nulled) — 404 instead
+    // of rendering a ghost. BANNED stays visible, matching GET /workers/:id.
+    if (
+      !client ||
+      client.status === UserStatus.DELETED ||
+      client.status === UserStatus.PENDING_DELETE
+    ) {
+      throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    }
+
+    return {
+      id: client._id.toString(),
+      full_name: client.full_name ?? null,
+      avatar: client.avatar ?? null,
+      member_since: new Date(client.created_at).toISOString(),
+      is_verified: Boolean(client.verify_email),
+      reputation_score: client.meta_data?.reputation_score ?? 100,
+      total_count: stats.total,
+      completed_count: stats.completed,
+      client_cancelled_count: stats.clientCancelled,
+    };
+  }
+
+  /** Same profile, but hidden when the viewer has profile-blocked the target. */
+  async getClientPublicProfileForViewer(
+    clientId: string,
+    viewerId: string | undefined
+  ): Promise<ClientPublicProfile> {
+    if (await moderationService.isProfileBlocked(viewerId, clientId)) {
+      throw AppError.notFound(USER_MESSAGES.USER_NOT_FOUND);
+    }
+    return this.getClientPublicProfile(clientId);
+  }
+
   async getUserDetailForAdmin(userId: string): Promise<{
     user: IUserDocument;
     worker_services: Array<{

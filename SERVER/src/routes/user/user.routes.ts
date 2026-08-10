@@ -15,6 +15,17 @@ router.get(
   asyncHandler<AuthRequest>(userController.getMyPostStats.bind(userController))
 );
 
+// Authenticated (any role): a client's public-facing profile, e.g. the author
+// of a job post in the feed. Curated whitelist, no email/phone.
+router.get(
+  "/:id/public-profile",
+  authenticate,
+  validateObjectId("id"),
+  asyncHandler<AuthRequest>(
+    userController.getClientPublicProfile.bind(userController)
+  )
+);
+
 // Admin-only routes
 router.use(authenticate, adminOnly);
 

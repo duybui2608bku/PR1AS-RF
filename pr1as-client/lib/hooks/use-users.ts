@@ -13,6 +13,16 @@ import {
 } from "@/services/user.service"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
+export function useClientPublicProfile(userId: string) {
+  return useQuery({
+    queryKey: queryKeys.users.publicProfile(userId),
+    queryFn: () => userService.getClientPublicProfile(userId),
+    enabled: Boolean(userId),
+    staleTime: 60_000,
+    retry: false,
+  })
+}
+
 export function useGetUsers(params: GetUsersParams = {}) {
   return useQuery({
     queryKey: queryKeys.users.list(params as Record<string, unknown>),

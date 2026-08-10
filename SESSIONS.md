@@ -38,6 +38,57 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-10 — Tag màu + trang thông tin khách từ bảng tin
+
+**Mục tiêu**: (1) làm nổi bật tag sở thích/dịch vụ bằng màu; (2) ở bảng tin job,
+bấm tên/avatar người đăng (client) để xem trang thông tin của họ.
+
+**Đã làm**:
+
+- `tagColorClass()` trong `pr1as-client/lib/utils.ts`: hash tên tag → 1 trong 8
+  màu cố định (có dark variant). Deterministic, **không** dùng `Math.random`
+  (nhấp nháy mỗi render + hydration mismatch). Áp cho hobbies ở
+  `worker-profile-header` (cả 2 layout) và hashtag dịch vụ ở `worker-services`.
+- Backend: `GET /api/users/:id/public-profile` (`authenticate`, bất kỳ role) trả
+  `ClientPublicProfile` — whitelist `id, full_name, avatar, member_since,
+  is_verified, reputation_score, total_count, completed_count,
+  client_cancelled_count`. **Không** email/phone.
+- Gộp projection: `GET /bookings/:id/client-profile` giờ gọi chung
+  `userService.getClientPublicProfile()` thay vì tự dựng bản sao. Type
+  `BookingClientProfile` bị xoá, thay bằng `ClientPublicProfile`
+  (`SERVER/src/types/user/user.dto.ts` ↔ `pr1as-client/types/index.ts`).
+- Frontend: trang `/customer/[id]` (client component, `SiteLayout`, noindex) +
+  `authorProfileHref()` dùng chung cho `post-card` và `post-comments` — author
+  có worker profile → `/worker/:id`, còn lại → `/customer/:id`.
+- i18n namespace mới `CustomerProfile` ở cả 4 locale.
+- Test: `SERVER/src/services/user/user.client-public-profile.test.ts` (6 case:
+  whitelist không lộ email/phone, profile-block → 404, DELETED/PENDING_DELETE →
+  404, không tồn tại → 404, default uy tín 100). Full suite: 120/120 pass.
+
+**File chính**: `SERVER/src/services/user/user.service.ts`,
+`SERVER/src/{controllers,routes}/user/*`, `SERVER/src/types/user/user.dto.ts`,
+`SERVER/src/services/booking/booking-crud.service.ts`,
+`pr1as-client/app/customer/[id]/*`, `pr1as-client/lib/utils.ts`,
+`pr1as-client/components/post/post-{card,comments}.tsx`
+
+**Quyết định / ghi chú**:
+
+- Route là `/customer/[id]` chứ **không** phải `/client/[id]`: `app/client/` đã
+  bị `AuthGuard` + shell dashboard chiếm, và `/client` nằm trong
+  `PROTECTED_PREFIXES`. Đã thêm `/customer` vào `PROTECTED_PREFIXES` (hồ sơ
+  khách chỉ cho user đã đăng nhập xem — khác `/worker/:id` vốn public cho SEO).
+- Guard: 404 khi viewer đã `block_profile` target (theo precedent
+  `worker.service.getWorkerById`) và khi account DELETED/PENDING_DELETE (dữ liệu
+  đã bị scrub). BANNED vẫn hiện, giống `GET /workers/:id`.
+- Lint `booking-crud.service.ts:277-293` fail prettier — **có sẵn từ HEAD**,
+  không đụng tới.
+
+**Còn lại**: mention `@[name](id)` trong comment vẫn hardcode `/worker/:id`
+(hiện chỉ tạo mention cho author có worker profile nên chưa vỡ). Chip trong form
+edit (`worker/setup`, `hashtag-chip-input`) chưa dùng `tagColorClass`.
+
+**Commit**: chưa commit · branch `feat/referral`
+
 ## 2026-08-09 — Người giới thiệu (referral)
 
 **Mục tiêu**: Đăng ký qua link giới thiệu + nhập mã khi tự đăng ký; hệ thống đếm

@@ -59,7 +59,10 @@ export function SiteFooter({ className }: { className?: string }) {
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Link
+              href="/about"
+              className="flex items-center gap-2 font-semibold"
+            >
               {isMounted && brandLogo ? (
                 <Image
                   src={brandLogo}

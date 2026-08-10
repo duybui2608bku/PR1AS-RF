@@ -34,6 +34,23 @@ export type TrendingHashtag = {
 }
 
 // ─── Post ─────────────────────────────────────────────────────────────────────
+/**
+ * What another user may see about a client. Mirrors the server whitelist in
+ * SERVER/src/types/user/user.dto.ts — no email/phone. Backs both
+ * GET /users/:id/public-profile and GET /bookings/:id/client-profile.
+ */
+export type ClientPublicProfile = {
+  id: string
+  full_name: string | null
+  avatar: string | null
+  member_since: string
+  is_verified: boolean
+  reputation_score: number
+  total_count: number
+  completed_count: number
+  client_cancelled_count: number
+}
+
 export type PostVisibility = "public" | "private"
 
 export type PostAuthor = {

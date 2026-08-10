@@ -64,7 +64,7 @@ import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
 import { useTogglePostRegistration } from "@/lib/hooks/use-post-registrations"
 import { useDeletePost, useSetCommentsLock } from "@/lib/hooks/use-posts"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { cn } from "@/lib/utils"
+import { authorProfileHref, cn } from "@/lib/utils"
 import { getPlanRingClass } from "@/lib/utils/plan"
 import { formatRelativeOrDate } from "@/lib/utils/time"
 import type { ReportReason } from "@/services/moderation.service"
@@ -427,9 +427,7 @@ export function PostCard({ post }: Props) {
   )
   const hasOpenPostReport = Boolean(openPostReportQuery.data)
   const timeAgo = formatRelativeOrDate(post.created_at, locale)
-  const workerHref = post.author.has_worker_profile
-    ? `/worker/${post.author.id}`
-    : null
+  const authorHref = authorProfileHref(post.author)
 
   const handleDelete = async () => {
     try {
@@ -477,9 +475,9 @@ export function PostCard({ post }: Props) {
     <article className="border-b bg-card p-4 sm:rounded-xl sm:border sm:shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          {workerHref ? (
+          {authorHref ? (
             <Link
-              href={workerHref}
+              href={authorHref}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 rounded-full transition-opacity hover:opacity-80"
@@ -500,9 +498,9 @@ export function PostCard({ post }: Props) {
             />
           )}
           <div className="min-w-0">
-            {workerHref ? (
+            {authorHref ? (
               <Link
-                href={workerHref}
+                href={authorHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block truncate text-sm leading-tight font-semibold hover:underline"

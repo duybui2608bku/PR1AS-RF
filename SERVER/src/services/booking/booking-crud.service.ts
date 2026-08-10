@@ -12,8 +12,9 @@ import {
   CreateBookingInput,
   BookingQuery,
   IBookingDocument,
-  BookingClientProfile,
 } from "../../types/booking/booking.types";
+import { ClientPublicProfile } from "../../types/user/user.dto";
+import { userService } from "../user/user.service";
 import { AppError } from "../../utils/AppError";
 import { ErrorCode } from "../../types/common/error.types";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -263,7 +264,7 @@ export class BookingCrudService extends BookingBaseService {
   async getClientProfileForBooking(
     bookingId: string,
     workerId: string
-  ): Promise<BookingClientProfile> {
+  ): Promise<ClientPublicProfile> {
     const booking = await bookingRepository.findById(bookingId);
     if (!booking) {
       throw new AppError(
@@ -301,28 +302,7 @@ export class BookingCrudService extends BookingBaseService {
       ? clientRef._id.toString()
       : clientRef.toString();
 
-    const [client, stats] = await Promise.all([
-      userRepository.findById(clientId),
-      bookingRepository.countClientBookingStats(clientId),
-    ]);
-    if (!client) {
-      throw new AppError(
-        BOOKING_MESSAGES.USER_NOT_FOUND,
-        HTTP_STATUS.NOT_FOUND,
-        ErrorCode.NOT_FOUND
-      );
-    }
-
-    return {
-      full_name: client.full_name ?? null,
-      avatar: client.avatar ?? null,
-      member_since: new Date(client.created_at).toISOString(),
-      is_verified: Boolean(client.verify_email),
-      reputation_score: client.meta_data?.reputation_score ?? 100,
-      total_count: stats.total,
-      completed_count: stats.completed,
-      client_cancelled_count: stats.clientCancelled,
-    };
+    return userService.getClientPublicProfile(clientId);
   }
 
   async lookupGuestBooking(

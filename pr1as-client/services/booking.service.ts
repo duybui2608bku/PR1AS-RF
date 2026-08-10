@@ -3,7 +3,6 @@ import type {
   AdminBookingAnalytics,
   AdminBookingAnalyticsQuery,
   Booking,
-  BookingClientProfile,
   BookingListQuery,
   BookingListResponse,
   CancelBookingPayload,
@@ -14,6 +13,7 @@ import type {
   UpdateBookingPayload,
   UpdateBookingStatusPayload,
 } from "@/types/booking"
+import type { ClientPublicProfile } from "@/types"
 
 type ApiResponse<T> = {
   success: boolean
@@ -164,8 +164,8 @@ export const bookingService = {
 
   getBookingClientProfile: async (
     bookingId: string
-  ): Promise<BookingClientProfile> => {
-    const response = await api.get<ApiResponse<BookingClientProfile>>(
+  ): Promise<ClientPublicProfile> => {
+    const response = await api.get<ApiResponse<ClientPublicProfile>>(
       `/bookings/${bookingId}/client-profile`
     )
     if (!response.data.data) {

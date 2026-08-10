@@ -719,6 +719,18 @@
       "description": "按需编辑个人信息和密码。"
     }
   },
+  "CustomerProfile": {
+    "pageTitle": "客户资料",
+    "defaultUser": "用户",
+    "loadErrorTitle": "无法加载客户信息",
+    "loadErrorDesc": "请稍后重试或检查链接。",
+    "memberSince": "注册于 {date}",
+    "verifiedBadge": "已验证",
+    "reputation": "信誉 {score}/100",
+    "totalBookings": "预约总数",
+    "completedBookings": "已完成",
+    "cancelRate": "取消率"
+  },
   "WorkerSetup": {
     "optional": "（可选）",
     "stepCounter": "步骤 {current}/{total}",

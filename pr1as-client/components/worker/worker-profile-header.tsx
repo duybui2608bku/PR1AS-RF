@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, tagColorClass } from "@/lib/utils"
 import { getReputationBadgeClass, getReputationScore } from "@/lib/utils/reputation"
 import { WorkerReportButton } from "@/components/worker/worker-report-button"
 import type { WorkerDetail, WorkerExperience, WorkerGender } from "@/types"
@@ -253,7 +253,7 @@ export function WorkerProfileHeader({
                 <Badge
                   key={`${hobby}-${i}`}
                   variant="secondary"
-                  className="rounded-full font-normal"
+                  className={cn("rounded-full font-normal", tagColorClass(hobby))}
                 >
                   {hobby}
                 </Badge>
@@ -436,7 +436,10 @@ export function WorkerProfileHeader({
                   <Badge
                     key={`${hobby}-${i}`}
                     variant="secondary"
-                    className="rounded-full font-normal"
+                    className={cn(
+                      "rounded-full font-normal",
+                      tagColorClass(hobby),
+                    )}
                   >
                     {hobby}
                   </Badge>
