@@ -76,6 +76,52 @@ it("awards the reporter and penalizes the target when both are workers", async (
   );
 });
 
+it("still awards/penalizes a worker whose currently active role is client (regression)", async () => {
+  // The reporter/target both HAVE the worker role, but are currently
+  // browsing as client (last_active_role/isWorker = false). Eligibility
+  // must follow account roles, not the currently active role, or a
+  // worker could dodge a report-resolution penalty just by switching
+  // their active role before an admin resolves the report.
+  repo.findReportById.mockResolvedValue({
+    status: ReportStatus.OPEN,
+    reporter_id: "reporter1",
+    target_user_id: "target1",
+    target_type: ReportTargetType.WORKER,
+  } as never);
+  repo.updateReportStatus.mockResolvedValue({
+    _id: "r1",
+    target_type: ReportTargetType.WORKER,
+  } as never);
+  userRepo.getUserRoleInfoById.mockImplementation(async () => ({
+    lastActiveRole: "client" as never,
+    roles: ["worker", "client"] as never,
+    status: null,
+    isWorker: false,
+    isClient: true,
+    isAdmin: false,
+  }));
+
+  await service.updateReportStatus({
+    reportId: "r1",
+    status: ReportStatus.RESOLVED,
+    adminId: "admin1",
+  });
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(repService.recoverPoints).toHaveBeenCalledWith(
+    "reporter1",
+    10,
+    ReputationHistoryReason.REPORT_FILED_VALID,
+    0
+  );
+  expect(repService.deductPoints).toHaveBeenCalledWith(
+    "target1",
+    10,
+    ReputationHistoryReason.REPORTED_VALID,
+    0
+  );
+});
+
 it("only awards the reporter when the target is not a worker (independent effects)", async () => {
   repo.findReportById.mockResolvedValue({
     status: ReportStatus.OPEN,
