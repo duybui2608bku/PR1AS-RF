@@ -86,16 +86,33 @@ không phải mùng 2).
   (`pr1as-product`) — nghi vấn còn treo, chưa hỏi rõ lý do lệch, chỉ mới
   override tạm khi chạy script chẩn đoán.
 
+**Cập nhật cùng phiên — tự động chạy migrate khi deploy**: user hỏi có cách
+nào merge code thì script `migrate:worker-reputation` tự chạy 1 lần. Lưu ý
+quan trọng đã giải thích cho user: script này ghi đè (không cộng dồn) nên
+**không được** chạy lặp lại mỗi lần merge — chạy nhiều lần sẽ xoá mất điểm
+cộng/trừ từ huỷ lịch/report tích luỹ sau lần chạy trước. Phát hiện repo đã
+có sẵn đúng pattern cho nhu cầu này (`service-catalog-migration.service.ts`:
+`runOnBoot()` — check collection `migrations` xem đã áp dụng chưa, chưa thì
+chạy dưới `job-lock` cross-instance rồi ghi marker, đảm bảo chạy đúng 1 lần
+kể cả nhiều instance cùng khởi động). Áp dụng y hệt pattern đó cho
+`WorkerReputationMigrationService.runOnBoot()`, wire vào `src/index.ts`
+ngay sau `serviceCatalogMigrationService.runOnBoot()`. TDD đầy đủ (6 test
+case), test suite 31/119 pass, typecheck sạch.
+
+**File chính (đợt 2)**: `SERVER/src/services/reputation/worker-reputation-migration.service.ts`,
+`SERVER/src/index.ts`
+
 **Còn lại**:
 - Nên kiểm tra thêm các sự kiện tính điểm khác (review, hoàn thành job,
   huỷ lịch...) trên môi trường thật để chắc chắn tất cả đều hoạt động sau
   fix này, không chỉ riêng profile completeness.
-- Chưa chạy `npm run migrate:worker-reputation --apply` trên DB thật để
-  backfill worker hiện có (script không bị ảnh hưởng bởi bug, an toàn để
-  chạy bất cứ lúc nào).
-- Nên làm rõ vì sao `.env` trong repo và DB user thực dùng lệch tên.
+- Migrate giờ tự chạy khi server restart với code mới (không cần chạy tay
+  `--apply` nữa) — nhưng cần bump tên migration (`worker-reputation-backfill-v2`)
+  nếu sau này muốn chạy lại (vd đổi công thức tính điểm).
+- Nên làm rõ vì sao `.env` trong repo và DB user thực dùng lệch tên
+  (`pr1as` vs `pr1as-product`).
 
-**Commit**: `f363f72` · branch `main-3`
+**Commit**: `f363f72`, `9e68798` · branch `main-3`
 
 ---
 
