@@ -629,22 +629,6 @@ export class UserRepository {
     });
   }
 
-  async incrementReputationScoreForAll(delta: number): Promise<number> {
-    const result = await User.updateMany(
-      { "meta_data.reputation_score": { $lt: 100 } },
-      [
-        {
-          $set: {
-            "meta_data.reputation_score": {
-              $min: [100, { $add: ["$meta_data.reputation_score", delta] }],
-            },
-          },
-        },
-      ]
-    );
-    return result.modifiedCount;
-  }
-
   async findReputationRecoveryCandidates(): Promise<
     Array<{ _id: Types.ObjectId; meta_data?: { reputation_score?: number } }>
   > {
