@@ -129,6 +129,72 @@ it("deducts for a low review and does not award the five-star bonus", async () =
   );
 });
 
+it("triggers neither the five-star bonus nor the low-review penalty for a mid-range rating", async () => {
+  await service.createReview(
+    { ...(input as object), rating: 3 } as never,
+    CLIENT_ID
+  );
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(repService.recoverPoints).toHaveBeenCalledWith(
+    WORKER_ID,
+    5,
+    ReputationHistoryReason.REVIEW_RECEIVED,
+    0
+  );
+  expect(repService.recoverPoints).not.toHaveBeenCalledWith(
+    WORKER_ID,
+    5,
+    ReputationHistoryReason.FIVE_STAR_REVIEW,
+    0
+  );
+  expect(repService.deductPoints).not.toHaveBeenCalled();
+});
+
+it("deducts at the exact low-review threshold boundary (rating === threshold)", async () => {
+  repConfig.getValue.mockResolvedValue(2); // LOW_REVIEW_THRESHOLD = 2
+
+  await service.createReview(
+    { ...(input as object), rating: 2 } as never,
+    CLIENT_ID
+  );
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(repService.deductPoints).toHaveBeenCalledWith(
+    WORKER_ID,
+    10,
+    ReputationHistoryReason.LOW_REVIEW,
+    0
+  );
+});
+
+it("does not deduct just above the low-review threshold boundary (threshold + 1)", async () => {
+  repConfig.getValue.mockResolvedValue(2); // LOW_REVIEW_THRESHOLD = 2
+
+  await service.createReview(
+    { ...(input as object), rating: 3 } as never,
+    CLIENT_ID
+  );
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(repService.deductPoints).not.toHaveBeenCalled();
+});
+
+it("does not award the five-star bonus for rating 4 (below MAX_RATING)", async () => {
+  await service.createReview(
+    { ...(input as object), rating: 4 } as never,
+    CLIENT_ID
+  );
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(repService.recoverPoints).not.toHaveBeenCalledWith(
+    WORKER_ID,
+    5,
+    ReputationHistoryReason.FIVE_STAR_REVIEW,
+    0
+  );
+});
+
 it("rejects updateReview from the owning client (client can no longer edit)", async () => {
   reviewRepo.findById.mockResolvedValue({
     _id: "r1",
