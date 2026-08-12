@@ -606,7 +606,11 @@ export class UserRepository {
           },
         },
       ],
-      { new: false, projection: { "meta_data.reputation_score": 1 } }
+      {
+        new: false,
+        projection: { "meta_data.reputation_score": 1 },
+        updatePipeline: true,
+      }
     ).lean();
     if (!before) return null;
     const previousScore =
