@@ -38,6 +38,67 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-12 — Fix bug nghiêm trọng: mọi cộng/trừ điểm uy tín đều no-op im lặng
+
+**Mục tiêu**: User báo worker mới đăng ký, hồ sơ đã đủ `date_of_birth` (đáng
+lẽ +5 điểm) nhưng điểm uy tín vẫn 0 — **100% lần nào test cũng vậy**, không
+phải ngẫu nhiên. Điều tra tiếp phần "Đại tu điểm uy tín worker" ở entry
+`2026-08-02` bên dưới (lưu ý: entry đó ghi sai ngày — làm cùng ngày hôm nay,
+không phải mùng 2).
+
+**Đã làm**:
+
+- Dùng `superpowers:systematic-debugging`: đọc lại to nay toàn bộ chuỗi
+  `becomeWorker → updateWorkerProfile → syncWorkerProfileCompleteness →
+  adjustReputationScore`, không thấy bug tĩnh rõ ràng → viết script chẩn
+  đoán throwaway, chạy thật lên DB Atlas (`pr1as-product` — phát hiện phụ:
+  `.env` trong repo trỏ `DB_NAME=pr1as`, khác với DB thật user dùng để test
+  là `pr1as-product`, phải override `DB_NAME` khi chạy script).
+- Bắt được lỗi thật: `adjustReputationScore` (`user.repository.ts`) gọi
+  `User.findByIdAndUpdate(id, [{$set:{...}}], {...})` — truyền **mảng**
+  (cú pháp aggregation pipeline) nhưng **thiếu `updatePipeline: true`**.
+  Mongoose 9 bắt buộc option này khi update là mảng, thiếu thì throw
+  `Cannot pass an array to query updates unless the updatePipeline option
+  is set` — lỗi này bị nuốt bởi `.catch(logger.error)` ở mọi nơi gọi.
+- **Đây là bug có sẵn từ trước phiên `2026-08-02`**, không phải do rework
+  gây ra — nhưng vì `deductPoints`/`recoverPoints` (hai hàm duy nhất mọi
+  sự kiện cộng/trừ điểm trong toàn app đều đi qua) đều gọi
+  `adjustReputationScore`, nên **mọi sự kiện tính điểm uy tín — kể cả các
+  quy tắc cũ có từ trước rework — đều đang no-op im lặng trên server thật**.
+  Không phát hiện được suốt cả phiên `2026-08-02` vì toàn bộ test mock
+  thẳng `User.findByIdAndUpdate`, không bao giờ chạy qua validation thật
+  của Mongoose (repo không có hạ tầng test DB thật).
+- Sửa 1 dòng: thêm `updatePipeline: true` vào options. Verify lại bằng
+  chính script chẩn đoán trên tài khoản thật: `reputation_score` 0 → 5,
+  có `reputation_history` với `reason: "profile_completeness"`. Thêm test
+  regression khẳng định `updatePipeline: true` có trong options (RED xác
+  nhận qua `git stash` trước khi sửa). Xoá script chẩn đoán sau khi xong.
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`adjustReputationScore`), `SERVER/src/repositories/auth/user.repository.reputation.test.ts`
+
+**Quyết định / ghi chú**:
+- Script migrate (`worker-reputation-migration.service.ts`) **không** đi
+  qua `adjustReputationScore` (dùng `setReputationScoreAndComponent` —
+  update thường, không phải pipeline), nên **không bị ảnh hưởng bởi bug
+  này** — vẫn chạy đúng để backfill worker hiện có sau khi deploy fix.
+- `.env` trong repo (`DB_NAME=pr1as`) không khớp DB thật user dùng
+  (`pr1as-product`) — nghi vấn còn treo, chưa hỏi rõ lý do lệch, chỉ mới
+  override tạm khi chạy script chẩn đoán.
+
+**Còn lại**:
+- Nên kiểm tra thêm các sự kiện tính điểm khác (review, hoàn thành job,
+  huỷ lịch...) trên môi trường thật để chắc chắn tất cả đều hoạt động sau
+  fix này, không chỉ riêng profile completeness.
+- Chưa chạy `npm run migrate:worker-reputation --apply` trên DB thật để
+  backfill worker hiện có (script không bị ảnh hưởng bởi bug, an toàn để
+  chạy bất cứ lúc nào).
+- Nên làm rõ vì sao `.env` trong repo và DB user thực dùng lệch tên.
+
+**Commit**: `f363f72` · branch `main-3`
+
+---
+
 ## 2026-08-12 — Thêm lối vào Boost hồ sơ cho worker
 
 **Mục tiêu**: Boost hồ sơ mới chỉ nằm trong dropdown user + mobile more sheet,
