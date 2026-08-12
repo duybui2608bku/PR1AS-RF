@@ -44,4 +44,24 @@ describe("adjustReputationScore defaultScore", () => {
     const ifNullClause = setStage.$max[1].$min[1].$add[0].$ifNull;
     expect(ifNullClause).toEqual(["$meta_data.reputation_score", 0]);
   });
+
+  // Regression test: the update argument here is an aggregation pipeline
+  // (an array, e.g. `[{ $set: {...} }]`), not a plain update document.
+  // Mongoose 9 throws `Cannot pass an array to query updates unless the
+  // updatePipeline option is set` at runtime unless this flag is present —
+  // a real, deterministic failure that every mocked unit test in this file
+  // (and every reputation-scoring test in the whole codebase) is blind to,
+  // since none of them exercise real Mongoose validation. This one test
+  // is what stands between "every reputation deduction/bonus in the app
+  // silently no-ops in production" and working code — do not remove.
+  it("sets updatePipeline: true, required by Mongoose 9 for array-style updates", async () => {
+    UserMock.findByIdAndUpdate.mockReturnValue({
+      lean: jest.fn().mockResolvedValue({ meta_data: {} }),
+    });
+
+    await userRepository.adjustReputationScore("u1", 5, 0);
+
+    const [, , options] = UserMock.findByIdAndUpdate.mock.calls[0];
+    expect(options.updatePipeline).toBe(true);
+  });
 });

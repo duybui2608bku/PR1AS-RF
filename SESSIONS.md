@@ -38,6 +38,211 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-12 — Fix bug nghiêm trọng: mọi cộng/trừ điểm uy tín đều no-op im lặng
+
+**Mục tiêu**: User báo worker mới đăng ký, hồ sơ đã đủ `date_of_birth` (đáng
+lẽ +5 điểm) nhưng điểm uy tín vẫn 0 — **100% lần nào test cũng vậy**, không
+phải ngẫu nhiên. Điều tra tiếp phần "Đại tu điểm uy tín worker" ở entry
+`2026-08-02` bên dưới (lưu ý: entry đó ghi sai ngày — làm cùng ngày hôm nay,
+không phải mùng 2).
+
+**Đã làm**:
+
+- Dùng `superpowers:systematic-debugging`: đọc lại to nay toàn bộ chuỗi
+  `becomeWorker → updateWorkerProfile → syncWorkerProfileCompleteness →
+  adjustReputationScore`, không thấy bug tĩnh rõ ràng → viết script chẩn
+  đoán throwaway, chạy thật lên DB Atlas (`pr1as-product` — phát hiện phụ:
+  `.env` trong repo trỏ `DB_NAME=pr1as`, khác với DB thật user dùng để test
+  là `pr1as-product`, phải override `DB_NAME` khi chạy script).
+- Bắt được lỗi thật: `adjustReputationScore` (`user.repository.ts`) gọi
+  `User.findByIdAndUpdate(id, [{$set:{...}}], {...})` — truyền **mảng**
+  (cú pháp aggregation pipeline) nhưng **thiếu `updatePipeline: true`**.
+  Mongoose 9 bắt buộc option này khi update là mảng, thiếu thì throw
+  `Cannot pass an array to query updates unless the updatePipeline option
+  is set` — lỗi này bị nuốt bởi `.catch(logger.error)` ở mọi nơi gọi.
+- **Đây là bug có sẵn từ trước phiên `2026-08-02`**, không phải do rework
+  gây ra — nhưng vì `deductPoints`/`recoverPoints` (hai hàm duy nhất mọi
+  sự kiện cộng/trừ điểm trong toàn app đều đi qua) đều gọi
+  `adjustReputationScore`, nên **mọi sự kiện tính điểm uy tín — kể cả các
+  quy tắc cũ có từ trước rework — đều đang no-op im lặng trên server thật**.
+  Không phát hiện được suốt cả phiên `2026-08-02` vì toàn bộ test mock
+  thẳng `User.findByIdAndUpdate`, không bao giờ chạy qua validation thật
+  của Mongoose (repo không có hạ tầng test DB thật).
+- Sửa 1 dòng: thêm `updatePipeline: true` vào options. Verify lại bằng
+  chính script chẩn đoán trên tài khoản thật: `reputation_score` 0 → 5,
+  có `reputation_history` với `reason: "profile_completeness"`. Thêm test
+  regression khẳng định `updatePipeline: true` có trong options (RED xác
+  nhận qua `git stash` trước khi sửa). Xoá script chẩn đoán sau khi xong.
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`adjustReputationScore`), `SERVER/src/repositories/auth/user.repository.reputation.test.ts`
+
+**Quyết định / ghi chú**:
+- Script migrate (`worker-reputation-migration.service.ts`) **không** đi
+  qua `adjustReputationScore` (dùng `setReputationScoreAndComponent` —
+  update thường, không phải pipeline), nên **không bị ảnh hưởng bởi bug
+  này** — vẫn chạy đúng để backfill worker hiện có sau khi deploy fix.
+- `.env` trong repo (`DB_NAME=pr1as`) không khớp DB thật user dùng
+  (`pr1as-product`) — nghi vấn còn treo, chưa hỏi rõ lý do lệch, chỉ mới
+  override tạm khi chạy script chẩn đoán.
+
+**Cập nhật cùng phiên — tự động chạy migrate khi deploy**: user hỏi có cách
+nào merge code thì script `migrate:worker-reputation` tự chạy 1 lần. Lưu ý
+quan trọng đã giải thích cho user: script này ghi đè (không cộng dồn) nên
+**không được** chạy lặp lại mỗi lần merge — chạy nhiều lần sẽ xoá mất điểm
+cộng/trừ từ huỷ lịch/report tích luỹ sau lần chạy trước. Phát hiện repo đã
+có sẵn đúng pattern cho nhu cầu này (`service-catalog-migration.service.ts`:
+`runOnBoot()` — check collection `migrations` xem đã áp dụng chưa, chưa thì
+chạy dưới `job-lock` cross-instance rồi ghi marker, đảm bảo chạy đúng 1 lần
+kể cả nhiều instance cùng khởi động). Áp dụng y hệt pattern đó cho
+`WorkerReputationMigrationService.runOnBoot()`, wire vào `src/index.ts`
+ngay sau `serviceCatalogMigrationService.runOnBoot()`. TDD đầy đủ (6 test
+case), test suite 31/119 pass, typecheck sạch.
+
+**File chính (đợt 2)**: `SERVER/src/services/reputation/worker-reputation-migration.service.ts`,
+`SERVER/src/index.ts`
+
+**Còn lại**:
+- Nên kiểm tra thêm các sự kiện tính điểm khác (review, hoàn thành job,
+  huỷ lịch...) trên môi trường thật để chắc chắn tất cả đều hoạt động sau
+  fix này, không chỉ riêng profile completeness.
+- Migrate giờ tự chạy khi server restart với code mới (không cần chạy tay
+  `--apply` nữa) — nhưng cần bump tên migration (`worker-reputation-backfill-v2`)
+  nếu sau này muốn chạy lại (vd đổi công thức tính điểm).
+- Nên làm rõ vì sao `.env` trong repo và DB user thực dùng lệch tên
+  (`pr1as` vs `pr1as-product`).
+
+**Commit**: `f363f72`, `9e68798` · branch `main-3`
+
+---
+
+## 2026-08-12 — Quét toàn repo tìm bug cùng loại `updatePipeline`; tìm và sửa 1 lỗi bảo mật
+
+**Mục tiêu**: User yêu cầu viết thêm unit test/regression test cho tính năng
+điểm uy tín và chủ động tìm bug tiềm ẩn khác, sau khi bug `updatePipeline`
+ở trên cho thấy toàn bộ test mock hiện có không bắt được lỗi runtime thật
+của Mongoose.
+
+**Đã làm**:
+
+- Quét toàn bộ `SERVER/src` (script Python, cân bằng ngoặc để xác định
+  đúng lệnh `findByIdAndUpdate`/`findOneAndUpdate` nào truyền **mảng** —
+  cú pháp aggregation pipeline) tìm mọi chỗ có cùng dạng lỗi thiếu
+  `updatePipeline: true`. Kết quả: chỉ có 4 chỗ dùng cú pháp mảng trong
+  toàn bộ backend, tất cả đều trong `user.repository.ts` — 3 chỗ đã đúng,
+  1 chỗ thiếu: `incrementFailedLoginAttempts`.
+- **Bug tìm được (ngoài phạm vi tính năng điểm uy tín, nhưng cùng nguyên
+  nhân gốc)**: `incrementFailedLoginAttempts` — dùng để đếm số lần đăng
+  nhập sai và khoá tài khoản sau `LOGIN_LOCKOUT.MAX_FAILED_ATTEMPTS` (10)
+  lần — thiếu `updatePipeline: true`. Lỗi bị `.catch()` nuốt ở
+  `auth.service.ts` (không crash login), nhưng hệ quả là **bộ đếm
+  `failed_login_attempts` không bao giờ ghi được vào DB thật** → cơ chế
+  khoá tài khoản chống brute-force **hoàn toàn không hoạt động** trên
+  server thật, từ trước phiên này rất lâu (không liên quan gì tới rework
+  điểm uy tín).
+- Sửa 1 dòng: thêm `updatePipeline: true`. Viết test mới
+  `user.repository.login-lockout.test.ts` (3 case), verify RED bằng
+  `git stash` trước khi sửa (test fail đúng vì thiếu option, không phải
+  lỗi khác), rồi GREEN sau khi pop lại. Toàn bộ test suite: 32/122 pass,
+  `tsc --noEmit` sạch.
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`incrementFailedLoginAttempts`), `SERVER/src/repositories/auth/user.repository.login-lockout.test.ts`
+
+**Quyết định / ghi chú**:
+- Đây là bug bảo mật nghiêm trọng hơn bug điểm uy tín (cho phép brute-force
+  không giới hạn số lần thử mật khẩu một tài khoản), nhưng nằm ngoài phạm
+  vi tính năng "điểm uy tín" mà user yêu cầu — sửa ngay vì cùng nguyên nhân
+  gốc, cùng mức độ rủi ro thấp/đã verify kỹ, theo tinh thần "tìm bug tiềm
+  ẩn" user vừa yêu cầu.
+- Đã xác nhận: không còn chỗ nào khác trong `SERVER/src` dùng cú pháp
+  update dạng mảng mà thiếu `updatePipeline` — audit này coi như đóng.
+
+**Còn lại**:
+- Tiếp tục theo yêu cầu ban đầu của phiên: viết thêm test cho các phần còn
+  lại của logic điểm uy tín (tầng huỷ lịch, report bonus/penalty, cache
+  config...) và tìm bug tiềm ẩn khác — đang làm.
+- (Kế thừa từ entry trên) Nên kiểm tra thêm các sự kiện tính điểm khác
+  trên môi trường thật; làm rõ lệch `DB_NAME` giữa `.env` và DB thật.
+
+**Commit**: `9b7362f` · branch `main-3`
+
+---
+
+## 2026-08-12 — Viết test còn thiếu + tìm bug tiềm ẩn cho tính năng điểm uy tín
+
+**Mục tiêu**: Tiếp nối 2 entry trên trong cùng phiên — user yêu cầu viết thêm
+unit/regression test và chủ động tìm bug tiềm ẩn khác để tính năng điểm uy
+tín "hoạt động đúng mà không bị lỗi nào nữa".
+
+**Đã làm**:
+
+- Rà lại toàn bộ file liên quan tới điểm uy tín xem đã có test hay chưa —
+  phát hiện `reputation.service.ts` (deductPoints/recoverPoints/
+  bulkDailyRecovery — 3 hàm lõi mọi nơi khác đều gọi vào) và
+  `reputation-config.service.ts` (cache/TTL/updateConfig — nền cho toàn bộ
+  ~19 rule bật/tắt) **chưa từng có test trực tiếp**; `booking-expiration.service.ts`
+  (phạt điểm khi booking hết hạn xác nhận) **chưa có file test nào**. Viết
+  test cho cả 3 — không phát hiện bug ở đây, logic đúng.
+- Bổ sung test biên (boundary) cho `review.service.ts` (rating đúng ngưỡng
+  five-star/low-review) và tier huỷ lịch trong `booking-status.service.ts`
+  (đúng mốc 30 phút / 2 tiếng, dùng fake timer để không bị flaky do
+  `Date.now()` đọc trực tiếp trong service) — không phát hiện bug, đúng
+  chính xác theo spec ban đầu của user.
+- **Bug thật #1 (đã sửa)**: `incrementFailedLoginAttempts` (đếm số lần đăng
+  nhập sai để khoá tài khoản) thiếu `updatePipeline: true` — **cùng loại
+  lỗi** vừa fix ở entry trên nhưng nằm ở hệ thống đăng nhập, không phải
+  điểm uy tín. Lỗi bị `.catch()` nuốt nên không crash login, nhưng bộ đếm
+  không bao giờ ghi được → **khoá tài khoản chống brute-force hoàn toàn
+  không hoạt động** từ trước đến giờ. Sửa + test regression (RED/GREEN qua
+  `git stash`).
+- **Bug thật #2 (dọn dẹp)**: `incrementReputationScoreForAll` — cùng lỗi
+  thiếu `updatePipeline`, nhưng là dead code (không ai gọi, thêm từ commit
+  đầu tiên của tính năng, bị `bulkDailyRecovery` bản dùng vòng lặp
+  per-candidate thay thế). Xoá luôn thay vì vá lỗi cho code không ai dùng.
+- **Bug thật #3 (đã sửa)**: `moderation.service.ts` (`updateReportStatus`)
+  dùng `roleInfo.isWorker` (= `last_active_role === WORKER`, vai trò đang
+  hoạt động) để quyết định có cộng/trừ điểm uy tín khi báo cáo được xử lý
+  hay không — trong khi **mọi chỗ khác** trong codebase (`reputation.service.ts`,
+  `post.service.ts`, `worker-question.service.ts`) đều dùng
+  `roles.includes(WORKER)` (tài khoản CÓ role worker hay không) để quyết
+  định model điểm uy tín nào áp dụng. Hệ quả: user có cả 2 role nhưng đang
+  active là client thì báo cáo đúng/bị báo cáo đúng sẽ **không** được
+  cộng/trừ điểm gì cả, dù tài khoản đó vẫn đang dùng model điểm uy tín
+  worker. Sửa để dùng `roles.includes(WORKER)`, thêm test regression
+  (RED/GREEN qua `git stash`).
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`incrementFailedLoginAttempts` fix, xoá `incrementReputationScoreForAll`),
+`SERVER/src/services/moderation/moderation.service.ts` (fix `isWorker`),
++ test mới/mở rộng: `user.repository.login-lockout.test.ts` (mới),
+`reputation.service.test.ts`, `booking-expiration.service.test.ts` (mới),
+`reputation-config.service.test.ts` (mới), `moderation.service.test.ts`,
+`review.service.test.ts`, `booking-status.cancel-tiers.test.ts`.
+
+**Quyết định / ghi chú**:
+- `incrementFailedLoginAttempts` nằm ngoài phạm vi tính năng điểm uy tín
+  nhưng sửa ngay vì cùng nguyên nhân gốc, rủi ro thấp, mức độ nghiêm trọng
+  cao (bảo mật) — không hỏi lại user theo tinh thần "tìm bug tiềm ẩn" vừa
+  yêu cầu.
+- Test suite: 31 → **34 suite / 122 → 159 test**, toàn bộ pass,
+  `tsc --noEmit` sạch, không chạy `prettier --write` (theo bài học CRLF từ
+  trước).
+
+**Còn lại**:
+- (Kế thừa từ 2 entry trên) Kiểm tra thêm trên môi trường thật; làm rõ
+  lệch `DB_NAME`.
+- Chưa audit các domain khác ngoài điểm uy tín (booking/chat/wallet...) cho
+  cùng loại lỗi `updatePipeline` — audit lần này chỉ quét toàn `SERVER/src`
+  một lần cho mọi domain nên coi như đã phủ, nhưng chưa test hành vi runtime
+  thật (không có hạ tầng DB thật trong test) ngoài file `adjustReputationScore`
+  đã verify bằng script chẩn đoán.
+
+**Commit**: `9b7362f`, `6536aaa`, `ca37f2e`, `a5c0a7f`, `1200557`, `85cdbe6`,
+`9086b10` · branch `main-3`
+
+---
+
 ## 2026-08-12 — Thêm lối vào Boost hồ sơ cho worker
 
 **Mục tiêu**: Boost hồ sơ mới chỉ nằm trong dropdown user + mobile more sheet,

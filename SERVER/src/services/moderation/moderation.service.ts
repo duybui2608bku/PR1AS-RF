@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { UserRole } from "../../types/auth/user.types";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { postRepository } from "../../repositories/post/post.repository";
 import { postMediaRepository } from "../../repositories/post/post-media.repository";
@@ -247,7 +248,12 @@ export class ModerationService {
       void userRepository
         .getUserRoleInfoById(reporterId)
         .then((roleInfo) => {
-          if (!roleInfo.isWorker) return;
+          // Reputation eligibility follows account roles (does this user
+          // *have* the worker role at all), not last_active_role — a
+          // worker currently browsing as client must still get scored,
+          // matching the convention in reputation.service.ts and
+          // post.service.ts.
+          if (!roleInfo.roles.includes(UserRole.WORKER)) return;
           return reputationConfigService
             .getActiveValue(ReputationConfigKey.REPORT_FILED_VALID_BONUS)
             .then((points) => {
@@ -268,7 +274,7 @@ export class ModerationService {
         void userRepository
           .getUserRoleInfoById(targetUserId)
           .then((roleInfo) => {
-            if (!roleInfo.isWorker) return;
+            if (!roleInfo.roles.includes(UserRole.WORKER)) return;
             return reputationConfigService
               .getActiveValue(ReputationConfigKey.REPORTED_VALID_PENALTY)
               .then((points) => {

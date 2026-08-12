@@ -123,3 +123,59 @@ it("applies no penalty when cancelling 2+ hours before start", async () => {
 
   expect(repService.deductPoints).not.toHaveBeenCalled();
 });
+
+describe("exact tier boundaries (frozen clock)", () => {
+  // Date.now() is read live inside cancelBooking (not injected), so exact
+  // millisecond boundaries need a frozen clock — otherwise real elapsed
+  // test-execution time nudges minutesUntilStart across the tier and makes
+  // these flaky.
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("applies no penalty at exactly 120 minutes (the free-cancellation cutoff)", async () => {
+    const booking = bookingAt(120 * MINUTE);
+    bookingRepo.findById.mockResolvedValue(booking);
+    bookingRepo.updateStatus.mockResolvedValue(booking);
+
+    await service.cancelBooking(
+      "booking1",
+      WORKER_ID,
+      CancellationReason.WORKER_UNAVAILABLE,
+      "",
+      { isWorker: true, isClient: false, isAdmin: false }
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(repService.deductPoints).not.toHaveBeenCalled();
+  });
+
+  it("applies the medium (not severe) penalty at exactly 30 minutes before start", async () => {
+    const booking = bookingAt(30 * MINUTE);
+    bookingRepo.findById.mockResolvedValue(booking);
+    bookingRepo.updateStatus.mockResolvedValue(booking);
+
+    await service.cancelBooking(
+      "booking1",
+      WORKER_ID,
+      CancellationReason.WORKER_UNAVAILABLE,
+      "",
+      { isWorker: true, isClient: false, isAdmin: false }
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(repService.deductPoints).toHaveBeenCalledWith(
+      WORKER_ID,
+      10,
+      ReputationHistoryReason.WORKER_CANCEL_MEDIUM,
+      0
+    );
+  });
+});

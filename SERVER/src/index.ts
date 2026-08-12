@@ -51,6 +51,7 @@ import {
 } from "./jobs/email-campaign.job";
 import { reputationConfigService } from "./services/reputation/reputation-config.service";
 import { serviceCatalogMigrationService } from "./services/service/service-catalog-migration.service";
+import { workerReputationMigrationService } from "./services/reputation/worker-reputation-migration.service";
 
 const app = createApp();
 const httpServer = createServer(app);
@@ -63,6 +64,7 @@ const startServer = async () => {
     await syncAllIndexes();
     await reputationConfigService.seedDefaults();
     await serviceCatalogMigrationService.runOnBoot();
+    await workerReputationMigrationService.runOnBoot();
     startBookingExpirationJob();
     startBookingAutoCompleteJob();
     startBookingReminderJob();

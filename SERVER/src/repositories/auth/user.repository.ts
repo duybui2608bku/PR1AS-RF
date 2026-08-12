@@ -606,7 +606,11 @@ export class UserRepository {
           },
         },
       ],
-      { new: false, projection: { "meta_data.reputation_score": 1 } }
+      {
+        new: false,
+        projection: { "meta_data.reputation_score": 1 },
+        updatePipeline: true,
+      }
     ).lean();
     if (!before) return null;
     const previousScore =
@@ -623,22 +627,6 @@ export class UserRepository {
     await User.findByIdAndUpdate(id, {
       "meta_data.reputation_profile_component": value,
     });
-  }
-
-  async incrementReputationScoreForAll(delta: number): Promise<number> {
-    const result = await User.updateMany(
-      { "meta_data.reputation_score": { $lt: 100 } },
-      [
-        {
-          $set: {
-            "meta_data.reputation_score": {
-              $min: [100, { $add: ["$meta_data.reputation_score", delta] }],
-            },
-          },
-        },
-      ]
-    );
-    return result.modifiedCount;
   }
 
   async findReputationRecoveryCandidates(): Promise<
@@ -750,7 +738,11 @@ export class UserRepository {
           },
         },
       ],
-      { new: true, projection: { failed_login_attempts: 1, locked_until: 1 } }
+      {
+        new: true,
+        projection: { failed_login_attempts: 1, locked_until: 1 },
+        updatePipeline: true,
+      }
     );
     if (!updated) return null;
     return {
