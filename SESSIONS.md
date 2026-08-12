@@ -169,6 +169,80 @@ của Mongoose.
 
 ---
 
+## 2026-08-12 — Viết test còn thiếu + tìm bug tiềm ẩn cho tính năng điểm uy tín
+
+**Mục tiêu**: Tiếp nối 2 entry trên trong cùng phiên — user yêu cầu viết thêm
+unit/regression test và chủ động tìm bug tiềm ẩn khác để tính năng điểm uy
+tín "hoạt động đúng mà không bị lỗi nào nữa".
+
+**Đã làm**:
+
+- Rà lại toàn bộ file liên quan tới điểm uy tín xem đã có test hay chưa —
+  phát hiện `reputation.service.ts` (deductPoints/recoverPoints/
+  bulkDailyRecovery — 3 hàm lõi mọi nơi khác đều gọi vào) và
+  `reputation-config.service.ts` (cache/TTL/updateConfig — nền cho toàn bộ
+  ~19 rule bật/tắt) **chưa từng có test trực tiếp**; `booking-expiration.service.ts`
+  (phạt điểm khi booking hết hạn xác nhận) **chưa có file test nào**. Viết
+  test cho cả 3 — không phát hiện bug ở đây, logic đúng.
+- Bổ sung test biên (boundary) cho `review.service.ts` (rating đúng ngưỡng
+  five-star/low-review) và tier huỷ lịch trong `booking-status.service.ts`
+  (đúng mốc 30 phút / 2 tiếng, dùng fake timer để không bị flaky do
+  `Date.now()` đọc trực tiếp trong service) — không phát hiện bug, đúng
+  chính xác theo spec ban đầu của user.
+- **Bug thật #1 (đã sửa)**: `incrementFailedLoginAttempts` (đếm số lần đăng
+  nhập sai để khoá tài khoản) thiếu `updatePipeline: true` — **cùng loại
+  lỗi** vừa fix ở entry trên nhưng nằm ở hệ thống đăng nhập, không phải
+  điểm uy tín. Lỗi bị `.catch()` nuốt nên không crash login, nhưng bộ đếm
+  không bao giờ ghi được → **khoá tài khoản chống brute-force hoàn toàn
+  không hoạt động** từ trước đến giờ. Sửa + test regression (RED/GREEN qua
+  `git stash`).
+- **Bug thật #2 (dọn dẹp)**: `incrementReputationScoreForAll` — cùng lỗi
+  thiếu `updatePipeline`, nhưng là dead code (không ai gọi, thêm từ commit
+  đầu tiên của tính năng, bị `bulkDailyRecovery` bản dùng vòng lặp
+  per-candidate thay thế). Xoá luôn thay vì vá lỗi cho code không ai dùng.
+- **Bug thật #3 (đã sửa)**: `moderation.service.ts` (`updateReportStatus`)
+  dùng `roleInfo.isWorker` (= `last_active_role === WORKER`, vai trò đang
+  hoạt động) để quyết định có cộng/trừ điểm uy tín khi báo cáo được xử lý
+  hay không — trong khi **mọi chỗ khác** trong codebase (`reputation.service.ts`,
+  `post.service.ts`, `worker-question.service.ts`) đều dùng
+  `roles.includes(WORKER)` (tài khoản CÓ role worker hay không) để quyết
+  định model điểm uy tín nào áp dụng. Hệ quả: user có cả 2 role nhưng đang
+  active là client thì báo cáo đúng/bị báo cáo đúng sẽ **không** được
+  cộng/trừ điểm gì cả, dù tài khoản đó vẫn đang dùng model điểm uy tín
+  worker. Sửa để dùng `roles.includes(WORKER)`, thêm test regression
+  (RED/GREEN qua `git stash`).
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`incrementFailedLoginAttempts` fix, xoá `incrementReputationScoreForAll`),
+`SERVER/src/services/moderation/moderation.service.ts` (fix `isWorker`),
++ test mới/mở rộng: `user.repository.login-lockout.test.ts` (mới),
+`reputation.service.test.ts`, `booking-expiration.service.test.ts` (mới),
+`reputation-config.service.test.ts` (mới), `moderation.service.test.ts`,
+`review.service.test.ts`, `booking-status.cancel-tiers.test.ts`.
+
+**Quyết định / ghi chú**:
+- `incrementFailedLoginAttempts` nằm ngoài phạm vi tính năng điểm uy tín
+  nhưng sửa ngay vì cùng nguyên nhân gốc, rủi ro thấp, mức độ nghiêm trọng
+  cao (bảo mật) — không hỏi lại user theo tinh thần "tìm bug tiềm ẩn" vừa
+  yêu cầu.
+- Test suite: 31 → **34 suite / 122 → 159 test**, toàn bộ pass,
+  `tsc --noEmit` sạch, không chạy `prettier --write` (theo bài học CRLF từ
+  trước).
+
+**Còn lại**:
+- (Kế thừa từ 2 entry trên) Kiểm tra thêm trên môi trường thật; làm rõ
+  lệch `DB_NAME`.
+- Chưa audit các domain khác ngoài điểm uy tín (booking/chat/wallet...) cho
+  cùng loại lỗi `updatePipeline` — audit lần này chỉ quét toàn `SERVER/src`
+  một lần cho mọi domain nên coi như đã phủ, nhưng chưa test hành vi runtime
+  thật (không có hạ tầng DB thật trong test) ngoài file `adjustReputationScore`
+  đã verify bằng script chẩn đoán.
+
+**Commit**: `9b7362f`, `6536aaa`, `ca37f2e`, `a5c0a7f`, `1200557`, `85cdbe6`,
+`9086b10` · branch `main-3`
+
+---
+
 ## 2026-08-12 — Thêm lối vào Boost hồ sơ cho worker
 
 **Mục tiêu**: Boost hồ sơ mới chỉ nằm trong dropdown user + mobile more sheet,
