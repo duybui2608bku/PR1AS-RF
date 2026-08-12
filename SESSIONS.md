@@ -116,6 +116,59 @@ case), test suite 31/119 pass, typecheck sạch.
 
 ---
 
+## 2026-08-12 — Quét toàn repo tìm bug cùng loại `updatePipeline`; tìm và sửa 1 lỗi bảo mật
+
+**Mục tiêu**: User yêu cầu viết thêm unit test/regression test cho tính năng
+điểm uy tín và chủ động tìm bug tiềm ẩn khác, sau khi bug `updatePipeline`
+ở trên cho thấy toàn bộ test mock hiện có không bắt được lỗi runtime thật
+của Mongoose.
+
+**Đã làm**:
+
+- Quét toàn bộ `SERVER/src` (script Python, cân bằng ngoặc để xác định
+  đúng lệnh `findByIdAndUpdate`/`findOneAndUpdate` nào truyền **mảng** —
+  cú pháp aggregation pipeline) tìm mọi chỗ có cùng dạng lỗi thiếu
+  `updatePipeline: true`. Kết quả: chỉ có 4 chỗ dùng cú pháp mảng trong
+  toàn bộ backend, tất cả đều trong `user.repository.ts` — 3 chỗ đã đúng,
+  1 chỗ thiếu: `incrementFailedLoginAttempts`.
+- **Bug tìm được (ngoài phạm vi tính năng điểm uy tín, nhưng cùng nguyên
+  nhân gốc)**: `incrementFailedLoginAttempts` — dùng để đếm số lần đăng
+  nhập sai và khoá tài khoản sau `LOGIN_LOCKOUT.MAX_FAILED_ATTEMPTS` (10)
+  lần — thiếu `updatePipeline: true`. Lỗi bị `.catch()` nuốt ở
+  `auth.service.ts` (không crash login), nhưng hệ quả là **bộ đếm
+  `failed_login_attempts` không bao giờ ghi được vào DB thật** → cơ chế
+  khoá tài khoản chống brute-force **hoàn toàn không hoạt động** trên
+  server thật, từ trước phiên này rất lâu (không liên quan gì tới rework
+  điểm uy tín).
+- Sửa 1 dòng: thêm `updatePipeline: true`. Viết test mới
+  `user.repository.login-lockout.test.ts` (3 case), verify RED bằng
+  `git stash` trước khi sửa (test fail đúng vì thiếu option, không phải
+  lỗi khác), rồi GREEN sau khi pop lại. Toàn bộ test suite: 32/122 pass,
+  `tsc --noEmit` sạch.
+
+**File chính**: `SERVER/src/repositories/auth/user.repository.ts`
+(`incrementFailedLoginAttempts`), `SERVER/src/repositories/auth/user.repository.login-lockout.test.ts`
+
+**Quyết định / ghi chú**:
+- Đây là bug bảo mật nghiêm trọng hơn bug điểm uy tín (cho phép brute-force
+  không giới hạn số lần thử mật khẩu một tài khoản), nhưng nằm ngoài phạm
+  vi tính năng "điểm uy tín" mà user yêu cầu — sửa ngay vì cùng nguyên nhân
+  gốc, cùng mức độ rủi ro thấp/đã verify kỹ, theo tinh thần "tìm bug tiềm
+  ẩn" user vừa yêu cầu.
+- Đã xác nhận: không còn chỗ nào khác trong `SERVER/src` dùng cú pháp
+  update dạng mảng mà thiếu `updatePipeline` — audit này coi như đóng.
+
+**Còn lại**:
+- Tiếp tục theo yêu cầu ban đầu của phiên: viết thêm test cho các phần còn
+  lại của logic điểm uy tín (tầng huỷ lịch, report bonus/penalty, cache
+  config...) và tìm bug tiềm ẩn khác — đang làm.
+- (Kế thừa từ entry trên) Nên kiểm tra thêm các sự kiện tính điểm khác
+  trên môi trường thật; làm rõ lệch `DB_NAME` giữa `.env` và DB thật.
+
+**Commit**: `9b7362f` · branch `main-3`
+
+---
+
 ## 2026-08-12 — Thêm lối vào Boost hồ sơ cho worker
 
 **Mục tiêu**: Boost hồ sơ mới chỉ nằm trong dropdown user + mobile more sheet,
