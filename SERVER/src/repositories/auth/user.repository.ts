@@ -754,7 +754,11 @@ export class UserRepository {
           },
         },
       ],
-      { new: true, projection: { failed_login_attempts: 1, locked_until: 1 } }
+      {
+        new: true,
+        projection: { failed_login_attempts: 1, locked_until: 1 },
+        updatePipeline: true,
+      }
     );
     if (!updated) return null;
     return {
