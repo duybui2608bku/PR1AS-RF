@@ -4,12 +4,24 @@ import { bookingRepository } from "../../repositories/booking/booking.repository
 import { reputationConfigService } from "./reputation-config.service";
 import { ReputationConfigKey } from "../../types/reputation/reputation-config.types";
 import { computeProfileCompletenessScore } from "./worker-profile-completeness";
+import { Migration } from "../../models/migration";
+import { withJobLock } from "../../utils/job-lock";
 import { logger } from "../../utils/logger";
 
 export interface WorkerMigrationResult {
   scanned: number;
   updated: number;
 }
+
+// Bump the suffix (v2, v3, ...) if the migration's scoring formula changes
+// and needs to re-run against every worker again — a new name is treated as
+// a brand-new, never-applied migration.
+const WORKER_REPUTATION_MIGRATION_NAME = "worker-reputation-backfill-v1";
+const LOCK_NAME = `migration:${WORKER_REPUTATION_MIGRATION_NAME}`;
+// Generous TTL: this migration does 2 extra queries per worker (review
+// stats + completed-booking count), so a large worker base can take a
+// while — matches the scan-heavy jobs elsewhere in this codebase.
+const LOCK_TTL_MS = 10 * 60 * 1000;
 
 /**
  * One-time backfill for existing workers under the new worker-only reputation
@@ -96,6 +108,38 @@ export class WorkerReputationMigrationService {
     }
 
     return { scanned: workers.length, updated: options.apply ? updated : 0 };
+  }
+
+  // Boot-time entry point. Skips immediately if already applied, otherwise
+  // runs under a cross-instance lock and records a marker so it runs exactly
+  // once — the next server boot (this one or any other instance) sees the
+  // marker and skips. Matches the pattern already established by
+  // ServiceCatalogMigrationService.runOnBoot.
+  async runOnBoot(): Promise<void> {
+    const already = await Migration.exists({
+      name: WORKER_REPUTATION_MIGRATION_NAME,
+    });
+    if (already) return;
+
+    await withJobLock(LOCK_NAME, { ttlMs: LOCK_TTL_MS }, async () => {
+      // Re-check inside the lock: another instance may have finished the
+      // migration while we were waiting to acquire it.
+      const stillPending = !(await Migration.exists({
+        name: WORKER_REPUTATION_MIGRATION_NAME,
+      }));
+      if (!stillPending) return;
+
+      logger.info(`[${WORKER_REPUTATION_MIGRATION_NAME}] starting migration`);
+      const result = await this.runManual({ apply: true });
+      await Migration.create({
+        name: WORKER_REPUTATION_MIGRATION_NAME,
+        applied_at: new Date(),
+      });
+      logger.info(
+        `[${WORKER_REPUTATION_MIGRATION_NAME}] migration complete`,
+        result
+      );
+    });
   }
 }
 
