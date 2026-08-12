@@ -9,16 +9,16 @@ const MOBILE_QUERY = "(max-width: 639px)"
  * SSR-safe: starts as `false` and resolves after mount, so server output
  * matches the desktop layout and updates on the client once measured.
  */
-export function useIsMobile(): boolean {
+export function useIsMobile(query: string = MOBILE_QUERY): boolean {
   const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {
-    const mql = window.matchMedia(MOBILE_QUERY)
+    const mql = window.matchMedia(query)
     const update = () => setIsMobile(mql.matches)
     update()
     mql.addEventListener("change", update)
     return () => mql.removeEventListener("change", update)
-  }, [])
+  }, [query])
 
   return isMobile
 }

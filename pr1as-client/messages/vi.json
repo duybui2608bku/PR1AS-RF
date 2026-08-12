@@ -11,7 +11,9 @@
     "search": "Tìm kiếm",
     "guest": "Khách",
     "user": "Người dùng",
-    "or": "hoặc"
+    "or": "hoặc",
+    "agreeTerms": "Tôi đã đọc và đồng ý với <terms>Điều khoản dịch vụ</terms> và <liability>Giới hạn trách nhiệm</liability>",
+    "mustAgreeTerms": "Vui lòng đọc và đồng ý với Điều khoản dịch vụ và Giới hạn trách nhiệm trước khi tiếp tục."
   },
   "Nav": {
     "services": "Dịch vụ",
@@ -930,6 +932,7 @@
       "notUpdated": "Chưa cập nhật",
       "noImage": "Chưa có ảnh",
       "edit": "Chỉnh sửa",
+      "boost": "Boost",
       "favorite": "Yêu thích",
       "addToFavorite": "Thêm vào yêu thích",
       "removeFavorite": "Bỏ yêu thích",
@@ -1291,6 +1294,7 @@
     "loadError": "Không tải được danh sách booking worker",
     "tryAgain": "Thử lại",
     "noBookings": "Chưa có booking nào",
+    "boostCta": "Boost hồ sơ để khách thấy bạn trước",
     "service": "Dịch vụ",
     "customer": "Khách hàng",
     "appointment": "Lịch hẹn",
@@ -1405,7 +1409,8 @@
       "reminder": {
         "title": "Đừng quên điểm danh hôm nay",
         "description": "Duy trì chuỗi điểm danh và nhận thêm điểm thưởng mỗi ngày.",
-        "snoozeHint": "Nếu đóng thông báo, chúng tôi sẽ nhắc lại sau 1 giờ."
+        "snoozeHint": "Nếu đóng thông báo, chúng tôi sẽ nhắc lại sau 1 giờ.",
+        "spendPoints": "Bạn có {points} điểm — Boost hồ sơ ngay"
       }
     },
     "panel": {
@@ -1590,6 +1595,7 @@
       "successToast": "Gói {package} đã được kích hoạt thành công!",
       "failedToast": "Giao dịch thất bại hoặc sai số tiền. Vui lòng kiểm tra lại.",
       "close": "Đóng",
+      "boostCta": "Bạn vừa được cộng điểm — Boost hồ sơ ngay",
       "cancel": "Hủy"
     }
   },

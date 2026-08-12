@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 
 import { Button } from "@/components/ui/button"
+import { TermsAgreement } from "@/components/shared/terms-agreement"
 import { useMyPricing, useBuyPricing } from "@/lib/hooks/use-pricing"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -68,6 +69,7 @@ type PricingPlanMeta = {
 export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const router = useRouter()
   const t = useTranslations("Pricing")
+  const tCommon = useTranslations("Common")
   const { format } = useCurrency()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const storedPlan = useAuthStore((s) => s.user?.meta_data?.pricing_plan_code) as
@@ -80,6 +82,7 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
   const currentPlan: PricingPlanCode | undefined =
     myPricingQuery.data?.plan_code ?? storedPlan
 
+  const [agreedTerms, setAgreedTerms] = useState(false)
   const [buyingPkg, setBuyingPkg] = useState<PricingPackage | null>(null)
   const [payment, setPayment] = useState<PricingPaymentResponse | null>(null)
 
@@ -169,6 +172,10 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
         return
       case "upgrade":
         if (pkg.package_code === "standard") return
+        if (!agreedTerms) {
+          toast.warning(tCommon("mustAgreeTerms"))
+          return
+        }
         setBuyingPkg(pkg)
         try {
           const result = await buyMutation.mutateAsync({
@@ -302,6 +309,15 @@ export function PricingPlans({ packages }: { packages: PricingPackage[] }) {
           )
         })}
       </div>
+
+      {isAuthenticated ? (
+        <TermsAgreement
+          id="pricing-terms"
+          checked={agreedTerms}
+          onCheckedChange={setAgreedTerms}
+          className="mx-auto mt-6 w-full justify-center md:w-10/12"
+        />
+      ) : null}
 
       <PricingPurchaseModal
         payment={payment}

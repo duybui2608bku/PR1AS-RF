@@ -1,6 +1,11 @@
 import { api } from "@/lib/axios"
 
 export type BoostType = "basic" | "featured"
+
+// ponytail: config API (/admin/boost/config) is admin-only, so the client mirrors
+// the two tier costs here. Move to a public config endpoint if admins start tuning them.
+export const BASIC_BOOST_COST = 50
+export const FEATURED_BOOST_COST = 400
 export type PointReason =
   | "attendance"
   | "attendance_streak_bonus"

@@ -29,7 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { TermsAgreement } from "@/components/shared/terms-agreement"
 import {
+  BOOKABLE_HOURS,
   classifyDays,
   computeBlockedHours,
   computeBookedIntervals,
@@ -77,14 +79,6 @@ const formatDateLabel = (date: Date, localeTag: string) =>
     year: "numeric",
   })
 
-const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
-  const hour = 6 + i
-  const label = `${String(hour).padStart(2, "0")}:00`
-  return { value: label, label }
-})
-
-const HOUR_VALUES = HOUR_OPTIONS.map((opt) => opt.value)
-
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -122,6 +116,7 @@ export function BookWorkerDialog({
   const [time, setTime] = useState<string>("09:00")
   const [quantityInput, setQuantityInput] = useState<string>("1")
   const [notes, setNotes] = useState("")
+  const [agreedTerms, setAgreedTerms] = useState(false)
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
   const [now, setNow] = useState(0)
   const [calendarMonth, setCalendarMonth] = useState<Date>(() =>
@@ -153,6 +148,7 @@ export function BookWorkerDialog({
     setTime("09:00")
     setQuantityInput("1")
     setNotes("")
+    setAgreedTerms(false)
     setDatePopoverOpen(false)
     setNow(Date.now())
     setCalendarMonth(startOfMonth(new Date()))
@@ -197,7 +193,7 @@ export function BookWorkerDialog({
   // so other clients can still grab the remaining hours.
   const { fullyBooked, partiallyBooked } = useMemo(
     () =>
-      classifyDays(startOfDay(new Date()), maxDate, HOUR_VALUES, bookedIntervals),
+      classifyDays(startOfDay(new Date()), maxDate, BOOKABLE_HOURS, bookedIntervals),
     [bookedIntervals, maxDate],
   )
 
@@ -220,7 +216,7 @@ export function BookWorkerDialog({
   const blockedHours = useMemo(() => {
     if (!date || !unit) return new Set<string>()
     const durationHours = HOURS_PER_UNIT[unit] * quantity
-    return computeBlockedHours(date, HOUR_VALUES, durationHours, bookedIntervals)
+    return computeBlockedHours(date, BOOKABLE_HOURS, durationHours, bookedIntervals)
   }, [date, unit, quantity, bookedIntervals])
 
   // Hour options that would violate the MIN_ADVANCE_HOURS buffer — only ever
@@ -232,7 +228,7 @@ export function BookWorkerDialog({
     if (!date || !now) return new Set<string>()
     const cutoff = now + MIN_ADVANCE_HOURS * 60 * 60 * 1000
     const result = new Set<string>()
-    for (const opt of HOUR_VALUES) {
+    for (const opt of BOOKABLE_HOURS) {
       if (hourToMs(date, opt) < cutoff) result.add(opt)
     }
     return result
@@ -415,17 +411,17 @@ export function BookWorkerDialog({
                   <SelectValue placeholder={t("book.timePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {HOUR_OPTIONS.map((opt) => {
-                    const isTaken = blockedHours.has(opt.value)
+                  {BOOKABLE_HOURS.map((opt) => {
+                    const isTaken = blockedHours.has(opt)
                     const isTooSoon =
-                      !isTaken && pastOrTooSoonHours.has(opt.value)
+                      !isTaken && pastOrTooSoonHours.has(opt)
                     return (
                       <SelectItem
-                        key={opt.value}
-                        value={opt.value}
+                        key={opt}
+                        value={opt}
                         disabled={isTaken || isTooSoon}
                       >
-                        {opt.label}
+                        {opt}
                         {isTaken ? ` · ${t("book.slotTaken")}` : ""}
                         {isTooSoon ? ` · ${t("book.slotTooSoon")}` : ""}
                       </SelectItem>
@@ -512,6 +508,12 @@ export function BookWorkerDialog({
           {validationError ? (
             <p className="text-sm text-destructive">{validationError}</p>
           ) : null}
+
+          <TermsAgreement
+            id="book-worker-terms"
+            checked={agreedTerms}
+            onCheckedChange={setAgreedTerms}
+          />
         </div>
 
         <DialogFooter className="w-full flex-row gap-2 sm:space-x-0">
@@ -526,7 +528,9 @@ export function BookWorkerDialog({
           <Button
             className="flex-1"
             onClick={handleSubmit}
-            disabled={!!validationError || createBooking.isPending}
+            disabled={
+              !!validationError || createBooking.isPending || !agreedTerms
+            }
           >
             {createBooking.isPending ? (
               <Loader2 className="size-4 animate-spin" />

@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  Flame,
   Heart,
   Loader2,
   Mars,
@@ -119,16 +120,28 @@ export function WorkerProfileHeader({
           {/* Top-right action */}
           <div className="absolute right-3 top-3 flex items-center gap-2">
             {isOwnProfile ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="gap-1.5 border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white"
-                onClick={() => router.push("/worker/setup")}
-              >
-                <Pencil className="size-3.5" />
-                {t("header.edit")}
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white"
+                  onClick={() => router.push("/worker/boost")}
+                >
+                  <Flame className="size-3.5 text-amber-300" />
+                  {t("header.boost")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white"
+                  onClick={() => router.push("/worker/setup")}
+                >
+                  <Pencil className="size-3.5" />
+                  {t("header.edit")}
+                </Button>
+              </>
             ) : (
               <>
                 {onToggleFavorite ? (
@@ -324,16 +337,28 @@ export function WorkerProfileHeader({
               </div>
               <div className="flex shrink-0 items-center gap-2 pt-0.5">
                 {isOwnProfile ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => router.push("/worker/setup")}
-                  >
-                    <Pencil className="size-3.5" />
-                    {t("header.edit")}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => router.push("/worker/boost")}
+                    >
+                      <Flame className="size-3.5 text-amber-500" />
+                      {t("header.boost")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => router.push("/worker/setup")}
+                    >
+                      <Pencil className="size-3.5" />
+                      {t("header.edit")}
+                    </Button>
+                  </>
                 ) : (
                   <>
                     {onToggleFavorite ? (

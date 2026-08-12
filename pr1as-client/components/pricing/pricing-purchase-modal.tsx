@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { CheckCircle2, Copy, Loader2, QrCode, XCircle } from "lucide-react"
+import Link from "next/link"
+import { CheckCircle2, Copy, Flame, Loader2, QrCode, XCircle } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { useTranslations, useLocale } from "next-intl"
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { getActiveRole } from "@/lib/auth/roles"
 import { useWalletTransaction } from "@/lib/hooks/use-wallet"
 import { useQueryClient } from "@tanstack/react-query"
 import { PRICING_KEYS } from "@/lib/hooks/use-pricing"
@@ -32,6 +34,7 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
   const locale = useLocale()
   const queryClient = useQueryClient()
   const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
   const notifiedRef = useRef<string | null>(null)
 
   const transactionQuery = useWalletTransaction(
@@ -149,6 +152,16 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
               <p className="font-semibold">⚠️ {t("noteTitle")}</p>
               <p className="mt-1">{t("noteContent", { content: payment.payment_content })}</p>
             </div>
+
+            {/* Both gold and diamond credit boost points — send workers to spend them. */}
+            {isSuccess && getActiveRole(user) === "worker" && (
+              <Button asChild className="w-full gap-1.5" onClick={onClose}>
+                <Link href="/worker/boost">
+                  <Flame className="size-4" />
+                  {t("boostCta")}
+                </Link>
+              </Button>
+            )}
 
             {canClose && (
               <Button variant="outline" className="w-full" onClick={onClose}>

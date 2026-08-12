@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import * as React from "react"
 import { toast } from "sonner"
@@ -10,26 +10,17 @@ import {
   AlertTriangle,
   Ban,
   Bug,
-  Building2,
-  CalendarClock,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Cookie,
   Copy,
   Eye,
-  FileText,
   FileWarning,
-  Gift,
   Lightbulb,
   Loader2,
-  Lock,
-  Mail,
   MessageSquarePlus,
-  // Scale, // tạm ẩn cùng link Trách nhiệm pháp lý
   Send,
   ShieldCheck,
-  Star,
   Trash2,
   User,
   UserX,
@@ -80,7 +71,11 @@ import {
   useUnblockUser,
 } from "@/lib/hooks/use-moderation"
 import { useReputationHistory } from "@/lib/hooks/use-reputation"
-import { siteConfig } from "@/config/site"
+import {
+  sectionGroups,
+  sectionMeta,
+  type SettingsSection,
+} from "@/lib/settings-sections"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
@@ -110,77 +105,12 @@ import type {
   FeedbackType,
 } from "@/services/feedback.service"
 
-type SettingsSection =
-  | "blocked"
-  | "post-reports"
-  | "worker-reports"
-  | "reputation"
-  | "referral"
-  | "feedback"
-  | "delete-account"
-
 type SettingsTranslator = ReturnType<typeof useTranslations>
 
 const useLocaleTag = () => {
   const locale = useLocale() as SupportedLocale
   return INTL_LOCALE_TAGS[locale] ?? "vi-VN"
 }
-
-const sectionMeta: Record<
-  SettingsSection,
-  {
-    labelKey: string
-    descriptionKey: string
-    icon: React.ComponentType<{ className?: string }>
-    danger?: boolean
-  }
-> = {
-  blocked: {
-    labelKey: "blockedLabel",
-    descriptionKey: "blockedDesc",
-    icon: Ban,
-  },
-  "post-reports": {
-    labelKey: "postReportsLabel",
-    descriptionKey: "postReportsDesc",
-    icon: FileWarning,
-  },
-  "worker-reports": {
-    labelKey: "workerReportsLabel",
-    descriptionKey: "workerReportsDesc",
-    icon: UserX,
-  },
-  reputation: {
-    labelKey: "reputationLabel",
-    descriptionKey: "reputationDesc",
-    icon: Star,
-  },
-  referral: {
-    labelKey: "referralLabel",
-    descriptionKey: "referralDesc",
-    icon: Gift,
-  },
-  feedback: {
-    labelKey: "feedbackLabel",
-    descriptionKey: "feedbackDesc",
-    icon: MessageSquarePlus,
-  },
-  "delete-account": {
-    labelKey: "deleteLabel",
-    descriptionKey: "deleteDesc",
-    icon: Trash2,
-    danger: true,
-  },
-}
-
-const sectionGroups: Array<{ titleKey: string; items: SettingsSection[] }> = [
-  {
-    titleKey: "groupSafety",
-    items: ["blocked", "post-reports", "worker-reports"],
-  },
-  { titleKey: "groupAccount", items: ["reputation", "referral", "feedback"] },
-  { titleKey: "groupDanger", items: ["delete-account"] },
-]
 
 // Các hàng điều hướng tới trang riêng (không phải panel trong settings).
 const navLinks: Array<{
@@ -197,61 +127,6 @@ const navLinks: Array<{
   },
 ]
 
-// Trang thông tin, pháp lý và liên hệ — trước đây nằm ở footer (đã ẩn trên mobile).
-const infoLinks: Array<{
-  href: string
-  labelKey: string
-  descriptionKey?: string
-  descriptionRaw?: string
-  icon: React.ComponentType<{ className?: string }>
-  external?: boolean
-}> = [
-  {
-    href: "/about",
-    labelKey: "aboutLabel",
-    descriptionKey: "aboutDesc",
-    icon: Building2,
-  },
-  {
-    href: "/privacy",
-    labelKey: "privacyLabel",
-    descriptionKey: "privacyDesc",
-    icon: Lock,
-  },
-  {
-    href: "/terms",
-    labelKey: "termsLabel",
-    descriptionKey: "termsDesc",
-    icon: FileText,
-  },
-  // Tạm thời ẩn link Trách nhiệm pháp lý (trang đang ẩn). Bật lại: bỏ comment
-  // (và bỏ comment import Scale).
-  // {
-  //   href: "/legal-responsibility",
-  //   labelKey: "legalRespLabel",
-  //   descriptionKey: "legalRespDesc",
-  //   icon: Scale,
-  // },
-  {
-    href: "/cookies",
-    labelKey: "cookiesLabel",
-    descriptionKey: "cookiesDesc",
-    icon: Cookie,
-  },
-  {
-    href: "/booking-process",
-    labelKey: "bookingProcessLabel",
-    descriptionKey: "bookingProcessDesc",
-    icon: CalendarClock,
-  },
-  {
-    href: `mailto:${siteConfig.contactEmail}`,
-    labelKey: "contactLabel",
-    descriptionRaw: siteConfig.contactEmail,
-    icon: Mail,
-    external: true,
-  },
-]
 
 const feedbackStatusKeys: Record<FeedbackStatus, string> = {
   open: "fbStatusOpen",
@@ -1231,8 +1106,26 @@ function SectionContent({ section }: { section: SettingsSection }) {
 export default function SettingsPage() {
   const t = useTranslations("Settings")
   // null = đang ở màn danh sách (mobile). Desktop luôn hiển thị 2 cột.
-  const [activeSection, setActiveSection] =
-    React.useState<SettingsSection | null>(null)
+  // Mục con nằm trong URL (?section=…) nên nút back của trình duyệt quay lại
+  // danh sách settings thay vì rời khỏi trang.
+  const searchParams = useSearchParams()
+  const sectionParam = searchParams.get("section")
+  const activeSection: SettingsSection | null =
+    sectionParam && sectionParam in sectionMeta
+      ? (sectionParam as SettingsSection)
+      : null
+
+  // pushState/back thay cho router.push: đổi query không cần round-trip RSC.
+  const openSection = (section: SettingsSection) => {
+    window.history.pushState(null, "", `?section=${section}`)
+  }
+  const closeSection = () => {
+    if (window.history.length > 1) {
+      window.history.back()
+      return
+    }
+    window.history.replaceState(null, "", "/settings")
+  }
   const desktopActive: SettingsSection = activeSection ?? "blocked"
   const activeMeta = sectionMeta[desktopActive]
   const ActiveIcon = activeMeta.icon
@@ -1303,7 +1196,7 @@ export default function SettingsPage() {
                       <button
                         key={id}
                         type="button"
-                        onClick={() => setActiveSection(id)}
+                        onClick={() => openSection(id)}
                         className={cn(
                           "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent",
                           desktopActive === id && "lg:bg-accent",
@@ -1335,46 +1228,6 @@ export default function SettingsPage() {
                 </div>
               </div>
             ))}
-
-            <div className="lg:hidden">
-              <p className="px-4 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:px-1">
-                {t("infoHeader")}
-              </p>
-              <div className="divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border lg:space-y-0.5 lg:divide-y-0 lg:border-0 lg:bg-transparent lg:p-1.5">
-                {infoLinks.map((link) => {
-                  const Icon = link.icon
-                  const rowClass =
-                    "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60 lg:rounded-lg lg:py-2.5 lg:hover:bg-accent"
-                  const inner = (
-                    <>
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-                        <Icon className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">
-                          {t(link.labelKey)}
-                        </span>
-                        <span className="block truncate text-xs text-muted-foreground lg:hidden">
-                          {link.descriptionKey
-                            ? t(link.descriptionKey)
-                            : link.descriptionRaw}
-                        </span>
-                      </span>
-                      <ChevronRight className="size-4 shrink-0 text-muted-foreground lg:hidden" />
-                    </>
-                  )
-                  return link.external ? (
-                    <a key={link.href} href={link.href} className={rowClass}>
-                      {inner}
-                    </a>
-                  ) : (
-                    <Link key={link.href} href={link.href} className={rowClass}>
-                      {inner}
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
           </nav>
         </aside>
 
@@ -1387,7 +1240,7 @@ export default function SettingsPage() {
           >
             <button
               type="button"
-              onClick={() => setActiveSection(null)}
+              onClick={closeSection}
               aria-label={t("back")}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-transform active:scale-90"
             >

@@ -4,9 +4,19 @@ import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { buttonVariants } from "@/components/ui/button"
+import { useOverlayHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 
-const AlertDialog = AlertDialogPrimitive.Root
+function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
+  // Back của trình duyệt/OS đóng lớp phủ thay vì rời khỏi trang.
+  const historyProps = useOverlayHistory({ open, defaultOpen, onOpenChange })
+  return <AlertDialogPrimitive.Root {...props} {...historyProps} />
+}
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 const AlertDialogPortal = AlertDialogPrimitive.Portal
 

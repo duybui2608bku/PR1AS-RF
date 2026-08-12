@@ -42,6 +42,7 @@ import {
   useGetUsers,
   useUpdateUserStatus,
 } from "@/lib/hooks/use-users"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { isAdminUser } from "@/lib/auth/roles"
 import { UserDetailDialog } from "@/components/dashboard/user-detail-dialog"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -301,6 +302,11 @@ export default function AdminUsersPage() {
   } | null>(null)
   const [detailUser, setDetailUser] = useState<UserListItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null)
+  // Back đóng modal xác nhận thay vì rời khỏi trang.
+  const closeConfirmTarget = useCallback(() => setConfirmTarget(null), [])
+  const closeDeleteTarget = useCallback(() => setDeleteTarget(null), [])
+  useSubViewHistory(confirmTarget !== null, closeConfirmTarget)
+  useSubViewHistory(deleteTarget !== null, closeDeleteTarget)
 
   const usersQuery = useGetUsers(filters)
   const updateStatusMutation = useUpdateUserStatus()

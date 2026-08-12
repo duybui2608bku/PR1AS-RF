@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { GoogleLogin } from "@react-oauth/google"
 import { AuthHeader } from "@/components/auth/auth-header"
 import { PasswordStrengthChecklist } from "@/components/auth/password-strength-checklist"
+import { TermsAgreement } from "@/components/shared/terms-agreement"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -53,6 +54,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [agreedTerms, setAgreedTerms] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState("")
 
@@ -277,10 +279,15 @@ export default function RegisterPage() {
               />
             </Field>
           </FieldGroup>
+          <TermsAgreement
+            id="register-terms"
+            checked={agreedTerms}
+            onCheckedChange={setAgreedTerms}
+          />
           <Button
             type="submit"
             className="h-11 w-full text-base"
-            disabled={registerMutation.isPending}
+            disabled={registerMutation.isPending || !agreedTerms}
           >
             {registerMutation.isPending ? (
               <Loader2 className="animate-spin" />
@@ -304,6 +311,7 @@ export default function RegisterPage() {
             className="pointer-events-none h-11 w-full text-base"
             tabIndex={-1}
             aria-hidden="true"
+            disabled={!agreedTerms}
           >
             {googleLoginMutation.isPending ? (
               <Loader2 className="animate-spin" />
@@ -320,7 +328,10 @@ export default function RegisterPage() {
           <div
             className="absolute inset-0 overflow-hidden opacity-0"
             aria-hidden="true"
-            style={{ pointerEvents: googleLoginMutation.isPending ? "none" : "auto" }}
+            style={{
+              pointerEvents:
+                agreedTerms && !googleLoginMutation.isPending ? "auto" : "none",
+            }}
           >
             <GoogleLogin
               onSuccess={(credentialResponse) =>

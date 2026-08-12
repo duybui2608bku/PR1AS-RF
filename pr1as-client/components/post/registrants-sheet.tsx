@@ -7,6 +7,7 @@ import { User, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { usePostRegistrations } from "@/lib/hooks/use-post-registrations"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 
 interface RegistrantsSheetProps {
@@ -24,6 +25,9 @@ export function RegistrantsSheet({
 }: RegistrantsSheetProps) {
   const t = useTranslations("Registrants")
   const { data, isLoading } = usePostRegistrations(postId, open)
+
+  // Back đóng danh sách đăng ký thay vì rời khỏi feed.
+  useSubViewHistory(open, () => onOpenChange(false))
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

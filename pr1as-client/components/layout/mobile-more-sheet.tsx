@@ -8,8 +8,8 @@ import {
   Heart,
   Loader2,
   LogOut,
-  Settings,
   User,
+  UserCog,
   Wallet,
 } from "lucide-react"
 import Image from "next/image"
@@ -40,6 +40,7 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const t = useTranslations("Nav")
   const tToast = useTranslations("Toast")
   const tCommon = useTranslations("Common")
+  const tSettings = useTranslations("Settings")
   const user = useAuthStore((s) => s.user)
   const logoutMutation = useLogout()
 
@@ -86,7 +87,11 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
       label: t("booking"),
       icon: CalendarCheck2,
     },
-    { href: "/settings", label: t("settings"), icon: Settings },
+    // Mobile bỏ trang Cài đặt: mục tài khoản + pháp lý đã chuyển vào trang Hồ sơ.
+    // Worker có hàng "Hồ sơ" trỏ sang trang công khai nên cần lối vào riêng.
+    ...(activeRole === "worker"
+      ? [{ href: "/client/profile", label: tSettings("groupAccount"), icon: UserCog }]
+      : []),
     {
       href: "/pricing",
       label: formatPricingPlan(user?.meta_data?.pricing_plan_code),

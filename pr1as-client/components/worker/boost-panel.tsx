@@ -8,7 +8,12 @@ import { formatDistanceToNow, type Locale } from "date-fns"
 import { enUS, ko, vi, zhCN } from "date-fns/locale"
 import { useLocale, useTranslations } from "next-intl"
 
-import { boostService, type BoostType } from "@/services/boost.service"
+import {
+  boostService,
+  BASIC_BOOST_COST,
+  FEATURED_BOOST_COST,
+  type BoostType,
+} from "@/services/boost.service"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -232,7 +237,7 @@ export function BoostPanel() {
         <BoostCard
           title={t("basicTitle")}
           description={t("basicDescription")}
-          cost={50}
+          cost={BASIC_BOOST_COST}
           durationHours={6}
           boostType="basic"
           tier={2}
@@ -245,7 +250,7 @@ export function BoostPanel() {
         <BoostCard
           title={t("featuredTitle")}
           description={t("featuredDescription")}
-          cost={400}
+          cost={FEATURED_BOOST_COST}
           durationHours={72}
           boostType="featured"
           tier={1}

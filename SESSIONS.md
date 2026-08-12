@@ -38,6 +38,143 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-08-12 — Thêm lối vào Boost hồ sơ cho worker
+
+**Mục tiêu**: Boost hồ sơ mới chỉ nằm trong dropdown user + mobile more sheet,
+worker phải tự nhớ mới bấm. Cần thêm lối vào ở nơi worker thực sự có nhu cầu.
+
+**Đã làm**:
+
+- Nút "Boost" cạnh nút "Chỉnh sửa" trên hồ sơ worker khi `isOwnProfile`
+  (cả nhánh mobile overlay lẫn nhánh desktop) → `/worker/boost`.
+- Empty state của `/worker/bookings` (0 booking) có CTA "Boost hồ sơ để khách
+  thấy bạn trước". Gộp 2 block empty state trùng nhau thành `NoBookingsEmpty`.
+- Thêm key i18n cho vi/en/zh/ko: `WorkerProfile.header.boost`,
+  `WorkerBookings.boostCta`, `WorkerBoost.attendance.reminder.spendPoints`,
+  `Pricing.purchaseModal.boostCta`.
+
+**File chính**: `pr1as-client/components/worker/worker-profile-header.tsx`,
+`pr1as-client/app/worker/bookings/page.tsx`,
+`pr1as-client/components/providers/attendance-reminder-modal.tsx`,
+`pr1as-client/components/pricing/pricing-purchase-modal.tsx`,
+`pr1as-client/services/boost.service.ts`, `pr1as-client/messages/*.json`
+
+- Modal nhắc điểm danh: khi `balance >= BASIC_BOOST_COST` hiện nút "Bạn có N
+  điểm — Boost hồ sơ ngay"; bấm thì đóng modal (snooze 1h như dismiss thường).
+- Modal mua gói: khi thanh toán `success` và active role là worker, hiện nút
+  Boost. Gold lẫn Diamond đều tặng điểm nên không cần lọc theo plan code.
+- Rút `BASIC_BOOST_COST` / `FEATURED_BOOST_COST` (50/400) ra
+  `services/boost.service.ts`, `boost-panel.tsx` dùng lại thay vì hard-code.
+
+**Quyết định / ghi chú**: CTA ở empty state hiện cả khi empty do lọc, không
+thêm điều kiện — noise thấp, không đáng thêm state. Giá boost phải hard-code
+ở client vì `/admin/boost/config` chỉ admin gọi được (đã ghi `ponytail:` ở
+`boost.service.ts`) — nếu admin bắt đầu chỉnh giá thì cần endpoint config
+public. Prettier báo `worker-profile-header.tsx` + `worker/bookings/page.tsx`
+chưa format **từ trước** khi sửa — không chạy `--write` để tránh diff rác.
+
+**Còn lại**: không.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-08-12 — Bỏ giới hạn giờ đặt lịch + dọn Cài đặt trên mobile
+
+**Mục tiêu**: (1) Khách muốn đặt lịch được cả 24h, không bó trong khung giờ
+hành chính. (2) Khách không muốn phần "tài khoản" và "thông tin & pháp lý"
+nằm trong trang Cài đặt trên mobile.
+
+**Đã làm**:
+
+- **Giờ đặt lịch**: khung giờ 06:00–21:00 vốn hard-code **hai nơi**
+  (dialog đặt lịch + lịch worker, nơi thứ hai dùng để tính "ngày kín lịch") →
+  gom về `BOOKABLE_HOURS` trong `lib/booking-availability.ts`, mở full
+  00:00–23:00. Backend không hề giới hạn giờ trong ngày (chỉ min 2h advance,
+  max 30 ngày) nên không phải sửa.
+- **IA mobile**: tách metadata các mục Cài đặt ra `lib/settings-sections.ts`
+  (`sectionMeta`, `sectionGroups`, `infoLinks`) → trang Hồ sơ
+  (`/client/profile`) dựng lại danh sách này ở cuối trang (chỉ mobile,
+  `lg:hidden`); panel vẫn sống ở `/settings`, hàng bấm vào mở thẳng
+  `?section=…` nên không phải di chuyển ~1400 dòng panel.
+- Bỏ hàng "Cài đặt" khỏi bottom-sheet More; worker được thêm hàng "Tài khoản"
+  → `/client/profile` (hàng "Hồ sơ" của worker trỏ sang trang công khai).
+
+**File chính**: `pr1as-client/lib/booking-availability.ts`,
+`components/worker/book-worker-dialog.tsx`, `components/worker/worker-calendar.tsx`,
+`lib/settings-sections.ts`, `app/settings/page.tsx`, `app/client/profile/page.tsx`,
+`components/layout/mobile-more-sheet.tsx`
+
+**Quyết định / ghi chú**:
+
+- Không bật footer trên mobile để chứa link pháp lý: hầu hết trang app dùng
+  `SiteLayout hideFooter` nên footer không đáng tin cậy làm nơi duy nhất chứa
+  Điều khoản/Bảo mật. Đặt ở trang Hồ sơ đúng thói quen app mobile hơn.
+- `/settings` trên mobile không còn lối vào từ nav nhưng vẫn render danh sách
+  cũ nếu gõ thẳng URL — giữ làm fallback, desktop vẫn dùng bố cục 2 cột.
+- Label hàng "Tài khoản" dùng lại key `Settings.groupAccount`, không thêm key
+  i18n mới.
+
+**Còn lại**: chưa bỏ giới hạn **đặt trước tối thiểu 2 tiếng**
+(`BOOKING_LIMITS.MIN_ADVANCE_HOURS` + `MIN_ADVANCE_HOURS` phía client) — đang
+chờ khách chốt.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
+## 2026-08-12 — Checkbox điều khoản + nút back đóng sub-view (toàn app)
+
+**Mục tiêu**: Bắt buộc tích chọn "Tôi đã đọc và đồng ý với Điều khoản dịch vụ và
+Giới hạn trách nhiệm" khi tạo tài khoản và trước khi nạp tiền / thanh toán.
+Không ẩn, không mặc định tích sẵn.
+
+**Đã làm**:
+
+- Component dùng chung `components/shared/terms-agreement.tsx`: checkbox +
+  label rich-text link tới `/terms` và `/legal-responsibility` (mở tab mới).
+- Gắn vào 4 điểm: đăng ký (chặn cả nút submit lẫn nút Google), nạp ví,
+  đặt lịch worker, mua gói cước. Nút hành động `disabled` khi chưa tích
+  (riêng trang pricing dùng toast vì CTA nằm trong từng card).
+- Thêm key `Common.agreeTerms` / `Common.mustAgreeTerms` cho cả 4 locale.
+- **Back**: mục con của /settings trước đây chỉ là state nên back rời hẳn trang
+  (về home). Nay section nằm trong URL `?section=…` (native `pushState`, không
+  round-trip RSC) → back quay lại danh sách settings, và link được deep-link.
+- **Back (chat)**: khung hội thoại trên mobile vẫn là state → thêm hook
+  `lib/hooks/use-subview-history.ts` (push 1 entry khi mở, `popstate` đóng,
+  đóng bằng state thì tự tiêu entry). Chỉ bật dưới `md`; `useIsMobile` nhận
+  thêm tham số media query.
+- **Back (phủ toàn bộ)**: hook dùng ngăn xếp nên back chỉ đóng sub-view trên
+  cùng (dialog lồng dialog). Bọc luôn 3 primitive `Dialog` / `AlertDialog` /
+  `BottomSheet` bằng `useOverlayHistory` → mọi modal/sheet trong app đóng
+  bằng back. Gắn thêm cho các lớp phủ tự viết: lightbox + overlay giữ tin nhắn
+  (chat), trình xem ảnh post, comments/registrants sheet, drawer sidebar admin,
+  modal chi tiết giao dịch và xác nhận khoá/xoá user.
+  **Không** gắn cho dropdown/popover/select/tooltip (mở-đóng liên tục, gắn vào
+  history chỉ tổ rác) và `banned-account-modal` (cố tình không cho tắt).
+
+**File chính**: `pr1as-client/components/shared/terms-agreement.tsx`,
+`app/(auth)/register/page.tsx`, `components/wallet/wallet-deposit-page.tsx`,
+`components/worker/book-worker-dialog.tsx`,
+`components/pricing/pricing-plans.tsx`, `messages/*.json`,
+`app/settings/page.tsx`, `components/chat/chat-page.tsx`,
+`lib/hooks/use-subview-history.ts`, `lib/hooks/use-is-mobile.ts`,
+`components/ui/{dialog,alert-dialog,bottom-sheet}.tsx`
+
+**Quyết định / ghi chú**: State khởi tạo `false` ở phía gọi và reset khi đóng
+dialog đặt lịch — không lưu "đã đồng ý" giữa các lần thanh toán. Mới chỉ chặn
+phía client; server chưa lưu bằng chứng đồng ý.
+Đã test back bằng headless browser trên route tạm: back đóng dialog (không rời
+trang), dialog lồng nhau đóng đúng thứ tự trên → dưới, và đóng bằng Escape thì
+lần back kế tiếp rời trang bình thường (không nuốt 1 lần bấm).
+
+**Còn lại**: nếu cần giá trị pháp lý, lưu `terms_accepted_at` (+ version điều
+khoản) trên user lúc đăng ký và trên transaction lúc thanh toán.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-08-09 — Người giới thiệu (referral)
 
 **Mục tiêu**: Đăng ký qua link giới thiệu + nhập mã khi tự đăng ký; hệ thống đếm

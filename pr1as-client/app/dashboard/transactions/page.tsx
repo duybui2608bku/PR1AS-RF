@@ -42,6 +42,7 @@ import type {
   AdminTransactionType,
 } from "@/services/admin-wallet.service"
 import type { WalletTransactionStatus } from "@/services/wallet.service"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 import { useCurrency } from "@/lib/hooks/use-currency"
 import { convertVndTo } from "@/lib/currency"
@@ -497,6 +498,9 @@ export default function AdminTransactionsPage() {
   })
   const [searchInput, setSearchInput] = useState("")
   const [detailTx, setDetailTx] = useState<AdminTransaction | null>(null)
+  // Back đóng modal thay vì rời khỏi trang.
+  const closeDetailTx = useCallback(() => setDetailTx(null), [])
+  useSubViewHistory(detailTx !== null, closeDetailTx)
 
   const txQuery = useAdminTransactions(filters)
   const statsQuery = useAdminTransactionStats()

@@ -5,19 +5,13 @@ import { useTranslations } from "next-intl"
 
 import { Calendar } from "@/components/ui/calendar"
 import {
+  BOOKABLE_HOURS,
   classifyDays,
   computeBookedIntervals,
 } from "@/lib/booking-availability"
 import { useWorkerSchedule } from "@/lib/hooks/use-worker"
 
 const DATE_RANGE_DAYS = 30
-
-// Mirror BookWorkerDialog's start-time window so "fully booked" is judged
-// against the same slots the booking form actually offers.
-const BOOKABLE_HOURS = Array.from(
-  { length: 16 },
-  (_, i) => `${String(6 + i).padStart(2, "0")}:00`,
-)
 
 const toIsoDate = (date: Date) => {
   const y = date.getFullYear()

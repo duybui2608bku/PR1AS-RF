@@ -1,11 +1,13 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { Clock3 } from "lucide-react"
+import { Clock3, Flame } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { AttendanceWidget } from "@/components/worker/attendance-widget"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,7 @@ import {
 import { getActiveRole } from "@/lib/auth/roles"
 import { queryKeys } from "@/lib/query-keys"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { boostService } from "@/services/boost.service"
+import { boostService, BASIC_BOOST_COST } from "@/services/boost.service"
 
 const REMINDER_INTERVAL_MS = 60 * 60 * 1000
 
@@ -47,6 +49,7 @@ export function AttendanceReminderModal() {
     enabled: isSessionLoaded && isAuthenticated && isWorker,
   })
 
+  const balance = data?.wallet.balance ?? 0
   const lastAttendanceDate = data?.wallet.last_attendance_date
   const checkedInToday = lastAttendanceDate
     ? new Date(lastAttendanceDate).toDateString() === new Date().toDateString()
@@ -90,6 +93,20 @@ export function AttendanceReminderModal() {
         </div>
         <div className="p-4 pt-0">
           <AttendanceWidget />
+          {balance >= BASIC_BOOST_COST && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full gap-1.5"
+              onClick={() => handleOpenChange(false)}
+            >
+              <Link href="/worker/boost">
+                <Flame className="size-3.5 text-amber-500" />
+                {t("spendPoints", { points: balance })}
+              </Link>
+            </Button>
+          )}
           <p className="mt-3 text-center text-xs text-muted-foreground">
             {t("snoozeHint")}
           </p>

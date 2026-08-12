@@ -11,7 +11,9 @@
     "search": "搜索",
     "guest": "访客",
     "user": "用户",
-    "or": "或"
+    "or": "或",
+    "agreeTerms": "我已阅读并同意<terms>服务条款</terms>和<liability>责任限制</liability>",
+    "mustAgreeTerms": "请先阅读并同意服务条款和责任限制后再继续。"
   },
   "Nav": {
     "services": "服务",
@@ -930,6 +932,7 @@
       "notUpdated": "未更新",
       "noImage": "暂无图片",
       "edit": "编辑",
+      "boost": "Boost",
       "favorite": "收藏",
       "addToFavorite": "加入收藏",
       "removeFavorite": "取消收藏",
@@ -1291,6 +1294,7 @@
     "loadError": "无法加载工作者预约列表",
     "tryAgain": "重试",
     "noBookings": "暂无预约",
+    "boostCta": "Boost 资料，让客户先看到你",
     "service": "服务",
     "customer": "客户",
     "appointment": "预约时间",
@@ -1405,7 +1409,8 @@
       "reminder": {
         "title": "别忘了今天签到",
         "description": "保持连续签到，每天领取奖励积分。",
-        "snoozeHint": "关闭提醒后，我们将在 1 小时后再次提醒。"
+        "snoozeHint": "关闭提醒后，我们将在 1 小时后再次提醒。",
+        "spendPoints": "您有 {points} 积分 — 立即 Boost 资料"
       }
     },
     "panel": {
@@ -1599,6 +1604,7 @@
       "successToast": "{package} 套餐已成功激活！",
       "failedToast": "交易失败或金额不正确。请重试。",
       "close": "关闭",
+      "boostCta": "您已获得积分 — 立即 Boost 资料",
       "cancel": "取消"
     }
   },

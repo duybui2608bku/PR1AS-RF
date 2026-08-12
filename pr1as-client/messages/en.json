@@ -11,7 +11,9 @@
     "search": "Search",
     "guest": "Guest",
     "user": "User",
-    "or": "or"
+    "or": "or",
+    "agreeTerms": "I have read and agree to the <terms>Terms of Service</terms> and the <liability>Limitation of Liability</liability>",
+    "mustAgreeTerms": "Please read and agree to the Terms of Service and the Limitation of Liability before continuing."
   },
   "Nav": {
     "services": "Services",
@@ -930,6 +932,7 @@
       "notUpdated": "Not updated",
       "noImage": "No image",
       "edit": "Edit",
+      "boost": "Boost",
       "favorite": "Favorite",
       "addToFavorite": "Add to favorites",
       "removeFavorite": "Remove favorite",
@@ -1291,6 +1294,7 @@
     "loadError": "Could not load worker booking list",
     "tryAgain": "Try again",
     "noBookings": "No bookings yet",
+    "boostCta": "Boost your profile to get seen first",
     "service": "Service",
     "customer": "Customer",
     "appointment": "Appointment",
@@ -1405,7 +1409,8 @@
       "reminder": {
         "title": "Don't forget today's check-in",
         "description": "Keep your attendance streak going and earn daily reward points.",
-        "snoozeHint": "If you close this reminder, we'll remind you again in 1 hour."
+        "snoozeHint": "If you close this reminder, we'll remind you again in 1 hour.",
+        "spendPoints": "You have {points} points — boost your profile"
       }
     },
     "panel": {
@@ -1599,6 +1604,7 @@
       "successToast": "{package} plan has been successfully activated!",
       "failedToast": "Transaction failed or incorrect amount. Please check again.",
       "close": "Close",
+      "boostCta": "You just earned points — boost your profile",
       "cancel": "Cancel"
     }
   },

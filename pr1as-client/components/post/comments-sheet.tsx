@@ -6,6 +6,7 @@ import { X } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { PostComments } from "@/components/post/post-comments"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 
 interface CommentsSheetProps {
@@ -36,6 +37,10 @@ export function CommentsSheet({
   isPostOwner,
 }: CommentsSheetProps) {
   const t = useTranslations("CommentsSheet")
+
+  // Back đóng khung bình luận thay vì rời khỏi feed.
+  useSubViewHistory(open, () => onOpenChange(false))
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>

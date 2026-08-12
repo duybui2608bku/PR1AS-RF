@@ -2,6 +2,7 @@
 
 import { ChangeEvent, ReactNode, useRef, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import {
   BadgeCheck,
@@ -9,6 +10,7 @@ import {
   Camera,
   CalendarDays,
   Check,
+  ChevronRight,
   Eye,
   EyeOff,
   KeyRound,
@@ -34,6 +36,11 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { isPasswordStrong } from "@/lib/auth/password.utils"
+import {
+  infoLinks,
+  sectionGroups,
+  sectionMeta,
+} from "@/lib/settings-sections"
 import { useDeletionStatus, useMe, useUpdateBasicProfile } from "@/lib/hooks/use-auth"
 import { useImageEditorQueue } from "@/lib/hooks/use-image-editor-queue"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -359,6 +366,8 @@ export default function ClientProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <AccountLinks />
       </div>
 
       <ImageEditorDialog
@@ -650,6 +659,100 @@ function PasswordEditRow({
           {saving ? <Loader2 className="size-4 animate-spin" /> : null}
           {hasPassword ? t("actions.savePassword") : t("actions.setPassword")}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Mobile: bottom nav không còn mục Cài đặt — các mục quản lý tài khoản và
+ * trang thông tin/pháp lý nằm ở cuối trang Hồ sơ. Desktop vẫn dùng /settings,
+ * nơi các panel thực sự sống (hàng ở đây mở thẳng panel qua ?section=).
+ */
+function AccountLinks() {
+  const t = useTranslations("Settings")
+  const groupClass =
+    "px-4 pb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:px-1"
+  const listClass =
+    "divide-y border-y bg-card sm:overflow-hidden sm:rounded-xl sm:border"
+  const rowClass =
+    "flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-accent/60"
+
+  return (
+    <div className="space-y-6 pt-2 lg:hidden">
+      {sectionGroups.map((group) => (
+        <div key={group.titleKey}>
+          <p className={groupClass}>{t(group.titleKey)}</p>
+          <div className={listClass}>
+            {group.items.map((id) => {
+              const meta = sectionMeta[id]
+              const Icon = meta.icon
+              return (
+                <Link
+                  key={id}
+                  href={`/settings?section=${id}`}
+                  className={cn(rowClass, meta.danger && "text-destructive")}
+                >
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full",
+                      meta.danger
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-muted text-foreground",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {t(meta.labelKey)}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {t(meta.descriptionKey)}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <p className={groupClass}>{t("infoHeader")}</p>
+        <div className={listClass}>
+          {infoLinks.map((link) => {
+            const Icon = link.icon
+            const inner = (
+              <>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                  <Icon className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {t(link.labelKey)}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {link.descriptionKey
+                      ? t(link.descriptionKey)
+                      : link.descriptionRaw}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </>
+            )
+            return link.external ? (
+              <a key={link.href} href={link.href} className={rowClass}>
+                {inner}
+              </a>
+            ) : (
+              <Link key={link.href} href={link.href} className={rowClass}>
+                {inner}
+              </Link>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

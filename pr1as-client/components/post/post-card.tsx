@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
-import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
 
@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { isWorkerRoleActive } from "@/lib/auth/roles"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { useAuthRequired } from "@/lib/hooks/use-auth-required"
 import { useOpenPostReport, useReportPost } from "@/lib/hooks/use-moderation"
 import { useTogglePostRegistration } from "@/lib/hooks/use-post-registrations"
@@ -308,6 +309,9 @@ function MediaSlider({
 function PostMedia({ media }: { media: PostPublic["media"] }) {
   const t = useTranslations("PostCard")
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
+  // Back đóng trình xem ảnh thay vì rời khỏi feed.
+  const closeViewer = useCallback(() => setViewerIndex(null), [])
+  useSubViewHistory(viewerIndex !== null, closeViewer)
 
   if (media.length === 0) return null
 

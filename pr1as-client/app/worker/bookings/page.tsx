@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   AlertCircle,
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   Eye,
   FilterX,
+  Flame,
   Info,
   Loader2,
   MessageCircle,
@@ -93,6 +95,19 @@ const PAGE_SIZE = 10
 
 type WorkerBookingsTranslator = ReturnType<typeof useTranslations>
 type BookingAudienceFilter = "all" | "guest" | "registered"
+
+const NoBookingsEmpty = ({ t }: { t: WorkerBookingsTranslator }) => (
+  <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
+    <CalendarCheck2 className="size-9 text-muted-foreground" />
+    <p className="text-sm font-medium">{t("noBookings")}</p>
+    <Button asChild size="sm" variant="outline" className="gap-1.5">
+      <Link href="/worker/boost">
+        <Flame className="size-3.5 text-amber-500" />
+        {t("boostCta")}
+      </Link>
+    </Button>
+  </div>
+)
 
 const BOOKING_STATUS_OPTIONS: BookingStatus[] = [
   BookingStatus.PENDING,
@@ -771,10 +786,7 @@ export default function WorkerBookingsPage() {
                 </Button>
               </div>
             ) : bookings.length === 0 ? (
-              <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
-                <CalendarCheck2 className="size-9 text-muted-foreground" />
-                <p className="text-sm font-medium">{t("noBookings")}</p>
-              </div>
+              <NoBookingsEmpty t={t} />
             ) : (
               <div className="space-y-3">
                 {bookings.map((booking) => {
@@ -850,10 +862,7 @@ export default function WorkerBookingsPage() {
                   </Button>
                 </div>
               ) : bookings.length === 0 ? (
-                <div className="flex min-h-48 flex-col items-center justify-center gap-3 px-4 text-center">
-                  <CalendarCheck2 className="size-9 text-muted-foreground" />
-                  <p className="text-sm font-medium">{t("noBookings")}</p>
-                </div>
+                <NoBookingsEmpty t={t} />
               ) : (
                 <div className="overflow-x-auto">
                   <Table className="min-w-[980px]">

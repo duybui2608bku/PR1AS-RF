@@ -48,6 +48,7 @@ import { useLogout, useMe } from "@/lib/hooks/use-auth"
 import { ApiError } from "@/lib/utils/error-handler"
 import { useSiteSettings } from "@/lib/hooks/use-site-settings"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 
@@ -484,6 +485,12 @@ export function AdminDashboardShell({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false)
+  // Back đóng drawer thay vì rời khỏi trang dashboard.
+  const closeMobileSidebar = React.useCallback(
+    () => setMobileSidebarOpen(false),
+    []
+  )
+  useSubViewHistory(mobileSidebarOpen, closeMobileSidebar)
   const { data: siteSettings } = useSiteSettings()
   const brandName = siteSettings?.name || "PR1AS"
 

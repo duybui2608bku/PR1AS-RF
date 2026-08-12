@@ -110,3 +110,9 @@ export const classifyDays = (
   }
   return { fullyBooked, partiallyBooked }
 }
+
+/** Start times the booking UI offers — the whole day, 00:00 → 23:00. */
+export const BOOKABLE_HOURS = Array.from(
+  { length: 24 },
+  (_, i) => `${String(i).padStart(2, "0")}:00`,
+)

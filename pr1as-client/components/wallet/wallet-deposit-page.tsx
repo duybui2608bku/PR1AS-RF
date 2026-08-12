@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { TermsAgreement } from "@/components/shared/terms-agreement"
 import { useCreateDeposit, useWalletTransaction } from "@/lib/hooks/use-wallet"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getErrorMessage } from "@/lib/utils/error-handler"
@@ -43,6 +44,7 @@ export function WalletDepositPage() {
   const localeTag = INTL_LOCALE_TAGS[locale] ?? "vi-VN"
   const createDepositMutation = useCreateDeposit()
   const [amount, setAmount] = useState("100000")
+  const [agreedTerms, setAgreedTerms] = useState(false)
   const [payment, setPayment] = useState<DepositPayment | null>(null)
   const notifiedTransactionRef = useRef<string | null>(null)
   const transactionQuery = useWalletTransaction(
@@ -238,11 +240,19 @@ export function WalletDepositPage() {
                 </p>
               </div>
 
+              <TermsAgreement
+                id="deposit-terms"
+                checked={agreedTerms}
+                onCheckedChange={setAgreedTerms}
+              />
+
               <Button
                 type="submit"
                 className="w-full"
                 disabled={
-                  createDepositMutation.isPending || Boolean(amountError)
+                  createDepositMutation.isPending ||
+                  Boolean(amountError) ||
+                  !agreedTerms
                 }
               >
                 {createDepositMutation.isPending ? (

@@ -53,6 +53,8 @@ import { getPlanRingClass } from "@/lib/utils/plan"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
 import { getErrorMessage, localizeServerMessage } from "@/lib/utils/error-handler"
 import { useChatSocket } from "@/lib/hooks/use-chat-socket"
+import { useIsMobile } from "@/lib/hooks/use-is-mobile"
+import { useSubViewHistory } from "@/lib/hooks/use-subview-history"
 import { getActiveRole } from "@/lib/auth/roles"
 import { uploadImage } from "@/lib/utils/upload-image"
 import { filterValidImageFiles } from "@/lib/utils/validate-upload"
@@ -449,6 +451,15 @@ export function ChatPage({
       shouldStartNewDirect
     )
   )
+
+  // Back của trình duyệt/OS đóng khung chat, quay lại danh sách (chỉ mobile —
+  // từ md trở lên hai cột hiển thị cùng lúc nên không có gì để đóng).
+  const isMobileChat = useIsMobile("(max-width: 767px)")
+  const closeMobileThread = React.useCallback(
+    () => setMobileThreadOpen(false),
+    []
+  )
+  useSubViewHistory(isMobileChat && mobileThreadOpen, closeMobileThread)
 
   // Ẩn bottom nav khi đang trong 1 đoạn chat trên mobile
   const setHideBottomNav = useUIStore((s) => s.setHideBottomNav)
@@ -2220,6 +2231,10 @@ function MessagePane({
     mine: boolean
   }
   const [messageSelection, setMessageSelection] = React.useState<MessageSelection | null>(null)
+
+  // Back đóng lightbox / overlay giữ tin nhắn trước khi rời trang chat.
+  useSubViewHistory(Boolean(lightboxUrl), closeLightbox)
+  useSubViewHistory(messageSelection !== null, () => setMessageSelection(null))
   const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Keyboard navigation for lightbox — phải ở đây (trước early returns) để không vi phạm Rules of Hooks

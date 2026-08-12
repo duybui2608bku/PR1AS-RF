@@ -4,9 +4,19 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { X } from "lucide-react"
 
+import { useOverlayHistory } from "@/lib/hooks/use-subview-history"
 import { cn } from "@/lib/utils"
 
-const Dialog = DialogPrimitive.Root
+function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  // Back của trình duyệt/OS đóng lớp phủ thay vì rời khỏi trang.
+  const historyProps = useOverlayHistory({ open, defaultOpen, onOpenChange })
+  return <DialogPrimitive.Root {...props} {...historyProps} />
+}
 const DialogTrigger = DialogPrimitive.Trigger
 const DialogPortal = DialogPrimitive.Portal
 const DialogClose = DialogPrimitive.Close
