@@ -315,7 +315,9 @@ Flow:
 2. It collects all worker ids in the result set.
 3. It fetches active boosts for those worker ids.
 4. It fetches boost config for `rotation_interval_minutes`.
-5. It annotates each worker with:
+5. It computes online status for all discovered worker ids via the live
+   socket registry.
+6. It annotates each worker with:
 
 ```ts
 boost: {
@@ -323,22 +325,28 @@ boost: {
   boost_type: "featured" | "basic" | null,
   boost_tier: 1 | 2 | null,
 }
+presence: {
+  is_online: boolean,
+  last_active_at: Date,
+}
 ```
 
-6. It sorts workers inside each service group by:
+7. It sorts workers inside each service group by:
    - boost tier first (`featured` before `basic` before unboosted);
-   - deterministic scatter inside the same tier.
+   - online status next (online before offline), within the same tier;
+   - deterministic scatter inside the same tier and online status.
 
 Rotation:
 
 ```text
 slotId = floor(Date.now() / (rotation_interval_minutes * 60 * 1000))
+onlineRank = isOnline ? 0 : 1
 scatter = (parseInt(workerId.last4Hex, 16) + slotId) % 1000
-sort key = [tier, scatter]
+sort key = [tier, onlineRank, scatter]
 ```
 
-This rotates exposure among workers in the same boost tier while keeping the
-order deterministic for a given rotation slot.
+This rotates exposure among workers in the same boost tier and online status
+while keeping the order deterministic for a given rotation slot.
 
 ## Pricing Interaction
 

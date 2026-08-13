@@ -257,10 +257,13 @@ Boost integration:
 
 1. Fetch active boosts for all discovered worker ids.
 2. Fetch boost config.
-3. Attach `boost.is_boosted`, `boost_type`, `boost_tier`.
-4. Sort workers by boost tier first.
-5. Workers with the same tier rotate using a deterministic scatter based on
-   worker id and `rotation_interval_minutes`.
+3. Compute online status for all discovered worker ids (live socket registry).
+4. Attach `boost.is_boosted`, `boost_type`, `boost_tier`, and
+   `presence.is_online`, `presence.last_active_at`.
+5. Sort workers by boost tier first, then online status (online before
+   offline), then deterministic scatter for workers tied on both.
+6. Workers with the same tier and online status rotate using a deterministic
+   scatter based on worker id and `rotation_interval_minutes`.
 
 Schedule filter:
 
