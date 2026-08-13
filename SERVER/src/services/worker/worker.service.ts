@@ -831,18 +831,37 @@ export class WorkerService {
       );
     }
 
-    const { data, total } =
-      await workerServiceRepository.searchWorkersByHashtag(
-        normalized,
-        pagination.skip,
-        pagination.limit
+    const candidates =
+      await workerServiceRepository.findHashtagCandidates(normalized);
+
+    if (!candidates.length) {
+      return PaginationHelper.formatResponse(
+        [],
+        pagination.page,
+        pagination.limit,
+        0
       );
+    }
+
+    const candidateIds = candidates.map((c) => c.id);
+    const { boostByWorkerId, onlineWorkerIds, slotId } =
+      await getBoostPresenceContext(candidateIds);
+
+    const sorted = [...candidates].sort((a, b) =>
+      compareWorkerRanking(a, b, boostByWorkerId, onlineWorkerIds, slotId)
+    );
+
+    // average_rating/completed_bookings/created_at are ranking-only inputs —
+    // never returned to the client
+    const pageItems: WorkerHashtagCard[] = sorted
+      .slice(pagination.skip, pagination.skip + pagination.limit)
+      .map(({ average_rating, completed_bookings, created_at, ...card }) => card);
 
     return PaginationHelper.formatResponse(
-      data,
+      pageItems,
       pagination.page,
       pagination.limit,
-      total
+      candidates.length
     );
   }
 }
