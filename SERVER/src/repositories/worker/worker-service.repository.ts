@@ -11,7 +11,6 @@ import { BookingStatus } from "../../constants/booking";
 import { ReviewType } from "../../constants/review";
 import { UserStatus, UserRole } from "../../types/auth";
 import { escapeRegExp } from "../../utils/string";
-import { WorkerHashtagCard } from "../../types/worker/worker-hashtag-search.types";
 
 export interface UpsertWorkerServicePayload {
   serviceId: string;
@@ -74,6 +73,26 @@ export interface WorkerSuggestionCandidate {
   average_rating: number;
   total_reviews: number;
   completed_bookings: number;
+}
+
+export interface WorkerHashtagCandidate {
+  id: string;
+  full_name: string | null;
+  avatar: string | null;
+  worker_profile: {
+    introduction: string | null;
+    gallery_urls: string[];
+    work_locations: Array<{
+      province_code: number;
+      ward_code: number | null;
+      label_snapshot: string | null;
+    }>;
+  } | null;
+  reputation_score: number;
+  average_rating: number;
+  completed_bookings: number;
+  created_at: Date | null;
+  matched_hashtags: string[];
 }
 
 const LOCATION_RADIUS_KM = 30;
@@ -835,11 +854,9 @@ class WorkerServiceRepository {
     return ids.map((id) => id.toString());
   }
 
-  async searchWorkersByHashtag(
-    normalizedQuery: string,
-    skip: number,
-    limit: number
-  ): Promise<{ data: WorkerHashtagCard[]; total: number }> {
+  async findHashtagCandidates(
+    normalizedQuery: string
+  ): Promise<WorkerHashtagCandidate[]> {
     const regex = new RegExp(escapeRegExp(normalizedQuery), "i");
 
     const pipeline: PipelineStage[] = [
@@ -873,8 +890,59 @@ class WorkerServiceRepository {
         $group: {
           _id: "$worker_id",
           worker: { $first: "$worker" },
-          reputation_score: { $first: "$worker.reputation_score" },
+          reputation_score: { $first: "$worker.meta_data.reputation_score" },
           all_hashtags: { $push: "$hashtags" },
+        },
+      },
+      {
+        $lookup: {
+          from: modelsName.REVIEW,
+          let: { workerId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$worker_id", "$$workerId"] },
+                    { $eq: ["$is_visible", true] },
+                    { $eq: ["$review_type", ReviewType.CLIENT_TO_WORKER] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                average_rating: { $avg: "$rating" },
+              },
+            },
+          ],
+          as: "review_summary",
+        },
+      },
+      {
+        $lookup: {
+          from: modelsName.BOOKING,
+          let: { workerId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$worker_id", "$$workerId"] },
+                    { $eq: ["$status", BookingStatus.COMPLETED] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                completed_bookings: { $sum: 1 },
+              },
+            },
+          ],
+          as: "booking_summary",
         },
       },
       {
@@ -895,6 +963,24 @@ class WorkerServiceRepository {
             },
           },
           reputation_score: { $ifNull: ["$reputation_score", 0] },
+          average_rating: {
+            $round: [
+              {
+                $ifNull: [
+                  { $arrayElemAt: ["$review_summary.average_rating", 0] },
+                  0,
+                ],
+              },
+              1,
+            ],
+          },
+          completed_bookings: {
+            $ifNull: [
+              { $arrayElemAt: ["$booking_summary.completed_bookings", 0] },
+              0,
+            ],
+          },
+          created_at: { $ifNull: ["$worker.created_at", null] },
           matched_hashtags: {
             $filter: {
               input: {
@@ -916,18 +1002,9 @@ class WorkerServiceRepository {
         },
       },
       { $sort: { reputation_score: -1, id: 1 } },
-      {
-        $facet: {
-          data: [{ $skip: skip }, { $limit: limit }],
-          totalCount: [{ $count: "count" }],
-        },
-      },
     ];
 
-    const [result] = await WorkerService.aggregate(pipeline);
-    const data = (result?.data ?? []) as WorkerHashtagCard[];
-    const total = result?.totalCount?.[0]?.count ?? 0;
-    return { data, total };
+    return WorkerService.aggregate<WorkerHashtagCandidate>(pipeline);
   }
 }
 
