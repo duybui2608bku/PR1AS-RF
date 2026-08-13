@@ -240,6 +240,31 @@ export const compareWorkerRanking = (
   return 0;
 };
 
+interface BoostPresenceContext {
+  boostByWorkerId: Map<string, { tier: number }>;
+  onlineWorkerIds: Set<string>;
+  slotId: number;
+}
+
+const getBoostPresenceContext = async (
+  workerIds: string[]
+): Promise<BoostPresenceContext> => {
+  const [activeBoosts, boostConfig] = await Promise.all([
+    workerBoostRepository.findActiveBoostsForWorkers(workerIds),
+    boostConfigRepository.get(),
+  ]);
+
+  const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
+  const onlineWorkerIds = isUserOnlineBulk(workerIds);
+  // Deterministic rotation: slot changes every rotation_interval_minutes so
+  // all boosted workers at the same tier get equal exposure over time.
+  const slotId = Math.floor(
+    Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
+  );
+
+  return { boostByWorkerId, onlineWorkerIds, slotId };
+};
+
 export class WorkerService {
   async getWorkerById(
     workerId: string,
@@ -570,61 +595,46 @@ export class WorkerService {
           : undefined,
       });
 
-    // Collect all worker ids, fetch active boosts, then apply boost-tier sort
+    // Collect all worker ids, fetch boost/presence context, then apply the
+    // full ranking sort (see compareWorkerRanking for the exact key order)
     const allWorkerIds = [
       ...new Set(groupedWorkers.flatMap((g) => g.workers.map((w) => w.id))),
     ];
 
-    const [activeBoosts, boostConfig] = await Promise.all([
-      workerBoostRepository.findActiveBoostsForWorkers(allWorkerIds),
-      boostConfigRepository.get(),
-    ]);
+    const { boostByWorkerId, onlineWorkerIds, slotId } =
+      await getBoostPresenceContext(allWorkerIds);
 
-    const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
-    const onlineWorkerIds = isUserOnlineBulk(allWorkerIds);
+    const groupedWithBoost = groupedWorkers.map((group) => {
+      const annotated = group.workers.map((w) => {
+        const boost = boostByWorkerId.get(w.id);
+        return {
+          ...w,
+          boost: {
+            is_boosted: Boolean(boost),
+            boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
+            boost_tier: boost ? boost.tier : null,
+          },
+          presence: {
+            is_online: onlineWorkerIds.has(w.id),
+            last_active_at: w.last_active_at ?? null,
+          },
+        };
+      });
 
-    // Deterministic rotation: slot changes every rotation_interval_minutes so
-    // all boosted workers at the same tier get equal exposure over time.
-    const slotId = Math.floor(
-      Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
-    );
+      annotated.sort((a, b) =>
+        compareWorkerRanking(a, b, boostByWorkerId, onlineWorkerIds, slotId)
+      );
 
-    const groupedWithBoost = groupedWorkers.map((group) => ({
-      ...group,
-      workers: group.workers
-        .map((w) => {
-          const boost = boostByWorkerId.get(w.id);
-          return {
-            ...w,
-            boost: {
-              is_boosted: Boolean(boost),
-              boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
-              boost_tier: boost ? boost.tier : null,
-            },
-            presence: {
-              is_online: onlineWorkerIds.has(w.id),
-              last_active_at: w.last_active_at ?? null,
-            },
-          };
-        })
-        .sort((a, b) => {
-          const [tierA, onlineA, scatterA] = getWorkerBoostSortKey(
-            a.id,
-            boostByWorkerId,
-            onlineWorkerIds,
-            slotId
-          );
-          const [tierB, onlineB, scatterB] = getWorkerBoostSortKey(
-            b.id,
-            boostByWorkerId,
-            onlineWorkerIds,
-            slotId
-          );
-          if (tierA !== tierB) return tierA - tierB;
-          if (onlineA !== onlineB) return onlineA - onlineB;
-          return scatterA - scatterB;
-        }),
-    }));
+      return {
+        service: group.service,
+        // average_rating/completed_bookings/created_at are ranking-only
+        // inputs (Task 2) — never returned to the client
+        workers: annotated.map(
+          ({ average_rating, completed_bookings, created_at, ...rest }) =>
+            rest
+        ),
+      };
+    });
 
     if (!query.schedule) return groupedWithBoost;
 
