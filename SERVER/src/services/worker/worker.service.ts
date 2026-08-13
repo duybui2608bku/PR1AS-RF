@@ -608,14 +608,12 @@ export class WorkerService {
           };
         })
         .sort((a, b) => {
-          // @ts-expect-error — getWorkerBoostSortKey is being replaced in Task 4
           const [tierA, onlineA, scatterA] = getWorkerBoostSortKey(
             a.id,
             boostByWorkerId,
             onlineWorkerIds,
             slotId
           );
-          // @ts-expect-error — getWorkerBoostSortKey is being replaced in Task 4
           const [tierB, onlineB, scatterB] = getWorkerBoostSortKey(
             b.id,
             boostByWorkerId,
