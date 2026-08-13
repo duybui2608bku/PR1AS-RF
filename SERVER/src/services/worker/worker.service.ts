@@ -181,21 +181,63 @@ const calculateSuggestionScore = (
   return serviceMatchScore + ratingScore + completedBookingScore + priceScore;
 };
 
-// Sort key for worker discovery: boost tier first (paid ranking is preserved),
-// then online-now as a tie-break within the same tier, then a deterministic
-// scatter so equal-priority workers rotate exposure over time.
-export const getWorkerBoostSortKey = (
-  workerId: string,
+export interface WorkerRankingInput {
+  id: string;
+  reputation_score: number;
+  completed_bookings: number;
+  average_rating: number;
+  created_at: Date | null;
+}
+
+// Sort key for worker discovery ranking, evaluated left-to-right:
+//   1. boost tier      — paid ranking always wins (featured < basic < none)
+//   2. reputation gate — score < 30 (e.g. moderation-flagged) pushed to the
+//                        back regardless of the merit stats below
+//   3. online-now       — tie-break within the same tier/gate
+//   4-6. merit cascade  — completed bookings, then rating, then raw
+//                        reputation score, all descending
+//   7. created_at        — newer profiles surface first among peers tied on
+//                        every stat above; this IS the new-worker priority,
+//                        expressed with no separate flag or time window
+//   8. scatter            — deterministic rotation so ties still split
+//                        exposure fairly over time
+export const getWorkerRankingSortKey = (
+  worker: WorkerRankingInput,
   boostByWorkerId: Map<string, { tier: number }>,
   onlineWorkerIds: Set<string>,
   slotId: number
-): [number, number, number] => {
-  const boost = boostByWorkerId.get(workerId);
+): [number, number, number, number, number, number, number, number] => {
+  const boost = boostByWorkerId.get(worker.id);
   const tier = boost ? boost.tier : 999;
-  const onlineRank = onlineWorkerIds.has(workerId) ? 0 : 1;
+  const reputationGate = worker.reputation_score < 30 ? 1 : 0;
+  const onlineRank = onlineWorkerIds.has(worker.id) ? 0 : 1;
   // Cheap deterministic scatter within same tier using last 4 hex chars of id
-  const scatter = (parseInt(workerId.slice(-4), 16) + slotId) % 1000;
-  return [tier, onlineRank, scatter];
+  const scatter = (parseInt(worker.id.slice(-4), 16) + slotId) % 1000;
+  return [
+    tier,
+    reputationGate,
+    onlineRank,
+    -worker.completed_bookings,
+    -worker.average_rating,
+    -worker.reputation_score,
+    worker.created_at ? -worker.created_at.getTime() : 0,
+    scatter,
+  ];
+};
+
+export const compareWorkerRanking = (
+  a: WorkerRankingInput,
+  b: WorkerRankingInput,
+  boostByWorkerId: Map<string, { tier: number }>,
+  onlineWorkerIds: Set<string>,
+  slotId: number
+): number => {
+  const keyA = getWorkerRankingSortKey(a, boostByWorkerId, onlineWorkerIds, slotId);
+  const keyB = getWorkerRankingSortKey(b, boostByWorkerId, onlineWorkerIds, slotId);
+  for (let i = 0; i < keyA.length; i += 1) {
+    if (keyA[i] !== keyB[i]) return keyA[i] - keyB[i];
+  }
+  return 0;
 };
 
 export class WorkerService {
@@ -566,12 +608,14 @@ export class WorkerService {
           };
         })
         .sort((a, b) => {
+          // @ts-expect-error — getWorkerBoostSortKey is being replaced in Task 4
           const [tierA, onlineA, scatterA] = getWorkerBoostSortKey(
             a.id,
             boostByWorkerId,
             onlineWorkerIds,
             slotId
           );
+          // @ts-expect-error — getWorkerBoostSortKey is being replaced in Task 4
           const [tierB, onlineB, scatterB] = getWorkerBoostSortKey(
             b.id,
             boostByWorkerId,
