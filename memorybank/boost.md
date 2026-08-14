@@ -307,15 +307,21 @@ Repository expiry:
 
 ## Discovery Integration
 
-Worker discovery integration lives in `WorkerService.getWorkersGroupedByService`.
+Worker discovery integration lives in `WorkerService.getWorkersGroupedByService`
+and `WorkerService.searchByHashtag`, sharing the same ranking logic via
+`compareWorkerRanking` (`worker.service.ts`).
 
-Flow:
+Flow (both endpoints):
 
-1. Worker search builds grouped workers by service.
+1. Worker search builds the candidate list (grouped by service, or hashtag
+   matches).
 2. It collects all worker ids in the result set.
-3. It fetches active boosts for those worker ids.
-4. It fetches boost config for `rotation_interval_minutes`.
-5. It annotates each worker with:
+3. `getBoostPresenceContext(workerIds)` fetches active boosts, boost config,
+   and live online status for those ids in one shot.
+4. `average_rating`/`completed_bookings` are computed via `$lookup` into
+   `Review`/`Booking` in the aggregation; `created_at` comes from the
+   worker's user document.
+5. Grouped-by-service annotates each worker in the response with:
 
 ```ts
 boost: {
@@ -323,22 +329,43 @@ boost: {
   boost_type: "featured" | "basic" | null,
   boost_tier: 1 | 2 | null,
 }
+presence: {
+  is_online: boolean,
+  last_active_at: Date,
+}
 ```
 
-6. It sorts workers inside each service group by:
-   - boost tier first (`featured` before `basic` before unboosted);
-   - deterministic scatter inside the same tier.
+   (Hashtag search computes boost/online for ranking only — it does not add
+   these fields to its response type.)
 
-Rotation:
+6. Both sort using `compareWorkerRanking`, an 8-key cascade:
+
+```text
+sort key = [
+  tier,                          // featured=1, basic=2, unboosted=999
+  reputationGate,                // reputation_score < 30 ? 1 : 0
+  onlineRank,                    // online=0, offline=1
+  -completed_bookings,
+  -average_rating,
+  -reputation_score,
+  created_at ? -created_at.getTime() : 0,
+  scatter,
+]
+```
+
+Rotation (unchanged):
 
 ```text
 slotId = floor(Date.now() / (rotation_interval_minutes * 60 * 1000))
 scatter = (parseInt(workerId.last4Hex, 16) + slotId) % 1000
-sort key = [tier, scatter]
 ```
 
-This rotates exposure among workers in the same boost tier while keeping the
-order deterministic for a given rotation slot.
+New-worker priority is expressed purely through `created_at` ranking above
+scatter — there is no separate "new" flag, badge, or time window. It only
+becomes the deciding factor once boost tier, the reputation gate, online
+status, completed bookings, rating, and reputation score are all tied,
+which in practice means newly-created workers rotate ahead of other
+newly-created workers with the same (usually zero) stats.
 
 ## Pricing Interaction
 

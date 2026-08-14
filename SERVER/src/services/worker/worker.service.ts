@@ -181,21 +181,88 @@ const calculateSuggestionScore = (
   return serviceMatchScore + ratingScore + completedBookingScore + priceScore;
 };
 
-// Sort key for worker discovery: boost tier first (paid ranking is preserved),
-// then online-now as a tie-break within the same tier, then a deterministic
-// scatter so equal-priority workers rotate exposure over time.
-export const getWorkerBoostSortKey = (
-  workerId: string,
+export interface WorkerRankingInput {
+  id: string;
+  reputation_score: number;
+  completed_bookings: number;
+  average_rating: number;
+  created_at: Date | null;
+}
+
+// Sort key for worker discovery ranking, evaluated left-to-right:
+//   1. boost tier      — paid ranking always wins (featured < basic < none)
+//   2. reputation gate — score < 30 (e.g. moderation-flagged) pushed to the
+//                        back regardless of the merit stats below
+//   3. online-now       — tie-break within the same tier/gate
+//   4-6. merit cascade  — completed bookings, then rating, then raw
+//                        reputation score, all descending
+//   7. created_at        — newer profiles surface first among peers tied on
+//                        every stat above; this IS the new-worker priority,
+//                        expressed with no separate flag or time window
+//   8. scatter            — deterministic rotation so ties still split
+//                        exposure fairly over time
+export const getWorkerRankingSortKey = (
+  worker: WorkerRankingInput,
   boostByWorkerId: Map<string, { tier: number }>,
   onlineWorkerIds: Set<string>,
   slotId: number
-): [number, number, number] => {
-  const boost = boostByWorkerId.get(workerId);
+): [number, number, number, number, number, number, number, number] => {
+  const boost = boostByWorkerId.get(worker.id);
   const tier = boost ? boost.tier : 999;
-  const onlineRank = onlineWorkerIds.has(workerId) ? 0 : 1;
+  const reputationGate = worker.reputation_score < 30 ? 1 : 0;
+  const onlineRank = onlineWorkerIds.has(worker.id) ? 0 : 1;
   // Cheap deterministic scatter within same tier using last 4 hex chars of id
-  const scatter = (parseInt(workerId.slice(-4), 16) + slotId) % 1000;
-  return [tier, onlineRank, scatter];
+  const scatter = (parseInt(worker.id.slice(-4), 16) + slotId) % 1000;
+  return [
+    tier,
+    reputationGate,
+    onlineRank,
+    -worker.completed_bookings,
+    -worker.average_rating,
+    -worker.reputation_score,
+    worker.created_at ? -worker.created_at.getTime() : 0,
+    scatter,
+  ];
+};
+
+export const compareWorkerRanking = (
+  a: WorkerRankingInput,
+  b: WorkerRankingInput,
+  boostByWorkerId: Map<string, { tier: number }>,
+  onlineWorkerIds: Set<string>,
+  slotId: number
+): number => {
+  const keyA = getWorkerRankingSortKey(a, boostByWorkerId, onlineWorkerIds, slotId);
+  const keyB = getWorkerRankingSortKey(b, boostByWorkerId, onlineWorkerIds, slotId);
+  for (let i = 0; i < keyA.length; i += 1) {
+    if (keyA[i] !== keyB[i]) return keyA[i] - keyB[i];
+  }
+  return 0;
+};
+
+interface BoostPresenceContext {
+  boostByWorkerId: Map<string, { tier: number }>;
+  onlineWorkerIds: Set<string>;
+  slotId: number;
+}
+
+const getBoostPresenceContext = async (
+  workerIds: string[]
+): Promise<BoostPresenceContext> => {
+  const [activeBoosts, boostConfig] = await Promise.all([
+    workerBoostRepository.findActiveBoostsForWorkers(workerIds),
+    boostConfigRepository.get(),
+  ]);
+
+  const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
+  const onlineWorkerIds = isUserOnlineBulk(workerIds);
+  // Deterministic rotation: slot changes every rotation_interval_minutes so
+  // all boosted workers at the same tier get equal exposure over time.
+  const slotId = Math.floor(
+    Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
+  );
+
+  return { boostByWorkerId, onlineWorkerIds, slotId };
 };
 
 export class WorkerService {
@@ -528,61 +595,55 @@ export class WorkerService {
           : undefined,
       });
 
-    // Collect all worker ids, fetch active boosts, then apply boost-tier sort
+    // Collect all worker ids, fetch boost/presence context, then apply the
+    // full ranking sort (see compareWorkerRanking for the exact key order)
     const allWorkerIds = [
       ...new Set(groupedWorkers.flatMap((g) => g.workers.map((w) => w.id))),
     ];
 
-    const [activeBoosts, boostConfig] = await Promise.all([
-      workerBoostRepository.findActiveBoostsForWorkers(allWorkerIds),
-      boostConfigRepository.get(),
+    const [
+      { boostByWorkerId, onlineWorkerIds, slotId },
+      averageRatingByWorkerId,
+      completedBookingsByWorkerId,
+    ] = await Promise.all([
+      getBoostPresenceContext(allWorkerIds),
+      reviewRepository.getAverageRatingsForWorkers(allWorkerIds),
+      bookingRepository.getCompletedCountsForWorkers(allWorkerIds),
     ]);
 
-    const boostByWorkerId = new Map(activeBoosts.map((b) => [b.user_id, b]));
-    const onlineWorkerIds = isUserOnlineBulk(allWorkerIds);
+    const groupedWithBoost = groupedWorkers.map((group) => {
+      const annotated = group.workers.map((w) => {
+        const boost = boostByWorkerId.get(w.id);
+        return {
+          ...w,
+          average_rating: averageRatingByWorkerId.get(w.id) ?? 0,
+          completed_bookings: completedBookingsByWorkerId.get(w.id) ?? 0,
+          boost: {
+            is_boosted: Boolean(boost),
+            boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
+            boost_tier: boost ? boost.tier : null,
+          },
+          presence: {
+            is_online: onlineWorkerIds.has(w.id),
+            last_active_at: w.last_active_at ?? null,
+          },
+        };
+      });
 
-    // Deterministic rotation: slot changes every rotation_interval_minutes so
-    // all boosted workers at the same tier get equal exposure over time.
-    const slotId = Math.floor(
-      Date.now() / (boostConfig.rotation_interval_minutes * 60 * 1000)
-    );
+      annotated.sort((a, b) =>
+        compareWorkerRanking(a, b, boostByWorkerId, onlineWorkerIds, slotId)
+      );
 
-    const groupedWithBoost = groupedWorkers.map((group) => ({
-      ...group,
-      workers: group.workers
-        .map((w) => {
-          const boost = boostByWorkerId.get(w.id);
-          return {
-            ...w,
-            boost: {
-              is_boosted: Boolean(boost),
-              boost_type: boost ? (boost.tier === 1 ? "featured" : "basic") : null,
-              boost_tier: boost ? boost.tier : null,
-            },
-            presence: {
-              is_online: onlineWorkerIds.has(w.id),
-              last_active_at: w.last_active_at ?? null,
-            },
-          };
-        })
-        .sort((a, b) => {
-          const [tierA, onlineA, scatterA] = getWorkerBoostSortKey(
-            a.id,
-            boostByWorkerId,
-            onlineWorkerIds,
-            slotId
-          );
-          const [tierB, onlineB, scatterB] = getWorkerBoostSortKey(
-            b.id,
-            boostByWorkerId,
-            onlineWorkerIds,
-            slotId
-          );
-          if (tierA !== tierB) return tierA - tierB;
-          if (onlineA !== onlineB) return onlineA - onlineB;
-          return scatterA - scatterB;
-        }),
-    }));
+      return {
+        service: group.service,
+        // average_rating/completed_bookings/created_at are ranking-only
+        // inputs (Task 2) — never returned to the client
+        workers: annotated.map(
+          ({ average_rating, completed_bookings, created_at, ...rest }) =>
+            rest
+        ),
+      };
+    });
 
     if (!query.schedule) return groupedWithBoost;
 
@@ -779,18 +840,37 @@ export class WorkerService {
       );
     }
 
-    const { data, total } =
-      await workerServiceRepository.searchWorkersByHashtag(
-        normalized,
-        pagination.skip,
-        pagination.limit
+    const candidates =
+      await workerServiceRepository.findHashtagCandidates(normalized);
+
+    if (!candidates.length) {
+      return PaginationHelper.formatResponse(
+        [],
+        pagination.page,
+        pagination.limit,
+        0
       );
+    }
+
+    const candidateIds = candidates.map((c) => c.id);
+    const { boostByWorkerId, onlineWorkerIds, slotId } =
+      await getBoostPresenceContext(candidateIds);
+
+    const sorted = [...candidates].sort((a, b) =>
+      compareWorkerRanking(a, b, boostByWorkerId, onlineWorkerIds, slotId)
+    );
+
+    // average_rating/completed_bookings/created_at are ranking-only inputs —
+    // never returned to the client
+    const pageItems: WorkerHashtagCard[] = sorted
+      .slice(pagination.skip, pagination.skip + pagination.limit)
+      .map(({ average_rating, completed_bookings, created_at, ...card }) => card);
 
     return PaginationHelper.formatResponse(
-      data,
+      pageItems,
       pagination.page,
       pagination.limit,
-      total
+      candidates.length
     );
   }
 }

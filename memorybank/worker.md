@@ -248,19 +248,32 @@ Work-location filter:
 
 Sort and grouping:
 
-- Workers with `reputation_score < 30` are pushed back.
-- Higher reputation sorts first before grouping.
 - Results are grouped by `service_id`.
 - Groups sort by service code.
+- Within each group, workers are ranked by `compareWorkerRanking`
+  (`WorkerService`), an 8-key cascade evaluated left to right: boost tier,
+  reputation gate (`reputation_score < 30` pushed to the back regardless of
+  other stats), online status, `completed_bookings` desc, `average_rating`
+  desc, `reputation_score` desc, `created_at` desc, deterministic scatter.
+  See `boost.md` "Discovery Integration" for the full key list.
+- `created_at` ranking last, before scatter, is how newly-created profiles
+  surface first: a brand-new worker (0 bookings, 0 rating, default
+  `reputation_score` 100) naturally sorts ahead of older workers with
+  identical stats, with no separate "new" flag or time window.
 
 Boost integration:
 
 1. Fetch active boosts for all discovered worker ids.
 2. Fetch boost config.
-3. Attach `boost.is_boosted`, `boost_type`, `boost_tier`.
-4. Sort workers by boost tier first.
-5. Workers with the same tier rotate using a deterministic scatter based on
-   worker id and `rotation_interval_minutes`.
+3. Compute online status for all discovered worker ids (live socket registry).
+4. Fetch `average_rating`/`completed_bookings` per worker via `$lookup` into
+   `Review`/`Booking` (same pattern as `getWorkerSuggestions`), and
+   `created_at` from the worker's user document.
+5. Attach `boost.is_boosted`, `boost_type`, `boost_tier`, and
+   `presence.is_online`, `presence.last_active_at` to each worker in the
+   response — `average_rating`/`completed_bookings`/`created_at` are used
+   only for ranking and are stripped before the response is returned.
+6. Sort workers using `compareWorkerRanking` (see above).
 
 Schedule filter:
 
