@@ -2,6 +2,7 @@ jest.mock("../../repositories/worker/worker-service.repository", () => ({
   workerServiceRepository: {
     findHashtagCandidates: jest.fn(),
     findAllForWorker: jest.fn(),
+    findWorkersGroupedByService: jest.fn(),
   },
 }));
 
@@ -15,6 +16,14 @@ jest.mock("../../repositories/review/review.repository", () => ({
   reviewRepository: {
     getStatsByWorkerId: jest.fn(),
     findByWorkerId: jest.fn(),
+    getAverageRatingsForWorkers: jest.fn(),
+  },
+}));
+
+jest.mock("../../repositories/booking/booking.repository", () => ({
+  bookingRepository: {
+    getCompletedCountsForWorkers: jest.fn(),
+    findConflictsForWorkersInWindow: jest.fn(),
   },
 }));
 
@@ -22,6 +31,13 @@ jest.mock("../../services/moderation", () => ({
   moderationService: {
     isProfileBlocked: jest.fn(),
     assertNoActiveRestriction: jest.fn(),
+    getProfileBlockedIds: jest.fn(),
+  },
+}));
+
+jest.mock("../../repositories/moderation", () => ({
+  moderationRepository: {
+    getActiveRestrictedUserIds: jest.fn(),
   },
 }));
 
@@ -45,7 +61,9 @@ import { workerService } from "./worker.service";
 import { workerServiceRepository } from "../../repositories/worker/worker-service.repository";
 import { userRepository } from "../../repositories/auth/user.repository";
 import { reviewRepository } from "../../repositories/review/review.repository";
+import { bookingRepository } from "../../repositories/booking/booking.repository";
 import { moderationService } from "../../services/moderation";
+import { moderationRepository } from "../../repositories/moderation";
 import { workerBoostRepository } from "../../repositories/boost/worker-boost.repository";
 import { boostConfigRepository } from "../../repositories/boost/boost-config.repository";
 import { isUserOnlineBulk } from "../../config/socket.handlers";
@@ -70,6 +88,185 @@ const candidate = (overrides: Record<string, unknown> & { id: string }) => ({
   created_at: new Date("2026-01-01T00:00:00Z"),
   matched_hashtags: ["it"],
   ...overrides,
+});
+
+const stubNoModerationRestrictions = () => {
+  (moderationService.getProfileBlockedIds as jest.Mock).mockResolvedValue([]);
+  (
+    moderationRepository.getActiveRestrictedUserIds as jest.Mock
+  ).mockResolvedValue([]);
+};
+
+const groupedWorker = (
+  overrides: Record<string, unknown> & { id: string }
+) => ({
+  full_name: null,
+  avatar: null,
+  worker_profile: null,
+  reputation_score: 100,
+  last_active_at: null,
+  created_at: new Date("2026-01-01T00:00:00Z"),
+  pricing: [],
+  ...overrides,
+});
+
+const groupedService = (overrides: Record<string, unknown> = {}) => ({
+  id: "service-1",
+  code: "MASSAGE",
+  name: { en: "Massage", vi: "Massage" },
+  description: { en: "desc", vi: "desc" },
+  category: "WELLNESS",
+  ...overrides,
+});
+
+describe("workerService.getWorkersGroupedByService", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("ranks a boosted worker ahead of a higher-merit unboosted worker, attaches boost/presence, and strips ranking-only fields", async () => {
+    (
+      workerServiceRepository.findWorkersGroupedByService as jest.Mock
+    ).mockResolvedValue([
+      {
+        service: groupedService(),
+        workers: [
+          groupedWorker({ id: "w-plain" }),
+          groupedWorker({ id: "w-boosted" }),
+        ],
+      },
+    ]);
+    stubNoModerationRestrictions();
+    (
+      workerBoostRepository.findActiveBoostsForWorkers as jest.Mock
+    ).mockResolvedValue([
+      { user_id: "w-boosted", tier: 1, expires_at: new Date("2099-01-01") },
+    ]);
+    (boostConfigRepository.get as jest.Mock).mockResolvedValue({
+      rotation_interval_minutes: 30,
+    });
+    (isUserOnlineBulk as jest.Mock).mockReturnValue(new Set());
+    (
+      reviewRepository.getAverageRatingsForWorkers as jest.Mock
+    ).mockResolvedValue(
+      new Map([
+        ["w-plain", 5],
+        ["w-boosted", 0],
+      ])
+    );
+    (
+      bookingRepository.getCompletedCountsForWorkers as jest.Mock
+    ).mockResolvedValue(
+      new Map([
+        ["w-plain", 999],
+        ["w-boosted", 0],
+      ])
+    );
+
+    const result = await workerService.getWorkersGroupedByService({});
+
+    // Boost tier outranks completed_bookings/average_rating even though
+    // w-plain has far higher merit stats than w-boosted.
+    expect(result[0].workers.map((w) => w.id)).toEqual([
+      "w-boosted",
+      "w-plain",
+    ]);
+    expect(result[0].workers[0].boost).toEqual({
+      is_boosted: true,
+      boost_type: "featured",
+      boost_tier: 1,
+    });
+    expect(result[0].workers[0].presence).toEqual({
+      is_online: false,
+      last_active_at: null,
+    });
+    for (const worker of result[0].workers) {
+      expect(worker).not.toHaveProperty("average_rating");
+      expect(worker).not.toHaveProperty("completed_bookings");
+      expect(worker).not.toHaveProperty("created_at");
+    }
+  });
+
+  it("ranks a newly-created worker ahead of an older one when every other stat is tied", async () => {
+    (
+      workerServiceRepository.findWorkersGroupedByService as jest.Mock
+    ).mockResolvedValue([
+      {
+        service: groupedService(),
+        workers: [
+          groupedWorker({ id: "w-old", created_at: new Date("2020-01-01") }),
+          groupedWorker({ id: "w-new", created_at: new Date("2026-08-01") }),
+        ],
+      },
+    ]);
+    stubNoModerationRestrictions();
+    (
+      workerBoostRepository.findActiveBoostsForWorkers as jest.Mock
+    ).mockResolvedValue([]);
+    (boostConfigRepository.get as jest.Mock).mockResolvedValue({
+      rotation_interval_minutes: 30,
+    });
+    (isUserOnlineBulk as jest.Mock).mockReturnValue(new Set());
+    (
+      reviewRepository.getAverageRatingsForWorkers as jest.Mock
+    ).mockResolvedValue(new Map());
+    (
+      bookingRepository.getCompletedCountsForWorkers as jest.Mock
+    ).mockResolvedValue(new Map());
+
+    const result = await workerService.getWorkersGroupedByService({});
+
+    expect(result[0].workers.map((w) => w.id)).toEqual(["w-new", "w-old"]);
+  });
+
+  it("filters out a worker with no schedule-free duration when a schedule is requested", async () => {
+    const scheduleAt = new Date("2026-08-20T09:00:00Z");
+    (
+      workerServiceRepository.findWorkersGroupedByService as jest.Mock
+    ).mockResolvedValue([
+      {
+        service: groupedService(),
+        workers: [
+          groupedWorker({
+            id: "w-busy",
+            pricing: [{ duration: 60, price: 100, unit: "session" }],
+          }),
+          groupedWorker({
+            id: "w-free",
+            pricing: [{ duration: 60, price: 100, unit: "session" }],
+          }),
+        ],
+      },
+    ]);
+    stubNoModerationRestrictions();
+    (
+      workerBoostRepository.findActiveBoostsForWorkers as jest.Mock
+    ).mockResolvedValue([]);
+    (boostConfigRepository.get as jest.Mock).mockResolvedValue({
+      rotation_interval_minutes: 30,
+    });
+    (isUserOnlineBulk as jest.Mock).mockReturnValue(new Set());
+    (
+      reviewRepository.getAverageRatingsForWorkers as jest.Mock
+    ).mockResolvedValue(new Map());
+    (
+      bookingRepository.getCompletedCountsForWorkers as jest.Mock
+    ).mockResolvedValue(new Map());
+    (
+      bookingRepository.findConflictsForWorkersInWindow as jest.Mock
+    ).mockResolvedValue([
+      {
+        worker_id: "w-busy",
+        start_time: new Date("2026-08-20T09:00:00Z"),
+        end_time: new Date("2026-08-20T10:00:00Z"),
+      },
+    ]);
+
+    const result = await workerService.getWorkersGroupedByService({
+      schedule: scheduleAt,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].workers.map((w) => w.id)).toEqual(["w-free"]);
+  });
 });
 
 describe("workerService.searchByHashtag", () => {
