@@ -5,7 +5,7 @@ import {
   CreateReviewInput,
   ReviewQuery,
 } from "../../types/review/review.types";
-import { REVIEW_LIMITS, RATING_VALUES } from "../../constants/review";
+import { REVIEW_LIMITS, RATING_VALUES, ReviewType } from "../../constants/review";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 
 export class ReviewRepository {
@@ -366,6 +366,38 @@ export class ReviewRepository {
       },
     ]);
     return row ?? { total: 0, fiveStarCount: 0, lowRatingCount: 0 };
+  }
+
+  async getAverageRatingsForWorkers(
+    workerIds: string[]
+  ): Promise<Map<string, number>> {
+    if (!workerIds.length) return new Map();
+
+    const rows = await Review.aggregate<{
+      _id: Types.ObjectId;
+      average_rating: number;
+    }>([
+      {
+        $match: {
+          worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
+          is_visible: true,
+          review_type: ReviewType.CLIENT_TO_WORKER,
+        },
+      },
+      {
+        $group: {
+          _id: "$worker_id",
+          average_rating: { $avg: "$rating" },
+        },
+      },
+    ]);
+
+    return new Map(
+      rows.map((row) => [
+        row._id.toString(),
+        Math.round((row.average_rating ?? 0) * 10) / 10,
+      ])
+    );
   }
 }
 

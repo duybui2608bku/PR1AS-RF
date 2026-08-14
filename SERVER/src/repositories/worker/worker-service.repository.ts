@@ -507,8 +507,6 @@ class WorkerServiceRepository {
         } | null;
         reputation_score: number;
         last_active_at: Date | null;
-        average_rating: number;
-        completed_bookings: number;
         created_at: Date | null;
         pricing: WorkerServicePricing[];
       }>;
@@ -658,97 +656,6 @@ class WorkerServiceRepository {
 
     stages.push(
       {
-        $lookup: {
-          from: modelsName.REVIEW,
-          let: { workerId: "$worker._id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$worker_id", "$$workerId"] },
-                    { $eq: ["$is_visible", true] },
-                    { $eq: ["$review_type", ReviewType.CLIENT_TO_WORKER] },
-                  ],
-                },
-              },
-            },
-            {
-              $group: {
-                _id: null,
-                average_rating: { $avg: "$rating" },
-              },
-            },
-          ],
-          as: "review_summary",
-        },
-      },
-      {
-        $lookup: {
-          from: modelsName.BOOKING,
-          let: { workerId: "$worker._id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$worker_id", "$$workerId"] },
-                    { $eq: ["$status", BookingStatus.COMPLETED] },
-                  ],
-                },
-              },
-            },
-            {
-              $group: {
-                _id: null,
-                completed_bookings: { $sum: 1 },
-              },
-            },
-          ],
-          as: "booking_summary",
-        },
-      },
-      {
-        $addFields: {
-          _average_rating: {
-            $round: [
-              {
-                $ifNull: [
-                  { $arrayElemAt: ["$review_summary.average_rating", 0] },
-                  0,
-                ],
-              },
-              1,
-            ],
-          },
-          _completed_bookings: {
-            $ifNull: [
-              { $arrayElemAt: ["$booking_summary.completed_bookings", 0] },
-              0,
-            ],
-          },
-          // Workers with reputation_score < 30 get sort priority 1 (pushed to back), others get 0
-          _reputation_priority: {
-            $cond: {
-              if: {
-                $lt: [
-                  { $ifNull: ["$worker.meta_data.reputation_score", 0] },
-                  30,
-                ],
-              },
-              then: 1,
-              else: 0,
-            },
-          },
-        },
-      },
-      {
-        $sort: {
-          _reputation_priority: 1,
-          "worker.meta_data.reputation_score": -1,
-        },
-      },
-      {
         $group: {
           _id: "$service_id",
           service: {
@@ -778,8 +685,6 @@ class WorkerServiceRepository {
                 $ifNull: ["$worker.meta_data.reputation_score", 0],
               },
               last_active_at: { $ifNull: ["$worker.last_active_at", null] },
-              average_rating: "$_average_rating",
-              completed_bookings: "$_completed_bookings",
               created_at: { $ifNull: ["$worker.created_at", null] },
               pricing: "$pricing",
             },
@@ -831,8 +736,6 @@ class WorkerServiceRepository {
           } | null;
           reputation_score: number;
           last_active_at: Date | null;
-          average_rating: number;
-          completed_bookings: number;
           created_at: Date | null;
           pricing: WorkerServicePricing[];
         }>;
@@ -1001,7 +904,6 @@ class WorkerServiceRepository {
           },
         },
       },
-      { $sort: { reputation_score: -1, id: 1 } },
     ];
 
     return WorkerService.aggregate<WorkerHashtagCandidate>(pipeline);
