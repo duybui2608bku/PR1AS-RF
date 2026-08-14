@@ -111,8 +111,42 @@ describe("workerService.searchByHashtag", () => {
 
     const result = await workerService.searchByHashtag("#it", 2, 2);
 
-    expect(result.data).toHaveLength(2);
+    // All candidates are tied on every key except created_at, so the ranked
+    // order is newest-first: w-4, w-3, w-2, w-1, w-0. Page 2 with limit 2
+    // means skip=2, so items at index 2,3 => w-2, w-1.
+    expect(result.data.map((w) => w.id)).toEqual(["w-2", "w-1"]);
     expect(result.pagination).toMatchObject({ page: 2, limit: 2, total: 5 });
+  });
+
+  it("returns a partial page when fewer candidates remain than the limit", async () => {
+    const candidates = Array.from({ length: 5 }, (_, i) =>
+      candidate({ id: `w-${i}`, created_at: new Date(2026, 0, i + 1) })
+    );
+    (workerServiceRepository.findHashtagCandidates as jest.Mock).mockResolvedValue(
+      candidates
+    );
+    stubNoBoostNoOnline();
+
+    const result = await workerService.searchByHashtag("#it", 3, 2);
+
+    // Page 3 with limit 2 means skip=4; only index 4 remains => w-0.
+    expect(result.data.map((w) => w.id)).toEqual(["w-0"]);
+    expect(result.pagination).toMatchObject({ page: 3, limit: 2, total: 5 });
+  });
+
+  it("returns an empty page when requesting past the end of the results", async () => {
+    const candidates = Array.from({ length: 5 }, (_, i) =>
+      candidate({ id: `w-${i}`, created_at: new Date(2026, 0, i + 1) })
+    );
+    (workerServiceRepository.findHashtagCandidates as jest.Mock).mockResolvedValue(
+      candidates
+    );
+    stubNoBoostNoOnline();
+
+    const result = await workerService.searchByHashtag("#it", 99, 2);
+
+    expect(result.data).toEqual([]);
+    expect(result.pagination).toMatchObject({ page: 99, limit: 2, total: 5 });
   });
 });
 
