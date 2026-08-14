@@ -5,7 +5,11 @@ import {
   CreateReviewInput,
   ReviewQuery,
 } from "../../types/review/review.types";
-import { REVIEW_LIMITS, RATING_VALUES, ReviewType } from "../../constants/review";
+import {
+  REVIEW_LIMITS,
+  RATING_VALUES,
+  ReviewType,
+} from "../../constants/review";
 import { VALIDATION_LIMITS } from "../../constants/validation";
 
 export class ReviewRepository {

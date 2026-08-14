@@ -601,12 +601,15 @@ export class WorkerService {
       ...new Set(groupedWorkers.flatMap((g) => g.workers.map((w) => w.id))),
     ];
 
-    const [{ boostByWorkerId, onlineWorkerIds, slotId }, averageRatingByWorkerId, completedBookingsByWorkerId] =
-      await Promise.all([
-        getBoostPresenceContext(allWorkerIds),
-        reviewRepository.getAverageRatingsForWorkers(allWorkerIds),
-        bookingRepository.getCompletedCountsForWorkers(allWorkerIds),
-      ]);
+    const [
+      { boostByWorkerId, onlineWorkerIds, slotId },
+      averageRatingByWorkerId,
+      completedBookingsByWorkerId,
+    ] = await Promise.all([
+      getBoostPresenceContext(allWorkerIds),
+      reviewRepository.getAverageRatingsForWorkers(allWorkerIds),
+      bookingRepository.getCompletedCountsForWorkers(allWorkerIds),
+    ]);
 
     const groupedWithBoost = groupedWorkers.map((group) => {
       const annotated = group.workers.map((w) => {

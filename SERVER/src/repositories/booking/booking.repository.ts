@@ -777,7 +777,10 @@ export class BookingRepository {
   ): Promise<Map<string, number>> {
     if (!workerIds.length) return new Map();
 
-    const rows = await Booking.aggregate<{ _id: Types.ObjectId; count: number }>([
+    const rows = await Booking.aggregate<{
+      _id: Types.ObjectId;
+      count: number;
+    }>([
       {
         $match: {
           worker_id: { $in: workerIds.map((id) => new Types.ObjectId(id)) },
