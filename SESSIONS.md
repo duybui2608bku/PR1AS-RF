@@ -75,7 +75,7 @@ không phải bấm 2 lần. Trang repro đã xoá.
 phải dùng `closeSubViewThen`, nếu không bug sẽ quay lại — chưa có lint rule
 chặn việc này.
 
-**Commit**: chưa commit · branch `main`
+**Commit**: `3e6a468` · merge vào `main` qua branch `fix/overlay-close-then-navigate`
 
 ---
 
