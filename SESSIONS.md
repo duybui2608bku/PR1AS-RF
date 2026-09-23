@@ -72,7 +72,7 @@ request `/auth/me` mỗi lần load trang (staleTime 60s chặn spam khi điều
 bỏ kết quả — vô hại (nó chỉ cần kích hoạt refresh token), có thể đổi sang
 `queryClient.invalidateQueries(auth.me)` nếu muốn gộp một đường.
 
-**Commit**: chưa commit · branch `main`
+**Commit**: `92d70ee` · branch `fix/auth-store-stale-user`
 
 ---
 
