@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useCompleteOnboarding } from "@/lib/hooks/use-auth"
+import { closeSubViewThen } from "@/lib/hooks/use-subview-history"
 import { useAuthStore, useHasHydrated } from "@/lib/store/auth-store"
 import { cn } from "@/lib/utils"
 
@@ -150,8 +151,11 @@ export function OnboardingRoleModal() {
 
   async function handleConfirm() {
     await completeOnboarding.mutateAsync()
+    if (selected === "worker") {
+      closeSubViewThen(() => setOpen(false), () => router.push("/worker/setup"))
+      return
+    }
     setOpen(false)
-    if (selected === "worker") router.push("/worker/setup")
   }
 
   async function handleSkip() {

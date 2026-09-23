@@ -122,3 +122,24 @@ export function useOverlayHistory({
 
   return { open: isOpen, onOpenChange: handleOpenChange }
 }
+
+/**
+ * Đóng sub-view đang mở rồi mới chạy `next` (thường là `router.push/replace`).
+ *
+ * Bắt buộc dùng cho handler "vừa đóng vừa điều hướng": đóng bằng state sẽ gọi
+ * `history.back()` để tiêu entry đã push lúc mở, mà `router.push` của App
+ * Router chỉ ghi URL trong effect sau khi transition commit — nên back() chạy
+ * sau và nuốt luôn lần điều hướng đó (bấm menu như không có tác dụng).
+ * Ở đây back() đi trước, `next` chạy khi popstate đã xử lý xong.
+ */
+export function closeSubViewThen(close: () => void, next: () => void) {
+  if (typeof window === "undefined" || stack.length === 0) {
+    close()
+    next()
+    return
+  }
+  // popstate → handlePopState đóng sub-view trên cùng (listener của nó đăng ký
+  // trước nên luôn chạy trước listener này).
+  window.addEventListener("popstate", next, { once: true })
+  window.history.back()
+}

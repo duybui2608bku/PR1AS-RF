@@ -38,6 +38,47 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-09-23 — Sheet "Tôi" ở bottom nav mobile: bấm menu không đi đâu cả
+
+**Mục tiêu**: Bug: trên mobile mở bottom sheet từ bottom nav, bấm item nào cũng
+như không có tác dụng.
+
+**Nguyên nhân** (đã repro được, không phải suy đoán): `useSubViewHistory`
+(thêm ở `ffaa424`) push một history entry khi overlay mở và **tiêu entry đó
+bằng `history.back()`** khi overlay đóng bằng state. Mọi handler kiểu "đóng
+rồi điều hướng" (`onClose(); router.push(x)`) vì thế tự huỷ: App Router của
+Next 16 chỉ ghi URL trong effect **sau khi** transition commit (xem
+`app-router.js`, effect theo `appRouterState`), nên `back()` chạy trước/sau đều
+nuốt mất lần điều hướng. Repro: nút "push thẳng" → `/posts` OK; nút
+"đóng + push" → đứng yên ở trang cũ.
+
+**Đã làm**:
+
+- Thêm `closeSubViewThen(close, next)` trong `use-subview-history.ts`: back()
+  trước (popstate đóng overlay qua đúng đường có sẵn), `next()` chạy trong
+  popstate — thứ tự xác định, không còn tranh nhau. History cũng sạch: không
+  để lại entry thừa.
+- Đổi 5 call site đang dính pattern này: `mobile-more-sheet` (menu + logout),
+  `auth-required-dialog` (login/register), `onboarding-role-modal` (→ /worker/setup).
+
+**File chính**: `pr1as-client/lib/hooks/use-subview-history.ts`,
+`pr1as-client/components/layout/mobile-more-sheet.tsx`,
+`pr1as-client/components/auth/auth-required-dialog.tsx`,
+`pr1as-client/components/providers/onboarding-role-modal.tsx`
+
+**Quyết định / ghi chú**: Kiểm chứng bằng trang repro tạm + dev server: (1)
+đóng + push → điều hướng OK, (2) back khi sheet mở → vẫn chỉ đóng sheet chứ
+không rời trang, (3) back sau khi điều hướng từ sheet → về đúng trang trước,
+không phải bấm 2 lần. Trang repro đã xoá.
+
+**Còn lại**: bất kỳ handler mới nào "vừa đóng overlay vừa `router.push`" đều
+phải dùng `closeSubViewThen`, nếu không bug sẽ quay lại — chưa có lint rule
+chặn việc này.
+
+**Commit**: chưa commit · branch `main`
+
+---
+
 ## 2026-09-23 — Header không cập nhật sau khi đổi avatar (store là bản chụp lúc login)
 
 **Mục tiêu**: Bug: đổi avatar xong header vẫn giữ ảnh cũ vì header đọc từ
