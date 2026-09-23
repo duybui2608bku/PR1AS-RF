@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { closeSubViewThen } from "@/lib/hooks/use-subview-history"
 import { useAuthDialogStore } from "@/lib/store/auth-dialog-store"
 
 export function AuthRequiredDialog() {
@@ -20,14 +21,12 @@ export function AuthRequiredDialog() {
   const t = useTranslations("Auth")
 
   const handleLogin = () => {
-    closeAuthDialog()
     const from = fromPath ? `?from=${encodeURIComponent(fromPath)}` : ""
-    router.push(`/login${from}`)
+    closeSubViewThen(closeAuthDialog, () => router.push(`/login${from}`))
   }
 
   const handleRegister = () => {
-    closeAuthDialog()
-    router.push("/register")
+    closeSubViewThen(closeAuthDialog, () => router.push("/register"))
   }
 
   return (

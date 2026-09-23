@@ -22,6 +22,7 @@ import {
   BottomSheetContent,
 } from "@/components/ui/bottom-sheet"
 import { useLogout } from "@/lib/hooks/use-auth"
+import { closeSubViewThen } from "@/lib/hooks/use-subview-history"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { getErrorMessage } from "@/lib/utils/error-handler"
 import { getPlanRingClass } from "@/lib/utils/plan"
@@ -52,16 +53,14 @@ export function MobileMoreSheet({ open, onClose }: MobileMoreSheetProps) {
   const activeRole = (lastActiveRole ?? fallbackRole)?.toLowerCase()
 
   const handleNavigate = (href: string) => {
-    onClose()
-    router.push(href)
+    closeSubViewThen(onClose, () => router.push(href))
   }
 
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
-      onClose()
       toast.success(tToast("logoutSuccess"))
-      router.replace("/login")
+      closeSubViewThen(onClose, () => router.replace("/login"))
     } catch (error) {
       toast.error(getErrorMessage(error, tToast("logoutError")))
     }
