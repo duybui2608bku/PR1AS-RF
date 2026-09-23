@@ -35,6 +35,9 @@ export const toPublicUser = (user: IUserDocument): IUserPublic => {
       pricing_started_at: user.meta_data?.pricing_started_at ?? null,
       pricing_expires_at: user.meta_data?.pricing_expires_at ?? null,
       onboarding_done: user.meta_data?.onboarding_done ?? false,
+      // Declared on IUserPublic and read by the client to set Accept-Language;
+      // omitting it meant every payload silently dropped the user locale.
+      locale: user.meta_data?.locale,
     },
   };
 };

@@ -19,7 +19,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import { PRICING_KEYS } from "@/lib/hooks/use-pricing"
 import { WALLET_KEYS } from "@/lib/hooks/use-wallet"
 import { queryKeys } from "@/lib/query-keys"
-import { useAuthStore } from "@/lib/store/auth-store"
 import type { PricingPaymentResponse } from "@/services/pricing.service"
 
 interface PricingPurchaseModalProps {
@@ -31,7 +30,6 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
   const t = useTranslations("Pricing.purchaseModal")
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const setUser = useAuthStore((s) => s.setUser)
   const notifiedRef = useRef<string | null>(null)
 
   const transactionQuery = useWalletTransaction(
@@ -51,17 +49,13 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
       queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       queryClient.invalidateQueries({ queryKey: WALLET_KEYS.all })
-      const currentUser = useAuthStore.getState().user
-      if (currentUser) {
-        setUser({ ...currentUser })
-      }
     }
 
     if (isFailed) {
       notifiedRef.current = payment.transaction_id
       toast.error(t("failedToast"))
     }
-  }, [isSuccess, isFailed, payment, queryClient, setUser, t])
+  }, [isSuccess, isFailed, payment, queryClient, t])
 
   const formatVnd = (amount: number) =>
     new Intl.NumberFormat(

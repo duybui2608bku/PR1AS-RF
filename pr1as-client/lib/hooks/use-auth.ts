@@ -153,6 +153,15 @@ export function useMe() {
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const response = await api.get<ApiResponse<{ user: AuthUser }>>("/auth/me")
+      // Server is the source of truth for the header/nav, which render off the
+      // sessionStorage-persisted store. Without this write-back the store keeps
+      // the snapshot taken at login, so a profile change only lands where a
+      // mutation remembered to call setUser — every other path stays stale.
+      const fresh = response.data.data?.user
+      if (fresh) {
+        const { user, setUser } = useAuthStore.getState()
+        setUser({ ...user, ...fresh })
+      }
       return response.data
     },
   })
