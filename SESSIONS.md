@@ -38,6 +38,44 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-09-23 — Header không cập nhật sau khi đổi avatar (store là bản chụp lúc login)
+
+**Mục tiêu**: Bug: đổi avatar xong header vẫn giữ ảnh cũ vì header đọc từ
+store đã persist (sessionStorage), không fetch lại. Sửa gốc + tìm bug cùng loại.
+
+**Đã làm**:
+
+- `useMe()` giờ **ghi ngược** user từ `GET /auth/me` vào auth store (merge nông
+  vào user hiện tại). Trước đây query này fetch dữ liệu mới rồi vứt đi, nên
+  store chỉ đổi khi một mutation nào đó nhớ gọi `setUser`.
+- Mount `useMe()` app-wide trong `SessionRestoreProvider`, nhờ vậy mọi
+  `invalidateQueries(auth.me)` sẵn có (update profile, switch role, mua gói,
+  redeem voucher, worker profile) đều refetch và repaint header/mobile nav.
+- Bug cùng loại đã sửa: `pricing-purchase-modal` gọi `setUser({ ...currentUser })`
+  — clone rỗng, không mang plan mới vào store → badge/ring gói trên header đứng
+  yên sau khi thanh toán SePay thành công. Xoá no-op, để invalidate lo.
+- Bug cùng loại đã sửa: `toPublicUser` không bao giờ set `meta_data.locale` dù
+  `IUserPublic` khai báo có → mọi payload user (login, /auth/me, switch-role)
+  đều rơi mất locale, `resolveAcceptLanguage` phải fallback về cookie UI.
+
+**File chính**: `pr1as-client/lib/hooks/use-auth.ts`,
+`pr1as-client/components/providers/index.tsx`,
+`pr1as-client/components/pricing/pricing-purchase-modal.tsx`,
+`SERVER/src/utils/user.helper.ts`
+
+**Quyết định / ghi chú**: Sửa tại chokepoint (`useMe`) thay vì thêm `setUser`
+vào từng mutation — server là source of truth cho header. Các `setUser` lạc
+quan sẵn có vẫn giữ để phản hồi tức thì, không round-trip. Chi phí: thêm 1
+request `/auth/me` mỗi lần load trang (staleTime 60s chặn spam khi điều hướng SPA).
+
+**Còn lại**: `TokenForegroundRefresh` vẫn gọi thẳng `api.get("/auth/me")` rồi
+bỏ kết quả — vô hại (nó chỉ cần kích hoạt refresh token), có thể đổi sang
+`queryClient.invalidateQueries(auth.me)` nếu muốn gộp một đường.
+
+**Commit**: `92d70ee` · merge vào `main` qua branch `fix/auth-store-stale-user`
+
+---
+
 ## 2026-08-12 — Fix bug nghiêm trọng: mọi cộng/trừ điểm uy tín đều no-op im lặng
 
 **Mục tiêu**: User báo worker mới đăng ký, hồ sơ đã đủ `date_of_birth` (đáng

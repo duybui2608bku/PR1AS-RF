@@ -21,6 +21,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { PrefLoadingOverlay } from "@/components/layout/pref-loading-overlay"
 import { Toaster } from "@/components/ui/sonner"
 import { clearSessionCookie } from "@/lib/auth/auth-cookie"
+import { useMe } from "@/lib/hooks/use-auth"
 import { useAuthStore, useHasHydrated, type AuthUser } from "@/lib/store/auth-store"
 import { useCurrencyStore } from "@/lib/store/currency-store"
 
@@ -54,6 +55,10 @@ async function fetchSessionWithRetry(): Promise<{
  *  Fixes bug: valid cookie → middleware redirect khỏi /login dù Zustand nói chưa login.
  */
 function SessionRestoreProvider() {
+  // Mounted app-wide so /auth/me stays subscribed: every
+  // invalidateQueries(auth.me) then refetches and writes the fresh user back
+  // into the store — that is what keeps the header in step with profile edits.
+  useMe()
   const hasHydrated = useHasHydrated()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const setAuth = useAuthStore((s) => s.setAuth)

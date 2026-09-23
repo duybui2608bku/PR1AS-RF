@@ -33,7 +33,6 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
   const t = useTranslations("Pricing.purchaseModal")
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   const notifiedRef = useRef<string | null>(null)
 
@@ -54,17 +53,13 @@ export function PricingPurchaseModal({ payment, onClose }: PricingPurchaseModalP
       queryClient.invalidateQueries({ queryKey: PRICING_KEYS.me() })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me })
       queryClient.invalidateQueries({ queryKey: WALLET_KEYS.all })
-      const currentUser = useAuthStore.getState().user
-      if (currentUser) {
-        setUser({ ...currentUser })
-      }
     }
 
     if (isFailed) {
       notifiedRef.current = payment.transaction_id
       toast.error(t("failedToast"))
     }
-  }, [isSuccess, isFailed, payment, queryClient, setUser, t])
+  }, [isSuccess, isFailed, payment, queryClient, t])
 
   const formatVnd = (amount: number) =>
     new Intl.NumberFormat(
