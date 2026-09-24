@@ -55,7 +55,7 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 **Còn lại**: chưa test UI end-to-end khi đăng nhập (chỉ probe route trả 401 khi không có token).
 
-**Commit**: chưa commit · branch `main`
+**Commit**: `d4ab5a8` · branch `main`
 
 ## 2026-09-24 — Thumbnail worker ưu tiên ảnh gallery thay vì avatar
 
