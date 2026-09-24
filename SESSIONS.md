@@ -52,7 +52,7 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 **Còn lại**: không
 
-**Commit**: chưa commit · branch `main`
+**Commit**: `6ffb4ea` · branch `main`
 
 ## 2026-09-23 — Sheet "Tôi" ở bottom nav mobile: bấm menu không đi đâu cả
 
