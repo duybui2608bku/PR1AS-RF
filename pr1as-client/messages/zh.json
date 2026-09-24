@@ -999,7 +999,13 @@
       "cancel": "取消",
       "answerSuccess": "回复已发送。",
       "answerUpdateSuccess": "回复已更新。",
-      "answerError": "无法发送您的回复。"
+      "answerError": "无法发送您的回复。",
+      "delete": "删除",
+      "deleteTitle": "删除此问题？",
+      "deleteDescription": "该问题及其回复将从资料页中移除，且无法撤销。",
+      "deleting": "正在删除…",
+      "deleteSuccess": "问题已删除。",
+      "deleteError": "无法删除该问题。"
     },
     "services": {
       "title": "服务",

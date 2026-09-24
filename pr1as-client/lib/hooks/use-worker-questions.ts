@@ -62,3 +62,17 @@ export function useAnswerWorkerQuestion(workerId: string) {
     },
   })
 }
+
+export function useDeleteWorkerQuestion(workerId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (questionId: string) =>
+      workerQuestionService.deleteWorkerQuestion(questionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.workerQuestions.byWorker(workerId),
+      })
+    },
+  })
+}

@@ -38,6 +38,25 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-09-24 — Ask the worker: cho phép xóa câu hỏi
+
+**Mục tiêu**: người hỏi và worker được hỏi đều xóa được câu hỏi trong mục "Ask the worker".
+
+**Đã làm**:
+
+- BE: `DELETE /api/worker-questions/:id` (authenticate + CSRF). Service `deleteQuestion` cho phép worker chủ hồ sơ hoặc asker đã đăng nhập; còn lại 403. View thêm `can_delete`.
+- Xóa = soft-hide `is_hidden=true` (repo `hide`), tái dùng cờ sẵn có mà list/answer đã lọc.
+- FE: nút thùng rác + `AlertDialog` xác nhận trong `worker-ask-question.tsx`, hook `useDeleteWorkerQuestion`, i18n `askWorker.delete*` cả 4 locale.
+- Test: `worker-question.service.test.ts` (5 case quyền xóa).
+
+**File chính**: `SERVER/src/services/worker-question/worker-question.service.ts`, `SERVER/src/routes/worker-question/worker-question.routes.ts`, `pr1as-client/components/worker/worker-ask-question.tsx`, `memorybank/worker-question.md`
+
+**Quyết định / ghi chú**: guest asker (không tài khoản) không xóa được — không có danh tính để xác minh. Xóa bởi user và ẩn bởi moderation hiện không phân biệt được trong DB.
+
+**Còn lại**: chưa test UI end-to-end khi đăng nhập (chỉ probe route trả 401 khi không có token).
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-09-24 — Thumbnail worker ưu tiên ảnh gallery thay vì avatar
 
 **Mục tiêu**: card preview worker đang hiện avatar thay vì ảnh worker đã setup.

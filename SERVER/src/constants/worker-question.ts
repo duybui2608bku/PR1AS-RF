@@ -24,6 +24,8 @@ export const WORKER_QUESTION_MESSAGES = {
   CANNOT_ASK_SELF: "Bạn không thể tự hỏi chính mình",
   ALREADY_ANSWERED: "Câu hỏi này đã được trả lời",
   UNAUTHORIZED_ANSWER: "Bạn không có quyền trả lời câu hỏi này",
+  QUESTION_DELETED: "Đã xóa câu hỏi",
+  UNAUTHORIZED_DELETE: "Bạn không có quyền xóa câu hỏi này",
 } as const;
 
 export const WORKER_QUESTION_MASK = "***";

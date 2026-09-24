@@ -61,6 +61,14 @@ export class WorkerQuestionController {
     );
     R.success(res, question, WORKER_QUESTION_MESSAGES.QUESTION_ANSWERED, req);
   }
+
+  async deleteQuestion(req: AuthRequest, res: Response): Promise<void> {
+    const userId = extractUserIdFromRequest(req);
+    const { id } = req.params;
+
+    await workerQuestionService.deleteQuestion(id, userId);
+    R.success(res, null, WORKER_QUESTION_MESSAGES.QUESTION_DELETED, req);
+  }
 }
 
 export const workerQuestionController = new WorkerQuestionController();

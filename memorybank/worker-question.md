@@ -84,6 +84,7 @@ Mounted at `/api/worker-questions` (`SERVER/src/routes/index.ts`).
 | `POST` | `/` | Optional | Yes | `questionCreateLimiter` (10/hour) | Ask a worker. Guest or registered. |
 | `GET` | `/worker/:workerId` | Optional | No | - | List a worker's questions, paginated and masked per viewer. |
 | `POST` | `/:id/answer` | Worker | Yes | - | Worker answers (or edits an answer to) their own question. |
+| `DELETE` | `/:id` | Required | Yes | - | Worker being asked or the registered asker deletes the question (soft-hide). |
 
 `POST /` is `optionalAuthenticate`: it works without a session (guest) and also
 recognises a logged-in viewer. `GET /worker/:workerId` is also
@@ -128,6 +129,7 @@ Each row is projected to a `WorkerQuestionView` with per-viewer masking:
   becomes `null`, and `is_masked=true`. `id`, `visibility`, and timestamps stay
   so the UI can still render a masked row.
 - `can_answer` is `true` only for the worker viewing their own profile.
+- `can_delete` is `true` for the worker owner and for the registered asker.
 - `is_answered = Boolean(answer)`.
 
 ### Answer payload
@@ -144,6 +146,17 @@ Answer rules (`WorkerQuestionService.answerQuestion`):
 | Answer is sanitised. | Stripped to plain text before storage. |
 | Editing is allowed. | Re-answering overwrites `answer` and `answered_at`. |
 | Notify only on first answer. | `isFirstAnswer = !question.answer`; edits never re-notify the asker. |
+
+### Delete rules
+
+`WorkerQuestionService.deleteQuestion`:
+
+| Rule | Behaviour |
+| --- | --- |
+| Route guards. | `authenticate` + CSRF (any role). |
+| Question must exist and not be hidden. | Else `404 QUESTION_NOT_FOUND`. |
+| Only the worker being asked or the registered asker. | Else `403 UNAUTHORIZED_DELETE`. Guest askers (`asker_id` null) cannot delete. |
+| Soft delete. | Sets `is_hidden=true` (repository `hide`), reusing the moderation flag, so the row drops out of the list and can no longer be answered. |
 
 ## Notifications
 
@@ -181,13 +194,14 @@ Behaviour:
   with helper hints.
 - Masked private rows render the masked placeholder for non-involved viewers.
 - The worker, on their own profile, sees an inline reply/edit form per question.
+- Rows with `can_delete` show a trash button that opens an `AlertDialog` confirm before deleting.
 
 Data layer:
 
 - Service: `workerQuestionService.getWorkerQuestions`, `createWorkerQuestion`,
   `answerWorkerQuestion` in `services/worker-question.service.ts`.
 - Hooks: `useWorkerQuestions` (infinite query, page size 5),
-  `useAskWorkerQuestion`, `useAnswerWorkerQuestion` in
+  `useAskWorkerQuestion`, `useAnswerWorkerQuestion`, `useDeleteWorkerQuestion` in
   `lib/hooks/use-worker-questions.ts`. Mutations invalidate
   `queryKeys.workerQuestions.byWorker(workerId)`.
 - Query keys: `workerQuestions.all` and
@@ -199,8 +213,9 @@ Data layer:
 - `asker_email` is always persisted, including for registered askers, because it
   is the channel used to email guests their answer.
 - `is_hidden` is a backend soft-hide guard (questions are filtered out of the
-  list and cannot be answered), but there is currently no admin route in this
-  module to set it - it is reserved for moderation/data tooling.
+  list and cannot be answered). It is set by the user-facing `DELETE /:id`;
+  there is no admin route in this module, so a user delete and a moderation
+  hide are indistinguishable in the data.
 - Answer edits are intentionally silent: only the first answer notifies the
   asker, so workers can fix typos without re-emailing the guest.
 - Question/answer text is stored as plain text; all HTML is stripped on the way

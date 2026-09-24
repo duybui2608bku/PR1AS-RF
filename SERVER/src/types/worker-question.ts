@@ -47,5 +47,6 @@ export interface WorkerQuestionView {
   is_answered: boolean;
   is_masked: boolean;
   can_answer: boolean;
+  can_delete: boolean;
   created_at: string;
 }

@@ -999,7 +999,13 @@
       "cancel": "Hủy",
       "answerSuccess": "Đã gửi phản hồi.",
       "answerUpdateSuccess": "Đã cập nhật phản hồi.",
-      "answerError": "Không thể gửi phản hồi."
+      "answerError": "Không thể gửi phản hồi.",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa câu hỏi này?",
+      "deleteDescription": "Câu hỏi và phản hồi sẽ bị xóa khỏi hồ sơ. Không thể hoàn tác.",
+      "deleting": "Đang xóa…",
+      "deleteSuccess": "Đã xóa câu hỏi.",
+      "deleteError": "Không thể xóa câu hỏi."
     },
     "services": {
       "title": "Dịch vụ",

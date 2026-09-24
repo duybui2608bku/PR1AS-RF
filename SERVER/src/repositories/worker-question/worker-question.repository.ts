@@ -61,6 +61,16 @@ export class WorkerQuestionRepository {
       { new: true }
     );
   }
+
+  // ponytail: delete = soft-hide via is_hidden, which the list and answer
+  // paths already filter on; add a dedicated deleted_at if moderation needs
+  // to tell the two apart.
+  async hide(id: string): Promise<void> {
+    await WorkerQuestion.updateOne(
+      { _id: id },
+      { is_hidden: true, updated_at: new Date() }
+    );
+  }
 }
 
 export const workerQuestionRepository = new WorkerQuestionRepository();

@@ -1,10 +1,21 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { Loader2, Lock, MessageCircleQuestion } from "lucide-react"
+import { Loader2, Lock, MessageCircleQuestion, Trash2 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   useAnswerWorkerQuestion,
   useAskWorkerQuestion,
+  useDeleteWorkerQuestion,
   useWorkerQuestions,
 } from "@/lib/hooks/use-worker-questions"
 import { INTL_LOCALE_TAGS, type SupportedLocale } from "@/lib/locale"
@@ -289,6 +301,8 @@ type QuestionItemProps = {
 
 function QuestionItem({ item, workerId, localeTag, t }: QuestionItemProps) {
   const answerMutation = useAnswerWorkerQuestion(workerId)
+  const deleteMutation = useDeleteWorkerQuestion(workerId)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const isEditing = item.is_answered
   const [isFormOpen, setIsFormOpen] = useState(!isEditing)
   const [answer, setAnswer] = useState(item.answer ?? "")
@@ -311,6 +325,16 @@ function QuestionItem({ item, workerId, localeTag, t }: QuestionItemProps) {
     }
   }
 
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(item.id)
+      toast.success(t("askWorker.deleteSuccess"))
+      setIsDeleteOpen(false)
+    } catch (deleteError) {
+      toast.error(getErrorMessage(deleteError, t("askWorker.deleteError")))
+    }
+  }
+
   return (
     <li className="rounded-lg border bg-muted/30 p-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -325,6 +349,46 @@ function QuestionItem({ item, workerId, localeTag, t }: QuestionItemProps) {
           <span className="font-medium text-foreground">
             {item.asker_nickname}
           </span>
+        ) : null}
+        {item.can_delete ? (
+          <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="ml-auto size-7 text-muted-foreground hover:text-destructive"
+                aria-label={t("askWorker.delete")}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("askWorker.deleteTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t("askWorker.deleteDescription")}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteMutation.isPending}>
+                  {t("askWorker.cancel")}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  disabled={deleteMutation.isPending}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    void handleDelete()
+                  }}
+                >
+                  {deleteMutation.isPending
+                    ? t("askWorker.deleting")
+                    : t("askWorker.delete")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : null}
       </div>
 

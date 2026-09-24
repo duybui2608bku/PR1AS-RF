@@ -51,4 +51,8 @@ export const workerQuestionService = {
     )
     return response.data.data
   },
+
+  deleteWorkerQuestion: async (questionId: string) => {
+    await api.delete(`/worker-questions/${questionId}`)
+  },
 }

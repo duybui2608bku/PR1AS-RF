@@ -43,4 +43,14 @@ router.post(
   )
 );
 
+router.delete(
+  "/:id",
+  authenticate,
+  validateObjectId("id"),
+  ...csrfProtection,
+  asyncHandler<AuthRequest>(
+    workerQuestionController.deleteQuestion.bind(workerQuestionController)
+  )
+);
+
 export default router;

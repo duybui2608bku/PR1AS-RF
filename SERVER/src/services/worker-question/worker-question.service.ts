@@ -146,6 +146,23 @@ export class WorkerQuestionService {
     return updated;
   }
 
+  // Both sides of the thread may delete it: the worker being asked and the
+  // registered asker. Guest askers have no identity to prove ownership with.
+  async deleteQuestion(questionId: string, userId: string): Promise<void> {
+    const question = await workerQuestionRepository.findById(questionId);
+    if (!question || question.is_hidden) {
+      throw AppError.notFound(WORKER_QUESTION_MESSAGES.QUESTION_NOT_FOUND);
+    }
+
+    const isWorker = question.worker_id.toString() === userId;
+    const isAsker = toId(question.asker_id) === userId;
+    if (!isWorker && !isAsker) {
+      throw AppError.forbidden(WORKER_QUESTION_MESSAGES.UNAUTHORIZED_DELETE);
+    }
+
+    await workerQuestionRepository.hide(questionId);
+  }
+
   private toView(
     question: IWorkerQuestionDocument,
     viewerId: string | null,
@@ -169,6 +186,7 @@ export class WorkerQuestionService {
       is_masked: masked,
       // Owner may answer and re-edit; UI distinguishes via is_answered.
       can_answer: isWorkerOwner,
+      can_delete: isWorkerOwner || isAsker,
       created_at: question.created_at.toISOString(),
     };
   }

@@ -998,7 +998,13 @@
       "cancel": "취소",
       "answerSuccess": "답글이 전송되었습니다.",
       "answerUpdateSuccess": "답글이 업데이트되었습니다.",
-      "answerError": "답글을 보낼 수 없습니다."
+      "answerError": "답글을 보낼 수 없습니다.",
+      "delete": "삭제",
+      "deleteTitle": "이 질문을 삭제할까요?",
+      "deleteDescription": "질문과 답변이 프로필에서 삭제되며 되돌릴 수 없습니다.",
+      "deleting": "삭제 중…",
+      "deleteSuccess": "질문이 삭제되었습니다.",
+      "deleteError": "질문을 삭제할 수 없습니다."
     },
     "services": {
       "title": "서비스",

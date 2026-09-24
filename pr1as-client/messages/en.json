@@ -999,7 +999,13 @@
       "cancel": "Cancel",
       "answerSuccess": "Reply sent.",
       "answerUpdateSuccess": "Reply updated.",
-      "answerError": "Could not send your reply."
+      "answerError": "Could not send your reply.",
+      "delete": "Delete",
+      "deleteTitle": "Delete this question?",
+      "deleteDescription": "The question and its reply will be removed from the profile. This cannot be undone.",
+      "deleting": "Deleting…",
+      "deleteSuccess": "Question deleted.",
+      "deleteError": "Could not delete the question."
     },
     "services": {
       "title": "Services",
