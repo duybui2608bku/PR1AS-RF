@@ -38,6 +38,22 @@ dở — thứ mà `git log` hay `memorybank/` không nắm hết.
 
 ---
 
+## 2026-09-24 — Thumbnail worker ưu tiên ảnh gallery thay vì avatar
+
+**Mục tiêu**: card preview worker đang hiện avatar thay vì ảnh worker đã setup.
+
+**Đã làm**:
+
+- Đảo thứ tự fallback `imageSrc`: `gallery_urls[0]` → `avatar` → null ở card danh sách worker theo dịch vụ và card worker yêu thích.
+
+**File chính**: `pr1as-client/components/worker/workers-by-service-list.tsx`, `pr1as-client/app/client/favorites/favorite-workers-client.tsx`
+
+**Quyết định / ghi chú**: `worker-suggestions.tsx` giữ avatar vì là avatar tròn, không phải thumbnail.
+
+**Còn lại**: không
+
+**Commit**: chưa commit · branch `main`
+
 ## 2026-09-23 — Sheet "Tôi" ở bottom nav mobile: bấm menu không đi đâu cả
 
 **Mục tiêu**: Bug: trên mobile mở bottom sheet từ bottom nav, bấm item nào cũng

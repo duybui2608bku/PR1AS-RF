@@ -176,7 +176,7 @@ const WorkerCard = ({
   onToggleFavorite?: (workerId: string, favorite: boolean) => void
   t: WorkersListTranslator
 }) => {
-  const imageSrc = worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
+  const imageSrc = worker.worker_profile?.gallery_urls?.[0] ?? worker.avatar ?? null
   const { format } = useCurrency()
   const { label, prefix } = formatPricing(worker.pricing, t, format)
   const height = worker.worker_profile?.height_cm

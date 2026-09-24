@@ -57,7 +57,7 @@ function FavoriteWorkerCard({
 }) {
   const t = useTranslations("Favorites")
   const imageSrc =
-    worker.avatar ?? worker.worker_profile?.gallery_urls?.[0] ?? null
+    worker.worker_profile?.gallery_urls?.[0] ?? worker.avatar ?? null
 
   return (
     <article className="group relative flex-none w-[44vw] snap-start overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md sm:w-auto">
